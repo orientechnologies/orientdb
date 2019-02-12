@@ -81,7 +81,7 @@ public class ONewDistributedTransactionManager {
     do {
 
       try {
-        return retriedCommit(database, iTx);
+        return retriedCommit(database, iTx, count);
       } catch (ODistributedRecordLockedException ex) {
         if (count == nretry) {
           throw ex;
@@ -99,7 +99,8 @@ public class ONewDistributedTransactionManager {
 
   }
 
-  public List<ORecordOperation> retriedCommit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx) {
+  public List<ORecordOperation> retriedCommit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
+      int retryCount) {
     final String localNodeName = dManager.getLocalNodeName();
 
     iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
@@ -121,7 +122,8 @@ public class ONewDistributedTransactionManager {
     int count = 0;
     do {
       localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1);
-      if (count != 0) {
+      //Make sure to do this retry only the first time
+      if (count != 0 && retryCount == 0) {
         int v = new Random().nextInt(1000);
         try {
           Thread.sleep(delay * count + v);
@@ -131,7 +133,7 @@ public class ONewDistributedTransactionManager {
         }
       }
       count++;
-    } while (localResult.getResponseType() == OTxLockTimeout.ID && count < nretry);
+    } while (localResult.getResponseType() == OTxLockTimeout.ID && count < nretry && retryCount == 0);
 
     try {
       localDistributedDatabase.getSyncConfiguration()

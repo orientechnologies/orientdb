@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -25,6 +26,7 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
 
     className = "Test";
     indexName = null;
+    OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(0);
 
     init(2);
 
