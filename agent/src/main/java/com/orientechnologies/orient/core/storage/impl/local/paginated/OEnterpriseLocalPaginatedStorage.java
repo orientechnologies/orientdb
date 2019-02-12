@@ -534,7 +534,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               if (cacheEntry != null)
                 readCache.releaseFromWrite(cacheEntry, writeCache);
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache, false, null);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache,  null);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
