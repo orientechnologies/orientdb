@@ -522,20 +522,29 @@ final class OSBTreeBucketSingleValue<K> extends ODurablePage {
 
     @Override
     public boolean equals(final Object o) {
-      if (this == o) {
+      if (this == o)
         return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
+      if (o == null || getClass() != o.getClass())
         return false;
-      }
+
       final SBTreeEntry<?> that = (SBTreeEntry<?>) o;
-      return leftChild == that.leftChild && rightChild == that.rightChild && Objects.equals(key, that.key) && Objects
-          .equals(value, that.value);
+
+      if (leftChild != that.leftChild)
+        return false;
+      if (rightChild != that.rightChild)
+        return false;
+      if (!Objects.equals(key, that.key))
+        return false;
+      return Objects.equals(value, that.value);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(leftChild, rightChild, key, value);
+      int result = leftChild;
+      result = 31 * result + rightChild;
+      result = 31 * result + (key != null ? key.hashCode() : 0);
+      result = 31 * result + (value != null ? value.hashCode() : 0);
+      return result;
     }
 
     @Override
