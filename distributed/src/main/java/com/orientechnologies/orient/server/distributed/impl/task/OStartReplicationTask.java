@@ -32,7 +32,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.TimerTask;
 
 /**
  * Start the replication with a server. The command is executed to the target server that will require a SYNC DATABASE command.
@@ -66,12 +65,7 @@ public class OStartReplicationTask extends OAbstractReplicatedTask {
 //        .checkNodeInConfiguration(dManager.getDatabaseConfiguration(databaseName), getNodeSource());
 
     // EXECUTE THE INSTALL DATABASE ASYNCHRONOUSLY
-    Orient.instance().scheduleTask(new TimerTask() {
-      @Override
-      public void run() {
-        dManager.installDatabase(true, databaseName, true, tryWithDeltaFirst);
-      }
-    }, 1000, 0);
+    Orient.instance().scheduleTask(() -> dManager.installDatabase(true, databaseName, true, tryWithDeltaFirst), 1000, 0);
 
     return true;
   }

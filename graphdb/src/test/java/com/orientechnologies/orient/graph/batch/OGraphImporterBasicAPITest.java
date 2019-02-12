@@ -1,12 +1,10 @@
 package com.orientechnologies.orient.graph.batch;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -18,7 +16,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimerTask;
 
 /**
  * @author Luca Garulli
@@ -44,34 +41,30 @@ public class OGraphImporterBasicAPITest {
     OrientVertexType user = graph.createVertexType("User");
     user.createProperty("uid", OType.STRING);
 
-    final OIndex<?> userIndex = user
-        .createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null, "AUTOSHARDING",
+    final OIndex<?> userIndex = user.createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, "AUTOSHARDING",
             new String[] { "uid" });
 
     OrientVertexType product = graph.createVertexType("Product");
     product.createProperty("uid", OType.STRING);
 
     final OIndex<?> productIndex = product
-        .createIndex("Product.uid", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null, "AUTOSHARDING",
+        .createIndex("Product.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, "AUTOSHARDING",
             new String[] { "uid" });
 
     final File file = new File("/Users/luca/Downloads/ratings_Books.csv");
     final BufferedReader br = new BufferedReader(new FileReader(file));
 
-    Orient.instance().scheduleTask(new TimerTask() {
-      @Override
-      public void run() {
-        roGraph.makeActive();
-        final long vertexCount = roGraph.countVertices();
-        final long edgeCount = roGraph.countEdges();
+    Orient.instance().scheduleTask(() -> {
+      roGraph.makeActive();
+      final long vertexCount = roGraph.countVertices();
+      final long edgeCount = roGraph.countEdges();
 
-        System.out.println(String
-            .format("%d vertices=%d %d/sec edges=%d %d/sec", row, vertexCount, ((vertexCount - lastVertexCount) * 1000 / 2000),
-                edgeCount, ((edgeCount - lastEdgeCount) * 1000 / 2000)));
+      System.out.println(String
+          .format("%d vertices=%d %d/sec edges=%d %d/sec", row, vertexCount, ((vertexCount - lastVertexCount) * 1000 / 2000),
+              edgeCount, ((edgeCount - lastEdgeCount) * 1000 / 2000)));
 
-        lastVertexCount = vertexCount;
-        lastEdgeCount = edgeCount;
-      }
+      lastVertexCount = vertexCount;
+      lastEdgeCount = edgeCount;
     }, 2000, 2000);
 
 

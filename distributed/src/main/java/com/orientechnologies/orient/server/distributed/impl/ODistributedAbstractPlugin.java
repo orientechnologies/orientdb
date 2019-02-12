@@ -153,11 +153,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected final    ConcurrentMap<String, ODistributedStorage>     storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                    status                            = NODE_STATUS.OFFLINE;
   protected          long                                           lastClusterChangeOn;
-  protected          List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected final    ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
-  protected          TimerTask                                      publishLocalNodeConfigurationTask = null;
-  protected          TimerTask                                      haStatsTask                       = null;
-  protected          OClusterHealthChecker                          healthCheckerTask                 = null;
+  protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
+  protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
+  protected       TimerTask                                      haStatsTask                       = null;
+  protected       TimerTask                                      healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -1763,7 +1763,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       try {
 
-        result = (T) iCallback.call(lastCfg);
+        result = iCallback.call(lastCfg);
 
       } finally {
         if (ODistributedServerLog.isDebugEnabled())
@@ -2116,13 +2116,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final Path storagePath = paginatedStorage.getStoragePath();
       final Path dbDirectoryPath = Paths.get(serverInstance.getDatabaseDirectory());
 
-      if (!storagePath.startsWith(dbDirectoryPath))
-        // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
-        return false;
-    } else if (dbUrl.startsWith("remote:"))
-      return false;
+      // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
+      return storagePath.startsWith(dbDirectoryPath);
+    } else
+      return !dbUrl.startsWith("remote:");
 
-    return true;
   }
 
   /**
@@ -2187,7 +2185,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     String url = cfg.field("publicAddress");
 
-    final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
+    final Collection<Map<String, Object>> listeners = cfg.field("listeners");
     if (listeners == null)
       throw new ODatabaseException(
           "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");

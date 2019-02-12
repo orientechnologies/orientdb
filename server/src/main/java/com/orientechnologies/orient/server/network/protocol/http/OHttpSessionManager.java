@@ -31,7 +31,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.TimerTask;
 
 /**
  * Handles the HTTP sessions such as a real HTTP Server.
@@ -47,7 +46,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
     expirationTime =
         server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT) * 1000;
 
-    Orient.instance().scheduleTask(new TimerTask() {
+    Orient.instance().scheduleTask(new Runnable() {
       @Override
       public void run() {
         final int expired = checkSessionsValidity();
@@ -86,7 +85,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
     acquireSharedLock();
     try {
 
-      return (OHttpSession[]) sessions.values().toArray(new OHttpSession[sessions.size()]);
+      return sessions.values().toArray(new OHttpSession[sessions.size()]);
 
     } finally {
       releaseSharedLock();

@@ -235,12 +235,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload,
       int retryCount) {
 
-    Orient.instance().scheduleTask(new TimerTask() {
-      @Override
-      public void run() {
-        processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
-      }
-    }, 10 * retryCount, 0);
+    Orient.instance().scheduleTask(
+        () -> processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false),
+        10 * retryCount, 0);
   }
 
   /**

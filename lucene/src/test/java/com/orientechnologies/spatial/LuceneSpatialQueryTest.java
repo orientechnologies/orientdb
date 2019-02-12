@@ -38,7 +38,6 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.TimerTask;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -69,7 +68,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
 
-        Orient.instance().getTimer().schedule(new TimerTask() {
+        Orient.instance().scheduleTask(new Runnable() {
           @Override
           public void run() {
 

@@ -151,38 +151,27 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   private void scheduleCommitTask() {
-    commitTask = new TimerTask() {
-      @Override
-      public boolean cancel() {
-        return super.cancel();
-      }
+    commitTask = Orient.instance().scheduleTask(() -> {
+      if (shouldClose()) {
+        openCloseLock.lock();
 
-      @Override
-      public void run() {
+        //while on lock the index was opened
+        if (!shouldClose())
+          return;
+        try {
 
-        if (shouldClose()) {
-          openCloseLock.lock();
-
-          //while on lock the index was opened
-          if (!shouldClose())
-            return;
-          try {
-
-            close();
-          } finally {
-            openCloseLock.unlock();
-          }
-
+          close();
+        } finally {
+          openCloseLock.unlock();
         }
-        if (!closed.get()) {
 
-          OLogManager.instance().debug(this, "Flushing index: " + indexName());
-          flush();
-        }
       }
-    };
+      if (!closed.get()) {
 
-    Orient.instance().scheduleTask(commitTask, firstFlushAfter, flushIndexInterval);
+        OLogManager.instance().debug(this, "Flushing index: " + indexName());
+        flush();
+      }
+    }, firstFlushAfter, flushIndexInterval);
   }
 
   private boolean shouldClose() {
@@ -220,7 +209,6 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   private void open() throws IOException {
-
 
     openCloseLock.lock();
 

@@ -56,12 +56,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerPluginManager implements OService {
-  private static final int CHECK_DELAY = 5000;
-  private OServer server;
-  private ConcurrentHashMap<String, OServerPluginInfo> activePlugins = new ConcurrentHashMap<String, OServerPluginInfo>();
-  private ConcurrentHashMap<String, String>            loadedPlugins = new ConcurrentHashMap<String, String>();
-  private volatile TimerTask autoReloadTimerTask;
-  private          String    directory;
+  private static final int                                          CHECK_DELAY   = 5000;
+  private              OServer                                      server;
+  private              ConcurrentHashMap<String, OServerPluginInfo> activePlugins = new ConcurrentHashMap<String, OServerPluginInfo>();
+  private              ConcurrentHashMap<String, String>            loadedPlugins = new ConcurrentHashMap<String, String>();
+  private volatile     TimerTask                                    autoReloadTimerTask;
+  private              String                                       directory;
 
   protected List<OPluginLifecycleListener> pluginListeners = new ArrayList<OPluginLifecycleListener>();
 
@@ -94,16 +94,7 @@ public class OServerPluginManager implements OService {
       updatePlugins();
 
     if (hotReload) {
-      // SCHEDULE A TIMER TASK FOR AUTO-RELOAD
-      final TimerTask timerTask = new TimerTask() {
-        @Override
-        public void run() {
-          updatePlugins();
-        }
-      };
-
-      Orient.instance().scheduleTask(timerTask, CHECK_DELAY, CHECK_DELAY);
-      autoReloadTimerTask = timerTask;
+      autoReloadTimerTask = Orient.instance().scheduleTask(this::updatePlugins, CHECK_DELAY, CHECK_DELAY);
     }
   }
 
@@ -372,8 +363,8 @@ public class OServerPluginManager implements OService {
         }
 
         // REGISTER THE PLUGIN
-        currentPluginData = new OServerPluginInfo(pluginName, (String) properties.field("version"),
-            (String) properties.field("description"), (String) properties.field("web"), pluginInstance, parameters,
+        currentPluginData = new OServerPluginInfo(pluginName, properties.field("version"), properties.field("description"),
+            properties.field("web"), pluginInstance, parameters,
             pluginFile.lastModified(), pluginClassLoader);
 
         registerPlugin(currentPluginData);

@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -58,13 +57,13 @@ public class OScheduledEvent extends ODocumentWrapper {
 
   private ODatabaseDocument db;
 
-  private OFunction function;
-  private boolean isRunning = false;
+  private          OFunction       function;
+  private          boolean         isRunning = false;
   private          OCronExpression cron;
   private volatile TimerTask       timer;
   private          long            nextExecutionId;
 
-  private class ScheduledTimer extends TimerTask {
+  private class ScheduledTimer implements Runnable {
     @Override
     public void run() {
       if (isRunning) {
@@ -166,9 +165,8 @@ public class OScheduledEvent extends ODocumentWrapper {
 
     bindDb();
 
-    timer = new ScheduledTimer();
     nextExecutionId = getNextExecutionId() + 1;
-    Orient.instance().scheduleTask(timer, cron.getNextValidTimeAfter(new Date()), 0);
+    timer = Orient.instance().scheduleTask(new ScheduledTimer(), cron.getNextValidTimeAfter(new Date()), 0);
     return this;
   }
 

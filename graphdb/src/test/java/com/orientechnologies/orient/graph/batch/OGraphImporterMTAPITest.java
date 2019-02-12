@@ -2,15 +2,17 @@ package com.orientechnologies.orient.graph.batch;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,7 +20,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -52,13 +53,13 @@ public class OGraphImporterMTAPITest {
     OrientVertexType user = graph.createVertexType("User", 64);
     user.createProperty("uid", OType.STRING);
 
-    user.createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null, "AUTOSHARDING",
+    user.createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, "AUTOSHARDING",
         new String[] { "uid" });
 
     OrientVertexType product = graph.createVertexType("Product", 64);
     product.createProperty("uid", OType.STRING);
 
-    product.createIndex("Product.uid", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null,
+    product.createIndex("Product.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null,
         "AUTOSHARDING", new String[] { "uid" });
 
     graph.createEdgeType("Reviewed");
@@ -68,19 +69,16 @@ public class OGraphImporterMTAPITest {
 
     final AtomicLong retry = new AtomicLong();
 
-    Orient.instance().scheduleTask(new TimerTask() {
-      @Override
-      public void run() {
-        roGraph.makeActive();
-        final long vertexCount = roGraph.countVertices();
-        final long edgeCount = roGraph.countEdges();
+    Orient.instance().scheduleTask(() -> {
+      roGraph.makeActive();
+      final long vertexCount = roGraph.countVertices();
+      final long edgeCount = roGraph.countEdges();
 
-        System.out.println(String.format("%d vertices=%d %d/sec edges=%d %d/sec retry=%d", row, vertexCount,
-            ((vertexCount - lastVertexCount) * 1000 / 2000), edgeCount, ((edgeCount - lastEdgeCount) * 1000 / 2000), retry.get()));
+      System.out.println(String.format("%d vertices=%d %d/sec edges=%d %d/sec retry=%d", row, vertexCount,
+          ((vertexCount - lastVertexCount) * 1000 / 2000), edgeCount, ((edgeCount - lastEdgeCount) * 1000 / 2000), retry.get()));
 
-        lastVertexCount = vertexCount;
-        lastEdgeCount = edgeCount;
-      }
+      lastVertexCount = vertexCount;
+      lastEdgeCount = edgeCount;
     }, 2000, 2000);
 
     final ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<String>(10000);
