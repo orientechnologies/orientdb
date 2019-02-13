@@ -8,11 +8,13 @@ import java.util.Objects;
 public final class OPointer {
   private final Pointer    pointer;
   private final int        size;
-  private       ByteBuffer byteBuffer;
+  private final ByteBuffer byteBuffer;
+  private       int        hash = 0;
 
   OPointer(Pointer pointer, int size) {
     this.pointer = pointer;
     this.size = size;
+    this.byteBuffer = pointer.getByteBuffer(0, size);
   }
 
   public void clear() {
@@ -20,11 +22,6 @@ public final class OPointer {
   }
 
   public ByteBuffer getNativeByteBuffer() {
-    if (byteBuffer != null) {
-      return byteBuffer;
-    }
-
-    byteBuffer = pointer.getByteBuffer(0, size);
     return byteBuffer;
   }
 
@@ -43,11 +40,17 @@ public final class OPointer {
     if (o == null || getClass() != o.getClass())
       return false;
     OPointer other = (OPointer) o;
+
     return size == other.size && Objects.equals(pointer, other.pointer);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pointer, size);
+    if (hash != 0) {
+      return hash;
+    }
+
+    hash = Objects.hash(pointer, size);
+    return hash;
   }
 }
