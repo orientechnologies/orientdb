@@ -37,7 +37,8 @@ public class FirstPhaseResponseHandlerTest {
     members.add(member1);
     members.add(member2);
     members.add(member3);
-    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1, null);
+    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1,
+        new ArrayList<>(), new ArrayList<>(), null);
     OLogId id = new OLogId(1);
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
@@ -45,9 +46,9 @@ public class FirstPhaseResponseHandlerTest {
     handler.receive(coordinator, context, member2, new OTransactionFirstPhaseResult(Type.SUCCESS, null));
     handler.receive(coordinator, context, member3, new OTransactionFirstPhaseResult(Type.SUCCESS, null));
 
-    Mockito.verify(coordinator, times(1))
-        .sendOperation(any(OSubmitRequest.class), eq(new OTransactionSecondPhaseOperation(operationId, true)),
-            any(OTransactionSecondPhaseResponseHandler.class));
+    Mockito.verify(coordinator, times(1)).sendOperation(any(OSubmitRequest.class),
+        eq(new OTransactionSecondPhaseOperation(operationId, new ArrayList<>(), new ArrayList<>(), true)),
+        any(OTransactionSecondPhaseResponseHandler.class));
     Mockito.verify(coordinator, times(0)).reply(same(member1), any(OSessionOperationId.class), any(OTransactionResponse.class));
   }
 
@@ -61,7 +62,8 @@ public class FirstPhaseResponseHandlerTest {
     members.add(member1);
     members.add(member2);
     members.add(member3);
-    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1, null);
+    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1,
+        new ArrayList<>(), new ArrayList<>(), null);
     OLogId id = new OLogId(1);
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
@@ -71,9 +73,9 @@ public class FirstPhaseResponseHandlerTest {
     handler.receive(coordinator, context, member3, new OTransactionFirstPhaseResult(Type.CONCURRENT_MODIFICATION_EXCEPTION,
         new OConcurrentModificationResult(new ORecordId(10, 10), 0, 1)));
 
-    Mockito.verify(coordinator, times(1))
-        .sendOperation(any(OSubmitRequest.class), eq(new OTransactionSecondPhaseOperation(operationId, false)),
-            any(OTransactionSecondPhaseResponseHandler.class));
+    Mockito.verify(coordinator, times(1)).sendOperation(any(OSubmitRequest.class),
+        eq(new OTransactionSecondPhaseOperation(operationId, new ArrayList<>(), new ArrayList<>(), false)),
+        any(OTransactionSecondPhaseResponseHandler.class));
 
     Mockito.verify(coordinator, times(1)).reply(same(member1), any(OSessionOperationId.class), any(OTransactionResponse.class));
   }
@@ -88,7 +90,8 @@ public class FirstPhaseResponseHandlerTest {
     members.add(member1);
     members.add(member2);
     members.add(member3);
-    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1, null);
+    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1,
+        new ArrayList<>(), new ArrayList<>(), null);
     OLogId id = new OLogId(1);
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
@@ -98,9 +101,9 @@ public class FirstPhaseResponseHandlerTest {
     handler.receive(coordinator, context, member3, new OTransactionFirstPhaseResult(Type.UNIQUE_KEY_VIOLATION,
         new OUniqueKeyViolationResult("Key", new ORecordId(10, 10), new ORecordId(10, 11), "Class.property")));
 
-    Mockito.verify(coordinator, times(1))
-        .sendOperation(any(OSubmitRequest.class), eq(new OTransactionSecondPhaseOperation(operationId, false)),
-            any(OTransactionSecondPhaseResponseHandler.class));
+    Mockito.verify(coordinator, times(1)).sendOperation(any(OSubmitRequest.class),
+        eq(new OTransactionSecondPhaseOperation(operationId, new ArrayList<>(), new ArrayList<>(), false)),
+        any(OTransactionSecondPhaseResponseHandler.class));
 
     Mockito.verify(coordinator, times(1)).reply(same(member1), any(OSessionOperationId.class), any(OTransactionResponse.class));
 

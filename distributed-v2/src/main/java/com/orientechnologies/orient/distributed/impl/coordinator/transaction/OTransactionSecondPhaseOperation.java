@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -18,11 +19,16 @@ import java.util.Objects;
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SECOND_PHASE_REQUEST;
 
 public class OTransactionSecondPhaseOperation implements ONodeRequest {
-  private OSessionOperationId operationId;
-  private boolean             success;
+  private OSessionOperationId           operationId;
+  private List<ORecordOperationRequest> operations;
+  private List<OIndexOperationRequest>  indexes;
+  private boolean                       success;
 
-  public OTransactionSecondPhaseOperation(OSessionOperationId operationId, boolean success) {
+  public OTransactionSecondPhaseOperation(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
+      List<OIndexOperationRequest> indexes, boolean success) {
     this.operationId = operationId;
+    this.operations = operations;
+    this.indexes = indexes;
     this.success = success;
   }
 
@@ -33,7 +39,8 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
   @Override
   public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
-    OTransactionOptimisticDistributed tx = ((ODatabaseDocumentDistributed) session).txSecondPhase(operationId, success);
+    OTransactionOptimisticDistributed tx = ((ODatabaseDocumentDistributed) session)
+        .txSecondPhase(operationId, operations, indexes, success);
 
     List<OCreatedRecordResponse> createdRecords = new ArrayList<>(tx.getCreatedRecords().size());
     List<OUpdatedRecordResponse> updatedRecords = new ArrayList<>(tx.getUpdatedRecords().size());
@@ -75,6 +82,14 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
   public void serialize(DataOutput output) throws IOException {
     operationId.serialize(output);
     output.writeBoolean(success);
+    output.writeInt(operations.size());
+    for (ORecordOperationRequest operation : operations) {
+      operation.serialize(output);
+    }
+    output.writeInt(indexes.size());
+    for (OIndexOperationRequest change : indexes) {
+      change.serialize(output);
+    }
   }
 
   @Override
@@ -82,6 +97,23 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
     operationId = new OSessionOperationId();
     operationId.deserialize(input);
     success = input.readBoolean();
+
+    int size = input.readInt();
+    operations = new ArrayList<>(size);
+    while (size-- > 0) {
+      ORecordOperationRequest op = new ORecordOperationRequest();
+      op.deserialize(input);
+      operations.add(op);
+    }
+
+    size = input.readInt();
+    indexes = new ArrayList<>(size);
+    while (size-- > 0) {
+      OIndexOperationRequest change = new OIndexOperationRequest();
+      change.deserialize(input);
+      indexes.add(change);
+    }
+
   }
 
   @Override

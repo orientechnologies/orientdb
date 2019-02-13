@@ -30,6 +30,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +101,8 @@ public class TestTransactionFlow {
       ONodeResponse res = ops.execute(null, null, null, (ODatabaseDocumentInternal) session);
       assertEquals(((OTransactionFirstPhaseResult) res).getType(), OTransactionFirstPhaseResult.Type.SUCCESS);
     }
-    OTransactionSecondPhaseOperation second = new OTransactionSecondPhaseOperation(ops.getOperationId(), true);
+    OTransactionSecondPhaseOperation second = new OTransactionSecondPhaseOperation(ops.getOperationId(), new ArrayList<>(),
+        new ArrayList<>(), true);
     try (ODatabaseSession session = orientDB.open(TestTransactionFlow.class.getSimpleName(), "admin", "admin")) {
       ONodeResponse res = second.execute(null, null, null, (ODatabaseDocumentInternal) session);
       assertTrue(((OTransactionSecondPhaseResponse) res).isSuccess());

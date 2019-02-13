@@ -49,7 +49,6 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySu
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.*;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.distributed.impl.metadata.OTransactionContext;
 import com.orientechnologies.orient.server.OServer;
 
 import java.util.*;
@@ -151,21 +150,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public void internalCommit(OTransactionInternal iTx) {
-    int protocolVersion = DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger();
-    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed() || (iTx.isSequenceTransaction() && protocolVersion == 2)) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed() || iTx.isSequenceTransaction()) {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
-      switch (protocolVersion) {
-      case 1:
-        break;
-      case 2:
-        distributedCommitV2(iTx);
-        break;
-      default:
-        throw new IllegalStateException(
-            "Invalid distributed replicaiton protocol version: " + DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger());
-      }
+      distributedCommitV2(iTx);
     }
   }
 
@@ -254,18 +243,17 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void txFirstPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
       List<OIndexOperationRequest> indexes, boolean useDeltas) {
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>(), useDeltas);
-    OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
-    sharedContext.getDistributedContext().registerTransaction(operationId, tx);
     tx.begin(operations, indexes);
-    firstPhaseDataChecks(false, tx);
+    firstPhaseDataChecks(tx);
   }
 
-  public OTransactionOptimisticDistributed txSecondPhase(OSessionOperationId operationId, boolean success) {
-    OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
-    OTransactionContext context = sharedContext.getDistributedContext().getTransaction(operationId);
+  public OTransactionOptimisticDistributed txSecondPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
+      List<OIndexOperationRequest> indexes, boolean success) {
+    //MAKE delta be used by default
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>(), false);
+    tx.begin(operations, indexes);
     try {
       if (success) {
-        OTransactionInternal tx = context.getTransaction();
         tx.setDatabase(this);
         ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
         return (OTransactionOptimisticDistributed) tx;
@@ -275,27 +263,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (OLowDiskSpaceException ex) {
       throw ex;
     } finally {
-      sharedContext.getDistributedContext().closeTransaction(operationId);
     }
     return null;
   }
 
-  public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
-    try {
-      OTransactionInternal tx = txContext.getTransaction();
-      ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
-    } catch (OLowDiskSpaceException ex) {
-      throw ex;
-    } finally {
-      txContext.destroy();
-    }
-
-  }
-
-  private void firstPhaseDataChecks(boolean local, OTransactionInternal transaction) {
-    if (!local) {
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
-    }
+  private void firstPhaseDataChecks(OTransactionInternal transaction) {
+    ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
 
     for (Map.Entry<String, OTransactionIndexChanges> change : transaction.getIndexOperations().entrySet()) {
       OIndex<?> index = getSharedContext().getIndexManager().getRawIndex(change.getKey());

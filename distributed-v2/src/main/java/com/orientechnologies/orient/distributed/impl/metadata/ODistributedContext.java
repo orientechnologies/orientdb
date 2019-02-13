@@ -17,17 +17,15 @@ import java.util.concurrent.Executors;
 
 public class ODistributedContext {
 
-  private Map<OSessionOperationId, OTransactionContext> transactions;
-  private ODistributedExecutor                          executor;
-  private OSubmitContext                                submitContext;
-  private ODistributedCoordinator                       coordinator;
-  private OClusterPositionAllocatorDatabase             allocator;
-  private OrientDBInternal                              context;
-  private String                                        databaseName;
-  private OOperationLog                                 opLog;
+  private ODistributedExecutor              executor;
+  private OSubmitContext                    submitContext;
+  private ODistributedCoordinator           coordinator;
+  private OClusterPositionAllocatorDatabase allocator;
+  private OrientDBInternal                  context;
+  private String                            databaseName;
+  private OOperationLog                     opLog;
 
   public ODistributedContext(OStorage storage, OrientDBDistributed context) {
-    transactions = new ConcurrentHashMap<>();
     this.context = context;
     this.databaseName = storage.getName();
     initOpLog();
@@ -41,19 +39,6 @@ public class ODistributedContext {
     this.opLog = OPersistentOperationalLogV1.newInstance(databaseName, context,
         (x) -> ((OrientDBDistributed) context).getCoordinateMessagesFactory().createOperationRequest(x));
 //    this.opLog = new OIncrementOperationalLog();
-  }
-
-  public void registerTransaction(OSessionOperationId requestId, OTransactionInternal tx) {
-    transactions.put(requestId, new OTransactionContext(tx));
-
-  }
-
-  public OTransactionContext getTransaction(OSessionOperationId operationId) {
-    return transactions.get(operationId);
-  }
-
-  public void closeTransaction(OSessionOperationId operationId) {
-    transactions.remove(operationId);
   }
 
   public ODistributedExecutor getExecutor() {

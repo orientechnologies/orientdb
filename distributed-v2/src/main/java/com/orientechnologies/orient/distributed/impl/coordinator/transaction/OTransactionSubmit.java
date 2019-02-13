@@ -155,7 +155,7 @@ public class OTransactionSubmit implements OSubmitRequest {
     }
     lockManager.lock(rids, keys, (guards) -> {
       OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this,
-          requester, guards);
+          requester, operations, indexes, guards);
       OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(operationId, this.operations, indexes);
       coordinator.sendOperation(this, request, responseHandler);
     });
@@ -192,6 +192,14 @@ public class OTransactionSubmit implements OSubmitRequest {
     for (OIndexOperationRequest change : indexes) {
       change.serialize(output);
     }
+  }
+
+  public List<OIndexOperationRequest> getIndexes() {
+    return indexes;
+  }
+
+  public List<ORecordOperationRequest> getOperations() {
+    return operations;
   }
 
   @Override

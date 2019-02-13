@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.OLockGuard;
@@ -21,13 +22,18 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
   private       boolean                               secondPhaseSent = false;
   private       boolean                               replySent       = false;
   private final List<OLockGuard>                      guards;
+  private       List<ORecordOperationRequest>         operations;
+  private       List<OIndexOperationRequest>          indexes;
 
   public OTransactionFirstPhaseResponseHandler(OSessionOperationId operationId, OTransactionSubmit request,
-      ODistributedMember requester, List<OLockGuard> guards) {
+      ODistributedMember requester, List<ORecordOperationRequest> operations, List<OIndexOperationRequest> indexes,
+      List<OLockGuard> guards) {
     this.operationId = operationId;
     this.request = request;
     this.requester = requester;
     this.guards = guards;
+    this.operations = operations;
+    this.indexes = indexes;
   }
 
   @Override
@@ -95,7 +101,8 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       return;
     OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(false, request, requester,
         null, operationId);
-    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, false), responseHandler);
+    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, new ArrayList<>(), new ArrayList<>(), false),
+        responseHandler);
     if (guards != null) {
       coordinator.getLockManager().unlock(guards);
     }
@@ -112,7 +119,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       return;
     OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(true, request, requester,
         guards, operationId);
-    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, true), responseHandler);
+    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, operations, indexes, true), responseHandler);
     secondPhaseSent = true;
   }
 
