@@ -50,7 +50,7 @@ public final class BoundedBuffer<E> extends StripedBuffer<E> {
   /**
    * The maximum number of elements per buffer.
    */
-  private static final int BUFFER_SIZE = 16;
+  private static final int BUFFER_SIZE = 128;
 
   // Assume 4-byte references and 64-byte cache line (16 elements per line)
   private static final int SPACED_SIZE = BUFFER_SIZE << 4;
