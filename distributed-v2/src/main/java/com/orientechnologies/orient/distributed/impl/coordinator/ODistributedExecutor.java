@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,11 +11,11 @@ import java.util.concurrent.TimeUnit;
 
 public class ODistributedExecutor implements AutoCloseable {
 
-  private       OOperationLog                   operationLog;
-  private       ExecutorService                 executor;
-  private       OrientDBInternal                orientDB;
-  private final String                          database;
-  private final Map<String, ODistributedMember> members = new ConcurrentHashMap<>();
+  private       OOperationLog                          operationLog;
+  private       ExecutorService                        executor;
+  private       OrientDBInternal                       orientDB;
+  private final String                                 database;
+  private final Map<ONodeIdentity, ODistributedMember> members = new ConcurrentHashMap<>();
 
   public ODistributedExecutor(ExecutorService executor, OOperationLog operationLog, OrientDBInternal orientDB, String database) {
     this.operationLog = operationLog;
@@ -46,14 +47,14 @@ public class ODistributedExecutor implements AutoCloseable {
   }
 
   public void join(ODistributedMember member) {
-    members.put(member.getName(), member);
+    members.put(member.getNodeIdentity(), member);
   }
 
-  public ODistributedMember getMember(String senderNode) {
+  public ODistributedMember getMember(ONodeIdentity senderNode) {
     return members.get(senderNode);
   }
 
   public void leave(ODistributedMember member) {
-    members.remove(member.getName());
+    members.remove(member.getNodeIdentity());
   }
 }

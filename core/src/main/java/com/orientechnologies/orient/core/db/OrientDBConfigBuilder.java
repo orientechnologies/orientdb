@@ -28,13 +28,16 @@ import java.util.Set;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
+import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
 
 public class OrientDBConfigBuilder {
 
-  private OContextConfiguration   configurations = new OContextConfiguration();
-  private Map<ATTRIBUTES, Object> attributes     = new HashMap<>();
-  private Set<ODatabaseListener>  listeners      = new HashSet<>();
-  private ClassLoader classLoader;
+  private OContextConfiguration     configurations           = new OContextConfiguration();
+  private Map<ATTRIBUTES, Object>   attributes               = new HashMap<>();
+  private Set<ODatabaseListener>    listeners                = new HashSet<>();
+  private ClassLoader               classLoader;
+  private ONodeConfigurationBuilder nodeConfigurationBuilder = ONodeConfiguration.builder();
 
   public OrientDBConfigBuilder fromGlobalMap(Map<OGlobalConfiguration, Object> values) {
     for (Map.Entry<OGlobalConfiguration, Object> entry : values.entrySet()) {
@@ -68,8 +71,12 @@ public class OrientDBConfigBuilder {
     this.classLoader = classLoader;
   }
 
+  public ONodeConfigurationBuilder getNodeConfigurationBuilder() {
+    return nodeConfigurationBuilder;
+  }
+
   public OrientDBConfig build() {
-    return new OrientDBConfig(configurations, attributes, listeners, classLoader);
+    return new OrientDBConfig(configurations, attributes, listeners, classLoader, nodeConfigurationBuilder.build());
   }
 
   public OrientDBConfigBuilder fromContext(OContextConfiguration contextConfiguration) {

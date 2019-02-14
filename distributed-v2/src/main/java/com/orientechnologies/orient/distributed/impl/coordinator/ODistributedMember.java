@@ -1,21 +1,22 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 public class ODistributedMember {
 
-  private String              name;
+  private ONodeIdentity       nodeIdentity;
   private String              database;
   private ODistributedChannel channel;
 
-  public ODistributedMember(String name, String database, ODistributedChannel channel) {
-    this.name = name;
+  public ODistributedMember(ONodeIdentity nodeIdentity, String database, ODistributedChannel channel) {
+    this.nodeIdentity = nodeIdentity;
     this.database = database;
     this.channel = channel;
   }
 
-  public String getName() {
-    return name;
+  public ONodeIdentity getNodeIdentity() {
+    return nodeIdentity;
   }
 
   public void sendRequest(OLogId id, ONodeRequest nodeRequest) {

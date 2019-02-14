@@ -4,6 +4,7 @@ import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -18,12 +19,12 @@ import java.io.IOException;
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST;
 
 public class OStructuralOperationRequest implements OBinaryRequest, ODistributedExecutable {
-  private String                     senderNode;
+  private ONodeIdentity              senderNode;
   private OLogId                     id;
   private OStructuralNodeRequest     request;
   private OCoordinateMessagesFactory factory;
 
-  public OStructuralOperationRequest(String senderNode, OLogId id, OStructuralNodeRequest request) {
+  public OStructuralOperationRequest(ONodeIdentity senderNode, OLogId id, OStructuralNodeRequest request) {
     this.senderNode = senderNode;
     this.id = id;
     this.request = request;
@@ -36,7 +37,7 @@ public class OStructuralOperationRequest implements OBinaryRequest, ODistributed
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
-    output.writeUTF(senderNode);
+    senderNode.write(output);
     OLogId.serialize(id, output);
     output.writeInt(request.getRequestType());
     request.serialize(output);
@@ -45,7 +46,8 @@ public class OStructuralOperationRequest implements OBinaryRequest, ODistributed
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     DataInputStream input = new DataInputStream(channel.getDataInput());
-    senderNode = input.readUTF();
+    senderNode = new ONodeIdentity();
+    senderNode.read(input);
     id = OLogId.deserialize(input);
     int requestType = input.readInt();
     request = factory.createStructuralOperationRequest(requestType);
@@ -90,7 +92,7 @@ public class OStructuralOperationRequest implements OBinaryRequest, ODistributed
     return request;
   }
 
-  public String getSenderNode() {
+  public ONodeIdentity getSenderNode() {
     return senderNode;
   }
 }

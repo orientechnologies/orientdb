@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
@@ -17,7 +18,7 @@ public class OStructuralCoordinator implements AutoCloseable {
   private final ExecutorService                                  requestExecutor;
   private final OOperationLog                                    operationLog;
   private final ConcurrentMap<OLogId, OStructuralRequestContext> contexts = new ConcurrentHashMap<>();
-  private final Map<String, OStructuralDistributedMember>        members  = new ConcurrentHashMap<>();
+  private final Map<ONodeIdentity, OStructuralDistributedMember> members  = new ConcurrentHashMap<>();
   private final Timer                                            timer;
   private final OrientDBDistributed                              context;
 
@@ -62,8 +63,8 @@ public class OStructuralCoordinator implements AutoCloseable {
     return context;
   }
 
-  public void join(OStructuralDistributedMember member) {
-    members.put(member.getName(), member);
+  public void nodeConnected(OStructuralDistributedMember member) {
+    members.put(member.getIdentity(), member);
   }
 
   @Override
@@ -90,12 +91,13 @@ public class OStructuralCoordinator implements AutoCloseable {
     return contexts;
   }
 
-  public OStructuralDistributedMember getMember(String member) {
+  public OStructuralDistributedMember getMember(ONodeIdentity member) {
     return members.get(member);
   }
 
-  public void leave(OStructuralDistributedMember member) {
-    members.remove(member.getName());
+  public void nodeDisconnected(ONodeIdentity identity) {
+    // TODO: Instead of remove mark it as disconnected
+    members.remove(identity);
   }
 
 }

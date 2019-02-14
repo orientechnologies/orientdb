@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -51,7 +52,7 @@ public class TestTransactionFlow {
       MalformedObjectNameException {
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     ((OrientDBDistributed) server0.getDatabases())
-        .setCoordinator(((OrientDBDistributed) server0.getDatabases()).getNodeConfig().getNodeName());
+        .setCoordinator(((OrientDBDistributed) server0.getDatabases()).getNodeConfig().getNodeIdentity());
     orientDB = server0.getContext();
     orientDB.create(TestTransactionFlow.class.getSimpleName(), ODatabaseType.MEMORY);
     try (ODatabaseSession session = orientDB.open(TestTransactionFlow.class.getSimpleName(), "admin", "admin")) {
@@ -91,7 +92,7 @@ public class TestTransactionFlow {
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(),
         new OIncrementOperationalLog(), new ODistributedLockManagerImpl(), new OMockAllocator());
     RecordChannel channel = new RecordChannel();
-    ODistributedMember member = new ODistributedMember("one", "test", channel);
+    ODistributedMember member = new ODistributedMember(new ONodeIdentity("one","one"), "test", channel);
     coordinator.join(member);
 
     submit.begin(member, new OSessionOperationId(), coordinator);

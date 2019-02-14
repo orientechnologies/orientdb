@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
@@ -10,51 +11,51 @@ import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmi
 
 public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
 
-  private String                  nodeName;
+  private ONodeIdentity           nodeIdentity;
   private ORemoteServerController controller;
 
-  public ODistributedChannelBinaryProtocol(String nodeName, ORemoteServerController remoteServer) {
-    this.nodeName = nodeName;
+  public ODistributedChannelBinaryProtocol(ONodeIdentity nodeIdentity, ORemoteServerController remoteServer) {
+    this.nodeIdentity = nodeIdentity;
     this.controller = remoteServer;
   }
 
   @Override
   public void sendRequest(String database, OLogId id, ONodeRequest nodeRequest) {
-    controller.sendBinaryRequest(new OOperationRequest(nodeName, database, id, nodeRequest));
+    controller.sendBinaryRequest(new OOperationRequest(nodeIdentity, database, id, nodeRequest));
   }
 
   @Override
   public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
-    controller.sendBinaryRequest(new OOperationResponse(nodeName, database, id, nodeResponse));
+    controller.sendBinaryRequest(new OOperationResponse(nodeIdentity, database, id, nodeResponse));
   }
 
   @Override
   public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
-    controller.sendBinaryRequest(new OStructuralOperationResponse(nodeName, opId, response));
+    controller.sendBinaryRequest(new OStructuralOperationResponse(nodeIdentity, opId, response));
   }
 
   @Override
   public void sendRequest(OLogId id, OStructuralNodeRequest request) {
-    controller.sendBinaryRequest(new OStructuralOperationRequest(nodeName, id, request));
+    controller.sendBinaryRequest(new OStructuralOperationRequest(nodeIdentity, id, request));
   }
 
   @Override
   public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
-    controller.sendBinaryRequest(new ONetworkStructuralSubmitResponse(nodeName, operationId, response));
+    controller.sendBinaryRequest(new ONetworkStructuralSubmitResponse(nodeIdentity, operationId, response));
   }
 
   @Override
   public void submit(OSessionOperationId operationId, OStructuralSubmitRequest request) {
-    controller.sendBinaryRequest(new ONetworkStructuralSubmitRequest(nodeName, operationId, request));
+    controller.sendBinaryRequest(new ONetworkStructuralSubmitRequest(nodeIdentity, operationId, request));
   }
 
   @Override
   public void submit(String database, OSessionOperationId operationId, OSubmitRequest request) {
-    controller.sendBinaryRequest(new ONetworkSubmitRequest(nodeName, database, operationId, request));
+    controller.sendBinaryRequest(new ONetworkSubmitRequest(nodeIdentity, database, operationId, request));
   }
 
   @Override
   public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
-    controller.sendBinaryRequest(new ONetworkSubmitResponse(nodeName, database, operationId, response));
+    controller.sendBinaryRequest(new ONetworkSubmitResponse(nodeIdentity, database, operationId, response));
   }
 }

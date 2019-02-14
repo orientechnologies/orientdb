@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.distributed.impl;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -9,15 +11,15 @@ public class OLeaderElectionStateMachine {
     LEADER, FOLLOWER, CANDIDATE;
   }
 
-  String      nodeName;
-  int         currentTerm;
-  Status      status;
-  int         quorum;
-  Set<String> votesReceived = new HashSet<>();
-  int         lastTermVoted = -1;
+  ONodeIdentity      nodeIdentity;
+  int                currentTerm;
+  Status             status;
+  int                quorum;
+  Set<ONodeIdentity> votesReceived = new HashSet<>();
+  int                lastTermVoted = -1;
 
-  synchronized void receiveVote(int term, String fromNode, String toNode) {
-    if (!nodeName.equals(toNode)) {
+  synchronized void receiveVote(int term, ONodeIdentity fromNode, ONodeIdentity toNode) {
+    if (!nodeIdentity.equals(toNode)) {
       return;
     }
     if (currentTerm == term) {
@@ -34,7 +36,7 @@ public class OLeaderElectionStateMachine {
     status = Status.CANDIDATE;
     currentTerm++;
     votesReceived.clear();
-    votesReceived.add(nodeName);
+    votesReceived.add(nodeIdentity);
   }
 
   synchronized void changeTerm(int term) {
@@ -47,7 +49,6 @@ public class OLeaderElectionStateMachine {
     status = Status.FOLLOWER;
     this.votesReceived.clear();
   }
-
 
   public Status getStatus() {
     return status;

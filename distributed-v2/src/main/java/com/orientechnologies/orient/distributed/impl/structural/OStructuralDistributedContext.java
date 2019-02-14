@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
@@ -39,12 +40,12 @@ public class OStructuralDistributedContext {
     return coordinator;
   }
 
-  public synchronized void makeCoordinator(String nodeName) {
+  public synchronized void makeCoordinator(ONodeIdentity identity) {
     if (coordinator == null) {
       coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), opLog, context);
-      OStructuralLoopBackDistributeDistributedMember loopBack = new OStructuralLoopBackDistributeDistributedMember(nodeName,
+      OStructuralLoopBackDistributeDistributedMember loopBack = new OStructuralLoopBackDistributeDistributedMember(identity,
           submitContext, coordinator, executor);
-      coordinator.join(loopBack);
+      coordinator.nodeConnected(loopBack);
       submitContext.setCoordinator(loopBack);
       executor.join(loopBack);
     }

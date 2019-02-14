@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -26,15 +27,15 @@ public class OSubmitTransactionBeginTest {
         new ODistributedLockManagerImpl(), new OMockAllocator());
 
     MockDistributedChannel cOne = new MockDistributedChannel();
-    ODistributedMember mOne = new ODistributedMember("one", null, cOne);
+    ODistributedMember mOne = new ODistributedMember(new ONodeIdentity("one", "one"), null, cOne);
     coordinator.join(mOne);
 
     MockDistributedChannel cTwo = new MockDistributedChannel();
-    ODistributedMember mTwo = new ODistributedMember("two", null, cTwo);
+    ODistributedMember mTwo = new ODistributedMember(new ONodeIdentity("two", "two"), null, cTwo);
     coordinator.join(mTwo);
 
     MockDistributedChannel cThree = new MockDistributedChannel();
-    ODistributedMember mThree = new ODistributedMember("three", null, cThree);
+    ODistributedMember mThree = new ODistributedMember(new ONodeIdentity("three", "three"), null, cThree);
     coordinator.join(mThree);
 
     ArrayList<ORecordOperation> recordOps = new ArrayList<>();

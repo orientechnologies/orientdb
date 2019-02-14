@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.Type;
@@ -30,9 +31,9 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumSuccess() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember("one", null, null);
-    ODistributedMember member2 = new ODistributedMember("two", null, null);
-    ODistributedMember member3 = new ODistributedMember("three", null, null);
+    ODistributedMember member1 = new ODistributedMember(new ONodeIdentity("one", "one"), null, null);
+    ODistributedMember member2 = new ODistributedMember(new ONodeIdentity("two", "two"), null, null);
+    ODistributedMember member3 = new ODistributedMember(new ONodeIdentity("three", "three"), null, null);
     List<ODistributedMember> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
@@ -55,9 +56,9 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumCME() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember("one", null, null);
-    ODistributedMember member2 = new ODistributedMember("two", null, null);
-    ODistributedMember member3 = new ODistributedMember("three", null, null);
+    ODistributedMember member1 = new ODistributedMember(new ONodeIdentity("one", "one"), null, null);
+    ODistributedMember member2 = new ODistributedMember(new ONodeIdentity("two", "two"), null, null);
+    ODistributedMember member3 = new ODistributedMember(new ONodeIdentity("three", "three"), null, null);
     List<ODistributedMember> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
@@ -83,9 +84,9 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumUnique() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember("one", null, null);
-    ODistributedMember member2 = new ODistributedMember("two", null, null);
-    ODistributedMember member3 = new ODistributedMember("three", null, null);
+    ODistributedMember member1 = new ODistributedMember(new ONodeIdentity("one", "one"), null, null);
+    ODistributedMember member2 = new ODistributedMember(new ONodeIdentity("two", "two"), null, null);
+    ODistributedMember member3 = new ODistributedMember(new ONodeIdentity("three", "three"), null, null);
     List<ODistributedMember> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);

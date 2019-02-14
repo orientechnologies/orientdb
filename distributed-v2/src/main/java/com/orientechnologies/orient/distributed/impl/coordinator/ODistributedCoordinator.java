@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class ODistributedCoordinator implements AutoCloseable {
   private final ExecutorService                        requestExecutor;
   private final OOperationLog                          operationLog;
   private final ConcurrentMap<OLogId, ORequestContext> contexts = new ConcurrentHashMap<>();
-  private final Map<String, ODistributedMember>        members  = new ConcurrentHashMap<>();
+  private final Map<ONodeIdentity, ODistributedMember> members  = new ConcurrentHashMap<>();
   private final Timer                                  timer;
   private final ODistributedLockManager                lockManager;
   private final OClusterPositionAllocator              allocator;
@@ -64,7 +65,7 @@ public class ODistributedCoordinator implements AutoCloseable {
   }
 
   public void join(ODistributedMember member) {
-    members.put(member.getName(), member);
+    members.put(member.getNodeIdentity(), member);
   }
 
   @Override
@@ -99,11 +100,11 @@ public class ODistributedCoordinator implements AutoCloseable {
     return allocator;
   }
 
-  public ODistributedMember getMember(String senderNode) {
+  public ODistributedMember getMember(ONodeIdentity senderNode) {
     return members.get(senderNode);
   }
 
   public void leave(ODistributedMember member) {
-    members.remove(member.getName());
+    members.remove(member.getNodeIdentity());
   }
 }

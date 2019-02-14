@@ -17,12 +17,12 @@ public class OUDPMulticastNodeManagerTest {
     int totalNodes = 0;
 
     @Override
-    public synchronized void nodeJoined(NodeData data) {
+    public synchronized void nodeConnected(NodeData data) {
       totalNodes++;
     }
 
     @Override
-    public synchronized void nodeLeft(NodeData data) {
+    public synchronized void nodeDisconnected(NodeData data) {
       totalNodes--;
     }
   }

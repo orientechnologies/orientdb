@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
@@ -66,8 +67,10 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler {
       break;
     }
     if (responseCount == context.getInvolvedMembers().size()) {
-      List<String> failedNodesNames = failedActionNode.stream().map(ODistributedMember::getName).collect(Collectors.toList());
-      List<String> limitReachedNodeNames = limitReachedNodes.stream().map(ODistributedMember::getName).collect(Collectors.toList());
+      List<ONodeIdentity> failedNodesNames = failedActionNode.stream().map(ODistributedMember::getNodeIdentity)
+          .collect(Collectors.toList());
+      List<ONodeIdentity> limitReachedNodeNames = limitReachedNodes.stream().map(ODistributedMember::getNodeIdentity)
+          .collect(Collectors.toList());
       OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedNodesNames,
           limitReachedNodeNames, senderResult, context.getInvolvedMembers().size());
       coordinator.reply(initiator, operationId, submitedActionResponse);

@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
@@ -45,31 +46,30 @@ public class CoordinatorTxTest {
     three.close();
   }
 
-
   @Test
   public void testTxCoordinator() throws InterruptedException {
-    ODistributedExecutor eOne = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), OrientDBInternal.extract(this.one),
-        "none");
-    ODistributedExecutor eTwo = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), OrientDBInternal.extract(this.two),
-        "none");
-    ODistributedExecutor eThree = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), OrientDBInternal.extract(this.three),
-        "none");
+    ODistributedExecutor eOne = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(),
+        OrientDBInternal.extract(this.one), "none");
+    ODistributedExecutor eTwo = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(),
+        OrientDBInternal.extract(this.two), "none");
+    ODistributedExecutor eThree = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(),
+        OrientDBInternal.extract(this.three), "none");
 
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
         null, null);
 
     MemberChannel cOne = new MemberChannel(eOne, coordinator);
-    ODistributedMember mOne = new ODistributedMember("one", null, cOne);
+    ODistributedMember mOne = new ODistributedMember(new ONodeIdentity("one", "one"), null, cOne);
     cOne.member = mOne;
     coordinator.join(mOne);
 
     MemberChannel cTwo = new MemberChannel(eOne, coordinator);
-    ODistributedMember mTwo = new ODistributedMember("two", null, cTwo);
+    ODistributedMember mTwo = new ODistributedMember(new ONodeIdentity("two", "two"), null, cTwo);
     cTwo.member = mTwo;
     coordinator.join(mTwo);
 
     MemberChannel cThree = new MemberChannel(eOne, coordinator);
-    ODistributedMember mThree = new ODistributedMember("three", null, cThree);
+    ODistributedMember mThree = new ODistributedMember(new ONodeIdentity("three", "three"), null, cThree);
     cThree.member = mThree;
     coordinator.join(mThree);
     OSubmitTx submit = new OSubmitTx();

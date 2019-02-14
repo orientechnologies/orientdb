@@ -4,6 +4,7 @@ import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -18,13 +19,14 @@ import java.io.IOException;
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_RESPONSE;
 
 public class ONetworkSubmitResponse implements OBinaryRequest, ODistributedExecutable {
-  private String                     senderNode;
+  private ONodeIdentity              senderNode;
   private String                     database;
   private OSessionOperationId        operationId;
   private OSubmitResponse            response;
   private OCoordinateMessagesFactory factory;
 
-  public ONetworkSubmitResponse(String senderNode, String database, OSessionOperationId operationId, OSubmitResponse response) {
+  public ONetworkSubmitResponse(ONodeIdentity senderNode, String database, OSessionOperationId operationId,
+      OSubmitResponse response) {
     this.senderNode = senderNode;
     this.database = database;
     this.operationId = operationId;
@@ -39,7 +41,7 @@ public class ONetworkSubmitResponse implements OBinaryRequest, ODistributedExecu
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
     operationId.serialize(output);
-    output.writeUTF(senderNode);
+    senderNode.write(output);
     output.writeUTF(database);
     output.writeInt(response.getResponseType());
     response.serialize(output);
@@ -50,7 +52,8 @@ public class ONetworkSubmitResponse implements OBinaryRequest, ODistributedExecu
     DataInputStream input = new DataInputStream(channel.getDataInput());
     operationId = new OSessionOperationId();
     operationId.deserialize(input);
-    senderNode = input.readUTF();
+    senderNode = new ONodeIdentity();
+    senderNode.read(input);
     database = input.readUTF();
     int responseType = input.readInt();
     response = factory.createSubmitResponse(responseType);
@@ -94,7 +97,7 @@ public class ONetworkSubmitResponse implements OBinaryRequest, ODistributedExecu
     return database;
   }
 
-  public String getSenderNode() {
+  public ONodeIdentity getSenderNode() {
     return senderNode;
   }
 

@@ -86,7 +86,7 @@ public class OUDPMulticastNodeManager extends ONodeManager {
       }
       socket.receive(packet);
       packet.getAddress();
-      Message message = deserializeMessage(packet.getData());
+      OBroadcastMessage message = deserializeMessage(packet.getData());
       if (!message.group.equals(this.config.getGroupName())) {
         return;
       }

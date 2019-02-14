@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 public class OLoopBackDistributeMember extends ODistributedMember {
@@ -7,8 +8,8 @@ public class OLoopBackDistributeMember extends ODistributedMember {
   private       ODistributedCoordinator coordinator;
   private final ODistributedExecutor    executor;
 
-  public OLoopBackDistributeMember(String name, String database, OSubmitContext submitContext, ODistributedCoordinator coordinator,
-      ODistributedExecutor executor) {
+  public OLoopBackDistributeMember(ONodeIdentity name, String database, OSubmitContext submitContext,
+      ODistributedCoordinator coordinator, ODistributedExecutor executor) {
     super(name, database, null);
     this.submitContext = submitContext;
     this.coordinator = coordinator;

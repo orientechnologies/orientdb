@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
@@ -26,9 +26,9 @@ public class OStructuralCoordinatorTest {
     OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
     MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
-    OStructuralDistributedMember one = new OStructuralDistributedMember("one", channel);
+    OStructuralDistributedMember one = new OStructuralDistributedMember(new ONodeIdentity("one", "one"), channel);
     channel.member = one;
-    coordinator.join(one);
+    coordinator.nodeConnected(one);
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
@@ -81,9 +81,9 @@ public class OStructuralCoordinatorTest {
     MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
     channel.reply = responseReceived;
-    OStructuralDistributedMember one = new OStructuralDistributedMember("one", channel);
+    OStructuralDistributedMember one = new OStructuralDistributedMember(new ONodeIdentity("one", "one"), channel);
     channel.member = one;
-    coordinator.join(one);
+    coordinator.nodeConnected(one);
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
@@ -186,9 +186,9 @@ public class OStructuralCoordinatorTest {
     OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
     MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
-    OStructuralDistributedMember one = new OStructuralDistributedMember("one", channel);
+    OStructuralDistributedMember one = new OStructuralDistributedMember(new ONodeIdentity("one", "one"), channel);
     channel.member = one;
-    coordinator.join(one);
+    coordinator.nodeConnected(one);
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override

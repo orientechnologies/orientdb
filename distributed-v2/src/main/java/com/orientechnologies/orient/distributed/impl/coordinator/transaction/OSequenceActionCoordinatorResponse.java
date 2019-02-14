@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse;
 
@@ -30,54 +31,51 @@ import java.util.List;
  */
 public class OSequenceActionCoordinatorResponse implements OSubmitResponse {
 
-  private List<String> failedOn;
-  private List<String> limitReachedOn;
-  private Object       resultOfSenderNode;
-  private int          nodesInvolved = 0;
+  private List<ONodeIdentity> failedOn;
+  private List<ONodeIdentity> limitReachedOn;
+  private Object              resultOfSenderNode;
+  private int                 nodesInvolved = 0;
 
   public OSequenceActionCoordinatorResponse() {
 
   }
 
-  public OSequenceActionCoordinatorResponse(List<String> failedOnNo, List<String> limitReachedOnNo, Object result, int numOfNodes) {
+  public OSequenceActionCoordinatorResponse(List<ONodeIdentity> failedOnNo, List<ONodeIdentity> limitReachedOnNo, Object result,
+      int numOfNodes) {
     failedOn = failedOnNo;
     limitReachedOn = limitReachedOnNo;
     resultOfSenderNode = result;
     this.nodesInvolved = numOfNodes;
   }
 
-  private static void serializeList(DataOutput output, List<String> list) throws IOException {
+  private static void serializeList(DataOutput output, List<ONodeIdentity> list) throws IOException {
     if (list == null) {
       output.writeByte(-1);
     } else {
       output.writeByte(1);
       output.writeInt(list.size());
-      for (String str : list) {
-        if (str == null) {
+      for (ONodeIdentity identity : list) {
+        if (identity == null) {
           output.writeByte(0);
         } else {
           output.writeByte(1);
-          byte[] strBytes = str.getBytes(StandardCharsets.UTF_8.name());
-          output.writeInt(strBytes.length);
-          output.write(strBytes);
+          identity.write(output);
         }
       }
     }
   }
 
-  private static List<String> deserializeList(DataInput input) throws IOException {
+  private static List<ONodeIdentity> deserializeList(DataInput input) throws IOException {
     byte nullFlag = input.readByte();
     if (nullFlag > -1) {
       int listSize = input.readInt();
-      List<String> retList = new ArrayList<>();
+      List<ONodeIdentity> retList = new ArrayList<>();
       for (int i = 0; i < listSize; i++) {
         byte stringByte = input.readByte();
         if (stringByte > 0) {
-          int bytesLength = input.readInt();
-          byte[] strBytes = new byte[bytesLength];
-          input.readFully(strBytes);
-          String str = new String(strBytes, StandardCharsets.UTF_8);
-          retList.add(str);
+          ONodeIdentity identity = new ONodeIdentity();
+          identity.read(input);
+          retList.add(identity);
         } else {
           retList.add(null);
         }
@@ -117,11 +115,11 @@ public class OSequenceActionCoordinatorResponse implements OSubmitResponse {
     return resultOfSenderNode;
   }
 
-  public List<String> getFailedOn() {
+  public List<ONodeIdentity> getFailedOn() {
     return failedOn;
   }
 
-  public List<String> getLimitReachedOn() {
+  public List<ONodeIdentity> getLimitReachedOn() {
     return limitReachedOn;
   }
 

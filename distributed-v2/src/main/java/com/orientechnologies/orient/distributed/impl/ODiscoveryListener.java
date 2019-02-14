@@ -1,20 +1,26 @@
 package com.orientechnologies.orient.distributed.impl;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+
 public interface ODiscoveryListener {
   static class NodeData {
-    String  name;
-    String  address;
-    int     port;
-    boolean master;
-    int     term;
-    long    lastPingTimestamp;
-    String  connectionUsername;
-    String  connectionPassword;
+    ONodeIdentity identity;
+    String        address;
+    int           port;
+    boolean       master;
+    int           term;
+    long          lastPingTimestamp;
+    String        connectionUsername;
+    String        connectionPassword;
+
+    public ONodeIdentity getNodeIdentity() {
+      return identity;
+    }
   }
 
-  void nodeJoined(NodeData data);
+  void nodeConnected(NodeData data);
 
-  void nodeLeft(NodeData data);
+  void nodeDisconnected(NodeData data);
 
   default void leaderElected(NodeData data) {
     //TODO

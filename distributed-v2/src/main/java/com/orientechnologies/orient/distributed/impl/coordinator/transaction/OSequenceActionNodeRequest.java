@@ -18,6 +18,7 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.sequence.OSequenceActionRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
@@ -45,13 +46,13 @@ import java.util.Objects;
 public class OSequenceActionNodeRequest implements ONodeRequest {
 
   private OSequenceActionRequest actionRequest;
-  private String                 initialNodeName;
+  private ONodeIdentity          initialNodeName;
 
   public OSequenceActionNodeRequest() {
 
   }
 
-  public OSequenceActionNodeRequest(OSequenceActionRequest action, String initialNodeName) {
+  public OSequenceActionNodeRequest(OSequenceActionRequest action, ONodeIdentity initialNodeName) {
     actionRequest = action;
     this.initialNodeName = initialNodeName;
   }
@@ -103,7 +104,7 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
       case OSequenceAction.SET_NEXT:
         if (targetSequence != null && targetSequence.getSequenceType() == OSequence.SEQUENCE_TYPE.CACHED) {
           OSequenceCached cached = (OSequenceCached) targetSequence;
-          result = OSequenceHelper.sequenceNextWithNewCurrentValueOnLocal(cached, action.getCurrentValue());          
+          result = OSequenceHelper.sequenceNextWithNewCurrentValueOnLocal(cached, action.getCurrentValue());
         } else {
           throw new RuntimeException("Action SET_NEXT is reserved only for CACHED sequences");
         }
@@ -134,9 +135,7 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
     }
     if (initialNodeName != null) {
       output.writeByte(1);
-      byte[] nodeNameBytes = initialNodeName.getBytes(StandardCharsets.UTF_8.name());
-      output.writeInt(nodeNameBytes.length);
-      output.write(nodeNameBytes);
+      initialNodeName.write(output);
     } else {
       output.writeByte(0);
     }
@@ -153,10 +152,8 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
     }
     flag = input.readByte();
     if (flag > 0) {
-      int length = input.readInt();
-      byte[] nodeNameBytes = new byte[length];
-      input.readFully(nodeNameBytes);
-      initialNodeName = new String(nodeNameBytes, StandardCharsets.UTF_8.name());
+      initialNodeName = new ONodeIdentity();
+      initialNodeName.read(input);
     } else {
       initialNodeName = null;
     }

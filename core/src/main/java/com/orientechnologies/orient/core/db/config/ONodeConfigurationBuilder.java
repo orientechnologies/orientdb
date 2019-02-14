@@ -2,44 +2,47 @@ package com.orientechnologies.orient.core.db.config;
 
 public class ONodeConfigurationBuilder {
 
-  ONodeConfiguration configuration;
+  private int                    quorum                = 2;
+  private String                 nodeName              = "OrientDB";
+  private String                 groupName             = "OrientDB";
+  private int                    tcpPort               = 2424;
+  private String                 groupPassword         = "OrientDB";
+  private OMulticastConfguration multicastConfguration = new OMulticastConfguration();
 
   protected ONodeConfigurationBuilder() {
-    configuration = new ONodeConfiguration();
   }
 
   public ONodeConfigurationBuilder setQuorum(int quorum) {
-    configuration.setQuorum(quorum);
+    this.quorum = quorum;
     return this;
   }
 
   public ONodeConfigurationBuilder setNodeName(String nodeName) {
-    configuration.setNodeName(nodeName);
+    this.nodeName = nodeName;
     return this;
   }
 
   public ONodeConfigurationBuilder setGroupName(String groupName) {
-    configuration.setGroupName(groupName);
+    this.groupName = groupName;
     return this;
   }
 
   public ONodeConfigurationBuilder setTcpPort(int tcpPort) {
-    configuration.setTcpPort(tcpPort);
+    this.tcpPort = tcpPort;
     return this;
   }
 
   public ONodeConfigurationBuilder setGroupPassword(String groupPassword) {
-    configuration.setGroupPassword(groupPassword);
+    this.groupPassword = groupPassword;
     return this;
   }
 
   public ONodeConfigurationBuilder setMulticast(OMulticastConfguration multicast) {
-    configuration.setMulticast(multicast);
+    multicastConfguration = multicast;
     return this;
   }
 
   public ONodeConfiguration build() {
-    return new ONodeConfiguration(configuration.getNodeName(), configuration.getGroupName(), configuration.getGroupPassword(),
-        configuration.getQuorum(), configuration.getTcpPort(), configuration.getMulticast());
+    return new ONodeConfiguration(nodeName, groupName, groupPassword, quorum, tcpPort, multicastConfguration);
   }
 }

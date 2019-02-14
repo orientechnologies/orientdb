@@ -4,6 +4,7 @@ import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -18,12 +19,13 @@ import java.io.IOException;
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST;
 
 public class ONetworkStructuralSubmitRequest implements OBinaryRequest, ODistributedExecutable {
-  private String                     senderNode;
+  private ONodeIdentity              senderNode;
   private OStructuralSubmitRequest   request;
   private OCoordinateMessagesFactory factory;
   private OSessionOperationId        operationId;
 
-  public ONetworkStructuralSubmitRequest(String senderNode, OSessionOperationId operationId, OStructuralSubmitRequest request) {
+  public ONetworkStructuralSubmitRequest(ONodeIdentity senderNode, OSessionOperationId operationId,
+      OStructuralSubmitRequest request) {
     this.request = request;
     this.senderNode = senderNode;
     this.operationId = operationId;
@@ -37,7 +39,7 @@ public class ONetworkStructuralSubmitRequest implements OBinaryRequest, ODistrib
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
     this.operationId.serialize(output);
-    output.writeUTF(senderNode);
+    senderNode.write(output);
     output.writeInt(request.getRequestType());
     request.serialize(output);
   }
@@ -47,7 +49,8 @@ public class ONetworkStructuralSubmitRequest implements OBinaryRequest, ODistrib
     DataInputStream input = new DataInputStream(channel.getDataInput());
     this.operationId = new OSessionOperationId();
     this.operationId.deserialize(input);
-    senderNode = input.readUTF();
+    senderNode = new ONodeIdentity();
+    senderNode.read(input);
     int requestType = input.readInt();
     request = factory.createStructuralSubmitRequest(requestType);
     request.deserialize(input);
@@ -87,7 +90,7 @@ public class ONetworkStructuralSubmitRequest implements OBinaryRequest, ODistrib
     return request;
   }
 
-  public String getSenderNode() {
+  public ONodeIdentity getSenderNode() {
     return senderNode;
   }
 

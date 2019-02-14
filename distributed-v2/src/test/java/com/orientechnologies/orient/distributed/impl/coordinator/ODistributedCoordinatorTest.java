@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
@@ -29,7 +30,7 @@ public class ODistributedCoordinatorTest {
         null);
     MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
-    ODistributedMember one = new ODistributedMember("one", null, channel);
+    ODistributedMember one = new ODistributedMember(new ONodeIdentity("one", "one"), null, channel);
     channel.member = one;
     coordinator.join(one);
 
@@ -84,7 +85,7 @@ public class ODistributedCoordinatorTest {
     MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
     channel.reply = responseReceived;
-    ODistributedMember one = new ODistributedMember("one", null, channel);
+    ODistributedMember one = new ODistributedMember(new ONodeIdentity("one", "one"), null, channel);
     channel.member = one;
     coordinator.join(one);
 
@@ -189,7 +190,7 @@ public class ODistributedCoordinatorTest {
         null);
     MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
-    ODistributedMember one = new ODistributedMember("one", null, channel);
+    ODistributedMember one = new ODistributedMember(new ONodeIdentity("one", "one"), null, channel);
     channel.member = one;
     coordinator.join(one);
 

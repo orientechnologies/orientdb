@@ -3,23 +3,20 @@ package com.orientechnologies.orient.core.db.config;
 import java.util.UUID;
 
 public class ONodeConfiguration {
-  private String nodeName;
-  private String groupName     = "OrientDB";
-  private String groupPassword = "OrientDB";
-
-  private int quorum = 2;
-
-  private Integer tcpPort;
-
+  private ONodeIdentity          nodeIdentity;
+  private String                 groupName;
+  private String                 groupPassword;
+  private int                    quorum;
+  private Integer                tcpPort;
   private OMulticastConfguration multicast = new OMulticastConfguration();
 
   protected ONodeConfiguration() {
-    nodeName = "node-" + UUID.randomUUID().toString();
+    nodeIdentity = new ONodeIdentity(UUID.randomUUID().toString(), "");
   }
 
   protected ONodeConfiguration(String nodeName, String groupName, String groupPassword, int quorum, Integer tcpPort,
       OMulticastConfguration multicast) {
-    this.nodeName = nodeName;
+    this.nodeIdentity = new ONodeIdentity(UUID.randomUUID().toString(), nodeName);
     this.groupName = groupName;
     this.groupPassword = groupPassword;
     this.quorum = quorum;
@@ -35,12 +32,12 @@ public class ONodeConfiguration {
     this.quorum = quorum;
   }
 
-  public String getNodeName() {
-    return nodeName;
+  public ONodeIdentity getNodeIdentity() {
+    return nodeIdentity;
   }
 
-  protected void setNodeName(String nodeName) {
-    this.nodeName = nodeName;
+  protected void setNodeIdentity(ONodeIdentity nodeIdentity) {
+    this.nodeIdentity = nodeIdentity;
   }
 
   public String getGroupName() {

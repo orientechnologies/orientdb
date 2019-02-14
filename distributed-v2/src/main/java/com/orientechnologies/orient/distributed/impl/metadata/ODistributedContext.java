@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
@@ -53,7 +54,7 @@ public class ODistributedContext {
     return coordinator;
   }
 
-  public synchronized void makeCoordinator(String nodeName, OSharedContext context) {
+  public synchronized void makeCoordinator(ONodeIdentity nodeName, OSharedContext context) {
     if (coordinator == null) {
       allocator = new OClusterPositionAllocatorDatabase(context);
       coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), opLog, new ODistributedLockManagerImpl(),
