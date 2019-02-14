@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -62,11 +63,11 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
  */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
-  private final String nodeName;
+  private final ONodeIdentity nodeIdentity;
 
-  public ODatabaseDocumentDistributed(OStorage storage, String nodeName) {
+  public ODatabaseDocumentDistributed(OStorage storage, ONodeIdentity nodeIdentity) {
     super(storage);
-    this.nodeName = nodeName;
+    this.nodeIdentity = nodeIdentity;
   }
 
   /**
@@ -75,7 +76,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the name of local node in the cluster
    */
   public String getLocalNodeName() {
-    return nodeName;
+    return nodeIdentity.getName();
   }
 
   @Override
@@ -114,7 +115,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public ODatabaseDocumentInternal copy() {
-    ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), getLocalNodeName());
+    ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), nodeIdentity);
     database.init(getConfig(), getSharedContext());
     String user;
     if (getUser() != null) {
@@ -163,7 +164,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
     OSessionOperationId id = new OSessionOperationId();
     id.init();
-    OSequenceActionCoordinatorSubmit submitAction = new OSequenceActionCoordinatorSubmit(action, getLocalNodeName());
+    OSequenceActionCoordinatorSubmit submitAction = new OSequenceActionCoordinatorSubmit(action);
     Future<OSubmitResponse> future = submitContext.send(id, submitAction);
     try {
       OSequenceActionCoordinatorResponse response = (OSequenceActionCoordinatorResponse) future.get();

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 
@@ -12,8 +13,8 @@ public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistrib
 
   private ODatabasePoolInternal pool;
 
-  public ODatabaseDocumentDistributedPooled(ODatabasePoolInternal pool, OStorage storage, String nodeName) {
-    super(storage, nodeName);
+  public ODatabaseDocumentDistributedPooled(ODatabasePoolInternal pool, OStorage storage, ONodeIdentity nodeIdentity) {
+    super(storage, nodeIdentity);
     this.pool = pool;
   }
 

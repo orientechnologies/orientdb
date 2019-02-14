@@ -54,7 +54,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private          OServer                                   server;
   private final    Map<ONodeIdentity, ODistributedChannel>   members          = new HashMap<>();
   private volatile boolean                                   coordinator      = false;
-  private volatile ONodeIdentity                             coordinatorName;
+  private volatile ONodeIdentity                             coordinatorIdentity;
   private          OStructuralDistributedContext             structuralDistributedContext;
   private          OCoordinatedExecutorMessageHandler        requestHandler;
   private          OCoordinateMessagesFactory                coordinateMessagesFactory;
@@ -78,8 +78,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return nodeConfiguration;
   }
 
-  private String getNodeNameFromConfig() {
-    return nodeConfiguration.getNodeIdentity().getName();
+  private ONodeIdentity getNodeIdentity() {
+    return getNodeConfig().getNodeIdentity();
   }
 
   @Override
@@ -138,14 +138,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new ODatabaseDocumentEmbedded(storage);
     }
-    return new ODatabaseDocumentDistributed(storage, getNodeNameFromConfig());
+    return new ODatabaseDocumentDistributed(storage, getNodeIdentity());
   }
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
-    return new ODatabaseDocumentDistributedPooled(pool, storage, getNodeNameFromConfig());
+    return new ODatabaseDocumentDistributedPooled(pool, storage, getNodeIdentity());
 
   }
 
@@ -271,13 +271,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         ODistributedContext distributed = ((OSharedContextDistributed) shared).getDistributedContext();
         if (distributed.getCoordinator() == null) {
           if (coordinator) {
-            distributed.makeCoordinator(getNodeConfig().getNodeIdentity(), shared);
+            distributed.makeCoordinator(getNodeIdentity(), shared);
             for (Map.Entry<ONodeIdentity, ODistributedChannel> node : members.entrySet()) {
               ODistributedMember member = new ODistributedMember(node.getKey(), database, node.getValue());
               distributed.getCoordinator().join(member);
             }
           } else {
-            ODistributedMember member = new ODistributedMember(coordinatorName, database, members.get(coordinatorName));
+            ODistributedMember member = new ODistributedMember(coordinatorIdentity, database, members.get(coordinatorIdentity));
             distributed.setExternalCoordinator(member);
           }
         }
@@ -291,13 +291,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   }
 
-  private boolean isDistributedVersionTwo() {
-    return getConfigurations().getConfigurations().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION)
-        == 2;
-  }
-
   public synchronized void nodeConnected(ONodeIdentity nodeIdentity, ODistributedChannel channel) {
-    if (this.getNodeNameFromConfig().equals(nodeIdentity))
+    if (this.getNodeIdentity().equals(nodeIdentity))
       return;
     members.put(nodeIdentity, channel);
     for (OSharedContext context : sharedContexts.values()) {
@@ -309,7 +304,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (coordinator) {
         ODistributedCoordinator c = distributed.getCoordinator();
         if (c == null) {
-          distributed.makeCoordinator(getNodeConfig().getNodeIdentity(), context);
+          distributed.makeCoordinator(getNodeIdentity(), context);
           c = distributed.getCoordinator();
         }
         c.join(member);
@@ -322,7 +317,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void nodeDisconnected(ONodeIdentity nodeIdentity) {
-    if (this.getNodeNameFromConfig().equals(nodeIdentity))
+    if (this.getNodeIdentity().equals(nodeIdentity))
       return;
     members.remove(nodeIdentity);
     for (OSharedContext context : sharedContexts.values()) {
@@ -352,8 +347,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void setCoordinator(ONodeIdentity coordinatorIdentity) {
-    this.coordinatorName = coordinatorIdentity;
-    if (getNodeConfig().getNodeIdentity().equals(coordinatorIdentity)) {
+    this.coordinatorIdentity = coordinatorIdentity;
+    if (getNodeIdentity().equals(coordinatorIdentity)) {
       if (!this.coordinator) {
         for (OSharedContext context : sharedContexts.values()) {
           if (isContextToIgnore(context))

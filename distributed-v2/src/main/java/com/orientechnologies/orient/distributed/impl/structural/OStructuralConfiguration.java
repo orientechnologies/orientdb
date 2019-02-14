@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.server.OSystemDatabase;
 
@@ -9,7 +10,8 @@ import java.util.List;
 public class OStructuralConfiguration {
 
   private OSystemDatabase                    systemDatabase;
-  private List<OStructuralNodeConfiguration> nodes;
+  private List<OStructuralNodeConfiguration> knownNodes;
+  private ONodeIdentity                      currentNodeIdentity;
 
   public OStructuralConfiguration(OrientDBDistributed context) {
     systemDatabase = context.getServer().getSystemDatabase();
@@ -20,14 +22,14 @@ public class OStructuralConfiguration {
   }
 
   private void updatePersistent() {
-    
+
   }
 
   public List<String> listDatabases() {
     return new ArrayList<>();
   }
 
-  public OStructuralNodeConfiguration getConfiguration(String nodeId) {
+  public OStructuralNodeConfiguration getConfiguration(ONodeIdentity nodeId) {
     return null;
   }
 

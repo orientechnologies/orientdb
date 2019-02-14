@@ -37,7 +37,7 @@ public class OSequenceActionCoordinatorSubmit implements OSubmitRequest {
 
   }
 
-  public OSequenceActionCoordinatorSubmit(OSequenceAction action, String initialNodeName) {
+  public OSequenceActionCoordinatorSubmit(OSequenceAction action) {
     this.action = new OSequenceActionRequest(action);
   }
 
