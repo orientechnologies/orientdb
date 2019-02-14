@@ -68,7 +68,8 @@ public class OAlterPropertyStatement extends ODDLStatement {
     } else {
       String setting = settingName.getStringValue();
       Object finalValue = settingValue.execute((OIdentifiable) null, ctx);
-      if (finalValue == null && (setting.equalsIgnoreCase("name") || setting.equalsIgnoreCase("shortname"))) {
+      if (finalValue == null && (setting.equalsIgnoreCase("name") || setting.equalsIgnoreCase("shortname") || setting
+          .equalsIgnoreCase("type"))) {
         finalValue = settingValue.toString();
         String stringFinalValue = (String) finalValue;
         if (stringFinalValue.startsWith("`") && stringFinalValue.endsWith("`") && stringFinalValue.length() > 2) {
