@@ -2050,6 +2050,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
 
           K lastKey = null;
 
+          boolean firstTry = true;
           mainCycle:
           while (true) {
             if (pageIndex == -1) {
@@ -2059,6 +2060,79 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
             final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
             try {
               final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
+              if (firstTry && fromKey != null && fromKeyInclusive && bucketSearchResult.itemIndex == 0) {
+                int leftSibling = (int) bucket.getLeftSibling();
+                while (leftSibling > 0) {
+                  final OCacheEntry siblingCacheEntry = loadPageForRead(atomicOperation, fileId, leftSibling, false);
+                  final Bucket<K> siblingBucket = new Bucket<>(siblingCacheEntry, keySerializer, encryption);
+
+                  final int bucketSize = siblingBucket.size();
+                  if (bucketSize == 0) {
+                    leftSibling = (int) siblingBucket.getLeftSibling();
+                  } else if (bucketSize == 1) {
+                    final K key = siblingBucket.getKey(0);
+
+                    if (key.equals(fromKey)) {
+                      lastKey = key;
+
+                      for (final ORID rid : siblingBucket.getValues(0)) {
+                        dataCache.add(new Map.Entry<K, ORID>() {
+                          @Override
+                          public K getKey() {
+                            return key;
+                          }
+
+                          @Override
+                          public ORID getValue() {
+                            return rid;
+                          }
+
+                          @Override
+                          public ORID setValue(final ORID value) {
+                            throw new UnsupportedOperationException("setValue");
+                          }
+                        });
+                      }
+
+                      leftSibling = (int) siblingBucket.getLeftSibling();
+                    } else {
+                      leftSibling = -1;
+                    }
+                  } else {
+                    final K key = siblingBucket.getKey(bucketSize - 1);
+                    if (key.equals(fromKey)) {
+                      lastKey = key;
+
+                      for (final ORID rid : siblingBucket.getValues(0)) {
+                        dataCache.add(new Map.Entry<K, ORID>() {
+                          @Override
+                          public K getKey() {
+                            return key;
+                          }
+
+                          @Override
+                          public ORID getValue() {
+                            return rid;
+                          }
+
+                          @Override
+                          public ORID setValue(final ORID value) {
+                            throw new UnsupportedOperationException("setValue");
+                          }
+                        });
+                      }
+
+                      leftSibling = -1;
+                    } else {
+                      leftSibling = -1;
+                    }
+                  }
+
+                  releasePageFromRead(atomicOperation, siblingCacheEntry);
+                }
+              }
+
+              firstTry = false;
 
               while (true) {
                 if (itemIndex >= bucket.size()) {
@@ -2205,6 +2279,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
             itemIndex = -bucketSearchResult.itemIndex - 2;
           }
 
+          boolean firstTry = true;
           K lastKey = null;
           mainCycle:
           while (true) {
@@ -2215,6 +2290,79 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
             final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
             try {
               final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
+              if (firstTry && toKey != null && toKeyInclusive && bucketSearchResult.itemIndex == 0) {
+                int rightSibling = (int) bucket.getRightSibling();
+                while (rightSibling > 0) {
+                  final OCacheEntry siblingCacheEntry = loadPageForRead(atomicOperation, fileId, rightSibling, false);
+                  final Bucket<K> siblingBucket = new Bucket<>(siblingCacheEntry, keySerializer, encryption);
+
+                  final int bucketSize = siblingBucket.size();
+                  if (bucketSize == 0) {
+                    rightSibling = (int) siblingBucket.getRightSibling();
+                  } else if (bucketSize == 1) {
+                    final K key = siblingBucket.getKey(0);
+
+                    if (key.equals(fromKey)) {
+                      lastKey = key;
+
+                      for (final ORID rid : siblingBucket.getValues(0)) {
+                        dataCache.add(new Map.Entry<K, ORID>() {
+                          @Override
+                          public K getKey() {
+                            return key;
+                          }
+
+                          @Override
+                          public ORID getValue() {
+                            return rid;
+                          }
+
+                          @Override
+                          public ORID setValue(final ORID value) {
+                            throw new UnsupportedOperationException("setValue");
+                          }
+                        });
+                      }
+
+                      rightSibling = (int) siblingBucket.getRightSibling();
+                    } else {
+                      rightSibling = -1;
+                    }
+                  } else {
+                    final K key = siblingBucket.getKey(0);
+                    if (key.equals(fromKey)) {
+                      lastKey = key;
+
+                      for (final ORID rid : siblingBucket.getValues(0)) {
+                        dataCache.add(new Map.Entry<K, ORID>() {
+                          @Override
+                          public K getKey() {
+                            return key;
+                          }
+
+                          @Override
+                          public ORID getValue() {
+                            return rid;
+                          }
+
+                          @Override
+                          public ORID setValue(final ORID value) {
+                            throw new UnsupportedOperationException("setValue");
+                          }
+                        });
+                      }
+
+                      rightSibling = -1;
+                    } else {
+                      rightSibling = -1;
+                    }
+
+                    releasePageFromRead(atomicOperation, siblingCacheEntry);
+                  }
+                }
+              }
+
+              firstTry = false;
 
               while (true) {
                 if (itemIndex >= bucket.size()) {
