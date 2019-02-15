@@ -5,9 +5,16 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.index.OIndexMultiValues;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OInsertBody;
+import com.orientechnologies.orient.core.sql.parser.OInsertSetExpression;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -116,10 +123,10 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
         Object key = keyExp.execute((OResult) null, ctx);
         Object value = valueExp.execute((OResult) null, ctx);
         if (value instanceof OIdentifiable) {
-          index.put(key, (OIdentifiable) value);
+          insertIntoIndex(index, key, (OIdentifiable) value);
           count++;
         } else if (value instanceof OResult && ((OResult) value).isElement()) {
-          index.put(key, ((OResult) value).getElement().get());
+          insertIntoIndex(index, key, ((OResult) value).getElement().get());
           count++;
         } else if (value instanceof OResultSet) {
           ((OResultSet) value).elementStream().forEach(x -> index.put(key, x));
@@ -128,10 +135,10 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
           while (iterator.hasNext()) {
             Object item = iterator.next();
             if (value instanceof OIdentifiable) {
-              index.put(key, (OIdentifiable) value);
+              insertIntoIndex(index, key, (OIdentifiable) value);
               count++;
             } else if (value instanceof OResult && ((OResult) value).isElement()) {
-              index.put(key, ((OResult) value).getElement().get());
+              insertIntoIndex(index, key, ((OResult) value).getElement().get());
               count++;
             } else {
               throw new OCommandExecutionException("Cannot insert into index " + value);
@@ -139,6 +146,17 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
           }
         }
         return count;
+      }
+
+      private void insertIntoIndex(final OIndex index, final Object key, final OIdentifiable value) {
+        if (index instanceof OIndexMultiValues) {
+          final Collection<ORID> rids = ((OIndexMultiValues) index).get(key);
+          if (!rids.contains(value.getIdentity())) {
+            index.put(key, value);
+          }
+        } else {
+          index.put(key, value);
+        }
       }
 
       @Override
