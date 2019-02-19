@@ -37,7 +37,7 @@ public class OStructuralOperationRequest implements OBinaryRequest, ODistributed
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
-    senderNode.write(output);
+    senderNode.serialize(output);
     OLogId.serialize(id, output);
     output.writeInt(request.getRequestType());
     request.serialize(output);
@@ -47,7 +47,7 @@ public class OStructuralOperationRequest implements OBinaryRequest, ODistributed
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     DataInputStream input = new DataInputStream(channel.getDataInput());
     senderNode = new ONodeIdentity();
-    senderNode.read(input);
+    senderNode.deserialize(input);
     id = OLogId.deserialize(input);
     int requestType = input.readInt();
     request = factory.createStructuralOperationRequest(requestType);

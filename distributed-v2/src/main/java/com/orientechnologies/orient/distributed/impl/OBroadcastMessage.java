@@ -48,7 +48,7 @@ class OBroadcastMessage {
   public void write(DataOutput output) throws IOException {
     output.writeInt(type);
     output.writeUTF(group);
-    nodeIdentity.write(output);
+    nodeIdentity.serialize(output);
     output.writeInt(term);
     output.writeInt(role);
     output.writeInt(tcpPort);
@@ -59,7 +59,7 @@ class OBroadcastMessage {
     case OBroadcastMessage.TYPE_PING:
       if (this.masterIdentity != null) {
         output.writeByte(1);
-        masterIdentity.write(output);
+        masterIdentity.serialize(output);
         output.writeInt(masterTerm);
         output.writeUTF(masterAddress);
         output.writeInt(masterTcpPort);
@@ -71,7 +71,7 @@ class OBroadcastMessage {
       }
       break;
     case OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION:
-      voteForIdentity.write(output);
+      voteForIdentity.serialize(output);
       break;
     }
 
@@ -81,7 +81,7 @@ class OBroadcastMessage {
     type = input.readInt();
     group = input.readUTF();
     nodeIdentity = new ONodeIdentity();
-    nodeIdentity.read(input);
+    nodeIdentity.deserialize(input);
     term = input.readInt();
     role = input.readInt();
     tcpPort = input.readInt();
@@ -93,7 +93,7 @@ class OBroadcastMessage {
       byte isThereMaster = input.readByte();
       if (isThereMaster == 1) {
         masterIdentity = new ONodeIdentity();
-        masterIdentity.read(input);
+        masterIdentity.deserialize(input);
         masterTerm = input.readInt();
         masterAddress = input.readUTF();
         masterTcpPort = input.readInt();
@@ -104,7 +104,7 @@ class OBroadcastMessage {
       break;
     case OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION:
       voteForIdentity = new ONodeIdentity();
-      voteForIdentity.read(input);
+      voteForIdentity.deserialize(input);
       break;
     }
   }

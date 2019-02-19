@@ -1,6 +1,11 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 public class OStructuralNodeDatabase {
+
   public enum NodeMode {
     ACTIVE, REPLICA,
   }
@@ -20,4 +25,17 @@ public class OStructuralNodeDatabase {
   public NodeMode getMode() {
     return mode;
   }
+
+  public void deserialize(DataInput input) throws IOException {
+    id = input.readUTF();
+    name = input.readUTF();
+    mode = NodeMode.valueOf(input.readUTF());
+  }
+
+  public void serialize(DataOutput output) throws IOException {
+    output.writeUTF(id);
+    output.writeUTF(name);
+    output.writeUTF(mode.name());
+  }
+
 }

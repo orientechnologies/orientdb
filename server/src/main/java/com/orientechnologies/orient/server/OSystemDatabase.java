@@ -22,11 +22,7 @@ package com.orientechnologies.orient.server;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.OElement;
@@ -41,20 +37,16 @@ public class OSystemDatabase {
   public static final String SERVER_INFO_CLASS  = "ServerInfo";
   public static final String SERVER_ID_PROPERTY = "serverId";
 
-  private final OServer server;
-  private       String  serverId;
+  private final OrientDBInternal context;
+  private       String           serverId;
 
-  public OSystemDatabase(final OServer server) {
-    this.server = server;
+  public OSystemDatabase(final OrientDBInternal context) {
+    this.context = context;
     init();
   }
 
   public String getSystemDatabaseName() {
     return OSystemDatabase.SYSTEM_DB_NAME;
-  }
-
-  public String getSystemDatabasePath() {
-    return server.getDatabaseDirectory() + getSystemDatabaseName();
   }
 
   /**
@@ -94,7 +86,7 @@ public class OSystemDatabase {
    * ThreadLocal-stored database before openSystemDatabase() is called and restoring it after the database is closed.
    */
   public ODatabaseDocumentInternal openSystemDatabase() {
-    return server.getDatabases().openNoAuthorization(getSystemDatabaseName());
+    return context.openNoAuthorization(getSystemDatabaseName());
   }
 
   public Object execute(final OCallable<Object, OResultSet> callback, final String sql, final Object... args) {
@@ -157,7 +149,7 @@ public class OSystemDatabase {
 
         OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
             .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1).build();
-        server.createDatabase(SYSTEM_DB_NAME, ODatabaseType.PLOCAL, config);
+        context.create(SYSTEM_DB_NAME, null, null, ODatabaseType.PLOCAL, config);
       }
       checkServerId();
 
@@ -194,36 +186,15 @@ public class OSystemDatabase {
     }
   }
 
-  public void executeInDBScope(OCallable<Void, ODatabase> callback) {
-
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
-
-    try {
-      final ODatabase<?> db = openSystemDatabase();
-      try {
-        callback.call(db);
-      } finally {
-        db.close();
-      }
-    } finally {
-      if (currentDB != null)
-        ODatabaseRecordThreadLocal.instance().set(currentDB);
-      else
-        ODatabaseRecordThreadLocal.instance().remove();
-    }
-
+  public void executeInDBScope(OCallable<Void, ODatabaseSession> callback) {
+    executeWithDB(callback);
   }
 
-  public <T> T executeWithDB(OCallable<T, ODatabase> callback) {
-
+  public <T> T executeWithDB(OCallable<T, ODatabaseSession> callback) {
     final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
-
     try {
-      final ODatabase<?> db = openSystemDatabase();
-      try {
+      try (final ODatabaseSession db = openSystemDatabase()) {
         return callback.call(db);
-      } finally {
-        db.close();
       }
     } finally {
       if (currentDB != null)
@@ -235,7 +206,7 @@ public class OSystemDatabase {
   }
 
   public boolean exists() {
-    return server.existsDatabase(getSystemDatabaseName());
+    return context.exists(getSystemDatabaseName(), null, null);
   }
 
   public String getServerId() {

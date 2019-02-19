@@ -41,7 +41,7 @@ public class ONetworkSubmitResponse implements OBinaryRequest, ODistributedExecu
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
     operationId.serialize(output);
-    senderNode.write(output);
+    senderNode.serialize(output);
     output.writeUTF(database);
     output.writeInt(response.getResponseType());
     response.serialize(output);
@@ -53,7 +53,7 @@ public class ONetworkSubmitResponse implements OBinaryRequest, ODistributedExecu
     operationId = new OSessionOperationId();
     operationId.deserialize(input);
     senderNode = new ONodeIdentity();
-    senderNode.read(input);
+    senderNode.deserialize(input);
     database = input.readUTF();
     int responseType = input.readInt();
     response = factory.createSubmitResponse(responseType);

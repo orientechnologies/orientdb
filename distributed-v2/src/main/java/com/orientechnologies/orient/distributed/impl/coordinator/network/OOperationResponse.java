@@ -39,7 +39,7 @@ public class OOperationResponse implements OBinaryRequest, ODistributedExecutabl
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
-    senderNode.write(output);
+    senderNode.serialize(output);
     output.writeUTF(database);
     OLogId.serialize(id, output);
     output.writeInt(response.getResponseType());
@@ -50,7 +50,7 @@ public class OOperationResponse implements OBinaryRequest, ODistributedExecutabl
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     DataInputStream input = new DataInputStream(channel.getDataInput());
     senderNode = new ONodeIdentity();
-    senderNode.read(input);
+    senderNode.deserialize(input);
     database = input.readUTF();
     id = OLogId.deserialize(input);
     int responseType = input.readInt();

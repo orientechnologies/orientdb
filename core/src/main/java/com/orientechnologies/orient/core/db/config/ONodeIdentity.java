@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.UUID;
 
 public class ONodeIdentity {
   private String id;
@@ -16,6 +17,10 @@ public class ONodeIdentity {
 
   public ONodeIdentity() {
 
+  }
+
+  public static ONodeIdentity generate() {
+    return new ONodeIdentity("", UUID.randomUUID().toString());
   }
 
   public String getId() {
@@ -54,12 +59,12 @@ public class ONodeIdentity {
     return name + '{' + id + '}';
   }
 
-  public void write(DataOutput output) throws IOException {
+  public void serialize(DataOutput output) throws IOException {
     output.writeUTF(id);
     output.writeUTF(name);
   }
 
-  public void read(DataInput input) throws IOException {
+  public void deserialize(DataInput input) throws IOException {
     id = input.readUTF();
     name = input.readUTF();
   }

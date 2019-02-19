@@ -1209,7 +1209,7 @@ public class OServer {
   }
 
   private void initSystemDatabase() {
-    systemDatabase = new OSystemDatabase(this);
+    systemDatabase = new OSystemDatabase(this.getDatabases());
   }
 
   public OrientDBInternal getDatabases() {

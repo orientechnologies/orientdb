@@ -22,7 +22,6 @@ import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +58,7 @@ public class OSequenceActionCoordinatorResponse implements OSubmitResponse {
           output.writeByte(0);
         } else {
           output.writeByte(1);
-          identity.write(output);
+          identity.serialize(output);
         }
       }
     }
@@ -74,7 +73,7 @@ public class OSequenceActionCoordinatorResponse implements OSubmitResponse {
         byte stringByte = input.readByte();
         if (stringByte > 0) {
           ONodeIdentity identity = new ONodeIdentity();
-          identity.read(input);
+          identity.deserialize(input);
           retList.add(identity);
         } else {
           retList.add(null);

@@ -60,6 +60,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private volatile boolean                                   distributedReady = false;
   private final    ConcurrentMap<String, ODistributedStatus> databasesStatus  = new ConcurrentHashMap<>();
   private          ONodeConfiguration                        nodeConfiguration;
+  private          OStructuralConfiguration                  structuralConfiguration;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -89,6 +90,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void onAfterActivate() {
+    structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this);
     checkPort();
     //TODO: Read the server UUID from the OSystem database;
     String nodeId = UUID.randomUUID().toString();

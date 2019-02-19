@@ -37,7 +37,6 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
@@ -135,7 +134,7 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
     }
     if (initialNodeName != null) {
       output.writeByte(1);
-      initialNodeName.write(output);
+      initialNodeName.serialize(output);
     } else {
       output.writeByte(0);
     }
@@ -153,7 +152,7 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
     flag = input.readByte();
     if (flag > 0) {
       initialNodeName = new ONodeIdentity();
-      initialNodeName.read(input);
+      initialNodeName.deserialize(input);
     } else {
       initialNodeName = null;
     }

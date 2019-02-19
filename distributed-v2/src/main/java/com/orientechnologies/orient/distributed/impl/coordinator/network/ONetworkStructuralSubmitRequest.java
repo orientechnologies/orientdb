@@ -39,7 +39,7 @@ public class ONetworkStructuralSubmitRequest implements OBinaryRequest, ODistrib
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
     this.operationId.serialize(output);
-    senderNode.write(output);
+    senderNode.serialize(output);
     output.writeInt(request.getRequestType());
     request.serialize(output);
   }
@@ -50,7 +50,7 @@ public class ONetworkStructuralSubmitRequest implements OBinaryRequest, ODistrib
     this.operationId = new OSessionOperationId();
     this.operationId.deserialize(input);
     senderNode = new ONodeIdentity();
-    senderNode.read(input);
+    senderNode.deserialize(input);
     int requestType = input.readInt();
     request = factory.createStructuralSubmitRequest(requestType);
     request.deserialize(input);

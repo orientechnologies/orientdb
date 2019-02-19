@@ -40,7 +40,7 @@ public class ONetworkSubmitRequest implements OBinaryRequest, ODistributedExecut
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
     this.operationId.serialize(output);
-    senderNode.write(output);
+    senderNode.serialize(output);
     output.writeUTF(database);
     output.writeInt(request.getRequestType());
     request.serialize(output);
@@ -52,7 +52,7 @@ public class ONetworkSubmitRequest implements OBinaryRequest, ODistributedExecut
     this.operationId = new OSessionOperationId();
     this.operationId.deserialize(input);
     senderNode = new ONodeIdentity();
-    senderNode.read(input);
+    senderNode.deserialize(input);
     database = input.readUTF();
     int requestType = input.readInt();
     request = factory.createSubmitRequest(requestType);
