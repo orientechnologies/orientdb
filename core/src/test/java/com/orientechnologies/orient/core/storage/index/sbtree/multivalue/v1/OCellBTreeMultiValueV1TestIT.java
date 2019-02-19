@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.multivalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
@@ -26,16 +26,16 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class OCellBTreeMultiValueTestIT {
-  private OCellBTreeMultiValue<String> multiValueTree;
-  private OrientDB                     orientDB;
+public class OCellBTreeMultiValueV1TestIT {
+  private OCellBTreeMultiValueV1<String> multiValueTree;
+  private OrientDB                       orientDB;
 
   private final String DB_NAME = "localMultiBTreeTest";
 
   @Before
   public void before() throws IOException {
     final String buildDirectory =
-        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeMultiValueTestIT.class.getSimpleName();
+        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeMultiValueV1TestIT.class.getSimpleName();
 
     final File dbDirectory = new File(buildDirectory, DB_NAME);
     OFileUtils.deleteRecursively(dbDirectory);
@@ -45,7 +45,7 @@ public class OCellBTreeMultiValueTestIT {
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
-    multiValueTree = new OCellBTreeMultiValue<>("multiBTree", ".sbt", ".nbt",
+    multiValueTree = new OCellBTreeMultiValueV1<>("multiBTree", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
@@ -1166,7 +1166,7 @@ public class OCellBTreeMultiValueTestIT {
     Assert.assertEquals(multiValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(multiValueTree.lastKey(), keyValues.lastKey());
 
-    final OCellBTreeMultiValue.OSBTreeKeyCursor<String> cursor = multiValueTree.keyCursor();
+    final OCellBTreeMultiValueV1.OSBTreeKeyCursor<String> cursor = multiValueTree.keyCursor();
 
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = cursor.next(-1);
@@ -1294,7 +1294,7 @@ public class OCellBTreeMultiValueTestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final OCellBTreeMultiValue.OSBTreeCursor<String, ORID> cursor = multiValueTree
+      final OCellBTreeMultiValueV1.OSBTreeCursor<String, ORID> cursor = multiValueTree
           .iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, Integer>> iterator;
@@ -1346,7 +1346,7 @@ public class OCellBTreeMultiValueTestIT {
         toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final OCellBTreeMultiValue.OSBTreeCursor<String, ORID> cursor = multiValueTree
+      final OCellBTreeMultiValueV1.OSBTreeCursor<String, ORID> cursor = multiValueTree
           .iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, Integer>> iterator;
@@ -1414,7 +1414,7 @@ public class OCellBTreeMultiValueTestIT {
         fromKey = toKey;
       }
 
-      OCellBTreeMultiValue.OSBTreeCursor<String, ORID> cursor = multiValueTree
+      OCellBTreeMultiValueV1.OSBTreeCursor<String, ORID> cursor = multiValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, Integer>> iterator;
@@ -1449,5 +1449,4 @@ public class OCellBTreeMultiValueTestIT {
       Assert.assertNull(cursor.next(-1));
     }
   }
-
 }
