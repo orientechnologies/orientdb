@@ -58,4 +58,8 @@ public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
   public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
     controller.sendBinaryRequest(new ONetworkSubmitResponse(nodeIdentity, database, operationId, response));
   }
+
+  public void close() {
+    controller.close();
+  }
 }

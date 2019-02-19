@@ -4,22 +4,25 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedChannelBinaryProtocol;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class ODistributedNetworkManager implements ODiscoveryListener {
 
-  private final ConcurrentMap<ONodeIdentity, ORemoteServerController> remoteServers = new ConcurrentHashMap<ONodeIdentity, ORemoteServerController>();
-  private final OrientDBDistributed                                   orientDB;
-  private final ONodeConfiguration                                    config;
-  private final ONodeInternalConfiguration                            internalConfiguration;
-  private       OUDPMulticastNodeManager                              discoveryManager;
+  private final ConcurrentMap<ONodeIdentity, ODistributedChannelBinaryProtocol> remoteServers = new ConcurrentHashMap<>();
+  private final OrientDBDistributed                                             orientDB;
+  private final ONodeConfiguration                                              config;
+  private final ONodeInternalConfiguration                                      internalConfiguration;
+  private       OUDPMulticastNodeManager                                        discoveryManager;
 
   public ODistributedNetworkManager(OrientDBDistributed orientDB, ONodeConfiguration config,
       ONodeInternalConfiguration internalConfiguration) {
@@ -29,12 +32,12 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
 
   }
 
-  public ORemoteServerController getRemoteServer(final ONodeIdentity rNodeName) {
+  public ODistributedChannelBinaryProtocol getRemoteServer(final ONodeIdentity rNodeName) {
     return remoteServers.get(rNodeName);
   }
 
-  public ORemoteServerController connectRemoteServer(final ONodeIdentity nodeIdentity, String host, String user, String password)
-      throws IOException {
+  public ODistributedChannelBinaryProtocol connectRemoteServer(final ONodeIdentity nodeIdentity, String host, String user,
+      String password) throws IOException {
     // OK
     ORemoteServerController remoteServer = new ORemoteServerController(new ORemoteServerAvailabilityCheck() {
       @Override
@@ -48,22 +51,23 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
         ODistributedNetworkManager.this.orientDB.nodeDisconnected(nodeIdentity);
       }
     }, config.getNodeIdentity().getName(), nodeIdentity.getName(), host, user, password);
-    final ORemoteServerController old = remoteServers.putIfAbsent(nodeIdentity, remoteServer);
+    ODistributedChannelBinaryProtocol channel = new ODistributedChannelBinaryProtocol(config.getNodeIdentity(), remoteServer);
+    final ODistributedChannelBinaryProtocol old = remoteServers.putIfAbsent(nodeIdentity, channel);
     if (old != null) {
-      remoteServer.close();
-      remoteServer = old;
+      channel.close();
+      channel = old;
     }
-    return remoteServer;
+    return channel;
   }
 
   public void closeRemoteServer(final ONodeIdentity node) {
-    final ORemoteServerController c = remoteServers.remove(node);
+    final ODistributedChannelBinaryProtocol c = remoteServers.remove(node);
     if (c != null)
       c.close();
   }
 
   public void closeAll() {
-    for (ORemoteServerController server : remoteServers.values())
+    for (ODistributedChannelBinaryProtocol server : remoteServers.values())
       server.close();
     remoteServers.clear();
   }
@@ -81,26 +85,22 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     //TODO
   }
 
-  public ODistributedConfiguration getDistributedConfiguration() {
-    return null;//TODO
-  }
-
   @Override
   public void nodeConnected(NodeData data) {
     if (data.getNodeIdentity().equals(config.getNodeIdentity()))
       return;
-    ORemoteServerController remote = getRemoteServer(data.getNodeIdentity());
-    if (remote == null) {
+    ODistributedChannelBinaryProtocol channel = getRemoteServer(data.getNodeIdentity());
+    if (channel == null) {
       //TODO: use some authentication data to do a binary connection.
       try {
-        remote = connectRemoteServer(data.getNodeIdentity(), data.address + ":" + data.port, data.connectionUsername,
+        channel = connectRemoteServer(data.getNodeIdentity(), data.address + ":" + data.port, data.connectionUsername,
             data.connectionPassword);
-        orientDB.nodeConnected(data.getNodeIdentity(), new ODistributedChannelBinaryProtocol(config.getNodeIdentity(), remote));
+        orientDB.nodeConnected(data.getNodeIdentity(), channel);
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on establish connection to a new joined node", e);
       }
     } else {
-      orientDB.nodeConnected(data.getNodeIdentity(), new ODistributedChannelBinaryProtocol(config.getNodeIdentity(), remote));
+      orientDB.nodeConnected(data.getNodeIdentity(), channel);
     }
   }
 
@@ -112,5 +112,13 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   @Override
   public void leaderElected(NodeData data) {
     orientDB.setCoordinator(data.getNodeIdentity());
+  }
+
+  public ODistributedChannel getChannel(ONodeIdentity identity) {
+    return remoteServers.get(identity);
+  }
+
+  public Set<ONodeIdentity> getRemoteServers() {
+    return remoteServers.keySet();
   }
 }
