@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.multivalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;

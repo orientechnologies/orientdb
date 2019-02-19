@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1.OCellBTreeMultiValueV1;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,12 +25,12 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   public static final  String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
-  private final OCellBTreeMultiValue<Object> sbTree;
-  private final String                       name;
+  private final OCellBTreeMultiValueV1<Object> sbTree;
+  private final String                         name;
 
   public OCellBTreeMultiValueIndexEngine(String name, OAbstractPaginatedStorage storage) {
     this.name = name;
-    this.sbTree = new OCellBTreeMultiValue<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+    this.sbTree = new OCellBTreeMultiValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
   }
 
   @Override
@@ -154,7 +154,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   @Override
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
-      private final OCellBTreeMultiValue.OSBTreeKeyCursor<Object> sbTreeKeyCursor = sbTree.keyCursor();
+      private final OCellBTreeMultiValueV1.OSBTreeKeyCursor<Object> sbTreeKeyCursor = sbTree.keyCursor();
 
       @Override
       public Object next(int prefetchSize) {
@@ -214,7 +214,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       }
 
       if (firstKey != null && lastKey != null) {
-        final OCellBTreeMultiValue.OSBTreeCursor<Object, ORID> cursor = sbTree
+        final OCellBTreeMultiValueV1.OSBTreeCursor<Object, ORID> cursor = sbTree
             .iterateEntriesBetween(firstKey, true, lastKey, true, true);
 
         Object prevKey = new Object();
@@ -255,9 +255,9 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   private static final class OSBTreeIndexCursor extends OIndexAbstractCursor {
-    private final OCellBTreeMultiValue.OSBTreeCursor<Object, ORID> treeCursor;
+    private final OCellBTreeMultiValueV1.OSBTreeCursor<Object, ORID> treeCursor;
 
-    private OSBTreeIndexCursor(OCellBTreeMultiValue.OSBTreeCursor<Object, ORID> treeCursor) {
+    private OSBTreeIndexCursor(OCellBTreeMultiValueV1.OSBTreeCursor<Object, ORID> treeCursor) {
       this.treeCursor = treeCursor;
     }
 
