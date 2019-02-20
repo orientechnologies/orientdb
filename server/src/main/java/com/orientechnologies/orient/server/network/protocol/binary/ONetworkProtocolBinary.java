@@ -310,6 +310,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
                 collectionManager.clearChangedIds();
             }
             exception = t;
+          } catch (Error err) {
+            connection.release();
+            throw err;
           }
         }
         if (exception != null) {
