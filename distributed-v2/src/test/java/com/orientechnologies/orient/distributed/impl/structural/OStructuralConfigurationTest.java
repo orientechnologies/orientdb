@@ -41,5 +41,5 @@ public class OStructuralConfigurationTest {
     context.drop(OSystemDatabase.SYSTEM_DB_NAME, null, null);
     context.close();
   }
-
+  
 }

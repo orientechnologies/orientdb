@@ -47,7 +47,7 @@ public class OStructuralConfiguration {
     });
   }
 
-  private void serialize(DataOutput output) throws IOException {
+  public void serialize(DataOutput output) throws IOException {
     this.currentNodeIdentity.serialize(output);
     this.sharedConfiguration.serialize(output);
   }
@@ -58,7 +58,7 @@ public class OStructuralConfiguration {
     this.sharedConfiguration.init();
   }
 
-  private void deserialize(DataInput input) throws IOException {
+  public void deserialize(DataInput input) throws IOException {
     this.currentNodeIdentity = new ONodeIdentity();
     this.currentNodeIdentity.deserialize(input);
     sharedConfiguration = new OStructuralSharedConfiguration();
@@ -79,5 +79,9 @@ public class OStructuralConfiguration {
 
   public ONodeIdentity getCurrentNodeIdentity() {
     return currentNodeIdentity;
+  }
+
+  public OStructuralSharedConfiguration getSharedConfiguration() {
+    return sharedConfiguration;
   }
 }

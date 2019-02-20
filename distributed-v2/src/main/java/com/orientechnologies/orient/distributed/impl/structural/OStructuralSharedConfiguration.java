@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,8 +29,16 @@ public class OStructuralSharedConfiguration {
 
   public void serialize(DataOutput output) throws IOException {
     output.writeInt(knownNodes.size());
-    for(OStructuralNodeConfiguration node : knownNodes.values()){
+    for (OStructuralNodeConfiguration node : knownNodes.values()) {
       node.serialize(output);
     }
+  }
+
+  public void addNode(OStructuralNodeConfiguration node) {
+    knownNodes.put(node.getIdentity(), node);
+  }
+
+  public Collection<OStructuralNodeConfiguration> listDatabases() {
+    return knownNodes.values();
   }
 }

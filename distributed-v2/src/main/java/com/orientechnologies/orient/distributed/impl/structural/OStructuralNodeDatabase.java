@@ -6,6 +6,10 @@ import java.io.IOException;
 
 public class OStructuralNodeDatabase {
 
+  protected OStructuralNodeDatabase() {
+
+  }
+
   public enum NodeMode {
     ACTIVE, REPLICA,
   }
@@ -13,6 +17,12 @@ public class OStructuralNodeDatabase {
   private String   id;
   private String   name;
   private NodeMode mode;
+
+  public OStructuralNodeDatabase(String id, String name, NodeMode mode) {
+    this.id = id;
+    this.name = name;
+    this.mode = mode;
+  }
 
   public String getId() {
     return id;

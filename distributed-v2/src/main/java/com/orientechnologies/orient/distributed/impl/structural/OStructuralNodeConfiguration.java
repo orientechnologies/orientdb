@@ -13,6 +13,15 @@ public class OStructuralNodeConfiguration {
   private ONodeIdentity                 identity;
   private List<OStructuralNodeDatabase> databases;
 
+  public OStructuralNodeConfiguration(ONodeIdentity identity) {
+    this.identity = identity;
+    this.databases = new ArrayList<>();
+  }
+
+  protected OStructuralNodeConfiguration() {
+
+  }
+
   public void deserialize(DataInput input) throws IOException {
     identity = new ONodeIdentity();
     identity.deserialize(input);
@@ -35,5 +44,9 @@ public class OStructuralNodeConfiguration {
     for (OStructuralNodeDatabase database : databases) {
       database.serialize(output);
     }
+  }
+
+  public void addDatabase(OStructuralNodeDatabase database) {
+    databases.add(database);
   }
 }
