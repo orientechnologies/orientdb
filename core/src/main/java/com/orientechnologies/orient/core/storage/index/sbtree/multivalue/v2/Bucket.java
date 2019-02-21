@@ -142,7 +142,7 @@ final class Bucket<K> extends ODurablePage {
     if (mId > 0) {
       final List<MultiValueEntry> entriesToRemove = new ArrayList<>(8);
       final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
-          .iterateEntriesMajor(new MultiValueEntry(mId, 0, 0), true, true);
+          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
 
       Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
       while (mapEntry != null) {
@@ -365,7 +365,7 @@ final class Bucket<K> extends ODurablePage {
     setIntValue(SIZE_OFFSET, size);
 
     final int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    final int entrySize = OIntegerSerializer.INT_SIZE + RID_SIZE + keySize;
+    final int entrySize = OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE + RID_SIZE + keySize;
 
     boolean moved = false;
     if (size > 0 && entryPosition > freePointer) {
@@ -423,6 +423,10 @@ final class Bucket<K> extends ODurablePage {
     if (nextItem == -1) {
       final int clusterIdPosition = position;
       final int clusterId = getShortValue(clusterIdPosition);
+      position += OShortSerializer.SHORT_SIZE;
+
+      final long clusterPosition = getLongValue(position);
+      position += OLongSerializer.LONG_SIZE;
 
       final int keySize;
       if (encryption == null) {
@@ -450,9 +454,6 @@ final class Bucket<K> extends ODurablePage {
         return false;
       }
 
-      position += OShortSerializer.SHORT_SIZE;
-
-      final long clusterPosition = getLongValue(position);
       if (clusterPosition == value.getClusterPosition()) {
         if (entriesCount > 1) {
           setShortValue(clusterIdPosition, (short) -1);
@@ -486,15 +487,7 @@ final class Bucket<K> extends ODurablePage {
           setIntValue(FREE_POINTER_OFFSET, freePointer + RID_SIZE);
         }
 
-        final int keySize;
-        if (encryption == null) {
-          keySize = getObjectSizeInDirectMemory(keySerializer, position);
-        } else {
-          final int encryptedSize = getIntValue(position);
-          keySize = encryptedSize + OIntegerSerializer.INT_SIZE;
-        }
-
-        setBinaryValue(entryPosition + OIntegerSerializer.INT_SIZE + keySize, nextValue);
+        setBinaryValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE, nextValue);
 
         if (nextItem > freePointer || nextItemSize > 1) {
           if (nextItemSize == 1) {
@@ -737,7 +730,7 @@ final class Bucket<K> extends ODurablePage {
 
     if (values.size() < entriesCount) {
       final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
-          .iterateEntriesMajor(new MultiValueEntry(mId, 0, 0), true, true);
+          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
 
       Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
       while (mapEntry != null) {
@@ -840,7 +833,7 @@ final class Bucket<K> extends ODurablePage {
 
     if (results.size() < entriesCount) {
       final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
-          .iterateEntriesMajor(new MultiValueEntry(mId, 0, 0), true, true);
+          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
       Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
       while (mapEntry != null) {
         final MultiValueEntry mEntry = mapEntry.getKey();
@@ -911,7 +904,9 @@ final class Bucket<K> extends ODurablePage {
         final List<ORID> values = entry.values;
 
         addNewLeafEntry(i, key, values.get(0), entry.mId);
-        appendNewLeafEntries(i, values);
+        if (values.size() > 1) {
+          appendNewLeafEntries(i, values.subList(1, values.size()));
+        }
       }
     }
 
@@ -934,7 +929,10 @@ final class Bucket<K> extends ODurablePage {
         final List<ORID> values = entry.values;
 
         addNewLeafEntry(index, key, values.get(0), entry.mId);
-        appendNewLeafEntries(index, values);
+        if (values.size() > 1) {
+          appendNewLeafEntries(index, values.subList(1, values.size()));
+        }
+
         index++;
       }
 
@@ -1041,7 +1039,7 @@ final class Bucket<K> extends ODurablePage {
     final int entriesCount = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
 
     int listSize = 0;
-    if (entriesCount + 1 <= EMBEDDED_ITEMS_THRESHOLD) {
+    if (entriesCount < EMBEDDED_ITEMS_THRESHOLD) {
       listSize = Math.min(values.size(), EMBEDDED_ITEMS_THRESHOLD - entriesCount);
 
       final int itemSize =
@@ -1082,6 +1080,7 @@ final class Bucket<K> extends ODurablePage {
       }
     }
 
+    setIntValue(entryPosition + OIntegerSerializer.INT_SIZE, entriesCount + values.size());
   }
 
   boolean addNonLeafEntry(final int index, final byte[] serializedKey, final int leftChild, final int rightChild,

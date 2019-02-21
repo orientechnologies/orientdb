@@ -1091,16 +1091,22 @@ public class OCellBTreeMultiValueV2TestIT {
     Assert.assertEquals(multiValueTree.firstKey(), keys.firstKey());
     Assert.assertEquals(multiValueTree.lastKey(), keys.lastKey());
 
-    for (Map.Entry<String, Integer> entry : keys.entrySet()) {
-      int val = Integer.parseInt(entry.getKey());
-      List<ORID> result = multiValueTree.get(entry.getKey());
+    for (int i = 0; i < keysCount; i++) {
+      final String key = String.valueOf(i);
 
-      Assert.assertEquals(entry.getValue().longValue(), result.size());
-      final ORID expected = new ORecordId(val % 32000, val);
+      if (i % 3 == 0) {
+        Assert.assertTrue(multiValueTree.get(key).isEmpty());
+      } else {
+        List<ORID> result = multiValueTree.get(key);
 
-      for (ORID rid : result) {
-        Assert.assertEquals(expected, rid);
+        Assert.assertEquals(1, result.size());
+        final ORID expected = new ORecordId(i % 32000, i);
+
+        for (ORID rid : result) {
+          Assert.assertEquals(expected, rid);
+        }
       }
+
     }
   }
 
@@ -1292,7 +1298,7 @@ public class OCellBTreeMultiValueV2TestIT {
       String fromKey = keys[fromKeyIndex];
 
       if (random.nextBoolean()) {
-        fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
+        fromKey = fromKey.substring(0, fromKey.length() - 1) + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
       final OCellBTreeMultiValueV2.OSBTreeCursor<String, ORID> cursor = multiValueTree
@@ -1344,7 +1350,7 @@ public class OCellBTreeMultiValueV2TestIT {
       int toKeyIndex = random.nextInt(keys.length);
       String toKey = keys[toKeyIndex];
       if (random.nextBoolean()) {
-        toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
+        toKey = toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
       final OCellBTreeMultiValueV2.OSBTreeCursor<String, ORID> cursor = multiValueTree
@@ -1404,11 +1410,11 @@ public class OCellBTreeMultiValueV2TestIT {
       String toKey = keys[toKeyIndex];
 
       if (random.nextBoolean()) {
-        fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
+        fromKey = fromKey.substring(0, fromKey.length() - 1) + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
       if (random.nextBoolean()) {
-        toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
+        toKey = toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
       if (fromKey.compareTo(toKey) > 0) {
