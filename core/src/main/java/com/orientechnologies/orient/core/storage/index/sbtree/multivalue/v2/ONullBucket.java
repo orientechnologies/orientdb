@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2;
 
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
@@ -26,9 +27,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
@@ -43,60 +47,55 @@ import java.util.List;
  * @since 4/15/14
  */
 final class ONullBucket extends ODurablePage {
+  private static final int EMBEDDED_RIDS_BOUNDARY = 64;
+
   private static final int RID_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
 
-  private static final int NEXT_FREE_LIST_OFFSET = NEXT_FREE_POSITION;
-  private static final int NEXT_OFFSET           = NEXT_FREE_LIST_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int M_ID_OFFSET               = NEXT_FREE_POSITION;
+  private static final int EMBEDDED_RIDS_SIZE_OFFSET = M_ID_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int RIDS_SIZE_OFFSET          = EMBEDDED_RIDS_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int RIDS_OFFSET               = RIDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int RIDS_SIZE_OFFSET = NEXT_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int RIDS_OFFSET      = RIDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private final OSBTree<MultiValueEntry, Byte> multiContainer;
 
-  ONullBucket(final OCacheEntry cacheEntry, final boolean isNew) {
+  ONullBucket(final OCacheEntry cacheEntry, final OSBTree<MultiValueEntry, Byte> multiContainer) {
     super(cacheEntry);
 
-    if (isNew) {
-      setIntValue(RIDS_SIZE_OFFSET, 0);
-      setIntValue(NEXT_FREE_LIST_OFFSET, -1);
-      setIntValue(NEXT_OFFSET, -1);
+    this.multiContainer = multiContainer;
+  }
+
+  protected void init(final long mId) {
+    setLongValue(M_ID_OFFSET, mId);
+    setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) 0);
+    setIntValue(RIDS_SIZE_OFFSET, 0);
+  }
+
+  void addValue(final ORID rid) throws IOException {
+    final int embeddedSize = getByteValue(EMBEDDED_RIDS_SIZE_OFFSET);
+
+    if (embeddedSize < EMBEDDED_RIDS_BOUNDARY) {
+      final int position = embeddedSize * RID_SIZE + RIDS_OFFSET;
+
+      setShortValue(position, (short) rid.getClusterId());
+      setLongValue(position + OShortSerializer.SHORT_SIZE, rid.getClusterPosition());
+
+      setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) (embeddedSize + 1));
+    } else {
+      final long mId = getLongValue(M_ID_OFFSET);
+      multiContainer.put(new MultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()), (byte) 1);
     }
-  }
 
-  void setNext(final int pageIndex) {
-    setIntValue(NEXT_OFFSET, pageIndex);
-  }
-
-  int getNext() {
-    return getIntValue(NEXT_OFFSET);
-  }
-
-  void setNextFreeList(final int pageIndex) {
-    setIntValue(NEXT_FREE_LIST_OFFSET, pageIndex);
-  }
-
-  int getNextFreeList() {
-    return getIntValue(NEXT_FREE_LIST_OFFSET);
-  }
-
-  boolean addValue(final ORID rid) {
     final int size = getIntValue(RIDS_SIZE_OFFSET);
-    final int position = size * RID_SIZE + RIDS_OFFSET;
-
-    if (position + RID_SIZE > MAX_PAGE_SIZE_BYTES) {
-      return false;
-    }
-
-    setShortValue(position, (short) rid.getClusterId());
-    setLongValue(position + OShortSerializer.SHORT_SIZE, rid.getClusterPosition());
-
     setIntValue(RIDS_SIZE_OFFSET, size + 1);
 
-    return true;
   }
 
   public List<ORID> getValues() {
-    final List<ORID> rids = new ArrayList<>();
     final int size = getIntValue(RIDS_SIZE_OFFSET);
-    final int end = size * RID_SIZE + RIDS_OFFSET;
+    final List<ORID> rids = new ArrayList<>(size);
+
+    final int embeddedSize = getByteValue(EMBEDDED_RIDS_SIZE_OFFSET);
+    final int end = embeddedSize * RID_SIZE + RIDS_OFFSET;
 
     for (int position = RIDS_OFFSET; position < end; position += RID_SIZE) {
       final int clusterId = getShortValue(position);
@@ -105,6 +104,23 @@ final class ONullBucket extends ODurablePage {
       rids.add(new ORecordId(clusterId, clusterPosition));
     }
 
+    if (size > embeddedSize) {
+      final long mId = getLongValue(M_ID_OFFSET);
+
+      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
+          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
+
+      Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
+      while (mapEntry != null) {
+        final MultiValueEntry entry = mapEntry.getKey();
+        rids.add(new ORecordId(entry.clusterId, entry.clusterPosition));
+
+        mapEntry = cursor.next(-1);
+      }
+    }
+
+    assert rids.size() == size;
+
     return rids;
   }
 
@@ -112,9 +128,11 @@ final class ONullBucket extends ODurablePage {
     return getIntValue(RIDS_SIZE_OFFSET);
   }
 
-  boolean removeValue(final ORID rid) {
+  boolean removeValue(final ORID rid) throws IOException {
     final int size = getIntValue(RIDS_SIZE_OFFSET);
-    final int end = size * RID_SIZE + RIDS_OFFSET;
+
+    final int embeddedSize = getByteValue(EMBEDDED_RIDS_SIZE_OFFSET);
+    final int end = embeddedSize * RID_SIZE + RIDS_OFFSET;
 
     for (int position = RIDS_OFFSET; position < end; position += RID_SIZE) {
       final int clusterId = getShortValue(position);
@@ -125,6 +143,16 @@ final class ONullBucket extends ODurablePage {
       final long clusterPosition = getLongValue(position + OShortSerializer.SHORT_SIZE);
       if (clusterPosition == rid.getClusterPosition()) {
         moveData(position + RID_SIZE, position, end - (position + RID_SIZE));
+        setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) (embeddedSize - 1));
+        setIntValue(RIDS_SIZE_OFFSET, size - 1);
+        return true;
+      }
+    }
+
+    if (size > embeddedSize) {
+      final long mId = getLongValue(M_ID_OFFSET);
+      final Byte result = multiContainer.remove(new MultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()));
+      if (result != null) {
         setIntValue(RIDS_SIZE_OFFSET, size - 1);
         return true;
       }
@@ -133,15 +161,42 @@ final class ONullBucket extends ODurablePage {
     return false;
   }
 
-  boolean isEmpty() {
-    return getIntValue(RIDS_SIZE_OFFSET) == 0;
+  int remove() throws IOException {
+    final long mId = getLongValue(M_ID_OFFSET);
+    final int embeddedSize = getByteValue(EMBEDDED_RIDS_SIZE_OFFSET);
+    final int size = getIntValue(RIDS_SIZE_OFFSET);
+
+    if (size > embeddedSize) {
+      final List<MultiValueEntry> entriesToRemove = new ArrayList<>(size - embeddedSize);
+
+      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
+          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
+
+      Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
+      while (mapEntry != null) {
+        final MultiValueEntry entry = mapEntry.getKey();
+        entriesToRemove.add(entry);
+
+        mapEntry = cursor.next(-1);
+      }
+
+      for (final MultiValueEntry entry : entriesToRemove) {
+        multiContainer.remove(entry);
+      }
+    }
+
+    setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) 0);
+    setIntValue(RIDS_SIZE_OFFSET, 0);
+
+    return size;
   }
 
-  boolean isFull() {
-    final int size = getIntValue(RIDS_SIZE_OFFSET);
-    final int position = size * RID_SIZE + RIDS_OFFSET;
+  void clear() {
+    setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) 0);
+    setIntValue(RIDS_SIZE_OFFSET, 0);
+  }
 
-    return position + RID_SIZE > MAX_PAGE_SIZE_BYTES;
-
+  boolean isEmpty() {
+    return getIntValue(RIDS_SIZE_OFFSET) == 0;
   }
 }
