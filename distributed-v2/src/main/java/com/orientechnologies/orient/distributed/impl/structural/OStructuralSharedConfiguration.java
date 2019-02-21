@@ -38,7 +38,7 @@ public class OStructuralSharedConfiguration {
     knownNodes.put(node.getIdentity(), node);
   }
 
-  public Collection<OStructuralNodeConfiguration> listDatabases() {
+  public Collection<OStructuralNodeConfiguration> listNodes() {
     return knownNodes.values();
   }
 }

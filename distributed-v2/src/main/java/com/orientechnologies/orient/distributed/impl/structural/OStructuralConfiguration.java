@@ -2,10 +2,10 @@ package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.server.OSystemDatabase;
 
 import java.io.*;
@@ -32,12 +32,12 @@ public class OStructuralConfiguration {
         if (config_record.hasNext()) {
           ORecordBytes record = (ORecordBytes) config_record.next();
 
-          this.deserialize(new DataInputStream(new ByteArrayInputStream(record.toStream())));
+          this.discDeserialize(new DataInputStream(new ByteArrayInputStream(record.toStream())));
         } else {
           this.init();
 
           ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-          this.serialize(new DataOutputStream(buffer));
+          this.discSerialize(new DataOutputStream(buffer));
           session.save(new ORecordBytes(buffer.toByteArray()), CLUSTER_NAME);
         }
       } catch (IOException e) {
@@ -47,7 +47,7 @@ public class OStructuralConfiguration {
     });
   }
 
-  public void serialize(DataOutput output) throws IOException {
+  protected void discSerialize(DataOutput output) throws IOException {
     this.currentNodeIdentity.serialize(output);
     this.sharedConfiguration.serialize(output);
   }
@@ -58,15 +58,33 @@ public class OStructuralConfiguration {
     this.sharedConfiguration.init();
   }
 
-  public void deserialize(DataInput input) throws IOException {
+  protected void discDeserialize(DataInput input) throws IOException {
     this.currentNodeIdentity = new ONodeIdentity();
     this.currentNodeIdentity.deserialize(input);
     sharedConfiguration = new OStructuralSharedConfiguration();
     sharedConfiguration.deserialize(input);
   }
 
-  private void save() {
-
+  public void save() {
+    systemDatabase.executeInDBScope((session) -> {
+      try {
+        assert session.existsCluster(CLUSTER_NAME);
+        ORecordIteratorCluster<ORecord> config_record = session.browseCluster(CLUSTER_NAME);
+        if (config_record.hasNext()) {
+          ORecordBytes record = (ORecordBytes) config_record.next();
+          ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+          this.discSerialize(new DataOutputStream(buffer));
+          record.setDirty();
+          record.fromStream(buffer.toByteArray());
+          session.save(record);
+        } else {
+          throw new ODatabaseException("Missing configuration record");
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return null;
+    });
   }
 
   public OStructuralNodeConfiguration getConfiguration(ONodeIdentity nodeId) {

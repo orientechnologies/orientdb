@@ -36,10 +36,22 @@ public class OStructuralConfigurationTest {
     assertEquals(generatedId, configuration1.getCurrentNodeIdentity());
   }
 
+  @Test
+  public void testChangeSaveLoad() {
+    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context);
+    ONodeIdentity generatedId = configuration.getCurrentNodeIdentity();
+    configuration.getSharedConfiguration().addNode(new OStructuralNodeConfiguration(ONodeIdentity.generate()));
+    configuration.save();
+
+    OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context);
+    assertEquals(generatedId, configuration1.getCurrentNodeIdentity());
+    assertEquals(1, configuration1.getSharedConfiguration().listNodes().size());
+  }
+
   @After
   public void after() {
     context.drop(OSystemDatabase.SYSTEM_DB_NAME, null, null);
     context.close();
   }
-  
+
 }

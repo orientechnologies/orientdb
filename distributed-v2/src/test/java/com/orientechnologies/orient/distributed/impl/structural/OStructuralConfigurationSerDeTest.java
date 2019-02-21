@@ -45,14 +45,14 @@ public class OStructuralConfigurationSerDeTest {
 
     configuration.getSharedConfiguration().addNode(nodeConfiguration1);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    configuration.serialize(new DataOutputStream(outputStream));
+    configuration.discSerialize(new DataOutputStream(outputStream));
 
     OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context);
-    configuration1.deserialize(new DataInputStream(new ByteArrayInputStream(outputStream.toByteArray())));
+    configuration1.discDeserialize(new DataInputStream(new ByteArrayInputStream(outputStream.toByteArray())));
 
     assertEquals(configuration1.getCurrentNodeIdentity(), configuration.getCurrentNodeIdentity());
-    assertEquals(configuration1.getSharedConfiguration().listDatabases().size(),
-        configuration.getSharedConfiguration().listDatabases().size());
+    assertEquals(configuration1.getSharedConfiguration().listNodes().size(),
+        configuration.getSharedConfiguration().listNodes().size());
 
   }
 
