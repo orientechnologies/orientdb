@@ -105,6 +105,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private final HashMap<String, Object> cache = new HashMap<>();
 
+  private long                                pendingNotificationsCount;
   private OStorageConfigurationUpdateListener updateListener;
 
   private final ThreadLocal<Boolean> pauseNotifications = ThreadLocal.withInitial(() -> false);
@@ -158,6 +159,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireWriteLock();
     try {
       updateListener = null;
+      pendingNotificationsCount = 0;
 
       cluster.delete();
       btree.delete();
@@ -172,6 +174,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireWriteLock();
     try {
       updateListener = null;
+      pendingNotificationsCount = 0;
 
       updateConfigurationProperty();
       updateMinimumClusters();
@@ -222,8 +225,9 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     try {
       pauseNotifications.set(false);
 
-      if (updateListener != null) {
+      if (pendingNotificationsCount > 0 && updateListener != null) {
         updateListener.onUpdate(this);
+        pendingNotificationsCount = 0;
       }
     } finally {
       lock.releaseWriteLock();
@@ -1308,6 +1312,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireWriteLock();
     try {
       this.updateListener = updateListener;
+      this.pendingNotificationsCount = 0;
     } finally {
       lock.releaseWriteLock();
     }
@@ -1550,8 +1555,13 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       throw OException.wrapException(new OStorageException("Error during drop of property " + name), e);
     }
 
-    if (updateListener != null && !pauseNotifications.get()) {
-      updateListener.onUpdate(this);
+    if (updateListener != null) {
+      if (!pauseNotifications.get()) {
+        updateListener.onUpdate(this);
+        pendingNotificationsCount = 0;
+      } else {
+        pendingNotificationsCount++;
+      }
     }
   }
 
@@ -1631,8 +1641,13 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       throw OException.wrapException(new OStorageException("Error during update of configuration property " + name), e);
     }
 
-    if (updateListener != null && !pauseNotifications.get()) {
-      updateListener.onUpdate(this);
+    if (updateListener != null) {
+      if (!pauseNotifications.get()) {
+        pendingNotificationsCount = 0;
+        updateListener.onUpdate(this);
+      } else {
+        pendingNotificationsCount++;
+      }
     }
   }
 
