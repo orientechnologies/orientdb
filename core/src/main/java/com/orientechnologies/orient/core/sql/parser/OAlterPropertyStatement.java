@@ -69,15 +69,15 @@ public class OAlterPropertyStatement extends ODDLStatement {
       String setting = settingName.getStringValue();
       boolean isCollate = setting.equalsIgnoreCase("collate");
       Object finalValue = settingValue.execute((OIdentifiable) null, ctx);
-      if (finalValue == null && 
-         (setting.equalsIgnoreCase("name") || setting.equalsIgnoreCase("shortname") || isCollate)) {
+      if (finalValue == null && (setting.equalsIgnoreCase("name") || setting.equalsIgnoreCase("shortname") || setting
+          .equalsIgnoreCase("type") || isCollate)) {
         finalValue = settingValue.toString();
         String stringFinalValue = (String) finalValue;
         if (stringFinalValue.startsWith("`") && stringFinalValue.endsWith("`") && stringFinalValue.length() > 2) {
           stringFinalValue = stringFinalValue.substring(1, stringFinalValue.length() - 1);
           finalValue = stringFinalValue;
         }
-      }      
+      }
       OProperty.ATTRIBUTES attribute;
       try {
         attribute = OProperty.ATTRIBUTES.valueOf(setting.toUpperCase(Locale.ENGLISH));

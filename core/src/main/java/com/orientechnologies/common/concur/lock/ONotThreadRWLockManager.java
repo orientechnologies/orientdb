@@ -12,9 +12,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ONotThreadRWLockManager<T> implements OSimpleRWLockManager<T> {
 
   private class LockGuard {
-    private int       count;
-    private Condition condition;
-    private boolean   shared;
+    private volatile int       count;
+    private final    Condition condition;
+    private final    boolean   shared;
 
     public LockGuard(int count, Condition condition, boolean shared) {
       this.count = count;

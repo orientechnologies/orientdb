@@ -692,8 +692,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         throw new ODistributedException("No enough nodes online to execute the operation, online nodes: " + online);
       }
 
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
-
       txManager.commit(this, iTx);
       return;
     } catch (OValidationException e) {
@@ -713,9 +711,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     //Sort and lock transaction entry in distributed environment
     Set<ORID> rids = new TreeSet<>();
     for (ORecordOperation entry : tx.getRecordOperations()) {
-      rids.add(entry.getRID());
+      if (entry.getType() != ORecordOperation.CREATED) {
+        rids.add(entry.getRID());
+      } else {
+        rids.add(new ORecordId(entry.getRID().getClusterId(), -1));
+      }
     }
-    for (ORID rid : rids) {
+      for (ORID rid : rids) {
       txContext.lock(rid);
     }
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
@@ -947,9 +949,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   private void firstPhaseDataChecks(boolean local, OTransactionInternal transaction) {
-    if (!local) {
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
-    }
+    ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
 
     for (Map.Entry<String, OTransactionIndexChanges> change : transaction.getIndexOperations().entrySet()) {
       OIndex<?> index = getSharedContext().getIndexManager().getRawIndex(change.getKey());

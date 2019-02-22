@@ -22,7 +22,7 @@ public class OExpression extends SimpleNode {
   protected Boolean singleQuotes;
   protected Boolean doubleQuotes;
 
-  protected boolean isNull = false;
+  protected boolean                isNull = false;
   protected ORid                   rid;
   protected OMathExpression        mathExpression;
   protected OArrayConcatExpression arrayConcatExpression;
@@ -161,6 +161,9 @@ public class OExpression extends SimpleNode {
     }
 
     if (booleanValue != null) {
+      return true;
+    }
+    if (rid != null) {
       return true;
     }
     if (value instanceof Number) {
