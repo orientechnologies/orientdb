@@ -105,10 +105,9 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private final HashMap<String, Object> cache = new HashMap<>();
 
-  private long                                pendingNotificationsCount;
   private OStorageConfigurationUpdateListener updateListener;
 
-  private final ThreadLocal<Boolean> pauseNotifications = ThreadLocal.withInitial(() -> false);
+  private final ThreadLocal<PausedNotificationsState> pauseNotifications = ThreadLocal.withInitial(PausedNotificationsState::new);
 
   public static boolean exists(final OWriteCache writeCache) {
     return writeCache.exists(COMPONENT_NAME + DATA_FILE_EXTENSION);
@@ -159,7 +158,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireWriteLock();
     try {
       updateListener = null;
-      pendingNotificationsCount = 0;
 
       cluster.delete();
       btree.delete();
@@ -174,7 +172,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireWriteLock();
     try {
       updateListener = null;
-      pendingNotificationsCount = 0;
 
       updateConfigurationProperty();
       updateMinimumClusters();
@@ -214,7 +211,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void pauseUpdateNotifications() {
     lock.acquireWriteLock();
     try {
-      pauseNotifications.set(true);
+      final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
+      pausedNotificationsState.notificationsPaused = true;
     } finally {
       lock.releaseWriteLock();
     }
@@ -223,12 +221,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void fireUpdateNotifications() {
     lock.acquireWriteLock();
     try {
-      pauseNotifications.set(false);
+      final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
 
-      if (pendingNotificationsCount > 0 && updateListener != null) {
+      if (pausedNotificationsState.pendingChanges > 0 && updateListener != null) {
         updateListener.onUpdate(this);
-        pendingNotificationsCount = 0;
+        pausedNotificationsState.pendingChanges = 0;
       }
+
+      pausedNotificationsState.notificationsPaused = false;
     } finally {
       lock.releaseWriteLock();
     }
@@ -1312,7 +1312,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireWriteLock();
     try {
       this.updateListener = updateListener;
-      this.pendingNotificationsCount = 0;
     } finally {
       lock.releaseWriteLock();
     }
@@ -1555,12 +1554,13 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       throw OException.wrapException(new OStorageException("Error during drop of property " + name), e);
     }
 
+    final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
     if (updateListener != null) {
-      if (!pauseNotifications.get()) {
+      if (!pausedNotificationsState.notificationsPaused) {
         updateListener.onUpdate(this);
-        pendingNotificationsCount = 0;
+        pausedNotificationsState.pendingChanges = 0;
       } else {
-        pendingNotificationsCount++;
+        pausedNotificationsState.pendingChanges++;
       }
     }
   }
@@ -1641,12 +1641,13 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       throw OException.wrapException(new OStorageException("Error during update of configuration property " + name), e);
     }
 
+    final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
     if (updateListener != null) {
-      if (!pauseNotifications.get()) {
-        pendingNotificationsCount = 0;
+      if (!pausedNotificationsState.notificationsPaused) {
+        pausedNotificationsState.pendingChanges = 0;
         updateListener.onUpdate(this);
       } else {
-        pendingNotificationsCount++;
+        pausedNotificationsState.pendingChanges++;
       }
     }
   }
@@ -1795,4 +1796,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
+  private static final class PausedNotificationsState {
+    private boolean notificationsPaused;
+    private long    pendingChanges;
+  }
 }
