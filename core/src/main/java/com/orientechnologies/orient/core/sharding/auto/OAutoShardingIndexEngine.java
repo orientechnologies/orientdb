@@ -147,7 +147,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       }
 
       for (OHashTable<Object, Object> p : partitions)
-        p.load(indexName + "_" + (i++), keyTypes, nullPointerSupport, encryption, hashFunction);
+        //noinspection unchecked
+        p.load(indexName + "_" + (i++), keyTypes, nullPointerSupport, encryption, hashFunction, keySerializer, valueSerializer);
     }
   }
 

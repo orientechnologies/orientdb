@@ -139,7 +139,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       //noinspection unchecked
       hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
     }
-    hashTable.load(indexName, keyTypes, nullPointerSupport, encryption, hashFunction);
+    //noinspection unchecked
+    hashTable.load(indexName, keyTypes, nullPointerSupport, encryption, hashFunction, keySerializer, valueSerializer);
   }
 
   @Override
