@@ -1240,17 +1240,8 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent {
     final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
 
     if (splitLeaf) {
-      if (bucketSize == 1) {
-        final Bucket.LeafEntry currentEntry = bucketToSplit.getLeafEntry(0);
-        final List<ORID> values = currentEntry.values;
-
-        final long mId = incrementMId(atomicOperation);
-        final Bucket.LeafEntry rightEntry = new Bucket.LeafEntry(currentEntry.key, mId, values.subList(0, values.size() / 2));
-        rightEntries.add(rightEntry);
-      } else {
-        for (int i = startRightIndex; i < bucketSize; i++) {
-          rightEntries.add(bucketToSplit.getLeafEntry(i));
-        }
+      for (int i = startRightIndex; i < bucketSize; i++) {
+        rightEntries.add(bucketToSplit.getLeafEntry(i));
       }
     } else {
       for (int i = startRightIndex; i < bucketSize; i++) {
