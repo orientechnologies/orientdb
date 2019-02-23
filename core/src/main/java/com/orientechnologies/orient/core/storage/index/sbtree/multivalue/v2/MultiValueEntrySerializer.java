@@ -7,9 +7,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 
 import java.nio.ByteBuffer;
 
-public class OMultiValueEntrySerializer implements OBinarySerializer<MultiValueEntry> {
-  public static final int                        ID       = 27;
-  public static final OMultiValueEntrySerializer INSTANCE = new OMultiValueEntrySerializer();
+public class MultiValueEntrySerializer implements OBinarySerializer<MultiValueEntry> {
+  public static final int                       ID       = 27;
+  public static final MultiValueEntrySerializer INSTANCE = new MultiValueEntrySerializer();
 
   @Override
   public int getObjectSize(final MultiValueEntry object, final Object... hints) {

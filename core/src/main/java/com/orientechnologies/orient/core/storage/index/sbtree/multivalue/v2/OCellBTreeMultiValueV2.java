@@ -167,7 +167,7 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
         }
 
         multiContainer = new OSBTree<>(getName(), containerExtension, null, storage);
-        multiContainer.create(OMultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
+        multiContainer.create(MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
       } finally {
         releaseExclusiveLock();
       }
@@ -513,7 +513,7 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
       this.keySerializer = keySerializer;
 
       multiContainer = new OSBTree<>(getName(), containerExtension, null, storage);
-      multiContainer.load(getName(), OMultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
+      multiContainer.load(getName(), MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
 
       final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
       try {
