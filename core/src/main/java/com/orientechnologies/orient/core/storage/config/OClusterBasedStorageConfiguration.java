@@ -107,7 +107,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private OStorageConfigurationUpdateListener updateListener;
 
-  private final ThreadLocal<Boolean> pauseNotifications = ThreadLocal.withInitial(() -> false);
+  private final ThreadLocal<PausedNotificationsState> pauseNotifications = ThreadLocal.withInitial(PausedNotificationsState::new);
 
   public static boolean exists(final OWriteCache writeCache) {
     return writeCache.exists(COMPONENT_NAME + DATA_FILE_EXTENSION);
@@ -211,7 +211,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void pauseUpdateNotifications() {
     lock.acquireWriteLock();
     try {
-      pauseNotifications.set(true);
+      final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
+      pausedNotificationsState.notificationsPaused = true;
     } finally {
       lock.releaseWriteLock();
     }
@@ -220,11 +221,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void fireUpdateNotifications() {
     lock.acquireWriteLock();
     try {
-      pauseNotifications.set(false);
+      final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
 
-      if (updateListener != null) {
+      if (pausedNotificationsState.pendingChanges > 0 && updateListener != null) {
         updateListener.onUpdate(this);
+        pausedNotificationsState.pendingChanges = 0;
       }
+
+      pausedNotificationsState.notificationsPaused = false;
     } finally {
       lock.releaseWriteLock();
     }
@@ -1550,8 +1554,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       throw OException.wrapException(new OStorageException("Error during drop of property " + name), e);
     }
 
-    if (updateListener != null && !pauseNotifications.get()) {
-      updateListener.onUpdate(this);
+    final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
+    if (updateListener != null) {
+      if (!pausedNotificationsState.notificationsPaused) {
+        updateListener.onUpdate(this);
+        pausedNotificationsState.pendingChanges = 0;
+      } else {
+        pausedNotificationsState.pendingChanges++;
+      }
     }
   }
 
@@ -1631,8 +1641,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       throw OException.wrapException(new OStorageException("Error during update of configuration property " + name), e);
     }
 
-    if (updateListener != null && !pauseNotifications.get()) {
-      updateListener.onUpdate(this);
+    final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
+    if (updateListener != null) {
+      if (!pausedNotificationsState.notificationsPaused) {
+        pausedNotificationsState.pendingChanges = 0;
+        updateListener.onUpdate(this);
+      } else {
+        pausedNotificationsState.pendingChanges++;
+      }
     }
   }
 
@@ -1780,4 +1796,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
+  private static final class PausedNotificationsState {
+    private boolean notificationsPaused;
+    private long    pendingChanges;
+  }
 }
