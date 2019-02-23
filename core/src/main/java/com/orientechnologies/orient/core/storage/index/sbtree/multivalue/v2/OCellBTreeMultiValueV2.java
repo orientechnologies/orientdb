@@ -103,8 +103,8 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
   private OType[]              keyTypes;
   private OEncryption          encryption;
 
-  private       OSBTree<MultiValueEntry, Byte> multiContainer;
-  private final OModifiableLong                mIdCounter = new OModifiableLong();
+  private       OSBTree<OMultiValueEntry, Byte> multiContainer;
+  private final OModifiableLong                 mIdCounter = new OModifiableLong();
 
   public OCellBTreeMultiValueV2(final String name, final String dataFileExtension, final String nullFileExtension,
       final String containerExtension, final OAbstractPaginatedStorage storage) {
