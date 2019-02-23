@@ -538,7 +538,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
           doc.setLazyLoad(false);
 
-          final OIdentifiable oldRid = doc.<OIdentifiable>field("rid");
+          final OIdentifiable oldRid = doc.field("rid");
           final OIdentifiable newRid;
           if (!doc.<Boolean>field("binary")) {
             if (exportImportHashTable != null)
@@ -554,9 +554,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             if (exportImportHashTable != null)
               newRid = exportImportHashTable.get(doc.<OIdentifiable>field("rid")).getIdentity();
             else
-              newRid = doc.<OIdentifiable>field("rid");
+              newRid = doc.field("rid");
 
-            index.put(binarySerializer.deserialize(doc.<byte[]>field("key"), 0), newRid != null ? newRid : oldRid);
+            index.put(binarySerializer.deserialize(doc.field("key"), 0), newRid != null ? newRid : oldRid);
           }
           tot++;
         }
@@ -1078,7 +1078,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     exportImportHashTable = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager()
         .createIndex(EXPORT_IMPORT_MAP_NAME, OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
-            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK), null, null, null);
+            new OSimpleKeyIndexDefinition(OType.LINK), null, null, null);
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
@@ -1348,7 +1348,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
 
         if (indexDefinition == null) {
-          indexDefinition = new OSimpleKeyIndexDefinition(0, OType.STRING);
+          indexDefinition = new OSimpleKeyIndexDefinition(OType.STRING);
         }
 
         boolean oldValue = OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();

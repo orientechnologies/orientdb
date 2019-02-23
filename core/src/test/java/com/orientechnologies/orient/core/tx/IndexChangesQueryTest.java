@@ -35,7 +35,7 @@ public class IndexChangesQueryTest {
     orientDB.create("test", ODatabaseType.MEMORY);
     database = orientDB.open("test", "admin", "admin");
     database.getMetadata().getIndexManager()
-        .createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null,
+        .createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null,
             null, null);
   }
 

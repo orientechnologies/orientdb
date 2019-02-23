@@ -14,23 +14,33 @@ import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1.OCellBTreeMultiValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.OCellBTreeMultiValueV2;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine {
+public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine, OCellBTreeIndexEngine {
   private static final String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
+  public static final  String M_CONTAINER_EXTENSION      = ".mbt";
 
-  private final OCellBTreeMultiValueV1<Object> sbTree;
-  private final String                         name;
+  private final OCellBTreeMultiValue<Object> sbTree;
+  private final String                       name;
 
-  public OCellBTreeMultiValueIndexEngine(String name, OAbstractPaginatedStorage storage) {
+  public OCellBTreeMultiValueIndexEngine(String name, OAbstractPaginatedStorage storage, final int version) {
     this.name = name;
-    this.sbTree = new OCellBTreeMultiValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+    if (version == 1) {
+      this.sbTree = new OCellBTreeMultiValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+    } else if (version == 2) {
+      this.sbTree = new OCellBTreeMultiValueV2<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
+          storage);
+    } else {
+      throw new IllegalStateException("Invalid tree version " + version);
+    }
   }
 
   @Override
@@ -108,11 +118,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public int getVersion() {
-    return 0;
-  }
-
-  @Override
   public void clear() {
     try {
       sbTree.clear();
@@ -154,7 +159,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   @Override
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
-      private final OCellBTreeMultiValueV1.OSBTreeKeyCursor<Object> sbTreeKeyCursor = sbTree.keyCursor();
+      private final OCellBTreeMultiValue.OCellBTreeKeyCursor<Object> sbTreeKeyCursor = sbTree.keyCursor();
 
       @Override
       public Object next(int prefetchSize) {
@@ -214,7 +219,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       }
 
       if (firstKey != null && lastKey != null) {
-        final OCellBTreeMultiValueV1.OSBTreeCursor<Object, ORID> cursor = sbTree
+        final OCellBTreeMultiValue.OCellBTreeCursor<Object, ORID> cursor = sbTree
             .iterateEntriesBetween(firstKey, true, lastKey, true, true);
 
         Object prevKey = new Object();
@@ -255,9 +260,9 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   private static final class OSBTreeIndexCursor extends OIndexAbstractCursor {
-    private final OCellBTreeMultiValueV1.OSBTreeCursor<Object, ORID> treeCursor;
+    private final OCellBTreeMultiValue.OCellBTreeCursor<Object, ORID> treeCursor;
 
-    private OSBTreeIndexCursor(OCellBTreeMultiValueV1.OSBTreeCursor<Object, ORID> treeCursor) {
+    private OSBTreeIndexCursor(OCellBTreeMultiValue.OCellBTreeCursor<Object, ORID> treeCursor) {
       this.treeCursor = treeCursor;
     }
 

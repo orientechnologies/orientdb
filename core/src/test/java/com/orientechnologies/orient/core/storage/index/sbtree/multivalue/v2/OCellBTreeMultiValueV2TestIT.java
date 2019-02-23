@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -1172,7 +1173,7 @@ public class OCellBTreeMultiValueV2TestIT {
     Assert.assertEquals(multiValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(multiValueTree.lastKey(), keyValues.lastKey());
 
-    final OCellBTreeMultiValueV2.OSBTreeKeyCursor<String> cursor = multiValueTree.keyCursor();
+    final OCellBTreeMultiValue.OCellBTreeKeyCursor<String> cursor = multiValueTree.keyCursor();
 
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = cursor.next(-1);
@@ -1300,7 +1301,7 @@ public class OCellBTreeMultiValueV2TestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 1) + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final OCellBTreeMultiValueV2.OSBTreeCursor<String, ORID> cursor = multiValueTree
+      final OCellBTreeMultiValue.OCellBTreeCursor<String, ORID> cursor = multiValueTree
           .iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, Integer>> iterator;
@@ -1352,7 +1353,7 @@ public class OCellBTreeMultiValueV2TestIT {
         toKey = toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final OCellBTreeMultiValueV2.OSBTreeCursor<String, ORID> cursor = multiValueTree
+      final OCellBTreeMultiValue.OCellBTreeCursor<String, ORID> cursor = multiValueTree
           .iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, Integer>> iterator;
@@ -1420,7 +1421,7 @@ public class OCellBTreeMultiValueV2TestIT {
         fromKey = toKey;
       }
 
-      OCellBTreeMultiValueV2.OSBTreeCursor<String, ORID> cursor = multiValueTree
+      OCellBTreeMultiValue.OCellBTreeCursor<String, ORID> cursor = multiValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, Integer>> iterator;
