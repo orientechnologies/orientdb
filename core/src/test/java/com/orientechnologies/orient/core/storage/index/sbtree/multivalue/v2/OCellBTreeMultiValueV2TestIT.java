@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1.OCellBTreeMultiValueV1TestIT;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,7 +35,7 @@ public class OCellBTreeMultiValueV2TestIT {
   @Before
   public void before() throws IOException {
     final String buildDirectory =
-        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeMultiValueV1TestIT.class.getSimpleName();
+        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeMultiValueV2TestIT.class.getSimpleName();
 
     final File dbDirectory = new File(buildDirectory, DB_NAME);
     OFileUtils.deleteRecursively(dbDirectory);
