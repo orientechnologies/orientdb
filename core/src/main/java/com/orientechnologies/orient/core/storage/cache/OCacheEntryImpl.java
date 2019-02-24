@@ -17,7 +17,6 @@ public class OCacheEntryImpl implements OCacheEntry {
   private final long          fileId;
   private final long          pageIndex;
 
-  private       boolean       dirty;
   private final AtomicInteger usagesCount = new AtomicInteger();
   private final AtomicInteger state       = new AtomicInteger();
 
@@ -116,21 +115,6 @@ public class OCacheEntryImpl implements OCacheEntry {
   @Override
   public void setEndLSN(final OLogSequenceNumber endLSN) {
     dataPointer.setEndLSN(endLSN);
-  }
-
-  @Override
-  public void markDirty() {
-    this.dirty = true;
-  }
-
-  @Override
-  public void clearDirty() {
-    this.dirty = false;
-  }
-
-  @Override
-  public boolean isDirty() {
-    return dirty;
   }
 
   @Override

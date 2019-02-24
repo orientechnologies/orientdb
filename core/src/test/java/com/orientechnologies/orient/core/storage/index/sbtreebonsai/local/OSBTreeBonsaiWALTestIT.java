@@ -318,7 +318,6 @@
 //              durablePage.restoreChanges(updatePageRecord.getChanges());
 //              durablePage.setLsn(new OLogSequenceNumber(0, 0));
 //
-//              cacheEntry.markDirty();
 //            } finally {
 //              expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
 //            }

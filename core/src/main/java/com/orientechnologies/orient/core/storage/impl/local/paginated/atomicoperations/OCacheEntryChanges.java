@@ -120,21 +120,6 @@ public class OCacheEntryChanges implements OCacheEntry {
   }
 
   @Override
-  public void markDirty() {
-    delegate.markDirty();
-  }
-
-  @Override
-  public void clearDirty() {
-    delegate.clearDirty();
-  }
-
-  @Override
-  public boolean isDirty() {
-    return delegate.isDirty();
-  }
-
-  @Override
   public boolean acquireEntry() {
     return delegate.acquireEntry();
   }
