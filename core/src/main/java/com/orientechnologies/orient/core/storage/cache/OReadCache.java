@@ -41,7 +41,6 @@ import java.io.IOException;
  * <li>Get pointer to the direct memory which is allocated to hold page data {@link OCachePointer#getDataPointer()}</li>
  * <li>Change page content as you wish.</li>
  * <li>Release page write lock {@link OCachePointer#releaseExclusiveLock()}</li>
- * <li>Mark page as dirty so it will be flushed eventually to the disk {@link OCacheEntry#markDirty()}</li>
  * <li>Put page back to the cache {@link #release(OCacheEntry, OWriteCache)}</li>
  * </ol>
  * <p>
