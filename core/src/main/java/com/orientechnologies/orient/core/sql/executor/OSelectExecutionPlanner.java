@@ -1992,6 +1992,9 @@ public class OSelectExecutionPlanner {
     } else {
       result = new ArrayList<>();
       result.add(createParallelIndexFetch(optimumIndexSearchDescriptors, filterClusters, ctx, profilingEnabled));
+      if (optimumIndexSearchDescriptors.size() > 1) {
+        result.add(new DistinctExecutionStep(ctx, profilingEnabled));
+      }
     }
     return result;
   }
