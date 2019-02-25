@@ -1400,7 +1400,6 @@ public class OSelectStatementExecutionTest {
     OExecutionPlan p2 = p.get();
     Assert.assertTrue(p2 instanceof OSelectExecutionPlan);
     OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
-    Assert.assertEquals(2, plan.getSteps().size());
     Assert.assertEquals(ParallelExecStep.class, plan.getSteps().get(0).getClass());
     ParallelExecStep parallel = (ParallelExecStep) plan.getSteps().get(0);
     Assert.assertEquals(2, parallel.getSubExecutionPlans().size());
