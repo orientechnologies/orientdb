@@ -182,7 +182,8 @@ public class OIncrementalServerSync {
                     do {
                       newRecord = Orient.instance().getRecordFactoryManager()
                           .newInstance((byte) recordType, rid.getClusterId(), null);
-                      ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion, recordContent, true);
+                      ORecordInternal
+                          .fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion - 1, recordContent, true);
 
                       try {
                         newRecord.save();
