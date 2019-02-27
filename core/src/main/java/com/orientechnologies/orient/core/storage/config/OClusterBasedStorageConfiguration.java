@@ -1779,7 +1779,9 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
     final List<OStorageClusterConfiguration> clusters = storageConfiguration.getClusters();
     for (final OStorageClusterConfiguration cluster : clusters) {
-      updateCluster(cluster);
+      if (cluster != null) {
+        updateCluster(cluster);
+      }
     }
 
     setCreationVersion(storageConfiguration.getCreatedAtVersion());
