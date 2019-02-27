@@ -2330,13 +2330,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
 
-        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName,
-            algorithm, indexType, durableInNonTxMode, version, apiVersion, multivalue, valueSerializer.getId(),
-            keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport, keySize, null, null, engineProperties);
-
         final OBaseIndexEngine engine = OIndexes
             .createIndexEngine(engineName, algorithm, indexType, durableInNonTxMode, this, version, apiVersion, multivalue,
                 engineProperties, null);
+
+        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName,
+            algorithm, indexType, durableInNonTxMode, version, engine.getEngineAPIVersion(), multivalue, valueSerializer.getId(),
+            keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport, keySize, null, null, engineProperties);
 
         if (engineData.getApiVersion() < 1) {
           ((OIndexEngine) engine)
