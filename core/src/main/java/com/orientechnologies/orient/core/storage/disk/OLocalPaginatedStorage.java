@@ -409,23 +409,21 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected OWriteAheadLog createWalFromIBUFiles(final File directory) throws IOException {
+  protected OWriteAheadLog createWalFromIBUFiles(final File directory, final OContextConfiguration contextConfiguration,
+      final Locale locale) throws IOException {
 
     return new OCASDiskWriteAheadLog(name, storagePath, directory.toPath(),
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
-        getConfiguration().getContextConfiguration().getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60
-            * 1_000_000_000L,
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L,
-        10, true, getConfiguration().getLocaleInstance(), OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
+        contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60 * 1_000_000_000L,
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L, 10, true, locale,
+        OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
-        getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
-        getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
-        getConfiguration().getContextConfiguration()
-            .getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
-        getConfiguration().getContextConfiguration()
-            .getValueAsInteger(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
   }
 
   @Override
