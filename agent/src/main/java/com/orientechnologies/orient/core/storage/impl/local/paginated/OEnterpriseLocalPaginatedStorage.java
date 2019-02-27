@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConf
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -54,6 +55,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -434,15 +436,19 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       final List<String> currentFiles = new ArrayList<String>(writeCache.files().keySet());
       final Locale serverLocale = configuration.getLocaleInstance();
       final OContextConfiguration contextConfiguration = configuration.getContextConfiguration();
+      final String charset = configuration.getCharset();
+      final Locale locale = configuration.getLocaleInstance();
 
       closeClusters(false);
       closeIndexes(false);
 
       sbTreeCollectionManager.clear();
       sharedContainer.clearResources();
+      ((OClusterBasedStorageConfiguration) configuration).close();
+      configuration = null;
 
       final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-      final ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream, Charset.forName(configuration.getCharset()));
+      final ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream, Charset.forName(charset));
       final int pageSize = writeCache.pageSize();
 
       ZipEntry zipEntry;
@@ -534,7 +540,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               if (cacheEntry != null)
                 readCache.releaseFromWrite(cacheEntry, writeCache);
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache,  null);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache, null);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
@@ -576,7 +582,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         }
       }
 
-      final OWriteAheadLog restoreLog = createWalFromIBUFiles(walTempDir);
+      final OWriteAheadLog restoreLog = createWalFromIBUFiles(walTempDir, contextConfiguration, locale);
       OLogSequenceNumber restoreLsn = null;
 
       if (restoreLog != null) {
@@ -598,9 +604,27 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         OLogManager.instance().error(this, "Can not remove temporary backup directory " + walTempDir.getAbsolutePath(), null);
       }
 
-      ((OClusterBasedStorageConfiguration) configuration).close();
-      configuration = new OClusterBasedStorageConfiguration(this);
-      ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration);
+      if (OClusterBasedStorageConfiguration.exists(writeCache)) {
+        configuration = new OClusterBasedStorageConfiguration(this);
+        ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration);
+      } else {
+        if (Files.exists(getStoragePath().resolve("database.ocf"))) {
+          final OStorageConfigurationSegment oldConfig = new OStorageConfigurationSegment(this);
+          oldConfig.load(contextConfiguration);
+
+          final OClusterBasedStorageConfiguration atomicConfiguration = new OClusterBasedStorageConfiguration(this);
+          atomicConfiguration.create(contextConfiguration, oldConfig);
+          configuration = atomicConfiguration;
+
+          oldConfig.close();
+          Files.deleteIfExists(getStoragePath().resolve("database.ocf"));
+        }
+
+        if (configuration == null) {
+          configuration = new OClusterBasedStorageConfiguration(this);
+          ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration);
+        }
+      }
 
       openClusters();
       openIndexes();
@@ -644,8 +668,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   private void replaceConfiguration(ZipInputStream zipInputStream, Charset charset) throws IOException {
-    OContextConfiguration config = getConfiguration().getContextConfiguration();
-
     byte[] buffer = new byte[1024];
 
     int rb = 0;
@@ -664,13 +686,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         System.arraycopy(oldBuffer, 0, buffer, 0, oldBuffer.length);
       }
     }
-
-    ((OStorageConfigurationImpl) getConfiguration()).fromStream(buffer, 0, rb, charset);
-    ((OStorageConfigurationImpl) getConfiguration()).update();
-
-    ((OStorageConfigurationImpl) getConfiguration()).close();
-
-    ((OStorageConfigurationImpl) getConfiguration()).load(config);
   }
 
 }
