@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipOutputStream;
@@ -46,12 +47,12 @@ import java.util.zip.ZipOutputStream;
 public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   private static final int ONE_KB = 1024;
 
-  public ODirectMemoryStorage(String name, String filePath, String mode, int id) {
+  public ODirectMemoryStorage(final String name, final String filePath, final String mode, final int id) {
     super(name, filePath, mode, id);
   }
 
   @Override
-  protected void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException {
+  protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration) throws IOException {
     if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       if (writeAheadLog == null) {
         writeAheadLog = new OMemoryWriteAheadLog();
@@ -74,18 +75,18 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void postCloseSteps(boolean onDelete, boolean jvmError) throws IOException {
+  protected void postCloseSteps(final boolean onDelete, final boolean jvmError) throws IOException {
   }
 
   @Override
   public boolean exists() {
     try {
       return readCache != null && writeCache.exists("default" + OPaginatedCluster.DEF_EXTENSION);
-    } catch (RuntimeException e) {
+    } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
+    } catch (final Error e) {
       throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
   }
@@ -105,35 +106,37 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
-      OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
     try {
       throw new UnsupportedOperationException();
-    } catch (RuntimeException e) {
+    } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
+    } catch (final Error e) {
       throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
+  public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener)
       throws IOException {
     try {
       throw new UnsupportedOperationException();
-    } catch (RuntimeException e) {
+    } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
+    } catch (final Error e) {
       throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
-  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
+  protected OLogSequenceNumber copyWALToIncrementalBackup(final ZipOutputStream zipOutputStream, final long startSegment)
+      throws IOException {
     return null;
   }
 
@@ -148,11 +151,12 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void addFileToDirectory(String name, InputStream stream, File directory) throws IOException {
+  protected void addFileToDirectory(final String name, final InputStream stream, final File directory) throws IOException {
   }
 
   @Override
-  protected OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException {
+  protected OWriteAheadLog createWalFromIBUFiles(final File directory, final OContextConfiguration contextConfiguration,
+      final Locale locale) throws IOException {
     return null;
   }
 
@@ -160,11 +164,11 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   public void shutdown() {
     try {
       delete();
-    } catch (RuntimeException e) {
+    } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
+    } catch (final Error e) {
       throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
   }
