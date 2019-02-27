@@ -191,7 +191,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -4240,8 +4239,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected abstract void addFileToDirectory(String name, InputStream stream, File directory) throws IOException;
 
   @SuppressWarnings("unused")
-  protected abstract OWriteAheadLog createWalFromIBUFiles(File directory, final OContextConfiguration contextConfiguration,
-      final Locale locale) throws IOException;
+  protected abstract OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException;
 
   /**
    * Checks if the storage is open. If it's closed an exception is raised.
