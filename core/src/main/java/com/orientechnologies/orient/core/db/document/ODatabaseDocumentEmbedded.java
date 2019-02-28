@@ -608,12 +608,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
 
-    ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
+    ((OAbstractPaginatedStorage) this.storage.getUnderlying()).pauseConfigurationUpdateNotifications();
     OResultSet original;
     try {
       original = executor.execute(this, script, args);
     } finally {
-      ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
+      ((OAbstractPaginatedStorage) this.storage.getUnderlying()).fireConfigurationUpdateNotifications();
     }
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result.getQueryId(), result);
@@ -629,11 +629,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original;
 
-    ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
+    ((OAbstractPaginatedStorage) this.storage.getUnderlying()).pauseConfigurationUpdateNotifications();
     try {
       original = executor.execute(this, script, args);
     } finally {
-      ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
+      ((OAbstractPaginatedStorage) this.storage.getUnderlying()).fireConfigurationUpdateNotifications();
     }
 
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);

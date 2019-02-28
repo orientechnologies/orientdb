@@ -732,7 +732,7 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertNotNull(item);
-      Object sum = item.<Object>getProperty("sum(val)");
+      Object sum = item.getProperty("sum(val)");
       if (sum.equals(20)) {
         evenFound = true;
       } else if (sum.equals(25)) {
@@ -761,7 +761,7 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertNotNull(item);
-      Object sum = item.<Object>getProperty("sum(val)");
+      Object sum = item.getProperty("sum(val)");
       Assert.assertEquals(45, sum);
 
     }
@@ -1400,7 +1400,6 @@ public class OSelectStatementExecutionTest {
     OExecutionPlan p2 = p.get();
     Assert.assertTrue(p2 instanceof OSelectExecutionPlan);
     OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
-    Assert.assertEquals(2, plan.getSteps().size());
     Assert.assertEquals(ParallelExecStep.class, plan.getSteps().get(0).getClass());
     ParallelExecStep parallel = (ParallelExecStep) plan.getSteps().get(0);
     Assert.assertEquals(2, parallel.getSubExecutionPlans().size());
@@ -2033,7 +2032,7 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    Object one = item.<Object>getProperty("one");
+    Object one = item.getProperty("one");
     Assert.assertTrue(one instanceof List);
     Assert.assertEquals(1, ((List) one).size());
     Object x = ((List) one).get(0);
@@ -2049,7 +2048,7 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    Object one = item.<Object>getProperty("one");
+    Object one = item.getProperty("one");
     Assert.assertEquals(1, one);
     result.close();
   }
@@ -2245,8 +2244,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
       Assert.assertNotNull(item.getProperty("i"));
       Assert.assertNotNull(item.getProperty("iSeq"));
-      Integer first = (Integer) item.getProperty("i");
-      Integer second = (Integer) item.getProperty("iSeq");
+      Integer first = item.getProperty("i");
+      Integer second = item.getProperty("iSeq");
       Assert.assertTrue(first + second == 0 || second.intValue() % first.intValue() == 0);
     }
     Assert.assertFalse(result.hasNext());

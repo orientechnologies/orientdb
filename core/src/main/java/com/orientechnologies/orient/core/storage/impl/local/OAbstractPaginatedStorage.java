@@ -191,6 +191,7 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -2306,13 +2307,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
 
-        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName,
-            algorithm, indexType, durableInNonTxMode, version, apiVersion, multivalue, valueSerializer.getId(),
-            keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport, keySize, null, null, engineProperties);
-
         final OBaseIndexEngine engine = OIndexes
             .createIndexEngine(engineName, algorithm, indexType, durableInNonTxMode, this, version, apiVersion, multivalue,
                 engineProperties, null);
+
+        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName,
+            algorithm, indexType, durableInNonTxMode, version, engine.getEngineAPIVersion(), multivalue, valueSerializer.getId(),
+            keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport, keySize, null, null, engineProperties);
 
         if (engineData.getApiVersion() < 1) {
           ((OIndexEngine) engine)
@@ -4239,7 +4240,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected abstract void addFileToDirectory(String name, InputStream stream, File directory) throws IOException;
 
   @SuppressWarnings("unused")
-  protected abstract OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException;
+  protected abstract OWriteAheadLog createWalFromIBUFiles(File directory, final OContextConfiguration contextConfiguration,
+      final Locale locale) throws IOException;
 
   /**
    * Checks if the storage is open. If it's closed an exception is raised.

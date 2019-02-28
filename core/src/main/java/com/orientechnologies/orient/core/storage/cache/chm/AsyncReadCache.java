@@ -232,14 +232,10 @@ public final class AsyncReadCache implements OReadCache {
     assert cachePointer != null;
 
     final PageKey pageKey = new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex());
-    if (cacheEntry.isDirty()) {
-      data.compute(pageKey, (page, entry) -> {
-        writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
-        return entry;//may be absent if page in pinned pages, in such case we use map as virtual lock
-      });
-
-      cacheEntry.clearDirty();
-    }
+    data.compute(pageKey, (page, entry) -> {
+      writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
+      return entry;//may be absent if page in pinned pages, in such case we use map as virtual lock
+    });
 
     //We need to release exclusive lock from cache pointer after we put it into the write cache so both "dirty pages" of write
     //cache and write cache itself will contain actual values simultaneously. But because cache entry can be cleared after we put it back to the

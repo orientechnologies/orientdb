@@ -66,12 +66,6 @@ public interface OCacheEntry {
 
   void setEndLSN(OLogSequenceNumber endLSN);
 
-  void markDirty();
-
-  void clearDirty();
-
-  boolean isDirty();
-
   boolean acquireEntry();
 
   void releaseEntry();

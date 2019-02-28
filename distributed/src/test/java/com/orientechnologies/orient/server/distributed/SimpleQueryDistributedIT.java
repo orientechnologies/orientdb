@@ -46,6 +46,16 @@ public class SimpleQueryDistributedIT {
   }
 
   @Test
+  public void testExecute() {
+    OVertex vertex = session.newVertex("V");
+    vertex.setProperty("name", "one");
+    session.save(vertex);
+    OResultSet res = session.execute("sql", "select from V");
+    assertTrue(res.hasNext());
+    assertEquals(res.next().getProperty("name"), "one");
+  }
+
+  @Test
   public void testRecords() {
     int records = (OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger() + 10);
     for (int i = 0; i < records; i++) {

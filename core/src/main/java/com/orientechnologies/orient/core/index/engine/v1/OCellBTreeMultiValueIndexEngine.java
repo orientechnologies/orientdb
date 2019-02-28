@@ -23,8 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine, OCellBTreeIndexEngine {
-  private static final String DATA_FILE_EXTENSION        = ".cbt";
+public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine {
+  private final static int    BINARY_VERSION             = 2;
+  public static final  String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
   public static final  String M_CONTAINER_EXTENSION      = ".mbt";
 
@@ -246,6 +247,11 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   @Override
   public boolean hasRangeQuerySupport() {
     return true;
+  }
+
+  @Override
+  public int getVersion() {
+    return BINARY_VERSION;
   }
 
   @Override
