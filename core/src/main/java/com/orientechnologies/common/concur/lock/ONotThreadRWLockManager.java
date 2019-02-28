@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ONotThreadRWLockManager<T> implements OSimpleRWLockManager<T> {
 
-  private class LockGuard {
+  private static class LockGuard {
     private volatile int       count;
     private final    Condition condition;
     private final    boolean   shared;

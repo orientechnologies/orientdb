@@ -4216,7 +4216,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     try {
-      lockManager.acquireReadLock(rid, 0);
+      lockManager.acquireReadLock(rid.copy(), 0);
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
