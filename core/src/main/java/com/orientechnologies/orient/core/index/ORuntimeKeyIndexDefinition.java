@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -44,7 +43,7 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
   private transient    OBinarySerializer<T> serializer;
 
   @SuppressWarnings("unchecked")
-  public ORuntimeKeyIndexDefinition(final byte iId, int version) {
+  public ORuntimeKeyIndexDefinition(final byte iId) {
     super();
 
     serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(iId);
@@ -115,14 +114,12 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
     super.serializeFromStream();
 
     final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
+    //noinspection unchecked
     serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(keySerializerId);
     if (serializer == null)
       throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + keySerializerId
           + ". Assure to plug custom serializer into the server.");
 
-    String collateField = document.field("collate");
-    if (collateField == null)
-      collateField = ODefaultCollate.NAME;
     setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean>field("nullValuesIgnored")));
   }
 
@@ -155,15 +152,9 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
 
   /**
    * {@inheritDoc}
-   *
-   * @param indexName
-   * @param indexType
    */
   public String toCreateIndexDDL(final String indexName, final String indexType, String engine) {
-    final StringBuilder ddl = new StringBuilder("create index `");
-    ddl.append(indexName).append("` ").append(indexType).append(' ');
-    ddl.append("runtime ").append(serializer.getId());
-    return ddl.toString();
+    return "create index `" + indexName + "` " + indexType + ' ' + "runtime " + serializer.getId();
   }
 
   public OBinarySerializer<T> getSerializer() {

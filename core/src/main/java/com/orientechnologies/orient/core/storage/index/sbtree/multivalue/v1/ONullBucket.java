@@ -17,7 +17,7 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.core.storage.index.sbtree.multivalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;

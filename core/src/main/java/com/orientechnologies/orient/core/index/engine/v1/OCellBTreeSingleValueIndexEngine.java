@@ -22,7 +22,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndexEngine {
+public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
   private static final String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
@@ -96,11 +96,6 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during removal of key " + key + " from index " + name), e);
     }
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
   }
 
   @Override

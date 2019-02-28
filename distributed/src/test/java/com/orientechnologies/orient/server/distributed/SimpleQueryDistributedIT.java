@@ -45,7 +45,6 @@ public class SimpleQueryDistributedIT {
     assertEquals(res.next().getProperty("name"), "one");
   }
 
-
   @Test
   public void testExecute() {
     OVertex vertex = session.newVertex("V");

@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 public interface OBaseIndexEngine {
-
   void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata);
 
   void flush();
