@@ -29,7 +29,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -83,6 +82,15 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     return incrementalBackup(new File(backupDirectory), started);
   }
 
+  @Override
+  public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
+    try {
+      incrementalBackup(stream, null, false);
+    } catch (IOException e) {
+      throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
+    }
+  }
+
   private String incrementalBackup(final File backupDirectory, OCallable<Void, Void> started) {
     String fileName = "";
 
@@ -124,7 +132,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
         ibuChannel.position(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
 
-        final OLogSequenceNumber maxLsn = incrementalBackup(Channels.newOutputStream(ibuChannel), lastLsn);
+        final OLogSequenceNumber maxLsn = incrementalBackup(Channels.newOutputStream(ibuChannel), lastLsn, true);
         final ByteBuffer dataBuffer = ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
 
         dataBuffer.putLong(nextIndex);
@@ -252,11 +260,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     return index;
   }
 
-  private OLogSequenceNumber incrementalBackup(final OutputStream stream, final OLogSequenceNumber fromLsn) throws IOException {
+  private OLogSequenceNumber incrementalBackup(final OutputStream stream, final OLogSequenceNumber fromLsn,
+      final boolean singleThread) throws IOException {
     OLogSequenceNumber lastLsn;
 
     checkOpenness();
-    if (!backupInProgress.compareAndSet(false, true)) {
+    if (singleThread && !backupInProgress.compareAndSet(false, true)) {
       throw new OBackupInProgressException(
           "You are trying to start incremental backup but it is in progress now, please wait till it will be finished", getName(),
           OErrorCode.BACKUP_IN_PROGRESS);
@@ -323,7 +332,9 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     } finally {
       stateLock.releaseReadLock();
 
-      backupInProgress.set(false);
+      if (singleThread) {
+        backupInProgress.set(false);
+      }
     }
 
     return lastLsn;
@@ -385,6 +396,15 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     restoreFromIncrementalBackup(new File(filePath));
   }
 
+  @Override
+  public void restoreFullIncrementalBackup(final InputStream stream) throws UnsupportedOperationException {
+    try {
+      restoreFromIncrementalBackup(stream, true);
+    } catch (IOException e) {
+      throw OException.wrapException(new OStorageException("Error during restore from incremental backup"), e);
+    }
+  }
+
   private void restoreFromIncrementalBackup(final File backupDirectory) {
     if (!backupDirectory.exists()) {
       throw new OStorageException("Directory which should contain incremental backup files (files with extension '" + IBU_EXTENSION
@@ -426,7 +446,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         stateLock.releaseWriteLock();
       }
     } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
+      throw OException.wrapException(new OStorageException("Error during restore from incremental backup"), e);
     }
   }
 
