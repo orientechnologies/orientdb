@@ -45,13 +45,12 @@ public class SimpleQueryDistributedIT {
     assertEquals(res.next().getProperty("name"), "one");
   }
 
-
   @Test
   public void testExecute() {
     OVertex vertex = session.newVertex("V");
     vertex.setProperty("name", "one");
     session.save(vertex);
-    OResultSet res = session.execute("sql","select from V");
+    OResultSet res = session.execute("sql", "select from V");
     assertTrue(res.hasNext());
     assertEquals(res.next().getProperty("name"), "one");
   }

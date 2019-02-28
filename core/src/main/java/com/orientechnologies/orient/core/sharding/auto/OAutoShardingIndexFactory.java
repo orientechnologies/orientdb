@@ -41,13 +41,13 @@ import java.util.Set;
  * <li>UNIQUE</li>
  * <li>NOTUNIQUE</li>
  * </ul>
- * 
+ *
  * @since 3.0
  */
 public class OAutoShardingIndexFactory implements OIndexFactory {
 
-  public static final String       AUTOSHARDING_ALGORITHM = "AUTOSHARDING";
-  public static final String       NONE_VALUE_CONTAINER   = "NONE";
+  public static final String AUTOSHARDING_ALGORITHM = "AUTOSHARDING";
+  public static final String NONE_VALUE_CONTAINER   = "NONE";
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
@@ -97,8 +97,9 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
 
-    if (version < 0)
-      version = getLastVersion();
+    if (version < 0) {
+      version = getLastVersion(algorithm);
+    }
 
     if (AUTOSHARDING_ALGORITHM.equals(algorithm))
       return createShardedIndex(name, indexType, valueContainerAlgorithm, metadata,
@@ -124,13 +125,13 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public int getLastVersion() {
+  public int getLastVersion(final String algorithm) {
     return OAutoShardingIndexEngine.VERSION;
   }
 
   @Override
   public OBaseIndexEngine createIndexEngine(final String algorithm, final String name, final Boolean durableInNonTxMode,
-      final OStorage storage, final int version, int apiVersion, boolean multivalue, final Map<String, String> engineProperties) {
+      final OStorage storage, final int version, int apiVersion, boolean multiValue, final Map<String, String> engineProperties) {
 
     final OIndexEngine indexEngine;
 
@@ -139,8 +140,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
       indexEngine = new OAutoShardingIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OAutoShardingIndexEngine(name, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          version);
+      indexEngine = new OAutoShardingIndexEngine(name, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
     else if (storageType.equals("remote"))
       // MANAGE REMOTE SHARDED INDEX TO CALL THE INTERESTED SERVER
       indexEngine = new ORemoteIndexEngine(name);

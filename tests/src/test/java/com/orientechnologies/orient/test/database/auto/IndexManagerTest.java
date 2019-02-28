@@ -1,7 +1,12 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -17,7 +22,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @Test
 public class IndexManagerTest extends DocumentDBBaseTest {
@@ -50,7 +60,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     try {
-      indexManager.createIndex("simple:key", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(-1, OType.INTEGER),
+      indexManager.createIndex("simple:key", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(OType.INTEGER),
           null, null, null);
       fail();
     } catch (Exception e) {
@@ -67,7 +77,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     final OIndex result = indexManager.createIndex("simplekey", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(
-        -1, OType.INTEGER), null, null, null);
+        OType.INTEGER), null, null, null);
 
     assertEquals(result.getName(), "simplekey");
 
@@ -580,7 +590,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   @Test
   public void testDropSimpleKey() {
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
-    indexManager.createIndex("simplekeytwo", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(-1, OType.INTEGER),
+    indexManager.createIndex("simplekeytwo", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(OType.INTEGER),
         null, null, null);
 
     assertNotNull(indexManager.getIndex("simplekeytwo"));

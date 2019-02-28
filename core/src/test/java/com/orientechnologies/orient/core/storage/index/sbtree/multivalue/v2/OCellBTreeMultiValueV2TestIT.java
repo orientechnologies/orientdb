@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.multivalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,16 +27,16 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class OCellBTreeMultiValueTestIT {
-  private OCellBTreeMultiValue<String> multiValueTree;
-  private OrientDB                     orientDB;
+public class OCellBTreeMultiValueV2TestIT {
+  private OCellBTreeMultiValueV2<String> multiValueTree;
+  private OrientDB                       orientDB;
 
   private final String DB_NAME = "localMultiBTreeTest";
 
   @Before
   public void before() throws IOException {
     final String buildDirectory =
-        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeMultiValueTestIT.class.getSimpleName();
+        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeMultiValueV2TestIT.class.getSimpleName();
 
     final File dbDirectory = new File(buildDirectory, DB_NAME);
     OFileUtils.deleteRecursively(dbDirectory);
@@ -45,7 +46,7 @@ public class OCellBTreeMultiValueTestIT {
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
-    multiValueTree = new OCellBTreeMultiValue<>("multiBTree", ".sbt", ".nbt",
+    multiValueTree = new OCellBTreeMultiValueV2<>("multiBTree", ".sbt", ".nbt", ".mdt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
@@ -1090,16 +1091,22 @@ public class OCellBTreeMultiValueTestIT {
     Assert.assertEquals(multiValueTree.firstKey(), keys.firstKey());
     Assert.assertEquals(multiValueTree.lastKey(), keys.lastKey());
 
-    for (Map.Entry<String, Integer> entry : keys.entrySet()) {
-      int val = Integer.parseInt(entry.getKey());
-      List<ORID> result = multiValueTree.get(entry.getKey());
+    for (int i = 0; i < keysCount; i++) {
+      final String key = String.valueOf(i);
 
-      Assert.assertEquals(entry.getValue().longValue(), result.size());
-      final ORID expected = new ORecordId(val % 32000, val);
+      if (i % 3 == 0) {
+        Assert.assertTrue(multiValueTree.get(key).isEmpty());
+      } else {
+        List<ORID> result = multiValueTree.get(key);
 
-      for (ORID rid : result) {
-        Assert.assertEquals(expected, rid);
+        Assert.assertEquals(1, result.size());
+        final ORID expected = new ORecordId(i % 32000, i);
+
+        for (ORID rid : result) {
+          Assert.assertEquals(expected, rid);
+        }
       }
+
     }
   }
 
@@ -1166,7 +1173,7 @@ public class OCellBTreeMultiValueTestIT {
     Assert.assertEquals(multiValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(multiValueTree.lastKey(), keyValues.lastKey());
 
-    final OCellBTreeMultiValue.OSBTreeKeyCursor<String> cursor = multiValueTree.keyCursor();
+    final OCellBTreeMultiValue.OCellBTreeKeyCursor<String> cursor = multiValueTree.keyCursor();
 
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = cursor.next(-1);
@@ -1291,10 +1298,10 @@ public class OCellBTreeMultiValueTestIT {
       String fromKey = keys[fromKeyIndex];
 
       if (random.nextBoolean()) {
-        fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
+        fromKey = fromKey.substring(0, fromKey.length() - 1) + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final OCellBTreeMultiValue.OSBTreeCursor<String, ORID> cursor = multiValueTree
+      final OCellBTreeMultiValue.OCellBTreeCursor<String, ORID> cursor = multiValueTree
           .iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, Integer>> iterator;
@@ -1343,10 +1350,10 @@ public class OCellBTreeMultiValueTestIT {
       int toKeyIndex = random.nextInt(keys.length);
       String toKey = keys[toKeyIndex];
       if (random.nextBoolean()) {
-        toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
+        toKey = toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final OCellBTreeMultiValue.OSBTreeCursor<String, ORID> cursor = multiValueTree
+      final OCellBTreeMultiValue.OCellBTreeCursor<String, ORID> cursor = multiValueTree
           .iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, Integer>> iterator;
@@ -1403,18 +1410,18 @@ public class OCellBTreeMultiValueTestIT {
       String toKey = keys[toKeyIndex];
 
       if (random.nextBoolean()) {
-        fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
+        fromKey = fromKey.substring(0, fromKey.length() - 1) + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
       if (random.nextBoolean()) {
-        toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
+        toKey = toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
       if (fromKey.compareTo(toKey) > 0) {
         fromKey = toKey;
       }
 
-      OCellBTreeMultiValue.OSBTreeCursor<String, ORID> cursor = multiValueTree
+      OCellBTreeMultiValue.OCellBTreeCursor<String, ORID> cursor = multiValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, Integer>> iterator;
@@ -1449,5 +1456,4 @@ public class OCellBTreeMultiValueTestIT {
       Assert.assertNull(cursor.next(-1));
     }
   }
-
 }

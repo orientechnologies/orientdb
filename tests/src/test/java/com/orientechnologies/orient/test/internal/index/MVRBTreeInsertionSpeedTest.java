@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.test.internal.index;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -9,6 +7,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import org.testng.annotations.Test;
 
 import java.util.Random;
 
@@ -45,7 +44,7 @@ public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
     databaseDocumentTx.create();
 
     index = (OIndexUnique) databaseDocumentTx.getMetadata().getIndexManager()
-        .createIndex("mvrbtreeIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(-1, OType.STRING), new int[0], null, null);
+        .createIndex("mvrbtreeIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.STRING), new int[0], null, null);
   }
 
   @Override

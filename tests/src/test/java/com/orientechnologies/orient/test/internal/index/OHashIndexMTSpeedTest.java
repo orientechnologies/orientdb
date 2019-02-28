@@ -41,7 +41,7 @@ public class OHashIndexMTSpeedTest extends TestCase {
 
     ODocument metadata = new ODocument().field("partitions", concurrencyLevel);
     final OIndex<?> userIndex = databaseDocumentTx.getMetadata().getIndexManager()
-        .createIndex("User.id", "UNIQUE", new OSimpleKeyIndexDefinition(-1, OType.LONG), new int[0], null, metadata,
+        .createIndex("User.id", "UNIQUE", new OSimpleKeyIndexDefinition(OType.LONG), new int[0], null, metadata,
             "AUTOSHARDING");
 
     Orient.instance().scheduleTask(new Runnable() {

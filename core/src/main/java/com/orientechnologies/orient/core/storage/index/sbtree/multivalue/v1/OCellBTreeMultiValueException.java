@@ -18,7 +18,7 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.index.sbtree.multivalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1;
 
 import com.orientechnologies.orient.core.exception.ODurableComponentException;
 
@@ -33,7 +33,7 @@ public final class OCellBTreeMultiValueException extends ODurableComponentExcept
     super(exception);
   }
 
-  OCellBTreeMultiValueException(final String message, final OCellBTreeMultiValue component) {
+  OCellBTreeMultiValueException(final String message, final OCellBTreeMultiValueV1 component) {
     super(message, component);
   }
 }

@@ -16,9 +16,61 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.AggregateProjectionSplit;
+import com.orientechnologies.orient.core.sql.parser.OAndBlock;
+import com.orientechnologies.orient.core.sql.parser.OBaseExpression;
+import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
+import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
+import com.orientechnologies.orient.core.sql.parser.OCluster;
+import com.orientechnologies.orient.core.sql.parser.OContainsAnyCondition;
+import com.orientechnologies.orient.core.sql.parser.OContainsKeyOperator;
+import com.orientechnologies.orient.core.sql.parser.OContainsValueCondition;
+import com.orientechnologies.orient.core.sql.parser.OContainsValueOperator;
+import com.orientechnologies.orient.core.sql.parser.OEqualsCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import com.orientechnologies.orient.core.sql.parser.OFromItem;
+import com.orientechnologies.orient.core.sql.parser.OFunctionCall;
+import com.orientechnologies.orient.core.sql.parser.OGeOperator;
+import com.orientechnologies.orient.core.sql.parser.OGroupBy;
+import com.orientechnologies.orient.core.sql.parser.OGtOperator;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OInCondition;
+import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OInputParameter;
+import com.orientechnologies.orient.core.sql.parser.OInteger;
+import com.orientechnologies.orient.core.sql.parser.OLeOperator;
+import com.orientechnologies.orient.core.sql.parser.OLetClause;
+import com.orientechnologies.orient.core.sql.parser.OLetItem;
+import com.orientechnologies.orient.core.sql.parser.OLtOperator;
+import com.orientechnologies.orient.core.sql.parser.OMetadataIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OOrBlock;
+import com.orientechnologies.orient.core.sql.parser.OOrderBy;
+import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
+import com.orientechnologies.orient.core.sql.parser.OProjection;
+import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
+import com.orientechnologies.orient.core.sql.parser.ORecordAttribute;
+import com.orientechnologies.orient.core.sql.parser.ORid;
+import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OWhereClause;
+import com.orientechnologies.orient.core.sql.parser.SubQueryCollector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -38,7 +90,7 @@ public class OSelectExecutionPlanner {
     info = new QueryPlanningInfo();
     info.projection = this.statement.getProjection() == null ? null : this.statement.getProjection().copy();
     info.projection = translateDistinct(info.projection);
-    info.distinct = info.projection == null ? false : info.projection.isDistinct();
+    info.distinct = info.projection != null && info.projection.isDistinct();
     if (info.projection != null) {
       info.projection.setDistinct(false);
     }
@@ -476,10 +528,7 @@ public class OSelectExecutionPlanner {
     if (function == null) {
       return false;
     }
-    if (function.getName().getStringValue().equalsIgnoreCase("distinct")) {
-      return true;
-    }
-    return false;
+    return function.getName().getStringValue().equalsIgnoreCase("distinct");
   }
 
   private boolean handleHardwiredOptimizations(OSelectExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
@@ -489,10 +538,7 @@ public class OSelectExecutionPlanner {
     if (handleHardwiredCountOnClass(result, info, ctx, profilingEnabled)) {
       return true;
     }
-    if (handleHardwiredCountOnClassUsingIndex(result, info, ctx, profilingEnabled)) {
-      return true;
-    }
-    return false;
+    return handleHardwiredCountOnClassUsingIndex(result, info, ctx, profilingEnabled);
   }
 
   private boolean handleHardwiredCountOnClass(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
@@ -603,12 +649,9 @@ public class OSelectExecutionPlanner {
    * @return
    */
   private boolean isMinimalQuery(QueryPlanningInfo info) {
-    if (info.projectionAfterOrderBy != null || info.globalLetClause != null || info.perRecordLetClause != null
-        || info.whereClause != null || info.flattenedWhereClause != null || info.groupBy != null || info.orderBy != null
-        || info.unwind != null || info.skip != null) {
-      return false;
-    }
-    return true;
+    return info.projectionAfterOrderBy == null && info.globalLetClause == null && info.perRecordLetClause == null
+        && info.whereClause == null && info.flattenedWhereClause == null && info.groupBy == null && info.orderBy == null
+        && info.unwind == null && info.skip == null;
   }
 
   private static boolean isCountStar(QueryPlanningInfo info) {
@@ -617,11 +660,7 @@ public class OSelectExecutionPlanner {
       return false;
     }
     OProjectionItem item = info.aggregateProjection.getItems().get(0);
-    if (!item.getExpression().toString().equalsIgnoreCase("count(*)")) {
-      return false;
-    }
-
-    return true;
+    return item.getExpression().toString().equalsIgnoreCase("count(*)");
   }
 
   private static boolean isCountOnly(QueryPlanningInfo info) {
@@ -895,10 +934,7 @@ public class OSelectExecutionPlanner {
   }
 
   private static boolean isAggregate(OProjectionItem item) {
-    if (item.isAggregate()) {
-      return true;
-    }
-    return false;
+    return item.isAggregate();
   }
 
   private static OProjectionItem projectionFromAlias(OIdentifier oIdentifier) {
@@ -2045,7 +2081,7 @@ public class OSelectExecutionPlanner {
         }
       }
     }
-    return result == null || result.equals(OOrderByItem.ASC) ? true : false;
+    return result == null || result.equals(OOrderByItem.ASC);
   }
 
   private OExecutionStepInternal createParallelIndexFetch(List<IndexSearchDescriptor> indexSearchDescriptors,
@@ -2572,9 +2608,7 @@ public class OSelectExecutionPlanner {
     if (info.orderBy.getItems().size() == 1) {
       OOrderByItem item = info.orderBy.getItems().get(0);
       String recordAttr = item.getRecordAttr();
-      if (recordAttr != null && recordAttr.equalsIgnoreCase("@rid") && OOrderByItem.DESC.equals(item.getType())) {
-        return true;
-      }
+      return recordAttr != null && recordAttr.equalsIgnoreCase("@rid") && OOrderByItem.DESC.equals(item.getType());
     }
     return false;
   }
@@ -2590,10 +2624,8 @@ public class OSelectExecutionPlanner {
     if (info.orderBy.getItems().size() == 1) {
       OOrderByItem item = info.orderBy.getItems().get(0);
       String recordAttr = item.getRecordAttr();
-      if (recordAttr != null && recordAttr.equalsIgnoreCase("@rid") && (item.getType() == null || OOrderByItem.ASC
-          .equals(item.getType()))) {
-        return true;
-      }
+      return recordAttr != null && recordAttr.equalsIgnoreCase("@rid") && (item.getType() == null || OOrderByItem.ASC
+          .equals(item.getType()));
     }
     return false;
   }
@@ -2609,10 +2641,8 @@ public class OSelectExecutionPlanner {
       return true;
     } else if (info.target.getItem().getCluster() != null) {
       return true;
-    } else if (info.target.getItem().getClusterList() != null) {
-      return true;
-    }
-    return false;
+    } else
+      return info.target.getItem().getClusterList() != null;
   }
 
 }

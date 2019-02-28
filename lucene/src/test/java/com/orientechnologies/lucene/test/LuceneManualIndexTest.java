@@ -53,7 +53,7 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
 
     ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
     OIndex<?> index = db.getMetadata().getIndexManager().createIndex("apiManual", OClass.INDEX_TYPE.FULLTEXT.toString(),
-        new OSimpleKeyIndexDefinition(1, OType.STRING, OType.STRING), null, null, meta, OLuceneIndexFactory.LUCENE_ALGORITHM);
+        new OSimpleKeyIndexDefinition(OType.STRING, OType.STRING), null, null, meta, OLuceneIndexFactory.LUCENE_ALGORITHM);
 
     db.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Enrico','London'],#5:0) ")).execute();
     db.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Luca','Rome'],#5:0) ")).execute();
@@ -112,7 +112,7 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
 
     // refs https://github.com/orientechnologies/orientdb/issues/7255
     OIndex<?> index = db.getMetadata().getIndexManager().createIndex("test", OClass.INDEX_TYPE.FULLTEXT.toString(),
-        new OSimpleKeyIndexDefinition(1, OType.STRING), null, null, null,
+        new OSimpleKeyIndexDefinition(OType.STRING), null, null, null,
         OLuceneIndexFactory.LUCENE_ALGORITHM);
 
     db.begin();
