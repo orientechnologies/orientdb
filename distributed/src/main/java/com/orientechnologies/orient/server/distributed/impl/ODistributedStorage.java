@@ -784,7 +784,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public <T> T getResource(final String iName, final Callable<T> iCallback) {
-    return (T) wrapped.getResource(iName, iCallback);
+    return wrapped.getResource(iName, iCallback);
   }
 
   @Override
@@ -823,6 +823,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public void restoreFromIncrementalBackup(final String filePath) {
     wrapped.restoreFromIncrementalBackup(filePath);
+  }
+
+  @Override
+  public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
+    wrapped.fullIncrementalBackup(stream);
+  }
+
+  @Override
+  public void restoreFullIncrementalBackup(final InputStream stream) throws UnsupportedOperationException {
+    wrapped.restoreFullIncrementalBackup(stream);
   }
 
   @Override
@@ -1396,7 +1406,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   private OFreezableStorageComponent getFreezableStorage() {
     if (wrapped instanceof OFreezableStorageComponent)
-      return ((OFreezableStorageComponent) wrapped);
+      return wrapped;
     else
       throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
   }
@@ -1448,7 +1458,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       final byte[] buffer = new byte[(int) file.length()];
       f.read(buffer);
 
-      final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
+      final ODocument doc = new ODocument().fromJSON(new String(buffer), "noMap");
       doc.field("version", 1);
       return doc;
 
