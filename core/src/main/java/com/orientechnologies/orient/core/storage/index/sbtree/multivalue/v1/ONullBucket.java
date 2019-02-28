@@ -17,7 +17,7 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.core.storage.index.sbtree.multivalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -141,10 +141,7 @@ final class ONullBucket extends ODurablePage {
     final int size = getIntValue(RIDS_SIZE_OFFSET);
     final int position = size * RID_SIZE + RIDS_OFFSET;
 
-    if (position + RID_SIZE > MAX_PAGE_SIZE_BYTES) {
-      return true;
-    }
+    return position + RID_SIZE > MAX_PAGE_SIZE_BYTES;
 
-    return false;
   }
 }

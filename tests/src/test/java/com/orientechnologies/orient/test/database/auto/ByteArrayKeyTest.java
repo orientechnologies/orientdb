@@ -8,7 +8,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import java.util.Collection;
 
@@ -48,7 +52,7 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     database
         .getMetadata()
         .getIndexManager()
-        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.BINARY), null, null,
+        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null,
             null);
   }
 
@@ -60,7 +64,7 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
 
     if (index == null) {
       index = database.getMetadata().getIndexManager()
-          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(-1, OType.BINARY), null, null, null);
+          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
       this.manualIndex = index;
     } else {
       index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");

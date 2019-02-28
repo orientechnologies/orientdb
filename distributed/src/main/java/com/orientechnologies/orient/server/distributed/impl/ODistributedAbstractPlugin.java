@@ -1374,9 +1374,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       singleNode.add(noteToSend);
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, singleNode, deployTask,
           getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
-      
+
       if (results == null) {
-        ODistributedServerLog.error(this, nodeName, selectedNodes.toString(), DIRECTION.IN, "Timeout waiting the sync database please set the `distributed.deployDbTaskTimeout` to appropriate value");
+        ODistributedServerLog.error(this, nodeName, selectedNodes.toString(), DIRECTION.IN,
+            "Timeout waiting the sync database please set the `distributed.deployDbTaskTimeout` to appropriate value");
         setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
         return false;
       }

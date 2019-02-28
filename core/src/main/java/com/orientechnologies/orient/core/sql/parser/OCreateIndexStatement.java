@@ -7,7 +7,13 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexes;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -17,19 +23,23 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OCreateIndexStatement extends ODDLStatement {
 
-  protected OIndexName  name;
-  protected OIdentifier className;
-  protected List<Property> propertyList = new ArrayList<Property>();
-  protected OIdentifier type;
-  protected OIdentifier engine;
-  protected List<OIdentifier> keyTypes = new ArrayList<OIdentifier>();
-  protected OJson metadata;
-  protected boolean ifNotExists = false;
+  protected OIndexName        name;
+  protected OIdentifier       className;
+  protected List<Property>    propertyList = new ArrayList<Property>();
+  protected OIdentifier       type;
+  protected OIdentifier       engine;
+  protected List<OIdentifier> keyTypes     = new ArrayList<OIdentifier>();
+  protected OJson             metadata;
+  protected boolean           ifNotExists  = false;
 
   public OCreateIndexStatement(int id) {
     super(id);
@@ -74,12 +84,12 @@ public class OCreateIndexStatement extends ODDLStatement {
       OType[] keyTypes = calculateKeyTypes(ctx);
 
       if (keyTypes != null && keyTypes.length > 0) {
-        idx = database.getMetadata().getIndexManager().createIndex(name.getValue(), type.getStringValue(),
-            new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(name.getValue(), type.getStringValue(), new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null,
+                metadataDoc, engine);
       } else if (keyTypes != null && keyTypes.length == 0 && "LUCENE_CROSS_CLASS".equalsIgnoreCase(engine)) {
         //handle special case of cross class  Lucene index: awful but works
-        OIndexDefinition keyDef = new OSimpleKeyIndexDefinition(new OType[] { OType.STRING }, collatesList,
-            factory.getLastVersion());
+        OIndexDefinition keyDef = new OSimpleKeyIndexDefinition(new OType[] { OType.STRING }, collatesList);
         idx = database.getMetadata().getIndexManager()
             .createIndex(name.getValue(), type.getStringValue(), keyDef, null, null, metadataDoc, engine);
 
@@ -160,10 +170,6 @@ public class OCreateIndexStatement extends ODDLStatement {
 
   /**
    * calculates the indexed class based on the class name
-   *
-   * @param ctx
-   *
-   * @return
    */
   private OClass getIndexClass(OCommandContext ctx) {
     if (className == null) {
@@ -178,10 +184,6 @@ public class OCreateIndexStatement extends ODDLStatement {
 
   /**
    * returns index metadata as an ODocuemnt (as expected by Index API)
-   *
-   * @param ctx
-   *
-   * @return
    */
   private ODocument calculateMetadata(OCommandContext ctx) {
     if (metadata == null) {
@@ -304,10 +306,7 @@ public class OCreateIndexStatement extends ODDLStatement {
       return false;
     if (keyTypes != null ? !keyTypes.equals(that.keyTypes) : that.keyTypes != null)
       return false;
-    if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null)
-      return false;
-
-    return true;
+    return metadata != null ? metadata.equals(that.metadata) : that.metadata == null;
   }
 
   @Override
@@ -325,9 +324,9 @@ public class OCreateIndexStatement extends ODDLStatement {
   public static class Property {
     protected OIdentifier      name;
     protected ORecordAttribute recordAttribute;
-    protected boolean byKey   = false;
-    protected boolean byValue = false;
-    protected OIdentifier collate;
+    protected boolean          byKey   = false;
+    protected boolean          byValue = false;
+    protected OIdentifier      collate;
 
     public Property copy() {
       Property result = new Property();
@@ -356,10 +355,7 @@ public class OCreateIndexStatement extends ODDLStatement {
         return false;
       if (recordAttribute != null ? !recordAttribute.equals(property.recordAttribute) : property.recordAttribute != null)
         return false;
-      if (collate != null ? !collate.equals(property.collate) : property.collate != null)
-        return false;
-
-      return true;
+      return collate != null ? collate.equals(property.collate) : property.collate == null;
     }
 
     @Override
@@ -374,8 +370,6 @@ public class OCreateIndexStatement extends ODDLStatement {
 
     /**
      * returns the complete key to index, eg. property name or "property by key/value"
-     *
-     * @return
      */
     public String getCompleteKey() {
       StringBuilder result = new StringBuilder();

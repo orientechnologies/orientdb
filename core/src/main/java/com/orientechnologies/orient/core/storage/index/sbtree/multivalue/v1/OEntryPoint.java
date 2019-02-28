@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.multivalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -21,7 +21,7 @@ final class OEntryPoint<K> extends ODurablePage {
     setIntValue(PAGES_SIZE_OFFSET, 1);
   }
 
-  void setTreeSize(long size) {
+  void setTreeSize(final long size) {
     setLongValue(TREE_SIZE_OFFSET, size);
   }
 
@@ -29,7 +29,7 @@ final class OEntryPoint<K> extends ODurablePage {
     return getLongValue(TREE_SIZE_OFFSET);
   }
 
-  void setPagesSize(int pages) {
+  void setPagesSize(final int pages) {
     setIntValue(PAGES_SIZE_OFFSET, pages);
   }
 
