@@ -211,6 +211,7 @@ public class PostponedEngineStartTest {
     @Override
     public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize) {
       return new OStorage() {
+
         @Override
         public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
             OCommandOutputListener iListener, int compressionLevel, int bufferSize) {
@@ -554,7 +555,17 @@ public class PostponedEngineStartTest {
         }
 
         @Override
+        public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
+
+        }
+
+        @Override
         public void restoreFromIncrementalBackup(String filePath) {
+
+        }
+
+        @Override
+        public void restoreFullIncrementalBackup(final InputStream stream) throws UnsupportedOperationException {
 
         }
 

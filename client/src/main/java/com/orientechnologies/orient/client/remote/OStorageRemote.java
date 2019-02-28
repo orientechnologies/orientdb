@@ -785,7 +785,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
+  public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
+    throw new UnsupportedOperationException("This operations is part of internal API and is not supported in remote storage");
+  }
+
+  @Override
   public void restoreFromIncrementalBackup(final String filePath) {
+    throw new UnsupportedOperationException("This operations is part of internal API and is not supported in remote storage");
+  }
+
+  @Override
+  public void restoreFullIncrementalBackup(final InputStream stream) throws UnsupportedOperationException {
     throw new UnsupportedOperationException("This operations is part of internal API and is not supported in remote storage");
   }
 
@@ -1355,10 +1365,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           final String nodeStatus = m.field("status");
 
           if (m != null && !"OFFLINE".equals(nodeStatus)) {
-            final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
+            final Collection<Map<String, Object>> listeners = m.field("listeners");
             if (listeners != null)
               for (Map<String, Object> listener : listeners) {
-                if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+                if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
                   String url = (String) listener.get("listen");
                   if (!serverURLs.contains(url))
                     addHost(url);

@@ -35,6 +35,8 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -126,7 +128,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   /**
    * Add a new cluster into the storage.
-   *  @param iClusterName name of the cluster
+   *
+   * @param iClusterName name of the cluster
    * @param iRequestedId requested id of the cluster
    */
   int addCluster(String iClusterName, int iRequestedId, Object... iParameters);
@@ -241,7 +244,11 @@ public interface OStorage extends OBackupable, OSharedContainer {
    */
   String incrementalBackup(String backupDirectory, OCallable<Void, Void> started) throws UnsupportedOperationException;
 
+  void fullIncrementalBackup(OutputStream stream) throws UnsupportedOperationException;
+
   void restoreFromIncrementalBackup(String filePath);
+
+  void restoreFullIncrementalBackup(InputStream stream) throws UnsupportedOperationException;
 
   /**
    * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method. For most of the storages it means

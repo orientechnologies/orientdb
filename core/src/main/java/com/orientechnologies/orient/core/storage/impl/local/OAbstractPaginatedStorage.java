@@ -5299,9 +5299,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
   }
 
+  @Override
+  public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
+    throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
+  }
+
   @SuppressWarnings("CanBeFinal")
   @Override
   public void restoreFromIncrementalBackup(final String filePath) {
+    throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
+  }
+
+  @Override
+  public void restoreFullIncrementalBackup(final InputStream stream) throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
   }
 
