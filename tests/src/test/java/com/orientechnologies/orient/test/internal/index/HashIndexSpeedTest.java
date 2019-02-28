@@ -39,7 +39,7 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
     databaseDocumentTx.create();
 
     hashIndex = databaseDocumentTx.getMetadata().getIndexManager()
-        .createIndex("hashIndex", "UNIQUE_HASH_INDEX", new OSimpleKeyIndexDefinition(OType.STRING), new int[0], null, null);
+        .createIndex("hashIndex", "UNIQUE_HASH_INDEX", new OSimpleKeyIndexDefinition(-1, OType.STRING), new int[0], null, null);
   }
 
   @Override

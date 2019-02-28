@@ -84,12 +84,12 @@ public class OCreateIndexStatement extends ODDLStatement {
       OType[] keyTypes = calculateKeyTypes(ctx);
 
       if (keyTypes != null && keyTypes.length > 0) {
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(name.getValue(), type.getStringValue(), new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null,
-                metadataDoc, engine);
+        idx = database.getMetadata().getIndexManager().createIndex(name.getValue(), type.getStringValue(),
+            new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
       } else if (keyTypes != null && keyTypes.length == 0 && "LUCENE_CROSS_CLASS".equalsIgnoreCase(engine)) {
         //handle special case of cross class  Lucene index: awful but works
-        OIndexDefinition keyDef = new OSimpleKeyIndexDefinition(new OType[] { OType.STRING }, collatesList);
+        OIndexDefinition keyDef = new OSimpleKeyIndexDefinition(new OType[] { OType.STRING }, collatesList,
+            factory.getLastVersion());
         idx = database.getMetadata().getIndexManager()
             .createIndex(name.getValue(), type.getStringValue(), keyDef, null, null, metadataDoc, engine);
 
@@ -170,6 +170,10 @@ public class OCreateIndexStatement extends ODDLStatement {
 
   /**
    * calculates the indexed class based on the class name
+   *
+   * @param ctx
+   *
+   * @return
    */
   private OClass getIndexClass(OCommandContext ctx) {
     if (className == null) {
@@ -184,6 +188,10 @@ public class OCreateIndexStatement extends ODDLStatement {
 
   /**
    * returns index metadata as an ODocuemnt (as expected by Index API)
+   *
+   * @param ctx
+   *
+   * @return
    */
   private ODocument calculateMetadata(OCommandContext ctx) {
     if (metadata == null) {
@@ -370,6 +378,8 @@ public class OCreateIndexStatement extends ODDLStatement {
 
     /**
      * returns the complete key to index, eg. property name or "property by key/value"
+     *
+     * @return
      */
     public String getCompleteKey() {
       StringBuilder result = new StringBuilder();

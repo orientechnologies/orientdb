@@ -96,8 +96,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       OSBTreeCollectionManagerShared.DEFAULT_EXTENSION, OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       O2QCache.CACHE_STATISTIC_FILE_EXTENSION, OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
       OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION, OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION,
-      OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION, OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION,
-      OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION };
+      OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION, OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION };
 
   private static final int ONE_KB = 1024;
 

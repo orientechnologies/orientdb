@@ -55,7 +55,7 @@ public class ODeleteStatementTest {
 
     OIndexFactory factory = OIndexes.getFactory("NOTUNIQUE", null);
     database.getMetadata().getIndexManager().createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE",
-        new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
+        new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.BINARY), null, null, null);
 
     OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex-notunique");
 

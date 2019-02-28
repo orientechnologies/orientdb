@@ -47,7 +47,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
-import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.MultiValueEntrySerializer;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -103,7 +102,6 @@ public class OBinarySerializerFactory {
     factory.registerSerializer(OMixedIndexRIDContainerSerializer.INSTANCE, null);
 
     factory.registerSerializer(OUTF8Serializer.INSTANCE, null);
-    factory.registerSerializer(MultiValueEntrySerializer.INSTANCE, null);
 
     return factory;
   }

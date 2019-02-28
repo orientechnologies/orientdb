@@ -6,13 +6,13 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public interface OV1IndexEngine extends OBaseIndexEngine {
-  int API_VERSION = 1;
+  int VERSION = 1;
 
   void put(Object key, ORID value);
 
   @Override
   default int getEngineAPIVersion() {
-    return API_VERSION;
+    return VERSION;
   }
 
   void load(final String name, final int keySize, final OType[] keyTypes, final OBinarySerializer keySerializer,

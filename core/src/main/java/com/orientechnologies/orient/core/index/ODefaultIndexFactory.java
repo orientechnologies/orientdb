@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -105,7 +104,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     }
 
     if (version < 0) {
-      version = getLastVersion(algorithm);
+      version = getLastVersion();
     }
 
     return createSBTreeIndex(name, indexType, valueContainerAlgorithm, metadata,
@@ -134,20 +133,13 @@ public class ODefaultIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public int getLastVersion(final String algorithm) {
-    switch (algorithm) {
-    case SBTREE_ALGORITHM:
-      return OSBTreeIndexEngine.VERSION;
-    case CELL_BTREE_ALGORITHM:
-      return OCellBTreeIndexEngine.VERSION;
-    }
-
-    throw new IllegalStateException("Invalid algorithm name " + algorithm);
+  public int getLastVersion() {
+    return OSBTreeIndexEngine.VERSION;
   }
 
   @Override
   public OBaseIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage,
-      int version, int apiVersion, @SuppressWarnings("SpellCheckingInspection") boolean multiValue,
+      int version, int apiVersion, @SuppressWarnings("SpellCheckingInspection") boolean multivalue,
       Map<String, String> engineProperties) {
 
     if (algorithm == null) {
@@ -169,8 +161,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
         indexEngine = new OSBTreeIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
         break;
       case CELL_BTREE_ALGORITHM:
-        if (multiValue) {
-          indexEngine = new OCellBTreeMultiValueIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
+        if (multivalue) {
+          indexEngine = new OCellBTreeMultiValueIndexEngine(name, (OAbstractPaginatedStorage) storage);
         } else {
           indexEngine = new OCellBTreeSingleValueIndexEngine(name, (OAbstractPaginatedStorage) storage);
         }
