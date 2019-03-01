@@ -1,7 +1,11 @@
 package com.orientechnologies.website.events;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jcabi.http.Request;
+import com.jcabi.http.request.ApacheRequest;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.configuration.AppConfig;
 import com.orientechnologies.website.model.schema.dto.Client;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
@@ -18,6 +22,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import reactor.event.Event;
 import reactor.function.Consumer;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,17 +33,17 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
 
   @Autowired
   @Lazy
-  protected JavaMailSenderImpl     sender;
+  protected JavaMailSenderImpl sender;
 
-  protected final Log              logger = LogFactory.getLog(getClass());
+  protected final Log                    logger = LogFactory.getLog(getClass());
   @Autowired
-  protected OrganizationRepository organizationRepository;
-
-  @Autowired
-  private IssueRepository          issueRepository;
+  protected       OrganizationRepository organizationRepository;
 
   @Autowired
-  OrientDBFactory                  factory;
+  private IssueRepository issueRepository;
+
+  @Autowired
+  OrientDBFactory factory;
 
   public String handleWhat() {
     return ReactorMSG.INTERNAL_EVENT.toString() + "/" + event();
@@ -62,11 +67,11 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
   }
 
   private void addEmail(OUser owner, Set<String> actors, OUser actorsInIssue) {
-    if (actorsInIssue.getWorkingEmail() != null && !actorsInIssue.getWorkingEmail().isEmpty()
-        && !actorsInIssue.getWorkingEmail().equals(owner.getWorkingEmail())) {
+    if (actorsInIssue.getWorkingEmail() != null && !actorsInIssue.getWorkingEmail().isEmpty() && !actorsInIssue.getWorkingEmail()
+        .equals(owner.getWorkingEmail())) {
       actors.add(actorsInIssue.getWorkingEmail());
-    } else if (actorsInIssue.getEmail() != null && !actorsInIssue.getEmail().isEmpty()
-        && !actorsInIssue.getEmail().equals(owner.getEmail())) {
+    } else if (actorsInIssue.getEmail() != null && !actorsInIssue.getEmail().isEmpty() && !actorsInIssue.getEmail()
+        .equals(owner.getEmail())) {
       actors.add(actorsInIssue.getEmail());
     }
   }
@@ -110,18 +115,18 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
     return text;
   }
 
-  protected String fillSubjectTags(Issue issue) {
+  protected static String fillSubjectTags(Issue issue) {
     return prjHubTag(issue) + assigneeTag(issue) + " " + titleTag(issue);
   }
 
-  private String assigneeTag(Issue issue) {
+  private static String assigneeTag(Issue issue) {
     if (issue.getAssignee() != null) {
       return "[" + issue.getAssignee().getUsername() + "]";
     }
     return "[NotAssigned]";
   }
 
-  private String prjHubTag(Issue issue) {
+  private static String prjHubTag(Issue issue) {
     if (issue.getClient() != null) {
       return "[PrjHub!]";
     } else {
@@ -140,11 +145,11 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
 
   }
 
-  private String titleTag(Issue issue) {
+  private static String titleTag(Issue issue) {
     return issue.getTitle();
   }
 
-  protected void sendEmail(Issue issue, String htmlContent, OUser user) {
+  protected void sendEmail(Issue issue, String htmlContent, OUser user, AppConfig config) {
 
     logIssueEvent(issue);
 
@@ -200,5 +205,24 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
 
     graph.getRawGraph().save(doc);
 
+    try {
+      sendSlackNotification(config.slackChannel, user.getName(), event(), config.endpoint + "/#issues/" + issue.getIid());
+    } catch (IOException e) {
+    }
+
+  }
+
+  public static void sendSlackNotification(String url, String actor, String evt, String link) throws IOException {
+
+    ObjectMapper mapper = new ObjectMapper();
+
+    Map<String, String> body = new HashMap<>();
+
+    String message = String.format("*%s by %s*\n%s", evt, actor, link);
+
+    body.put("text", message);
+
+    new ApacheRequest(url).header("Content-type", "application/json").method(Request.POST).body()
+        .set(mapper.writeValueAsString(body)).back().fetch();
   }
 }

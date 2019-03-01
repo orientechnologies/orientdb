@@ -37,6 +37,7 @@ public class MailConfiguration {
   @Value("${mock}")
   private boolean   mock;
 
+
   @Bean
   public JavaMailSender javaMailSender() {
     JavaMailSenderImpl mailSender = new MockMailSender(this, mock);
@@ -75,6 +76,50 @@ public class MailConfiguration {
     templateResolver.setOrder(1);
 
     return templateResolver;
+  }
+
+  public void setProtocol(String protocol) {
+    this.protocol = protocol;
+  }
+
+  public void setHost(String host) {
+    this.host = host;
+  }
+
+  public void setPort(int port) {
+    this.port = port;
+  }
+
+  public void setPort1(int port1) {
+    this.port1 = port1;
+  }
+
+  public void setHost1(String host1) {
+    this.host1 = host1;
+  }
+
+  public void setAuth(boolean auth) {
+    this.auth = auth;
+  }
+
+  public void setStarttls(boolean starttls) {
+    this.starttls = starttls;
+  }
+
+  public void setFrom(String from) {
+    this.from = from;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public void setMock(boolean mock) {
+    this.mock = mock;
   }
 
 }

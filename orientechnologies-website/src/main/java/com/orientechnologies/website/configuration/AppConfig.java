@@ -21,4 +21,7 @@ public class AppConfig {
 
     @Value("${escalate.mailcc}")
     public String escalateMilcc;
+
+    @Value("${app.slack}")
+    public String slackChannel;
 }

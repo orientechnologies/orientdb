@@ -65,7 +65,7 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
 
     OUser user = issue.getUser();
 
-    sendEmail(issue, htmlContent, user);
+    sendEmail(issue, htmlContent, user,config);
 
     if (issue.getClient() != null) {
       sendSupportMail(sender, issue, htmlContent, true);

@@ -56,7 +56,7 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
 
     OUser owner = comment.getActor();
 
-    sendEmail(issue, htmlContent, owner);
+    sendEmail(issue, htmlContent, owner,config);
 
     if (issue.getClient() != null)
       sendSupportMail(sender, issue, htmlContent, false);

@@ -13,6 +13,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import reactor.event.Event;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -57,6 +58,11 @@ public class IssueEscalateEvent extends EventInternal<Map<String, Object>> {
     mailMessage.setSubject(fillSubjectTags(issue));
     mailMessage.setText(htmlContent);
     sender.send(mailMessage);
+
+    try {
+      sendSlackNotification(config.slackChannel, user.getName(),event(),config.endpoint + "/#issues/" + issue.getIid());
+    } catch (IOException e) {
+    }
 
     logIssueEvent(issue);
     postHandle();

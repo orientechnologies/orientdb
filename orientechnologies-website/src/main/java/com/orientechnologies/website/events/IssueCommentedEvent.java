@@ -58,7 +58,7 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
 
     OUser owner = comment.getUser();
 
-    sendEmail(issue, htmlContent, owner);
+    sendEmail(issue, htmlContent, owner,config);
 
 
     if (issue.getClient() != null) {

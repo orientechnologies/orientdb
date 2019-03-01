@@ -53,7 +53,7 @@ public class IssueClosedEvent extends EventInternal<IssueEvent> {
     String htmlContent = templateEngine.process("newClosed.html", context);
 
     OUser owner = comment.getActor();
-    sendEmail(issue, htmlContent, owner);
+    sendEmail(issue, htmlContent, owner,config);
 
     if (issue.getClient() != null)
       sendSupportMail(sender, issue, htmlContent, false);
