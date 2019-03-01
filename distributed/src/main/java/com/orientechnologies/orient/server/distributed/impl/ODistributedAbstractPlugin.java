@@ -101,8 +101,6 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -126,7 +124,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -153,11 +150,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected final    ConcurrentMap<String, ODistributedStorage>     storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                    status                            = NODE_STATUS.OFFLINE;
   protected          long                                           lastClusterChangeOn;
-  protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
-  protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
-  protected       TimerTask                                      haStatsTask                       = null;
-  protected       TimerTask                                      healthCheckerTask                 = null;
+  protected          List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected final    ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
+  protected          TimerTask                                      publishLocalNodeConfigurationTask = null;
+  protected          TimerTask                                      haStatsTask                       = null;
+  protected          TimerTask                                      healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -1558,44 +1555,22 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ODistributedDatabaseImpl distrDatabase, final String iNode, final ODistributedDatabaseChunk firstChunk,
       final boolean delta, final File uniqueClustersBackupDirectory, final OModifiableDistributedConfiguration cfg) {
 
-    final String fileName = Orient.getTempPath() + "install_" + databaseName + "_server" + getLocalNodeId() + ".zip";
-
     final String localNodeName = nodeName;
-
-    ODistributedServerLog
-        .info(this, localNodeName, iNode, DIRECTION.IN, "Copying remote database '%s' to: %s", databaseName, fileName);
-
-    final File file = new File(fileName);
-    if (file.exists())
-      file.delete();
-
-    try {
-      file.getParentFile().mkdirs();
-      file.createNewFile();
-    } catch (IOException e) {
-      throw OException.wrapException(new ODistributedException("Error on creating temp database file to install locally"), e);
-    }
-
-    // DELETE ANY PREVIOUS .COMPLETED FILE
-    final File completedFile = new File(file.getAbsolutePath() + ".completed");
-    if (completedFile.exists())
-      completedFile.delete();
 
     final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
 
-    OSyncReceiver receiver = new OSyncReceiver(this, databaseName, firstChunk, momentum, fileName, iNode, dbPath, file);
+    OSyncReceiver receiver = new OSyncReceiver(this, databaseName, firstChunk, momentum, iNode, dbPath);
     try {
       Thread t = new Thread(receiver);
       t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       t.start();
 
     } catch (Exception e) {
-      ODistributedServerLog
-          .error(this, nodeName, null, DIRECTION.NONE, "Error on transferring database '%s' to '%s'", e, databaseName, fileName);
+      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on transferring database '%s' ", e, databaseName);
       throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     }
 
-    final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
+    final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, delta,
         uniqueClustersBackupDirectory, cfg, firstChunk.incremental, receiver);
 
     if (db == null)
@@ -1927,128 +1902,110 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   protected ODatabaseDocumentInternal installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
-      final String iDatabaseCompressedFile, final boolean delta, final File uniqueClustersBackupDirectory,
-      final OModifiableDistributedConfiguration cfg, boolean incremental, OSyncReceiver receiver) {
+      final boolean delta, final File uniqueClustersBackupDirectory, final OModifiableDistributedConfiguration cfg,
+      boolean incremental, OSyncReceiver receiver) {
     ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "Installing database '%s' to: %s...", databaseName, dbPath);
 
-    final File f = new File(iDatabaseCompressedFile);
-    final File fCompleted = new File(iDatabaseCompressedFile + ".completed");
-
     new File(dbPath).mkdirs();
-
     try {
-      final ODistributedAbstractPlugin me = this;
-      executeInDistributedDatabaseLock(databaseName, 20000, cfg, new OCallable<Void, OModifiableDistributedConfiguration>() {
-        @Override
-        public Void call(final OModifiableDistributedConfiguration cfg) {
-          try {
-            if (incremental) {
-              try {
-                receiver.getLatch().await();
-              } catch (InterruptedException e) {
-                throw OException.wrapException(new OInterruptedException("Interrupted waiting receive of sync"), e);
-              }
-              File dir = File.createTempFile("tmp", Long.toString(System.currentTimeMillis()));
-              if (dir.exists()) {
-                dir.delete();
-              }
-              dir.mkdir();
-              File file = new File(iDatabaseCompressedFile);
-              file.renameTo(new File(dir, databaseName + "_full.ibu"));
-              OStorage storage = serverInstance.getDatabases()
-                  .fullSync(databaseName, dir.getAbsolutePath(), OrientDBConfig.defaultConfig());
-              ODistributedStorage distributedStorage = getStorage(databaseName);
-              distributedStorage.replaceIfNeeded((OAbstractPaginatedStorage) storage);
-              distributedStorage.saveDatabaseConfiguration();
-              distributedStorage.getLocalDistributedDatabase().getSyncConfiguration().save();
-              file.delete();
-              dir.delete();
-              if (uniqueClustersBackupDirectory != null && uniqueClustersBackupDirectory.exists()) {
-                // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE CLUSTERS OWNED EXCLUSIVELY BY CURRENT
-                // NODE THAT WOULD BE LOST IF NOT REPLACED
-                for (File f : uniqueClustersBackupDirectory.listFiles()) {
-                  final File oldFile = new File(dbPath + "/" + f.getName());
-                  if (oldFile.exists())
-                    oldFile.delete();
-
-                  // REPLACE IT
-                  if (!f.renameTo(oldFile))
-                    throw new ODistributedException(
-                        "Cannot restore exclusive cluster file '" + f.getAbsolutePath() + "' into " + oldFile.getAbsolutePath());
-                }
-
-                uniqueClustersBackupDirectory.delete();
-              }
-              OLogSequenceNumber lsn = ((OAbstractPaginatedStorage) storage).getLSN();
-              final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(lsn,
-                  getMessageService().getDatabase(databaseName).getSyncConfiguration().getLastOperationTimestamp());
-
-              final Set<String> clustersOnLocalServer = cfg.getClustersOnServer(getLocalNodeName());
-              for (String c : clustersOnLocalServer)
-                deployTask.includeClusterName(c);
-
-              final List<String> targetNodes = new ArrayList<String>(1);
-              targetNodes.add(iNode);
-
-              ODistributedServerLog
-                  .info(this, nodeName, iNode, DIRECTION.OUT, "Requesting database delta sync for '%s' LSN=%s...", databaseName,
-                      lsn);
-
-              try {
-                final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask,
-                    getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-                final Map<String, Object> results = (Map<String, Object>) response.getPayload();
-                installResponseDeltaSync(messageService.getDatabase(databaseName), databaseName, cfg, iNode, results);
-              } catch (Exception e) {
-                e.printStackTrace();//TODO
-              }
-
-            } else if (delta) {
-              try (FileInputStream in = new OWaitDataInputStream(f, receiver.getLatch())) {
-                new OIncrementalServerSync().importDelta(serverInstance, databaseName, in, iNode);
-              }
-
-            } else {
-
-              // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
-              try (InputStream in = new OWaitDataInputStream(f, receiver.getLatch())) {
-
-                // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
-                serverInstance.getDatabases().restore(databaseName, in, null, new Callable<Object>() {
-                  @Override
-                  public Object call() throws Exception {
-                    if (uniqueClustersBackupDirectory != null && uniqueClustersBackupDirectory.exists()) {
-                      // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE CLUSTERS OWNED EXCLUSIVELY BY CURRENT
-                      // NODE THAT WOULD BE LOST IF NOT REPLACED
-                      for (File f : uniqueClustersBackupDirectory.listFiles()) {
-                        final File oldFile = new File(dbPath + "/" + f.getName());
-                        if (oldFile.exists())
-                          oldFile.delete();
-
-                        // REPLACE IT
-                        if (!f.renameTo(oldFile))
-                          throw new ODistributedException(
-                              "Cannot restore exclusive cluster file '" + f.getAbsolutePath() + "' into " + oldFile
-                                  .getAbsolutePath());
-                      }
-
-                      uniqueClustersBackupDirectory.delete();
-                    }
-                    return null;
-                  }
-                }, ODistributedServerLog.isDebugEnabled() ? me : null);
-              }
-            }
-            return null;
-          } catch (IOException e) {
-            throw OException.wrapException(new OIOException("Error on distributed sync of database"), e);
-          }
-        }
-      });
-    } finally {
-      f.delete();
-      fCompleted.delete();
+      receiver.getStarted().await();
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OInterruptedException("Interrupted waiting receive of sync"), e);
     }
+
+    final ODistributedAbstractPlugin me = this;
+    executeInDistributedDatabaseLock(databaseName, 20000, cfg, new OCallable<Void, OModifiableDistributedConfiguration>() {
+      @Override
+      public Void call(final OModifiableDistributedConfiguration cfg) {
+        try {
+          if (incremental) {
+            OStorage storage = serverInstance.getDatabases()
+                .fullSync(databaseName, receiver.getInputStream(), OrientDBConfig.defaultConfig());
+            ODistributedStorage distributedStorage = getStorage(databaseName);
+            distributedStorage.replaceIfNeeded((OAbstractPaginatedStorage) storage);
+            distributedStorage.saveDatabaseConfiguration();
+            distributedStorage.getLocalDistributedDatabase().getSyncConfiguration().save();
+            if (uniqueClustersBackupDirectory != null && uniqueClustersBackupDirectory.exists()) {
+              // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE CLUSTERS OWNED EXCLUSIVELY BY CURRENT
+              // NODE THAT WOULD BE LOST IF NOT REPLACED
+              for (File f : uniqueClustersBackupDirectory.listFiles()) {
+                final File oldFile = new File(dbPath + "/" + f.getName());
+                if (oldFile.exists())
+                  oldFile.delete();
+
+                // REPLACE IT
+                if (!f.renameTo(oldFile))
+                  throw new ODistributedException(
+                      "Cannot restore exclusive cluster file '" + f.getAbsolutePath() + "' into " + oldFile.getAbsolutePath());
+              }
+
+              uniqueClustersBackupDirectory.delete();
+            }
+            OLogSequenceNumber lsn = ((OAbstractPaginatedStorage) storage).getLSN();
+            final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(lsn,
+                getMessageService().getDatabase(databaseName).getSyncConfiguration().getLastOperationTimestamp());
+
+            final Set<String> clustersOnLocalServer = cfg.getClustersOnServer(getLocalNodeName());
+            for (String c : clustersOnLocalServer)
+              deployTask.includeClusterName(c);
+
+            final List<String> targetNodes = new ArrayList<String>(1);
+            targetNodes.add(iNode);
+
+            ODistributedServerLog
+                .info(this, nodeName, iNode, DIRECTION.OUT, "Requesting database delta sync for '%s' LSN=%s...", databaseName, lsn);
+
+            try {
+              final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask,
+                  getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+              final Map<String, Object> results = (Map<String, Object>) response.getPayload();
+              installResponseDeltaSync(messageService.getDatabase(databaseName), databaseName, cfg, iNode, results);
+            } catch (Exception e) {
+              e.printStackTrace();//TODO
+            }
+
+          } else if (delta) {
+            try (InputStream in = receiver.getInputStream()) {
+              new OIncrementalServerSync().importDelta(serverInstance, databaseName, in, iNode);
+            }
+
+          } else {
+
+            // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
+            try (InputStream in = receiver.getInputStream()) {
+
+              // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
+              serverInstance.getDatabases().restore(databaseName, in, null, new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                  if (uniqueClustersBackupDirectory != null && uniqueClustersBackupDirectory.exists()) {
+                    // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE CLUSTERS OWNED EXCLUSIVELY BY CURRENT
+                    // NODE THAT WOULD BE LOST IF NOT REPLACED
+                    for (File f : uniqueClustersBackupDirectory.listFiles()) {
+                      final File oldFile = new File(dbPath + "/" + f.getName());
+                      if (oldFile.exists())
+                        oldFile.delete();
+
+                      // REPLACE IT
+                      if (!f.renameTo(oldFile))
+                        throw new ODistributedException(
+                            "Cannot restore exclusive cluster file '" + f.getAbsolutePath() + "' into " + oldFile
+                                .getAbsolutePath());
+                    }
+
+                    uniqueClustersBackupDirectory.delete();
+                  }
+                  return null;
+                }
+              }, ODistributedServerLog.isDebugEnabled() ? me : null);
+            }
+          }
+          return null;
+        } catch (IOException e) {
+          throw OException.wrapException(new OIOException("Error on distributed sync of database"), e);
+        }
+      }
+    });
 
     ODatabaseDocumentInternal database = serverInstance.openDatabase(databaseName);
 
@@ -2214,66 +2171,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       url += ":" + port;
     }
     return url;
-  }
-
-  private static class OWaitDataInputStream extends FileInputStream {
-    private CountDownLatch latch;
-
-    public OWaitDataInputStream(File f, CountDownLatch latch) throws FileNotFoundException {
-      super(f);
-      this.latch = latch;
-    }
-
-    @Override
-    public int read() throws IOException {
-      while (true) {
-        final int read = super.read();
-        if (read > -1)
-          return read;
-
-        try {
-          if (latch.await(100, TimeUnit.MILLISECONDS)) {
-            return super.read();
-          }
-        } catch (InterruptedException e) {
-          OException.wrapException(new OInterruptedException("Interrupted waiting sync"), e);
-        }
-      }
-    }
-
-    @Override
-    public int read(final byte[] b, final int off, final int len) throws IOException {
-      while (true) {
-        final int read = super.read(b, off, len);
-        if (read > 0)
-          return read;
-
-        try {
-          if (latch.await(100, TimeUnit.MILLISECONDS)) {
-            return super.read(b, off, len);
-          }
-        } catch (InterruptedException e) {
-          OException.wrapException(new OInterruptedException("Interrupted waiting sync"), e);
-        }
-      }
-    }
-
-    @Override
-    public int available() throws IOException {
-      while (true) {
-        final int avail = super.available();
-        if (avail > 0)
-          return avail;
-
-        try {
-          if (latch.await(100, TimeUnit.MILLISECONDS)) {
-            return super.available();
-          }
-        } catch (InterruptedException e) {
-          OException.wrapException(new OInterruptedException("Interrupted waiting sync"), e);
-        }
-      }
-    }
   }
 
 }

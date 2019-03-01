@@ -555,6 +555,11 @@ public class PostponedEngineStartTest {
         }
 
         @Override
+        public boolean supportIncremental() {
+          return false;
+        }
+
+        @Override
         public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
 
         }

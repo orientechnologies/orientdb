@@ -1113,6 +1113,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
+  public boolean supportIncremental() {
+    return wrapped.supportIncremental();
+  }
+
+  @Override
   public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
     wrapped.fullIncrementalBackup(stream);
   }

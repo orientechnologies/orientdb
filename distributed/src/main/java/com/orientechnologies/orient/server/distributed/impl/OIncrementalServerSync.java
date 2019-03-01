@@ -41,6 +41,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedDatabase
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -68,7 +69,7 @@ public class OIncrementalServerSync {
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    */
-  public void importDelta(final OServer serverInstance, final String databaseName, final FileInputStream in, final String iNode)
+  public void importDelta(final OServer serverInstance, final String databaseName, final InputStream in, final String iNode)
       throws IOException {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
 

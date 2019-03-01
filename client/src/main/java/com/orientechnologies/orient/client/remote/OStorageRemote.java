@@ -785,6 +785,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
+  public boolean supportIncremental() {
+    //THIS IS FALSE HERE THOUGH WE HAVE SOME SUPPORT FOR SOME SPECIFIC CASES FROM REMOTE
+    return false;
+  }
+
+  @Override
   public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
     throw new UnsupportedOperationException("This operations is part of internal API and is not supported in remote storage");
   }

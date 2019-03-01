@@ -12,6 +12,7 @@ import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
+import java.io.InputStream;
 import java.util.HashMap;
 
 /**
@@ -40,7 +41,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return plugin;
   }
 
-  public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
+  public OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage = null;
     synchronized (this) {
@@ -65,7 +66,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }
-    storage.restoreFromIncrementalBackup(backupPath);
+    storage.restoreFullIncrementalBackup(backupStream);
     ODatabaseRecordThreadLocal.instance().remove();
     return storage;
   }

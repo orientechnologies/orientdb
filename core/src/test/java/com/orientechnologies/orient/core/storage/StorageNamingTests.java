@@ -313,6 +313,11 @@ public class StorageNamingTests {
     }
 
     @Override
+    public boolean supportIncremental() {
+      return false;
+    }
+
+    @Override
     public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
 
     }
