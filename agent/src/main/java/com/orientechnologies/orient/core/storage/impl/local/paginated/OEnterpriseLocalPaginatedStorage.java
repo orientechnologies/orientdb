@@ -83,6 +83,11 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   @Override
+  public boolean supportIncremental() {
+    return true;
+  }
+
+  @Override
   public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
     try {
       incrementalBackup(stream, null, false);
