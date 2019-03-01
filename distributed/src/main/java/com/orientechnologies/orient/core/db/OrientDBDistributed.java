@@ -107,7 +107,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.plugin = plugin;
   }
 
-  public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
+  public OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage = null;
     synchronized (this) {
@@ -134,7 +134,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }
-    storage.restoreFromIncrementalBackup(backupPath);
+    storage.restoreFullIncrementalBackup(backupStream);
     //DROP AND CREATE THE SHARED CONTEXT SU HAS CORRECT INFORMATION.
     synchronized (this) {
       OSharedContext context = sharedContexts.remove(dbName);

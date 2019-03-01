@@ -241,6 +241,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
    */
   String incrementalBackup(String backupDirectory, OCallable<Void, Void> started) throws UnsupportedOperationException;
 
+  boolean supportIncremental();
+
   void fullIncrementalBackup(OutputStream stream) throws UnsupportedOperationException;
 
   void restoreFromIncrementalBackup(String filePath);
