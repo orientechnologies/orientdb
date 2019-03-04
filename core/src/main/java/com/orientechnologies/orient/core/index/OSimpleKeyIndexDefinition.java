@@ -33,9 +33,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
-  private OType[] keyTypes;
+  private static final long    serialVersionUID = -1264300379465791244L;
+  private              OType[] keyTypes;
 
-  public OSimpleKeyIndexDefinition(final OType... keyTypes) {
+  public OSimpleKeyIndexDefinition(int version, final OType... keyTypes) {
     super();
 
     this.keyTypes = keyTypes;
@@ -44,7 +45,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   public OSimpleKeyIndexDefinition() {
   }
 
-  public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList) {
+  public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList, int version) {
     super();
 
     this.keyTypes = Arrays.copyOf(keyTypes2, keyTypes2.length);
@@ -126,14 +127,14 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   protected void serializeToStream() {
     super.serializeToStream();
 
-    final List<String> keyTypeNames = new ArrayList<>(keyTypes.length);
+    final List<String> keyTypeNames = new ArrayList<String>(keyTypes.length);
 
     for (final OType keyType : keyTypes)
       keyTypeNames.add(keyType.toString());
 
     document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
     if (collate instanceof OCompositeCollate) {
-      List<String> collatesNames = new ArrayList<>();
+      List<String> collatesNames = new ArrayList<String>();
       for (OCollate curCollate : ((OCompositeCollate) this.collate).getCollates())
         collatesNames.add(curCollate.getName());
       document.field("collates", collatesNames, OType.EMBEDDEDLIST);

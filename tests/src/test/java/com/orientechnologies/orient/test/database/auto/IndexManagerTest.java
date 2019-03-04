@@ -60,7 +60,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     try {
-      indexManager.createIndex("simple:key", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(OType.INTEGER),
+      indexManager.createIndex("simple:key", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(-1, OType.INTEGER),
           null, null, null);
       fail();
     } catch (Exception e) {
@@ -77,7 +77,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     final OIndex result = indexManager.createIndex("simplekey", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(
-        OType.INTEGER), null, null, null);
+        -1, OType.INTEGER), null, null, null);
 
     assertEquals(result.getName(), "simplekey");
 
@@ -590,7 +590,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   @Test
   public void testDropSimpleKey() {
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
-    indexManager.createIndex("simplekeytwo", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(OType.INTEGER),
+    indexManager.createIndex("simplekeytwo", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(-1, OType.INTEGER),
         null, null, null);
 
     assertNotNull(indexManager.getIndex("simplekeytwo"));

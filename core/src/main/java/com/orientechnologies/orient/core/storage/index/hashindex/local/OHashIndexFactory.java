@@ -45,14 +45,14 @@ import java.util.Set;
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public final class OHashIndexFactory implements OIndexFactory {
+public class OHashIndexFactory implements OIndexFactory {
 
   private static final Set<String> TYPES;
   public static final  String      HASH_INDEX_ALGORITHM = "HASH_INDEX";
   private static final Set<String> ALGORITHMS;
 
   static {
-    final Set<String> types = new HashSet<>(4);
+    final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString());
     types.add(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString());
     types.add(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString());
@@ -61,7 +61,7 @@ public final class OHashIndexFactory implements OIndexFactory {
   }
 
   static {
-    final Set<String> algorithms = new HashSet<>(1);
+    final Set<String> algorithms = new HashSet<String>();
     algorithms.add(HASH_INDEX_ALGORITHM);
 
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
@@ -76,21 +76,19 @@ public final class OHashIndexFactory implements OIndexFactory {
    * <li>DICTIONARY</li>
    * </ul>
    */
-  public final Set<String> getTypes() {
+  public Set<String> getTypes() {
     return TYPES;
   }
 
-  public final Set<String> getAlgorithms() {
+  public Set<String> getAlgorithms() {
     return ALGORITHMS;
   }
 
-  public final OIndexInternal<?> createIndex(final String name, final OStorage storage, final String indexType,
-      final String algorithm, String valueContainerAlgorithm, final ODocument metadata, int version)
-      throws OConfigurationException {
+  public OIndexInternal<?> createIndex(final String name, final OStorage storage, final String indexType, final String algorithm,
+      String valueContainerAlgorithm, final ODocument metadata, int version) throws OConfigurationException {
 
-    if (version < 0) {
-      version = getLastVersion(algorithm);
-    }
+    if (version < 0)
+      version = getLastVersion();
 
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
@@ -114,32 +112,26 @@ public final class OHashIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public final int getLastVersion(final String algorithm) {
+  public int getLastVersion() {
     return OHashTableIndexEngine.VERSION;
   }
 
   @Override
-  public final OBaseIndexEngine createIndexEngine(final String algorithm, final String name, final Boolean durableInNonTxMode,
-      final OStorage storage, final int version, final int apiVersion, final boolean multiValue,
+  public OBaseIndexEngine createIndexEngine(final String algoritm, final String name, final Boolean durableInNonTxMode,
+      final OStorage storage, final int version, final int apiVersion, final boolean multivalue,
       final Map<String, String> engineProperties) {
     final OIndexEngine indexEngine;
 
     final String storageType = storage.getType();
-    switch (storageType) {
-    case "memory":
-    case "plocal":
+    if (storageType.equals("memory") || storageType.equals("plocal"))
       indexEngine = new OHashTableIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
-      break;
-    case "distributed":
+    else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
       indexEngine = new OHashTableIndexEngine(name, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
-      break;
-    case "remote":
+    else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine(name);
-      break;
-    default:
+    else
       throw new OIndexException("Unsupported storage type: " + storageType);
-    }
 
     return indexEngine;
   }

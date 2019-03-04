@@ -1078,7 +1078,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     exportImportHashTable = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager()
         .createIndex(EXPORT_IMPORT_MAP_NAME, OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
-            new OSimpleKeyIndexDefinition(OType.LINK), null, null, null);
+            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK), null, null, null);
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
@@ -1348,7 +1348,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
 
         if (indexDefinition == null) {
-          indexDefinition = new OSimpleKeyIndexDefinition(OType.STRING);
+          indexDefinition = new OSimpleKeyIndexDefinition(0, OType.STRING);
         }
 
         boolean oldValue = OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();

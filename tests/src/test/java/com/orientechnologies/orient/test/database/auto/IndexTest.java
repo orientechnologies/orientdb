@@ -1061,7 +1061,9 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManager idxManager = db.getMetadata().getIndexManager();
     OIndexFactory indexFactory = OIndexes.getFactory("UNIQUE", null);
 
-    idxManager.createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+    idxManager
+        .createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(indexFactory.getLastVersion(), OType.INTEGER),
+            null, null, null);
     OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexTest");
 
     ODocument v0 = new ODocument("ManualIndexTxClass");
@@ -1103,8 +1105,8 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManager idxManager = db.getMetadata().getIndexManager();
     OIndexFactory factory = OIndexes.getFactory("UNIQUE", null);
 
-    idxManager
-        .createIndex("manualTxIndexRecursiveStoreTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+    idxManager.createIndex("manualTxIndexRecursiveStoreTest", "UNIQUE",
+        new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.INTEGER), null, null, null);
 
     OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexRecursiveStoreTest");
 
@@ -1149,7 +1151,9 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testIndexCountPlusCondition() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
     OIndexFactory factory = OIndexes.getFactory("NOTUNIQUE", null);
-    idxManager.createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+    idxManager
+        .createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.INTEGER),
+            null, null, null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexCountPlusCondition");
 
@@ -1178,7 +1182,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNotUniqueIndexKeySize() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
     idxManager
-        .createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+        .createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null, null, null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexKeySize");
 
@@ -1199,7 +1203,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
   public void testNotUniqueIndexSize() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
-    idxManager.createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+    idxManager
+        .createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null, null, null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSize");
 
@@ -1630,7 +1635,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     List<ODocument> resultOne = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(queryOne));
     Assert.assertEquals(resultOne.size(), 1);
-    Assert.assertEquals(resultOne.get(0).getIdentity(), docOne.getIdentity());
+    Assert.assertEquals(resultOne.get(0), docOne);
 
     ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryOne)).execute();
     Assert.assertTrue(explain.<Collection<String>>field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
@@ -1639,7 +1644,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     List<ODocument> resultTwo = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(queryTwo));
     Assert.assertEquals(resultTwo.size(), 1);
-    Assert.assertEquals(resultTwo.get(0).getIdentity(), docTwo.getIdentity());
+    Assert.assertEquals(resultTwo.get(0), docTwo);
 
     explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryTwo)).execute();
     Assert.assertTrue(explain.<Collection<String>>field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));

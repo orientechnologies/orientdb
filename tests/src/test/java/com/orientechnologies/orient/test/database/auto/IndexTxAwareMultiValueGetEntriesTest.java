@@ -38,7 +38,7 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
     database
         .getMetadata()
         .getIndexManager()
-        .createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null,
+        .createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null,
             null, null);
 
   }

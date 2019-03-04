@@ -155,7 +155,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
         final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
 
-        loadedIndexDefinition = new OSimpleKeyIndexDefinition(keyType);
+        loadedIndexDefinition = new OSimpleKeyIndexDefinition(factory.getLastVersion(), keyType);
 
         config.removeField(OIndexInternal.CONFIG_KEYTYPE);
       }
@@ -577,7 +577,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   @Override
   public void setType(OType type) {
-    indexDefinition = new OSimpleKeyIndexDefinition(type);
+    indexDefinition = new OSimpleKeyIndexDefinition(version, type);
     updateConfiguration();
   }
 

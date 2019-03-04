@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1;
+package com.orientechnologies.orient.core.storage.index.sbtree.multivalue;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;

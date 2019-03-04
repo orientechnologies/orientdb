@@ -29,7 +29,7 @@ import java.util.Set;
 
 public interface OIndexFactory {
 
-  int getLastVersion(final String algorithm);
+  int getLastVersion();
 
   /**
    * @return List of supported indexes of this factory
@@ -44,8 +44,12 @@ public interface OIndexFactory {
   /**
    * Creates an index.
    *
+   * @param name
+   * @param storage TODO
    * @param indexType
    *          index type
+   * @param algorithm
+   * @param valueContainerAlgorithm
    * @return OIndexInternal
    * @throws OConfigurationException
    *           if index creation failed
@@ -54,5 +58,5 @@ public interface OIndexFactory {
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException;
 
   OBaseIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
-      int apiVersion, boolean multiValue, Map<String, String> engineProperties);
+      int apiVersion, boolean multivalue, Map<String, String> engineProperties);
 }
