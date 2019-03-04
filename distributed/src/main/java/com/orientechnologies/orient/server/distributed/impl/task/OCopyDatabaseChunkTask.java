@@ -29,6 +29,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 import java.io.DataInput;
@@ -63,12 +64,9 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   @Override
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    final File f = new File(fileName);
-    if (!f.exists())
-      throw new IllegalArgumentException("File name '" + fileName + "' not found");
 
-    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(f, offset, OSyncDatabaseTask.CHUNK_MAX_SIZE, null,
-        compressed, false);
+    OBackgroundBackup b = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(b, offset, OSyncDatabaseTask.CHUNK_MAX_SIZE, null);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));

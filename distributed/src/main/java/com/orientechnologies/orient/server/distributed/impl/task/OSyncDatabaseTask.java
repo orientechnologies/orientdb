@@ -130,6 +130,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
           ((ODistributedStorage) database.getStorage()).setLastValidBackup(backup);
         } else {
           momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+          backup.makeStreamFromFile();
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
               "Reusing last backup of database '%s' in directory: %s...", databaseName,
               backup.getResultedBackupFile().getAbsolutePath());
@@ -142,15 +143,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
           OLogManager.instance().info(this, "Another backup running on database '%s' waiting it to finish", databaseName);
         }
 
-        File backupFile = new File(backup.getFinalBackupPath());
-        if (backup.getIncremental().get()) {
-          //iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-          //backupFile = backupFile.listFiles(pathname -> pathname.getName().endsWith(".ibu"))[0];
-          //backup.getFinished().await();
-        }
-
-        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum.get(), false,
-            backup.getIncremental().get());
+        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backup, 0, CHUNK_MAX_SIZE, momentum.get());
 
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
             "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),

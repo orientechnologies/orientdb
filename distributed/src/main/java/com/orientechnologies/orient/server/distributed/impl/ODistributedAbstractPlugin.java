@@ -1890,17 +1890,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final OutputStream out)
-      throws IOException {
-
-    ODistributedServerLog
-        .info(this, nodeName, null, DIRECTION.NONE, "- writing chunk #%d offset=%d size=%s", iChunkId, chunk.offset,
-            OFileUtils.getSizeAsString(chunk.buffer.length));
-    out.write(chunk.buffer);
-
-    return chunk.buffer.length;
-  }
-
   protected ODatabaseDocumentInternal installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
       final boolean delta, final File uniqueClustersBackupDirectory, final OModifiableDistributedConfiguration cfg,
       boolean incremental, OSyncReceiver receiver) {
