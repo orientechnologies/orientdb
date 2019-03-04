@@ -1624,7 +1624,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               File file = new File(iDatabaseCompressedFile);
               file.renameTo(new File(dir, databaseName + "_full.ibu"));
               OStorage storage = serverInstance.getDatabases()
-                  .fullSync(databaseName, dir.getAbsolutePath(), OrientDBConfig.defaultConfig());
+                  .fullSync(databaseName, null, OrientDBConfig.defaultConfig());
               file.delete();
               dir.delete();
               if (uniqueClustersBackupDirectory != null && uniqueClustersBackupDirectory.exists()) {

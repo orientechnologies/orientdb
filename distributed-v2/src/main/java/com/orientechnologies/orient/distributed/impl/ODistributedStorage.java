@@ -1291,6 +1291,21 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     }
   }
 
+  @Override
+  public void restoreFullIncrementalBackup(InputStream stream) throws UnsupportedOperationException {
+    wrapped.restoreFullIncrementalBackup(stream);
+  }
+
+  @Override
+  public boolean supportIncremental() {
+    return wrapped.supportIncremental();
+  }
+
+  @Override
+  public void fullIncrementalBackup(OutputStream stream) throws UnsupportedOperationException {
+    wrapped.fullIncrementalBackup(stream);
+  }
+
   protected File getDistributedConfigFile() {
     return new File(serverInstance.getDatabaseDirectory() + getName() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
