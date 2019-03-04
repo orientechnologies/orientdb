@@ -49,7 +49,7 @@ public class OSyncReceiver implements Runnable {
       started.countDown();
       try {
 
-        long fileSize = distributed.writeDatabaseChunk(1, chunk, output);
+        long fileSize = writeDatabaseChunk(1, chunk, output);
         for (int chunkNum = 2; !chunk.last; chunkNum++) {
           final ODistributedResponse response = distributed.sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
               new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
@@ -63,12 +63,9 @@ public class OSyncReceiver implements Runnable {
                 "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
           } else if (result instanceof ODistributedDatabaseChunk) {
             chunk = (ODistributedDatabaseChunk) result;
-            fileSize += distributed.writeDatabaseChunk(chunkNum, chunk, output);
+            fileSize += writeDatabaseChunk(chunkNum, chunk, output);
           }
         }
-
-        output.flush();
-        done.countDown();
 
         ODistributedServerLog
             .info(this, distributed.nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Database copied correctly, size=%s",
@@ -78,6 +75,7 @@ public class OSyncReceiver implements Runnable {
         try {
           output.flush();
           output.close();
+          done.countDown();
         } catch (IOException e) {
           ODistributedServerLog
               .warn(this, distributed.nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Error on closing sync piped stream ",
@@ -92,6 +90,23 @@ public class OSyncReceiver implements Runnable {
               databaseName);
       throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     }
+  }
+
+  protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final OutputStream out)
+      throws IOException {
+
+    ODistributedServerLog.info(this, distributed.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        "- writing chunk #%d offset=%d size=%s", iChunkId, chunk.offset, OFileUtils.getSizeAsString(chunk.buffer.length));
+    try {
+      out.write(chunk.buffer);
+    } catch (IOException e) {
+      // IN CASE OF ZIP BACKUPS WE CAN IGNORE THE IOException ad the end of the file.
+      if (chunk.incremental) {
+        throw e;
+      }
+    }
+
+    return chunk.buffer.length;
   }
 
   public CountDownLatch getStarted() {
