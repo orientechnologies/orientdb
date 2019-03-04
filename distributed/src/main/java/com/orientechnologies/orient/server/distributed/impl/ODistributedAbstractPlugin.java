@@ -990,6 +990,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                         "Skipping download of database '%s' from the cluster because autoDeploy=false", databaseName);
 
                     setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
+                    distrDatabase.setOnline();
                     distrDatabase.resume();
                     return false;
                   }

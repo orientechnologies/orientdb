@@ -472,6 +472,10 @@ public class OTokenHandlerImpl implements OTokenHandler {
     }
   }
 
+  public void setSessionInMills(long sessionInMills) {
+    this.sessionInMills = sessionInMills;
+  }
+
   private static class MacThreadLocal extends ThreadLocal<Mac> {
     @Override
     protected Mac initialValue() {
