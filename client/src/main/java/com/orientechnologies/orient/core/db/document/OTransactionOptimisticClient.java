@@ -59,6 +59,7 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
       record.fromStream(operation.getRecord());
       ORecordInternal.setIdentity(record, (ORecordId) operation.getId());
       ORecordInternal.setVersion(record, operation.getVersion());
+      ORecordInternal.setContentChanged(record,operation.isContentChanged());
       getDatabase().getLocalCache().updateRecord(record);
       boolean callHook = checkCallHook(oldEntries, operation.getId(), operation.getType());
       addRecord(record, operation.getType(), null, callHook);
