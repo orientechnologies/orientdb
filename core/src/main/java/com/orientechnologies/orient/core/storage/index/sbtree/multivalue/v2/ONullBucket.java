@@ -56,9 +56,9 @@ final class ONullBucket extends ODurablePage {
   private static final int RIDS_SIZE_OFFSET          = EMBEDDED_RIDS_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int RIDS_OFFSET               = RIDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private final OSBTree<MultiValueEntry, Byte> multiContainer;
+  private final OSBTree<OMultiValueEntry, Byte> multiContainer;
 
-  ONullBucket(final OCacheEntry cacheEntry, final OSBTree<MultiValueEntry, Byte> multiContainer) {
+  ONullBucket(final OCacheEntry cacheEntry, final OSBTree<OMultiValueEntry, Byte> multiContainer) {
     super(cacheEntry);
 
     this.multiContainer = multiContainer;
@@ -82,7 +82,7 @@ final class ONullBucket extends ODurablePage {
       setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) (embeddedSize + 1));
     } else {
       final long mId = getLongValue(M_ID_OFFSET);
-      multiContainer.put(new MultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()), (byte) 1);
+      multiContainer.put(new OMultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()), (byte) 1);
     }
 
     final int size = getIntValue(RIDS_SIZE_OFFSET);
@@ -107,12 +107,12 @@ final class ONullBucket extends ODurablePage {
     if (size > embeddedSize) {
       final long mId = getLongValue(M_ID_OFFSET);
 
-      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
-          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
+      final OSBTree.OSBTreeCursor<OMultiValueEntry, Byte> cursor = multiContainer
+          .iterateEntriesBetween(new OMultiValueEntry(mId, 0, 0), true, new OMultiValueEntry(mId + 1, 0, 0), false, true);
 
-      Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
+      Map.Entry<OMultiValueEntry, Byte> mapEntry = cursor.next(-1);
       while (mapEntry != null) {
-        final MultiValueEntry entry = mapEntry.getKey();
+        final OMultiValueEntry entry = mapEntry.getKey();
         rids.add(new ORecordId(entry.clusterId, entry.clusterPosition));
 
         mapEntry = cursor.next(-1);
@@ -151,7 +151,7 @@ final class ONullBucket extends ODurablePage {
 
     if (size > embeddedSize) {
       final long mId = getLongValue(M_ID_OFFSET);
-      final Byte result = multiContainer.remove(new MultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()));
+      final Byte result = multiContainer.remove(new OMultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()));
       if (result != null) {
         setIntValue(RIDS_SIZE_OFFSET, size - 1);
         return true;
@@ -167,20 +167,20 @@ final class ONullBucket extends ODurablePage {
     final int size = getIntValue(RIDS_SIZE_OFFSET);
 
     if (size > embeddedSize) {
-      final List<MultiValueEntry> entriesToRemove = new ArrayList<>(size - embeddedSize);
+      final List<OMultiValueEntry> entriesToRemove = new ArrayList<>(size - embeddedSize);
 
-      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
-          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
+      final OSBTree.OSBTreeCursor<OMultiValueEntry, Byte> cursor = multiContainer
+          .iterateEntriesBetween(new OMultiValueEntry(mId, 0, 0), true, new OMultiValueEntry(mId + 1, 0, 0), false, true);
 
-      Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
+      Map.Entry<OMultiValueEntry, Byte> mapEntry = cursor.next(-1);
       while (mapEntry != null) {
-        final MultiValueEntry entry = mapEntry.getKey();
+        final OMultiValueEntry entry = mapEntry.getKey();
         entriesToRemove.add(entry);
 
         mapEntry = cursor.next(-1);
       }
 
-      for (final MultiValueEntry entry : entriesToRemove) {
+      for (final OMultiValueEntry entry : entriesToRemove) {
         multiContainer.remove(entry);
       }
     }

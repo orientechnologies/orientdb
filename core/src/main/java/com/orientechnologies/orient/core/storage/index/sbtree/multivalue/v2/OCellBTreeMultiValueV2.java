@@ -102,8 +102,8 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent {
   private OType[]              keyTypes;
   private OEncryption          encryption;
 
-  private       OSBTree<MultiValueEntry, Byte> multiContainer;
-  private final OModifiableLong                mIdCounter = new OModifiableLong();
+  private       OSBTree<OMultiValueEntry, Byte> multiContainer;
+  private final OModifiableLong                 mIdCounter = new OModifiableLong();
 
   public OCellBTreeMultiValueV2(final String name, final String dataFileExtension, final String nullFileExtension,
       final String containerExtension, final OAbstractPaginatedStorage storage) {
@@ -166,7 +166,7 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent {
         }
 
         multiContainer = new OSBTree<>(getName(), containerExtension, null, storage);
-        multiContainer.create(OMultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
+        multiContainer.create(MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
       } finally {
         releaseExclusiveLock();
       }
@@ -512,7 +512,7 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent {
       this.keySerializer = keySerializer;
 
       multiContainer = new OSBTree<>(getName(), containerExtension, null, storage);
-      multiContainer.load(getName(), OMultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
+      multiContainer.load(getName(), MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
 
       final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
       try {
