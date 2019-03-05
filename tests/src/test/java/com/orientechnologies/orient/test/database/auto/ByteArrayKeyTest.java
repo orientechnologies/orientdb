@@ -52,7 +52,7 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     database
         .getMetadata()
         .getIndexManager()
-        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.BINARY), null, null,
+        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null,
             null);
   }
 
@@ -64,7 +64,7 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
 
     if (index == null) {
       index = database.getMetadata().getIndexManager()
-          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(-1, OType.BINARY), null, null, null);
+          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
       this.manualIndex = index;
     } else {
       index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");

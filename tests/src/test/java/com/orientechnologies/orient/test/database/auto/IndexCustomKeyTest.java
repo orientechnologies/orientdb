@@ -204,7 +204,7 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
       OBinarySerializerFactory.getInstance().registerSerializer(new OHash256Serializer(), null);
 
       database.getMetadata().getIndexManager()
-          .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID, -1), null, null, null);
+          .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null, null);
     }
   }
 

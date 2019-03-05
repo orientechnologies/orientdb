@@ -24,9 +24,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -1059,10 +1057,8 @@ public class IndexTest extends ObjectDBBaseTest {
     database.getMetadata().getSchema().createClass("ManualIndexTxClass", 1, null);
 
     OIndexManager idxManager = db.getMetadata().getIndexManager();
-    OIndexFactory indexFactory = OIndexes.getFactory("UNIQUE", null);
-
     idxManager
-        .createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(indexFactory.getLastVersion(), OType.INTEGER),
+        .createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER),
             null, null, null);
     OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexTest");
 
@@ -1103,10 +1099,8 @@ public class IndexTest extends ObjectDBBaseTest {
     database.getMetadata().getSchema().createClass("ManualIndexTxRecursiveStoreClass", 1, null);
 
     OIndexManager idxManager = db.getMetadata().getIndexManager();
-    OIndexFactory factory = OIndexes.getFactory("UNIQUE", null);
-
     idxManager.createIndex("manualTxIndexRecursiveStoreTest", "UNIQUE",
-        new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.INTEGER), null, null, null);
+        new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
 
     OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexRecursiveStoreTest");
 
@@ -1150,9 +1144,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
   public void testIndexCountPlusCondition() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
-    OIndexFactory factory = OIndexes.getFactory("NOTUNIQUE", null);
     idxManager
-        .createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.INTEGER),
+        .createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER),
             null, null, null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexCountPlusCondition");
@@ -1182,7 +1175,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNotUniqueIndexKeySize() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
     idxManager
-        .createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null, null, null);
+        .createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexKeySize");
 
@@ -1204,7 +1197,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNotUniqueIndexSize() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
     idxManager
-        .createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(-1, OType.INTEGER), null, null, null);
+        .createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSize");
 

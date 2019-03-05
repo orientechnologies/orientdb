@@ -182,7 +182,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
         .getMetadata()
         .getIndexManager()
         .createIndex("__@recordmap@___" + indexName, OClass.INDEX_TYPE.DICTIONARY.toString(),
-            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK, OType.STRING), null, null, null));
+            new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
 
     final String className;
     if (Vertex.class.isAssignableFrom(indexClass))
@@ -196,13 +196,12 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     metadata.field(CONFIG_CLASSNAME, className);
     metadata.field(CONFIG_RECORD_MAP_NAME, recordKeyValueIndex.getName());
 
-    final OIndexFactory nuFactory = OIndexes.getFactory(OClass.INDEX_TYPE.NOTUNIQUE.toString(), null);
     // CREATE THE MAP
     this.underlying = new OIndexTxAwareMultiValue(graph.getRawGraph(), (OIndex<Collection<OIdentifiable>>) graph
         .getRawGraph()
         .getMetadata()
         .getIndexManager().createIndex(indexName, OClass.INDEX_TYPE.NOTUNIQUE.toString(),
-            new OSimpleKeyIndexDefinition(nuFactory.getLastVersion(), iKeyType), null, null, metadata));
+            new OSimpleKeyIndexDefinition(iKeyType), null, null, metadata));
 
   }
 
@@ -231,14 +230,12 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   }
 
   private OIndex<?> buildKeyValueIndex(final ODocument metadata) {
-    final OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
-
     final OIndex<?> recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph
         .getRawGraph()
         .getMetadata()
         .getIndexManager()
         .createIndex("__@recordmap@___" + underlying.getName(), OClass.INDEX_TYPE.DICTIONARY.toString(),
-            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK, OType.STRING), null, null, null));
+            new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
 
     final List<ODocument> entries = graph.getRawGraph().query(
         new OSQLSynchQuery<Object>("select  from index:" + underlying.getName()));

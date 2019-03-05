@@ -3,8 +3,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -53,9 +51,8 @@ public class ODeleteStatementTest {
     ODatabaseDocument database = new ODatabaseDocumentTx("memory:ODeleteStatementTestDeleteFromIndexBinary");
     database.create();
 
-    OIndexFactory factory = OIndexes.getFactory("NOTUNIQUE", null);
     database.getMetadata().getIndexManager().createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE",
-        new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.BINARY), null, null, null);
+        new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
 
     OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex-notunique");
 

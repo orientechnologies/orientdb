@@ -181,7 +181,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
       OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
       createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(),
-          new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.STRING), null, null, null);
+          new OSimpleKeyIndexDefinition(OType.STRING), null, null, null);
     } finally {
       releaseExclusiveLock();
     }
@@ -550,7 +550,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   private OIndex<?> createDictionary() {
     final OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
     return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(),
-        new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.STRING), null, null, null);
+        new OSimpleKeyIndexDefinition(OType.STRING), null, null, null);
   }
 
   Locale getServerLocale() {

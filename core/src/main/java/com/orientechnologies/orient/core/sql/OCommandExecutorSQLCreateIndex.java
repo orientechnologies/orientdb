@@ -269,7 +269,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
       else if (serializerKeyId != 0) {
         idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId, factory.getLastVersion()),
+            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId),
                 null, null, metadataDoc, engine);
       } else {
         throw new ODatabaseException("Impossible to create an index without specify the key type or the associated property");
