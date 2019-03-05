@@ -98,7 +98,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
 
     if (version < 0)
-      version = getLastVersion();
+      version = getLastVersion(algorithm);
 
     if (AUTOSHARDING_ALGORITHM.equals(algorithm))
       return createShardedIndex(name, indexType, valueContainerAlgorithm, metadata,
@@ -124,7 +124,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public int getLastVersion() {
+  public int getLastVersion(final String algorithm) {
     return OAutoShardingIndexEngine.VERSION;
   }
 

@@ -104,7 +104,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     }
 
     if (version < 0) {
-      version = getLastVersion();
+      version = getLastVersion(algorithm);
     }
 
     return createSBTreeIndex(name, indexType, valueContainerAlgorithm, metadata,
@@ -133,7 +133,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public int getLastVersion() {
+  public int getLastVersion(final String algorithm) {
     return OSBTreeIndexEngine.VERSION;
   }
 

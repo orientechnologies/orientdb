@@ -88,7 +88,7 @@ public class OHashIndexFactory implements OIndexFactory {
       String valueContainerAlgorithm, final ODocument metadata, int version) throws OConfigurationException {
 
     if (version < 0)
-      version = getLastVersion();
+      version = getLastVersion(algorithm);
 
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
@@ -112,7 +112,7 @@ public class OHashIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public int getLastVersion() {
+  public int getLastVersion(final String algorithm) {
     return OHashTableIndexEngine.VERSION;
   }
 

@@ -45,7 +45,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   public OSimpleKeyIndexDefinition() {
   }
 
-  public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList, int version) {
+  public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList) {
     super();
 
     this.keyTypes = Arrays.copyOf(keyTypes2, keyTypes2.length);

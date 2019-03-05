@@ -266,7 +266,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 
       if (keyTypes != null)
         idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(),
-            new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
+            new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null, metadataDoc, engine);
       else if (serializerKeyId != 0) {
         idx = database.getMetadata().getIndexManager()
             .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId),
