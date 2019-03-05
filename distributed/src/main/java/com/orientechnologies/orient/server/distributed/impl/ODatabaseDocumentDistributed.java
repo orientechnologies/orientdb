@@ -717,26 +717,26 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         rids.add(new ORecordId(entry.getRID().getClusterId(), -1));
       }
     }
-      for (ORID rid : rids) {
+    for (ORID rid : rids) {
       txContext.lock(rid);
     }
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
-    Set<OPair<String, Object>> keys = new TreeSet<>();
+    Set<String> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
       OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType()) || OClass.INDEX_TYPE.DICTIONARY.name().equals(index.getType())
           || OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(index.getType())) {
         for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-          keys.add(new OPair<>(String.valueOf(changesPerKey.key), changesPerKey.key));
+          keys.add(String.valueOf(changesPerKey.key));
         }
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
-          keys.add(new OPair<>("null", null));
+          keys.add("null");
         }
       }
     }
-    for (OPair key : keys) {
-      txContext.lockIndexKey(key.getValue());
+    for (String key : keys) {
+      txContext.lockIndexKey(key);
     }
 
   }
