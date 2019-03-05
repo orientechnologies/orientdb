@@ -306,7 +306,7 @@ public class OSelectExecutionPlanner {
     Map<String, Set<String>> result = new LinkedHashMap<>();
     Set<String> uncovered = new HashSet<>();
     uncovered.addAll(queryClusters);
-    uncovered = uncovered.stream().map(x -> x.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet());
+    uncovered = uncovered.stream().filter(x -> x != null).map(x -> x.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet());
 
     //try local node first
     Set<String> nextNodeClusters = new HashSet<>();
@@ -392,6 +392,9 @@ public class OSelectExecutionPlanner {
     if (item.getRids() != null && item.getRids().size() > 0) {
       if (item.getRids().size() == 1) {
         OInteger cluster = item.getRids().get(0).getCluster();
+        if (cluster.getValue().longValue() > ORID.CLUSTER_MAX) {
+          throw new OCommandExecutionException("Invalid cluster Id:" + cluster + ". Max allowed value = " + ORID.CLUSTER_MAX);
+        }
         result.add(db.getClusterNameById(cluster.getValue().intValue()));
       } else {
         for (ORid rid : item.getRids()) {
