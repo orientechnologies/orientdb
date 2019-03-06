@@ -383,10 +383,17 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         //some problems in key conversion, so the params do not match the key types
         continue;
       }
-      OIndexCursor cursor;
       if (index.supportsOrderedIterations()) {
-        cursor = index.iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded,
-            toBetweenIndexKey(indexDef, thirdValue), toKeyIncluded, isOrderAsc());
+
+        Object from = toBetweenIndexKey(indexDef, secondValue);
+        Object to = toBetweenIndexKey(indexDef, thirdValue);
+        if (from == null && to == null) {
+          //manage null value explicitly, as the index API does not seem to work correctly in this case
+          cursor = getCursorForNullKey();
+        } else {
+          cursor = index.iterateEntriesBetween(from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
+        }
+
       } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
         cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
       } else {
@@ -399,6 +406,82 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       cursor = nextCursors.remove(0);
       fetchNextEntry();
     }
+  }
+
+  private OIndexCursor getCursorForNullKey() {
+    Object result = index.get(null);
+
+    if (!(result instanceof Iterable)) {
+      result = Collections.singleton(result);
+    }
+    final Object r = result;
+
+    OIndexCursor cursor = new OIndexCursor() {
+
+      final Iterator iter = ((Iterable) r).iterator();
+
+      @Override
+      public boolean hasNext() {
+        return iter.hasNext();
+      }
+
+      @Override
+      public OIdentifiable next() {
+        return (OIdentifiable) iter.next();
+      }
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        if(!iter.hasNext()){
+          return null;
+        }
+        Object val = iter.next();
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return null;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return (OIdentifiable) val;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            return (OIdentifiable) val;
+          }
+        };
+      }
+
+      @Override
+      public Set<OIdentifiable> toValues() {
+        Set<OIdentifiable> res = new HashSet<>();
+        while (hasNext()) {
+          res.add(next());
+        }
+        return res;
+      }
+
+      @Override
+      public Set<Map.Entry<Object, OIdentifiable>> toEntries() {
+        Set<Map.Entry<Object, OIdentifiable>> res = new HashSet<>();
+        while (hasNext()) {
+          res.add(nextEntry());
+        }
+        return res;
+      }
+
+      @Override
+      public Set<Object> toKeys() {
+        return Collections.singleton(null);
+      }
+
+      @Override
+      public void setPrefetchSize(int prefetchSize) {
+      }
+    };
+    return cursor;
   }
 
   /**
