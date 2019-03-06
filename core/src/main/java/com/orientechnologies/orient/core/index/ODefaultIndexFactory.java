@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -134,7 +135,14 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
   @Override
   public int getLastVersion(final String algorithm) {
-    return OSBTreeIndexEngine.VERSION;
+    switch (algorithm) {
+    case SBTREE_ALGORITHM:
+      return OSBTreeIndexEngine.VERSION;
+    case CELL_BTREE_ALGORITHM:
+      return OCellBTreeIndexEngine.VERSION;
+    }
+
+    throw new IllegalStateException("Invalid algorithm name " + algorithm);
   }
 
   @Override
@@ -162,7 +170,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
         break;
       case CELL_BTREE_ALGORITHM:
         if (multivalue) {
-          indexEngine = new OCellBTreeMultiValueIndexEngine(name, (OAbstractPaginatedStorage) storage);
+          indexEngine = new OCellBTreeMultiValueIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
         } else {
           indexEngine = new OCellBTreeSingleValueIndexEngine(name, (OAbstractPaginatedStorage) storage);
         }
