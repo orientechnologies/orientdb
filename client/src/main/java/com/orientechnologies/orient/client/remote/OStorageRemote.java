@@ -434,8 +434,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           throw OException.wrapException(new OStorageException(errorMessage), e);
         } else {
           session.removeServerSession(network.getServerURL());
-          if (--retry <= 0)
-            throw OException.wrapException(new OStorageException(errorMessage), e);
         }
         serverUrl = null;
       } catch (OOfflineNodeException e) {
@@ -1175,8 +1173,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void rollback(OTransactionInternal iTx) {
     try {
-      if (((OTransactionOptimistic) iTx).isAlreadyCleared()) {
+      if (((OTransactionOptimistic) iTx).isAlreadyCleared() && getCurrentSession().getAllServerSessions().size() > 0) {
         ORollbackTransactionRequest request = new ORollbackTransactionRequest(iTx.getId());
+
         ORollbackTransactionResponse response = networkOperation(request, "Error on fetching next page for statment: " + request);
       }
     } finally {
