@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -22,12 +23,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxLockTimeout;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 
@@ -131,6 +127,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       payload = new OTxLockTimeout();
     } catch (ORecordDuplicatedException ex) {
       payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), ex.getKey());
+    } catch (OConcurrentCreateException ex) {
+      payload = new OTxConcurrentCreation(ex.getActualRid(),ex.getExpectedRid());
     } catch (RuntimeException ex) {
       payload = new OTxException(ex);
     }
