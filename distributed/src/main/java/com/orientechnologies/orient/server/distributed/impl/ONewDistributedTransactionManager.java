@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -41,12 +42,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxLockTimeout;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 
@@ -83,6 +79,17 @@ public class ONewDistributedTransactionManager {
         retriedCommit(database, iTx, count);
         return;
       } catch (ODistributedRecordLockedException ex) {
+        if (count == nretry) {
+          throw ex;
+        }
+        int v = new Random().nextInt(1000);
+        try {
+          Thread.sleep(delay * count + v);
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+          return;
+        }
+      } catch (OConcurrentCreateException ex) {
         if (count == nretry) {
           throw ex;
         }
@@ -265,9 +272,16 @@ public class ONewDistributedTransactionManager {
       for (OTransactionResultPayload result : results) {
         switch (result.getResponseType()) {
         case OTxLockTimeout.ID:
+          localKo(requestId, database);
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
           throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId,
               database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+        case OTxConcurrentCreation.ID:
+          localKo(requestId, database);
+          sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+          throw new OConcurrentCreateException(((OTxConcurrentCreation) result).getExpectedRid(),
+              ((OTxConcurrentCreation) result).getActualRid());
+
         case OTxSuccess.ID:
           messages.add("success");
           break;

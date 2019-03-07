@@ -58,6 +58,13 @@ public class OTransactionPhase1TaskResult implements OStreamable {
       out.writeLong(pl.getRecordId().getClusterPosition());
       out.writeInt(pl.getVersion());
       break;
+    case OTxConcurrentCreation.ID:
+      OTxConcurrentCreation pl6 = (OTxConcurrentCreation) resultPayload;
+      out.writeInt(pl6.getActualRid().getClusterId());
+      out.writeLong(pl6.getActualRid().getClusterPosition());
+      out.writeInt(pl6.getExpectedRid().getClusterId());
+      out.writeLong(pl6.getExpectedRid().getClusterPosition());
+      break;
     case OTxException.ID:
       OTxException pl2 = (OTxException) resultPayload;
       OStreamableHelper.toStream(out, pl2.getException());
@@ -105,6 +112,11 @@ public class OTransactionPhase1TaskResult implements OStreamable {
     case OTxException.ID:
       RuntimeException exception = (RuntimeException) OStreamableHelper.fromStream(in);
       this.resultPayload = new OTxException(exception);
+      break;
+    case OTxConcurrentCreation.ID:
+      ORecordId actualRid = new ORecordId(in.readInt(), in.readLong());
+      ORecordId expectedRid = new ORecordId(in.readInt(), in.readLong());
+      this.resultPayload = new OTxConcurrentCreation(actualRid, expectedRid);
       break;
     case OTxUniqueIndex.ID:
       //RID

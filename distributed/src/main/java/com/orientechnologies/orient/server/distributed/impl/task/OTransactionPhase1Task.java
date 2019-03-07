@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -129,6 +130,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       payload = new OTxLockTimeout();
     } catch (ORecordDuplicatedException ex) {
       payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), ex.getKey());
+    } catch (OConcurrentCreateException ex) {
+      payload = new OTxConcurrentCreation(ex.getActualRid(),ex.getExpectedRid());
     } catch (RuntimeException ex) {
       payload = new OTxException(ex);
     }
