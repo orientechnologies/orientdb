@@ -20,8 +20,10 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
+
 
 import java.sql.*;
 import java.util.Map;
@@ -199,6 +201,11 @@ public class OrientJdbcConnection implements Connection {
 
   public void setAutoCommit(boolean autoCommit) throws SQLException {
     this.autoCommit = autoCommit;
+    if(!this.autoCommit){
+       database.open(OTransaction.TXTYPE.OPTIMISTIC);
+    }else{
+       database.open(OTransaction.TXTYPE.NOTX);
+    }
   }
 
   public String getCatalog() throws SQLException {
