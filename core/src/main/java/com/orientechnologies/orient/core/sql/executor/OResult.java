@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -206,8 +207,18 @@ public interface OResult {
       jsonVal = "\"" + Base64.getEncoder().encodeToString((byte[]) val) + "\"";
     } else if (val instanceof Date) {
       jsonVal = "\"" + ODateHelper.getDateTimeFormatInstance().format(val) + "\"";
+    } else if (val.getClass().isArray()) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("[");
+      for (int i = 0; i < Array.getLength(val); i++) {
+        if (i > 0) {
+          builder.append(", ");
+        }
+        builder.append(toJson(Array.get(val, i)));
+      }
+      builder.append("]");
+      jsonVal = builder.toString();
     } else {
-
       throw new UnsupportedOperationException("Cannot convert " + val + " - " + val.getClass() + " to JSON");
     }
     return jsonVal;
