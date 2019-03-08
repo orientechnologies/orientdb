@@ -47,16 +47,14 @@ public class OIndexDefinitionFactory {
   /**
    * Creates an instance of {@link OIndexDefinition} for automatic index.
    *
-   * @param oClass
-   *          class which will be indexed
-   * @param fieldNames
-   *          list of properties which will be indexed. Format should be '<property> [by key|value]', use 'by key' or 'by value' to
-   *          describe how to index maps. By default maps indexed by key
-   * @param types
-   *          types of indexed properties
+   * @param oClass     class which will be indexed
+   * @param fieldNames list of properties which will be indexed. Format should be '<property> [by key|value]', use 'by key' or 'by
+   *                   value' to describe how to index maps. By default maps indexed by key
+   * @param types      types of indexed properties
    * @param collates
    * @param indexKind
    * @param algorithm
+   *
    * @return index definition instance
    */
   public static OIndexDefinition createIndexDefinition(final OClass oClass, final List<String> fieldNames, final List<OType> types,
@@ -73,19 +71,30 @@ public class OIndexDefinitionFactory {
   /**
    * Extract field name from '<property> [by key|value]' field format.
    *
-   * @param fieldDefinition
-   *          definition of field
+   * @param fieldDefinition definition of field
+   *
    * @return extracted property name
    */
   public static String extractFieldName(final String fieldDefinition) {
     String[] fieldNameParts = FILED_NAME_PATTERN.split(fieldDefinition);
-    if (fieldNameParts.length == 1)
-      return fieldDefinition;
+    if (fieldNameParts.length == 0) {
+      throw new IllegalArgumentException(
+          "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldDefinition + '\'');
+    }
     if (fieldNameParts.length == 3 && "by".equalsIgnoreCase(fieldNameParts[1]))
       return fieldNameParts[0];
 
-    throw new IllegalArgumentException(
-        "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldDefinition + '\'');
+    if (fieldNameParts.length == 1)
+      return fieldDefinition;
+
+    StringBuilder result = new StringBuilder();
+    result.append(fieldNameParts[0]);
+    for (int i = 1; i < fieldNameParts.length; i++) {
+      result.append(" ");
+      result.append(fieldNameParts[i]);
+    }
+    return result.toString();
+
   }
 
   private static OIndexDefinition createMultipleFieldIndexDefinition(final OClass oClass, final List<String> fieldsToIndex,
@@ -108,8 +117,9 @@ public class OIndexDefinitionFactory {
 
   private static void checkTypes(OClass oClass, List<String> fieldNames, List<OType> types) {
     if (fieldNames.size() != types.size())
-      throw new IllegalArgumentException("Count of field names doesn't match count of field types. It was " + fieldNames.size()
-          + " fields, but " + types.size() + " types.");
+      throw new IllegalArgumentException(
+          "Count of field names doesn't match count of field types. It was " + fieldNames.size() + " fields, but " + types.size()
+              + " types.");
 
     for (int i = 0, fieldNamesSize = fieldNames.size(); i < fieldNamesSize; i++) {
       String fieldName = fieldNames.get(i);
@@ -148,8 +158,8 @@ public class OIndexDefinitionFactory {
       }
 
       indexDefinition = new OPropertyMapIndexDefinition(oClass.getName(), fieldName, indexType, indexBy);
-    } else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
-        || type.equals(OType.LINKSET)) {
+    } else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST) || type
+        .equals(OType.LINKSET)) {
       if (type.equals(OType.LINKSET))
         indexType = OType.LINK;
       else if (type.equals(OType.LINKLIST)) {

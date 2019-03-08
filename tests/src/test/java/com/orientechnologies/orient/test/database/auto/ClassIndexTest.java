@@ -451,10 +451,8 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     boolean exceptionIsThrown = false;
     try {
       oClass.createIndex("ClassIndexTestPropertyWrongSpecifierEmbeddedMap", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"fEmbeddedMap b value"});
-    } catch (IllegalArgumentException e) {
+    } catch (OIndexException e) {
       exceptionIsThrown = true;
-      assertEquals(e.getMessage(),
-          "Illegal field name format, should be '<property> [by key|value]' but was 'fEmbeddedMap b value'");
     }
 
     assertTrue(exceptionIsThrown);
@@ -466,10 +464,8 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     boolean exceptionIsThrown = false;
     try {
       oClass.createIndex("ClassIndexTestPropertyWrongSpecifierEmbeddedMap", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"fEmbeddedMap by value t"});
-    } catch (IllegalArgumentException e) {
+    } catch (OIndexException e) {
       exceptionIsThrown = true;
-      assertEquals(e.getMessage(),
-          "Illegal field name format, should be '<property> [by key|value]' but was 'fEmbeddedMap by value t'");
     }
 
     assertTrue(exceptionIsThrown);
