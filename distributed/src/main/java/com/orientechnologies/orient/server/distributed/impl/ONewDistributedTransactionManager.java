@@ -86,7 +86,7 @@ public class ONewDistributedTransactionManager {
         try {
           Thread.sleep(delay * count + v);
         } catch (InterruptedException e) {
-          Thread.interrupted();
+          Thread.currentThread().interrupt();
           return;
         }
       } catch (OConcurrentCreateException ex) {
@@ -97,7 +97,7 @@ public class ONewDistributedTransactionManager {
         try {
           Thread.sleep(delay * count + v);
         } catch (InterruptedException e) {
-          Thread.interrupted();
+          Thread.currentThread().interrupt();
           return;
         }
       }
@@ -134,7 +134,7 @@ public class ONewDistributedTransactionManager {
         try {
           Thread.sleep(delay * count + v);
         } catch (InterruptedException e) {
-          Thread.interrupted();
+          Thread.currentThread().interrupt();
           return;
         }
       }

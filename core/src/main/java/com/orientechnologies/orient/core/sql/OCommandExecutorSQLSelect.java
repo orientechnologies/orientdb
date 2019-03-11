@@ -605,7 +605,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             applyGroupBy(record, iContext);
             resultQueue.put(new AsyncResult(record, iContext));
           } catch (InterruptedException ignore) {
-            Thread.interrupted();
+            Thread.currentThread().interrupt();
             return false;
           }
           tmpQueueOffer.incrementAndGet();
@@ -1732,7 +1732,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
       } catch (InterruptedException ignore) {
-        Thread.interrupted();
+        Thread.currentThread().interrupt();
         cancelQuery = true;
         break;
       }

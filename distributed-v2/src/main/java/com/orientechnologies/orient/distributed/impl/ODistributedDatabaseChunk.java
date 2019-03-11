@@ -76,7 +76,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
         }
       }
     } catch (InterruptedException e) {
-      Thread.interrupted();
+      Thread.currentThread().interrupt();
     }
 
   }
