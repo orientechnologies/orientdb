@@ -57,7 +57,7 @@ public class OParenthesisExpression extends OMathExpression {
       return expression.execute(iCurrentRecord, ctx);
     }
     if (statement != null) {
-      OInternalExecutionPlan execPlan = statement.createExecutionPlan(ctx, false);
+      OInternalExecutionPlan execPlan = statement.createExecutionPlanNoCache(ctx, false);
       if (execPlan instanceof OInsertExecutionPlan) {
         ((OInsertExecutionPlan) execPlan).executeInternal();
       }
