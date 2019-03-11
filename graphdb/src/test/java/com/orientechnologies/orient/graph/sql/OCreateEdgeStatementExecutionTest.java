@@ -334,4 +334,27 @@ public class OCreateEdgeStatementExecutionTest {
 
     }
   }
+
+  @Test
+  public void testPositionalParams() {
+
+    String vClass1 = "testPositionalParamsV";
+    db.createVertexClass(vClass1);
+
+    String eClass = "testPositionalParamsE";
+    db.createEdgeClass(eClass);
+
+    for (int i = 0; i < 2; i++) {
+      OVertex v1 = db.newVertex(vClass1);
+      v1.setProperty("name", "v" + i);
+      v1.save();
+    }
+
+    db.command("CREATE EDGE " + eClass + " from (select from " + vClass1 + " WHERE name = ? ) to  (select from " + vClass1
+        + " WHERE name = ? )", "v0", "v1").close();
+
+    OResultSet result = db.query("select from " + eClass + " where out.name = 'v0' AND in.name = 'v1'");
+    Assert.assertTrue(result.hasNext());
+    result.close();
+  }
 }
