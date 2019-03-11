@@ -20,9 +20,9 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.serialization.OStreamable;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
-import com.orientechnologies.orient.server.distributed.impl.task.OBackgroundBackup;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -48,13 +48,11 @@ public class ODistributedDatabaseChunk implements OStreamable {
   public ODistributedDatabaseChunk() {
   }
 
-  public ODistributedDatabaseChunk(final OBackgroundBackup backgroundBackup, final long iOffset, final int iMaxSize,
-      final ODistributedMomentum momentum) throws IOException {
+  public ODistributedDatabaseChunk(final OSyncSource backgroundBackup, final int iMaxSize, final ODistributedMomentum momentum) throws IOException {
     filePath = "";
-    offset = iOffset;
     this.momentum = momentum;
     this.gzipCompressed = false;
-    this.incremental = backgroundBackup.getIncremental().get();
+    this.incremental = backgroundBackup.getIncremental();
     this.walSegment = -1;
     this.walPosition = -1;
 
@@ -67,9 +65,12 @@ public class ODistributedDatabaseChunk implements OStreamable {
         buffer = new byte[] {};
         last = true;
       } else {
-        buffer = new byte[read];
-        System.arraycopy(local, 0, buffer, 0, read);
-        // UPDATE FILE SIZE
+        if(local.length == read){
+          buffer = local;
+        } else {
+          buffer = new byte[read];
+          System.arraycopy(local, 0, buffer, 0, read);
+        }
 
         if (in.available() == 0 && backgroundBackup.getFinished().await(0, TimeUnit.NANOSECONDS)) {
           // BACKUP COMPLETED
@@ -77,7 +78,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
         }
       }
     } catch (InterruptedException e) {
-      Thread.interrupted();
+      Thread.currentThread().interrupt();
     }
 
   }

@@ -93,7 +93,6 @@ public class OIncrementalServerSync {
 
           long lastLap = System.currentTimeMillis();
 
-          // final GZIPInputStream gzipInput = new GZIPInputStream(in);
           try {
 
             final DataInputStream input = new DataInputStream(in);
@@ -143,7 +142,7 @@ public class OIncrementalServerSync {
                   final int recordType = input.readByte();
                   final int recordSize = input.readInt();
                   final byte[] recordContent = new byte[recordSize];
-                  input.read(recordContent);
+                  input.readFully(recordContent);
 
                   switch (recordStatus) {
                   case REMOVED:

@@ -376,7 +376,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           fileSize = writeDatabaseChunk(nodeName, 1, chunk, out);
           for (int chunkNum = 2; !chunk.last; chunkNum++) {
             final Object result = distributedManager.sendRequest(databaseName, null, OMultiValue.getSingletonList(r.getKey()),
-                new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
+                new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, chunk.gzipCompressed),
                 distributedManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
             if (result instanceof Boolean)

@@ -75,6 +75,7 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -92,9 +93,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
-import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
-import com.orientechnologies.orient.server.distributed.impl.task.OBackgroundBackup;
-import com.orientechnologies.orient.server.distributed.impl.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordIfNotLatestTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSQLCommandTask;
@@ -144,7 +142,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   private ODistributedStorageEventListener    eventListener;
 
   private volatile ODistributedConfiguration distributedConfiguration;
-  private volatile OBackgroundBackup         lastValidBackup = null;
+  private volatile OSyncSource               lastValidBackup = null;
 
   public ODistributedStorage(final OServer iServer, final String dbName) {
     this.serverInstance = iServer;
@@ -1387,11 +1385,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           "Cannot execute write operation (" + operation + ") on node '" + localNodeName + "' because is non a master");
   }
 
-  public OBackgroundBackup getLastValidBackup() {
+  public OSyncSource getLastValidBackup() {
     return lastValidBackup;
   }
 
-  public void setLastValidBackup(final OBackgroundBackup lastValidBackup) {
+  public void setLastValidBackup(final OSyncSource lastValidBackup) {
     this.lastValidBackup = lastValidBackup;
   }
 
