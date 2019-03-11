@@ -9,17 +9,16 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class OBackgroundBackup implements Runnable {
+public class OBackgroundBackup implements Runnable, OSyncSource {
   private          OSyncDatabaseTask                     oSyncDatabaseTask;
   private final    ODistributedServerManager             iManager;
   private final    ODatabaseDocumentInternal             database;
@@ -150,8 +149,8 @@ public class OBackgroundBackup implements Runnable {
     inputStream = new FileInputStream(finalBackupPath);
   }
 
-  public AtomicBoolean getIncremental() {
-    return incremental;
+  public boolean getIncremental() {
+    return incremental.get();
   }
 
   public File getResultedBackupFile() {

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -93,7 +94,12 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
         final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
 
-        OBackgroundBackup backup = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+        OBackgroundBackup backup = null;
+        OSyncSource last = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+        if (last instanceof OBackgroundBackup) {
+          backup = (OBackgroundBackup) last;
+        }
+
         if (backup == null || !backup.getResultedBackupFile().exists()) {
           // CREATE A BACKUP OF DATABASE FROM SCRATCH
           File backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
@@ -143,7 +149,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
           OLogManager.instance().info(this, "Another backup running on database '%s' waiting it to finish", databaseName);
         }
 
-        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backup, 0, CHUNK_MAX_SIZE, momentum.get());
+        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backup, CHUNK_MAX_SIZE, momentum.get());
 
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
             "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),

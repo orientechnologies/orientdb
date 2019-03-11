@@ -23,6 +23,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -34,7 +35,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -65,8 +65,8 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
-    OBackgroundBackup b = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
-    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(b, offset, OSyncDatabaseTask.CHUNK_MAX_SIZE, null);
+    OSyncSource b = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(b, OSyncDatabaseTask.CHUNK_MAX_SIZE, null);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
