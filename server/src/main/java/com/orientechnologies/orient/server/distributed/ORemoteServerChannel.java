@@ -167,9 +167,6 @@ public class ORemoteServerChannel {
         // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
         lastException = e;
 
-        OLogManager.instance().error(this,
-            " current message: " + operation.getClass() + " previous message: " + this.prevRequest + " prev response"
-                + prevResponse, e);
         handleNewError();
 
         close();
