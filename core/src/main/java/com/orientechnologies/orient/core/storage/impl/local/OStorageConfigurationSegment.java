@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,7 +44,6 @@ import java.util.zip.CRC32;
 /**
  * Handles the database configuration in one big record.
  */
-@SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
   //This class uses "double write" pattern.
   //Whenever we want to update configuration, first we write data in backup file and make fsync. Then we write the same data

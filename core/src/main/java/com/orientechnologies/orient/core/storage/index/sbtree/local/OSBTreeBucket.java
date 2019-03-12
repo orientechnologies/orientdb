@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -74,7 +73,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   private final OEncryption encryption;
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OSBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
       OBinarySerializer<V> valueSerializer, OEncryption encryption) throws IOException {
     super(cacheEntry);
@@ -99,7 +97,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     setByteValue(VALUE_SERIALIZER_OFFSET, this.valueSerializer.getId());
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OSBTreeBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OType[] keyTypes,
       OBinarySerializer<V> valueSerializer, OEncryption encryption) {
     super(cacheEntry);

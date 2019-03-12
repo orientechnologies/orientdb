@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -64,7 +63,6 @@ final class OSBTreeBucketSingleValue<K> extends ODurablePage {
 
   private final OEncryption encryption;
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   OSBTreeBucketSingleValue(final OCacheEntry cacheEntry, final boolean isLeaf, final OBinarySerializer<K> keySerializer,
       final OType[] keyTypes, final OEncryption encryption) {
     super(cacheEntry);
@@ -82,7 +80,6 @@ final class OSBTreeBucketSingleValue<K> extends ODurablePage {
     setLongValue(RIGHT_SIBLING_OFFSET, -1);
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   OSBTreeBucketSingleValue(final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer, final OType[] keyTypes,
       final OEncryption encryption) {
     super(cacheEntry);

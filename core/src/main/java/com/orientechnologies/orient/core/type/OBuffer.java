@@ -20,14 +20,12 @@
 package com.orientechnologies.orient.core.type;
 
 import com.orientechnologies.common.io.OIOUtils;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-@SuppressFBWarnings({ "EI_EXPOSE_REP2", "EI_EXPOSE_REP" })
 public class OBuffer implements Externalizable {
   public byte[] buffer;
 
@@ -68,7 +66,6 @@ public class OBuffer implements Externalizable {
     return buffer;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setBuffer(final byte[] buffer) {
     this.buffer = buffer;
   }

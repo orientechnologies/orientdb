@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.cache.chm;
 
-import javax.annotation.Nonnegative;
 
 /**
  * An admission policy to the cache. A page replacement policy always admits new entries and chooses
@@ -26,7 +25,7 @@ import javax.annotation.Nonnegative;
  * @author ben.manes@gmail.com (Ben Manes)
  */
 interface Admittor {
-  void ensureCapacity(@Nonnegative long maximumSize);
+  void ensureCapacity(long maximumSize);
 
   int frequency(int hash);
 

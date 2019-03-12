@@ -55,7 +55,6 @@ import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
 
-import javax.annotation.Nonnull;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -710,7 +709,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     }
 
     @Override
-    public Thread newThread(@Nonnull final Runnable r) {
+    public Thread newThread(final Runnable r) {
       return new Thread(OAbstractPaginatedStorage.storageThreadGroup, r, "Segment adder thread");
     }
   }

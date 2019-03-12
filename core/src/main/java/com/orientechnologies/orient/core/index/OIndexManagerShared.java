@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.ArrayList;
@@ -61,7 +60,6 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @author Artem Orobets added composite index managemement
  */
-@SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
 public class OIndexManagerShared extends OIndexManagerAbstract {
   private volatile transient Thread   recreateIndexesThread = null;
   private volatile           boolean  rebuildCompleted      = false;

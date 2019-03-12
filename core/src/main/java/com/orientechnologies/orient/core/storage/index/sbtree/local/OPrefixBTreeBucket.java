@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -61,7 +60,6 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
   private final OEncryption encryption;
   private       String      bucketPrefix;
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   OPrefixBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<String> keySerializer,
       OBinarySerializer<V> valueSerializer, OEncryption encryption, String bucketPrefix) {
     super(cacheEntry);
@@ -105,7 +103,6 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     positionsArrayOffset = treeSizeOffset + OLongSerializer.LONG_SIZE;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OPrefixBTreeBucket(OCacheEntry cacheEntry, OBinarySerializer<String> keySerializer, OBinarySerializer<V> valueSerializer,
       OEncryption encryption) {
     super(cacheEntry);

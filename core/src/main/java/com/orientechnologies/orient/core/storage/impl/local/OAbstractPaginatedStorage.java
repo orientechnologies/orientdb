@@ -167,9 +167,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import javax.annotation.Nonnull;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -5107,7 +5105,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     indexEngineNameMap.clear();
   }
 
-  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   private byte[] checkAndIncrementVersion(final OCluster iCluster, final ORecordId rid, final AtomicInteger version,
       final AtomicInteger iDatabaseVersion, final byte[] iRecordContent, final byte iRecordType) {
 
@@ -6296,7 +6293,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private static final class FuzzyCheckpointThreadFactory implements ThreadFactory {
     @Override
-    public final Thread newThread(@Nonnull final Runnable r) {
+    public final Thread newThread(final Runnable r) {
       final Thread thread = new Thread(storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());

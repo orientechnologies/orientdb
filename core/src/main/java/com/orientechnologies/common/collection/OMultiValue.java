@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -430,7 +429,6 @@ public class OMultiValue {
    *
    * @return
    */
-  @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
   public static Object add(final Object iObject, final Object iToAdd) {
     if (iObject != null) {
       if (iObject instanceof Collection<?> || iObject instanceof OCollection<?>) {
@@ -723,7 +721,6 @@ public class OMultiValue {
     return array(iValue, iClass, null);
   }
 
-  @SuppressFBWarnings("PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   public static <T> T[] array(final Object iValue, final Class<? extends T> iClass, final OCallable<Object, Object> iCallback) {
     if (iValue == null)
       return null;

@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -53,20 +51,17 @@ public class OStorageOperationResult<RET> implements Externalizable {
     this(result, null, false);
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OStorageOperationResult(final RET result, final boolean moved) {
     this.result = result;
     this.isMoved = moved;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public OStorageOperationResult(final RET result, final byte[] content, final boolean moved) {
     this.result = result;
     this.modifiedRecordContent = content;
     this.isMoved = moved;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public byte[] getModifiedRecordContent() {
     return modifiedRecordContent;
   }

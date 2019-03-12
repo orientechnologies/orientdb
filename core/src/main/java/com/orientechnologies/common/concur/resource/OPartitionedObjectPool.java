@@ -2,7 +2,6 @@ package com.orientechnologies.common.concur.resource;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -15,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 15/12/14
  */
-@SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY")
 public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
   private static final int HASH_INCREMENT = 0x61c88647;
   private static final int MIN_POOL_SIZE = 2;
