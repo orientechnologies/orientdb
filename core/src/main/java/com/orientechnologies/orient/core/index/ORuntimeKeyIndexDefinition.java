@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,7 +37,6 @@ import java.util.List;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
   private static final long                 serialVersionUID = -8855918974071833818L;
   private transient    OBinarySerializer<T> serializer;

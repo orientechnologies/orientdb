@@ -4,7 +4,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
-import javax.annotation.concurrent.GuardedBy;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -134,7 +133,6 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   /**
    * Last indexes of buffers on which buffer flush procedure was stopped
    */
-  @GuardedBy("lruLock")
   private final long[] readBufferReadCount = new long[NUMBER_OF_READ_BUFFERS];
 
   /**
@@ -162,7 +160,6 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   /**
    * LRU list to updated statistic of recency of contained items.
    */
-  @GuardedBy("lruLock")
   private final OClosableLRUList<K, V> lruList = new OClosableLRUList<K, V>();
 
   /**
@@ -513,7 +510,6 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * Read content of write buffer and adds/removes LRU entries to update internal statistic.
    * Method has to be wrapped by LRU lock.
    */
-  @GuardedBy("lruLock")
   private void emptyWriteBuffer() {
     Runnable task = stateBuffer.poll();
     while (task != null) {
@@ -526,7 +522,6 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * Read content of all read buffers and reorder elements inside of LRU list to update internal statistic.
    * Method has to be wrapped by LRU lock.
    */
-  @GuardedBy("lruLock")
   private void emptyReadBuffers() {
     for (int n = 0; n < NUMBER_OF_READ_BUFFERS; n++) {
       AtomicReference<OClosableEntry<K, V>>[] buffer = readBuffers[n];

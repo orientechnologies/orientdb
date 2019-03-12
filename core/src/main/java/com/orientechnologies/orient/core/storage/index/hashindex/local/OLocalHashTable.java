@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -121,7 +120,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     this.nullBucketFileExtension = nullBucketFileExtension;
   }
 
-  @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   @Override
   public void create(final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer, final OType[] keyTypes,
       final OEncryption encryption, final OHashFunction<K> keyHashFunction, final boolean nullKeyIsSupported) throws IOException {
@@ -1763,7 +1761,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
   }
 
-  @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   private void initHashTreeState(final OAtomicOperation atomicOperation) throws IOException {
     truncateFile(atomicOperation, fileId);
 

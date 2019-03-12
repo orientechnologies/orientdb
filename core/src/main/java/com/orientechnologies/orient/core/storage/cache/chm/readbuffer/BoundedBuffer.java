@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.cache.chm.readbuffer;
 
-import javax.annotation.Nonnull;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Consumer;
@@ -74,7 +73,7 @@ public final class BoundedBuffer<E> extends StripedBuffer<E> {
     }
 
     @Override
-    public int offer(@Nonnull final E e) {
+    public int offer(final E e) {
       final long head = readCounter.get();
       final long tail = writeCounter.get();
       final long size = (tail - head);
@@ -90,7 +89,7 @@ public final class BoundedBuffer<E> extends StripedBuffer<E> {
     }
 
     @Override
-    public void drainTo(@Nonnull final Consumer<E> consumer) {
+    public void drainTo(final Consumer<E> consumer) {
       long head = readCounter.get();
       final long tail = writeCounter.get();
 

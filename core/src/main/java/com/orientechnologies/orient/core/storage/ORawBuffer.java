@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.type.OBuffer;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -39,7 +38,6 @@ public class ORawBuffer extends OBuffer {
     version = 0;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public ORawBuffer(final byte[] buffer, final int version, final byte recordType) {
     this.buffer = buffer;
     this.version = version;

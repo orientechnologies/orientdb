@@ -20,26 +20,21 @@
 
 package com.orientechnologies.common.concur.lock;
 
+import com.orientechnologies.common.types.OModifiableInteger;
+
 import java.util.Iterator;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.types.OModifiableInteger;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/18/14
  */
-@SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
   private static final long serialVersionUID = 7975120282194559960L;
 

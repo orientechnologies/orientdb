@@ -54,7 +54,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.File;
 import java.io.IOException;
@@ -579,7 +578,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   }
 
   @Override
-  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   public ORawBuffer readRecord(final long clusterPosition, final boolean prefetchRecords) throws IOException {
     int pagesToPrefetch = 1;
 
@@ -1625,7 +1623,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     return physicalPosition;
   }
 
-  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   private byte[] readFullEntry(final long clusterPosition, long pageIndex, int recordPosition,
       final OAtomicOperation atomicOperation, final int pageCount) throws IOException {
     if (getFilledUpTo(atomicOperation, fileId) <= pageIndex) {

@@ -21,13 +21,11 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.03.13
  */
-@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class OMurmurHash3HashFunction<V> implements OHashFunction<V> {
   private static final int SEED = 362498820;
 

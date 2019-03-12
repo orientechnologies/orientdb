@@ -56,7 +56,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListene
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import javax.annotation.Nonnull;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -3390,7 +3389,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     @Override
-    public final Thread newThread(@Nonnull final Runnable r) {
+    public final Thread newThread(final Runnable r) {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setName("OrientDB Write Cache Flush Task");
@@ -3405,7 +3404,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     @Override
-    public final Thread newThread(@Nonnull final Runnable r) {
+    public final Thread newThread(final Runnable r) {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
 
       thread.setDaemon(true);
