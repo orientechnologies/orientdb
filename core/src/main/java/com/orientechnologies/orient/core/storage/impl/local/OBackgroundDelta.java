@@ -18,8 +18,8 @@ public class OBackgroundDelta implements Runnable, OSyncSource {
   private OLogSequenceNumber        endLsn;
   private CountDownLatch            finished = new CountDownLatch(1);
 
-  public OBackgroundDelta(OAbstractPaginatedStorage storage, OCommandOutputListener outputListener,
-      SortedSet<ORID> sortedRids, OLogSequenceNumber lsn, OLogSequenceNumber endLsn) throws IOException {
+  public OBackgroundDelta(OAbstractPaginatedStorage storage, OCommandOutputListener outputListener, SortedSet<ORID> sortedRids,
+      OLogSequenceNumber lsn, OLogSequenceNumber endLsn) throws IOException {
     this.storage = storage;
     this.outputListener = outputListener;
     this.sortedRids = sortedRids;
@@ -63,5 +63,15 @@ public class OBackgroundDelta implements Runnable, OSyncSource {
 
   public OLogSequenceNumber getEndLsn() {
     return endLsn;
+  }
+
+  @Override
+  public boolean isValid() {
+    return false;
+  }
+
+  @Override
+  public void invalidate() {
+    //DO NOTHING IS INVALID BY DEFINITION
   }
 }

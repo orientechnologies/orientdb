@@ -31,6 +31,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
   private final    CountDownLatch                        started     = new CountDownLatch(1);
   private final    CountDownLatch                        finished    = new CountDownLatch(1);
   private volatile InputStream                           inputStream;
+  public volatile  boolean                               valid       = true;
 
   public OBackgroundBackup(OSyncDatabaseTask oSyncDatabaseTask, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database, File resultedBackupFile, String finalBackupPath, OModifiableBoolean incremental,
@@ -171,5 +172,15 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
 
   public InputStream getInputStream() {
     return inputStream;
+  }
+
+  @Override
+  public void invalidate() {
+    valid = false;
+  }
+
+  @Override
+  public boolean isValid() {
+    return valid;
   }
 }
