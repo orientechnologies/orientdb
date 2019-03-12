@@ -198,9 +198,6 @@ public class ORemoteServerChannel {
         // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
         lastException = e;
 
-        OLogManager.instance().error(this,
-            " current message: " + operation.getClass() + " previous message: " + this.prevRequest + " prev response"
-                + prevResponse, e);
         handleNewError();
 
         close();
@@ -210,9 +207,6 @@ public class ORemoteServerChannel {
 
         if (!check.isNodeAvailable(server))
           break;
-
-        ODistributedServerLog.warn(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT,
-            "Error on sending message to distributed node (%s) retrying (%d/%d)", lastException.toString(), retry, maxRetry);
 
         if (retry > 1)
           try {
@@ -231,8 +225,6 @@ public class ORemoteServerChannel {
           lastException = e1;
           handleNewError();
 
-          ODistributedServerLog.warn(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT,
-              "Error on reconnecting to distributed node (%s)", lastException.toString());
         }
       }
     }
@@ -240,9 +232,6 @@ public class ORemoteServerChannel {
     if (lastException == null)
       handleNewError();
 
-    ODistributedServerLog
-        .error(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT, "Error sending message to other node",
-            lastException);
     return null;
   }
 
