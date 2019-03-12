@@ -491,13 +491,18 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void postDeleteSteps() {
+    String databasePath = OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url));
+    deleteFilesFromDisc(name, DELETE_MAX_RETRIES, DELETE_WAIT_TIME, databasePath);
+  }
+
+  public static void deleteFilesFromDisc(String name, int maxRetries, int waitTime, String databaseDirectory) {
     File dbDir;// GET REAL DIRECTORY
-    dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
+    dbDir = new File(databaseDirectory);
     if (!dbDir.exists() || !dbDir.isDirectory())
       dbDir = dbDir.getParentFile();
 
     // RETRIES
-    for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {
+    for (int i = 0; i < maxRetries; ++i) {
       if (dbDir != null && dbDir.exists() && dbDir.isDirectory()) {
         int notDeletedFiles = 0;
 
@@ -520,7 +525,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         if (notDeletedFiles == 0) {
           // TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
           if (!dbDir.delete())
-            OLogManager.instance().error(this,
+            OLogManager.instance().error(OLocalPaginatedStorage.class,
                 "Cannot delete storage directory with path " + dbDir.getAbsolutePath() + " because directory is not empty. Files: "
                     + Arrays.toString(dbDir.listFiles()), null);
           return;
@@ -528,9 +533,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       } else
         return;
 
-      OLogManager.instance().debug(this,
+      OLogManager.instance().debug(OLocalPaginatedStorage.class,
           "Cannot delete database files because they are still locked by the OrientDB process: waiting %d ms and retrying %d/%d...",
-          DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
+          waitTime, i, maxRetries);
     }
 
     throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");

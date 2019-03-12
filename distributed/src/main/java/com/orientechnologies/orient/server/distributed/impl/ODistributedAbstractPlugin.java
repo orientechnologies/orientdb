@@ -1250,14 +1250,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
           final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
 
-          installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, server, (ODistributedDatabaseChunk) value, true,
-              uniqueClustersBackupDirectory, cfg);
+          try {
+            installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, server, (ODistributedDatabaseChunk) value, true,
+                uniqueClustersBackupDirectory, cfg);
+            ODistributedServerLog.info(this, nodeName, targetNode, DIRECTION.IN, "Installed delta of database '%s'", databaseName);
 
-          ODistributedServerLog.info(this, nodeName, targetNode, DIRECTION.IN, "Installed delta of database '%s'", databaseName);
-
-          // DATABASE INSTALLED CORRECTLY
-          databaseInstalledCorrectly = true;
-          break;
+            // DATABASE INSTALLED CORRECTLY
+            databaseInstalledCorrectly = true;
+            break;
+          } catch (OException e) {
+            OLogManager.instance().error(this, "Error installing database from network", e);
+            databaseInstalledCorrectly = false;
+            break;
+          }
 
         } else
           throw new IllegalArgumentException("Type " + value + " not supported");
@@ -1395,8 +1400,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           if (backupDatabase)
             backupCurrentDatabase(databaseName);
 
-          installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
-              uniqueClustersBackupDirectory, cfg);
+          try {
+            installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
+                uniqueClustersBackupDirectory, cfg);
+          } catch (OException e) {
+            OLogManager.instance().error(this, "Error installing database from network", e);
+            return false;
+          }
 
           OStorage storage = storages.get(databaseName);
           replaceStorageInSessions(storage);
