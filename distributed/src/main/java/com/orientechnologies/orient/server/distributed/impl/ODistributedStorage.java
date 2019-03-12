@@ -1623,11 +1623,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public void release() {
-    final String localNode = dManager.getLocalNodeName();
-
-    if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
+    if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE) {
       // RESTORE PREVIOUS STATUS
-      dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+      getLocalDistributedDatabase().setOnline();;
+    }
 
     getFreezableStorage().release();
   }
@@ -1654,9 +1653,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     } catch (IOException e) {
       throw OException.wrapException(new OIOException("Error on executing backup"), e);
     } finally {
-      if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
+      if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE) {
         // RESTORE PREVIOUS STATUS
-        dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+        dManager.getMessageService().getDatabase(getName()).setOnline();
+      }
     }
     // }
     // });

@@ -208,7 +208,7 @@ public class OClusterHealthChecker implements Runnable {
             "No server are ONLINE for database '%s'. Considering local copy of database as the good one. Setting status=ONLINE...",
             dbName);
 
-        manager.setDatabaseStatus(manager.getLocalNodeName(), dbName, ODistributedServerManager.DB_STATUS.ONLINE);
+        manager.getMessageService().getDatabase(dbName).setOnline();
 
       } else {
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
