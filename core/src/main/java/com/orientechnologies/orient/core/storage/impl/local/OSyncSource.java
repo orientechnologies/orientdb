@@ -9,4 +9,8 @@ public interface OSyncSource {
   InputStream getInputStream();
 
   CountDownLatch getFinished();
+
+  void invalidate();
+
+  boolean isValid();
 }

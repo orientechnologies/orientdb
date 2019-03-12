@@ -123,6 +123,7 @@ import java.util.TimeZone;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -1415,7 +1416,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public void resetLastValidBackup() {
-    lastValidBackup = null;
+    if (lastValidBackup != null) {
+      lastValidBackup.invalidate();
+    }
+  }
+
+  public void clearLastValidBackup() {
+    if (lastValidBackup != null) {
+      lastValidBackup = null;
+    }
   }
 
   protected void dropStorageFiles() {
