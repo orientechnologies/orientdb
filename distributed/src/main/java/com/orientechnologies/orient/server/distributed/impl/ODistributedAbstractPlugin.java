@@ -1002,7 +1002,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                     ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
                         "Skipping download of database '%s' from the cluster because autoDeploy=false", databaseName);
 
-                    setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
                     distrDatabase.setOnline();
                     distrDatabase.resume();
                     return false;
@@ -1025,7 +1024,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                             "Skipping download of the entire database '%s' from the cluster because autoDeploy=false",
                             databaseName);
 
-                        setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
+                        distrDatabase.setOnline();
                         distrDatabase.resume();
                         return false;
                       }
@@ -1060,7 +1059,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
               } catch (ODatabaseIsOldException e) {
                 // CURRENT DATABASE IS NEWER, SET ALL OTHER DATABASES AS NOT_AVAILABLE TO FORCE THEM TO ASK FOR THE CURRENT DATABASE
-                setDatabaseStatus(nodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
                 distrDatabase.setOnline();
 
                 ODistributedServerLog.info(this, nodeName, null, DIRECTION.OUT,
