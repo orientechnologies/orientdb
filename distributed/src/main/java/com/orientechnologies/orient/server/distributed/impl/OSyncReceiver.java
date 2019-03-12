@@ -55,15 +55,21 @@ public class OSyncReceiver implements Runnable {
               new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
               distributed.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
-          final Object result = response.getPayload();
-          if (result instanceof Boolean)
-            continue;
-          else if (result instanceof Exception) {
-            ODistributedServerLog.error(this, distributed.nodeName, iNode, ODistributedServerLog.DIRECTION.IN,
-                "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
-          } else if (result instanceof ODistributedDatabaseChunk) {
-            chunk = (ODistributedDatabaseChunk) result;
-            fileSize += writeDatabaseChunk(chunkNum, chunk, output);
+          if (response == null) {
+            output.close();
+            done.countDown();
+            break;
+          } else {
+            final Object result = response.getPayload();
+            if (result instanceof Boolean)
+              continue;
+            else if (result instanceof Exception) {
+              ODistributedServerLog.error(this, distributed.nodeName, iNode, ODistributedServerLog.DIRECTION.IN,
+                  "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
+            } else if (result instanceof ODistributedDatabaseChunk) {
+              chunk = (ODistributedDatabaseChunk) result;
+              fileSize += writeDatabaseChunk(chunkNum, chunk, output);
+            }
           }
         }
 
