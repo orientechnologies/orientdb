@@ -46,6 +46,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
+
 /**
  * Created by tglman on 08/04/16.
  */
@@ -432,6 +435,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
       }
       storage.restore(in, options, callable, iListener);
     } catch (Exception e) {
+      OContextConfiguration configs = getConfigurations().getConfigurations();
+      OLocalPaginatedStorage
+          .deleteFilesFromDisc(name, configs.getValueAsInteger(FILE_DELETE_RETRY), configs.getValueAsInteger(FILE_DELETE_DELAY),
+              buildName(name));
       throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
     }
   }
