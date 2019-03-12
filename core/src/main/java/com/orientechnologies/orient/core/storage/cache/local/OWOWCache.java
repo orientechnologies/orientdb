@@ -1226,8 +1226,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     try {
       future.get();
     } catch (final InterruptedException e) {
-      //noinspection ResultOfMethodCallIgnored
-      Thread.interrupted();
+      Thread.currentThread().interrupt();
       throw OException.wrapException(new OInterruptedException("File flush was interrupted"), e);
     } catch (final Exception e) {
       throw OException.wrapException(new OWriteCacheException("File flush was abnormally terminated"), e);
@@ -1241,8 +1240,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     try {
       future.get();
     } catch (final InterruptedException e) {
-      //noinspection ResultOfMethodCallIgnored
-      Thread.interrupted();
+      Thread.currentThread().interrupt();
       throw OException.wrapException(new OInterruptedException("File flush was interrupted"), e);
     } catch (final Exception e) {
       throw OException.wrapException(new OWriteCacheException("File flush was abnormally terminated"), e);

@@ -228,7 +228,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                   .info(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,
                       "Received shutdown signal, waiting for asynchronous queue is empty (pending msgs=%d)...", pendingMessages);
 
-            Thread.interrupted();
+            Thread.currentThread().interrupt();
 
           } catch (Exception e) {
             if (running)
