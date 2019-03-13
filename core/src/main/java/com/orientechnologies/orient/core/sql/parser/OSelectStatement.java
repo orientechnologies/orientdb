@@ -253,7 +253,7 @@ public class OSelectStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -266,21 +266,31 @@ public class OSelectStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OInternalExecutionPlan executionPlan;
+    if(usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    }else{
+      executionPlan = createExecutionPlanNoCache(ctx, false);
+    }
 
     OLocalResultSet result = new OLocalResultSet(executionPlan);
     return result;
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OInternalExecutionPlan executionPlan;
+    if(usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    }else{
+      executionPlan = createExecutionPlanNoCache(ctx, false);
+    }
 
     OLocalResultSet result = new OLocalResultSet(executionPlan);
     return result;

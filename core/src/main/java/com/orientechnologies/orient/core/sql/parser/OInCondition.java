@@ -97,7 +97,7 @@ public class OInCondition extends OBooleanExpression {
   protected static Object executeQuery(OSelectStatement rightStatement, OCommandContext ctx) {
     OBasicCommandContext subCtx = new OBasicCommandContext();
     subCtx.setParentWithoutOverridingChild(ctx);
-    OResultSet result = rightStatement.execute(ctx.getDatabase(), ctx.getInputParameters());
+    OResultSet result = rightStatement.execute(ctx.getDatabase(), ctx.getInputParameters(), false);
     return result.stream().collect(Collectors.toSet());
   }
 

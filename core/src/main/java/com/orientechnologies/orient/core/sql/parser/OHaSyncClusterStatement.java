@@ -41,7 +41,7 @@ public class OHaSyncClusterStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
     StringBuilder builder = new StringBuilder();
     Map<Object, Object> pars = new HashMap<>();
     for (int i = 0; i < args.length; i++) {
@@ -59,7 +59,7 @@ public class OHaSyncClusterStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext) {
+  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
     StringBuilder builder = new StringBuilder();
     toString(args, builder);
     Object result = db.command(new OCommandSQL(builder.toString())).execute();

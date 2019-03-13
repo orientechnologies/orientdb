@@ -29,7 +29,7 @@ public class OExplainStatement extends OStatement {
     statement.toString(params, builder);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -42,13 +42,18 @@ public class OExplainStatement extends OStatement {
     }
     ctx.setInputParameters(params);
 
-    OExecutionPlan executionPlan = statement.createExecutionPlan(ctx, false);
+    OExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = statement.createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = statement.createExecutionPlanNoCache(ctx, false);
+    }
 
     OExplainResultSet result = new OExplainResultSet(executionPlan);
     return result;
   }
 
-  @Override public OResultSet execute(ODatabase db, Map args, OCommandContext parentCtx) {
+  @Override public OResultSet execute(ODatabase db, Map args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -56,7 +61,12 @@ public class OExplainStatement extends OStatement {
     ctx.setDatabase(db);
     ctx.setInputParameters(args);
 
-    OExecutionPlan executionPlan = statement.createExecutionPlan(ctx, false);
+    OExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = statement.createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = statement.createExecutionPlanNoCache(ctx, false);
+    }
 
     OExplainResultSet result = new OExplainResultSet(executionPlan);
     return result;

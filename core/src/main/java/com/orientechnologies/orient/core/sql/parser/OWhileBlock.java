@@ -36,7 +36,7 @@ public class OWhileBlock extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -49,20 +49,34 @@ public class OWhileBlock extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+
+    OUpdateExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (OUpdateExecutionPlan)createExecutionPlanNoCache(ctx, false);
+    }
+
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+
+    OUpdateExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (OUpdateExecutionPlan)createExecutionPlanNoCache(ctx, false);
+    }
+
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }

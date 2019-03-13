@@ -6,11 +6,7 @@ import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -27,11 +23,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLResultsetDelegat
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OIterableRecordSource;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OMatchExecutionPlanner;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.executor.PatternEdge;
-import com.orientechnologies.orient.core.sql.executor.PatternNode;
+import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.query.OBasicLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -40,18 +32,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OMatchStatement extends OStatement implements OCommandExecutor, OIterableRecordSource {
@@ -101,7 +82,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   public static class EdgeTraversal {
-    boolean out = true;
+    boolean     out = true;
     PatternEdge edge;
 
     public EdgeTraversal(PatternEdge edge, boolean out) {
@@ -112,8 +93,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public static class MatchExecutionPlan {
     public List<EdgeTraversal> sortedEdges;
-    public Map<String, Long> preFetchedAliases = new HashMap<String, Long>();
-    public String rootAlias;
+    public Map<String, Long>   preFetchedAliases = new HashMap<String, Long>();
+    public String              rootAlias;
   }
 
   public static final String                  KEYWORD_MATCH           = "MATCH";
@@ -124,11 +105,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   protected           List<OIdentifier>       returnAliases           = new ArrayList<>();
   protected           List<ONestedProjection> returnNestedProjections = new ArrayList<>();
   protected           boolean                 returnDistinct          = false;
-  protected OGroupBy groupBy;
-  protected OOrderBy orderBy;
-  protected OUnwind  unwind;
-  protected OSkip    skip;
-  protected OLimit   limit;
+  protected           OGroupBy                groupBy;
+  protected           OOrderBy                orderBy;
+  protected           OUnwind                 unwind;
+  protected           OSkip                   skip;
+  protected           OLimit                  limit;
 
   // post-parsing generated data
   protected Pattern pattern;
@@ -153,7 +134,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -166,20 +147,30 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OInternalExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = createExecutionPlanNoCache(ctx, false);
+    }
 
     return new OLocalResultSet(executionPlan);
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OInternalExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = createExecutionPlanNoCache(ctx, false);
+    }
 
     return new OLocalResultSet(executionPlan);
   }

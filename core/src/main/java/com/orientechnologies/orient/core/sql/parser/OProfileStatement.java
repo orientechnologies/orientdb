@@ -33,7 +33,7 @@ public class OProfileStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -46,7 +46,13 @@ public class OProfileStatement extends OStatement {
     }
     ctx.setInputParameters(params);
 
-    OExecutionPlan executionPlan = statement.createExecutionPlan(ctx, true);
+    OExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = statement.createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = statement.createExecutionPlanNoCache(ctx, false);
+    }
+
     if(executionPlan instanceof OUpdateExecutionPlan){
       ((OUpdateExecutionPlan) executionPlan).executeInternal();
     }
@@ -65,7 +71,7 @@ public class OProfileStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Map args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -73,7 +79,12 @@ public class OProfileStatement extends OStatement {
     ctx.setDatabase(db);
     ctx.setInputParameters(args);
 
-    OExecutionPlan executionPlan = statement.createExecutionPlan(ctx, true);
+    OExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = statement.createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = statement.createExecutionPlanNoCache(ctx, false);
+    }
 
     OLocalResultSet rs = new OLocalResultSet((OInternalExecutionPlan) executionPlan);
 
