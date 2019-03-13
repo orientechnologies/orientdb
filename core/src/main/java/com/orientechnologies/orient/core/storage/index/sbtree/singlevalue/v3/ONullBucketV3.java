@@ -37,8 +37,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
  */
-final class ONullBucket extends ODurablePage {
-  ONullBucket(final OCacheEntry cacheEntry, final boolean isNew) {
+final class ONullBucketV3 extends ODurablePage {
+  ONullBucketV3(final OCacheEntry cacheEntry, final boolean isNew) {
     super(cacheEntry);
 
     if (isNew) {
