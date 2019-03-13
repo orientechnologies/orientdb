@@ -42,7 +42,7 @@ public class OIfStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -55,7 +55,13 @@ public class OIfStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OIfExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+
+    OIfExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (OIfExecutionPlan)createExecutionPlanNoCache(ctx, false);
+    }
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
     if (last == null) {
@@ -74,14 +80,20 @@ public class OIfStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OIfExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+
+    OIfExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (OIfExecutionPlan)createExecutionPlanNoCache(ctx, false);
+    }
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
     if (last == null) {

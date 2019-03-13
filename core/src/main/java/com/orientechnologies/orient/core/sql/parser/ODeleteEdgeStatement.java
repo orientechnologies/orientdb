@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.ODeleteEdgeExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.ODeleteExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.HashMap;
@@ -47,31 +48,43 @@ public class ODeleteEdgeStatement extends OStatement {
   }
 
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    ODeleteExecutionPlan executionPlan;
+    if(usePlanCache) {
+      executionPlan = (ODeleteExecutionPlan) createExecutionPlan(ctx, false);
+    }else{
+      executionPlan = (ODeleteExecutionPlan) createExecutionPlanNoCache(ctx, false);
+    }
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
         params.put(i, args[i]);
       }
     }
-    return execute(db, params, parentCtx);
+    return execute(db, params, parentCtx, usePlanCache);
   }
 
-  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
-    ODeleteExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, true);
+    result.setStatement(this.originalStatement);
+    return result;
+  }
+
+  public OInternalExecutionPlan createExecutionPlanNoCache(OCommandContext ctx, boolean enableProfiling) {
+    ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
     return result;
   }

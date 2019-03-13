@@ -548,7 +548,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
     }
-    OResultSet original = statement.execute(this, args);
+    OResultSet original = statement.execute(this, args, true);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result.getQueryId(), result);
     result.addLifecycleListener(this);
@@ -564,7 +564,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
     }
-    OResultSet original = statement.execute(this, args);
+    OResultSet original = statement.execute(this, args, true);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result.getQueryId(), result);
     result.addLifecycleListener(this);
@@ -577,7 +577,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkIfActive();
 
     OStatement statement = OSQLEngine.parse(query, this);
-    OResultSet original = statement.execute(this, args);
+    OResultSet original = statement.execute(this, args, true);
     OLocalResultSetLifecycleDecorator result;
     if (!statement.isIdempotent()) {
       //fetch all, close and detach
@@ -601,7 +601,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkIfActive();
 
     OStatement statement = OSQLEngine.parse(query, this);
-    OResultSet original = statement.execute(this, args);
+    OResultSet original = statement.execute(this, args, true);
     OLocalResultSetLifecycleDecorator result;
     if (!statement.isIdempotent()) {
       //fetch all, close and detach

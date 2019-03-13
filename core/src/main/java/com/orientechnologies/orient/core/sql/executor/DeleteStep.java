@@ -76,4 +76,14 @@ public class DeleteStep extends AbstractExecutionStep {
   public long getCost() {
     return cost;
   }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new DeleteStep(ctx, this.profilingEnabled);
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
 }

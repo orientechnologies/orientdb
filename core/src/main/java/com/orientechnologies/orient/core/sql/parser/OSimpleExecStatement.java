@@ -28,7 +28,7 @@ public abstract class OSimpleExecStatement extends OStatement {
 
   public abstract OResultSet executeSimple(OCommandContext ctx);
 
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentContext != null) {
       ctx.setParentWithoutOverridingChild(parentContext);
@@ -45,7 +45,7 @@ public abstract class OSimpleExecStatement extends OStatement {
     return executionPlan.executeInternal(ctx);
   }
 
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentContext) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentContext, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentContext != null) {
       ctx.setParentWithoutOverridingChild(parentContext);

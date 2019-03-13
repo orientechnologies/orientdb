@@ -16,9 +16,9 @@ public class ODeleteStatement extends OStatement {
 
   public    OFromClause  fromClause;
   protected OWhereClause whereClause;
-  protected boolean returnBefore = false;
-  protected OLimit  limit        = null;
-  protected boolean unsafe       = false;
+  protected boolean      returnBefore = false;
+  protected OLimit       limit        = null;
+  protected boolean      unsafe       = false;
 
   public ODeleteStatement(int id) {
     super(id);
@@ -46,7 +46,8 @@ public class ODeleteStatement extends OStatement {
     }
   }
 
-  @Override public ODeleteStatement copy() {
+  @Override
+  public ODeleteStatement copy() {
     ODeleteStatement result = new ODeleteStatement(-1);
     result.fromClause = fromClause == null ? null : fromClause.copy();
     result.whereClause = whereClause == null ? null : whereClause.copy();
@@ -56,7 +57,8 @@ public class ODeleteStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -78,7 +80,8 @@ public class ODeleteStatement extends OStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = fromClause != null ? fromClause.hashCode() : 0;
     result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
     result = 31 * result + (returnBefore ? 1 : 0);
@@ -87,19 +90,26 @@ public class ODeleteStatement extends OStatement {
     return result;
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    ODeleteExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (ODeleteExecutionPlan) createExecutionPlanNoCache(ctx, false);
+    }
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -112,7 +122,12 @@ public class ODeleteStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    ODeleteExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (ODeleteExecutionPlan) createExecutionPlanNoCache(ctx, false);
+    }
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
