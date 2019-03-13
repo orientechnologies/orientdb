@@ -227,6 +227,11 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
+  public long approximateSize() {
+    return sbTree.size();
+  }
+
+  @Override
   public boolean hasRangeQuerySupport() {
     return true;
   }

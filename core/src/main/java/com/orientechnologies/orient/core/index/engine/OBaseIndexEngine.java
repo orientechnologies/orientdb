@@ -81,6 +81,8 @@ public interface OBaseIndexEngine {
 
   String getIndexNameByKey(Object key);
 
+  long approximateSize();
+
   interface ValuesTransformer {
     Collection<ORID> transformFromValue(Object value);
   }

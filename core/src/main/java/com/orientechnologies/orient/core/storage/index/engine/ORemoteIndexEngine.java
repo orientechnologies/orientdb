@@ -153,6 +153,11 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public long approximateSize() {
+    return 0;
+  }
+
+  @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

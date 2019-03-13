@@ -226,6 +226,11 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public long approximateSize() {
+    return size(null);
+  }
+
+  @Override
   public int getVersion() {
     return version;
   }

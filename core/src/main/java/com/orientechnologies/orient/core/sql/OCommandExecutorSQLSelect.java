@@ -2351,7 +2351,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           key = index.getLastKey();
         }
 
-        if (index.getKeySize() == 0) {
+        if (index.approximateSize() == 0) {
           return null;
         }
 

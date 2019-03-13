@@ -30,9 +30,8 @@ import java.util.Set;
 
 /**
  * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex instance.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OIndexAbstractDelegate<T> implements OIndex<T> {
   protected OIndex<T> delegate;
@@ -221,6 +220,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 
   public long getKeySize() {
     return delegate.getKeySize();
+  }
+
+  @Override
+  public long approximateSize() {
+    return delegate.approximateSize();
   }
 
   public String getDatabaseName() {

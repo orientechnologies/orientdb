@@ -273,6 +273,11 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public long approximateSize() {
+    return size(null);
+  }
+
+  @Override
   public boolean hasRangeQuerySupport() {
     return true;
   }

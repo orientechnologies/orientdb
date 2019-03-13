@@ -271,6 +271,22 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     return 1;
   }
 
+  @Override
+  public long approximateSize() {
+    acquireSharedLock();
+    try {
+      while (true) {
+        try {
+          return storage.approximateIndexSize(indexId);
+        } catch (OInvalidIndexEngineIdException ignore) {
+          doReloadIndexEngine();
+        }
+      }
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   public boolean loadFromConfiguration(final ODocument config) {
     acquireExclusiveLock();
     try {

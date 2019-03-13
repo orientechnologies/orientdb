@@ -54,27 +54,27 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String QUERY_ITERATE_ENTRIES = "select from index:`%s` where key in [%s] order by key %s ";
   private final static String QUERY_GET_ENTRIES     = "select from index:`%s` where key in [%s]";
 
-  private final static String QUERY_PUT         = "insert into index:`%s` (key,rid) values (?,?)";
-  private final static String QUERY_REMOVE      = "delete from index:`%s` where key = ?";
-  private final static String QUERY_REMOVE2     = "delete from index:`%s` where key = ? and rid = ?";
-  private final static String QUERY_REMOVE3     = "delete from index:`%s` where rid = ?";
-  private final static String QUERY_CONTAINS    = "select count(*) as size from index:`%s` where key = ?";
-  private final static String QUERY_COUNT       = "select count(*) as size from index:`%s` where key = ?";
-  private final static String QUERY_COUNT_RANGE = "select count(*) as size from index:`%s` where ";
-  private final static String QUERY_SIZE        = "select count(*) as size from index:`%s`";
-  private final static String QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
-  private final static String QUERY_KEYS        = "select key from index:`%s`";
-  private final static String QUERY_REBUILD     = "rebuild index %s";
-  private final static String QUERY_CLEAR       = "delete from index:`%s`";
-  private final static String QUERY_DROP        = "drop index %s";
-  protected final String           databaseName;
-  private final   String           wrappedType;
-  private final   String           algorithm;
-  private final   ORID             rid;
-  protected       OIndexDefinition indexDefinition;
-  protected       String           name;
-  protected       ODocument        configuration;
-  protected       Set<String>      clustersToIndex;
+  private final static String           QUERY_PUT         = "insert into index:`%s` (key,rid) values (?,?)";
+  private final static String           QUERY_REMOVE      = "delete from index:`%s` where key = ?";
+  private final static String           QUERY_REMOVE2     = "delete from index:`%s` where key = ? and rid = ?";
+  private final static String           QUERY_REMOVE3     = "delete from index:`%s` where rid = ?";
+  private final static String           QUERY_CONTAINS    = "select count(*) as size from index:`%s` where key = ?";
+  private final static String           QUERY_COUNT       = "select count(*) as size from index:`%s` where key = ?";
+  private final static String           QUERY_COUNT_RANGE = "select count(*) as size from index:`%s` where ";
+  private final static String           QUERY_SIZE        = "select count(*) as size from index:`%s`";
+  private final static String           QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
+  private final static String           QUERY_KEYS        = "select key from index:`%s`";
+  private final static String           QUERY_REBUILD     = "rebuild index %s";
+  private final static String           QUERY_CLEAR       = "delete from index:`%s`";
+  private final static String           QUERY_DROP        = "drop index %s";
+  protected final      String           databaseName;
+  private final        String           wrappedType;
+  private final        String           algorithm;
+  private final        ORID             rid;
+  protected            OIndexDefinition indexDefinition;
+  protected            String           name;
+  protected            ODocument        configuration;
+  protected            Set<String>      clustersToIndex;
 
   public OIndexRemote(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {
@@ -164,7 +164,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public boolean remove(final Object key) {
-    try(OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key)) {
+    try (OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key)) {
       if (!result.hasNext()) {
         return false;
       }
@@ -246,6 +246,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return 0;
   }
 
+  @Override
+  public long approximateSize() {
+    throw new UnsupportedOperationException();
+  }
+
   public boolean isAutomatic() {
     return indexDefinition != null && indexDefinition.getClassName() != null;
   }
@@ -307,7 +312,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       }
     }
 
-    try (OResultSet rs = getDatabase().indexQuery(getName(), String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray())) {
+    try (OResultSet rs = getDatabase()
+        .indexQuery(getName(), String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray())) {
       return rs.stream().map((res) -> (ODocument) res.toElement()).collect(Collectors.toList());
     }
 
@@ -381,7 +387,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     }
 
     final OResultSet res = getDatabase()
-        .indexQuery(getName(), String.format(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"), keys.toArray());
+        .indexQuery(getName(), String.format(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"),
+            keys.toArray());
 
     final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
     res.forEachRemaining(x -> copy.add(x));

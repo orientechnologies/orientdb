@@ -295,6 +295,19 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public long approximateSize() {
+    long counter = 0;
+
+    if (partitions != null) {
+      for (OHashTable<Object, Object> p : partitions) {
+        counter += p.size();
+      }
+    }
+
+    return counter;
+  }
+
+  @Override
   public int getVersion() {
     return version;
   }

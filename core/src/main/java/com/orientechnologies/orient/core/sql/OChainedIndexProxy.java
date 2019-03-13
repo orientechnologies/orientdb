@@ -493,6 +493,11 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
+  public long approximateSize() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
   public void flush() {
     throw new UnsupportedOperationException("Not allowed operation");
   }

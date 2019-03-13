@@ -125,6 +125,11 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   long getKeySize();
 
   /**
+   * @return approximate amount of entries contained in index.
+   */
+  long approximateSize();
+
+  /**
    * Flushes in-memory changes to disk.
    */
   public void flush();

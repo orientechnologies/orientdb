@@ -547,6 +547,11 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
+  public long approximateSize() {
+    return sizeInTx(null);
+  }
+
+  @Override
   public void release(IndexSearcher searcher) {
     updateLastAccess();
     openIfClosed();

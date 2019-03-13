@@ -217,6 +217,11 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
+  public long approximateSize() {
+    return delegate.approximateSize();
+  }
+
+  @Override
   public boolean hasRangeQuerySupport() {
     return delegate.hasRangeQuerySupport();
   }

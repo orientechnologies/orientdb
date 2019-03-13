@@ -560,6 +560,21 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
+  public long approximateSize() {
+    if (singleValueTree != null) {
+      assert nullValueTree != null;
+
+      long counter = nullValueTree.size();
+      counter += singleValueTree.size();
+
+      return counter;
+    }
+
+    assert multiValueTree != null;
+    return multiValueTree.size();
+  }
+
+  @Override
   public boolean hasRangeQuerySupport() {
     return true;
   }
