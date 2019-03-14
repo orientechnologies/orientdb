@@ -128,6 +128,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX;
 import static com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME;
@@ -1325,8 +1326,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected boolean requestDatabaseFullSync(final ODistributedDatabaseImpl distrDatabase, final boolean backupDatabase,
       final String databaseName, final boolean iAskToAllNodes, final OModifiableDistributedConfiguration cfg) {
     // GET ALL THE OTHER SERVERS
-    final Collection<String> nodes = cfg.getServers(null, nodeName);
-
+    Collection<String> nodes = cfg.getServers(null, nodeName);
+    nodes = nodes.stream().filter(this::isNodeAvailable).collect(Collectors.toList());
     if (nodes.isEmpty()) {
       ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
           "Cannot request full deploy of database '%s' because there are no nodes available with such database", databaseName);
