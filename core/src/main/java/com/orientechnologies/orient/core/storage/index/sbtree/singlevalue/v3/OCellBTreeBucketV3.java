@@ -275,6 +275,7 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
 
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     //skip key
+    entryPosition += OIntegerSerializer.INT_SIZE;
     entryPosition += getIntValue(entryPosition) + OIntegerSerializer.INT_SIZE;
 
     return getBinaryValue(entryPosition, RID_SIZE);

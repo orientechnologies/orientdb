@@ -27,7 +27,7 @@ import java.util.TreeSet;
 
 public class OCellBTreeSingleValueV3TestIT {
   private OCellBTreeSingleValueV3<String> singleValueTree;
-  private OrientDB                      orientDB;
+  private OrientDB                        orientDB;
 
   private String dbName;
 
@@ -50,11 +50,11 @@ public class OCellBTreeSingleValueV3TestIT {
     singleValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
 
-  @After
-  public void afterMethod() {
-    orientDB.drop(dbName);
-    orientDB.close();
-  }
+//  @After
+//  public void afterMethod() {
+//    orientDB.drop(dbName);
+//    orientDB.close();
+//  }
 
   @Test
   public void testKeyPut() throws Exception {
@@ -95,7 +95,10 @@ public class OCellBTreeSingleValueV3TestIT {
   @Test
   public void testKeyPutRandomUniform() throws Exception {
     final NavigableSet<String> keys = new TreeSet<>();
-    final Random random = new Random();
+    final long seed = System.nanoTime();
+    System.out.println("testKeyPutRandomUniform : seed " + seed);
+    final Random random = new Random(seed);
+
     final int keysCount = 1_000_000;
 
     while (keys.size() < keysCount) {
