@@ -37,8 +37,7 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
 
   public FetchEdgesFromToVerticesStep(String fromAlias, String toAlias, OIdentifier targetClass, OIdentifier targetCluster,
       OCommandContext ctx, boolean profilingEnabled) {
-    super(ctx, profilingEnabled
-    );
+    super(ctx, profilingEnabled);
     this.targetClass = targetClass;
     this.targetCluster = targetCluster;
     this.fromAlias = fromAlias;
@@ -217,5 +216,15 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
       result += "\n" + spaces + "       (target cluster " + targetCluster + ")";
     }
     return result;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new FetchEdgesFromToVerticesStep(fromAlias, toAlias, targetClass, targetCluster, ctx, profilingEnabled);
   }
 }

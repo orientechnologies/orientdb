@@ -71,4 +71,14 @@ public class CountStep extends AbstractExecutionStep {
   public long getCost() {
     return cost;
   }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new CountStep(ctx, profilingEnabled);
+  }
 }

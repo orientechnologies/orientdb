@@ -86,4 +86,14 @@ public class CastToEdgeStep extends AbstractExecutionStep {
   public long getCost() {
     return cost;
   }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new CastToEdgeStep(ctx, profilingEnabled);
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
 }

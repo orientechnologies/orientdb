@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 public class SubQueryStep extends AbstractExecutionStep {
   private final OInternalExecutionPlan subExecuitonPlan;
   private final OCommandContext        childCtx;
+  private       boolean                sameContextAsParent = false;
 
   /**
    * executes a sub-query
@@ -22,6 +23,8 @@ public class SubQueryStep extends AbstractExecutionStep {
     super(ctx, profilingEnabled);
     this.subExecuitonPlan = subExecutionPlan;
     this.childCtx = subCtx;
+
+    this.sameContextAsParent = (ctx == childCtx);
   }
 
   @Override
@@ -38,5 +41,15 @@ public class SubQueryStep extends AbstractExecutionStep {
     builder.append("+ FETCH FROM SUBQUERY \n");
     builder.append(subExecuitonPlan.prettyPrint(depth + 1, indent));
     return builder.toString();
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return sameContextAsParent && subExecuitonPlan.canBeCached();
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new SubQueryStep(subExecuitonPlan.copy(ctx), ctx, ctx, profilingEnabled);
   }
 }
