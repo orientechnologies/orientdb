@@ -50,11 +50,11 @@ public class OCellBTreeSingleValueV3TestIT {
     singleValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
 
-//  @After
-//  public void afterMethod() {
-//    orientDB.drop(dbName);
-//    orientDB.close();
-//  }
+  @After
+  public void afterMethod() {
+    orientDB.drop(dbName);
+    orientDB.close();
+  }
 
   @Test
   public void testKeyPut() throws Exception {
@@ -287,6 +287,28 @@ public class OCellBTreeSingleValueV3TestIT {
         Assert.assertEquals(singleValueTree.get(Integer.toString(keysCount + i)),
             new ORecordId((keysCount + i) % 32000, keysCount + i));
       }
+    }
+  }
+
+  @Test
+  public void testKeyAddDeleteAdd() throws Exception {
+    final int keysCount = 1_000_000;
+
+    for (int i = 0; i < keysCount; i++) {
+      singleValueTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
+    }
+
+    for (int i = 0; i < keysCount; i += 2) {
+      Assert.assertEquals(singleValueTree.remove(Integer.toString(i)), new ORecordId(i % 32000, i));
+    }
+
+    for (int i = 0; i < keysCount; i += 2) {
+      singleValueTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
+    }
+
+
+    for (int i = 0; i < keysCount; i++) {
+      Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
     }
   }
 
