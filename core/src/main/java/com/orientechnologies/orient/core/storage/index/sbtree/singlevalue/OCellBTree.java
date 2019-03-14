@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.io.IOException;
 import java.util.Map;
 
-public interface OCellBTee<K> {
+public interface OCellBTree<K> {
   void create(OBinarySerializer<K> keySerializer, OType[] keyTypes, int keySize, OEncryption encryption) throws IOException;
 
   ORID get(K key);

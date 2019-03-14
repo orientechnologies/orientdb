@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTee;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTree;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -333,7 +333,7 @@ public class OCellBTreeSingleValueV3TestIT {
     Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
 
-    final OCellBTee.OCellBTreeKeyCursor<String> cursor = singleValueTree.keyCursor();
+    final OCellBTree.OCellBTreeKeyCursor<String> cursor = singleValueTree.keyCursor();
 
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = cursor.next(-1);
@@ -443,7 +443,7 @@ public class OCellBTreeSingleValueV3TestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final OCellBTee.OCellBTreeCursor<String, ORID> cursor = singleValueTree
+      final OCellBTree.OCellBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
@@ -484,7 +484,7 @@ public class OCellBTreeSingleValueV3TestIT {
         toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final OCellBTee.OCellBTreeCursor<String, ORID> cursor = singleValueTree
+      final OCellBTree.OCellBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
@@ -541,7 +541,7 @@ public class OCellBTreeSingleValueV3TestIT {
         fromKey = toKey;
       }
 
-      OCellBTee.OCellBTreeCursor<String, ORID> cursor = singleValueTree
+      OCellBTree.OCellBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;

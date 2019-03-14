@@ -22,8 +22,8 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1.OCellBTreeMultiValueV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.OCellBTreeMultiValueV2;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTee;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTree;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.OCellBTreeSingleValueV3;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
   private final OCellBTreeMultiValue<Object> multiValueTree;
 
-  private final OCellBTreeSingleValueV1<OCompositeKey> singleValueTree;
+  private final OCellBTree<OCompositeKey> singleValueTree;
   private final OSBTree<OIdentifiable, Boolean>        nullValueTree;
 
   private final String name;
@@ -58,7 +58,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       this.nullValueTree = null;
     } else if (version == 3) {
       this.multiValueTree = null;
-      this.singleValueTree = new OCellBTreeSingleValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      this.singleValueTree = new OCellBTreeSingleValueV3<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
       this.nullValueTree = new OSBTree<>(name + "$n", DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalArgumentException("Invalid version number " + version);
@@ -170,7 +170,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     assert singleValueTree != null;
 
     if (key != null) {
-      final OCellBTee.OCellBTreeCursor<OCompositeKey, ORID> cursor = singleValueTree
+      final OCellBTree.OCellBTreeCursor<OCompositeKey, ORID> cursor = singleValueTree
           .iterateEntriesMajor(new OCompositeKey(key), false, true);
 
       return cursor.next(1) != null;
@@ -190,7 +190,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       if (key != null) {
         assert singleValueTree != null;
 
-        final OCellBTee.OCellBTreeCursor<OCompositeKey, ORID> cursor = singleValueTree
+        final OCellBTree.OCellBTreeCursor<OCompositeKey, ORID> cursor = singleValueTree
             .iterateEntriesMajor(new OCompositeKey(key), false, true);
 
         final List<OCompositeKey> keysToDelete = new ArrayList<>(16);
@@ -258,7 +258,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       }
 
       if (singleValueTree != null) {
-        final OCellBTee.OCellBTreeKeyCursor<OCompositeKey> cursor = singleValueTree.keyCursor();
+        final OCellBTree.OCellBTreeKeyCursor<OCompositeKey> cursor = singleValueTree.keyCursor();
         OCompositeKey key = cursor.next(-1);
         while (key != null) {
           singleValueTree.remove(key);
@@ -304,7 +304,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OCompositeKey compositeKey = new OCompositeKey(key);
 
       assert singleValueTree != null;
-      final OCellBTee.OCellBTreeCursor<OCompositeKey, ORID> cursor = singleValueTree
+      final OCellBTree.OCellBTreeCursor<OCompositeKey, ORID> cursor = singleValueTree
           .iterateEntriesBetween(compositeKey, true, compositeKey, true, true);
 
       final List<ORID> result = new ArrayList<>();
@@ -389,7 +389,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     assert singleValueTree != null;
 
     return new OIndexKeyCursor() {
-      private final OCellBTee.OCellBTreeKeyCursor<OCompositeKey> keyCursor = singleValueTree.keyCursor();
+      private final OCellBTree.OCellBTreeKeyCursor<OCompositeKey> keyCursor = singleValueTree.keyCursor();
 
       @Override
       public Object next(final int prefetchSize) {
@@ -538,7 +538,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
       Object lastKey = null;
 
-      final OCellBTee.OCellBTreeKeyCursor<OCompositeKey> cursor = singleValueTree.keyCursor();
+      final OCellBTree.OCellBTreeKeyCursor<OCompositeKey> cursor = singleValueTree.keyCursor();
       OCompositeKey key = cursor.next(-1);
       while (key != null) {
 
@@ -620,9 +620,9 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   private static final class OMCellBTreeIndexCursor extends OIndexAbstractCursor {
-    private final OCellBTee.OCellBTreeCursor<OCompositeKey, ORID> treeCursor;
+    private final OCellBTree.OCellBTreeCursor<OCompositeKey, ORID> treeCursor;
 
-    private OMCellBTreeIndexCursor(OCellBTee.OCellBTreeCursor<OCompositeKey, ORID> treeCursor) {
+    private OMCellBTreeIndexCursor(OCellBTree.OCellBTreeCursor<OCompositeKey, ORID> treeCursor) {
       this.treeCursor = treeCursor;
     }
 

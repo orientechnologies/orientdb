@@ -172,7 +172,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
         if (multivalue) {
           indexEngine = new OCellBTreeMultiValueIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
         } else {
-          indexEngine = new OCellBTreeSingleValueIndexEngine(name, (OAbstractPaginatedStorage) storage);
+          indexEngine = new OCellBTreeSingleValueIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
         }
         break;
       default:
