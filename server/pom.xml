@@ -30,7 +30,6 @@
         <javac.target.version>1.8</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
         <osgi.import>
-            javax.mail.*;resolution:=optional,
             orient.client.*;resolution:=optional,
             *
         </osgi.import>
@@ -74,11 +73,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-            <version>1.4.7</version>
-        </dependency>
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
