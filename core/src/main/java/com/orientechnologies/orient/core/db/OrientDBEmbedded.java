@@ -130,7 +130,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     for (OAbstractPaginatedStorage storage : storages.values()) {
       if (storage.getType().equalsIgnoreCase(ODatabaseType.PLOCAL.name()) && storage.getSessionCount() == 0) {
         long currentTime = System.currentTimeMillis();
-        if (currentTime > storage.getZeroTime() + delay) {
+        if (currentTime > storage.getLastCloseTime() + delay) {
           toClose.add(storage.getName());
         }
       }
