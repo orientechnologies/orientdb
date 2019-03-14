@@ -291,8 +291,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicLong txCommit       = new AtomicLong(0);
   private final AtomicLong txRollback     = new AtomicLong(0);
 
-  private final AtomicInteger sessionCount = new AtomicInteger(0);
-  private final AtomicLong    zeroTime     = new AtomicLong(0);
+  private final AtomicInteger sessionCount  = new AtomicInteger(0);
+  private final AtomicLong    lastCloseTime = new AtomicLong(System.currentTimeMillis());
 
   public OAbstractPaginatedStorage(final String name, final String filePath, final String mode, final int id) {
     super(name, filePath, mode);
@@ -6281,17 +6281,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void decOnClose() {
-    int count = sessionCount.decrementAndGet();
-    if (count == 0) {
-      zeroTime.set(System.currentTimeMillis());
-    }
+    lastCloseTime.set(System.currentTimeMillis());
+    sessionCount.decrementAndGet();
   }
 
   public int getSessionCount() {
     return sessionCount.get();
   }
 
-  public long getZeroTime() {
-    return zeroTime.get();
+  public long getLastCloseTime() {
+    return lastCloseTime.get();
   }
 }
