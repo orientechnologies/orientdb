@@ -62,7 +62,19 @@ public class OUpdateExecutionPlan extends OSelectExecutionPlan {
 
   @Override
   public boolean canBeCached() {
-    return false;
+    for (OExecutionStepInternal step : steps) {
+      if (!step.canBeCached()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public OInternalExecutionPlan copy(OCommandContext ctx) {
+    OUpdateExecutionPlan copy = new OUpdateExecutionPlan(ctx);
+    super.copyOn(copy, ctx);
+    return copy;
   }
 }
 
