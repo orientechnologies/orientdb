@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTee;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueV1;
 
 import java.io.IOException;
@@ -1008,7 +1009,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private void preloadConfigurationProperties() throws IOException {
     final Map<String, String> properties = new HashMap<>(8);
 
-    final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
+    final OCellBTee.OCellBTreeCursor<String, ORID> cursor = btree
         .iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
     Map.Entry<String, ORID> entry = cursor.next(-1);
     while (entry != null) {
@@ -1060,7 +1061,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void clearProperties() {
     lock.acquireWriteLock();
     try {
-      final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
+      final OCellBTee.OCellBTreeCursor<String, ORID> cursor = btree
           .iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
 
       final List<String> keysToRemove = new ArrayList<>(8);
@@ -1142,7 +1143,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public Set<String> indexEngines() {
     lock.acquireReadLock();
     try {
-      final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
+      final OCellBTee.OCellBTreeCursor<String, ORID> cursor = btree
           .iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
 
       final Set<String> result = new HashSet<>(4);
@@ -1165,7 +1166,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private List<IndexEngineData> loadIndexEngines() {
     try {
-      final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
+      final OCellBTee.OCellBTreeCursor<String, ORID> cursor = btree
           .iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
       final List<IndexEngineData> result = new ArrayList<>(4);
 
@@ -1262,7 +1263,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private void preloadClusters() throws IOException {
     final List<OStorageClusterConfiguration> clusters = new ArrayList<>(1024);
-    final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
+    final OCellBTee.OCellBTreeCursor<String, ORID> cursor = btree
         .iterateEntriesMajor(CLUSTERS_PREFIX_PROPERTY, false, true);
 
     Map.Entry<String, ORID> entry = cursor.next(-1);

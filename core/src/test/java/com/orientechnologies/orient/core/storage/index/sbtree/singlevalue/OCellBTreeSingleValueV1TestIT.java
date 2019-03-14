@@ -308,7 +308,7 @@ public class OCellBTreeSingleValueV1TestIT {
     Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
 
-    final OCellBTreeSingleValueV1.OSBTreeKeyCursor<String> cursor = singleValueTree.keyCursor();
+    final OCellBTee.OCellBTreeKeyCursor<String> cursor = singleValueTree.keyCursor();
 
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = cursor.next(-1);
@@ -418,7 +418,7 @@ public class OCellBTreeSingleValueV1TestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = singleValueTree
+      final OCellBTee.OCellBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
@@ -459,7 +459,7 @@ public class OCellBTreeSingleValueV1TestIT {
         toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = singleValueTree
+      final OCellBTee.OCellBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
@@ -516,7 +516,7 @@ public class OCellBTreeSingleValueV1TestIT {
         fromKey = toKey;
       }
 
-      OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = singleValueTree
+      OCellBTee.OCellBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
