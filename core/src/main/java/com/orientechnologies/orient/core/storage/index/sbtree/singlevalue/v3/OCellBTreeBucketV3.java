@@ -305,7 +305,7 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     }
 
     setIntValue(SIZE_OFFSET, rawEntries.size());
-    assert getIntValue(FREE_POINTER_OFFSET) - size() * OIntegerSerializer.INT_SIZE - POSITIONS_ARRAY_OFFSET == getIntValue(
+    assert !isLeaf || getIntValue(FREE_POINTER_OFFSET) - size() * OIntegerSerializer.INT_SIZE - POSITIONS_ARRAY_OFFSET == getIntValue(
         FREE_SPACE_OFFSET);
   }
 
@@ -329,7 +329,7 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     }
 
     setIntValue(SIZE_OFFSET, newSize);
-    assert getIntValue(FREE_POINTER_OFFSET) - size() * OIntegerSerializer.INT_SIZE - POSITIONS_ARRAY_OFFSET == getIntValue(
+    assert !isLeaf || getIntValue(FREE_POINTER_OFFSET) - size() * OIntegerSerializer.INT_SIZE - POSITIONS_ARRAY_OFFSET == getIntValue(
         FREE_SPACE_OFFSET);
   }
 
