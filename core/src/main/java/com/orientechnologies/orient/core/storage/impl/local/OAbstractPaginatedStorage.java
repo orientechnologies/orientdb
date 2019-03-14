@@ -291,6 +291,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicLong txCommit       = new AtomicLong(0);
   private final AtomicLong txRollback     = new AtomicLong(0);
 
+  private final AtomicInteger sessionCount = new AtomicInteger(0);
+  private final AtomicLong    zeroTime     = new AtomicLong(0);
+
   public OAbstractPaginatedStorage(final String name, final String filePath, final String mode, final int id) {
     super(name, filePath, mode);
 
@@ -1043,15 +1046,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * This method finds all the records which were updated starting from (but not including) current LSN and write result in provided
    * output stream. In output stream will be included all thw records which were updated/deleted/created since passed in LSN till
-   * the current moment.
-   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
-   * Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li> <li>Record's
-   * cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if record is
-   * not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary presentation of
-   * record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is not deleted -
-   * length of content is provided in above entity</li> </ol>
+   * the current moment. Deleted records are written in output stream first, then created/updated records. All records are sorted by
+   * record id. Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li>
+   * <li>Record's cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only
+   * if
+   * record is not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary
+   * presentation of record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is
+   * not deleted - length of content is provided in above entity</li> </ol>
    *
-   * @param lsn    LSN from which we should find changed records
+   * @param lsn LSN from which we should find changed records
+   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
    *
@@ -1160,7 +1164,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } finally {
         stateLock.releaseReadLock();
       }
-      OBackgroundDelta b = new OBackgroundDelta(this,  outputListener, sortedRids, lsn, endLsn);
+      OBackgroundDelta b = new OBackgroundDelta(this, outputListener, sortedRids, lsn, endLsn);
 
       return b;
     } catch (final RuntimeException e) {
@@ -4881,6 +4885,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void doClose(final boolean force, final boolean onDelete) {
     if (!force && !onDelete) {
+      decOnClose();
       return;
     }
 
@@ -6269,5 +6274,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         walVacuumInProgress.set(false);
       }
     }
+  }
+
+  public void incOnOpen() {
+    sessionCount.incrementAndGet();
+  }
+
+  public void decOnClose() {
+    int count = sessionCount.decrementAndGet();
+    if (count == 0) {
+      zeroTime.set(System.currentTimeMillis());
+    }
+  }
+
+  public int getSessionCount() {
+    return sessionCount.get();
+  }
+
+  public long getZeroTime() {
+    return zeroTime.get();
   }
 }
