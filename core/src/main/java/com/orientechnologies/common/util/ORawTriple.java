@@ -3,9 +3,9 @@ package com.orientechnologies.common.util;
 import java.util.Objects;
 
 public class ORawTriple<K, T, V> {
-  private final K first;
-  private final T second;
-  private final V third;
+  public final K first;
+  public final T second;
+  public final V third;
 
   public ORawTriple(K first, T second, V third) {
     this.first = first;

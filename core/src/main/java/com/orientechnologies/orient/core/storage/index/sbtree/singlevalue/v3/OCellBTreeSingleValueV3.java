@@ -301,7 +301,7 @@ public final class OCellBTreeSingleValueV3<K> extends ODurableComponent {
               releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
               return true;
             } else {
-              keyBucket.remove(bucketSearchResult.itemIndex, rawKey);
+              keyBucket.remove(bucketSearchResult.itemIndex);
               insertionIndex = bucketSearchResult.itemIndex;
               sizeDiff = 0;
             }
@@ -582,7 +582,7 @@ public final class OCellBTreeSingleValueV3<K> extends ODurableComponent {
           encryption);
 
       removedValue = keyBucket.getValue(bucketSearchResult.itemIndex);
-      keyBucket.remove(bucketSearchResult.itemIndex, null);
+      keyBucket.remove(bucketSearchResult.itemIndex);
       updateSize(-1, atomicOperation);
     } finally {
       releasePageFromWrite(atomicOperation, keyBucketCacheEntry);

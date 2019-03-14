@@ -26,6 +26,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.util.ORawTriple;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -51,8 +52,11 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
   private static final int IS_LEAF_OFFSET       = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int LEFT_SIBLING_OFFSET  = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int RIGHT_SIBLING_OFFSET = LEFT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int FREE_SPACE_OFFSET    = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int POSITIONS_ARRAY_OFFSET = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int POSITIONS_ARRAY_OFFSET = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
+
+  private static final int FREE_SPACE_DEFRAGMENTATION_BOUNDARY = (int) ((MAX_PAGE_SIZE_BYTES - POSITIONS_ARRAY_OFFSET) * 0.3);
 
   private final boolean isLeaf;
 
@@ -80,6 +84,8 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     setByteValue(IS_LEAF_OFFSET, (byte) (isLeaf ? 1 : 0));
     setLongValue(LEFT_SIBLING_OFFSET, -1);
     setLongValue(RIGHT_SIBLING_OFFSET, -1);
+
+    setIntValue(FREE_SPACE_OFFSET, MAX_PAGE_SIZE_BYTES - POSITIONS_ARRAY_OFFSET);
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
@@ -118,20 +124,9 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     return -(low + 1); // key not found.
   }
 
-  public void remove(final int entryIndex, final byte[] oldRawKey) {
+  public void remove(final int entryIndex) {
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
-    final int keySize;
-
-    if (oldRawKey == null) {
-      if (encryption == null) {
-        keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition);
-      } else {
-        final int encryptionSize = getIntValue(entryPosition);
-        keySize = OIntegerSerializer.INT_SIZE + encryptionSize;
-      }
-    } else {
-      keySize = oldRawKey.length;
-    }
+    final int keySize = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
 
     final int entrySize;
     if (isLeaf) {
@@ -146,25 +141,13 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
           POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
     }
 
+    final int freeSpace = getIntValue(FREE_SPACE_OFFSET);
     size--;
+
     setIntValue(SIZE_OFFSET, size);
+    setIntValue(FREE_SPACE_OFFSET, freeSpace + OIntegerSerializer.INT_SIZE + entrySize);
 
-    final int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    if (size > 0 && entryPosition > freePointer) {
-      moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
-    }
-
-    setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
-
-    int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
-
-    for (int i = 0; i < size; i++) {
-      final int currentEntryPosition = getIntValue(currentPositionOffset);
-      if (currentEntryPosition < entryPosition) {
-        setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
-      }
-      currentPositionOffset += OIntegerSerializer.INT_SIZE;
-    }
+    setIntValue(entryPosition, -1);
   }
 
   public int size() {
@@ -175,16 +158,18 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
     if (isLeaf) {
+      entryPosition += OIntegerSerializer.INT_SIZE;
+
+      final int keySize = getIntValue(entryPosition);
+      entryPosition += OIntegerSerializer.INT_SIZE;
+
       final K key;
       if (encryption == null) {
         key = deserializeFromDirectMemory(keySerializer, entryPosition);
 
         entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
       } else {
-        final int encryptionSize = getIntValue(entryPosition);
-        entryPosition += OIntegerSerializer.INT_SIZE;
-
-        final byte[] encryptedKey = getBinaryValue(entryPosition, encryptionSize);
+        final byte[] encryptedKey = getBinaryValue(entryPosition, keySize);
         entryPosition += encryptedKey.length;
 
         final byte[] serializedKey = encryption.decrypt(encryptedKey);
@@ -243,14 +228,9 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     final int startEntryPosition = entryPosition;
 
     if (isLeaf) {
-      final int keySize;
-      if (encryption == null) {
-        keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition);
-      } else {
-        final int encryptedSize = getIntValue(entryPosition);
-        keySize = OIntegerSerializer.INT_SIZE + encryptedSize;
-      }
+      entryPosition += OIntegerSerializer.INT_SIZE;
 
+      final int keySize = getIntValue(entryPosition);
       return getBinaryValue(startEntryPosition, keySize + RID_SIZE);
     } else {
       entryPosition += 2 * OIntegerSerializer.INT_SIZE;
@@ -278,14 +258,9 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     assert isLeaf;
 
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
-
+    entryPosition += OIntegerSerializer.INT_SIZE;
     // skip key
-    if (encryption == null) {
-      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
-    } else {
-      final int encryptedSize = getIntValue(entryPosition);
-      entryPosition += OIntegerSerializer.INT_SIZE + encryptedSize;
-    }
+    entryPosition += getIntValue(entryPosition) + OIntegerSerializer.INT_SIZE;
 
     final int clusterId = getShortValue(entryPosition);
     final long clusterPosition = getLongValue(entryPosition + OShortSerializer.SHORT_SIZE);
@@ -297,32 +272,23 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     assert isLeaf;
 
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
-
-    // skip key
-    if (encryption == null) {
-      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
-    } else {
-      final int encryptedSize = getIntValue(entryPosition);
-      entryPosition += OIntegerSerializer.INT_SIZE + encryptedSize;
-    }
+    //skip key
+    entryPosition += getIntValue(entryPosition) + OIntegerSerializer.INT_SIZE;
 
     return getBinaryValue(entryPosition, RID_SIZE);
   }
 
   public K getKey(final int index) {
     int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    entryPosition += OIntegerSerializer.INT_SIZE;
 
-    if (!isLeaf) {
-      entryPosition += 2 * OIntegerSerializer.INT_SIZE;
-    }
+    final int keySize = getIntValue(entryPosition);
+    entryPosition += OIntegerSerializer.INT_SIZE;
 
     if (encryption == null) {
       return deserializeFromDirectMemory(keySerializer, entryPosition);
     } else {
-      final int encryptedSize = getIntValue(entryPosition);
-      entryPosition += OIntegerSerializer.INT_SIZE;
-
-      final byte[] encryptedKey = getBinaryValue(entryPosition, encryptedSize);
+      final byte[] encryptedKey = getBinaryValue(entryPosition, keySize);
       final byte[] serializedKey = encryption.decrypt(encryptedKey);
       return keySerializer.deserializeNativeObject(serializedKey, 0);
     }
@@ -347,6 +313,7 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
       rawEntries.add(getRawEntry(i));
     }
 
+    setIntValue(FREE_SPACE_OFFSET, MAX_PAGE_SIZE_BYTES - POSITIONS_ARRAY_OFFSET);
     setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
 
     int index = 0;
@@ -364,9 +331,23 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     assert isLeaf;
     final int size = getIntValue(SIZE_OFFSET);
 
+    final int freeSpace = getIntValue(FREE_SPACE_OFFSET);
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
+
     if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
-      return false;
+      //do defragmentation only if free space occupies at least N% of page size, otherwise better to split page
+      //and as result perform implicit defragmentation
+      if (freeSpace >= FREE_SPACE_DEFRAGMENTATION_BOUNDARY) {
+        doDefragmentation();
+
+        freePointer = getIntValue(FREE_POINTER_OFFSET);
+
+        if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
+          return false;
+        }
+      } else {
+        return false;
+      }
     }
 
     if (index <= size - 1) {
@@ -380,10 +361,60 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);
     setIntValue(SIZE_OFFSET, size + 1);
 
+    freePointer += setIntValue(freePointer, index);
+    freePointer += setIntValue(freePointer, serializedKey.length);
+
     setBinaryValue(freePointer, serializedKey);
     setBinaryValue(freePointer + serializedKey.length, serializedValue);
 
+    setIntValue(FREE_SPACE_OFFSET, freeSpace - (OIntegerSerializer.INT_SIZE + entrySize));
+
     return true;
+  }
+
+  private void doDefragmentation() {
+    //position, size, entryIndex
+    final List<ORawTriple<Integer, Integer, Integer>> entries = new ArrayList<>(256);
+
+    final int freePointer = getIntValue(FREE_POINTER_OFFSET);
+    int entryPosition = freePointer;
+    while (entryPosition < MAX_PAGE_SIZE_BYTES) {
+      final int entryIndex = getIntValue(entryPosition);
+      final int size = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE) + 2 * OIntegerSerializer.INT_SIZE + RID_SIZE;
+      entries.add(new ORawTriple<>(entryPosition, entryIndex, size));
+
+      entryPosition += size;
+    }
+
+    int shift = 0;
+    int lastDataPosition = 0;
+    int mergedDataSize = 0;
+
+    for (int i = entries.size() - 1; i >= 0; i--) {
+      final ORawTriple<Integer, Integer, Integer> triple = entries.get(0);
+
+      final int position = triple.first;
+      final int size = triple.second;
+      final int entryIndex = triple.third;
+
+      if (entryIndex >= 0 && shift > 0) {
+        setIntValue(POSITIONS_ARRAY_OFFSET + OIntegerSerializer.INT_SIZE * entryIndex, position + shift);
+
+        lastDataPosition = position;
+        mergedDataSize += size; // accumulate consecutive data segments size
+      }
+
+      if (mergedDataSize > 0 && (entryIndex < 0 || i == 0)) { // move consecutive merged data segments in one go
+        moveData(lastDataPosition, lastDataPosition + shift, mergedDataSize);
+        mergedDataSize = 0;
+      }
+
+      if (entryIndex < 0) {
+        shift += size;
+      }
+    }
+
+    setIntValue(FREE_POINTER_OFFSET, freePointer + shift);
   }
 
   private void appendRawEntry(final int index, final byte[] rawEntry) {
@@ -405,13 +436,13 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
       keySize = keySerializer.getObjectSize(treeEntry.key, (Object[]) keyTypes);
     } else {
       encryptedKey = encryption.encrypt(serializedKey);
-      keySize = encryptedKey.length + OIntegerSerializer.INT_SIZE;
+      keySize = encryptedKey.length;
     }
 
     int entrySize = keySize;
 
     if (isLeaf) {
-      entrySize += RID_SIZE;
+      entrySize += RID_SIZE + 2 * OIntegerSerializer.INT_SIZE;
     } else {
       entrySize += 2 * OIntegerSerializer.INT_SIZE;
     }
@@ -434,12 +465,12 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     setIntValue(SIZE_OFFSET, size + 1);
 
     if (isLeaf) {
+      freePointer += setIntValue(freePointer, index);
+      freePointer += setIntValue(freePointer, keySize);
+
       if (encryption == null) {
         freePointer += setBinaryValue(freePointer, serializedKey);
       } else {
-        setIntValue(freePointer, encryptedKey.length);
-        freePointer += OIntegerSerializer.INT_SIZE;
-
         freePointer += setBinaryValue(freePointer, encryptedKey);
       }
 
@@ -478,13 +509,10 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
 
   void updateValue(final int index, final byte[] value) {
     int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    entryPosition += OIntegerSerializer.INT_SIZE;
 
-    if (encryption == null) {
-      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
-    } else {
-      final int encryptedValue = getIntValue(entryPosition);
-      entryPosition += OIntegerSerializer.INT_SIZE + encryptedValue;
-    }
+    final int keySize = getIntValue(entryPosition);
+    entryPosition += OIntegerSerializer.INT_SIZE + keySize;
 
     setBinaryValue(entryPosition, value);
   }
@@ -513,7 +541,7 @@ final class OCellBTreeBucketV3<K> extends ODurablePage {
     public final K    key;
     public final ORID value;
 
-    public SBTreeEntry(final int leftChild, final int rightChild, final K key, final ORID value) {
+    SBTreeEntry(final int leftChild, final int rightChild, final K key, final ORID value) {
       this.leftChild = leftChild;
       this.rightChild = rightChild;
       this.key = key;
