@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueV1;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -96,8 +96,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private OContextConfiguration configuration;
   private boolean               validation;
 
-  private final OCellBTreeSingleValue<String> btree;
-  private final OPaginatedCluster             cluster;
+  private final OCellBTreeSingleValueV1<String> btree;
+  private final OPaginatedCluster               cluster;
 
   private final OAbstractPaginatedStorage storage;
   private final OAtomicOperationsManager  atomicOperationsManager;
@@ -117,7 +117,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     cluster = OPaginatedClusterFactory
         .createCluster(COMPONENT_NAME, OPaginatedCluster.getLatestBinaryVersion(), storage, DATA_FILE_EXTENSION,
             MAP_FILE_EXTENSION);
-    btree = new OCellBTreeSingleValue<>(COMPONENT_NAME, TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
+    btree = new OCellBTreeSingleValueV1<>(COMPONENT_NAME, TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
 
     this.storage = storage;
@@ -1008,7 +1008,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private void preloadConfigurationProperties() throws IOException {
     final Map<String, String> properties = new HashMap<>(8);
 
-    final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = btree
+    final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
         .iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
     Map.Entry<String, ORID> entry = cursor.next(-1);
     while (entry != null) {
@@ -1060,7 +1060,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void clearProperties() {
     lock.acquireWriteLock();
     try {
-      final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = btree
+      final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
           .iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
 
       final List<String> keysToRemove = new ArrayList<>(8);
@@ -1142,7 +1142,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public Set<String> indexEngines() {
     lock.acquireReadLock();
     try {
-      final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = btree
+      final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
           .iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
 
       final Set<String> result = new HashSet<>(4);
@@ -1165,7 +1165,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private List<IndexEngineData> loadIndexEngines() {
     try {
-      final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = btree
+      final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
           .iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
       final List<IndexEngineData> result = new ArrayList<>(4);
 
@@ -1262,7 +1262,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private void preloadClusters() throws IOException {
     final List<OStorageClusterConfiguration> clusters = new ArrayList<>(1024);
-    final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = btree
+    final OCellBTreeSingleValueV1.OSBTreeCursor<String, ORID> cursor = btree
         .iterateEntriesMajor(CLUSTERS_PREFIX_PROPERTY, false, true);
 
     Map.Entry<String, ORID> entry = cursor.next(-1);

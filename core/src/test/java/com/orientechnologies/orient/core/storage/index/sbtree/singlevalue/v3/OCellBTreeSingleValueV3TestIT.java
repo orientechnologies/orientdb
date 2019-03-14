@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

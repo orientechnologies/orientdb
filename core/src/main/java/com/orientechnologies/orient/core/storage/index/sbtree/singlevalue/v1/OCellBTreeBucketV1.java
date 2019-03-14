@@ -18,7 +18,7 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -43,7 +43,7 @@ import java.util.Objects;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-final class OSBTreeBucketSingleValue<K> extends ODurablePage {
+final class OCellBTreeBucketV1<K> extends ODurablePage {
   private static final int RID_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
 
   private static final int FREE_POINTER_OFFSET  = NEXT_FREE_POSITION;
@@ -65,7 +65,7 @@ final class OSBTreeBucketSingleValue<K> extends ODurablePage {
   private final OEncryption encryption;
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  OSBTreeBucketSingleValue(final OCacheEntry cacheEntry, final boolean isLeaf, final OBinarySerializer<K> keySerializer,
+  OCellBTreeBucketV1(final OCacheEntry cacheEntry, final boolean isLeaf, final OBinarySerializer<K> keySerializer,
       final OType[] keyTypes, final OEncryption encryption) {
     super(cacheEntry);
 
@@ -83,7 +83,7 @@ final class OSBTreeBucketSingleValue<K> extends ODurablePage {
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  OSBTreeBucketSingleValue(final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer, final OType[] keyTypes,
+  OCellBTreeBucketV1(final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer, final OType[] keyTypes,
       final OEncryption encryption) {
     super(cacheEntry);
     this.keyTypes = keyTypes;

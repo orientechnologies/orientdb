@@ -17,7 +17,7 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1;
 
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.id.ORID;
@@ -37,8 +37,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
  */
-final class ONullBucket extends ODurablePage {
-  ONullBucket(final OCacheEntry cacheEntry, final boolean isNew) {
+final class ONullBucketV1 extends ODurablePage {
+  ONullBucketV1(final OCacheEntry cacheEntry, final boolean isNew) {
     super(cacheEntry);
 
     if (isNew) {
