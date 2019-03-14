@@ -247,6 +247,22 @@ public class OrientDBEmbeddedTests {
     orientDB.close();
   }
 
+  @Test
+  public void autoClose() throws InterruptedException {
+    OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
+    OrientDBEmbedded embedded = ((OrientDBEmbedded) OrientDBInternal.extract(orientDB));
+    embedded.initAutoClose(3000);
+    orientDB.create("test", ODatabaseType.PLOCAL);
+    ODatabaseSession db1 = orientDB.open("test", "admin", "admin");
+    assertFalse(db1.isClosed());
+    db1.close();
+    assertNotNull(embedded.getStorage("test"));
+    Thread.sleep(4100);
+    assertNull(embedded.getStorage("test"));
+    orientDB.drop("test");
+    orientDB.close();
+  }
+
   @Test(expected = ODatabaseException.class)
   public void testOpenNotExistDatabase() {
     try (OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig())) {

@@ -41,27 +41,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileStore;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -79,6 +61,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private volatile boolean                                open           = true;
   private          ExecutorService                        executor;
   private          Timer                                  timer;
+  private          TimerTask                              autoCloseTimer = null;
 
   protected final long maxWALSegmentSize;
 
@@ -129,6 +112,32 @@ public class OrientDBEmbedded implements OrientDBInternal {
         new LinkedBlockingQueue<>());
     timer = new Timer();
 
+    boolean autoClose = this.configurations.getConfigurations().getValueAsBoolean(OGlobalConfiguration.AUTO_CLOSE_AFTER_DELAY);
+    if (autoClose) {
+      int autoCloseDelay = this.configurations.getConfigurations().getValueAsInteger(OGlobalConfiguration.AUTO_CLOSE_DELAY);
+      final long delay = autoCloseDelay * 60 * 1000;
+      initAutoClose(delay);
+    }
+  }
+
+  public void initAutoClose(long delay) {
+    final long scheduleTime = delay / 3;
+    autoCloseTimer = orient.scheduleTask(() -> orient.submit(() -> checkAndCloseStorages(delay)), scheduleTime, scheduleTime);
+  }
+
+  private synchronized void checkAndCloseStorages(long delay) {
+    Set<String> toClose = new HashSet<>();
+    for (OAbstractPaginatedStorage storage : storages.values()) {
+      if (storage.getType().equalsIgnoreCase(ODatabaseType.PLOCAL.name()) && storage.getSessionCount() == 0) {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime > storage.getZeroTime() + delay) {
+          toClose.add(storage.getName());
+        }
+      }
+    }
+    for (String storage : toClose) {
+      forceDatabaseClose(storage);
+    }
   }
 
   private long calculateInitialMaxWALSegSize(OrientDBConfig configurations) throws IOException {
@@ -226,6 +235,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
+        storage.incOnOpen();
         embedded = newSessionInstance(storage);
         embedded.init(config, getOrCreateSharedContext(storage));
       }
@@ -251,6 +261,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
+        storage.incOnOpen();
         embedded = newSessionInstance(storage);
         embedded.init(config, getOrCreateSharedContext(storage));
       }
@@ -286,6 +297,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
         embedded = newSessionInstance(storage);
         embedded.init(config, getOrCreateSharedContext(storage));
+        storage.incOnOpen();
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, password);
@@ -315,6 +327,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       storage.open(pool.getConfig().getConfigurations());
       embedded = newPooledSessionInstance(pool, storage);
       embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
+      storage.incOnOpen();
     }
     embedded.rebuildIndexes();
     embedded.internalOpen(user, password);
@@ -572,6 +585,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
     this.sharedContexts.clear();
     storages.clear();
     orient.onEmbeddedFactoryClose(this);
+    if (autoCloseTimer != null) {
+      autoCloseTimer.cancel();
+    }
   }
 
   public OrientDBConfig getConfigurations() {

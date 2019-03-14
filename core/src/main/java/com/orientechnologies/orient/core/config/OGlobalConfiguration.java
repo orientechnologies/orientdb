@@ -1056,7 +1056,12 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   @Deprecated INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
 
-  @Deprecated CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1);
+  @Deprecated CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
+
+  AUTO_CLOSE_AFTER_DELAY("storage.autoCloseAfterDelay",
+      "Enable auto close of storage after a specified delay if no session are active", Boolean.class, false),
+
+  AUTO_CLOSE_DELAY("storage.autoCloseAfterDelay", "Storage auto close delay time in minutes", Integer.class, 20);
 
   static {
     readConfiguration();
