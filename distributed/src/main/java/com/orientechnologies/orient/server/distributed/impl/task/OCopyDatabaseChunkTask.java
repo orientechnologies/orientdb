@@ -25,10 +25,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -65,7 +62,12 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
-    OSyncSource b = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+    ODistributedStorage storage = (ODistributedStorage) database.getStorage();
+    if (storage == null) {
+      throw new ODistributedException("database not available anymore during sync");
+    }
+    OSyncSource b = storage.getLastValidBackup();
+
     final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(b, OSyncDatabaseTask.CHUNK_MAX_SIZE, null);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
