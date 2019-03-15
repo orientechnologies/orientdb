@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.plugin.mail.OMailPlugin;
 
-import javax.mail.MessagingException;
 import java.util.Map;
 
 @EventConfig(when = "MetricWhen", what = "MailWhat")

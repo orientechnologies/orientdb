@@ -18,7 +18,6 @@ package com.orientechnologies.workbench.event;
 
 import java.util.Map;
 
-import javax.mail.MessagingException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -63,10 +62,6 @@ public class OEventMetricMailExecutor extends OEventMetricExecutor {
       OLogManager.instance().info(this, "EMAIL sending email: %s", configuration);
 
       mailPlugin.send(configuration);
-    } catch (MessagingException e) {
-
-      OLogManager.instance().error(this, "Error sending  email with configuration: %s", configuration);
-
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error sending  email with configuration: %s", configuration);
     }

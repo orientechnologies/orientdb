@@ -17,8 +17,6 @@ package com.orientechnologies.workbench.event;
 
 import java.util.Map;
 
-import javax.mail.MessagingException;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -67,8 +65,6 @@ public class OEventLogMailExecutor extends OEventLogExecutor {
       OLogManager.instance().info(this, "EMAIL sending email: %s", configuration);
 
       mailPlugin.send(configuration);
-    } catch (MessagingException e) {
-      e.printStackTrace();
     } catch (Exception e) {
       e.printStackTrace();
     }
