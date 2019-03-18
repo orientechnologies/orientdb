@@ -11,7 +11,12 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created by luigidellaquila on 21/02/17.
@@ -37,8 +42,7 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
 
   public FetchEdgesFromToVerticesStep(String fromAlias, String toAlias, OIdentifier targetClass, OIdentifier targetCluster,
       OCommandContext ctx, boolean profilingEnabled) {
-    super(ctx, profilingEnabled
-    );
+    super(ctx, profilingEnabled);
     this.targetClass = targetClass;
     this.targetCluster = targetCluster;
     this.fromAlias = fromAlias;
@@ -217,5 +221,15 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
       result += "\n" + spaces + "       (target cluster " + targetCluster + ")";
     }
     return result;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new FetchEdgesFromToVerticesStep(fromAlias, toAlias, targetClass, targetCluster, ctx, profilingEnabled);
   }
 }

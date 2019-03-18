@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -15,28 +16,33 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class OBackgroundBackup implements Runnable {
-  private       OSyncDatabaseTask                     oSyncDatabaseTask;
-  private final ODistributedServerManager             iManager;
-  private final ODatabaseDocumentInternal             database;
-  private final File                                  resultedBackupFile;
-  private final String                                finalBackupPath;
-  private final AtomicBoolean                         incremental = new AtomicBoolean(false);
-  private final AtomicReference<ODistributedMomentum> momentum;
-  private final ODistributedDatabase                  dDatabase;
-  private final ODistributedRequestId                 requestId;
-  private final File                                  completedFile;
-  private       CountDownLatch                        started     = new CountDownLatch(1);
-  private       CountDownLatch                        finished    = new CountDownLatch(1);
+public class OBackgroundBackup implements Runnable, OSyncSource {
+  private          OSyncDatabaseTask                     oSyncDatabaseTask;
+  private final    ODistributedServerManager             iManager;
+  private final    ODatabaseDocumentInternal             database;
+  private final    File                                  resultedBackupFile;
+  private final    String                                finalBackupPath;
+  private final    AtomicBoolean                         incremental = new AtomicBoolean(false);
+  private final    AtomicReference<ODistributedMomentum> momentum;
+  private final    ODistributedDatabase                  dDatabase;
+  private final    ODistributedRequestId                 requestId;
+  private final    CountDownLatch                        started     = new CountDownLatch(1);
+  private final    CountDownLatch                        finished    = new CountDownLatch(1);
+  private volatile InputStream                           inputStream;
+  public volatile  boolean                               valid       = true;
 
   public OBackgroundBackup(OSyncDatabaseTask oSyncDatabaseTask, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database, File resultedBackupFile, String finalBackupPath, OModifiableBoolean incremental,
@@ -50,7 +56,6 @@ public class OBackgroundBackup implements Runnable {
     this.momentum = momentum;
     this.dDatabase = dDatabase;
     this.requestId = requestId;
-    this.completedFile = completedFile;
   }
 
   @Override
@@ -66,7 +71,17 @@ public class OBackgroundBackup implements Runnable {
                 "Compressing database '%s' %d clusters %s...", database.getName(), database.getClusterNames().size(),
                 database.getClusterNames());
 
-        try {
+        if (resultedBackupFile.exists())
+          resultedBackupFile.delete();
+        else
+          resultedBackupFile.getParentFile().mkdirs();
+        resultedBackupFile.createNewFile();
+
+        final OutputStream fileOutputStream = new FileOutputStream(resultedBackupFile);
+        PipedOutputStream pipedOutputStream = new PipedOutputStream();
+        inputStream = new PipedInputStream(pipedOutputStream, OSyncDatabaseTask.CHUNK_MAX_SIZE);
+        OutputStream dest = new TeeOutputStream(fileOutputStream, pipedOutputStream);
+        if (database.getStorage().supportIncremental()) {
           OWriteAheadLog wal = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getWALInstance();
           OLogSequenceNumber lsn = wal.end();
           if (lsn == null) {
@@ -74,14 +89,10 @@ public class OBackgroundBackup implements Runnable {
           }
           wal.addCutTillLimit(lsn);
 
-          resultedBackupFile.delete();
-
           try {
-            database.getStorage().incrementalBackup(finalBackupPath, (x) -> {
-              incremental.set(true);
-              started.countDown();
-              return null;
-            });
+            incremental.set(true);
+            started.countDown();
+            database.getStorage().fullIncrementalBackup(dest);
           } catch (UnsupportedOperationException u) {
             throw u;
           } catch (RuntimeException r) {
@@ -90,46 +101,37 @@ public class OBackgroundBackup implements Runnable {
           } finally {
             wal.removeCutTillLimit(lsn);
           }
-          File dir = new File(finalBackupPath);
-          File file = new File(finalBackupPath, dir.listFiles()[0].getName() + ".completed");
-          file.createNewFile();
           finished.countDown();
           OLogManager.instance().info(this, "Sending Enterprise backup (" + database.getName() + ") for node sync");
 
-        } catch (UnsupportedOperationException e) {
-
-          if (resultedBackupFile.exists())
-            resultedBackupFile.delete();
-          else
-            resultedBackupFile.getParentFile().mkdirs();
-          resultedBackupFile.createNewFile();
-
-          final FileOutputStream fileOutputStream = new FileOutputStream(resultedBackupFile);
+        } else {
           try {
-            database.backup(fileOutputStream, null, new Callable<Object>() {
-                  @Override
-                  public Object call() throws Exception {
-                    momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
-                    started.countDown();
-                    return null;
-                  }
-                }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
-                  @Override
-                  public void onMessage(String iText) {
-                    if (iText.startsWith("\n"))
-                      iText = iText.substring(1);
+            OCommandOutputListener listener = null;
+            if (ODistributedServerLog.isDebugEnabled()) {
+              listener = new OCommandOutputListener() {
+                @Override
+                public void onMessage(String iText) {
+                  if (iText.startsWith("\n"))
+                    iText = iText.substring(1);
 
-                    OLogManager.instance().debug(this, iText);
-                  }
-                } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(),
+                  OLogManager.instance().debug(this, iText);
+                }
+              };
+            }
+            database.backup(dest, null, () -> {
+                  momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+                  incremental.set(false);
+                  started.countDown();
+                  return null;
+                }, listener, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(),
                 OAbstractSyncDatabaseTask.CHUNK_MAX_SIZE);
           } finally {
             try {
-              fileOutputStream.close();
+              dest.close();
             } catch (IOException e2) {
               OLogManager.instance().debug(this, "Error performing backup ", e2);
             }
-
+            finished.countDown();
           }
         }
 
@@ -141,11 +143,6 @@ public class OBackgroundBackup implements Runnable {
         OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, database.getName());
         throw e;
       } finally {
-        try {
-          completedFile.createNewFile();
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
-        }
         finished.countDown();
       }
     } catch (Exception e) {
@@ -159,8 +156,13 @@ public class OBackgroundBackup implements Runnable {
 
   }
 
-  public AtomicBoolean getIncremental() {
-    return incremental;
+  public void makeStreamFromFile() throws IOException, InterruptedException {
+    getFinished().await();
+    inputStream = new FileInputStream(finalBackupPath);
+  }
+
+  public boolean getIncremental() {
+    return incremental.get();
   }
 
   public File getResultedBackupFile() {
@@ -177,5 +179,19 @@ public class OBackgroundBackup implements Runnable {
 
   public CountDownLatch getFinished() {
     return finished;
+  }
+
+  public InputStream getInputStream() {
+    return inputStream;
+  }
+
+  @Override
+  public void invalidate() {
+    valid = false;
+  }
+
+  @Override
+  public boolean isValid() {
+    return valid;
   }
 }

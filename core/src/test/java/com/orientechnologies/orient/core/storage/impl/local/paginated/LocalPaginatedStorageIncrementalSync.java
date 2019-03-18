@@ -20,7 +20,13 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.util.Random;
@@ -98,7 +104,7 @@ public class LocalPaginatedStorageIncrementalSync {
       final OutputStream outputStream = Channels.newOutputStream(channel);
       final OutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
 
-      ((OAbstractPaginatedStorage) originalDB.getStorage()).recordsChangedAfterLSN(startLSN, bufferedOutputStream, null);
+      ((OAbstractPaginatedStorage) originalDB.getStorage()).recordsChangedAfterLSN(startLSN, null);
       bufferedOutputStream.close();
 
       dataFile.close();

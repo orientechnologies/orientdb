@@ -1,6 +1,10 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -63,4 +67,40 @@ public class OCheckIndexToolTest {
     }
   }
 
+  @Test
+  public void testBugOnCollectionIndex() {
+
+    OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+
+    context.create("test", ODatabaseType.MEMORY);
+
+    try (ODatabaseSession db = context.open("test", "admin", "admin")) {
+
+      db.command("create class testclass");
+      db.command("create property testclass.name string");
+      db.command("create property testclass.tags linklist");
+      db.command("alter property testclass.tags default '[]'");
+      db.command("create index testclass_tags_idx on testclass (tags) NOTUNIQUE_HASH_INDEX");
+
+      db.command("insert into testclass set name = 'a',tags = [#5:0] ");
+      db.command("insert into testclass set name = 'b'");
+      db.command("insert into testclass set name = 'c' ");
+
+      OCheckIndexTool tool = new OCheckIndexTool();
+
+      tool.setDatabase(db);
+      tool.setVerbose(true);
+      tool.setOutputListener(new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
+          System.out.println(iText);
+        }
+      });
+
+      tool.run();
+      Assert.assertEquals(0, tool.getTotalErrors());
+
+    }
+    context.close();
+  }
 }

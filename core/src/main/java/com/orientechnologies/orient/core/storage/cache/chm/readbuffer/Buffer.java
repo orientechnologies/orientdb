@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.cache.chm.readbuffer;
 
-import javax.annotation.Nonnull;
 import java.util.function.Consumer;
 
 /**
@@ -44,7 +43,7 @@ public interface Buffer<E> {
    *
    * @return {@code 1} if the buffer is full, {@code -1} if the CAS failed, or {@code 0} if added
    */
-  int offer(@Nonnull E e);
+  int offer(E e);
 
   /**
    * Drains the buffer, sending each element to the consumer for processing. The caller must ensure
@@ -52,7 +51,7 @@ public interface Buffer<E> {
    *
    * @param consumer the action to perform on each element
    */
-  void drainTo(@Nonnull Consumer<E> consumer);
+  void drainTo(Consumer<E> consumer);
 
   /**
    * Returns the number of elements residing in the buffer.

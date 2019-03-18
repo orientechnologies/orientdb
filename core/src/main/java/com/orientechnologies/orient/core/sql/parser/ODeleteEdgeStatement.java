@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.ODeleteEdgeExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.ODeleteExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.HashMap;
@@ -46,36 +47,48 @@ public class ODeleteEdgeStatement extends OStatement {
     return visitor.visit(this, data);
   }
 
-
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    ODeleteExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = (ODeleteExecutionPlan) createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (ODeleteExecutionPlan) createExecutionPlanNoCache(ctx, false);
+    }
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
         params.put(i, args[i]);
       }
     }
-    return execute(db, params, parentCtx);
+    return execute(db, params, parentCtx, usePlanCache);
   }
 
-  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
-    ODeleteExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, true);
     result.setStatement(this.originalStatement);
     return result;
   }
 
+  public OInternalExecutionPlan createExecutionPlanNoCache(OCommandContext ctx, boolean enableProfiling) {
+    ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
+    result.setStatement(this.originalStatement);
+    return result;
+  }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DELETE EDGE");
@@ -105,11 +118,11 @@ public class ODeleteEdgeStatement extends OStatement {
       }
       builder.append("]");
     }
-    if(leftExpression!=null){
+    if (leftExpression != null) {
       builder.append(" FROM ");
       leftExpression.toString(params, builder);
     }
-    if(rightExpression!=null){
+    if (rightExpression != null) {
       builder.append(" TO ");
       rightExpression.toString(params, builder);
     }
@@ -127,7 +140,8 @@ public class ODeleteEdgeStatement extends OStatement {
     }
   }
 
-  @Override public ODeleteEdgeStatement copy() {
+  @Override
+  public ODeleteEdgeStatement copy() {
     ODeleteEdgeStatement result = null;
     try {
       result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
@@ -138,15 +152,31 @@ public class ODeleteEdgeStatement extends OStatement {
     result.targetClusterName = targetClusterName == null ? null : targetClusterName.copy();
     result.rid = rid == null ? null : rid.copy();
     result.rids = rids == null ? null : rids.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.leftExpression = leftExpression==null?null:leftExpression.copy();
-    result.rightExpression = rightExpression==null?null:rightExpression.copy();
+    result.leftExpression = leftExpression == null ? null : leftExpression.copy();
+    result.rightExpression = rightExpression == null ? null : rightExpression.copy();
     result.whereClause = whereClause == null ? null : whereClause.copy();
     result.limit = limit == null ? null : limit.copy();
     result.batch = batch == null ? null : batch.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean executinPlanCanBeCached() {
+    if (leftExpression != null && !leftExpression.isCacheable()) {
+      return false;
+    }
+    if (rightExpression != null && !rightExpression.isCacheable()) {
+      return false;
+    }
+
+    if (whereClause != null && !whereClause.isCacheable()) {
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -176,13 +206,14 @@ public class ODeleteEdgeStatement extends OStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = className != null ? className.hashCode() : 0;
     result = 31 * result + (targetClusterName != null ? targetClusterName.hashCode() : 0);
     result = 31 * result + (rid != null ? rid.hashCode() : 0);
     result = 31 * result + (rids != null ? rids.hashCode() : 0);
     result = 31 * result + (leftExpression != null ? leftExpression.hashCode() : 0);
-    result = 31 * result + (rightExpression!= null ? rightExpression.hashCode() : 0);
+    result = 31 * result + (rightExpression != null ? rightExpression.hashCode() : 0);
     result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
     result = 31 * result + (limit != null ? limit.hashCode() : 0);
     result = 31 * result + (batch != null ? batch.hashCode() : 0);

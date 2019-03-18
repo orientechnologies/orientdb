@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
-import edu.umd.cs.findbugs.gui2.FilterListener;
 import org.junit.Test;
 
 import java.io.File;

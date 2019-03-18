@@ -23,9 +23,9 @@ public class OUpdateStatement extends OStatement {
 
   protected boolean upsert = false;
 
-  protected boolean returnBefore = false;
-  protected boolean returnAfter  = false;
-  protected boolean returnCount  = false;
+  protected boolean     returnBefore = false;
+  protected boolean     returnAfter  = false;
+  protected boolean     returnCount  = false;
   protected OProjection returnProjection;
 
   public OWhereClause whereClause;
@@ -106,7 +106,8 @@ public class OUpdateStatement extends OStatement {
     return "UPDATE ";
   }
 
-  @Override public OUpdateStatement copy() {
+  @Override
+  public OUpdateStatement copy() {
     OUpdateStatement result = null;
     try {
       result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
@@ -127,7 +128,8 @@ public class OUpdateStatement extends OStatement {
     return result;
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -140,19 +142,30 @@ public class OUpdateStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OUpdateExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (OUpdateExecutionPlan) createExecutionPlanNoCache(ctx, false);
+    }
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OUpdateExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (OUpdateExecutionPlan) createExecutionPlanNoCache(ctx, false);
+    }
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
@@ -164,7 +177,8 @@ public class OUpdateStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -196,7 +210,8 @@ public class OUpdateStatement extends OStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = target != null ? target.hashCode() : 0;
     result = 31 * result + (operations != null ? operations.hashCode() : 0);
     result = 31 * result + (upsert ? 1 : 0);

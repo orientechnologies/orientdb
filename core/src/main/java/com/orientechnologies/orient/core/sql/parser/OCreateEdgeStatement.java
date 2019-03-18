@@ -37,7 +37,7 @@ public class OCreateEdgeStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -50,20 +50,30 @@ public class OCreateEdgeStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OInsertExecutionPlan executionPlan;
+    if(usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    }else{
+      executionPlan = createExecutionPlanNoCache(ctx, false);
+    }
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OInsertExecutionPlan executionPlan;
+    if(usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    }else{
+      executionPlan = createExecutionPlanNoCache(ctx, false);
+    }
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -103,7 +104,7 @@ public class OCheckIndexTool extends ODatabaseTool {
     String clusterName = database.getClusterNameById(clusterId);
 
     int TOT_STEPS = 20;
-    message("Checking cluster " + clusterName + "  for index " + index.getName()+"\n");
+    message("Checking cluster " + clusterName + "  for index " + index.getName() + "\n");
     ORecordIteratorCluster<ORecord> iter = database.browseCluster(clusterName);
     long count = 0;
     long step = -1;
@@ -150,14 +151,26 @@ public class OCheckIndexTool extends ODatabaseTool {
     if (indexKey == null) {
       return;
     }
-    Object values = index.get(indexKey);
+
+    if (index.getDefinition().getFields().size() == 1 && indexKey instanceof Collection) {
+      for (Object key : ((Collection) indexKey)) {
+        Object values = index.get(key);
+        checkSingleRecord(doc, index, docId, values);
+      }
+    } else {
+      Object values = index.get(indexKey);
+      checkSingleRecord(doc, index, docId, values);
+    }
+  }
+
+  private void checkSingleRecord(ODocument doc, OIndex index, ORID docId, Object values) {
     if (values instanceof OIdentifiable) {
       //single value
       ORID indexRid = ((OIdentifiable) values).getIdentity();
       if (!indexRid.equals(docId)) {
 //        errors.add(new Error(docId, index.getName(), true, false));
         totalErrors++;
-        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity()+"\n");
+        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
       }
     } else if (values instanceof Iterable) {
       Iterator<OIdentifiable> valuesOnIndex = ((Iterable) values).iterator();
@@ -172,7 +185,7 @@ public class OCheckIndexTool extends ODatabaseTool {
       if (!found) {
 //        errors.add(new Error(docId, index.getName(), true, false));
         totalErrors++;
-        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity()+"\n");
+        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
       }
     }
   }

@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptio
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -568,7 +567,6 @@ public class AsyncReadCacheTestIT {
     }
   }
 
-  @SuppressFBWarnings("IS2_INCONSISTENT_SYNC")
   private static final class ZipfianGenerator {
     static final double ZIPFIAN_CONSTANT = 0.99;
 

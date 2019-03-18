@@ -10,10 +10,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -22,22 +22,21 @@ public class OSyncReceiver implements Runnable {
   private final String                                databaseName;
   private final ODistributedDatabaseChunk             firstChunk;
   private final AtomicReference<ODistributedMomentum> momentum;
-  private final String                                fileName;
   private final String                                iNode;
   private final String                                dbPath;
-  private final File                                  file;
-  private final CountDownLatch                        done = new CountDownLatch(1);
+  private final CountDownLatch                        done    = new CountDownLatch(1);
+  private final CountDownLatch                        started = new CountDownLatch(1);
+  private       PipedOutputStream                     output;
+  private       PipedInputStream                      inputStream;
 
   public OSyncReceiver(ODistributedAbstractPlugin distributed, String databaseName, ODistributedDatabaseChunk firstChunk,
-      AtomicReference<ODistributedMomentum> momentum, String fileName, String iNode, String dbPath, File file) {
+      AtomicReference<ODistributedMomentum> momentum, String iNode, String dbPath) {
     this.distributed = distributed;
     this.databaseName = databaseName;
     this.firstChunk = firstChunk;
     this.momentum = momentum;
-    this.fileName = fileName;
     this.iNode = iNode;
     this.dbPath = dbPath;
-    this.file = file;
   }
 
   @Override
@@ -48,32 +47,34 @@ public class OSyncReceiver implements Runnable {
 
       momentum.set(chunk.getMomentum());
 
-      final OutputStream fOut = new FileOutputStream(fileName, false);
+      output = new PipedOutputStream();
+      inputStream = new PipedInputStream(output);
+      started.countDown();
       try {
 
-        long fileSize = distributed.writeDatabaseChunk(1, chunk, fOut);
+        long fileSize = writeDatabaseChunk(1, chunk, output);
         for (int chunkNum = 2; !chunk.last; chunkNum++) {
           final ODistributedResponse response = distributed.sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
               new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
               distributed.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
-          final Object result = response.getPayload();
-          if (result instanceof Boolean)
-            continue;
-          else if (result instanceof Exception) {
-            ODistributedServerLog.error(this, distributed.nodeName, iNode, ODistributedServerLog.DIRECTION.IN,
-                "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
-          } else if (result instanceof ODistributedDatabaseChunk) {
-            chunk = (ODistributedDatabaseChunk) result;
-            fileSize += distributed.writeDatabaseChunk(chunkNum, chunk, fOut);
+          if (response == null) {
+            output.close();
+            done.countDown();
+            break;
+          } else {
+            final Object result = response.getPayload();
+            if (result instanceof Boolean)
+              continue;
+            else if (result instanceof Exception) {
+              ODistributedServerLog.error(this, distributed.nodeName, iNode, ODistributedServerLog.DIRECTION.IN,
+                  "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
+            } else if (result instanceof ODistributedDatabaseChunk) {
+              chunk = (ODistributedDatabaseChunk) result;
+              fileSize += writeDatabaseChunk(chunkNum, chunk, output);
+            }
           }
         }
-
-        fOut.flush();
-        done.countDown();
-
-        // CREATE THE .COMPLETED FILE TO SIGNAL EOF
-        new File(file.getAbsolutePath() + ".completed").createNewFile();
 
         ODistributedServerLog
             .info(this, distributed.nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Database copied correctly, size=%s",
@@ -81,20 +82,51 @@ public class OSyncReceiver implements Runnable {
 
       } finally {
         try {
-          fOut.flush();
-          fOut.close();
+          output.flush();
+          output.close();
+          done.countDown();
         } catch (IOException e) {
+          ODistributedServerLog
+              .warn(this, distributed.nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Error on closing sync piped stream ",
+                  e);
+
         }
       }
 
     } catch (Exception e) {
-      ODistributedServerLog.error(this, distributed.nodeName, null, ODistributedServerLog.DIRECTION.NONE,
-          "Error on transferring database '%s' to '%s'", e, databaseName, fileName);
+      ODistributedServerLog
+          .error(this, distributed.nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Error on transferring database '%s' ", e,
+              databaseName);
       throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     }
   }
 
-  public CountDownLatch getLatch() {
+  protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final OutputStream out)
+      throws IOException {
+
+    ODistributedServerLog.info(this, distributed.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        "- writing chunk #%d offset=%d size=%s", iChunkId, chunk.offset, OFileUtils.getSizeAsString(chunk.buffer.length));
+    try {
+      out.write(chunk.buffer);
+    } catch (IOException e) {
+      // IN CASE OF ZIP BACKUPS WE CAN IGNORE THE IOException ad the end of the file.
+      if (chunk.incremental) {
+        throw e;
+      }
+    }
+
+    return chunk.buffer.length;
+  }
+
+  public CountDownLatch getStarted() {
+    return started;
+  }
+
+  public PipedInputStream getInputStream() {
+    return inputStream;
+  }
+
+  public CountDownLatch getDone() {
     return done;
   }
 }

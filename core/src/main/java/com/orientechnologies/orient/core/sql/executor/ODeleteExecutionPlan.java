@@ -19,7 +19,20 @@ public class ODeleteExecutionPlan extends OUpdateExecutionPlan {
 
   @Override
   public boolean canBeCached() {
-    return false;
+    for (OExecutionStepInternal step : steps) {
+      if (!step.canBeCached()) {
+        return false;
+      }
+    }
+    return true;
   }
+
+  @Override
+  public OInternalExecutionPlan copy(OCommandContext ctx) {
+    ODeleteExecutionPlan copy = new ODeleteExecutionPlan(ctx);
+    super.copyOn(copy, ctx);
+    return copy;
+  }
+
 }
 

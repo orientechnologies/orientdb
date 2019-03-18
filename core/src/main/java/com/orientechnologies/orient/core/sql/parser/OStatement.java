@@ -58,21 +58,39 @@ public class OStatement extends SimpleNode {
     throw new UnsupportedOperationException("Unsupported command: " + getClass().getSimpleName());
   }
 
+
   public OResultSet execute(ODatabase db, Object[] args) {
-    return execute(db, args, null);
+    return execute(db, args, true);
   }
 
   public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext) {
-    throw new UnsupportedOperationException();
+    return execute(db, args, parentContext,true);
   }
 
   public OResultSet execute(ODatabase db, Map args) {
-    return execute(db, args, null);
+    return execute(db, args, true);
   }
 
   public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext) {
+    return execute(db, args, parentContext,true);
+  }
+
+  public OResultSet execute(ODatabase db, Object[] args, boolean usePlanCache) {
+    return execute(db, args, null, usePlanCache);
+  }
+
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
     throw new UnsupportedOperationException();
   }
+
+  public OResultSet execute(ODatabase db, Map args, boolean usePlanCache) {
+    return execute(db, args, null, usePlanCache);
+  }
+
+  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
+    throw new UnsupportedOperationException();
+  }
+
 
   /**
    * creates an execution plan for current statement, with profiling disabled

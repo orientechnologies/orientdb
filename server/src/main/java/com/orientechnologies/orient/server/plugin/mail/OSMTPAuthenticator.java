@@ -19,9 +19,9 @@
   */
 package com.orientechnologies.orient.server.plugin.mail;
 
-import javax.mail.PasswordAuthentication;
+import java.net.PasswordAuthentication;
 
-public class OSMTPAuthenticator extends javax.mail.Authenticator {
+public class OSMTPAuthenticator  {
   private String userName;
   private String password;
 
@@ -31,6 +31,6 @@ public class OSMTPAuthenticator extends javax.mail.Authenticator {
   }
 
   public PasswordAuthentication getPasswordAuthentication() {
-    return new PasswordAuthentication(userName, password);
+    return null;
   }
 }

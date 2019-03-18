@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.core.storage.cluster;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-@SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
 public class OClusterPageDebug {
   public long   pageIndex      = -1;
   public int    inPagePosition = -1;

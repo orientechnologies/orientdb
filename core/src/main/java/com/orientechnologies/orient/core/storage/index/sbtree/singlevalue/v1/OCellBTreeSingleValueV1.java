@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTree;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -79,7 +78,6 @@ import java.util.Map;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-@SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
 public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implements OCellBTree<K> {
   private static final int               MAX_KEY_SIZE       = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
   private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
@@ -589,7 +587,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     return removedValue;
   }
 
-  public OCellBTreeCursor<K, ORID> iterateEntriesMinor(final K key, final boolean inclusive, final boolean ascSortOrder) {
+  public OCellBTree.OCellBTreeCursor<K, ORID> iterateEntriesMinor(final K key, final boolean inclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -607,7 +605,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     }
   }
 
-  public OCellBTreeCursor<K, ORID> iterateEntriesMajor(final K key, final boolean inclusive, final boolean ascSortOrder) {
+  public OCellBTree.OCellBTreeCursor<K, ORID> iterateEntriesMajor(final K key, final boolean inclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -687,7 +685,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     }
   }
 
-  public OCellBTreeKeyCursor<K> keyCursor() {
+  public OCellBTree.OCellBTreeKeyCursor<K> keyCursor() {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -711,7 +709,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     }
   }
 
-  public OCellBTreeCursor<K, ORID> iterateEntriesBetween(final K keyFrom, final boolean fromInclusive, final K keyTo,
+  public OCellBTree.OCellBTreeCursor<K, ORID> iterateEntriesBetween(final K keyFrom, final boolean fromInclusive, final K keyTo,
       final boolean toInclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
@@ -747,14 +745,14 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     }
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesMinorDesc(K key, final boolean inclusive) {
+  private OCellBTree.OCellBTreeCursor<K, ORID> iterateEntriesMinorDesc(K key, final boolean inclusive) {
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorDesc(key, inclusive);
 
     return new OCellBTreeCursorBackward(null, key, false, inclusive);
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesMinorAsc(K key, final boolean inclusive) {
+  private OCellBTree.OCellBTreeCursor<K, ORID> iterateEntriesMinorAsc(K key, final boolean inclusive) {
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorAsc(key, inclusive);
 
@@ -785,14 +783,14 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     return key;
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesMajorAsc(K key, final boolean inclusive) {
+  private OCellBTree.OCellBTreeCursor<K, ORID> iterateEntriesMajorAsc(K key, final boolean inclusive) {
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMajorAsc(key, inclusive);
 
     return new OCellBTreeCursorForward(key, null, inclusive, false);
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesMajorDesc(K key, final boolean inclusive) {
+  private OCellBTree.OCellBTreeCursor<K, ORID> iterateEntriesMajorDesc(K key, final boolean inclusive) {
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
@@ -950,7 +948,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     }
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesBetweenAscOrder(K keyFrom, final boolean fromInclusive, K keyTo,
+  private OCellBTree.OCellBTreeCursor<K, ORID> iterateEntriesBetweenAscOrder(K keyFrom, final boolean fromInclusive, K keyTo,
       final boolean toInclusive) {
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
@@ -961,7 +959,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     return new OCellBTreeCursorForward(keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesBetweenDescOrder(K keyFrom, final boolean fromInclusive, K keyTo,
+  private OCellBTree.OCellBTreeCursor<K, ORID> iterateEntriesBetweenDescOrder(K keyFrom, final boolean fromInclusive, K keyTo,
       final boolean toInclusive) {
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
@@ -1433,7 +1431,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     }
   }
 
-  public final class OCellBTreeFullKeyCursor implements OCellBTreeKeyCursor<K> {
+  public final class OCellBTreeFullKeyCursor implements OCellBTree.OCellBTreeKeyCursor<K> {
     private long pageIndex;
     private int  itemIndex;
 
@@ -1529,7 +1527,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     }
   }
 
-  private final class OCellBTreeCursorForward implements OCellBTreeCursor<K, ORID> {
+  private final class OCellBTreeCursorForward implements OCellBTree.OCellBTreeCursor<K, ORID> {
     private       K       fromKey;
     private final K       toKey;
     private       boolean fromKeyInclusive;
@@ -1668,7 +1666,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     }
   }
 
-  private final class OCellBTreeCursorBackward implements OCellBTreeCursor<K, ORID> {
+  private final class OCellBTreeCursorBackward implements OCellBTree.OCellBTreeCursor<K, ORID> {
     private final K       fromKey;
     private       K       toKey;
     private final boolean fromKeyInclusive;

@@ -164,9 +164,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import javax.annotation.Nonnull;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -292,6 +290,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicLong txBegun        = new AtomicLong(0);
   private final AtomicLong txCommit       = new AtomicLong(0);
   private final AtomicLong txRollback     = new AtomicLong(0);
+
+  private final AtomicInteger sessionCount  = new AtomicInteger(0);
+  private final AtomicLong    lastCloseTime = new AtomicLong(System.currentTimeMillis());
 
   public OAbstractPaginatedStorage(final String name, final String filePath, final String mode, final int id) {
     super(name, filePath, mode);
@@ -1045,24 +1046,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * This method finds all the records which were updated starting from (but not including) current LSN and write result in provided
    * output stream. In output stream will be included all thw records which were updated/deleted/created since passed in LSN till
-   * the current moment.
-   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
-   * Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li> <li>Record's
-   * cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if record is
-   * not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary presentation of
-   * record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is not deleted -
-   * length of content is provided in above entity</li> </ol>
+   * the current moment. Deleted records are written in output stream first, then created/updated records. All records are sorted by
+   * record id. Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li>
+   * <li>Record's cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only
+   * if
+   * record is not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary
+   * presentation of record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is
+   * not deleted - length of content is provided in above entity</li> </ol>
    *
-   * @param lsn    LSN from which we should find changed records
-   * @param stream Stream which will contain found records
+   * @param lsn LSN from which we should find changed records
    *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
    *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
-  public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
-      final OCommandOutputListener outputListener) {
+  public OBackgroundDelta recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OCommandOutputListener outputListener) {
+    final OLogSequenceNumber endLsn;
+    // container of rids of changed records
+    final SortedSet<ORID> sortedRids = new TreeSet<>();
     try {
       if (!configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL)) {
         throw new IllegalStateException(
@@ -1079,7 +1081,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         // we iterate till the last record is contained in wal at the moment when we call this method
-        final OLogSequenceNumber endLsn = writeAheadLog.end();
+        endLsn = writeAheadLog.end();
 
         if (endLsn == null || lsn.compareTo(endLsn) > 0) {
           OLogManager.instance()
@@ -1089,11 +1091,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         if (lsn.equals(endLsn)) {
           // nothing has changed
-          return endLsn;
+          return new OBackgroundDelta(endLsn);
         }
-
-        // container of rids of changed records
-        final SortedSet<ORID> sortedRids = new TreeSet<>();
 
         List<OWriteableWALRecord> records = writeAheadLog.next(lsn, 1);
         if (records.isEmpty()) {
@@ -1160,83 +1159,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           writeAheadLog.removeCutTillLimit(freezeLsn);
         }
 
-        final int totalRecords = sortedRids.size();
-        OLogManager.instance().info(this, "Exporting records after LSN=%s. Found %d records", lsn, totalRecords);
-
-        // records may be deleted after we flag them as existing and as result rule of sorting of records
-        // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
-        final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
-        try {
-          try (final DataOutputStream dataOutputStream = new DataOutputStream(stream)) {
-
-            dataOutputStream.writeLong(sortedRids.size());
-
-            long exportedRecord = 1;
-            Iterator<ORID> ridIterator = sortedRids.iterator();
-            while (ridIterator.hasNext()) {
-              final ORID rid = ridIterator.next();
-              final OCluster cluster = clusters.get(rid.getClusterId());
-
-              // we do not need to load record only check it's presence
-              if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
-                dataOutputStream.writeInt(rid.getClusterId());
-                dataOutputStream.writeLong(rid.getClusterPosition());
-                dataOutputStream.write(1);
-
-                OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
-
-                if (outputListener != null) {
-                  outputListener.onMessage("exporting record " + exportedRecord + "/" + totalRecords);
-                }
-
-                // delete to avoid duplication
-                ridIterator.remove();
-                exportedRecord++;
-              }
-            }
-
-            ridIterator = sortedRids.iterator();
-            while (ridIterator.hasNext()) {
-              final ORID rid = ridIterator.next();
-              final OCluster cluster = clusters.get(rid.getClusterId());
-
-              dataOutputStream.writeInt(rid.getClusterId());
-              dataOutputStream.writeLong(rid.getClusterPosition());
-
-              if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
-                dataOutputStream.writeBoolean(true);
-                OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
-              } else {
-                final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition(), false);
-                assert rawBuffer != null;
-
-                dataOutputStream.writeBoolean(false);
-                dataOutputStream.writeInt(rawBuffer.version);
-                dataOutputStream.write(rawBuffer.recordType);
-                dataOutputStream.writeInt(rawBuffer.buffer.length);
-                dataOutputStream.write(rawBuffer.buffer);
-
-                OLogManager.instance().debug(this, "Exporting modified record rid=%s type=%d size=%d v=%d - buffer size=%d", rid,
-                    rawBuffer.recordType, rawBuffer.buffer.length, rawBuffer.version, dataOutputStream.size());
-              }
-
-              if (outputListener != null) {
-                outputListener.onMessage("exporting record " + exportedRecord + "/" + totalRecords);
-              }
-
-              exportedRecord++;
-            }
-          }
-        } finally {
-          atomicOperationsManager.releaseAtomicOperations(lockId);
-        }
-
-        return endLsn;
       } catch (final IOException e) {
         throw OException.wrapException(new OStorageException("Error of reading of records changed after LSN " + lsn), e);
       } finally {
         stateLock.releaseReadLock();
       }
+      OBackgroundDelta b = new OBackgroundDelta(this, outputListener, sortedRids, lsn, endLsn);
+
+      return b;
     } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (final Error e) {
@@ -1244,6 +1174,66 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
+  }
+
+  protected void serializeDeltaContent(OutputStream stream, OCommandOutputListener outputListener, SortedSet<ORID> sortedRids,
+      OLogSequenceNumber lsn) {
+    try {
+      stateLock.acquireReadLock();
+      final int totalRecords = sortedRids.size();
+      OLogManager.instance().info(this, "Exporting records after LSN=%s. Found %d records", lsn, totalRecords);
+      // records may be deleted after we flag them as existing and as result rule of sorting of records
+      // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
+      final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
+      try {
+        try (final DataOutputStream dataOutputStream = new DataOutputStream(stream)) {
+
+          dataOutputStream.writeLong(sortedRids.size());
+
+          long exportedRecord = 1;
+
+          Iterator<ORID> ridIterator = sortedRids.iterator();
+          while (ridIterator.hasNext()) {
+            final ORID rid = ridIterator.next();
+            final OCluster cluster = clusters.get(rid.getClusterId());
+
+            dataOutputStream.writeInt(rid.getClusterId());
+            dataOutputStream.writeLong(rid.getClusterPosition());
+
+            if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+              dataOutputStream.writeBoolean(true);
+              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
+            } else {
+              final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition(), false);
+              assert rawBuffer != null;
+
+              dataOutputStream.writeBoolean(false);
+              dataOutputStream.writeInt(rawBuffer.version);
+              dataOutputStream.writeByte(rawBuffer.recordType);
+              dataOutputStream.writeInt(rawBuffer.buffer.length);
+              dataOutputStream.write(rawBuffer.buffer);
+
+              OLogManager.instance()
+                  .debug(this, "Exporting modified record rid=%s type=%d size=%d v=%d - buffer size=%d", rid, rawBuffer.recordType,
+                      rawBuffer.buffer.length, rawBuffer.version, dataOutputStream.size());
+            }
+
+            if (outputListener != null) {
+              outputListener.onMessage("exporting record " + exportedRecord + "/" + totalRecords);
+            }
+
+            exportedRecord++;
+          }
+        }
+      } finally {
+        atomicOperationsManager.releaseAtomicOperations(lockId);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    } finally {
+      stateLock.releaseReadLock();
+    }
+
   }
 
   /**
@@ -4931,6 +4921,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void doClose(final boolean force, final boolean onDelete) {
     if (!force && !onDelete) {
+      decOnClose();
       return;
     }
 
@@ -5073,7 +5064,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     indexEngineNameMap.clear();
   }
 
-  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   private byte[] checkAndIncrementVersion(final OCluster iCluster, final ORecordId rid, final AtomicInteger version,
       final AtomicInteger iDatabaseVersion, final byte[] iRecordContent, final byte iRecordType) {
 
@@ -5338,9 +5328,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
   }
 
+  @Override
+  public boolean supportIncremental() {
+    return false;
+  }
+
+  @Override
+  public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
+    throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
+  }
+
   @SuppressWarnings("CanBeFinal")
   @Override
   public void restoreFromIncrementalBackup(final String filePath) {
+    throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
+  }
+
+  @Override
+  public void restoreFullIncrementalBackup(final InputStream stream) throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
   }
 
@@ -6246,7 +6251,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private static final class FuzzyCheckpointThreadFactory implements ThreadFactory {
     @Override
-    public final Thread newThread(@Nonnull final Runnable r) {
+    public final Thread newThread(final Runnable r) {
       final Thread thread = new Thread(storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
@@ -6305,5 +6310,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         walVacuumInProgress.set(false);
       }
     }
+  }
+
+  public void incOnOpen() {
+    sessionCount.incrementAndGet();
+  }
+
+  public void decOnClose() {
+    lastCloseTime.set(System.currentTimeMillis());
+    sessionCount.decrementAndGet();
+  }
+
+  public int getSessionCount() {
+    return sessionCount.get();
+  }
+
+  public long getLastCloseTime() {
+    return lastCloseTime.get();
   }
 }

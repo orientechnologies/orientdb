@@ -12,7 +12,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by tglman on 08/04/16.
@@ -242,6 +246,22 @@ public class OrientDBEmbeddedTests {
     ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
     assertFalse(db1.isClosed());
     db1.close();
+    orientDB.drop("test");
+    orientDB.close();
+  }
+
+  @Test
+  public void autoClose() throws InterruptedException {
+    OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
+    OrientDBEmbedded embedded = ((OrientDBEmbedded) OrientDBInternal.extract(orientDB));
+    embedded.initAutoClose(3000);
+    orientDB.create("test", ODatabaseType.PLOCAL);
+    ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
+    assertFalse(db1.isClosed());
+    db1.close();
+    assertNotNull(embedded.getStorage("test"));
+    Thread.sleep(4100);
+    assertNull(embedded.getStorage("test"));
     orientDB.drop("test");
     orientDB.close();
   }

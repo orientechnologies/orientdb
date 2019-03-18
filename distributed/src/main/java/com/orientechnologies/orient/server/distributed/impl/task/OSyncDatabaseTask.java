@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -93,8 +94,13 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
         final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
 
-        OBackgroundBackup backup = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
-        if (backup == null || !backup.getResultedBackupFile().exists()) {
+        OBackgroundBackup backup = null;
+        OSyncSource last = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+        if (last instanceof OBackgroundBackup) {
+          backup = (OBackgroundBackup) last;
+        }
+
+        if (backup == null ||!last.isValid()|| !backup.getResultedBackupFile().exists()) {
           // CREATE A BACKUP OF DATABASE FROM SCRATCH
           File backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
           String backupPath = backupFile.getAbsolutePath();
@@ -130,6 +136,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
           ((ODistributedStorage) database.getStorage()).setLastValidBackup(backup);
         } else {
           momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+          backup.makeStreamFromFile();
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
               "Reusing last backup of database '%s' in directory: %s...", databaseName,
               backup.getResultedBackupFile().getAbsolutePath());
@@ -142,15 +149,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
           OLogManager.instance().info(this, "Another backup running on database '%s' waiting it to finish", databaseName);
         }
 
-        File backupFile = new File(backup.getFinalBackupPath());
-        if (backup.getIncremental().get()) {
-          iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-          backupFile = backupFile.listFiles(pathname -> pathname.getName().endsWith(".ibu"))[0];
-          backup.getFinished().await();
-        }
-
-        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum.get(), false,
-            backup.getIncremental().get());
+        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backup, CHUNK_MAX_SIZE, momentum.get());
 
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
             "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),

@@ -24,8 +24,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OService;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import javax.annotation.CheckReturnValue;
-import javax.annotation.meta.When;
 import java.io.PrintStream;
 import java.util.Date;
 import java.util.List;
@@ -57,16 +55,12 @@ public interface OProfiler extends OService {
 
   List<String> getChronos();
 
-  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime);
 
-  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary);
 
-  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload);
 
-  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload, String user);
 
   String dumpChronos();

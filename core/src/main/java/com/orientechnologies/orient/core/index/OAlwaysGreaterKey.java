@@ -19,7 +19,6 @@
   */
 package com.orientechnologies.orient.core.index;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * It always greater than any passed in key.
@@ -27,7 +26,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 20.03.12
  */
-@SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public final class OAlwaysGreaterKey implements Comparable<Comparable<?>>{
 	public int compareTo(Comparable<?> o) {
 		return 1;

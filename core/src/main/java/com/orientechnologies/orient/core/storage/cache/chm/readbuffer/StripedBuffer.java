@@ -20,8 +20,6 @@
  */
 package com.orientechnologies.orient.core.storage.cache.chm.readbuffer;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -121,7 +119,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
   /**
    * Table of buffers. When non-null, size is a power of 2.
    */
-  private transient volatile @Nullable
+  private transient volatile
   Buffer<E>[] table;
 
   /**
@@ -161,7 +159,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
   protected abstract Buffer<E> create(E e);
 
   @Override
-  public int offer(@Nonnull final E e) {
+  public int offer(final E e) {
     final int mask;
     int result = 0;
     final Buffer<E> buffer;
@@ -176,7 +174,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
   }
 
   @Override
-  public void drainTo(@Nonnull final Consumer<E> consumer) {
+  public void drainTo(final Consumer<E> consumer) {
     final Buffer<E>[] buffers = table;
     if (buffers == null) {
       return;

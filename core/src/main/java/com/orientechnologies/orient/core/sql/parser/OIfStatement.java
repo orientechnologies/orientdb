@@ -5,7 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.executor.EmptyStep;
+import com.orientechnologies.orient.core.sql.executor.IfStep;
+import com.orientechnologies.orient.core.sql.executor.OExecutionStepInternal;
+import com.orientechnologies.orient.core.sql.executor.OIfExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +48,7 @@ public class OIfStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -55,7 +61,13 @@ public class OIfStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OIfExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+
+    OIfExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (OIfExecutionPlan)createExecutionPlanNoCache(ctx, false);
+    }
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
     if (last == null) {
@@ -74,14 +86,20 @@ public class OIfStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OIfExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+
+    OIfExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = (OIfExecutionPlan)createExecutionPlanNoCache(ctx, false);
+    }
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
     if (last == null) {

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.serialization.OStreamable;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
 
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
 public class ODistributedDatabaseChunk implements OStreamable {
@@ -44,6 +46,41 @@ public class ODistributedDatabaseChunk implements OStreamable {
   public  long                 walPosition;
 
   public ODistributedDatabaseChunk() {
+  }
+
+  public ODistributedDatabaseChunk(final OSyncSource backgroundBackup, final int iMaxSize, final ODistributedMomentum momentum) throws IOException {
+    filePath = "";
+    this.momentum = momentum;
+    this.gzipCompressed = false;
+    this.incremental = backgroundBackup.getIncremental();
+    this.walSegment = -1;
+    this.walPosition = -1;
+
+    try {
+      final InputStream in = backgroundBackup.getInputStream();
+      byte[] local = new byte[iMaxSize];
+      int read = 0;
+      read = in.read(local);
+      if (read == -1) {
+        buffer = new byte[] {};
+        last = true;
+      } else {
+        if(local.length == read){
+          buffer = local;
+        } else {
+          buffer = new byte[read];
+          System.arraycopy(local, 0, buffer, 0, read);
+        }
+
+        if (in.available() == 0 && backgroundBackup.getFinished().await(0, TimeUnit.NANOSECONDS)) {
+          // BACKUP COMPLETED
+          last = true;
+        }
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
   }
 
   public ODistributedDatabaseChunk(final File iFile, final long iOffset, final int iMaxSize, final ODistributedMomentum momentum,

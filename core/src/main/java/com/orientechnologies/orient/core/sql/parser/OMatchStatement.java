@@ -101,7 +101,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   public static class EdgeTraversal {
-    boolean out = true;
+    boolean     out = true;
     PatternEdge edge;
 
     public EdgeTraversal(PatternEdge edge, boolean out) {
@@ -112,8 +112,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public static class MatchExecutionPlan {
     public List<EdgeTraversal> sortedEdges;
-    public Map<String, Long> preFetchedAliases = new HashMap<String, Long>();
-    public String rootAlias;
+    public Map<String, Long>   preFetchedAliases = new HashMap<String, Long>();
+    public String              rootAlias;
   }
 
   public static final String                  KEYWORD_MATCH           = "MATCH";
@@ -124,11 +124,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   protected           List<OIdentifier>       returnAliases           = new ArrayList<>();
   protected           List<ONestedProjection> returnNestedProjections = new ArrayList<>();
   protected           boolean                 returnDistinct          = false;
-  protected OGroupBy groupBy;
-  protected OOrderBy orderBy;
-  protected OUnwind  unwind;
-  protected OSkip    skip;
-  protected OLimit   limit;
+  protected           OGroupBy                groupBy;
+  protected           OOrderBy                orderBy;
+  protected           OUnwind                 unwind;
+  protected           OSkip                   skip;
+  protected           OLimit                  limit;
 
   // post-parsing generated data
   protected Pattern pattern;
@@ -153,7 +153,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -166,20 +166,30 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OInternalExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = createExecutionPlanNoCache(ctx, false);
+    }
 
     return new OLocalResultSet(executionPlan);
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
+    OInternalExecutionPlan executionPlan;
+    if (usePlanCache) {
+      executionPlan = createExecutionPlan(ctx, false);
+    } else {
+      executionPlan = createExecutionPlanNoCache(ctx, false);
+    }
 
     return new OLocalResultSet(executionPlan);
   }

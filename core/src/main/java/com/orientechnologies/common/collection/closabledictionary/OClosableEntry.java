@@ -1,6 +1,5 @@
 package com.orientechnologies.common.collection.closabledictionary;
 
-import javax.annotation.concurrent.GuardedBy;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -42,28 +41,22 @@ public class OClosableEntry<K, V extends OClosableItem> {
   }
 
 
-  @GuardedBy("lruLock")
   private OClosableEntry<K, V> next;
 
-  @GuardedBy("lruLock")
   private OClosableEntry<K, V> prev;
 
-  @GuardedBy("lruLock")
   public OClosableEntry<K, V> getNext() {
     return next;
   }
 
-  @GuardedBy("lruLock")
   public void setNext(OClosableEntry<K, V> next) {
     this.next = next;
   }
 
-  @GuardedBy("lruLock")
   public OClosableEntry<K, V> getPrev() {
     return prev;
   }
 
-  @GuardedBy("lruLock")
   public void setPrev(OClosableEntry<K, V> prev) {
     this.prev = prev;
   }
@@ -73,7 +66,6 @@ public class OClosableEntry<K, V extends OClosableItem> {
   /**
    * Current state of state machine
    */
-  @GuardedBy("stateLock")
   private volatile long state     = STATUS_OPEN;
   private final    Lock stateLock = new ReentrantLock();
 
@@ -93,7 +85,6 @@ public class OClosableEntry<K, V extends OClosableItem> {
     stateLock.unlock();
   }
 
-  @GuardedBy("stateLock")
   void makeAcquiredFromClosed(OClosableItem item) {
     final long s = state;
     if (s != STATUS_CLOSED)
@@ -105,7 +96,6 @@ public class OClosableEntry<K, V extends OClosableItem> {
     state = acquiredState;
   }
 
-  @GuardedBy("stateLock")
   void makeAcquiredFromOpen() {
     if (state != STATUS_OPEN)
       throw new IllegalStateException();
@@ -132,7 +122,6 @@ public class OClosableEntry<K, V extends OClosableItem> {
     }
   }
 
-  @GuardedBy("stateLock")
   void incrementAcquired() {
     long acquireCount = state >>> ACQUIRED_OFFSET;
 

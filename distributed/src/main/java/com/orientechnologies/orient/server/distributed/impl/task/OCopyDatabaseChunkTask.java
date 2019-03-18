@@ -23,33 +23,33 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 
 /**
  * Ask for a database chunk.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- *
  */
 public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 15;
+  public static final  int  FACTORYID        = 15;
 
-  private String            fileName;
-  private int               chunkNum;
-  private long              offset;
-  private boolean           compressed;
+  private String  fileName;
+  private int     chunkNum;
+  private long    offset;
+  private boolean compressed;
 
   public OCopyDatabaseChunkTask() {
   }
@@ -64,19 +64,16 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   @Override
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    final File f = new File(fileName);
-    if (!f.exists())
-      throw new IllegalArgumentException("File name '" + fileName + "' not found");
 
-    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(f, offset, OSyncDatabaseTask.CHUNK_MAX_SIZE, null,
-         compressed, false);
+    OSyncSource b = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(b, OSyncDatabaseTask.CHUNK_MAX_SIZE, null);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
 
-    if (result.last)
-      // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-      iManager.setDatabaseStatus(iManager.getLocalNodeName(), database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+    if (result.last) {
+      iManager.getMessageService().getDatabase(database.getName()).setOnline();
+    }
 
     return result;
   }

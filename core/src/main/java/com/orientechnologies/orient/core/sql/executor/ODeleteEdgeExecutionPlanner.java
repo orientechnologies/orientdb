@@ -1,8 +1,20 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OBatch;
+import com.orientechnologies.orient.core.sql.parser.ODeleteEdgeStatement;
+import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import com.orientechnologies.orient.core.sql.parser.OFromItem;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OLimit;
+import com.orientechnologies.orient.core.sql.parser.ORid;
+import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
+import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +24,9 @@ import java.util.stream.Collectors;
  * Created by luigidellaquila on 08/08/16.
  */
 public class ODeleteEdgeExecutionPlanner {
+
+  private final ODeleteEdgeStatement statement;
+
 
   protected OIdentifier className;
   protected OIdentifier targetClusterName;
@@ -27,26 +42,40 @@ public class ODeleteEdgeExecutionPlanner {
 
   private OLimit limit;
 
-  public ODeleteEdgeExecutionPlanner(ODeleteEdgeStatement stm) {
-
-    this.className = stm.getClassName() == null ? null : stm.getClassName().copy();
-    this.targetClusterName = stm.getTargetClusterName() == null ? null : stm.getTargetClusterName().copy();
-    if (stm.getRid() != null) {
-      this.rids = new ArrayList<>();
-      rids.add(stm.getRid().copy());
-    } else {
-      this.rids = stm.getRids() == null ? null : stm.getRids().stream().map(x -> x.copy()).collect(Collectors.toList());
-    }
-
-    this.leftExpression = stm.getLeftExpression() == null ? null : stm.getLeftExpression().copy();
-    this.rightExpression = stm.getRightExpression() == null ? null : stm.getRightExpression().copy();
-
-    this.whereClause = stm.getWhereClause() == null ? null : stm.getWhereClause().copy();
-    this.batch = stm.getBatch() == null ? null : stm.getBatch().copy();
-    this.limit = stm.getLimit() == null ? null : stm.getLimit().copy();
+  public ODeleteEdgeExecutionPlanner(ODeleteEdgeStatement stm2) {
+    this.statement = stm2;
   }
 
-  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  private void init(){
+
+    this.className = this.statement.getClassName() == null ? null : this.statement.getClassName().copy();
+    this.targetClusterName = this.statement.getTargetClusterName() == null ? null : this.statement.getTargetClusterName().copy();
+    if (this.statement.getRid() != null) {
+      this.rids = new ArrayList<>();
+      rids.add(this.statement.getRid().copy());
+    } else {
+      this.rids = this.statement.getRids() == null ? null : this.statement.getRids().stream().map(x -> x.copy()).collect(Collectors.toList());
+    }
+
+    this.leftExpression = this.statement.getLeftExpression() == null ? null : this.statement.getLeftExpression().copy();
+    this.rightExpression = this.statement.getRightExpression() == null ? null : this.statement.getRightExpression().copy();
+
+    this.whereClause = this.statement.getWhereClause() == null ? null : this.statement.getWhereClause().copy();
+    this.batch = this.statement.getBatch() == null ? null : this.statement.getBatch().copy();
+    this.limit = this.statement.getLimit() == null ? null : this.statement.getLimit().copy();
+  }
+
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling, boolean useCache) {
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+    if (useCache && !enableProfiling && statement.executinPlanCanBeCached()) {
+      OExecutionPlan plan = OExecutionPlanCache.get(statement.getOriginalStatement(), ctx, db);
+      if (plan != null) {
+        return (OInternalExecutionPlan) plan;
+      }
+    }
+    long planningStart = System.currentTimeMillis();
+
+    init();
     ODeleteExecutionPlan result = new ODeleteExecutionPlan(ctx);
 
     if (leftExpression != null || rightExpression != null) {
@@ -72,12 +101,15 @@ public class ODeleteEdgeExecutionPlanner {
     }
 
     handleLimit(result, ctx, this.limit, enableProfiling);
-
     handleCastToEdge(result, ctx, enableProfiling);
-
     handleDelete(result, ctx, enableProfiling);
-
     handleReturn(result, ctx, enableProfiling);
+
+    if (useCache && !enableProfiling && this.statement.executinPlanCanBeCached() && result.canBeCached()
+        && OExecutionPlanCache.getLastInvalidation(db) < planningStart) {
+      OExecutionPlanCache.put(this.statement.getOriginalStatement(), result, (ODatabaseDocumentInternal) ctx.getDatabase());
+    }
+
     return result;
   }
 

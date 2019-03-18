@@ -33,7 +33,7 @@ public class OLetStatement extends OSimpleExecStatement {
       if (statement.originalStatement == null) {
         statement.setOriginalStatement(statement.toString());
       }
-      result = statement.execute(ctx.getDatabase(), params, ctx);
+      result = statement.execute(ctx.getDatabase(), params, ctx, false);
     }
     if (result instanceof OResultSet) {
       OInternalResultSet rs = new OInternalResultSet();

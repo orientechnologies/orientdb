@@ -61,6 +61,8 @@ public class OSharedContextRemote extends OSharedContext {
     schema.forceSnapshot(database);
     security.load();
     scheduler.load(database);
+    sequenceLibrary.load(database);
+    functionLibrary.load(database);
   }
 
 }
