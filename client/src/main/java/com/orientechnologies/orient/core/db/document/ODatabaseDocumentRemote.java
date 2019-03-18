@@ -62,11 +62,11 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
+import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -846,4 +846,35 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
+
+  public ODatabaseDocumentAbstract delete(final ORecord record) {
+    checkOpenness();
+    if (record == null)
+      throw new ODatabaseException("Cannot delete null document");
+    if (record instanceof OVertex) {
+      reload(record,"in_*:2 out_*:2");
+      OVertexDelegate.deleteLinks((OVertex) record);
+    } else if (record instanceof OEdge) {
+      reload(record,"in:1 out:1");
+      OEdgeDelegate.deleteLinks((OEdge) record);
+    }
+
+    // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
+    if (record instanceof ODocument && ((ODocument) record).getClassName() != null)
+      checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, ((ODocument) record).getClassName());
+
+    try {
+      currentTx.deleteRecord(record, OPERATION_MODE.SYNCHRONOUS);
+    } catch (OException e) {
+      throw e;
+    } catch (Exception e) {
+      if (record instanceof ODocument)
+        throw OException.wrapException(new ODatabaseException(
+            "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
+      else
+        throw OException.wrapException(new ODatabaseException("Error on deleting record " + record.getIdentity()), e);
+    }
+    return this;
+  }
+
 }

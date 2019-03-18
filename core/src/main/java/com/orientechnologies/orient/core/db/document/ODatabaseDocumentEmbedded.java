@@ -46,11 +46,7 @@ import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
@@ -75,12 +71,8 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.record.impl.ODirtyManager;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -880,6 +872,50 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       return id;
     }
     return null;
+  }
+
+  /**
+   * Deletes a document. Behavior depends by the current running transaction if any. If no transaction is running then the record is
+   * deleted immediately. If an Optimistic transaction is running then the record will be deleted at commit time. The current
+   * transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is running, then an
+   * exclusive lock is acquired against the record. Current transaction will continue to see the record as deleted, while others
+   * cannot access to it since it's locked.
+   * <p>
+   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a {@link
+   * OConcurrentModificationException} exception is thrown.
+   *
+   * @param record record to delete
+   *
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   *
+   * @see #setMVCC(boolean), {@link #isMVCC()}
+   */
+  public ODatabaseDocumentAbstract delete(final ORecord record) {
+    checkOpenness();
+    if (record == null)
+      throw new ODatabaseException("Cannot delete null document");
+    if (record instanceof OVertex) {
+      OVertexDelegate.deleteLinks((OVertex) record);
+    } else if (record instanceof OEdge) {
+      OEdgeDelegate.deleteLinks((OEdge) record);
+    }
+
+    // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
+    if (record instanceof ODocument && ((ODocument) record).getClassName() != null)
+      checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, ((ODocument) record).getClassName());
+
+    try {
+      currentTx.deleteRecord(record, OPERATION_MODE.SYNCHRONOUS);
+    } catch (OException e) {
+      throw e;
+    } catch (Exception e) {
+      if (record instanceof ODocument)
+        throw OException.wrapException(new ODatabaseException(
+            "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
+      else
+        throw OException.wrapException(new ODatabaseException("Error on deleting record " + record.getIdentity()), e);
+    }
+    return this;
   }
 
   @Override
