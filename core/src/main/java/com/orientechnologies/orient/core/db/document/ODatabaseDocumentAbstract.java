@@ -278,6 +278,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /**
    * Deletes the record without checking the version.
    */
+  @Deprecated
   public ODatabaseDocument delete(final ORID iRecord, final OPERATION_MODE iMode) {
     ORecord record = load(iRecord);
     if (record == null)
@@ -287,6 +288,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return this;
   }
 
+  @Deprecated
   public ODatabaseDocument delete(final ORecord iRecord, final OPERATION_MODE iMode) {
     checkIfActive();
     ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
