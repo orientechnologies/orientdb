@@ -1,10 +1,6 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -70,21 +66,19 @@ public class OCheckIndexToolTest {
   @Test
   public void testBugOnCollectionIndex() {
 
-    OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCheckIndexToolTestCollections");
+    db.create();
 
-    context.create("test", ODatabaseType.MEMORY);
+    try {
+      db.command(new OCommandSQL("create class testclass")).execute();
+      db.command(new OCommandSQL("create property testclass.name string")).execute();
+      db.command(new OCommandSQL("create property testclass.tags linklist")).execute();
+      db.command(new OCommandSQL("alter property testclass.tags default '[]'")).execute();
+      db.command(new OCommandSQL("create index testclass_tags_idx on testclass (tags) NOTUNIQUE_HASH_INDEX")).execute();
 
-    try (ODatabaseSession db = context.open("test", "admin", "admin")) {
-
-      db.command("create class testclass");
-      db.command("create property testclass.name string");
-      db.command("create property testclass.tags linklist");
-      db.command("alter property testclass.tags default '[]'");
-      db.command("create index testclass_tags_idx on testclass (tags) NOTUNIQUE_HASH_INDEX");
-
-      db.command("insert into testclass set name = 'a',tags = [#5:0] ");
-      db.command("insert into testclass set name = 'b'");
-      db.command("insert into testclass set name = 'c' ");
+      db.command(new OCommandSQL("insert into testclass set name = 'a',tags = [#5:0] ")).execute();
+      db.command(new OCommandSQL("insert into testclass set name = 'b'")).execute();
+      db.command(new OCommandSQL("insert into testclass set name = 'c' ")).execute();
 
       OCheckIndexTool tool = new OCheckIndexTool();
 
@@ -100,7 +94,8 @@ public class OCheckIndexToolTest {
       tool.run();
       Assert.assertEquals(0, tool.getTotalErrors());
 
+    } finally {
+      db.close();
     }
-    context.close();
   }
 }
