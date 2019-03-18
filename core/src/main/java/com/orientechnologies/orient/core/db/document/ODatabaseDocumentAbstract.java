@@ -272,37 +272,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return TYPE;
   }
 
-  /**
-   * Deletes the record without checking the version.
-   */
-  public ODatabaseDocument delete(final ORID iRecord, final OPERATION_MODE iMode) {
-    ORecord record = load(iRecord);
-    if (record == null)
-      return this;
-
-    delete(record, iMode);
-    return this;
-  }
-
-  public ODatabaseDocument delete(final ORecord iRecord, final OPERATION_MODE iMode) {
-    checkIfActive();
-    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
-    if (iRecord instanceof OElement && dirtyManager != null && dirtyManager.getReferences() != null && !dirtyManager.getReferences()
-        .isEmpty()) {
-      if (((OElement) iRecord).isEdge() || ((OElement) iRecord).isVertex() && !getTransaction().isActive()) {
-        begin();
-        try {
-          currentTx.deleteRecord(iRecord, iMode);
-          return this;
-        } finally {
-          commit();
-        }
-      }
-    }
-    currentTx.deleteRecord(iRecord, iMode);
-    return this;
-  }
-
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iClass) {
     return (ORecordIteratorCluster<REC>) browseCluster(iClusterName);
   }
