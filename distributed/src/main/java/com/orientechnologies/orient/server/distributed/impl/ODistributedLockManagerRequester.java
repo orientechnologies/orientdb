@@ -39,7 +39,7 @@ import java.util.Set;
 public class ODistributedLockManagerRequester implements ODistributedLockManager {
   private final    ODistributedServerManager manager;
   private volatile String                    server;
-  private Map<String, Long> acquiredResources = new HashMap<String, Long>();
+  private          Map<String, Long>         acquiredResources = new HashMap<String, Long>();
 
   private static final ThreadLocal<Map<String, OModifiableInteger>> acquired = ThreadLocal.withInitial(() -> {
     return new HashMap<>();
@@ -206,6 +206,8 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
             continue;
           }
 
+          //Remove acquired resource anyway, the next that need to acquire the lock need to find a server first in any case.
+          acquiredResources.remove(resource);
           throw (RuntimeException) result;
 
         } else if (result instanceof RuntimeException)

@@ -489,6 +489,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return name;
   }
 
+  @Override
+  public boolean isNodeAvailable(final String iNodeName) {
+    if (iNodeName == null)
+      return false;
+    Member member = activeNodes.get(iNodeName);
+    return member != null && hazelcastInstance.getCluster().getMembers().contains(member);
+  }
+
   protected void waitStartupIsCompleted() throws InterruptedException {
     long totalReceivedRequests = getMessageService().getReceivedRequests();
     long totalProcessedRequests = getMessageService().getProcessedRequests();
@@ -1435,13 +1443,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
         try {
-          installDatabase(true, databaseName, false,
-              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
+          if(!installDatabase(true, databaseName, false,
+              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean())){
+            setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
+          }
         } catch (Exception e) {
           ODistributedServerLog
               .error(this, getLocalNodeName(), null, DIRECTION.IN, "Error on installing database '%s' on local node (error=%s)",
                   databaseName, e.toString());
-          setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
         }
       }
     }
