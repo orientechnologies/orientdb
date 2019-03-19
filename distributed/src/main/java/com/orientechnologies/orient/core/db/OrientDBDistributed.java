@@ -134,7 +134,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }
-    storage.restoreFullIncrementalBackup(backupStream);
+    try {
+      storage.restoreFullIncrementalBackup(backupStream);
+    } catch (RuntimeException e) {
+      storage.delete();
+      throw e;
+    }
     //DROP AND CREATE THE SHARED CONTEXT SU HAS CORRECT INFORMATION.
     synchronized (this) {
       OSharedContext context = sharedContexts.remove(dbName);
@@ -143,6 +148,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     ODatabaseDocumentEmbedded instance = openNoAuthorization(dbName);
     instance.close();
     checkCoordinator(dbName);
+    ODatabaseRecordThreadLocal.instance().remove();
     return storage;
   }
 
