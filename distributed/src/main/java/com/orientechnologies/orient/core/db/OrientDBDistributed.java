@@ -66,7 +66,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }
-    storage.restoreFullIncrementalBackup(backupStream);
+    try {
+      storage.restoreFullIncrementalBackup(backupStream);
+    } catch (RuntimeException e) {
+      storage.delete();
+      throw e;
+    }
     ODatabaseRecordThreadLocal.instance().remove();
     return storage;
   }
