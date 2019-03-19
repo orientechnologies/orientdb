@@ -57,7 +57,13 @@ public class OParenthesisExpression extends OMathExpression {
       return expression.execute(iCurrentRecord, ctx);
     }
     if (statement != null) {
-      OInternalExecutionPlan execPlan = statement.createExecutionPlanNoCache(ctx, false);
+      OInternalExecutionPlan execPlan;
+      if (statement.originalStatement == null || statement.originalStatement.contains("?")) {
+        //cannot cache statements with positional params, especially when it's in a subquery/expression.
+        execPlan = statement.createExecutionPlanNoCache(ctx, false);
+      } else {
+        execPlan = statement.createExecutionPlan(ctx, false);
+      }
       if (execPlan instanceof OInsertExecutionPlan) {
         ((OInsertExecutionPlan) execPlan).executeInternal();
       }

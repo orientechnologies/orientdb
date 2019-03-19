@@ -61,7 +61,7 @@ public class OSyncReceiver implements Runnable {
           if (response == null) {
             output.close();
             done.countDown();
-            break;
+            return;
           } else {
             final Object result = response.getPayload();
             if (result instanceof Boolean)

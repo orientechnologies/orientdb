@@ -125,8 +125,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
 import static com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME;
 
 /**
@@ -1038,6 +1040,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                       current.activateOnCurrentThread();
                     }
                   }
+                } else {
+                  setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
                 }
 
               } catch (ODatabaseIsOldException e) {
@@ -1095,6 +1099,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (requestDatabaseFullSync(distrDatabase, backupDatabase, databaseName, retry > 0, cfg))
         // DEPLOYED
         return true;
+      try {
+        Thread.sleep(serverInstance.getContextConfiguration().getValueAsLong(DISTRIBUTED_MAX_STARTUP_DELAY));
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return false;
+      }
     }
     // RETRY COUNTER EXCEED
     return false;
@@ -1249,14 +1259,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
           final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
 
-          installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, server, (ODistributedDatabaseChunk) value, true,
-              uniqueClustersBackupDirectory, cfg);
+          try {
+            installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, server, (ODistributedDatabaseChunk) value, true,
+                uniqueClustersBackupDirectory, cfg);
+            ODistributedServerLog.info(this, nodeName, targetNode, DIRECTION.IN, "Installed delta of database '%s'", databaseName);
 
-          ODistributedServerLog.info(this, nodeName, targetNode, DIRECTION.IN, "Installed delta of database '%s'", databaseName);
-
-          // DATABASE INSTALLED CORRECTLY
-          databaseInstalledCorrectly = true;
-          break;
+            // DATABASE INSTALLED CORRECTLY
+            databaseInstalledCorrectly = true;
+            break;
+          } catch (OException e) {
+            OLogManager.instance().error(this, "Error installing database from network", e);
+            databaseInstalledCorrectly = false;
+            break;
+          }
 
         } else
           throw new IllegalArgumentException("Type " + value + " not supported");
@@ -1303,8 +1318,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected boolean requestDatabaseFullSync(final ODistributedDatabaseImpl distrDatabase, final boolean backupDatabase,
       final String databaseName, final boolean iAskToAllNodes, final OModifiableDistributedConfiguration cfg) {
     // GET ALL THE OTHER SERVERS
-    final Collection<String> nodes = cfg.getServers(null, nodeName);
-
+    Collection<String> nodes = cfg.getServers(null, nodeName);
     if (nodes.isEmpty()) {
       ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
           "Cannot request full deploy of database '%s' because there are no nodes available with such database", databaseName);
@@ -1341,6 +1355,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (selectedNodes.isEmpty())
       // NO NODE ONLINE, SEND THE MESSAGE TO EVERYONE
       selectedNodes.addAll(nodes);
+    Iterator<String> iter = selectedNodes.iterator();
+    while (iter.hasNext()) {
+      if (!isNodeAvailable(iter.next()))
+        iter.remove();
+    }
 
     ODistributedServerLog
         .info(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Requesting deploy of database '%s' on local server...",
@@ -1394,8 +1413,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           if (backupDatabase)
             backupCurrentDatabase(databaseName);
 
-          installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
-              uniqueClustersBackupDirectory, cfg);
+          try {
+            installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
+                uniqueClustersBackupDirectory, cfg);
+          } catch (OException e) {
+            OLogManager.instance().error(this, "Error installing database from network", e);
+            return false;
+          }
 
           OStorage storage = storages.get(databaseName);
           replaceStorageInSessions(storage);
