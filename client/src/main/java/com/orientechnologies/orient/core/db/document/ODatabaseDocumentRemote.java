@@ -852,7 +852,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
     if (record instanceof OVertex) {
-      reload(record,"in_*:2 out_*:2");
+      reload(record,"in*:2 out*:2");
       OVertexDelegate.deleteLinks((OVertex) record);
     } else if (record instanceof OEdge) {
       reload(record,"in:1 out:1");
