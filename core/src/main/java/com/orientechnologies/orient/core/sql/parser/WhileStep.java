@@ -49,7 +49,17 @@ public class WhileStep extends AbstractExecutionStep {
     subCtx1.setParent(ctx);
     OScriptExecutionPlan plan = new OScriptExecutionPlan(subCtx1);
     for (OStatement stm : statements) {
-      plan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled);
+      if (stm.originalStatement == null) {
+        stm.originalStatement = stm.toString();
+      }
+      OInternalExecutionPlan subPlan;
+      if (stm.originalStatement.contains("?")) {
+        //cannot cache execution plans with positional parameters inside scripts
+        subPlan = stm.createExecutionPlanNoCache(subCtx1, profilingEnabled);
+      } else {
+        subPlan = stm.createExecutionPlan(subCtx1, profilingEnabled);
+      }
+      plan.chain(subPlan, profilingEnabled);
     }
     return plan;
   }
