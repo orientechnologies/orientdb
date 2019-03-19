@@ -40,13 +40,16 @@ public class OrientDataSource implements DataSource {
     }
   }
 
-  private PrintWriter   logger;
-  private int           loginTimeout;
-  private String        dbUrl;
-  private String        username;
-  private String        password;
-  private Properties    info;
-  private OrientDB      orientDB;
+  private PrintWriter logger;
+  private int         loginTimeout;
+  private String      dbUrl;
+  private String      username;
+  private String      password;
+  private Properties  info;
+
+  private OrientDB orientDB;
+  String dbName;
+
   private ODatabasePool pool;
 
   public OrientDataSource() {
@@ -72,9 +75,14 @@ public class OrientDataSource implements DataSource {
 
   }
 
+  @Deprecated
   public OrientDataSource(OrientDB orientDB) {
-
     this.orientDB = orientDB;
+  }
+
+  public OrientDataSource(OrientDB orientDB, String dbName) {
+    this.orientDB = orientDB;
+    this.dbName = dbName;
   }
 
   @Override
@@ -120,8 +128,7 @@ public class OrientDataSource implements DataSource {
       OURLConnection connUrl = OURLHelper.parseNew(orientDbUrl);
       OrientDBConfig settings = OrientDBConfig.builder()
           .addConfig(OGlobalConfiguration.DB_POOL_MIN, Integer.valueOf(info.getProperty("db.pool.min", "1")))
-          .addConfig(OGlobalConfiguration.DB_POOL_MAX, Integer.valueOf(info.getProperty("db.pool.max", "10")))
-          .build();
+          .addConfig(OGlobalConfiguration.DB_POOL_MAX, Integer.valueOf(info.getProperty("db.pool.max", "10"))).build();
 
       orientDB = new OrientDB(connUrl.getType() + ":" + connUrl.getPath(), serverUsername, serverPassword, settings);
 
@@ -129,6 +136,8 @@ public class OrientDataSource implements DataSource {
         orientDB.createIfNotExists(connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
 
       pool = new ODatabasePool(orientDB, connUrl.getDbName(), username, password);
+    } else if (pool == null) {
+      pool = new ODatabasePool(orientDB, this.dbName, username, password);
     }
 
     return new OrientJdbcConnection(pool.acquire(), orientDB, info);
