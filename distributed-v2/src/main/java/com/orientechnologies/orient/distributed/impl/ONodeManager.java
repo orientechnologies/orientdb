@@ -36,6 +36,9 @@ public abstract class ONodeManager {
   protected long maxInactiveServerTimeMillis = 5000;
 
   OLeaderElectionStateMachine leaderStatus;
+  private TimerTask                   discoveryTimer;
+  private TimerTask                   disconnectTimer;
+  private TimerTask                   checkerTimer;
 
   public ONodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration, int term,
       OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener) {
@@ -99,10 +102,14 @@ public abstract class ONodeManager {
 
   public void stop() {
     running = false;
-    taskScheduler.cancel();
+    checkerTimer.cancel();
+    disconnectTimer.cancel();
+    discoveryTimer.cancel();
     try {
-      messageThread.interrupt();
-      messageThread.join();
+      do {
+        messageThread.interrupt();
+        messageThread.join(1000);
+      } while (messageThread.isAlive());
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -121,7 +128,7 @@ public abstract class ONodeManager {
    */
   protected void initReceiveMessages() throws IOException {
     messageThread = new Thread(() -> {
-      while (Thread.interrupted()) {
+      while (!Thread.interrupted()) {
         receiveMessages();
       }
     });
@@ -163,7 +170,7 @@ public abstract class ONodeManager {
    * init the procedure that sends pings to other servers, ie. that notifies that you are alive
    */
   protected void initDiscoveryPing() {
-    taskScheduler.scheduleOnce(new TimerTask() {
+    discoveryTimer = new TimerTask() {
       @Override
       public void run() {
         try {
@@ -175,7 +182,8 @@ public abstract class ONodeManager {
           e.printStackTrace();
         }
       }
-    }, discoveryPingIntervalMillis);
+    };
+    taskScheduler.scheduleOnce(discoveryTimer, discoveryPingIntervalMillis);
   }
 
   protected void sendPing() throws Exception {
@@ -291,7 +299,7 @@ public abstract class ONodeManager {
    * inits the procedure that checks if a server is no longer available, ie. if he did not ping for a long time
    */
   protected void initCheckDisconnect() {
-    taskScheduler.scheduleOnce(new TimerTask() {
+    disconnectTimer = new TimerTask() {
       public void run() {
         try {
           checkIfKnownServersAreAlive();
@@ -302,7 +310,8 @@ public abstract class ONodeManager {
           e.printStackTrace();
         }
       }
-    }, discoveryPingIntervalMillis);
+    };
+    taskScheduler.scheduleOnce(disconnectTimer, discoveryPingIntervalMillis);
   }
 
   private synchronized void checkIfKnownServersAreAlive() {
@@ -329,7 +338,7 @@ public abstract class ONodeManager {
    * init the procedure that sends pings to other servers, ie. that notifies that you are alive
    */
   private void initCheckLeader() {
-    taskScheduler.scheduleOnce(new TimerTask() {
+    checkerTimer = new TimerTask() {
       @Override
       public void run() {
         try {
@@ -341,7 +350,8 @@ public abstract class ONodeManager {
           e.printStackTrace();
         }
       }
-    }, checkLeaderIntervalMillis);
+    };
+    taskScheduler.scheduleOnce(checkerTimer, checkLeaderIntervalMillis);
   }
 
   private void checkLeader() {

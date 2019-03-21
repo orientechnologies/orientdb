@@ -8,7 +8,4 @@ public interface OSchedulerInternal {
 
   void scheduleOnce(TimerTask task, long delay);
 
-  default void cancel() {
-  }
-
 }

@@ -38,8 +38,8 @@ public class OUDPMulticastNodeManager extends ONodeManager {
   }
 
   public void stop() {
-    super.stop();
     socket.close();
+    super.stop();
   }
 
   protected void initNetwork() throws IOException {
@@ -95,7 +95,6 @@ public class OUDPMulticastNodeManager extends ONodeManager {
     } catch (SocketException ex) {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      return ;
     } catch (Exception e) {
       e.printStackTrace();
     }
