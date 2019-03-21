@@ -23,27 +23,27 @@ public class OStructuralConfigurationTest {
 
   @Test
   public void testSimpleInit() {
-    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context);
+    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
     assertNotNull(configuration.getCurrentNodeIdentity());
   }
 
   @Test
   public void testFirstInitAndReopen() {
-    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context);
+    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
     ONodeIdentity generatedId = configuration.getCurrentNodeIdentity();
 
-    OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context);
+    OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
     assertEquals(generatedId, configuration1.getCurrentNodeIdentity());
   }
 
   @Test
   public void testChangeSaveLoad() {
-    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context);
+    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
     ONodeIdentity generatedId = configuration.getCurrentNodeIdentity();
-    configuration.getSharedConfiguration().addNode(new OStructuralNodeConfiguration(ONodeIdentity.generate()));
+    configuration.getSharedConfiguration().addNode(new OStructuralNodeConfiguration(ONodeIdentity.generate("node2")));
     configuration.save();
 
-    OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context);
+    OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
     assertEquals(generatedId, configuration1.getCurrentNodeIdentity());
     assertEquals(1, configuration1.getSharedConfiguration().listNodes().size());
   }

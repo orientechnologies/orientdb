@@ -17,12 +17,12 @@ public class OStructuralConfiguration {
   private              ONodeIdentity                  currentNodeIdentity;
   private              OStructuralSharedConfiguration sharedConfiguration;
 
-  public OStructuralConfiguration(OSystemDatabase systemDatabase, OrientDBInternal context) {
+  public OStructuralConfiguration(OSystemDatabase systemDatabase, OrientDBInternal context, String nodeName) {
     this.systemDatabase = systemDatabase;
-    load();
+    load(nodeName);
   }
 
-  private synchronized void load() {
+  private synchronized void load(String nodeName) {
     systemDatabase.executeInDBScope((session) -> {
       try {
         if (!session.existsCluster(CLUSTER_NAME)) {
@@ -34,7 +34,7 @@ public class OStructuralConfiguration {
 
           this.discDeserialize(new DataInputStream(new ByteArrayInputStream(record.toStream())));
         } else {
-          this.init();
+          this.init(nodeName);
 
           ByteArrayOutputStream buffer = new ByteArrayOutputStream();
           this.discSerialize(new DataOutputStream(buffer));
@@ -52,8 +52,8 @@ public class OStructuralConfiguration {
     this.sharedConfiguration.serialize(output);
   }
 
-  private void init() {
-    this.currentNodeIdentity = ONodeIdentity.generate();
+  private void init(String nodeName) {
+    this.currentNodeIdentity = ONodeIdentity.generate(nodeName);
     this.sharedConfiguration = new OStructuralSharedConfiguration();
     this.sharedConfiguration.init();
   }

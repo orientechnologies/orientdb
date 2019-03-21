@@ -93,6 +93,9 @@ public class OUDPMulticastNodeManager extends ONodeManager {
       String fromAddr = packet.getAddress().getHostAddress();
       processMessage(message, fromAddr);
     } catch (SocketException ex) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return ;
     } catch (Exception e) {
       e.printStackTrace();
     }

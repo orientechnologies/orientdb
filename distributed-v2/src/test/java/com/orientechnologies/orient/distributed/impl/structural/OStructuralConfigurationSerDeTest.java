@@ -26,9 +26,9 @@ public class OStructuralConfigurationSerDeTest {
 
   @Test
   public void testDiscSerializationDeserialization() throws IOException {
-    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context);
+    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
 
-    OStructuralNodeConfiguration nodeConfiguration = new OStructuralNodeConfiguration(ONodeIdentity.generate());
+    OStructuralNodeConfiguration nodeConfiguration = new OStructuralNodeConfiguration(ONodeIdentity.generate("node2"));
     OStructuralNodeDatabase database = new OStructuralNodeDatabase(UUID.randomUUID().toString(), "one",
         OStructuralNodeDatabase.NodeMode.ACTIVE);
 
@@ -38,7 +38,7 @@ public class OStructuralConfigurationSerDeTest {
     nodeConfiguration.addDatabase(database1);
     configuration.getSharedConfiguration().addNode(nodeConfiguration);
 
-    OStructuralNodeConfiguration nodeConfiguration1 = new OStructuralNodeConfiguration(ONodeIdentity.generate());
+    OStructuralNodeConfiguration nodeConfiguration1 = new OStructuralNodeConfiguration(ONodeIdentity.generate("node3"));
     OStructuralNodeDatabase database2 = new OStructuralNodeDatabase(UUID.randomUUID().toString(), "one",
         OStructuralNodeDatabase.NodeMode.ACTIVE);
     nodeConfiguration1.addDatabase(database2);
@@ -47,7 +47,7 @@ public class OStructuralConfigurationSerDeTest {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     configuration.discSerialize(new DataOutputStream(outputStream));
 
-    OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context);
+    OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
     configuration1.discDeserialize(new DataInputStream(new ByteArrayInputStream(outputStream.toByteArray())));
 
     assertEquals(configuration1.getCurrentNodeIdentity(), configuration.getCurrentNodeIdentity());

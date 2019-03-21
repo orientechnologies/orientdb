@@ -19,8 +19,8 @@ public class ONodeIdentity {
 
   }
 
-  public static ONodeIdentity generate() {
-    return new ONodeIdentity("", UUID.randomUUID().toString());
+  public static ONodeIdentity generate(String nodeName) {
+    return new ONodeIdentity(UUID.randomUUID().toString(), nodeName);
   }
 
   public String getId() {

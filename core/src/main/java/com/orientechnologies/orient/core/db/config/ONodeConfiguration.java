@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.db.config;
 import java.util.UUID;
 
 public class ONodeConfiguration {
+  //Node name is redundant because it can come also from user configuration appart been stored in the node identity
+  private String                 nodeName;
   private ONodeIdentity          nodeIdentity;
   private String                 groupName;
   private String                 groupPassword;
@@ -11,12 +13,11 @@ public class ONodeConfiguration {
   private OMulticastConfguration multicast = new OMulticastConfguration();
 
   protected ONodeConfiguration() {
-    nodeIdentity = new ONodeIdentity(UUID.randomUUID().toString(), "");
   }
 
   protected ONodeConfiguration(String nodeName, String groupName, String groupPassword, int quorum, Integer tcpPort,
       OMulticastConfguration multicast) {
-    this.nodeIdentity = new ONodeIdentity(UUID.randomUUID().toString(), nodeName);
+    this.nodeName = nodeName;
     this.groupName = groupName;
     this.groupPassword = groupPassword;
     this.quorum = quorum;
@@ -34,10 +35,6 @@ public class ONodeConfiguration {
 
   public ONodeIdentity getNodeIdentity() {
     return nodeIdentity;
-  }
-
-  protected void setNodeIdentity(ONodeIdentity nodeIdentity) {
-    this.nodeIdentity = nodeIdentity;
   }
 
   public String getGroupName() {
@@ -74,5 +71,13 @@ public class ONodeConfiguration {
 
   public static ONodeConfigurationBuilder builder() {
     return new ONodeConfigurationBuilder();
+  }
+
+  public String getNodeName() {
+    return nodeName;
+  }
+
+  public void setNodeIdentity(ONodeIdentity nodeIdentity) {
+    this.nodeIdentity = nodeIdentity;
   }
 }

@@ -99,6 +99,13 @@ public abstract class ONodeManager {
 
   public void stop() {
     running = false;
+    taskScheduler.cancel();
+    try {
+      messageThread.interrupt();
+      messageThread.join();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
 
@@ -114,7 +121,7 @@ public abstract class ONodeManager {
    */
   protected void initReceiveMessages() throws IOException {
     messageThread = new Thread(() -> {
-      while (running) {
+      while (Thread.interrupted()) {
         receiveMessages();
       }
     });

@@ -90,11 +90,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void onAfterActivate() {
-    structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this);
+    structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this,
+        this.nodeConfiguration.getNodeName());
+    this.nodeConfiguration.setNodeIdentity(this.structuralConfiguration.getCurrentNodeIdentity());
     checkPort();
-    //TODO: Read the server UUID from the OSystem database;
-    String nodeId = UUID.randomUUID().toString();
-    this.nodeConfiguration.getNodeIdentity().setId(nodeId);
     structuralDistributedContext = new OStructuralDistributedContext(this);
     networkManager = new ODistributedNetworkManager(this, getNodeConfig(), generateInternalConfiguration());
     networkManager.startup();
