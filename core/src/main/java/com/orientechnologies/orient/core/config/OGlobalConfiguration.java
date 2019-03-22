@@ -1061,7 +1061,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   AUTO_CLOSE_AFTER_DELAY("storage.autoCloseAfterDelay",
       "Enable auto close of storage after a specified delay if no session are active", Boolean.class, false),
 
-  AUTO_CLOSE_DELAY("storage.autoCloseAfterDelay", "Storage auto close delay time in minutes", Integer.class, 20);
+  AUTO_CLOSE_DELAY("storage.autoCloseDelay", "Storage auto close delay time in minutes", Integer.class, 20);
 
   static {
     readConfiguration();
