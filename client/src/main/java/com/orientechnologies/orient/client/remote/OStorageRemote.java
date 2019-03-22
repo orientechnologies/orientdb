@@ -238,9 +238,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final Set<OStorageRemoteSession>     sessions                = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
-  private final    Map<Integer, OLiveQueryClientListener> liveQueryListener = new ConcurrentHashMap<>();
+  private final    Map<Integer, OLiveQueryClientListener> liveQueryListener   = new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread               pushThread;
   private final    OrientDBRemote                         context;
+  private volatile int                                    nextServerToConnect = 0;
 
   public OStorageRemote(final String iURL, OrientDBRemote context, final String iMode, ORemoteConnectionManager connectionManager)
       throws IOException {
@@ -1875,11 +1876,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       break;
 
     case ROUND_ROBIN_CONNECT:
-      if (!iIsConnectOperation)
-        url = session != null ? session.getServerUrl() : null;
-
-      if (url == null)
-        url = getServerURFromList(iIsConnectOperation, session);
+      if (iIsConnectOperation || session == null) {
+        url = getNextConnectUrl(session);
+      } else {
+        url = session.getServerUrl();
+      }
       OLogManager.instance()
           .debug(this, "ROUND_ROBIN_CONNECT: Next remote operation will be executed on server: %s (isConnectOperation=%s)", url,
               iIsConnectOperation);
@@ -1897,6 +1898,27 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
 
     return url;
+  }
+
+  public String getNextConnectUrl(OStorageRemoteSession session) {
+    synchronized (serverURLs) {
+      if (serverURLs.isEmpty()) {
+        parseServerURLs();
+        if (serverURLs.isEmpty())
+          throw new OStorageException("Cannot create a connection to remote server because url list is empty");
+      }
+
+      final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + getName();
+      if (session != null)
+        session.serverURLIndex = this.nextServerToConnect;
+
+      this.nextServerToConnect++;
+      if (this.nextServerToConnect >= serverURLs.size())
+        // RESET INDEX
+        this.nextServerToConnect = 0;
+
+      return serverURL;
+    }
   }
 
   protected String getCurrentServerURL() {
