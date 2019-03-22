@@ -75,6 +75,26 @@
                 <exclude.test.1>**/SBTreeTestBigValues.java</exclude.test.1>
                 <exclude.test.2>**/WOWCacheTest.java</exclude.test.2>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/OCellBTreeMultiValueV2TestIT.java</exclude>
+                                <exclude>**/OCellBTreeSingleValueTestIT.java</exclude>
+                                <exclude>**/SBTreeTestIT.java</exclude>
+                                <exclude>**/SBTreeWALTestIT.java</exclude>
+                                <exclude>**/SBTreeTestEncryptionTestIT.java</exclude>
+                                <exclude>**/OLocalHashTableTestIT.java</exclude>
+                                <exclude>**/LocalHashTableIterationTestIT.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <profile>
@@ -90,7 +110,70 @@
                 <exclude.test.2>empty.java</exclude.test.2>
             </properties>
 
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/OCellBTreeMultiValueV2TestIT.java</exclude>
+                                <exclude>**/OCellBTreeSingleValueTestIT.java</exclude>
+                                <exclude>**/SBTreeTestIT.java</exclude>
+                                <exclude>**/SBTreeWALTestIT.java</exclude>
+                                <exclude>**/SBTreeTestEncryptionTestIT.java</exclude>
+                                <exclude>**/OLocalHashTableTestIT.java</exclude>
+                                <exclude>**/LocalHashTableIterationTestIT.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
+
+        <profile>
+            <id>storage-tests</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>storage</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <includes>
+                                <include>**/OCellBTreeMultiValueV2TestIT.java</include>
+                                <include>**/OCellBTreeSingleValueTestIT.java</include>
+                                <include>**/SBTreeTestIT.java</include>
+                                <include>**/SBTreeWALTestIT.java</include>
+                                <include>**/SBTreeTestEncryptionTestIT.java</include>
+                                <include>**/OLocalHashTableTestIT.java</include>
+                                <include>**/LocalHashTableIterationTestIT.java</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+                <exclude.test.2>empty.java</exclude.test.2>
+            </properties>
+        </profile>
+
         <profile>
             <id>release</id>
             <activation>
@@ -103,7 +186,6 @@
                 <exclude.test.1>empty.java</exclude.test.1>
                 <exclude.test.2>empty.java</exclude.test.2>
             </properties>
-
         </profile>
         <profile>
             <id>localDeploy</id>
