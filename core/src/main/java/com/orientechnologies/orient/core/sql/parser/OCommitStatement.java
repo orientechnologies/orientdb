@@ -44,6 +44,10 @@ public class OCommitStatement extends OSimpleExecStatement {
     return result;
   }
 
+  public OInteger getRetry() {
+    return retry;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;
