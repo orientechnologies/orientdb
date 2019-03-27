@@ -36,6 +36,25 @@ public class OSqlScriptExecutor implements OScriptExecutor {
     }
     scriptContext.setInputParameters(params);
 
+    return executeInternal(statements, scriptContext);
+  }
+
+  @Override
+  public OResultSet execute(ODatabaseDocumentInternal database, String script, Map params) {
+    if (!script.trim().endsWith(";")) {
+      script += ";";
+    }
+    List<OStatement> statements = OSQLEngine.parseScript(script, database);
+
+    OCommandContext scriptContext = new OBasicCommandContext();
+    ((OBasicCommandContext) scriptContext).setDatabase(database);
+
+    scriptContext.setInputParameters(params);
+
+    return executeInternal(statements, scriptContext);
+  }
+
+  private OResultSet executeInternal(List<OStatement> statements, OCommandContext scriptContext) {
     OScriptExecutionPlan plan = new OScriptExecutionPlan(scriptContext);
 
     List<OStatement> lastRetryBlock = new ArrayList<>();
@@ -84,26 +103,5 @@ public class OSqlScriptExecutor implements OScriptExecutor {
       }
     }
     return new OLocalResultSet(plan);
-  }
-
-  @Override
-  public OResultSet execute(ODatabaseDocumentInternal database, String script, Map params) {
-    if (!script.trim().endsWith(";")) {
-      script += ";";
-    }
-    List<OStatement> statements = OSQLEngine.parseScript(script, database);
-    OResultSet rs = null;
-    OCommandContext scriptContext = new OBasicCommandContext();
-    scriptContext.setInputParameters(params);
-    for (OStatement stm : statements) {
-      if (rs != null) {
-        rs.close();
-      }
-      rs = stm.execute(database, params, scriptContext, false);
-    }
-    if (rs == null) {
-      rs = new OInternalResultSet();
-    }
-    return rs;
   }
 }
