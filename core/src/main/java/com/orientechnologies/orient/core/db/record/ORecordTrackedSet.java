@@ -43,8 +43,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 
   public ORecordTrackedSet(final ORecord iSourceRecord) {
     this.sourceRecord = iSourceRecord;
-    if (iSourceRecord != null)
-      iSourceRecord.setDirty();
   }
 
   @Override
