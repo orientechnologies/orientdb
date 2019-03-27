@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private int                   differences           = 0;
   private boolean               compareIndexMetadata  = false;
 
+  private Set<String> excludeIndexes = new HashSet<>();
+
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final String userName, final String userPassword,
       final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
@@ -80,11 +83,21 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     excludeClusters.add("orids");
     excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+
+    excludeIndexes.add(ODatabaseImport.EXPORT_IMPORT_MAP_NAME);
   }
 
   @Override
   public void run() {
     compare();
+  }
+
+  public void addExcludeIndexes(String index) {
+    excludeIndexes.add(index);
+  }
+
+  public void addExcludeClusters(String cluster) {
+    excludeClusters.add(cluster);
   }
 
   public boolean compare() {
@@ -348,22 +361,16 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
     });
 
-    while (makeDbCall(databaseOne, new ODbRelatedCall<Boolean>() {
-      public Boolean call(ODatabaseDocumentInternal database) {
-        return iteratorOne.hasNext();
-      }
-    })) {
-      final OIndex indexOne = makeDbCall(databaseOne, new ODbRelatedCall<OIndex<?>>() {
-        public OIndex<?> call(ODatabaseDocumentInternal database) {
-          return iteratorOne.next();
-        }
-      });
+    while (makeDbCall(databaseOne, database -> iteratorOne.hasNext())) {
+      final OIndex indexOne = makeDbCall(databaseOne, (ODbRelatedCall<OIndex<?>>) database -> iteratorOne.next());
 
-      final OIndex<?> indexTwo = makeDbCall(databaseTwo, new ODbRelatedCall<OIndex<?>>() {
-        public OIndex<?> call(ODatabaseDocumentInternal database) {
-          return indexManagerTwo.getIndex(indexOne.getName());
-        }
-      });
+      final String indexName = makeDbCall(databaseOne, database -> indexOne.getName());
+      if (excludeIndexes.contains(indexName)) {
+        continue;
+      }
+
+      final OIndex<?> indexTwo = makeDbCall(databaseTwo,
+          (ODbRelatedCall<OIndex<?>>) database -> indexManagerTwo.getIndex(indexOne.getName()));
 
       if (indexTwo == null) {
         ok = false;
@@ -411,17 +418,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         continue;
       }
 
-      final long indexOneSize = makeDbCall(databaseOne, new ODbRelatedCall<Long>() {
-        public Long call(ODatabaseDocumentInternal database) {
-          return indexOne.getSize();
-        }
-      });
+      final long indexOneSize = makeDbCall(databaseOne, database -> indexOne.getSize());
 
-      final long indexTwoSize = makeDbCall(databaseTwo, new ODbRelatedCall<Long>() {
-        public Long call(ODatabaseDocumentInternal database) {
-          return indexTwo.getSize();
-        }
-      });
+      final long indexTwoSize = makeDbCall(databaseTwo, database -> indexTwo.getSize());
 
       if (indexOneSize != indexTwoSize) {
         ok = false;
