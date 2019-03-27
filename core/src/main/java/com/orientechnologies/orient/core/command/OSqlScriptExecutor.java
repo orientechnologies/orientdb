@@ -4,14 +4,10 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.executor.OScriptExecutionPlan;
-import com.orientechnologies.orient.core.sql.parser.OLetStatement;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.parser.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,12 +38,47 @@ public class OSqlScriptExecutor implements OScriptExecutor {
 
     OScriptExecutionPlan plan = new OScriptExecutionPlan(scriptContext);
 
+    List<OStatement> lastRetryBlock = new ArrayList<>();
+    int nestedTxLevel = 0;
+
     for (OStatement stm : statements) {
       if (stm.getOriginalStatement() == null) {
         stm.setOriginalStatement(stm.toString());
       }
-      OInternalExecutionPlan sub = stm.createExecutionPlan(scriptContext);
-      plan.chain(sub, false);
+      if (stm instanceof OBeginStatement) {
+        nestedTxLevel++;
+      }
+
+      if (nestedTxLevel <= 0) {
+        OInternalExecutionPlan sub = stm.createExecutionPlan(scriptContext);
+        plan.chain(sub, false);
+      } else {
+        lastRetryBlock.add(stm);
+      }
+
+      if (stm instanceof OCommitStatement && nestedTxLevel > 0) {
+        nestedTxLevel--;
+        if (nestedTxLevel == 0) {
+          if (((OCommitStatement) stm).getRetry() != null) {
+            int nRetries = ((OCommitStatement) stm).getRetry().getValue().intValue();
+            if (nRetries <= 0) {
+              throw new OCommandExecutionException("Invalid retry number: " + nRetries);
+            }
+
+            RetryStep step = new RetryStep(lastRetryBlock, nRetries, scriptContext, false);
+            ORetryExecutionPlan retryPlan = new ORetryExecutionPlan(scriptContext);
+            retryPlan.chain(step);
+            plan.chain(retryPlan, false);
+            lastRetryBlock = new ArrayList<>();
+          } else {
+            for (OStatement statement : lastRetryBlock) {
+              OInternalExecutionPlan sub = statement.createExecutionPlan(scriptContext);
+              plan.chain(sub, false);
+            }
+          }
+        }
+      }
+
       if (stm instanceof OLetStatement) {
         scriptContext.declareScriptVariable(((OLetStatement) stm).getName().getStringValue());
       }
