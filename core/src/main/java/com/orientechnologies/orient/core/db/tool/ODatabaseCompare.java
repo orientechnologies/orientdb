@@ -312,39 +312,22 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     boolean ok = true;
 
-    final OIndexManager indexManagerOne = makeDbCall(databaseOne, new ODbRelatedCall<OIndexManager>() {
-      public OIndexManager call(ODatabaseDocumentInternal database) {
-        return database.getMetadata().getIndexManager();
-      }
-    });
+    final OIndexManager indexManagerOne = makeDbCall(databaseOne, database -> database.getMetadata().getIndexManager());
 
-    final OIndexManager indexManagerTwo = makeDbCall(databaseTwo, new ODbRelatedCall<OIndexManager>() {
-      public OIndexManager call(ODatabaseDocumentInternal database) {
-        return database.getMetadata().getIndexManager();
-      }
-    });
+    final OIndexManager indexManagerTwo = makeDbCall(databaseTwo, database -> database.getMetadata().getIndexManager());
 
     final Collection<? extends OIndex<?>> indexesOne = makeDbCall(databaseOne,
-        new ODbRelatedCall<Collection<? extends OIndex<?>>>() {
-          public Collection<? extends OIndex<?>> call(ODatabaseDocumentInternal database) {
-            return indexManagerOne.getIndexes();
-          }
-        });
+        (ODbRelatedCall<Collection<? extends OIndex<?>>>) database -> indexManagerOne.getIndexes());
 
-    int indexesSizeOne = makeDbCall(databaseTwo, new ODbRelatedCall<Integer>() {
-      public Integer call(ODatabaseDocumentInternal database) {
-        return indexesOne.size();
+    int indexesSizeOne = makeDbCall(databaseTwo, database -> indexesOne.size());
+
+    int indexesSizeTwo = makeDbCall(databaseTwo, database -> indexManagerTwo.getIndexes().size());
+
+    if (exportImportHashTable != null) {
+      if (makeDbCall(databaseTwo, database -> indexManagerTwo.getIndex(ODatabaseImport.EXPORT_IMPORT_MAP_NAME) == null)) {
+        indexesSizeTwo--;
       }
-    });
-
-    int indexesSizeTwo = makeDbCall(databaseTwo, new ODbRelatedCall<Integer>() {
-      public Integer call(ODatabaseDocumentInternal database) {
-        return indexManagerTwo.getIndexes().size();
-      }
-    });
-
-    if (exportImportHashTable != null)
-      indexesSizeTwo--;
+    }
 
     if (indexesSizeOne != indexesSizeTwo) {
       ok = false;
@@ -355,11 +338,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       ++differences;
     }
 
-    final Iterator<? extends OIndex<?>> iteratorOne = makeDbCall(databaseOne, new ODbRelatedCall<Iterator<? extends OIndex<?>>>() {
-      public Iterator<? extends OIndex<?>> call(ODatabaseDocumentInternal database) {
-        return indexesOne.iterator();
-      }
-    });
+    final Iterator<? extends OIndex<?>> iteratorOne = makeDbCall(databaseOne,
+        (ODbRelatedCall<Iterator<? extends OIndex<?>>>) database -> indexesOne.iterator());
 
     while (makeDbCall(databaseOne, database -> iteratorOne.hasNext())) {
       final OIndex indexOne = makeDbCall(databaseOne, (ODbRelatedCall<OIndex<?>>) database -> iteratorOne.next());
