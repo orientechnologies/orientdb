@@ -19,61 +19,9 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
-import com.orientechnologies.orient.core.sql.parser.AggregateProjectionSplit;
-import com.orientechnologies.orient.core.sql.parser.OAndBlock;
-import com.orientechnologies.orient.core.sql.parser.OBaseExpression;
-import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
-import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
-import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
-import com.orientechnologies.orient.core.sql.parser.OCluster;
-import com.orientechnologies.orient.core.sql.parser.OContainsAnyCondition;
-import com.orientechnologies.orient.core.sql.parser.OContainsKeyOperator;
-import com.orientechnologies.orient.core.sql.parser.OContainsValueCondition;
-import com.orientechnologies.orient.core.sql.parser.OContainsValueOperator;
-import com.orientechnologies.orient.core.sql.parser.OEqualsCompareOperator;
-import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
-import com.orientechnologies.orient.core.sql.parser.OExpression;
-import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.orient.core.sql.parser.OFromItem;
-import com.orientechnologies.orient.core.sql.parser.OFunctionCall;
-import com.orientechnologies.orient.core.sql.parser.OGeOperator;
-import com.orientechnologies.orient.core.sql.parser.OGroupBy;
-import com.orientechnologies.orient.core.sql.parser.OGtOperator;
-import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OInCondition;
-import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OInputParameter;
-import com.orientechnologies.orient.core.sql.parser.OInteger;
-import com.orientechnologies.orient.core.sql.parser.OLeOperator;
-import com.orientechnologies.orient.core.sql.parser.OLetClause;
-import com.orientechnologies.orient.core.sql.parser.OLetItem;
-import com.orientechnologies.orient.core.sql.parser.OLtOperator;
-import com.orientechnologies.orient.core.sql.parser.OMetadataIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OOrBlock;
-import com.orientechnologies.orient.core.sql.parser.OOrderBy;
-import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
-import com.orientechnologies.orient.core.sql.parser.OProjection;
-import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
-import com.orientechnologies.orient.core.sql.parser.ORecordAttribute;
-import com.orientechnologies.orient.core.sql.parser.ORid;
-import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-import com.orientechnologies.orient.core.sql.parser.SubQueryCollector;
+import com.orientechnologies.orient.core.sql.parser.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -1842,7 +1790,7 @@ public class OSelectExecutionPlanner {
             break;//ASC/DESC interleaved, cannot be used with index.
           }
         }
-        if (!indexField.equals(orderItem.getAlias())) {
+        if (!(indexField.equals(orderItem.getAlias()) || isInOriginalProjection(indexField, orderItem.getAlias()))) {
           indexFound = false;
           break;
         }
@@ -1862,6 +1810,20 @@ public class OSelectExecutionPlanner {
       }
     }
     return false;
+  }
+
+  private boolean isInOriginalProjection(String indexField, String alias) {
+    if (info.projection == null) {
+      return false;
+    }
+    if (info.projection.getItems() == null) {
+      return false;
+
+    }
+    return info.projection.getItems().stream()
+        .filter(proj -> proj.getExpression().toString().equals(indexField))
+        .filter(proj -> proj.getAlias()!=null)
+        .anyMatch(proj -> proj.getAlias().getStringValue().equals(alias));
   }
 
   private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier targetClass, Set<String> filterClusters,
