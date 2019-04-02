@@ -48,7 +48,7 @@ public class OArraySelector extends SimpleNode {
     }
   }
 
-  public Integer getValue(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
+  public Object getValue(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
     Object result = null;
     if (inputParam != null) {
       result = inputParam.getValue(ctx.getInputParameters());
@@ -64,7 +64,7 @@ public class OArraySelector extends SimpleNode {
     if (result instanceof Number) {
       return ((Number) result).intValue();
     }
-    return null;
+    return result;
   }
 
   public Object getValue(OResult iCurrentRecord, Object iResult, OCommandContext ctx) {

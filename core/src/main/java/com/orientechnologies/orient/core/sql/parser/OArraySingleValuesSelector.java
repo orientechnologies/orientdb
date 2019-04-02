@@ -10,12 +10,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OArraySingleValuesSelector extends SimpleNode {
@@ -51,11 +46,31 @@ public class OArraySingleValuesSelector extends SimpleNode {
   public Object execute(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
     List<Object> result = new ArrayList<Object>();
     for (OArraySelector item : items) {
-      Integer index = item.getValue(iCurrentRecord, iResult, ctx);
-      if (this.items.size() == 1) {
-        return OMultiValue.getValue(iResult, index);
+      Object index = item.getValue(iCurrentRecord, iResult, ctx);
+      if (index == null) {
+        return null;
       }
-      result.add(OMultiValue.getValue(iResult, index));
+
+      if (index instanceof Integer) {
+        result.add(OMultiValue.getValue(iResult, ((Integer) index).intValue()));
+      } else {
+        if (iResult instanceof Map) {
+          result.add(((Map) iResult).get(index));
+        } else if (iResult instanceof OElement && index instanceof String) {
+          result.add(((OElement) iResult).getProperty((String) index));
+        } else if (OMultiValue.isMultiValue(iResult)) {
+          Iterator<Object> iter = OMultiValue.getMultiValueIterator(iResult);
+          while (iter.hasNext()) {
+            result.add(calculateValue(iter.next(), index));
+          }
+        } else {
+          result.add(null);
+        }
+      }
+      if (this.items.size() == 1 && result.size() == 1) {
+//      if (this.items.size() == 1) {
+        return result.get(0);
+      }
     }
     return result;
   }
