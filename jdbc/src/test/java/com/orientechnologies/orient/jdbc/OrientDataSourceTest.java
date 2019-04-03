@@ -17,6 +17,9 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -130,4 +133,20 @@ public class OrientDataSourceTest extends OrientJdbcDbPerClassTemplateTest {
     futures.forEach(CompletableFuture::join);
   }
 
+
+
+  @Test
+  public void shouldConnectWithOrientDBInstance() throws SQLException {
+    final String serverUser = "admin";
+    final String serverPassword = "admin";
+    final String dbName = "test";
+
+    OrientDB orientDB = new OrientDB("embedded:.", serverUser, serverPassword, OrientDBConfig.defaultConfig());
+    orientDB.create(dbName, ODatabaseType.MEMORY);
+
+    OrientDataSource ods = new OrientDataSource(orientDB, dbName);
+    Connection connection = ods.getConnection(serverUser, serverPassword);
+    Statement statement = connection.createStatement();
+    statement.executeQuery("SELECT FROM V");
+  }
 }

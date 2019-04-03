@@ -140,7 +140,7 @@ public class OrientDataSource implements DataSource {
       pool = new ODatabasePool(orientDB, this.dbName, username, password);
     }
 
-    return new OrientJdbcConnection(pool.acquire(), orientDB, info);
+    return new OrientJdbcConnection(pool.acquire(), orientDB, info == null ? new Properties() : info);
   }
 
   public void setDbUrl(String dbUrl) {
