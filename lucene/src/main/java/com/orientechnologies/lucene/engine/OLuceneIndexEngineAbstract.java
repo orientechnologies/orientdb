@@ -157,13 +157,13 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   private void scheduleCommitTask() {
     commitTask = Orient.instance().scheduleTask(() -> {
       if (shouldClose()) {
-        openCloseLock.lock();
 
-        //while on lock the index was opened
-        if (!shouldClose())
-          return;
         try {
+          openCloseLock.lock();
 
+          //while on lock the index was opened
+          if (!shouldClose())
+            return;
           close();
         } finally {
           openCloseLock.unlock();
@@ -215,12 +215,13 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   private void open() throws IOException {
 
-    openCloseLock.lock();
-
-    if (!closed.get())
-      return;
-
     try {
+
+      openCloseLock.lock();
+
+      if (!closed.get())
+        return;
+
       OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
 
       directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
