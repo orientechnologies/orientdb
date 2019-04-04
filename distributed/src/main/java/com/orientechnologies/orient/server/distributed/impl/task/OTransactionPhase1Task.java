@@ -1,17 +1,13 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -28,7 +24,8 @@ import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDis
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -36,6 +33,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -98,7 +97,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       ODatabaseDocumentInternal database) throws Exception {
     convert(database);
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops, false);
-    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
+    //No need to increase the lock timeout here with the retry because this retries are not deadlock retries
+    int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount,
+        timeout);
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
@@ -116,22 +118,24 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, ODatabaseDocumentDistributed database,
-      OTransactionInternal tx, boolean local, int retryCount) {
+      OTransactionInternal tx, boolean local, int retryCount, long timeout) {
     OTransactionResultPayload payload;
     try {
-      if (database.beginDistributedTx(requestId, tx, local, retryCount)) {
+      if (database.beginDistributedTx(requestId, tx, local, retryCount, timeout)) {
         payload = new OTxSuccess();
       } else {
         return null;
       }
     } catch (OConcurrentModificationException ex) {
       payload = new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
-    } catch (ODistributedLockException | OLockException ex) {
-      payload = new OTxLockTimeout();
+    } catch (ODistributedRecordLockedException ex) {
+      payload = new OTxRecordLockTimeout(ex.getNode(), ex.getRid());
+    } catch (ODistributedKeyLockedException ex) {
+      payload = new OTxKeyLockTimeout(ex.getNode(), ex.getKey());
     } catch (ORecordDuplicatedException ex) {
       payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), ex.getKey());
     } catch (OConcurrentCreateException ex) {
-      payload = new OTxConcurrentCreation(ex.getActualRid(),ex.getExpectedRid());
+      payload = new OTxConcurrentCreation(ex.getActualRid(), ex.getExpectedRid());
     } catch (RuntimeException ex) {
       payload = new OTxException(ex);
     }

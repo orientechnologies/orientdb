@@ -278,7 +278,11 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   }
   
   @Override
-  public boolean isUseDeltas(){
+  public boolean isUseDeltas() {
     return useDeltas;
+  }
+
+  public void setDatabase(ODatabaseDocumentInternal database) {
+    this.database = database;
   }
 }

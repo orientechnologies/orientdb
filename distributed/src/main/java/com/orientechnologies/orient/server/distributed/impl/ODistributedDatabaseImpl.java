@@ -119,6 +119,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final String                     localNodeName;
   private final OSimpleLockManager<ORID>   recordLockManager;
   private final OSimpleLockManager<Object> indexKeyLockManager;
+  private       AtomicLong                 operationsRunnig = new AtomicLong(0);
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -126,6 +127,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public OSimpleLockManager<Object> getIndexKeyLockManager() {
     return indexKeyLockManager;
+  }
+
+  public void startOperation() {
+    waitDistributedIsReady();
+    operationsRunnig.incrementAndGet();
+  }
+
+  public void endOperation() {
+    operationsRunnig.decrementAndGet();
   }
 
   public class ODistributedLock {
@@ -245,7 +255,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
    * Distributed requests against the available workers by using one queue per worker. This guarantee the sequence of the operations
    * against the same record cluster.
    */
-  public void processRequest(final ODistributedRequest request, final boolean waitForAcceptingRequests) {
+  public synchronized void processRequest(final ODistributedRequest request, final boolean waitForAcceptingRequests) {
     if (!running) {
       throw new ODistributedException("Server is going down or is removing the database:'" + getDatabaseName() + "' discarding");
     }
@@ -369,16 +379,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void waitIsReady(ORemoteTask task) {
     if (task.isNodeOnlineRequired())
-      if (!parsing.get()) {
-        // WAIT FOR PARSING REQUESTS
-        while (!parsing.get()) {
-          try {
-            Thread.sleep(300);
-          } catch (InterruptedException e) {
-            break;
-          }
+      waitDistributedIsReady();
+  }
+
+  public void waitDistributedIsReady() {
+    if (!parsing.get()) {
+      // WAIT FOR PARSING REQUESTS
+      while (!parsing.get()) {
+        try {
+          Thread.sleep(300);
+        } catch (InterruptedException e) {
+          break;
         }
       }
+    }
   }
 
   protected Set<Integer> getInvolvedQueuesByPartitionKeys(final int[] partitionKeys) {
@@ -663,12 +677,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     } else {
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-            "Cannot lock record %s in database '%s' owned by %s (reqId=%s thread=%d)", rid, databaseName, currentLock.reqId,
-            requestId, Thread.currentThread().getId());
+            "Cannot lock record %s in database '%s' owned by %s (reqId=%s thread=%d)", rid, databaseName, null, requestId,
+            Thread.currentThread().getId());
     }
 
     if (currentLock != null)
-      throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, currentLock.reqId, timeout);
+      throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, null, timeout);
 
     return newLock;
   }
@@ -1266,7 +1280,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void suspend() {
-    if (this.parsing.get()) {
+    boolean parsing = this.parsing.get();
+    if (parsing) {
       // RESET THE DATABASE
       if (lockThread != null)
         lockThread.reset();
@@ -1276,11 +1291,22 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         if (w != null)
           w.reset();
       }
+    }
+
+    this.parsing.set(false);
+    if (parsing) {
+      while (operationsRunnig.get() != 0) {
+        try {
+          Thread.sleep(300);
+        } catch (InterruptedException e) {
+          break;
+        }
+      }
+
       recordLockManager.reset();
       indexKeyLockManager.reset();
     }
 
-    this.parsing.set(false);
   }
 
   public void resume() {

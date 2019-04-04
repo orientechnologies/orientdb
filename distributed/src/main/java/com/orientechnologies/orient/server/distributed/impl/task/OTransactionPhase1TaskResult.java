@@ -50,7 +50,17 @@ public class OTransactionPhase1TaskResult implements OStreamable {
     out.writeInt(resultPayload.getResponseType());
     switch (resultPayload.getResponseType()) {
     case OTxSuccess.ID:
-    case OTxLockTimeout.ID:
+      break;
+    case OTxRecordLockTimeout.ID:
+      OTxRecordLockTimeout rl = (OTxRecordLockTimeout) resultPayload;
+      out.writeUTF(rl.getNode());
+      out.writeInt(rl.getLockedId().getClusterId());
+      out.writeLong(rl.getLockedId().getClusterPosition());
+      break;
+    case OTxKeyLockTimeout.ID:
+      OTxKeyLockTimeout tl = (OTxKeyLockTimeout) resultPayload;
+      out.writeUTF(tl.getNode());
+      out.writeUTF(tl.getKey());
       break;
     case OTxConcurrentModification.ID:
       OTxConcurrentModification pl = (OTxConcurrentModification) resultPayload;
@@ -101,8 +111,15 @@ public class OTransactionPhase1TaskResult implements OStreamable {
     case OTxSuccess.ID:
       this.resultPayload = new OTxSuccess();
       break;
-    case OTxLockTimeout.ID:
-      this.resultPayload = new OTxLockTimeout();
+    case OTxKeyLockTimeout.ID:
+      String keyNode = in.readUTF();
+      String key = in.readUTF();
+      this.resultPayload = new OTxKeyLockTimeout(keyNode, key);
+      break;
+    case OTxRecordLockTimeout.ID:
+      String node = in.readUTF();
+      ORecordId lockRid = new ORecordId(in.readInt(), in.readLong());
+      this.resultPayload = new OTxRecordLockTimeout(node, lockRid);
       break;
     case OTxConcurrentModification.ID:
       ORecordId rid = new ORecordId(in.readInt(), in.readLong());

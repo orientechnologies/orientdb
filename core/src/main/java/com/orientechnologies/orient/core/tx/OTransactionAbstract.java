@@ -36,9 +36,9 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected ODatabaseDocumentInternal       database;
-  protected TXSTATUS                        status         = TXSTATUS.INVALID;
-  protected ISOLATION_LEVEL                 isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
+  protected ODatabaseDocumentInternal           database;
+  protected TXSTATUS                            status         = TXSTATUS.INVALID;
+  protected ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
   protected Map<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
 
   public static final class LockedRecordMetadata {
