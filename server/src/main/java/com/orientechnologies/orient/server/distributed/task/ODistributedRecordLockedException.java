@@ -32,6 +32,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 public class ODistributedRecordLockedException extends ONeedRetryException {
   protected ORID                  rid;
   protected ODistributedRequestId lockHolder;
+  protected String node;
 
   public ODistributedRecordLockedException(final ODistributedRecordLockedException exception) {
     super(exception);
@@ -41,12 +42,17 @@ public class ODistributedRecordLockedException extends ONeedRetryException {
       final ODistributedRequestId iLockingRequestId, long timeout) {
     super("Timeout (" + timeout + "ms) on acquiring lock on record " + iRid + " on server '" + localNodeName
         + "'. It is locked by request " + iLockingRequestId);
-    rid = iRid;
-    lockHolder = iLockingRequestId;
+    this.rid = iRid;
+    this.lockHolder = iLockingRequestId;
+    this.node = localNodeName;
   }
 
   public ORID getRid() {
     return rid;
+  }
+
+  public String getNode() {
+    return node;
   }
 
   public ODistributedRequestId getLockHolder() {

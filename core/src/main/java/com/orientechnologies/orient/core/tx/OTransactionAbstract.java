@@ -41,10 +41,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseDocumentInternal           database;
-  protected       TXSTATUS                            status         = TXSTATUS.INVALID;
-  protected       ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
-  protected       HashMap<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
+  protected ODatabaseDocumentInternal           database;
+  protected TXSTATUS                            status         = TXSTATUS.INVALID;
+  protected ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
+  protected HashMap<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
 
   private static final class LockedRecordMetadata {
     private final OStorage.LOCKING_STRATEGY strategy;

@@ -21,6 +21,11 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
 
   @Override
   public void lock(T key) {
+    lock(key, timeout);
+  }
+
+  @Override
+  public void lock(T key, long timeout) {
 
     lock.lock();
     try {
@@ -73,5 +78,10 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
     } finally {
       lock.unlock();
     }
+  }
+
+  @Override
+  public long getTimeout() {
+    return timeout;
   }
 }
