@@ -153,9 +153,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     int result = 0;
 
     try {
+      final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
+
       boolean tty = false;
       try {
-        if (setTerminalToCBreak())
+        if (console.isInteractiveMode(args) && setTerminalToCBreak())
           tty = true;
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> restoreTerminal()));
@@ -165,7 +167,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       new OSignalHandler().installDefaultSignals(signal -> restoreTerminal());
 
-      final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
+
 
       if (tty)
         console.setReader(new TTYConsoleReader(console.historyEnabled()));
