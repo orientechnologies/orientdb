@@ -86,6 +86,7 @@ public class ONewDistributedTransactionManager {
       try {
         int v = new Random().nextInt(delay);
         retriedCommit(database, iTx, count, timeout + (delay + v) * count);
+        return;
       } catch (OConcurrentCreateException | ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
         // Nothing just retry
         if (count > nretry) {
@@ -116,17 +117,16 @@ public class ONewDistributedTransactionManager {
     final Set<String> involvedClusters = getInvolvedClusters(iTx.getRecordOperations());
     Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
     OTransactionResultPayload localResult;
-    int nretry = database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
-    int delay = database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
 
     //This retry happen only the first time i try to lock on local server
-    int count = 0;
-    do {
-      int v = new Random().nextInt(delay);
-      localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1, timeout + (delay + v) * count);
-      count++;
-    } while ((localResult.getResponseType() == OTxRecordLockTimeout.ID || localResult.getResponseType() == OTxKeyLockTimeout.ID)
-        && count < nretry && retryCount == 0);
+    localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1, timeout);
+    if (localResult.getResponseType() == OTxRecordLockTimeout.ID) {
+      throw new ODistributedRecordLockedException(dManager.getLocalNodeName(), ((OTxRecordLockTimeout) localResult).getLockedId(),
+          null, timeout);
+    }
+    if (localResult.getResponseType() == OTxKeyLockTimeout.ID) {
+      throw new ODistributedKeyLockedException(dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout);
+    }
 
     final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
     try {
@@ -166,11 +166,9 @@ public class ONewDistributedTransactionManager {
       }
       case OTxRecordLockTimeout.ID:
         throw new ODistributedRecordLockedException(dManager.getLocalNodeName(), ((OTxRecordLockTimeout) localResult).getLockedId(),
-            null, database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+            null, timeout);
       case OTxKeyLockTimeout.ID:
-        throw new ODistributedKeyLockedException(dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(),
-            database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
-
+        throw new ODistributedKeyLockedException(dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout); 
       }
       return;
     }
@@ -190,7 +188,7 @@ public class ONewDistributedTransactionManager {
               return responseManager;
             }));
 
-    handleResponse(requestId, responseManager, involvedClusters, sentNodes, database, iTx);
+    handleResponse(requestId, responseManager, involvedClusters, sentNodes, database, iTx, timeout);
 
     // OK, DISTRIBUTED COMMIT SUCCEED
     return;
@@ -202,7 +200,8 @@ public class ONewDistributedTransactionManager {
   }
 
   private void handleResponse(ODistributedRequestId requestId, ONewDistributedResponseManager responseManager,
-      Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database, OTransactionInternal iTx) {
+      Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database, OTransactionInternal iTx,
+      long timeout) {
 
     int[] involvedClustersIds = new int[involvedClusters.size()];
     int i = 0;
@@ -248,14 +247,12 @@ public class ONewDistributedTransactionManager {
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
         localKo(requestId, database);
         throw new ODistributedRecordLockedException(((OTxRecordLockTimeout) resultPayload).getNode(),
-            ((OTxRecordLockTimeout) resultPayload).getLockedId(), null,
-            database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+            ((OTxRecordLockTimeout) resultPayload).getLockedId(), null, timeout);
       case OTxKeyLockTimeout.ID:
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
         localKo(requestId, database);
         throw new ODistributedKeyLockedException(((OTxKeyLockTimeout) resultPayload).getNode(),
-            ((OTxKeyLockTimeout) resultPayload).getKey(),
-            database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+            ((OTxKeyLockTimeout) resultPayload).getKey(), timeout);
       }
 
       for (OTransactionResultPayload result : responseManager.getAllResponses()) {
@@ -274,13 +271,12 @@ public class ONewDistributedTransactionManager {
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
           localKo(requestId, database);
           throw new ODistributedRecordLockedException(((OTxRecordLockTimeout) result).getNode(),
-              ((OTxRecordLockTimeout) result).getLockedId(), null,
-              database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+              ((OTxRecordLockTimeout) result).getLockedId(), null, timeout);
         case OTxKeyLockTimeout.ID:
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
           localKo(requestId, database);
           throw new ODistributedKeyLockedException(((OTxKeyLockTimeout) result).getNode(), ((OTxKeyLockTimeout) result).getKey(),
-              database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+              timeout);
 
         case OTxConcurrentCreation.ID:
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
