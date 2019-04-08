@@ -47,7 +47,7 @@ public class OStorageRemoteAsyncOperationTest {
   public void before() throws IOException {
     MockitoAnnotations.initMocks(this);
     Mockito.when(session.getServerSession(Mockito.anyString())).thenReturn(nodeSession);
-    storage = new OStorageRemote("mock",null, "mock", null) {
+    storage = new OStorageRemote("mock",null, "mock", null, null) {
       @Override
       public <T> T baseNetworkOperation(OStorageRemoteOperation<T> operation, String errorMessage, int retry) {
         try {

@@ -77,15 +77,16 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public synchronized ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     checkOpen();
+    OrientDBConfig resolvedConfig = solveConfig(config);
     try {
       OStorageRemote storage;
       storage = storages.get(name);
       if (storage == null) {
-        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager);
+        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager, resolvedConfig);
         storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
-      db.internalOpen(user, password, solveConfig(config), getOrCreateSharedContext(storage));
+      db.internalOpen(user, password, resolvedConfig, getOrCreateSharedContext(storage));
       return db;
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
@@ -116,7 +117,7 @@ public class OrientDBRemote implements OrientDBInternal {
     OStorageRemote storage = storages.get(name);
     if (storage == null) {
       try {
-        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager);
+        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager, null);
         storages.put(name, storage);
       } catch (Exception e) {
         throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);

@@ -128,10 +128,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OrientDBRemote;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.db.document.OLiveQueryMonitorRemote;
@@ -243,20 +240,24 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final    OrientDBRemote                         context;
   private volatile int                                    nextServerToConnect = 0;
 
-  public OStorageRemote(final String iURL, OrientDBRemote context, final String iMode, ORemoteConnectionManager connectionManager)
-      throws IOException {
-    this(iURL, context, iMode, connectionManager, null);
+  public OStorageRemote(final String iURL, OrientDBRemote context, final String iMode, ORemoteConnectionManager connectionManager,
+      OrientDBConfig config) throws IOException {
+    this(iURL, context, iMode, connectionManager, null, config);
   }
 
   public OStorageRemote(final String iURL, OrientDBRemote context, final String iMode, ORemoteConnectionManager connectionManager,
-      final STATUS status) throws IOException {
+      final STATUS status, OrientDBConfig config) throws IOException {
     super(iURL, iURL, iMode); // NO TIMEOUT @SINCE 1.5
     if (status != null)
       this.status = status;
 
     configuration = null;
 
-    clientConfiguration = new OContextConfiguration();
+    if (config != null) {
+      clientConfiguration = config.getConfigurations();
+    } else {
+      clientConfiguration = new OContextConfiguration();
+    }
     connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
     connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
     parseServerURLs();
@@ -1396,6 +1397,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @SuppressWarnings("unchecked")
   public void updateDistributedNodes(List<String> hosts) {
+    if (!clientConfiguration.getValueAsBoolean(CLIENT_CONNECTION_FETCH_HOST_LIST)) {
+      return;
+    }
     // TEMPORARY FIX: DISTRIBUTED MODE DOESN'T SUPPORT TREE BONSAI, KEEP ALWAYS EMBEDDED RIDS
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
     // UPDATE IT
@@ -2409,5 +2413,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public void clearProperties() {
     throw new UnsupportedOperationException();
+  }
+
+  public List<String> getServerURLs() {
+    return serverURLs;
   }
 }
