@@ -249,7 +249,11 @@ public class OSQLHelper {
   public static OSQLFunctionRuntime getFunction(final OBaseParser iCommand, final String iWord) {
     final int separator = iWord.indexOf('.');
     final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN);
-    if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {
+    final int beginSquareBracket = iWord.indexOf(OStringSerializerHelper.LIST_BEGIN);
+    final int beginCurlyBrace = iWord.indexOf(OStringSerializerHelper.MAP_BEGIN);
+
+    if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis) && (beginSquareBracket == -1
+        || beginSquareBracket > beginParenthesis) && (beginCurlyBrace == -1 || beginCurlyBrace > beginParenthesis)) {
       final int endParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_END, beginParenthesis);
 
       final char firstChar = iWord.charAt(0);

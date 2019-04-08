@@ -22,7 +22,8 @@ public class OAndBlock extends OBooleanExpression {
     super(p, id);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
 
     if (getSubBlocks() == null) {
       return true;
@@ -53,6 +54,10 @@ public class OAndBlock extends OBooleanExpression {
     // subBlocks.get(0).toString(params, builder);
     // }
 
+    if (subBlocks.size() > 1) {
+      builder.append('(');
+    }
+
     boolean first = true;
     for (OBooleanExpression expr : subBlocks) {
       if (!first) {
@@ -61,9 +66,14 @@ public class OAndBlock extends OBooleanExpression {
       expr.toString(params, builder);
       first = false;
     }
+    if (subBlocks.size() > 1) {
+      builder.append(')');
+    }
+
   }
 
-  @Override protected boolean supportsBasicCalculation() {
+  @Override
+  protected boolean supportsBasicCalculation() {
     for (OBooleanExpression expr : subBlocks) {
       if (!expr.supportsBasicCalculation()) {
         return false;
@@ -72,7 +82,8 @@ public class OAndBlock extends OBooleanExpression {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     int result = 0;
     for (OBooleanExpression expr : subBlocks) {
       result += expr.getNumberOfExternalCalculations();
@@ -80,7 +91,8 @@ public class OAndBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     for (OBooleanExpression expr : subBlocks) {
       result.addAll(expr.getExternalCalculationConditions());
@@ -138,7 +150,8 @@ public class OAndBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> result = new ArrayList<String>();
     for (OBooleanExpression exp : subBlocks) {
       List<String> x = exp.getMatchPatternInvolvedAliases();

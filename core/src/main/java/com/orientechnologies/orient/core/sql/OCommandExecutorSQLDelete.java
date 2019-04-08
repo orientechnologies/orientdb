@@ -49,25 +49,24 @@ import java.util.Map;
 
 /**
  * SQL UPDATE command.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final String   NAME            = "DELETE FROM";
-  public static final String   KEYWORD_DELETE  = "DELETE";
-  private static final String  VALUE_NOT_FOUND = "_not_found_";
+  public static final  String NAME            = "DELETE FROM";
+  public static final  String KEYWORD_DELETE  = "DELETE";
+  private static final String VALUE_NOT_FOUND = "_not_found_";
 
   private OSQLQuery<ODocument> query;
-  private String               indexName       = null;
-  private int                  recordCount     = 0;
-  private String               lockStrategy    = "NONE";
-  private String               returning       = "COUNT";
+  private String               indexName    = null;
+  private int                  recordCount  = 0;
+  private String               lockStrategy = "NONE";
+  private String               returning    = "COUNT";
   private List<ORecord>        allDeletedRecords;
 
-  private OSQLFilter           compiledFilter;
-  private boolean              unsafe          = false;
+  private OSQLFilter compiledFilter;
+  private boolean    unsafe = false;
 
   public OCommandExecutorSQLDelete() {
   }
@@ -116,8 +115,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
             else if (word.equals(KEYWORD_UNSAFE))
               unsafe = true;
             else if (word.equalsIgnoreCase(KEYWORD_WHERE))
-              compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()),
-                  getContext(), KEYWORD_WHERE);
+              compiledFilter = OSQLEngine.getInstance()
+                  .parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(), KEYWORD_WHERE);
 
             parserNextWord(true);
           }
@@ -140,8 +139,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
             else if (word.equals(KEYWORD_UNSAFE))
               unsafe = true;
             else if (word.equalsIgnoreCase(KEYWORD_WHERE))
-              compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()),
-                  getContext(), KEYWORD_WHERE);
+              compiledFilter = OSQLEngine.getInstance()
+                  .parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(), KEYWORD_WHERE);
 
             parserNextWord(true);
           }
@@ -244,21 +243,26 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
         }
 
       } else {
-        if (KEYWORD_KEY.equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
+        OSQLFilterCondition condition = compiledFilter.getRootCondition();
+        if (condition.getRight() == null) {
+          //decapsulate round braces
+          condition = (OSQLFilterCondition) condition.getLeft();
+        }
+        if (KEYWORD_KEY.equalsIgnoreCase(condition.getLeft().toString()))
           // FOUND KEY ONLY
-          key = getIndexKey(index.getDefinition(), compiledFilter.getRootCondition().getRight());
+          key = getIndexKey(index.getDefinition(), condition.getRight());
 
-        else if (KEYWORD_RID.equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString())) {
+        else if (KEYWORD_RID.equalsIgnoreCase(condition.getLeft().toString())) {
           // BY RID
-          value = OSQLHelper.getValue(compiledFilter.getRootCondition().getRight());
+          value = OSQLHelper.getValue(condition.getRight());
 
-        } else if (compiledFilter.getRootCondition().getLeft() instanceof OSQLFilterCondition) {
+        } else if (condition.getLeft() instanceof OSQLFilterCondition) {
           // KEY AND VALUE
-          final OSQLFilterCondition leftCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getLeft();
+          final OSQLFilterCondition leftCondition = (OSQLFilterCondition) condition.getLeft();
           if (KEYWORD_KEY.equalsIgnoreCase(leftCondition.getLeft().toString()))
             key = getIndexKey(index.getDefinition(), leftCondition.getRight());
 
-          final OSQLFilterCondition rightCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getRight();
+          final OSQLFilterCondition rightCondition = (OSQLFilterCondition) condition.getRight();
           if (KEYWORD_RID.equalsIgnoreCase(rightCondition.getLeft().toString()))
             value = OSQLHelper.getValue(rightCondition.getRight());
 
@@ -291,8 +295,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
   public boolean result(final Object iRecord) {
     final ORecordAbstract record = ((OIdentifiable) iRecord).getRecord();
 
-    if (record instanceof ODocument && compiledFilter != null
-        && !Boolean.TRUE.equals(this.compiledFilter.evaluate(record, (ODocument) record, getContext()))) {
+    if (record instanceof ODocument && compiledFilter != null && !Boolean.TRUE
+        .equals(this.compiledFilter.evaluate(record, (ODocument) record, getContext()))) {
       return true;
     }
     try {
@@ -350,8 +354,9 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
     final String returning = parserNextWord(true);
 
     if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
-      throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
-          + "' but it should be COUNT (default), BEFORE. Example: " + KEYWORD_RETURN + " BEFORE");
+      throwParsingException(
+          "Invalid " + KEYWORD_RETURN + " value set to '" + returning + "' but it should be COUNT (default), BEFORE. Example: "
+              + KEYWORD_RETURN + " BEFORE");
 
     return returning;
   }

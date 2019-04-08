@@ -65,6 +65,9 @@ public class OOrBlock extends OBooleanExpression {
     // return;
     // }
 
+    if (subBlocks.size() > 1) {
+      builder.append('(');
+    }
     boolean first = true;
     for (OBooleanExpression expr : subBlocks) {
       if (!first) {
@@ -73,6 +76,10 @@ public class OOrBlock extends OBooleanExpression {
       expr.toString(params, builder);
       first = false;
     }
+    if (subBlocks.size() > 1) {
+      builder.append(')');
+    }
+
   }
 
   @Override
@@ -119,16 +126,17 @@ public class OOrBlock extends OBooleanExpression {
 
   public List<OAndBlock> flatten() {
     List<OAndBlock> result = new ArrayList<OAndBlock>();
-    for(OBooleanExpression sub:subBlocks){
+    for (OBooleanExpression sub : subBlocks) {
       List<OAndBlock> childFlattened = sub.flatten();
-      for(OAndBlock child:childFlattened){
+      for (OAndBlock child : childFlattened) {
         result.add(child);
       }
     }
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> result = new ArrayList<String>();
     for (OBooleanExpression exp : subBlocks) {
       List<String> x = exp.getMatchPatternInvolvedAliases();
