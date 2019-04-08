@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -75,15 +74,16 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public synchronized ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     checkOpen();
+    OrientDBConfig resolvedConfig = solveConfig(config);
     try {
       OStorageRemote storage;
       storage = storages.get(name);
       if (storage == null) {
-        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager);
+        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager, resolvedConfig);
         storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
-      db.internalOpen(user, password, solveConfig(config));
+      db.internalOpen(user, password, resolvedConfig);
       return db;
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
@@ -114,7 +114,7 @@ public class OrientDBRemote implements OrientDBInternal {
     OStorageRemote storage = storages.get(name);
     if (storage == null) {
       try {
-        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager);
+        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager, null);
         storages.put(name, storage);
       } catch (Exception e) {
         throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);

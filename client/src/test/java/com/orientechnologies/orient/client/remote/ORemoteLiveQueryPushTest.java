@@ -68,7 +68,7 @@ public class ORemoteLiveQueryPushTest {
   @Before
   public void before() throws IOException {
     MockitoAnnotations.initMocks(this);
-    storage = new OStorageRemote("none", null, "", connectionManager);
+    storage = new OStorageRemote("none", null, "", connectionManager, null);
 
   }
 

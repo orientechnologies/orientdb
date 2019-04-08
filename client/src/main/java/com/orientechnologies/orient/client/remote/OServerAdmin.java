@@ -23,11 +23,9 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.*;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBRemote;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -38,9 +36,7 @@ import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -71,7 +67,7 @@ public class OServerAdmin {
     OURLConnection connection = OURLHelper.parse(iURL);
     OrientDBRemote remote = (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(connection.getPath());
 
-    storage = new OStorageRemote(url, null, "", remote.getConnectionManager(), OStorage.STATUS.OPEN) {
+    storage = new OStorageRemote(url, null, "", remote.getConnectionManager(), OStorage.STATUS.OPEN, null) {
       @Override
       protected OStorageRemoteSession getCurrentSession() {
         return session;
@@ -82,7 +78,7 @@ public class OServerAdmin {
   public OServerAdmin(OrientDBRemote remote, String url) throws IOException {
     ORemoteConnectionManager connectionManager = remote.getConnectionManager();
 
-    storage = new OStorageRemote(url, null, "", connectionManager, OStorage.STATUS.OPEN) {
+    storage = new OStorageRemote(url, null, "", connectionManager, OStorage.STATUS.OPEN, null) {
       @Override
       protected OStorageRemoteSession getCurrentSession() {
         return session;
