@@ -2545,7 +2545,7 @@ ee.controller("SingleBackupController", [
           return $scope.selectedEvents.indexOf(e.op) != -1;
         })
         .map(function(e, idx, arr) {
-          var date = new Date(e.timestamp);
+          var date = new Date(e.timestampUnix);
           return {
             id: idx,
             title: $scope.info(e),
