@@ -1049,8 +1049,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * the current moment. Deleted records are written in output stream first, then created/updated records. All records are sorted by
    * record id. Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li>
    * <li>Record's cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only
-   * if
-   * record is not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary
+   * if record is not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary
    * presentation of record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is
    * not deleted - length of content is provided in above entity</li> </ol>
    *
@@ -1925,11 +1924,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             } else {
               //This allocate position starting from a valid rid, used in distributed for allocate the same position on other nodes
               final ORecordId rid = (ORecordId) rec.getIdentity();
-              final OCluster cluster = getClusterById(rid.getClusterId());
-              final OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
-              if (ppos.clusterPosition != rid.getClusterPosition()) {
+              final OPaginatedCluster cluster = (OPaginatedCluster) getClusterById(rid.getClusterId());
+              OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
+              if (recordStatus == OPaginatedCluster.RECORD_STATUS.NOT_EXISTENT) {
+                OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                while (ppos.clusterPosition < rid.getClusterPosition()) {
+                  ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                }
+                if (ppos.clusterPosition != rid.getClusterPosition()) {
+                  throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
+                }
+              } else if (recordStatus == OPaginatedCluster.RECORD_STATUS.PRESENT
+                  || recordStatus == OPaginatedCluster.RECORD_STATUS.REMOVED) {
+                final OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
                 throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
               }
+
             }
           }
         } catch (final Exception e) {

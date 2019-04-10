@@ -4,12 +4,13 @@ import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -555,7 +556,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
-  public void acquireLocksForTx(OTransactionInternal tx, ODistributedTxContext txContext, long timeout) {
+  public void acquireLocksForTx(OTransactionInternal tx, ODistributedTxContext txContext) {
     //Sort and lock transaction entry in distributed environment
     Set<ORID> rids = new TreeSet<>();
     for (ORecordOperation entry : tx.getRecordOperations()) {
@@ -566,8 +567,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
     for (ORID rid : rids) {
-      txContext.lock(rid, timeout);
+      txContext.lock(rid);
     }
+
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
     Set<String> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
@@ -589,13 +591,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
-  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount,
-      long timeout) {
+  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
         requestId, tx);
     try {
-      internalBegin2pc(txContext, local, timeout);
+      internalBegin2pc(txContext, local);
       txContext.setStatus(SUCCESS);
       getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
     } catch (OConcurrentCreateException ex) {
@@ -633,7 +634,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw e;
     } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
-      txContext.unlock();
       /// ?? do i've to save this state as well ?
       txContext.setStatus(TIMEDOUT);
       getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
@@ -647,7 +647,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     }
-    getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
     return true;
   }
 
@@ -681,10 +680,17 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         int timeout = getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
         int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
         int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+
         for (int i = 0; i < nretry; i++) {
           try {
-            int v = new Random().nextInt(delay);
-            internalBegin2pc(txContext, local, timeout + (delay + v) * i);
+            if (i > 0) {
+              try {
+                Thread.sleep(new Random().nextInt(delay));
+              } catch (InterruptedException e) {
+                OException.wrapException(new OInterruptedException(e.getMessage()), e);
+              }
+            }
+            internalBegin2pc(txContext, local);
             txContext.setStatus(SUCCESS);
             break;
           } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
@@ -697,6 +703,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
         if (!SUCCESS.equals(txContext.getStatus())) {
           txContext.destroy();
+          localDistributedDatabase.popTxContext(transactionId);
           Orient.instance().submit(() -> {
             OLogManager.instance()
                 .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
@@ -716,6 +723,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
 
       } else {
+        txContext.destroy();
+        localDistributedDatabase.popTxContext(transactionId);
         Orient.instance().submit(() -> {
           OLogManager.instance()
               .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
@@ -732,9 +741,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     if (txContext != null) {
-      synchronized (txContext) {
-        txContext.destroy();
-      }
+      txContext.destroy();
       OLiveQueryHook.removePendingDatabaseOps(this);
       OLiveQueryHookV2.removePendingDatabaseOps(this);
       return true;
@@ -756,7 +763,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
-  public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local, long timeout) {
+  public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
     getStorageDistributed().resetLastValidBackup();
     OTransactionInternal transaction = txContext.getTransaction();
     //This is moved before checks because also the coordinator first node allocate before checks
@@ -765,7 +772,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ((OTransactionOptimistic) transaction).begin();
     }
 
-    acquireLocksForTx(transaction, txContext, timeout);
+    acquireLocksForTx(transaction, txContext);
 
     ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
 
