@@ -34,8 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
-
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
  */
@@ -98,9 +96,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     convert(database);
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops, false);
     //No need to increase the lock timeout here with the retry because this retries are not deadlock retries
-    int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
-    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount,
-        timeout);
+    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
@@ -118,10 +114,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, ODatabaseDocumentDistributed database,
-      OTransactionInternal tx, boolean local, int retryCount, long timeout) {
+      OTransactionInternal tx, boolean local, int retryCount) {
     OTransactionResultPayload payload;
     try {
-      if (database.beginDistributedTx(requestId, tx, local, retryCount, timeout)) {
+      if (database.beginDistributedTx(requestId, tx, local, retryCount)) {
         payload = new OTxSuccess();
       } else {
         return null;

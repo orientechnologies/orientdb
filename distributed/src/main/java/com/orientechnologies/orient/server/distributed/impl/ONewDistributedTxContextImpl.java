@@ -46,6 +46,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     try {
       recordLockManager.lock(key);
     } catch (OLockException ex) {
+      this.unlock();
       throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key, recordLockManager.getTimeout());
     }
     lockedKeys.add(key);
@@ -57,6 +58,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     try {
       recordLockManager.lock(rid);
     } catch (OLockException ex) {
+      this.unlock();
       throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, null, recordLockManager.getTimeout());
     }
     lockedRids.add(rid);
@@ -69,6 +71,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     try {
       recordLockManager.lock(rid, timeout);
     } catch (OLockException ex) {
+      this.unlock();
       throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, null, timeout);
     }
     lockedRids.add(rid);
@@ -153,4 +156,5 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public Status getStatus() {
     return status;
   }
+
 }

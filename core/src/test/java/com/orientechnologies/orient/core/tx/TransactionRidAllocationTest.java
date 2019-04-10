@@ -111,12 +111,12 @@ public class TransactionRidAllocationTest {
     ODatabaseDocumentInternal second;
     orientDB.create("secondTest", ODatabaseType.MEMORY);
     second = (ODatabaseDocumentInternal) orientDB.open("secondTest", "admin", "admin");
-    db.activateOnCurrentThread();
     //THIS OFFSET FIRST DB FROM THE SECOND
     for (int i = 0; i < 20; i++) {
-      db.save(db.newVertex("V"));
+      second.save(second.newVertex("V"));
     }
 
+    db.activateOnCurrentThread();
     db.begin();
     OVertex v = db.newVertex("V");
     db.save(v);

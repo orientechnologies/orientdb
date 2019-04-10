@@ -113,7 +113,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
   @Override
   public ODistributedResponseManager getResponseManager(final ODistributedRequestId reqId) {
-    return responsesByRequestIds.get(reqId);
+    return responsesByRequestIds.get(reqId.getMessageId());
   }
 
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
