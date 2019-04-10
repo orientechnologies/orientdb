@@ -2157,6 +2157,15 @@ public class OSelectExecutionPlanner {
         .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz)).filter(Objects::nonNull)
         .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 
+    List<IndexSearchDescriptor> fullTextIndexDescriptors = indexes.stream()
+        .filter(idx->idx.getType().equalsIgnoreCase("FULLTEXT"))
+        .filter(idx->!idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
+        .map(idx -> buildIndexSearchDescriptorForFulltext(ctx, idx, block, clazz)).filter(Objects::nonNull)
+        .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
+
+    descriptors.addAll(fullTextIndexDescriptors);
+
+
     //remove the redundant descriptors (eg. if I have one on [a] and one on [a, b], the first one is redundant, just discard it)
     descriptors = removePrefixIndexes(descriptors);
 
@@ -2396,6 +2405,73 @@ public class OSelectExecutionPlanner {
                 blockIterator.remove();
                 break;
               }
+            }
+          }
+        }
+      }
+      if (breakHere || !indexFieldFound) {
+        break;
+      }
+    }
+
+    if (result.keyCondition.getSubBlocks().size() < index.getDefinition().getFields().size() && !index
+        .supportsOrderedIterations()) {
+      //hash indexes do not support partial key match
+      return null;
+    }
+
+    if (found) {
+      result.remainingCondition = blockCopy;
+      return result;
+    }
+    return null;
+  }
+
+
+  /**
+   * given a full text index and a flat AND block, returns a descriptor on how to process it with an index (index, index key and additional
+   * filters to apply after index fetch
+   *
+   * @param ctx
+   * @param index
+   * @param block
+   * @param clazz
+   *
+   * @return
+   */
+  private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(OCommandContext ctx, OIndex<?> index, OAndBlock block, OClass clazz) {
+    List<String> indexFields = index.getDefinition().getFields();
+    OBinaryCondition keyCondition = new OBinaryCondition(-1);
+    OIdentifier key = new OIdentifier("key");
+    keyCondition.setLeft(new OExpression(key));
+    boolean found = false;
+
+    OAndBlock blockCopy = block.copy();
+    Iterator<OBooleanExpression> blockIterator;
+
+    OAndBlock indexKeyValue = new OAndBlock(-1);
+    IndexSearchDescriptor result = new IndexSearchDescriptor();
+    result.idx = index;
+    result.keyCondition = indexKeyValue;
+    for (String indexField : indexFields) {
+      blockIterator = blockCopy.getSubBlocks().iterator();
+      boolean breakHere = false;
+      boolean indexFieldFound = false;
+      while (blockIterator.hasNext()) {
+        OBooleanExpression singleExp = blockIterator.next();
+        if (singleExp instanceof OContainsTextCondition) {
+          OExpression left = ((OContainsTextCondition) singleExp).getLeft();
+          if (left.isBaseIdentifier()) {
+            String fieldName = left.getDefaultAlias().getStringValue();
+            if (indexField.equals(fieldName)) {
+              found = true;
+              indexFieldFound = true;
+              OContainsTextCondition condition = new OContainsTextCondition(-1);
+              condition.setLeft(left);
+              condition.setRight(((OContainsTextCondition) singleExp).getRight().copy());
+              indexKeyValue.getSubBlocks().add(condition);
+              blockIterator.remove();
+              break;
             }
           }
         }

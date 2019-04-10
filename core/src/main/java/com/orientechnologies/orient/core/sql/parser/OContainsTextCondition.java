@@ -174,5 +174,21 @@ public class OContainsTextCondition extends OBooleanExpression {
     }
     return true;
   }
+
+  public void setLeft(OExpression left) {
+    this.left = left;
+  }
+
+  public void setRight(OExpression right) {
+    this.right = right;
+  }
+
+  public OExpression getLeft() {
+    return left;
+  }
+
+  public OExpression getRight() {
+    return right;
+  }
 }
 /* JavaCC - OriginalChecksum=b588492ba2cbd0f932055f1f64bbbecd (do not edit this line) */

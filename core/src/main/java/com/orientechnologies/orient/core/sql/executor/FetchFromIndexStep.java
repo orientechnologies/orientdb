@@ -396,6 +396,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
       } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
         cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+      } else if (isFullTextIndex(index)) {
+        cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
       } else {
         throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
       }
@@ -406,6 +408,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       cursor = nextCursors.remove(0);
       fetchNextEntry();
     }
+  }
+
+  private boolean isFullTextIndex(OIndex index) {
+    return index.getType().equalsIgnoreCase("FULLTEXT") && !index.getAlgorithm().equalsIgnoreCase("LUCENE");
   }
 
   private OIndexCursor getCursorForNullKey() {
@@ -432,7 +438,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if(!iter.hasNext()){
+        if (!iter.hasNext()) {
           return null;
         }
         Object val = iter.next();
@@ -727,6 +733,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           throw new UnsupportedOperationException("Cannot execute index query with " + exp);
         }
 
+      }else if (exp instanceof OContainsTextCondition) {
+        if (((OContainsTextCondition) exp).getRight() != null) {
+          result.add(((OContainsTextCondition) exp).getRight());
+        } else {
+          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+        }
+
       } else {
         throw new UnsupportedOperationException("Cannot execute index query with " + exp);
       }
@@ -767,6 +780,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           throw new UnsupportedOperationException("Cannot execute index query with " + exp);
         }
 
+      } else if (exp instanceof OContainsTextCondition) {
+        result.add(((OContainsTextCondition) exp).getRight());
       } else {
         throw new UnsupportedOperationException("Cannot execute index query with " + exp);
       }
@@ -796,6 +811,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else {
         return false;
       }
+    } else if (exp instanceof OContainsTextCondition){
+      return true;
     } else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
     }
@@ -844,7 +861,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else {
         return false;
       }
-    } else {
+    } else if(exp instanceof OContainsTextCondition){
+      return true;
+    }else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
     }
   }
