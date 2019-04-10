@@ -3,7 +3,6 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import com.orientechnologies.orient.core.db.config.OMulticastConfguration;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
-import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +27,7 @@ public class OUDPMulticastNodeManagerIT {
 
   @Test
   public void testMasterElection() throws InterruptedException {
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 3; i++) {
       testMasterElectionWith(3, 2);
       testMasterElectionWith(5, 3);
       testMasterElectionWith(5, 5);
@@ -63,8 +62,9 @@ public class OUDPMulticastNodeManagerIT {
       int port = 4321 + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName).setGroupName("default").setQuorum(quorum)
-          .setMulticast(
+      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName)
+          .setGroupName("testMasterElectionWith_default_" + nNodes + "_" + quorum)
+          .setTcpPort(port).setQuorum(quorum).setMulticast(
               OMulticastConfguration.builder().setEnabled(true).setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts)
                   .build()).build();
 
@@ -125,7 +125,7 @@ public class OUDPMulticastNodeManagerIT {
 
   @Test
   public void testJoinAfterMasterElection() throws InterruptedException {
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 3; i++) {
       testJoinAfterMasterElection(3, 2);
       testJoinAfterMasterElection(5, 3);
       testJoinAfterMasterElection(10, 6);
@@ -159,8 +159,9 @@ public class OUDPMulticastNodeManagerIT {
       int port = 4321 + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName).setGroupName("default").setQuorum(quorum)
-          .setMulticast(
+      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName)
+          .setGroupName("testJoinAfterMasterElection_default_" + nNodes + "_" + quorum)
+          .setTcpPort(port).setQuorum(quorum).setMulticast(
               OMulticastConfguration.builder().setEnabled(true).setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts)
                   .build()).build();
 
@@ -195,7 +196,8 @@ public class OUDPMulticastNodeManagerIT {
       int port = 4321 + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName).setGroupName("default").setQuorum(quorum)
+      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName).setGroupName("testJoinAfterMasterElection_default_" + nNodes + "_" + quorum).setQuorum(quorum)
+          .setTcpPort(port)
           .setMulticast(
               OMulticastConfguration.builder().setEnabled(true).setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts)
                   .build()).build();

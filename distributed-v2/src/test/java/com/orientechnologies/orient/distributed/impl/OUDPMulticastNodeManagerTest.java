@@ -3,7 +3,6 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import com.orientechnologies.orient.core.db.config.OMulticastConfguration;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
-import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -175,12 +174,12 @@ public class OUDPMulticastNodeManagerTest {
 
     ONodeInternalConfiguration internalConfiguration = createInternalConfiguration();
 
-    ONodeConfiguration config1 = createConfiguration("node1", "default", null, 4321, new int[] { 4321, 4322, 4323 });
+    ONodeConfiguration config1 = createConfiguration("node1", "testTwoGroups_default", null, 4321, new int[] { 4321, 4322, 4323 });
 
     OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration, discoveryListener1, scheduler);
     manager1.start();
 
-    ONodeConfiguration configOther = createConfiguration("node1", "group2", null, 4323, new int[] { 4321, 4322, 4323 });
+    ONodeConfiguration configOther = createConfiguration("node1", "testTwoGroups_group2", null, 4323, new int[] { 4321, 4322, 4323 });
 
     OUDPMulticastNodeManager managerOtherGroup = new OUDPMulticastNodeManager(configOther, internalConfiguration,
         discoveryListenerOther, scheduler);
@@ -190,7 +189,7 @@ public class OUDPMulticastNodeManagerTest {
 
     Assert.assertEquals(1, ((MockDiscoveryListener) discoveryListener1).totalNodes);
 
-    ONodeConfiguration config2 = createConfiguration("node2", "default", null, 4322, new int[] { 4321, 4322, 4323 });
+    ONodeConfiguration config2 = createConfiguration("node2", "testTwoGroups_default", null, 4322, new int[] { 4321, 4322, 4323 });
 
     OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration, discoveryListener2, scheduler);
     manager2.start();
