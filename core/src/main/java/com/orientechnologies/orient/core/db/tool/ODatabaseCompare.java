@@ -43,14 +43,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
@@ -324,7 +317,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     int indexesSizeTwo = makeDbCall(databaseTwo, database -> indexManagerTwo.getIndexes().size());
 
     if (exportImportHashTable != null) {
-      if (makeDbCall(databaseTwo, database -> indexManagerTwo.getIndex(ODatabaseImport.EXPORT_IMPORT_MAP_NAME) == null)) {
+      if (makeDbCall(databaseTwo, database -> indexManagerTwo.getIndex(ODatabaseImport.EXPORT_IMPORT_MAP_NAME) != null)) {
         indexesSizeTwo--;
       }
     }
