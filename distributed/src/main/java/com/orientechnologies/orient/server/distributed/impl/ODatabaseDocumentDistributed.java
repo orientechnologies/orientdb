@@ -829,7 +829,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
         return true;
       } else if (TIMEDOUT.equals(txContext.getStatus())) {
-        int timeout = getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
         int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
         int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
 
@@ -869,6 +868,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
+          return true;
         } finally {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
