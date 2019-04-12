@@ -1054,16 +1054,21 @@ public class OSelectExecutionPlanner {
       if (target == null) {
         handleNoTarget(shardedPlan.getValue(), ctx, profilingEnabled);
       } else if (target.getIdentifier() != null) {
-        Set<String> filterClusters = info.serverToClusters.get(shardedPlan.getKey());
+        String className = target.getIdentifier().getStringValue();
+        if(className.startsWith("$") && !ctx.getDatabase().getMetadata().getSchema().existsClass(className)){
+          handleVariableAsTarget(shardedPlan.getValue(), info, ctx, profilingEnabled);
+        }else {
+          Set<String> filterClusters = info.serverToClusters.get(shardedPlan.getKey());
 
-        OAndBlock ridRangeConditions = extractRidRanges(info.flattenedWhereClause, ctx);
-        if (ridRangeConditions != null && !ridRangeConditions.isEmpty()) {
-          info.ridRangeConditions = ridRangeConditions;
-          filterClusters = filterClusters.stream()
-              .filter(x -> clusterMatchesRidRange(x, ridRangeConditions, ctx.getDatabase(), ctx)).collect(Collectors.toSet());
+          OAndBlock ridRangeConditions = extractRidRanges(info.flattenedWhereClause, ctx);
+          if (ridRangeConditions != null && !ridRangeConditions.isEmpty()) {
+            info.ridRangeConditions = ridRangeConditions;
+            filterClusters = filterClusters.stream()
+                .filter(x -> clusterMatchesRidRange(x, ridRangeConditions, ctx.getDatabase(), ctx)).collect(Collectors.toSet());
+          }
+
+          handleClassAsTarget(shardedPlan.getValue(), filterClusters, info, ctx, profilingEnabled);
         }
-
-        handleClassAsTarget(shardedPlan.getValue(), filterClusters, info, ctx, profilingEnabled);
       } else if (target.getCluster() != null) {
         handleClustersAsTarget(shardedPlan.getValue(), info, Collections.singletonList(target.getCluster()), ctx, profilingEnabled);
       } else if (target.getClusterList() != null) {
@@ -1120,6 +1125,11 @@ public class OSelectExecutionPlanner {
         throw new UnsupportedOperationException();
       }
     }
+  }
+
+  private void handleVariableAsTarget(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx,
+      boolean profilingEnabled) {
+    plan.chain(new FetchFromVariableStep(info.target.getItem().getIdentifier().getStringValue(), ctx, profilingEnabled));
   }
 
   private boolean clusterMatchesRidRange(String clusterName, OAndBlock ridRangeConditions, ODatabase database,
