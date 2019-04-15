@@ -55,8 +55,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private volatile boolean                                   coordinator      = false;
   private volatile ONodeIdentity                             coordinatorIdentity;
   private          OStructuralDistributedContext             structuralDistributedContext;
-  private          OCoordinatedExecutorMessageHandler        requestHandler;
-  private          OCoordinateMessagesFactory                coordinateMessagesFactory;
   private          ODistributedNetworkManager                networkManager;
   private volatile boolean                                   distributedReady = false;
   private final    ConcurrentMap<String, ODistributedStatus> databasesStatus  = new ConcurrentHashMap<>();
@@ -66,12 +64,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
 
-    //This now si simple but should be replaced by a factory depending to the protocol version
-    coordinateMessagesFactory = new OCoordinateMessagesFactory();
-    requestHandler = new OCoordinatedExecutorMessageHandler(this);
-
     this.nodeConfiguration = config.getNodeConfiguration();
-
   }
 
   public ONodeConfiguration getNodeConfig() {
@@ -472,40 +465,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       }
     }
   }
-
   public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
       throws IOException {
-    OBinaryRequest<OBinaryResponse> request = newDistributedRequest(requestType);
-    try {
-      request.read(channel, 0, null);
-    } catch (IOException e) {
-      //impossible to read request ... probably need to notify this back.
-      throw e;
-    }
-    ODistributedExecutable executable = (ODistributedExecutable) request;
-    executable.executeDistributed(requestHandler);
-  }
-
-  private OBinaryRequest<OBinaryResponse> newDistributedRequest(int requestType) {
-    switch (requestType) {
-    case DISTRIBUTED_SUBMIT_REQUEST:
-      return new ONetworkSubmitRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_SUBMIT_RESPONSE:
-      return new ONetworkSubmitResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_OPERATION_REQUEST:
-      return new OOperationRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_OPERATION_RESPONSE:
-      return new OOperationResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST:
-      return new ONetworkStructuralSubmitRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE:
-      return new ONetworkStructuralSubmitResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST:
-      return new OStructuralOperationRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE:
-      return new OStructuralOperationResponse(coordinateMessagesFactory);
-    }
-    return null;
+    networkManager.coordinatedRequest(connection,requestType,clientTxId,channel);
   }
 
   public void internalCreateDatabase(String database, String type, Map<String, String> configurations) {
@@ -557,7 +519,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public OCoordinateMessagesFactory getCoordinateMessagesFactory() {
-    return coordinateMessagesFactory;
+    return networkManager.getCoordinateMessagesFactory();
   }
 
   @Override
