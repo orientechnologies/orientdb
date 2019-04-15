@@ -9,7 +9,6 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 public abstract class ONodeManager {
@@ -139,8 +138,8 @@ public abstract class ONodeManager {
 
   protected synchronized void processMessage(OBroadcastMessage message, String fromAddr) {
 //    System.out.println(
-//        "MSG toNode: " + this.nodeName + " fromNode: " + message.nodeName + " role: " + message.role + " term: " + message.term
-//            + " type: " + message.type + " master: " + message.masterName + " masterTerm: " + message.masterTerm+" masterPing: "+message.masterPing);
+//        "MSG toNode: " + this.config.getNodeName() + " fromNode: " + message.getNodeIdentity().getName() + " role: " + message.role + " term: " + message.term
+//            + " type: " + message.type + " master: " + message.masterIdentity + " masterTerm: " + message.masterTerm+" masterPing: "+message.masterPing);
     switch (message.type) {
     case OBroadcastMessage.TYPE_PING:
 //      System.out.println("" + nodeName + " - RECEIVE PING FROM " + message.nodeName);
@@ -403,7 +402,7 @@ public abstract class ONodeManager {
       byte[] msg = serializeMessage(message);
       sendMessageToGroup(msg);
     } catch (Exception e) {
-
+      e.printStackTrace();
     }
   }
 

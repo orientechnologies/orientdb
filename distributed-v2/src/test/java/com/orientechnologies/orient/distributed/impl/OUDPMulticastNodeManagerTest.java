@@ -106,7 +106,7 @@ public class OUDPMulticastNodeManagerTest {
     OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration, discoveryListener2, scheduler);
     manager2.start();
     assertTrue(discoveryListener2.connects.await(2, TimeUnit.SECONDS));
-
+    Thread.sleep(100);
     Assert.assertEquals(2, discoveryListener1.totalNodes);
     Assert.assertEquals(2, discoveryListener2.totalNodes);
 
@@ -142,18 +142,23 @@ public class OUDPMulticastNodeManagerTest {
     OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration, discoveryListener2, scheduler);
 
     manager2.start();
-    assertTrue(discoveryListener2.connects.await(2, TimeUnit.SECONDS));
 
-    Assert.assertEquals(2, discoveryListener1.totalNodes);
-    Assert.assertEquals(2, discoveryListener2.totalNodes);
+    try {
+      assertTrue(discoveryListener2.connects.await(2, TimeUnit.SECONDS));
+      Thread.sleep(100);
+      Assert.assertEquals(2, discoveryListener1.totalNodes);
+      Assert.assertEquals(2, discoveryListener2.totalNodes);
 
-    manager2.stop();
+      manager2.stop();
 
-    assertTrue(discoveryListener1.disconnects.await(15, TimeUnit.SECONDS));
+      assertTrue(discoveryListener1.disconnects.await(15, TimeUnit.SECONDS));
 
-    Assert.assertEquals(1, discoveryListener1.totalNodes);
-    manager1.stop();
-    Thread.sleep(5000);
+      Assert.assertEquals(1, discoveryListener1.totalNodes);
+    }finally {
+      manager1.stop();
+      manager2.stop();
+    }
+    Thread.sleep(3000);
 
   }
 
@@ -231,7 +236,7 @@ public class OUDPMulticastNodeManagerTest {
       if (value.master) {
         numOfMasters++;
       }
-      System.out.println(value);
+      System.out.println(value.lastPingTimestamp);
     }
     Assert.assertEquals(1, numOfMasters);
 

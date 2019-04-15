@@ -38,8 +38,10 @@ public class OUDPMulticastNodeManager extends ONodeManager {
   }
 
   public void stop() {
-    socket.close();
-    super.stop();
+    if(running) {
+      socket.close();
+      super.stop();
+    }
   }
 
   protected void initNetwork() throws IOException {

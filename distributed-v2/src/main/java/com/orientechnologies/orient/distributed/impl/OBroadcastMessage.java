@@ -52,8 +52,14 @@ class OBroadcastMessage {
     output.writeInt(term);
     output.writeInt(role);
     output.writeInt(tcpPort);
-    output.writeUTF(connectionUsername);
-    output.writeUTF(connectionPassword);
+    output.writeBoolean(connectionUsername != null);
+    if (connectionUsername != null) {
+      output.writeUTF(connectionUsername);
+    }
+    output.writeBoolean(connectionPassword != null);
+    if (connectionPassword != null) {
+      output.writeUTF(connectionPassword);
+    }
 
     switch (type) {
     case OBroadcastMessage.TYPE_PING:
@@ -64,8 +70,14 @@ class OBroadcastMessage {
         output.writeUTF(masterAddress);
         output.writeInt(masterTcpPort);
         output.writeLong(masterPing);
-        output.writeUTF(masterConnectionUsername);
-        output.writeUTF(masterConnectionPassword);
+        output.writeBoolean(masterConnectionUsername != null);
+        if (masterConnectionUsername != null) {
+          output.writeUTF(masterConnectionUsername);
+        }
+        output.writeBoolean(masterConnectionPassword != null);
+        if (masterConnectionPassword != null) {
+          output.writeUTF(masterConnectionPassword);
+        }
       } else {
         output.writeByte(0);
       }
@@ -85,8 +97,12 @@ class OBroadcastMessage {
     term = input.readInt();
     role = input.readInt();
     tcpPort = input.readInt();
-    connectionUsername = input.readUTF();
-    connectionPassword = input.readUTF();
+    if (input.readBoolean()) {
+      connectionUsername = input.readUTF();
+    }
+    if (input.readBoolean()) {
+      connectionPassword = input.readUTF();
+    }
 
     switch (type) {
     case OBroadcastMessage.TYPE_PING:
@@ -98,8 +114,12 @@ class OBroadcastMessage {
         masterAddress = input.readUTF();
         masterTcpPort = input.readInt();
         masterPing = input.readLong();
-        masterConnectionUsername = input.readUTF();
-        masterConnectionPassword = input.readUTF();
+        if (input.readBoolean()) {
+          masterConnectionUsername = input.readUTF();
+        }
+        if (input.readBoolean()) {
+          masterConnectionPassword = input.readUTF();
+        }
       }
       break;
     case OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION:
