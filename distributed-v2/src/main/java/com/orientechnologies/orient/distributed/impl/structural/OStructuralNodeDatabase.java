@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class OStructuralNodeDatabase {
 
-  protected OStructuralNodeDatabase() {
+  public OStructuralNodeDatabase() {
 
   }
 

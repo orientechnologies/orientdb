@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class OStructuralCoordinator implements AutoCloseable {
+public class OStructuralCoordinator implements AutoCloseable, OCoordinationContext {
   private final ExecutorService                                  requestExecutor;
   private final OOperationLog                                    operationLog;
   private final ConcurrentMap<OLogId, OStructuralRequestContext> contexts = new ConcurrentHashMap<>();
@@ -31,12 +31,12 @@ public class OStructuralCoordinator implements AutoCloseable {
 
   public void submit(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralSubmitRequest request) {
     requestExecutor.execute(() -> {
-      request.begin(member, operationId, this, context);
+      request.begin(new OStructuralSubmitId(member, operationId), this);
     });
   }
 
-  public void reply(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralSubmitResponse response) {
-    member.reply(operationId, response);
+  public void reply(OStructuralSubmitId id, OStructuralSubmitResponse response) {
+    id.getMember().reply(id.getOperationId(), response);
   }
 
   public void receive(OStructuralDistributedMember member, OLogId relativeRequest, OStructuralNodeResponse response) {
@@ -49,11 +49,10 @@ public class OStructuralCoordinator implements AutoCloseable {
     return operationLog.log(request);
   }
 
-  public OStructuralRequestContext sendOperation(OStructuralSubmitRequest submitRequest, OStructuralNodeRequest nodeRequest,
-      OStructuralResponseHandler handler) {
+  public OStructuralRequestContext sendOperation(OStructuralNodeRequest nodeRequest, OStructuralResponseHandler handler) {
     List<OStructuralDistributedMember> members = new ArrayList<>(this.members.values());
     OLogId id = log(nodeRequest);
-    OStructuralRequestContext context = new OStructuralRequestContext(this, submitRequest, nodeRequest, members, handler, id);
+    OStructuralRequestContext context = new OStructuralRequestContext(this, nodeRequest, members, handler, id);
     contexts.put(id, context);
     for (OStructuralDistributedMember member : members) {
       member.sendRequest(id, nodeRequest);
@@ -100,4 +99,8 @@ public class OStructuralCoordinator implements AutoCloseable {
     members.remove(identity);
   }
 
+  @Override
+  public OrientDBDistributed getOrientDB() {
+    return context;
+  }
 }

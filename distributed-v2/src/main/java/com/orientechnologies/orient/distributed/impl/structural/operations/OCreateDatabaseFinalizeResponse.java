@@ -1,6 +1,7 @@
-package com.orientechnologies.orient.distributed.impl.structural;
+package com.orientechnologies.orient.distributed.impl.structural.operations;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
 
 import java.io.DataInput;
 import java.io.DataOutput;

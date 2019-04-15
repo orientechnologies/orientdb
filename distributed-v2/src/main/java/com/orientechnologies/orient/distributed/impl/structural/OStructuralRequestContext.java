@@ -13,7 +13,6 @@ public class OStructuralRequestContext {
     STARTED, QUORUM_OK, QUORUM_KO
   }
 
-  private OStructuralSubmitRequest                                   submitRequest;
   private OStructuralNodeRequest                                     nodeRequest;
   private Collection<OStructuralDistributedMember>                   involvedMembers;
   private Map<OStructuralDistributedMember, OStructuralNodeResponse> responses = new ConcurrentHashMap<>();
@@ -23,11 +22,9 @@ public class OStructuralRequestContext {
   private TimerTask                                                  timerTask;
   private OLogId                                                     requestId;
 
-  public OStructuralRequestContext(OStructuralCoordinator coordinator, OStructuralSubmitRequest submitRequest,
-      OStructuralNodeRequest nodeRequest, Collection<OStructuralDistributedMember> involvedMembers,
+  public OStructuralRequestContext(OStructuralCoordinator coordinator, OStructuralNodeRequest nodeRequest, Collection<OStructuralDistributedMember> involvedMembers,
       OStructuralResponseHandler handler, OLogId requestId) {
     this.coordinator = coordinator;
-    this.submitRequest = submitRequest;
     this.nodeRequest = nodeRequest;
     this.involvedMembers = involvedMembers;
     this.handler = handler;

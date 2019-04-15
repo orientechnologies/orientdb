@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class OStructuralDistributedExecutor implements AutoCloseable {
+public class OStructuralDistributedExecutor implements AutoCloseable, OOperationContext {
 
   private       OOperationLog                                    operationLog;
   private       ExecutorService                                  executor;
@@ -28,7 +28,7 @@ public class OStructuralDistributedExecutor implements AutoCloseable {
     executor.execute(() -> {
       operationLog.logReceived(opId, request);
       OStructuralNodeResponse response;
-      response = request.execute(member, opId, this, orientDB);
+      response = request.execute(this);
       member.sendResponse(opId, response);
     });
   }
@@ -53,5 +53,10 @@ public class OStructuralDistributedExecutor implements AutoCloseable {
 
   public void leave(OStructuralDistributedMember member) {
     members.remove(member.getIdentity());
+  }
+
+  @Override
+  public OrientDBDistributed getOrientDB() {
+    return orientDB;
   }
 }

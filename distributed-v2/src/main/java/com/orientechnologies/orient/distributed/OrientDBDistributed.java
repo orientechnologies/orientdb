@@ -25,6 +25,10 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.distributed.impl.structural.*;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OConfigurationFetchRequest;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OConfigurationFetchResponse;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitRequest;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.*;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;

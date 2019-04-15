@@ -6,6 +6,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySu
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySubmitResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.*;
 import com.orientechnologies.orient.distributed.impl.structural.*;
+import com.orientechnologies.orient.distributed.impl.structural.operations.*;
 
 public class OCoordinateMessagesFactory {
   public static final int TRANSACTION_SUBMIT_REQUEST        = 1;

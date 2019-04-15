@@ -1,7 +1,8 @@
-package com.orientechnologies.orient.distributed.impl.structural;
+package com.orientechnologies.orient.distributed.impl.structural.operations;
 
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.structural.OOperationContext;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -24,12 +25,11 @@ public class OCreateDatabaseFinalizeRequest implements OStructuralNodeRequest {
   }
 
   @Override
-  public OStructuralNodeResponse execute(OStructuralDistributedMember nodeFrom, OLogId opId,
-      OStructuralDistributedExecutor executor, OrientDBDistributed context) {
+  public OStructuralNodeResponse execute(OOperationContext context) {
     if (success) {
-      context.finalizeCreateDatabase(database);
+      context.getOrientDB().finalizeCreateDatabase(database);
     } else {
-      context.internalDropDatabase(database);
+      context.getOrientDB().internalDropDatabase(database);
     }
     return new OCreateDatabaseFinalizeResponse();
   }

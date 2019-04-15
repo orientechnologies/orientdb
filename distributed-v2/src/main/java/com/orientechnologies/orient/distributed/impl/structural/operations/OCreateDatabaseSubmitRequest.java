@@ -1,8 +1,7 @@
-package com.orientechnologies.orient.distributed.impl.structural;
+package com.orientechnologies.orient.distributed.impl.structural.operations;
 
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.structural.*;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -10,27 +9,26 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OCreateDatabaseOperationRequest implements OStructuralNodeRequest {
+public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
 
   private String              database;
   private String              type;
   private Map<String, String> configurations;
 
-  public OCreateDatabaseOperationRequest(String database, String type, Map<String, String> configurations) {
+  public OCreateDatabaseSubmitRequest(String database, String type, Map<String, String> configurations) {
     this.database = database;
     this.type = type;
     this.configurations = configurations;
   }
 
-  public OCreateDatabaseOperationRequest() {
+  public OCreateDatabaseSubmitRequest() {
 
   }
 
   @Override
-  public OStructuralNodeResponse execute(OStructuralDistributedMember nodeFrom, OLogId opId,
-      OStructuralDistributedExecutor executor, OrientDBDistributed context) {
-    context.internalCreateDatabase(database, type, configurations);
-    return new OCreateDatabaseOperationResponse(true);
+  public void begin(OStructuralSubmitId id, OCoordinationContext coordinator) {
+    coordinator.sendOperation(new OCreateDatabaseOperationRequest(this.database, this.type, this.configurations),
+        new OCreateDatabaseResponseHandler(this, id, database));
   }
 
   @Override
@@ -42,7 +40,6 @@ public class OCreateDatabaseOperationRequest implements OStructuralNodeRequest {
       output.writeUTF(configuration.getKey());
       output.writeUTF(configuration.getValue());
     }
-
   }
 
   @Override
@@ -60,6 +57,6 @@ public class OCreateDatabaseOperationRequest implements OStructuralNodeRequest {
 
   @Override
   public int getRequestType() {
-    return OCoordinateMessagesFactory.CREATE_DATABASE_REQUEST;
+    return OCoordinateMessagesFactory.CREATE_DATABASE_SUBMIT_REQUEST;
   }
 }

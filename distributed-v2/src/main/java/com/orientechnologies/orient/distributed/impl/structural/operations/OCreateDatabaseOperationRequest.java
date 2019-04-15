@@ -1,8 +1,9 @@
-package com.orientechnologies.orient.distributed.impl.structural;
+package com.orientechnologies.orient.distributed.impl.structural.operations;
 
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.OOperationContext;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -10,28 +11,26 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
+public class OCreateDatabaseOperationRequest implements OStructuralNodeRequest {
 
   private String              database;
   private String              type;
   private Map<String, String> configurations;
 
-  public OCreateDatabaseSubmitRequest(String database, String type, Map<String, String> configurations) {
+  public OCreateDatabaseOperationRequest(String database, String type, Map<String, String> configurations) {
     this.database = database;
     this.type = type;
     this.configurations = configurations;
   }
 
-  public OCreateDatabaseSubmitRequest() {
+  public OCreateDatabaseOperationRequest() {
 
   }
 
   @Override
-  public void begin(OStructuralDistributedMember sender, OSessionOperationId operationId, OStructuralCoordinator coordinator,
-      OrientDBDistributed context) {
-    OStructuralRequestContext ct = coordinator
-        .sendOperation(this, new OCreateDatabaseOperationRequest(this.database, this.type, this.configurations),
-            new OCreateDatabaseResponseHandler(this, sender, operationId, database));
+  public OStructuralNodeResponse execute(OOperationContext context) {
+    context.getOrientDB().internalCreateDatabase(database, type, configurations);
+    return new OCreateDatabaseOperationResponse(true);
   }
 
   @Override
@@ -43,6 +42,7 @@ public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
       output.writeUTF(configuration.getKey());
       output.writeUTF(configuration.getValue());
     }
+
   }
 
   @Override
@@ -60,6 +60,6 @@ public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
 
   @Override
   public int getRequestType() {
-    return OCoordinateMessagesFactory.CREATE_DATABASE_SUBMIT_REQUEST;
+    return OCoordinateMessagesFactory.CREATE_DATABASE_REQUEST;
   }
 }

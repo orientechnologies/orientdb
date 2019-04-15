@@ -1,8 +1,7 @@
-package com.orientechnologies.orient.distributed.impl.structural;
+package com.orientechnologies.orient.distributed.impl.structural.operations;
 
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
-import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.*;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -23,10 +22,8 @@ public class OConfigurationFetchRequest implements OStructuralSubmitRequest {
   }
 
   @Override
-  public void begin(OStructuralDistributedMember sender, OSessionOperationId operationId, OStructuralCoordinator coordinator,
-      OrientDBDistributed context) {
-    coordinator
-        .reply(sender, operationId, new OConfigurationFetchResponse(context.getStructuralConfiguration().getSharedConfiguration()));
+  public void begin(OStructuralSubmitId id, OCoordinationContext coordinator) {
+    coordinator.reply(id, new OConfigurationFetchResponse(coordinator.getOrientDB().getStructuralConfiguration().getSharedConfiguration()));
 
   }
 
