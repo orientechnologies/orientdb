@@ -19,10 +19,7 @@ import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistribute
 import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.distributed.impl.ONodeInternalConfiguration;
-import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
+import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
@@ -340,10 +337,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME) || context.getStorage().isClosed();
   }
 
-  public void sendStructuralJoinToCoordinator() {
-
-  }
-
   public synchronized void setCoordinator(ONodeIdentity coordinatorIdentity) {
     this.coordinatorIdentity = coordinatorIdentity;
     if (getNodeIdentity().equals(coordinatorIdentity)) {
@@ -368,6 +361,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         this.coordinator = true;
       }
     } else {
+      structuralDistributedContext.setExternalCoordinator(
+          new OStructuralDistributedMember(coordinatorIdentity, networkManager.getChannel(coordinatorIdentity)));
+      joinCoordinator();
       for (OSharedContext context : sharedContexts.values()) {
         if (isContextToIgnore(context))
           continue;
@@ -377,11 +373,39 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
         distributed.setExternalCoordinator(member);
       }
-      structuralDistributedContext.setExternalCoordinator(
-          new OStructuralDistributedMember(coordinatorIdentity, networkManager.getChannel(coordinatorIdentity)));
       this.coordinator = false;
     }
     setOnline();
+  }
+
+  private void joinCoordinator() {
+    Set<String> localDatabase = super.listDatabases(null, null);
+    List<OStructuralNodeDatabase> databases = new ArrayList<>();
+
+    for (String database : localDatabase) {
+      databases.add(new OStructuralNodeDatabase(database, database, OStructuralNodeDatabase.NodeMode.ACTIVE));
+    }
+    OLogId logId = structuralDistributedContext.getOpLog().lastPersistentLog();
+    Future<OStructuralSubmitResponse> result = getStructuralDistributedContext().getSubmitContext()
+        .send(new OSessionOperationId(), new OConfigurationFetchRequest(logId, databases));
+
+    try {
+      OConfigurationFetchResponse res = (OConfigurationFetchResponse) result.get();
+
+      syncToConfiguration(res.getSharedConfiguration());
+
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+
+  }
+
+  private void syncToConfiguration(OStructuralSharedConfiguration sharedConfiguration) {
+    //TODO: check the existing databases if the uuid match with the configuration,
+    // in case not remove local database and fatch new one from the network
+    getStructuralConfiguration().receiveSharedConfiguration(sharedConfiguration);
   }
 
   public synchronized ODistributedContext getDistributedContext(String database) {
@@ -540,5 +564,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OServer getServer() {
     return server;
+  }
+
+  public OStructuralConfiguration getStructuralConfiguration() {
+    return structuralConfiguration;
   }
 }

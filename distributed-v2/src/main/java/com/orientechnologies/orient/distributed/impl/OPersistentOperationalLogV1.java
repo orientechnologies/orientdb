@@ -165,6 +165,11 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   }
 
+  @Override
+  public OLogId lastPersistentLog() {
+    return new OLogId(inc.get());
+  }
+
   protected AtomicLong readLastLogId() {
     String filePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum);
     File f = new File(filePath);

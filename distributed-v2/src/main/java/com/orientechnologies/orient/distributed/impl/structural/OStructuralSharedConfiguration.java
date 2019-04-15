@@ -41,4 +41,14 @@ public class OStructuralSharedConfiguration {
   public Collection<OStructuralNodeConfiguration> listNodes() {
     return knownNodes.values();
   }
+
+  public void distributeSerialize(DataOutput output) throws IOException {
+    //For now just use the same of disc serialization but this will change in future
+    serialize(output);
+  }
+
+  public void distributeDeserialize(DataInput input) throws IOException {
+    //For now just use the same of disc serialization but this will change in future
+    deserialize(input);
+  }
 }

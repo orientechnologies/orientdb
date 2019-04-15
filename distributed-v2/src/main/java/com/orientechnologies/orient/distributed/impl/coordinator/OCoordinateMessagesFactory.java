@@ -38,6 +38,9 @@ public class OCoordinateMessagesFactory {
   public static final int DROP_DATABASE_REQUEST         = 2;
   public static final int DROP_DATABASE_RESPONSE        = 2;
 
+  public static final int CONFIGURATION_FETCH_SUBMIT_REQUEST  = 4;
+  public static final int CONFIGURATION_FETCH_SUBMIT_RESPONSE = 4;
+
   public ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {
     case TRANSACTION_FIRST_PHASE_RESPONSE:

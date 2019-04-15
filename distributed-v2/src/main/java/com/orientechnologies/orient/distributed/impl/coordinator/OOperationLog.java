@@ -7,6 +7,8 @@ public interface OOperationLog extends AutoCloseable {
 
   void logReceived(OLogId logId, OLogRequest request);
 
+  OLogId lastPersistentLog();
+
   /**
    * @param from first entry to get. Null to iterate since the beginning
    * @param to   last entry to get (included).

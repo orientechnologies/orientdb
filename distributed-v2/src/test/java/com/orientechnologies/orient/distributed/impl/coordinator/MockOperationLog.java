@@ -14,4 +14,9 @@ public class MockOperationLog implements OOperationLog {
   public void logReceived(OLogId logId, OLogRequest request) {
 
   }
+
+  @Override
+  public OLogId lastPersistentLog() {
+    return new OLogId(sequence.get());
+  }
 }

@@ -40,6 +40,10 @@ public class OStructuralDistributedContext {
     return coordinator;
   }
 
+  public OOperationLog getOpLog() {
+    return opLog;
+  }
+
   public synchronized void makeCoordinator(ONodeIdentity identity) {
     if (coordinator == null) {
       coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), opLog, context);

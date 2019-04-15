@@ -10,6 +10,7 @@ public class OStructuralNodeDatabase {
 
   }
 
+
   public enum NodeMode {
     ACTIVE, REPLICA,
   }
@@ -47,5 +48,10 @@ public class OStructuralNodeDatabase {
     output.writeUTF(name);
     output.writeUTF(mode.name());
   }
+
+  public void distributedSerialize(DataOutput output) throws IOException {
+    serialize(output);
+  }
+
 
 }

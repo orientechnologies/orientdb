@@ -102,4 +102,9 @@ public class OStructuralConfiguration {
   public OStructuralSharedConfiguration getSharedConfiguration() {
     return sharedConfiguration;
   }
+
+  public void receiveSharedConfiguration(OStructuralSharedConfiguration sharedConfiguration) {
+    this.sharedConfiguration = sharedConfiguration;
+    this.save();
+  }
 }

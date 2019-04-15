@@ -18,4 +18,9 @@ public class OIncrementOperationalLog implements OOperationLog {
   public void logReceived(OLogId logId, OLogRequest request) {
 
   }
+
+  @Override
+  public OLogId lastPersistentLog() {
+    return new OLogId(inc.get());
+  }
 }
