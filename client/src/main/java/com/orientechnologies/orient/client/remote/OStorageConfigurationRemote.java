@@ -242,4 +242,14 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   public int getMaxKeySize() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public String getUuid() {
+    throw new UnsupportedOperationException("Current version of the binary protocol do not support uuid");
+  }
+
+  @Override
+  public void setUuid(String uuid) {
+    throw new UnsupportedOperationException("Current version of the binary protocol do not support uuid");
+  }
 }

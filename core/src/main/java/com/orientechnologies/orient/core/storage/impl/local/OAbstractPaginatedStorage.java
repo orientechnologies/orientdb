@@ -182,24 +182,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TimeZone;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
@@ -280,6 +263,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final Map<String, OBaseIndexEngine> indexEngineNameMap = new HashMap<>();
   private final List<OBaseIndexEngine>        indexEngines       = new ArrayList<>();
   private       boolean                       wereDataRestoredAfterOpen;
+  private       UUID                          uuid;
 
   private final LongAdder fullCheckpointCount = new LongAdder();
 
@@ -384,6 +368,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         initConfiguration(contextConfiguration);
+        String uuid = configuration.getUuid();
+        if (uuid == null) {
+          uuid = UUID.randomUUID().toString();
+          configuration.setUuid(uuid);
+        }
+        this.uuid = UUID.fromString(uuid);
 
         checkPageSizeAndRelatedParameters();
 
@@ -575,6 +565,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
         }
 
+        uuid = UUID.randomUUID();
         initLockingStrategy(contextConfiguration);
 
         initWalAndDiskCache(contextConfiguration);
@@ -583,6 +574,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         configuration = new OClusterBasedStorageConfiguration(this);
         ((OClusterBasedStorageConfiguration) configuration).create(contextConfiguration);
+        configuration.setUuid(uuid.toString());
 
         componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
@@ -876,6 +868,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return id;
   }
 
+  public UUID getUuid() {
+    return uuid;
+  }
+
   public final boolean setClusterStatus(final int clusterId, final OStorageClusterConfiguration.STATUS iStatus) {
     try {
       checkOpenness();
@@ -1066,7 +1062,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * not deleted - length of content is provided in above entity</li> </ol>
    *
    * @param lsn LSN from which we should find changed records
-   *
    *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */

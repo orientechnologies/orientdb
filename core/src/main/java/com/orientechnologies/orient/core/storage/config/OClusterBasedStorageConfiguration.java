@@ -83,6 +83,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private static final String PROPERTIES = "properties";
   private static final String CLUSTERS   = "clusters";
+  private static final String UUID       = "UUID";
 
   private static final String[] INT_PROPERTIES = new String[] { MINIMUM_CLUSTERS_PROPERTY, VERSION_PROPERTY,
       BINARY_FORMAT_VERSION_PROPERTY, RECORD_SERIALIZER_VERSION_PROPERTY, PAGE_SIZE_PROPERTY, FREE_LIST_BOUNDARY_PROPERTY,
@@ -91,7 +92,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private static final String[] STRING_PROPERTIES = new String[] { SCHEMA_RECORD_ID_PROPERTY, INDEX_MANAGER_RECORD_ID_PROPERTY,
       LOCALE_LANGUAGE_PROPERTY, LOCALE_COUNTRY_PROPERTY, DATE_FORMAT_PROPERTY, DATE_TIME_FORMAT_PROPERTY, TIME_ZONE_PROPERTY,
       CHARSET_PROPERTY, CONFLICT_STRATEGY_PROPERTY, CLUSTER_SELECTION_PROPERTY, RECORD_SERIALIZER_PROPERTY,
-      CREATED_AT_VERSION_PROPERTY };
+      CREATED_AT_VERSION_PROPERTY, UUID };
 
   private OContextConfiguration configuration;
   private boolean               validation;
@@ -638,6 +639,27 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       updateStringProperty(DATE_TIME_FORMAT_PROPERTY, dateTimeFormat, true);
     } finally {
       lock.releaseWriteLock();
+    }
+  }
+
+  public void setUuid(final String uuid) {
+    lock.acquireWriteLock();
+    try {
+      updateStringProperty(UUID, uuid, true);
+    } finally {
+      lock.releaseWriteLock();
+    }
+  }
+
+  public String getUuid() {
+    lock.acquireReadLock();
+    try {
+      final String uuid = readStringProperty(UUID);
+      assert uuid != null;
+
+      return uuid;
+    } finally {
+      lock.releaseReadLock();
     }
   }
 
