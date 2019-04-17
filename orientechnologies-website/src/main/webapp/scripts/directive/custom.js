@@ -224,7 +224,7 @@ angular.module('webappApp').directive('avatar', function ($timeout) {
     },
     controller: function ($scope) {
 
-        console.log($scope);
+        // console.log($scope);
     },
     templateUrl: 'views/avatar.html'
   }

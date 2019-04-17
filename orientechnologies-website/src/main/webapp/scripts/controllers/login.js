@@ -8,14 +8,20 @@ angular
     Notification,
     AccessToken,
     $location,
-    $window
+    $window,
+    $timeout
   ) {
+
+
     $scope.login = function() {
       User.login($scope.user)
         .then(function(res) {
           AccessToken.set(res.token);
           $location.path("/");
-          $window.location.reload();
+        
+          $timeout(function() {
+            $window.location.reload();
+          },100)
         })
         .catch(function(err) {
           var text = err.data.message || err.data.statusText;

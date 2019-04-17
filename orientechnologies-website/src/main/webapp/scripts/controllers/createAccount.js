@@ -57,14 +57,19 @@ angular
     AccessToken,
     $window,
     $location,
-    Notification
+    Notification,
+    $timeout
   ) {
     if ($routeParams.token) {
       User.validateToken($routeParams.token)
         .then(function(data) {
           AccessToken.set(data.token);
           $location.path("/change-password/" + $routeParams.token);
-          $window.location.reload();
+          
+          $timeout(function() {
+            $window.location.reload();
+          },100)
+          
         })
         .catch(function(err) {
           Notification.error(err.data.message, 5000);

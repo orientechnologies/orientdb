@@ -126,7 +126,8 @@ angular
       return {
         responseError: function(rejection) {
           if (rejection.status == 401 || rejection.status == 403) {
-            $location.path("/login");
+
+           $location.path("/login");
           }
           return $q.reject(rejection);
         }
@@ -159,7 +160,6 @@ angular
           delete $cookies.prjhub_token;
         }
         var token = AccessToken.get();
-
         if (token) {
           config.headers["X-AUTH-TOKEN"] = token;
         }
