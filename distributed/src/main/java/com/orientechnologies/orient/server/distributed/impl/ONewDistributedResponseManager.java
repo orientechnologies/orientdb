@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
@@ -11,7 +8,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTr
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
@@ -25,6 +21,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   private volatile int                                           responseCount;
   private final    List<String>                                  debugNodeReplied = new ArrayList<>();
   private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType    = new HashMap<>();
+  private volatile IdentityHashMap<OTransactionResultPayload, String> payloadToNode = new IdentityHashMap<>();
   private volatile boolean                                       finished         = false;
   private volatile boolean                                       quorumReached    = false;
   private volatile Object                                        finalResult;
@@ -42,7 +39,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public synchronized boolean setLocalResult(String localNodeName, Object localResult) {
-    return addResult((OTransactionResultPayload) localResult);
+    return addResult(localNodeName, (OTransactionResultPayload) localResult);
   }
 
   @Override
@@ -140,6 +137,10 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return null;
   }
 
+  public String getNodeNameFromPayload(OTransactionResultPayload payload){
+    return this.payloadToNode.get(payload);
+  }
+
   @Override
   public int getQuorum() {
     return 0;
@@ -152,10 +153,10 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   public synchronized boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName) {
     debugNodeReplied.add(senderNodeName);
-    return addResult(response.getResultPayload());
+    return addResult(senderNodeName, response.getResultPayload());
   }
 
-  private boolean addResult(OTransactionResultPayload result) {
+  private boolean addResult(String senderNodeName, OTransactionResultPayload result) {
     List<OTransactionResultPayload> results = resultsByType.get(result.getResponseType());
     if (results == null) {
       results = new ArrayList<>();
@@ -164,6 +165,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     } else {
       results.add(result);
     }
+    payloadToNode.put(result, senderNodeName);
     responseCount += 1;
     checkFinished(results);
     return this.finished;

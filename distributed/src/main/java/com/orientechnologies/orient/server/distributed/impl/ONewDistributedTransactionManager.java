@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -34,12 +33,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
@@ -283,17 +278,17 @@ public class ONewDistributedTransactionManager {
         case OTxConcurrentModification.ID:
           ORecordId recordId = ((OTxConcurrentModification) result).getRecordId();
           messages.add(String
-              .format("concurrent modification record: %s database version: %d transaction version: %d", recordId.toString(),
+              .format("concurrent modification record (node "+responseManager.getNodeNameFromPayload(result)+"): %s database version: %d transaction version: %d", recordId.toString(),
                   ((OTxConcurrentModification) result).getVersion(), iTx.getRecordEntry(recordId).getRecord().getVersion()));
           break;
         case OTxException.ID:
           exceptions.add(((OTxException) result).getException());
           OLogManager.instance().debug(this, "distributed exception", ((OTxException) result).getException());
-          messages.add(String.format("exception: '%s'", ((OTxException) result).getException().getMessage()));
+          messages.add(String.format("exception (node "+responseManager.getNodeNameFromPayload(result)+"): '%s'", ((OTxException) result).getException().getMessage()));
           break;
         case OTxUniqueIndex.ID:
           messages.add(String
-              .format("unique index violation on index:'$s' with key:'%s' and rid:'%s'", ((OTxUniqueIndex) result).getIndex(),
+              .format("unique index violation on index (node "+responseManager.getNodeNameFromPayload(result)+"):'$s' with key:'%s' and rid:'%s'", ((OTxUniqueIndex) result).getIndex(),
                   ((OTxUniqueIndex) result).getKey(), ((OTxUniqueIndex) result).getRecordId()));
           break;
 
