@@ -3,10 +3,12 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -333,6 +335,34 @@ public class OrientDBEmbeddedTests {
     }, 10);
 
     assertTrue(once.await(20, TimeUnit.MILLISECONDS));
+  }
+
+  @Test
+  public void testUUID() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDb.create("test", ODatabaseType.MEMORY);
+    ODatabaseSession session = orientDb.open("test", "admin", "admin");
+    assertNotNull(((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage()).getUuid());
+    session.close();
+    orientDb.close();
+  }
+
+  @Test
+  public void testPersistentUUID() {
+    OrientDB orientDb = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
+    orientDb.create("testPersistentUUID", ODatabaseType.PLOCAL);
+    ODatabaseSession session = orientDb.open("testPersistentUUID", "admin", "admin");
+    UUID uuid = ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage()).getUuid();
+    assertNotNull(uuid);
+    session.close();
+    orientDb.close();
+    OrientDB orientDb1 = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
+    ODatabaseSession session1 = orientDb1.open("testPersistentUUID", "admin", "admin");
+    assertEquals(uuid, ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session1).getStorage()).getUuid());
+    session1.close();
+    orientDb1.drop("testPersistentUUID");
+    orientDb1.close();
+
   }
 
 }

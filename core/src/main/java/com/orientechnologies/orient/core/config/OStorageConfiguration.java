@@ -82,7 +82,12 @@ public interface OStorageConfiguration {
 
   int getMaxKeySize();
 
-  final class IndexEngineData {
+  void setUuid(final String uuid);
+
+  String getUuid();
+
+
+    final class IndexEngineData {
     private final String              name;
     private final String              algorithm;
     private final String              indexType;

@@ -36,15 +36,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -1346,5 +1338,15 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     } finally {
       lock.releaseWriteLock();
     }
+  }
+
+  @Override
+  public String getUuid() {
+    throw  new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setUuid(String uuid) {
+    throw new UnsupportedOperationException();
   }
 }
