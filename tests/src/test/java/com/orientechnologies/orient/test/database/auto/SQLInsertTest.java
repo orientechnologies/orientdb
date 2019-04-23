@@ -62,6 +62,9 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
+    for (int i = 0; i < 30; i++) {
+      new ODocument("Address").save();
+    }
     List<Long> positions = getValidPositions(addressId);
 
     if (!database.getMetadata().getSchema().existsClass("Profile"))
@@ -266,6 +269,13 @@ public class SQLInsertTest extends DocumentDBBaseTest {
   }
 
   public void updateMultipleFields() {
+
+    if (!database.getMetadata().getSchema().existsClass("Account"))
+      database.getMetadata().getSchema().createClass("Account");
+
+    for (int i = 0; i < 30; i++) {
+      database.command("insert into cluster:3 set name = 'foo"+i+"'");
+    }
     List<Long> positions = getValidPositions(3);
 
     OIdentifiable result = database.command(
