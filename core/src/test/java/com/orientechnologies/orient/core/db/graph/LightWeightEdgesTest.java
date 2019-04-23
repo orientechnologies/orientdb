@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -27,6 +29,7 @@ public class LightWeightEdgesTest {
     orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.create("test", ODatabaseType.MEMORY);
     session = orientDB.open("test", "admin", "admin");
+    session.command("ALTER database custom useLightweightEdges = true");
     session.createVertexClass("Vertex");
     session.createEdgeClass("Edge");
   }
@@ -85,6 +88,36 @@ public class LightWeightEdgesTest {
 
   }
 
+  @Test
+  public void testRegularBySchema() {
+//    session.command("alter database custom useLightweightEdges = true;");
+    String vClazz = "VtestRegularBySchema";
+    OClass vClass = session.createVertexClass(vClazz);
+
+    String eClazz = "EtestRegularBySchema";
+    OClass eClass = session.createEdgeClass(eClazz);
+
+    vClass.createProperty("out_" + eClazz, OType.LINKBAG, eClass);
+    vClass.createProperty("in_" + eClazz, OType.LINKBAG, eClass);
+
+    OVertex v = session.newVertex(vClass);
+    v.setProperty("name", "a");
+    v.save();
+    OVertex v1 = session.newVertex(vClass);
+    v1.setProperty("name", "b");
+    v1.save();
+
+    session.command("create edge " + eClazz + " from (select from " + vClazz + " where name = 'a') to (select from " + vClazz
+        + " where name = 'b') set name = 'foo'");
+
+    session.execute("sql", ""
+        +
+        "begin;"+
+        "delete edge "+eClazz+";"+
+        "create edge " + eClazz + " from (select from " + vClazz + " where name = 'a') to (select from " + vClazz + " where name = 'b') set name = 'foo';"+
+        "commit;");
+
+  }
 
   @After
   public void after() {
