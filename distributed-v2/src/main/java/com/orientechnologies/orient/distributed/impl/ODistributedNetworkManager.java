@@ -64,8 +64,8 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
         //TODO: Integrate with the discovery manager.
         ODistributedNetworkManager.this.orientDB.nodeDisconnected(nodeIdentity);
       }
-    }, config.getNodeIdentity().getName(), nodeIdentity.getName(), host, user, password);
-    ODistributedChannelBinaryProtocol channel = new ODistributedChannelBinaryProtocol(config.getNodeIdentity(), remoteServer);
+    }, internalConfiguration.getNodeIdentity().getName(), nodeIdentity.getName(), host, user, password);
+    ODistributedChannelBinaryProtocol channel = new ODistributedChannelBinaryProtocol(internalConfiguration.getNodeIdentity(), remoteServer);
     final ODistributedChannelBinaryProtocol old = remoteServers.putIfAbsent(nodeIdentity, channel);
     if (old != null) {
       channel.close();
@@ -101,7 +101,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
 
   @Override
   public void nodeConnected(NodeData data) {
-    if (data.getNodeIdentity().equals(config.getNodeIdentity()))
+    if (data.getNodeIdentity().equals(internalConfiguration.getNodeIdentity()))
       return;
     ODistributedChannelBinaryProtocol channel = getRemoteServer(data.getNodeIdentity());
     if (channel == null) {

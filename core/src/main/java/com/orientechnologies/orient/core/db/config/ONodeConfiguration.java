@@ -5,7 +5,6 @@ import java.util.UUID;
 public class ONodeConfiguration {
   //Node name is redundant because it can come also from user configuration appart been stored in the node identity
   private String                 nodeName;
-  private ONodeIdentity          nodeIdentity;
   private String                 groupName;
   private String                 groupPassword;
   private int                    quorum;
@@ -31,10 +30,6 @@ public class ONodeConfiguration {
 
   protected void setQuorum(int quorum) {
     this.quorum = quorum;
-  }
-
-  public ONodeIdentity getNodeIdentity() {
-    return nodeIdentity;
   }
 
   public String getGroupName() {
@@ -77,7 +72,4 @@ public class ONodeConfiguration {
     return nodeName;
   }
 
-  public void setNodeIdentity(ONodeIdentity nodeIdentity) {
-    this.nodeIdentity = nodeIdentity;
-  }
 }

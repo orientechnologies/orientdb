@@ -29,17 +29,17 @@ public class OStructuralConfigurationSerDeTest {
     OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
 
     OStructuralNodeConfiguration nodeConfiguration = new OStructuralNodeConfiguration(ONodeIdentity.generate("node2"));
-    OStructuralNodeDatabase database = new OStructuralNodeDatabase(UUID.randomUUID().toString(), "one",
+    OStructuralNodeDatabase database = new OStructuralNodeDatabase(UUID.randomUUID(), "one",
         OStructuralNodeDatabase.NodeMode.ACTIVE);
 
     nodeConfiguration.addDatabase(database);
-    OStructuralNodeDatabase database1 = new OStructuralNodeDatabase(UUID.randomUUID().toString(), "two",
+    OStructuralNodeDatabase database1 = new OStructuralNodeDatabase(UUID.randomUUID(), "two",
         OStructuralNodeDatabase.NodeMode.ACTIVE);
     nodeConfiguration.addDatabase(database1);
     configuration.getSharedConfiguration().addNode(nodeConfiguration);
 
     OStructuralNodeConfiguration nodeConfiguration1 = new OStructuralNodeConfiguration(ONodeIdentity.generate("node3"));
-    OStructuralNodeDatabase database2 = new OStructuralNodeDatabase(UUID.randomUUID().toString(), "one",
+    OStructuralNodeDatabase database2 = new OStructuralNodeDatabase(UUID.randomUUID(), "one",
         OStructuralNodeDatabase.NodeMode.ACTIVE);
     nodeConfiguration1.addDatabase(database2);
 

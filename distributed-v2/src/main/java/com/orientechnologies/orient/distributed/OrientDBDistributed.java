@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -72,7 +73,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private ONodeIdentity getNodeIdentity() {
-    return getNodeConfig().getNodeIdentity();
+    return structuralConfiguration.getCurrentNodeIdentity();
   }
 
   @Override
@@ -86,7 +87,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void onAfterActivate() {
     structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this,
         this.nodeConfiguration.getNodeName());
-    this.nodeConfiguration.setNodeIdentity(this.structuralConfiguration.getCurrentNodeIdentity());
     checkPort();
     structuralDistributedContext = new OStructuralDistributedContext(this);
     networkManager = new ODistributedNetworkManager(this, getNodeConfig(), generateInternalConfiguration());
@@ -111,8 +111,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       server.addTemporaryUser(DISTRIBUTED_USER, "" + new SecureRandom().nextLong(), "*");
       user = server.getUser(DISTRIBUTED_USER);
     }
+    OLogId lastLogId = structuralDistributedContext.getOpLog().lastPersistentLog();
 
-    return new ONodeInternalConfiguration(UUID.randomUUID(), DISTRIBUTED_USER, user.password);
+    return new ONodeInternalConfiguration(lastLogId, structuralConfiguration.getCurrentNodeIdentity(), DISTRIBUTED_USER,
+        user.password);
   }
 
   @Override
@@ -201,28 +203,24 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
-    if (true) {
-      if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) {
-        super.create(name, user, password, type, config);
-        return;
-      }
-      checkReadyForHandleRequests();
-      //TODO:RESOLVE CONFIGURATION PARAMETERS
-      Future<OStructuralSubmitResponse> created = structuralDistributedContext.getSubmitContext()
-          .send(new OSessionOperationId(), new OCreateDatabaseSubmitRequest(name, type.name(), new HashMap<>()));
-      try {
-        created.get();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-        return;
-      } catch (ExecutionException e) {
-        e.printStackTrace();
-      }
-      //This initialize the distributed configuration.
-      checkCoordinator(name);
-    } else {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) {
       super.create(name, user, password, type, config);
+      return;
     }
+    checkReadyForHandleRequests();
+    //TODO:RESOLVE CONFIGURATION PARAMETERS
+    Future<OStructuralSubmitResponse> created = structuralDistributedContext.getSubmitContext()
+        .send(new OSessionOperationId(), new OCreateDatabaseSubmitRequest(name, type.name(), new HashMap<>()));
+    try {
+      created.get();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+      return;
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+    //This initialize the distributed configuration.
+    checkCoordinator(name);
   }
 
   @Override
@@ -376,11 +374,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void joinCoordinator() {
-    Set<String> localDatabase = super.listDatabases(null, null);
+    super.loadAllDatabases();
+    Collection<OStorage> storages = super.getStorages();
     List<OStructuralNodeDatabase> databases = new ArrayList<>();
 
-    for (String database : localDatabase) {
-      databases.add(new OStructuralNodeDatabase(database, database, OStructuralNodeDatabase.NodeMode.ACTIVE));
+    for (OStorage database : storages) {
+      databases.add(new OStructuralNodeDatabase(((OAbstractPaginatedStorage) database).getUuid(), database.getName(),
+          OStructuralNodeDatabase.NodeMode.ACTIVE));
     }
     OLogId logId = structuralDistributedContext.getOpLog().lastPersistentLog();
     Future<OStructuralSubmitResponse> result = getStructuralDistributedContext().getSubmitContext()
@@ -399,10 +399,54 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   }
 
-  private void syncToConfiguration(OStructuralSharedConfiguration sharedConfiguration) {
-    //TODO: check the existing databases if the uuid match with the configuration,
-    // in case not remove local database and fatch new one from the network
+  private synchronized void syncDatabase(OStructuralNodeDatabase configuration) {
+
+  }
+
+  private synchronized void parkDatabase(String database) {
+    forceDatabaseClose(database);
+    //TODO: Move The  database folder somewhere else, backup folder?
+  }
+
+  private void triggerParkDatabase(String databaseName) {
+    //TODO: This should make sure that two park do not happen concurrently on the same database
+    executeNoDb(() -> {
+      parkDatabase(databaseName);
+      return null;
+    });
+  }
+
+  private void triggerSyncDatabase(OStructuralNodeDatabase db) {
+    //TODO: This should make sure that two sync do not happen concurrently on the same database
+    executeNoDb(() -> {
+      syncDatabase(db);
+      return null;
+    });
+  }
+
+  private synchronized void syncToConfiguration(OStructuralSharedConfiguration sharedConfiguration) {
     getStructuralConfiguration().receiveSharedConfiguration(sharedConfiguration);
+    OStructuralNodeConfiguration nodeConfig = getStructuralConfiguration().getSharedConfiguration().getNode(getNodeIdentity());
+    assert nodeConfig != null : "if arrived here the configuration should have this node configured";
+    super.loadAllDatabases();
+    Collection<OStorage> storages = super.getStorages();
+    for (OStorage st : storages) {
+      if (st instanceof OAbstractPaginatedStorage) {
+        OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) st;
+        OStructuralNodeDatabase db = nodeConfig.getDatabase(storage.getUuid());
+        if (db != null) {
+          triggerSyncDatabase(db);
+        } else {
+          triggerParkDatabase(st.getName());
+        }
+      }
+    }
+    Set<UUID> existingIds = storages.stream().map((s) -> ((OAbstractPaginatedStorage) s).getUuid()).collect(Collectors.toSet());
+    for (OStructuralNodeDatabase db : nodeConfig.getDatabases()) {
+      if (!existingIds.contains(db.getUuid())) {
+        triggerSyncDatabase(db);
+      }
+    }
   }
 
   public synchronized ODistributedContext getDistributedContext(String database) {
@@ -419,55 +463,26 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void drop(String name, String user, String password) {
-    if (true) {
-
-      if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) {
-        super.drop(name, user, password);
-        return;
-      }
-      checkReadyForHandleRequests();
-      //TODO:RESOLVE CONFIGURATION PARAMETERS
-      Future<OStructuralSubmitResponse> created = structuralDistributedContext.getSubmitContext()
-          .send(new OSessionOperationId(), new ODropDatabaseSubmitRequest(name));
-      try {
-        created.get();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-        return;
-      } catch (ExecutionException e) {
-        e.printStackTrace();
-      }
-    } else {
-      synchronized (this) {
-        checkOpen();
-        //This is a temporary fix for distributed drop that avoid scheduled view update to re-open the distributed database while is dropped
-        OSharedContext sharedContext = sharedContexts.get(name);
-        if (sharedContext != null) {
-          sharedContext.getViewManager().close();
-        }
-      }
-
-      ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
-      for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners(); it.hasNext(); ) {
-        it.next().onDrop(db);
-      }
-      db.close();
-      synchronized (this) {
-        if (exists(name, user, password)) {
-          OAbstractPaginatedStorage storage = getOrInitStorage(name);
-          OSharedContext sharedContext = sharedContexts.get(name);
-          if (sharedContext != null)
-            sharedContext.close();
-          storage.delete();
-          storages.remove(name);
-          sharedContexts.remove(name);
-        }
-      }
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) {
+      super.drop(name, user, password);
+      return;
+    }
+    checkReadyForHandleRequests();
+    //TODO:RESOLVE CONFIGURATION PARAMETERS
+    Future<OStructuralSubmitResponse> created = structuralDistributedContext.getSubmitContext()
+        .send(new OSessionOperationId(), new ODropDatabaseSubmitRequest(name));
+    try {
+      created.get();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      e.printStackTrace();
     }
   }
+
   public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
       throws IOException {
-    networkManager.coordinatedRequest(connection,requestType,clientTxId,channel);
+    networkManager.coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
   public void internalCreateDatabase(String database, String type, Map<String, String> configurations) {

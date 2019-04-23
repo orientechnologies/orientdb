@@ -78,32 +78,32 @@ public class OUDPMulticastNodeManagerTest {
         .setGroupPassword(password).setQuorum(2).setTcpPort(2424)
         .setMulticast(OMulticastConfguration.builder().setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts).build())
         .build();
-    config.setNodeIdentity(new ONodeIdentity(UUID.randomUUID().toString(), nodeName));
     return config;
   }
 
-  protected ONodeInternalConfiguration createInternalConfiguration() {
-    return new ONodeInternalConfiguration(UUID.randomUUID(), "", "");
+  protected ONodeInternalConfiguration createInternalConfiguration(String nodeName) {
+    return new ONodeInternalConfiguration(null, new ONodeIdentity(UUID.randomUUID().toString(), nodeName), "", "");
   }
 
   @Test
   public void test() throws InterruptedException {
-    MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1,1);
-    MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(2,0);
+    MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 1);
+    MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(2, 0);
     OSchedulerInternal scheduler = new OSchedulerInternalTest();
 
-    ONodeInternalConfiguration internalConfiguration = createInternalConfiguration();
+    ONodeInternalConfiguration internalConfiguration1 = createInternalConfiguration("node1");
 
     ONodeConfiguration config1 = createConfiguration("node1", 4321);
 
-    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration, discoveryListener1, scheduler);
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration1, discoveryListener1, scheduler);
     manager1.start();
     assertTrue(discoveryListener1.connects.await(2, TimeUnit.SECONDS));
 
     Assert.assertEquals(1, discoveryListener1.totalNodes);
+    ONodeInternalConfiguration internalConfiguration2 = createInternalConfiguration("node2");
     ONodeConfiguration config2 = createConfiguration("node2", 4322);
 
-    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration, discoveryListener2, scheduler);
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration2, discoveryListener2, scheduler);
     manager2.start();
     assertTrue(discoveryListener2.connects.await(2, TimeUnit.SECONDS));
     Thread.sleep(100);
@@ -126,20 +126,21 @@ public class OUDPMulticastNodeManagerTest {
     MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(2, 0);
     OSchedulerInternal scheduler = new OSchedulerInternalTest();
 
-    ONodeInternalConfiguration internalConfiguration = createInternalConfiguration();
+    ONodeInternalConfiguration internalConfiguration1 = createInternalConfiguration("node1");
 
     ONodeConfiguration config1 = createConfiguration("node1", "test", 4321);
 
-    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration, discoveryListener1, scheduler);
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration1, discoveryListener1, scheduler);
 
     manager1.start();
     assertTrue(discoveryListener1.connects.await(2, TimeUnit.SECONDS));
 
     Assert.assertEquals(1, discoveryListener1.totalNodes);
 
+    ONodeInternalConfiguration internalConfiguration2 = createInternalConfiguration("node2");
     ONodeConfiguration config2 = createConfiguration("node2", "test", 4321);
 
-    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration, discoveryListener2, scheduler);
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration2, discoveryListener2, scheduler);
 
     manager2.start();
 
@@ -154,7 +155,7 @@ public class OUDPMulticastNodeManagerTest {
       assertTrue(discoveryListener1.disconnects.await(15, TimeUnit.SECONDS));
 
       Assert.assertEquals(1, discoveryListener1.totalNodes);
-    }finally {
+    } finally {
       manager1.stop();
       manager2.stop();
     }
@@ -164,32 +165,33 @@ public class OUDPMulticastNodeManagerTest {
 
   @Test
   public void testTwoGroups() throws InterruptedException {
-    MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1,1);
-    MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(2,0);
-    MockDiscoveryListener discoveryListenerOther = new MockDiscoveryListener(0,0);
+    MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 1);
+    MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(2, 0);
+    MockDiscoveryListener discoveryListenerOther = new MockDiscoveryListener(0, 0);
     OSchedulerInternal scheduler = new OSchedulerInternalTest();
 
-    ONodeInternalConfiguration internalConfiguration = createInternalConfiguration();
+    ONodeInternalConfiguration internalConfiguration1 = createInternalConfiguration("node1");
 
     ONodeConfiguration config1 = createConfiguration("node1", "testTwoGroups_default", null, 4321, new int[] { 4321, 4322, 4323 });
 
-    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration, discoveryListener1, scheduler);
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration1, discoveryListener1, scheduler);
     manager1.start();
 
     ONodeConfiguration configOther = createConfiguration("node1", "testTwoGroups_group2", null, 4323,
         new int[] { 4321, 4322, 4323 });
 
-    OUDPMulticastNodeManager managerOtherGroup = new OUDPMulticastNodeManager(configOther, internalConfiguration,
+    OUDPMulticastNodeManager managerOtherGroup = new OUDPMulticastNodeManager(configOther, internalConfiguration1,
         discoveryListenerOther, scheduler);
     managerOtherGroup.start();
 
     assertTrue(discoveryListener1.connects.await(2, TimeUnit.SECONDS));
 
     Assert.assertEquals(1, discoveryListener1.totalNodes);
+    ONodeInternalConfiguration internalConfiguration2 = createInternalConfiguration("node2");
 
     ONodeConfiguration config2 = createConfiguration("node2", "testTwoGroups_default", null, 4322, new int[] { 4321, 4322, 4323 });
 
-    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration, discoveryListener2, scheduler);
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration2, discoveryListener2, scheduler);
     manager2.start();
     assertTrue(discoveryListener2.connects.await(2, TimeUnit.SECONDS));
 
@@ -209,14 +211,14 @@ public class OUDPMulticastNodeManagerTest {
 
   @Test
   public void testMasterElectionWithTwo() throws InterruptedException {
-    MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1,0);
-    MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(1,0);
+    MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 0);
+    MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(1, 0);
     OSchedulerInternal scheduler = new OSchedulerInternalTest();
 
     ONodeConfiguration config1 = createConfiguration("node1", 4321);
-    ONodeInternalConfiguration internalConfiguration = createInternalConfiguration();
+    ONodeInternalConfiguration internalConfiguration1 = createInternalConfiguration("node1");
 
-    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration, discoveryListener1, scheduler);
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration1, discoveryListener1, scheduler);
     manager1.start();
     assertTrue(discoveryListener1.connects.await(2, TimeUnit.SECONDS));
 
@@ -225,9 +227,10 @@ public class OUDPMulticastNodeManagerTest {
       Assert.assertFalse(value.master);
     }
 
+    ONodeInternalConfiguration internalConfiguration2 = createInternalConfiguration("node2");
     ONodeConfiguration config2 = createConfiguration("node2", 4322);
 
-    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration, discoveryListener2, scheduler);
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration2, discoveryListener2, scheduler);
     manager2.start();
     assertTrue(discoveryListener2.connects.await(2, TimeUnit.SECONDS));
     Thread.sleep(10000);

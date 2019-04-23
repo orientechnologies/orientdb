@@ -51,4 +51,8 @@ public class OStructuralSharedConfiguration {
     //For now just use the same of disc serialization but this will change in future
     deserialize(input);
   }
+
+  public OStructuralNodeConfiguration getNode(ONodeIdentity nodeIdentity) {
+    return knownNodes.get(nodeIdentity);
+  }
 }

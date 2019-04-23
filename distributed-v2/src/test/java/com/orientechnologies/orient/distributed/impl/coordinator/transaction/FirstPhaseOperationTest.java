@@ -48,8 +48,8 @@ public class FirstPhaseOperationTest {
     backwardCompatible = OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.getValueAsBoolean();
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = OServer.startFromClasspathConfig("orientdb-server-config.xml");
-    ((OrientDBDistributed) server.getDatabases())
-        .setCoordinator(((OrientDBDistributed) server.getDatabases()).getNodeConfig().getNodeIdentity());
+    OrientDBDistributed impl = (OrientDBDistributed) server.getDatabases();
+    impl.setCoordinator(impl.getStructuralConfiguration().getCurrentNodeIdentity());
     orientDB = server.getContext();
     orientDB.create(FirstPhaseOperationTest.class.getSimpleName(), ODatabaseType.MEMORY);
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {

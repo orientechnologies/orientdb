@@ -51,8 +51,8 @@ public class TestTransactionFlow {
       IllegalAccessException, InstanceAlreadyExistsException, NotCompliantMBeanException, ClassNotFoundException,
       MalformedObjectNameException {
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    ((OrientDBDistributed) server0.getDatabases())
-        .setCoordinator(((OrientDBDistributed) server0.getDatabases()).getNodeConfig().getNodeIdentity());
+    OrientDBDistributed impl = (OrientDBDistributed) server0.getDatabases();
+    impl.setCoordinator(impl.getStructuralConfiguration().getCurrentNodeIdentity());
     orientDB = server0.getContext();
     orientDB.create(TestTransactionFlow.class.getSimpleName(), ODatabaseType.MEMORY);
     try (ODatabaseSession session = orientDB.open(TestTransactionFlow.class.getSimpleName(), "admin", "admin")) {
@@ -92,7 +92,7 @@ public class TestTransactionFlow {
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(),
         new OIncrementOperationalLog(), new ODistributedLockManagerImpl(), new OMockAllocator());
     RecordChannel channel = new RecordChannel();
-    ODistributedMember member = new ODistributedMember(new ONodeIdentity("one","one"), "test", channel);
+    ODistributedMember member = new ODistributedMember(new ONodeIdentity("one", "one"), "test", channel);
     coordinator.join(member);
 
     submit.begin(member, new OSessionOperationId(), coordinator);

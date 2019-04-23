@@ -35,9 +35,9 @@ public abstract class ONodeManager {
   protected long maxInactiveServerTimeMillis = 5000;
 
   OLeaderElectionStateMachine leaderStatus;
-  private TimerTask                   discoveryTimer;
-  private TimerTask                   disconnectTimer;
-  private TimerTask                   checkerTimer;
+  private TimerTask discoveryTimer;
+  private TimerTask disconnectTimer;
+  private TimerTask checkerTimer;
 
   public ONodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration, int term,
       OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener) {
@@ -47,14 +47,15 @@ public abstract class ONodeManager {
       throw new IllegalArgumentException("Invalid group name");
     }
 
-    if (config.getNodeIdentity().getName() == null || config.getNodeIdentity().getName().length() == 0) {
+    if (internalConfiguration.getNodeIdentity().getName() == null
+        || internalConfiguration.getNodeIdentity().getName().length() == 0) {
       throw new IllegalArgumentException("Invalid node name");
     }
     this.discoveryListener = discoveryListener;
     knownServers = new HashMap<>();
     this.taskScheduler = taskScheduler;
     leaderStatus = new OLeaderElectionStateMachine();
-    leaderStatus.nodeIdentity = config.getNodeIdentity();
+    leaderStatus.nodeIdentity = internalConfiguration.getNodeIdentity();
     leaderStatus.setQuorum(config.getQuorum());
     leaderStatus.changeTerm(term);
   }
@@ -198,7 +199,7 @@ public abstract class ONodeManager {
     //nodeData
     OBroadcastMessage message = new OBroadcastMessage();
     message.type = OBroadcastMessage.TYPE_PING;
-    message.nodeIdentity = this.config.getNodeIdentity();
+    message.nodeIdentity = this.internalConfiguration.getNodeIdentity();
     message.group = this.config.getGroupName();
     message.term = leaderStatus.currentTerm;
     message.role = leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER ?
@@ -249,13 +250,13 @@ public abstract class ONodeManager {
           data.master = false;
         }
         leaderStatus.changeTerm(message.term);
-        if (this.config.getNodeIdentity().equals(message.getNodeIdentity())) {
+        if (this.internalConfiguration.getNodeIdentity().equals(message.getNodeIdentity())) {
           leaderStatus.status = OLeaderElectionStateMachine.Status.LEADER;
         }
       } else if (data.term == message.term && message.role == OBroadcastMessage.ROLE_COORDINATOR) {
         resetLeader();
         data.master = true;
-        if (!message.getNodeIdentity().equals(this.config.getNodeIdentity())) {
+        if (!message.getNodeIdentity().equals(this.internalConfiguration.getNodeIdentity())) {
           leaderStatus.status = OLeaderElectionStateMachine.Status.FOLLOWER;
         }
       }
@@ -392,7 +393,7 @@ public abstract class ONodeManager {
 //    System.out.println("" + this.nodeName + " * START ELECTION term " + currentTerm + " node " + nodeName);
     OBroadcastMessage message = new OBroadcastMessage();
     message.group = this.config.getGroupName();
-    message.nodeIdentity = this.config.getNodeIdentity();
+    message.nodeIdentity = this.internalConfiguration.getNodeIdentity();
     message.term = currentTerm;
     message.dbName = dbName;
     message.lastLogId = lastLogId;
@@ -408,7 +409,7 @@ public abstract class ONodeManager {
 
   private void processReceiveLeaderElected(OBroadcastMessage message, String fromAddr) {
     if (message.term >= leaderStatus.currentTerm) {
-      if (!this.config.getNodeIdentity().equals(message.nodeIdentity)) {
+      if (!this.internalConfiguration.getNodeIdentity().equals(message.nodeIdentity)) {
         leaderStatus.setStatus(OLeaderElectionStateMachine.Status.FOLLOWER);
       } else {
         leaderStatus.setStatus(OLeaderElectionStateMachine.Status.LEADER);
@@ -446,7 +447,7 @@ public abstract class ONodeManager {
   private void sendVote(int term, ONodeIdentity toNode) {
     OBroadcastMessage message = new OBroadcastMessage();
     message.group = this.config.getGroupName();
-    message.nodeIdentity = this.config.getNodeIdentity();
+    message.nodeIdentity = this.internalConfiguration.getNodeIdentity();
     message.term = term;
     message.voteForIdentity = toNode;
     message.type = OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION;
@@ -470,10 +471,10 @@ public abstract class ONodeManager {
       ODiscoveryListener.NodeData data = new ODiscoveryListener.NodeData();
       data.term = leaderStatus.currentTerm;
       data.master = true;
-      data.identity = this.config.getNodeIdentity();
+      data.identity = this.internalConfiguration.getNodeIdentity();
       data.lastPingTimestamp = System.currentTimeMillis();
       discoveryListener.leaderElected(data);
-      knownServers.put(this.config.getNodeIdentity(), data);
+      knownServers.put(this.internalConfiguration.getNodeIdentity(), data);
       sendLeaderElected();
     }
   }
@@ -486,7 +487,7 @@ public abstract class ONodeManager {
 //    System.out.println("SEND LEADER ELECTED " + nodeName);
     OBroadcastMessage message = new OBroadcastMessage();
     message.group = this.config.getGroupName();
-    message.nodeIdentity = this.config.getNodeIdentity();
+    message.nodeIdentity = this.internalConfiguration.getNodeIdentity();
     message.term = leaderStatus.currentTerm;
     message.tcpPort = getConfig().getTcpPort();
     message.type = OBroadcastMessage.TYPE_LEADER_ELECTED;
@@ -586,5 +587,9 @@ public abstract class ONodeManager {
 
   public ONodeConfiguration getConfig() {
     return config;
+  }
+
+  public ONodeInternalConfiguration getInternalConfiguration() {
+    return internalConfiguration;
   }
 }

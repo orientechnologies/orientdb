@@ -5,17 +5,16 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class OStructuralNodeConfiguration {
 
-  private ONodeIdentity                 identity;
-  private List<OStructuralNodeDatabase> databases;
+  private ONodeIdentity                      identity;
+  private Map<UUID, OStructuralNodeDatabase> databases;
 
   public OStructuralNodeConfiguration(ONodeIdentity identity) {
     this.identity = identity;
-    this.databases = new ArrayList<>();
+    this.databases = new HashMap<>();
   }
 
   protected OStructuralNodeConfiguration() {
@@ -26,11 +25,11 @@ public class OStructuralNodeConfiguration {
     identity = new ONodeIdentity();
     identity.deserialize(input);
     int nDatabases = input.readInt();
-    databases = new ArrayList<>(nDatabases);
+    databases = new HashMap<>(nDatabases);
     while (nDatabases-- > 0) {
       OStructuralNodeDatabase db = new OStructuralNodeDatabase();
       db.deserialize(input);
-      databases.add(db);
+      databases.put(db.getUuid(), db);
     }
   }
 
@@ -41,12 +40,20 @@ public class OStructuralNodeConfiguration {
   public void serialize(DataOutput output) throws IOException {
     identity.serialize(output);
     output.writeInt(databases.size());
-    for (OStructuralNodeDatabase database : databases) {
+    for (OStructuralNodeDatabase database : databases.values()) {
       database.serialize(output);
     }
   }
 
   public void addDatabase(OStructuralNodeDatabase database) {
-    databases.add(database);
+    databases.put(database.getUuid(), database);
+  }
+
+  public OStructuralNodeDatabase getDatabase(UUID database) {
+    return databases.get(database);
+  }
+
+  public Collection<OStructuralNodeDatabase> getDatabases() {
+    return databases.values();
   }
 }

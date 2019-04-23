@@ -1,21 +1,29 @@
 package com.orientechnologies.orient.distributed.impl;
 
-import java.util.UUID;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 
 public class ONodeInternalConfiguration {
 
-  private UUID nodeId;
-  private String connectionUsername;
-  private String connectionPassword;
+  private ONodeIdentity nodeIdentity;
+  private String        connectionUsername;
+  private String        connectionPassword;
+  private OLogId        lastLogId;
 
-  public ONodeInternalConfiguration(UUID nodeId, String connectionUsername, String connectionPassword) {
-    this.nodeId = nodeId;
+  public ONodeInternalConfiguration(OLogId lastLogId, ONodeIdentity nodeIdentity, String connectionUsername,
+      String connectionPassword) {
+    this.lastLogId = lastLogId;
+    this.nodeIdentity = nodeIdentity;
     this.connectionUsername = connectionUsername;
     this.connectionPassword = connectionPassword;
   }
 
-  public UUID getNodeId() {
-    return nodeId;
+  public OLogId getLastLogId() {
+    return lastLogId;
+  }
+
+  public ONodeIdentity getNodeIdentity() {
+    return nodeIdentity;
   }
 
   public String getConnectionPassword() {
