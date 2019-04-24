@@ -90,6 +90,9 @@ public class OrientGraphFactoryEncryptionTest {
   @Test
   public void shouldFailWitWrongKey() {
     try (OrientDB orientDB = new OrientDB("embedded:" + dbDir, OrientDBConfig.defaultConfig())) {
+      if (orientDB.exists(dbName)) {
+        orientDB.drop(dbName);
+      }
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession db = orientDB.open(dbName, "admin", "admin")) {
