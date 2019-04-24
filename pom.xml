@@ -1,19 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
-
   <groupId>com.orientechnologies</groupId>
   <artifactId>orientdb-studio</artifactId>
   <version>3.1.0-SNAPSHOT</version>
-
   <name>OrientDB Studio</name>
   <description>OrientDB Studio - web interface for OrientDB server</description>
   <url>http://www.orientdb.com</url>
-
   <organization>
     <name>OrientDB</name>
     <url>https://orientdb.com</url>
@@ -24,7 +17,6 @@
       <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
-
   <scm>
     <connection>scm:git:git@github.com:orientechnologies/orientdb-studio.git</connection>
     <developerConnection>scm:git:git@github.com:orientechnologies/orientdb-studio.git</developerConnection>
@@ -34,8 +26,6 @@
     <system>GitHub Issues</system>
     <url>https://github.com/orientechnologies/orientdb-studio/issues</url>
   </issueManagement>
-
-
   <developers>
     <developer>
       <id>l.garulli</id>
@@ -90,13 +80,11 @@
     </repository>
   </repositories>
   <build>
-
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <version>2.8</version>
-
         <executions>
           <execution>
             <id>unzip-community</id>
@@ -148,7 +136,6 @@
         </executions>
       </plugin>
       <plugin>
-
         <!-- Build the front end -->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
@@ -160,7 +147,21 @@
               <goal>exec</goal>
             </goals>
           </execution>
-
+          <execution>
+            <id>Install Deps and Dist</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>yarn</executable>
+              <arguments>
+                <argument>run</argument>
+                <argument>dist</argument>
+              </arguments>
+              <workingDirectory>.</workingDirectory>
+            </configuration>
+          </execution>
           <execution>
             <id>Run OrientB</id>
             <goals>
@@ -203,10 +204,11 @@
           </execution>
         </executions>
         <configuration>
-          <executable>yarn</executable>
+          <executable>npm</executable>
           <arguments>
-            <argument>run</argument>
-            <argument>dist</argument>
+            <argument>install</argument>
+            <argument>-g</argument>
+            <argument>yarn</argument>
           </arguments>
           <workingDirectory>.</workingDirectory>
         </configuration>
@@ -253,8 +255,6 @@
       </plugin>
     </plugins>
   </build>
-
-
   <profiles>
     <profile>
       <id>release-sign-artifacts</id>
@@ -283,6 +283,5 @@
         </plugins>
       </build>
     </profile>
-
   </profiles>
 </project>
