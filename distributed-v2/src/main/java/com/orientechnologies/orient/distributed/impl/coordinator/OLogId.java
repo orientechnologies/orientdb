@@ -5,7 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Objects;
 
-public class OLogId {
+public class OLogId implements Comparable<OLogId> {
   private long id;
 
   public OLogId(long id) {
@@ -13,11 +13,20 @@ public class OLogId {
   }
 
   public static void serialize(OLogId id, DataOutput output) throws IOException {
-    output.writeLong(id.id);
+    if (id == null) {
+      output.writeLong(-1);
+    } else {
+      output.writeLong(id.id);
+    }
   }
 
   public static OLogId deserialize(DataInput input) throws IOException {
-    return new OLogId(input.readLong());
+    long val = input.readLong();
+    if (val == -1) {
+      return null;
+    } else {
+      return new OLogId(val);
+    }
   }
 
   @Override
@@ -37,5 +46,10 @@ public class OLogId {
 
   public long getId() {
     return id;
+  }
+
+  @Override
+  public int compareTo(OLogId o) {
+    return ((Long) this.id).compareTo(o.id);
   }
 }

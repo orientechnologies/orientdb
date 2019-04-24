@@ -2,8 +2,6 @@ package com.orientechnologies.orient.distributed;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.client.remote.OBinaryRequest;
-import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -13,14 +11,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.distributed.hazelcast.OCoordinatedExecutorMessageHandler;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.distributed.impl.ONodeInternalConfiguration;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDistributed;
@@ -42,7 +38,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
@@ -332,7 +327,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME) || context.getStorage().isClosed();
   }
 
-  public synchronized void setCoordinator(ONodeIdentity coordinatorIdentity) {
+  public synchronized void setCoordinator(ONodeIdentity coordinatorIdentity, OLogId lastValid) {
     this.coordinatorIdentity = coordinatorIdentity;
     if (getNodeIdentity().equals(coordinatorIdentity)) {
       if (!this.coordinator) {
@@ -356,9 +351,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         this.coordinator = true;
       }
     } else {
+      realignToLog(lastValid);
       structuralDistributedContext.setExternalCoordinator(
           new OStructuralDistributedMember(coordinatorIdentity, networkManager.getChannel(coordinatorIdentity)));
-      joinCoordinator();
+      firstJoinCoordinator();
       for (OSharedContext context : sharedContexts.values()) {
         if (isContextToIgnore(context))
           continue;
@@ -373,7 +369,28 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     setOnline();
   }
 
-  private void joinCoordinator() {
+  private void realignToLog(OLogId lastValid) {
+    OLogId id = this.structuralConfiguration.getLastUpdateId();
+    OOperationLog opLog = this.structuralDistributedContext.getOpLog();
+    if (opLog.lastPersistentLog() != null && lastValid != null) {
+      Iterator<OOperationLogEntry> list = opLog.iterate(id, lastValid);
+      while (list.hasNext()) {
+        OOperationLogEntry change = list.next();
+        this.structuralDistributedContext.getExecutor().recover(change.getLogId(), (OStructuralNodeRequest) change.getRequest());
+      }
+      int isCoordinatorLastMoreRecent = lastValid.compareTo(opLog.lastPersistentLog());
+      if (isCoordinatorLastMoreRecent > 0) {
+        // Fetch the missing from network
+      } else if (isCoordinatorLastMoreRecent < 0) {
+        opLog.removeAfter(lastValid);
+      }
+    } else {
+      firstJoinCoordinator();
+    }
+
+  }
+
+  private void firstJoinCoordinator() {
     super.loadAllDatabases();
     Collection<OStorage> storages = super.getStorages();
     List<OStructuralNodeDatabase> databases = new ArrayList<>();

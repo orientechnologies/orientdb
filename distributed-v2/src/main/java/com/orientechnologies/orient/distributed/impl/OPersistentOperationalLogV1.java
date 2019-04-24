@@ -345,4 +345,10 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       }
     }
   }
+
+  @Override
+  public void removeAfter(OLogId lastValid) {
+    //TODO:
+    throw new UnsupportedOperationException("not yed done");
+  }
 }

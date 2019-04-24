@@ -15,12 +15,10 @@ public interface OOperationLog extends AutoCloseable {
    *
    * @return
    */
-  default Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to) {
-    throw new UnsupportedOperationException();
-  }
+  Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to);
 
   @Override
-  default void close() {
+  void close();
 
-  }
+  void removeAfter(OLogId lastValid);
 }

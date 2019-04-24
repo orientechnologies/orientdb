@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.server.OSystemDatabase;
 
 import java.io.*;
@@ -15,6 +16,7 @@ public class OStructuralConfiguration {
   private static final String                         CLUSTER_NAME = "__DISTRIBUTED_CONFIG__";
   private              OSystemDatabase                systemDatabase;
   private              ONodeIdentity                  currentNodeIdentity;
+  private              OLogId                         lastUpdateId;
   private              OStructuralSharedConfiguration sharedConfiguration;
 
   public OStructuralConfiguration(OSystemDatabase systemDatabase, OrientDBInternal context, String nodeName) {
@@ -48,6 +50,7 @@ public class OStructuralConfiguration {
   }
 
   protected void discSerialize(DataOutput output) throws IOException {
+    OLogId.serialize(lastUpdateId, output);
     this.currentNodeIdentity.serialize(output);
     this.sharedConfiguration.serialize(output);
   }
@@ -59,13 +62,23 @@ public class OStructuralConfiguration {
   }
 
   protected void discDeserialize(DataInput input) throws IOException {
+    this.lastUpdateId = OLogId.deserialize(input);
     this.currentNodeIdentity = new ONodeIdentity();
     this.currentNodeIdentity.deserialize(input);
     sharedConfiguration = new OStructuralSharedConfiguration();
     sharedConfiguration.deserialize(input);
   }
 
+  public synchronized void saveFromNetwork(OLogId id) {
+    this.lastUpdateId = id;
+    saveInternal();
+  }
+
   public void save() {
+    saveInternal();
+  }
+
+  public synchronized void saveInternal() {
     systemDatabase.executeInDBScope((session) -> {
       try {
         assert session.existsCluster(CLUSTER_NAME);
@@ -103,8 +116,12 @@ public class OStructuralConfiguration {
     return sharedConfiguration;
   }
 
-  public void receiveSharedConfiguration(OStructuralSharedConfiguration sharedConfiguration) {
+  public synchronized void receiveSharedConfiguration(OStructuralSharedConfiguration sharedConfiguration) {
     this.sharedConfiguration = sharedConfiguration;
     this.save();
+  }
+
+  public OLogId getLastUpdateId() {
+    return lastUpdateId;
   }
 }

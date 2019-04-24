@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.impl.structural;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 
 import java.util.Map;
@@ -58,5 +59,12 @@ public class OStructuralDistributedExecutor implements AutoCloseable, OOperation
   @Override
   public OrientDBDistributed getOrientDB() {
     return orientDB;
+  }
+
+  public void recover(OLogId logId, OStructuralNodeRequest request) {
+    executor.execute(() -> {
+      request.recover(this);
+    });
+
   }
 }

@@ -9,6 +9,7 @@ import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.hazelcast.OCoordinatedExecutorMessageHandler;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -65,7 +66,8 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
         ODistributedNetworkManager.this.orientDB.nodeDisconnected(nodeIdentity);
       }
     }, internalConfiguration.getNodeIdentity().getName(), nodeIdentity.getName(), host, user, password);
-    ODistributedChannelBinaryProtocol channel = new ODistributedChannelBinaryProtocol(internalConfiguration.getNodeIdentity(), remoteServer);
+    ODistributedChannelBinaryProtocol channel = new ODistributedChannelBinaryProtocol(internalConfiguration.getNodeIdentity(),
+        remoteServer);
     final ODistributedChannelBinaryProtocol old = remoteServers.putIfAbsent(nodeIdentity, channel);
     if (old != null) {
       channel.close();
@@ -125,7 +127,9 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
 
   @Override
   public void leaderElected(NodeData data) {
-    orientDB.setCoordinator(data.getNodeIdentity());
+    //TODO: Come from a term
+    OLogId lastValid = null;
+    orientDB.setCoordinator(data.getNodeIdentity(), lastValid);
   }
 
   public ODistributedChannel getChannel(ONodeIdentity identity) {
