@@ -70,6 +70,13 @@ public class OrientGraphFactoryEncryptionTest {
   public void shouldQueryDESEncryptedDatabase() {
     OrientGraphFactory graphFactory = new OrientGraphFactory("plocal:" + dbPath);
 
+    if(graphFactory.exists()) {
+      graphFactory.drop();
+    }else{
+      graphFactory.close();
+    }
+    graphFactory = new OrientGraphFactory("plocal:" + dbPath);
+
     graphFactory.setProperty(STORAGE_ENCRYPTION_METHOD.getKey(), "des");
     graphFactory.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
 

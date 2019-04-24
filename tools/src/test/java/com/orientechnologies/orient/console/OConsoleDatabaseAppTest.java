@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.console;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -111,10 +112,12 @@ public class OConsoleDatabaseAppTest {
       String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("#") + 5).trim();
 
       console.set("maxBinaryDisplay", "10000");
-      if (rid.length() == 0) {
-        System.out.println("testDisplayRawRecord - Result from console: " + resultString);
+      try {
+        console.displayRawRecord(rid);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "testDisplayRawRecord - Result from console: " + resultString, e);
+        throw e;
       }
-      console.displayRawRecord(rid);
       result = out.toByteArray();
       resultString = new String(result);
 
