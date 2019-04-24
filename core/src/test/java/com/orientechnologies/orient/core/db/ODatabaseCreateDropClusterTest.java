@@ -1,16 +1,16 @@
 package com.orientechnologies.orient.core.db;
 
-import org.junit.Assert; import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ODatabaseCreateDropClusterTest {
 
   @Test
   public void createDropCluster() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseCreateDropClusterTest.class.getName());
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseCreateDropClusterTest.class.getSimpleName());
     db.create();
     try {
       db.addCluster("test");
@@ -24,7 +24,7 @@ public class ODatabaseCreateDropClusterTest {
 
   @Test
   public void createDropClusterOnClass() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseCreateDropClusterTest.class.getName());
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseCreateDropClusterTest.class.getSimpleName());
     db.create();
     try {
       OClass test = db.getMetadata().getSchema().createClass("test", 1, null);

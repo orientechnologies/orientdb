@@ -24,12 +24,17 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -46,6 +51,38 @@ import java.util.concurrent.Callable;
  * @author Sergey Sitnikov
  */
 public class StorageNamingTests {
+
+  @Test
+  public void testSpecialLettersOne() {
+    try (OrientDB orientDB = new OrientDB("embedded:nameTest", OrientDBConfig.defaultConfig())) {
+      try {
+        orientDB.create("name%", ODatabaseType.MEMORY);
+        Assert.fail();
+      } catch (OInvalidDatabaseNameException e) {
+        //skip
+      }
+    }
+  }
+
+  @Test
+  public void testSpecialLettersTwo() {
+    try (OrientDB orientDB = new OrientDB("embedded:nameTest", OrientDBConfig.defaultConfig())) {
+      try {
+        orientDB.create("na.me", ODatabaseType.MEMORY);
+        Assert.fail();
+      } catch (OInvalidDatabaseNameException e) {
+        //skip
+      }
+    }
+  }
+
+  @Test
+  public void testSpecialLettersThree() {
+    try (OrientDB orientDB = new OrientDB("embedded:nameTest", OrientDBConfig.defaultConfig())) {
+      orientDB.create("na_me$", ODatabaseType.MEMORY);
+      orientDB.drop("na_me$");
+    }
+  }
 
   @Test
   public void commaInPathShouldBeAllowed() {

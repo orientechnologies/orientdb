@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Random;
 
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -41,10 +42,12 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
   public void testListDatabasesMemoryDB() throws Exception {
     final OServerAdmin admin = new OServerAdmin("remote:localhost").connect("root", ODatabaseHelper.getServerRootPassword());
     try {
-      final String plocalDatabaseName = "plocalTestListDatabasesMemoryDB" + Math.random();
+      final Random random = new Random();
+
+      final String plocalDatabaseName = "plocalTestListDatabasesMemoryDB" + random.nextInt();
       admin.createDatabase(plocalDatabaseName, "graph", "plocal");
 
-      final String memoryDatabaseName = "memoryTestListDatabasesMemoryDB" + Math.random();
+      final String memoryDatabaseName = "memoryTestListDatabasesMemoryDB" + random.nextInt();
       admin.createDatabase(memoryDatabaseName, "graph", "memory");
 
       final Map<String, String> list = admin.listDatabases();

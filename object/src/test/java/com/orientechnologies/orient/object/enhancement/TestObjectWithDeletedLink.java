@@ -13,7 +13,7 @@ public class TestObjectWithDeletedLink {
 
   @Before
   public void before() {
-    db = new OObjectDatabaseTx("memory:" + TestObjectWithDeletedLink.class.getName());
+    db = new OObjectDatabaseTx("memory:" + TestObjectWithDeletedLink.class.getSimpleName());
     db.create();
     db.getEntityManager().registerEntityClass(SimpleSelfRef.class);
   }

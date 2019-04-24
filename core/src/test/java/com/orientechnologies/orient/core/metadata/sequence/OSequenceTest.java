@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -21,8 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Assert;
-
 /**
  * Created by frank on 22/04/2016.
  */
@@ -34,7 +33,7 @@ public class OSequenceTest {
   public  ExternalResource resource = new ExternalResource() {
     @Override
     protected void before() throws Throwable {
-      db = new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getName());
+      db = new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getSimpleName());
       db.create();
     }
 

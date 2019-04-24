@@ -34,8 +34,10 @@ public class AbstractRemoteTest {
     server.startup(stream);
     server.activate();
 
-    server.createDatabase(name.getMethodName(), ODatabaseType.MEMORY, OrientDBConfig.defaultConfig());
-
+    final String dbName = name.getMethodName();
+    if (dbName != null) {
+      server.createDatabase(dbName, ODatabaseType.MEMORY, OrientDBConfig.defaultConfig());
+    }
   }
 
   @After

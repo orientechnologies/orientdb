@@ -1,17 +1,13 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import com.orientechnologies.orient.core.Orient;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.util.wrappers.batch.cache.ObjectIDVertexCache;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.*;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Sergey Sitnikov
@@ -22,7 +18,7 @@ public class NestedTxTest {
   @Test
   public void testNestedTx() throws InterruptedException, ExecutionException {
     final ExecutorService executorService = Executors.newSingleThreadExecutor();
-    final OrientGraphFactory factory = new OrientGraphFactory("memory:NestedTxTest.testNestedTx", "admin", "admin")
+    final OrientGraphFactory factory = new OrientGraphFactory("memory:NestedTxTest_testNestedTx", "admin", "admin")
         .setupPool(2, 10);
     factory.setAutoStartTx(false);
 

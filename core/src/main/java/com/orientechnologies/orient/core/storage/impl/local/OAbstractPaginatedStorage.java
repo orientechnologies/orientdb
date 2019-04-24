@@ -71,6 +71,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.OJVMErrorException;
 import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
@@ -182,7 +183,25 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
@@ -192,6 +211,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -556,6 +577,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireWriteLock();
       try {
+        if (name == null) {
+          throw new OInvalidDatabaseNameException("Database name can not be null");
+        }
+
+        if (name.isEmpty()) {
+          throw new OInvalidDatabaseNameException("Database name can not be empty");
+        }
+
+        final Pattern namePattern = Pattern.compile("[^\\w\\d$_-]+");
+        final Matcher matcher = namePattern.matcher(name);
+        if (matcher.find()) {
+          throw new OInvalidDatabaseNameException(
+              "Only letters, numbers, `$`, `_` and `-` are allowed in database name. Provided name :`" + name + "`");
+        }
 
         if (status != STATUS.CLOSED) {
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it is not closed");

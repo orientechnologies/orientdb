@@ -22,7 +22,7 @@ public class ConcurrencySBTreeBonsaiLocalTest {
 
   @Test
   public void testName() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ConcurrencySBTreeBonsaiLocalTest.class.getName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ConcurrencySBTreeBonsaiLocalTest.class.getSimpleName());
     db.create();
     ExecutorService exec = Executors.newCachedThreadPool();
     try {

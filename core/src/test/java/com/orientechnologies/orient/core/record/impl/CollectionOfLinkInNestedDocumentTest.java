@@ -11,7 +11,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class CollectionOfLinkInNestedDocumentTest {
 
@@ -19,17 +21,13 @@ public class CollectionOfLinkInNestedDocumentTest {
 
   @Before
   public void before() {
-    db = new ODatabaseDocumentTx("memory:" + CollectionOfLinkInNestedDocumentTest.class);
+    db = new ODatabaseDocumentTx("memory:" + CollectionOfLinkInNestedDocumentTest.class.getSimpleName());
     db.create();
   }
 
   @After
   public void after() {
-    try {
-      db.drop();
-    } finally {
-
-    }
+    db.drop();
   }
 
   @Test
