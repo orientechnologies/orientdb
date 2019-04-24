@@ -18,7 +18,7 @@ public class HookChangeValidationTest {
   @Test
   public void testHookCreateChange() {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + HookChangeValidationTest.class.getName());
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + HookChangeValidationTest.class.getSimpleName());
     db.create();
     try {
       OSchema schema = db.getMetadata().getSchema();
@@ -63,7 +63,7 @@ public class HookChangeValidationTest {
   @Test
   public void testHookUpdateChange() {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + HookChangeValidationTest.class.getName());
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + HookChangeValidationTest.class.getSimpleName());
     db.create();
     try {
       OSchema schema = db.getMetadata().getSchema();
@@ -115,7 +115,7 @@ public class HookChangeValidationTest {
   @Test
   public void testHookCreateChangeTx() {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + HookChangeValidationTest.class.getName());
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + HookChangeValidationTest.class.getSimpleName());
     db.create();
     try {
       OSchema schema = db.getMetadata().getSchema();
@@ -162,7 +162,7 @@ public class HookChangeValidationTest {
   @Test
   public void testHookUpdateChangeTx() {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + HookChangeValidationTest.class.getName());
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + HookChangeValidationTest.class.getSimpleName());
     db.create();
     try {
       OSchema schema = db.getMetadata().getSchema();

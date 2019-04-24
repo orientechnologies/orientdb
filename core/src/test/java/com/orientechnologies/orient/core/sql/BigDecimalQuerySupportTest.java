@@ -14,7 +14,7 @@ public class BigDecimalQuerySupportTest {
 
   @Test
   public void testDecimalPrecision() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + BigDecimalQuerySupportTest.class.getName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + BigDecimalQuerySupportTest.class.getSimpleName());
     db.create();
     try {
 

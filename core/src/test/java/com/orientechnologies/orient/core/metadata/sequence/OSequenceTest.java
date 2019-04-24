@@ -30,7 +30,7 @@ public class OSequenceTest {
   public ExternalResource resource = new ExternalResource() {
     @Override
     protected void before() throws Throwable {
-      db = new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getName());
+      db = new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getSimpleName());
       db.create();
     }
 

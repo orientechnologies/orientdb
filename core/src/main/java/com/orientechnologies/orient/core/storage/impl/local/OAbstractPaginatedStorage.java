@@ -68,6 +68,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.OJVMErrorException;
 import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
@@ -206,6 +207,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -554,6 +557,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireWriteLock();
       try {
+        if (name == null) {
+          throw new OInvalidDatabaseNameException("Database name can not be null");
+        }
+
+        if (name.isEmpty()) {
+          throw new OInvalidDatabaseNameException("Database name can not be empty");
+        }
+
+        final Pattern namePattern = Pattern.compile("[^\\w\\d$_-]+");
+        final Matcher matcher = namePattern.matcher(name);
+        if (matcher.find()) {
+          throw new OInvalidDatabaseNameException(
+              "Only letters, numbers, `$`, `_` and `-` are allowed in database name. Provided name :`" + name + "`");
+        }
 
         if (status != STATUS.CLOSED) {
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it is not closed");
