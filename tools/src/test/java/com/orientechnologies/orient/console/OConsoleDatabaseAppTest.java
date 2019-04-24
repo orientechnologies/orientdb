@@ -111,6 +111,9 @@ public class OConsoleDatabaseAppTest {
       String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("#") + 5).trim();
 
       console.set("maxBinaryDisplay", "10000");
+      if (rid.length() == 0) {
+        System.out.println("testDisplayRawRecord - Result from console: " + resultString);
+      }
       console.displayRawRecord(rid);
       result = out.toByteArray();
       resultString = new String(result);
@@ -324,13 +327,10 @@ public class OConsoleDatabaseAppTest {
 
 //    builder.append("create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
 
-    builder.append("create edge from \n"
-        + "(select from V where name = 'foo') \n"
-        + "to (select from V where name = 'bar');\n");
+    builder.append("create edge from \n" + "(select from V where name = 'foo') \n" + "to (select from V where name = 'bar');\n");
 
     ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
     OConsoleDatabaseApp console = c.console();
-
 
     try {
       console.run();
