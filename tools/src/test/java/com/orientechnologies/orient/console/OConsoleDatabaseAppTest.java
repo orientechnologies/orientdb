@@ -109,7 +109,7 @@ public class OConsoleDatabaseAppTest {
       console.setOutput(stream);
       String resultString = new String(result);
 
-      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("#") + 5).trim();
+      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("{") ).trim();
 
       console.set("maxBinaryDisplay", "10000");
       try {
