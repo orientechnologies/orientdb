@@ -15,6 +15,7 @@ public class OCommitStatement extends OSimpleExecStatement {
 
   protected OInteger         retry;
   protected List<OStatement> elseStatements;
+  protected Boolean          elseFail;
 
   public OCommitStatement(int id) {
     super(id);
@@ -26,7 +27,7 @@ public class OCommitStatement extends OSimpleExecStatement {
 
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
-    ctx.getDatabase().commit();//no RETRY here, that case is allowed only for batch scripts;
+    ctx.getDatabase().commit();//no RETRY and ELSE here, that case is allowed only for batch scripts;
     OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
     item.setProperty("operation", "commit");
@@ -40,13 +41,26 @@ public class OCommitStatement extends OSimpleExecStatement {
     if (retry != null) {
       builder.append(" RETRY ");
       retry.toString(params, builder);
+      if (elseFail != null || elseStatements != null) {
+        builder.append(" ELSE ");
+      }
       if (elseStatements != null) {
-        builder.append(" ELSE {\n");
+        builder.append("{\n");
         for (OStatement stm : elseStatements) {
           stm.toString(params, builder);
           builder.append(";\n");
         }
         builder.append("}");
+      }
+      if (elseFail != null) {
+        if (elseStatements != null) {
+          builder.append(" AND");
+        }
+        if (elseFail) {
+          builder.append(" FAIL");
+        } else {
+          builder.append(" CONTINUE");
+        }
       }
     }
   }
@@ -61,11 +75,22 @@ public class OCommitStatement extends OSimpleExecStatement {
         result.elseStatements.add(stm.copy());
       }
     }
+    if (elseFail != null) {
+      result.elseFail = elseFail;
+    }
     return result;
   }
 
   public OInteger getRetry() {
     return retry;
+  }
+
+  public List<OStatement> getElseStatements() {
+    return elseStatements;
+  }
+
+  public Boolean getElseFail() {
+    return elseFail;
   }
 
   @Override
@@ -79,13 +104,16 @@ public class OCommitStatement extends OSimpleExecStatement {
 
     if (retry != null ? !retry.equals(that.retry) : that.retry != null)
       return false;
-    return elseStatements != null ? elseStatements.equals(that.elseStatements) : that.elseStatements == null;
+    if (elseStatements != null ? !elseStatements.equals(that.elseStatements) : that.elseStatements != null)
+      return false;
+    return elseFail != null ? elseFail.equals(that.elseFail) : that.elseFail == null;
   }
 
   @Override
   public int hashCode() {
     int result = retry != null ? retry.hashCode() : 0;
     result = 31 * result + (elseStatements != null ? elseStatements.hashCode() : 0);
+    result = 31 * result + (elseFail != null ? elseFail.hashCode() : 0);
     return result;
   }
 }
