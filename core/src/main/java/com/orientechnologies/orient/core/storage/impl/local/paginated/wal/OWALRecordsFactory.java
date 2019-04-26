@@ -24,8 +24,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
@@ -58,49 +56,38 @@ public final class OWALRecordsFactory {
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
   private static final LZ4Factory factory                    = LZ4Factory.fastestInstance();
-  private static final int        MIN_COMPRESSED_RECORD_SIZE = 2 * 1024;
+  private static final int        MIN_COMPRESSED_RECORD_SIZE = 8 * 1024;
 
   public static OPair<ByteBuffer, Long> toStream(final OWriteableWALRecord walRecord) {
     final int contentSize = walRecord.serializedSize() + 1;
 
-    final long pointer;
-    final ByteBuffer content;
-
-    pointer = Native.malloc(contentSize);
-    content = new Pointer(pointer).getByteBuffer(0, contentSize);
+    final ByteBuffer content = ByteBuffer.allocate(contentSize).order(ByteOrder.nativeOrder());
 
     final byte recordId = walRecord.getId();
     content.put(recordId);
     walRecord.toStream(content);
 
     if (MIN_COMPRESSED_RECORD_SIZE <= 0 || contentSize < MIN_COMPRESSED_RECORD_SIZE) {
-      return new OPair<>(content, pointer);
+      return new OPair<>(content, 0L);
     }
 
     final LZ4Compressor compressor = factory.fastCompressor();
     final int maxCompressedLength = compressor.maxCompressedLength(contentSize - 1);
 
-    final long compressedPointer = Native.malloc(maxCompressedLength + 5);
-    final ByteBuffer compressedContent = new Pointer(compressedPointer).
-        getByteBuffer(0, maxCompressedLength + 5).order(ByteOrder.nativeOrder());
+    final ByteBuffer compressedContent = ByteBuffer.allocate(maxCompressedLength + 5).order(ByteOrder.nativeOrder());
 
     content.position(1);
     compressedContent.position(5);
     final int compressedLength = compressor.compress(content, 1, contentSize - 1, compressedContent, 5, maxCompressedLength);
 
     if (compressedLength + 5 < contentSize) {
-      if (pointer > 0) {
-        Native.free(pointer);
-      }
-
       compressedContent.limit(compressedLength + 5);
       compressedContent.put(0, (byte) (-(recordId + 1)));
       compressedContent.putInt(1, contentSize);
 
-      return new OPair<>(compressedContent, compressedPointer);
+      return new OPair<>(compressedContent, 0L);
     } else {
-      Native.free(compressedPointer);
-      return new OPair<>(content, pointer);
+      return new OPair<>(content, 0L);
     }
   }
 
