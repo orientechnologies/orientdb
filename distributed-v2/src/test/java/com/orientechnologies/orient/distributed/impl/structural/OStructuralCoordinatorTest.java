@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.impl.structural;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import org.junit.Test;
 
 import java.io.DataInput;
@@ -284,6 +285,21 @@ public class OStructuralCoordinatorTest {
 
     @Override
     public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
+
+    }
+
+    @Override
+    public void propagate(OLogId id, ORaftOperation operation) {
+
+    }
+
+    @Override
+    public void ack(OLogId logId) {
+
+    }
+
+    @Override
+    public void confirm(OLogId id) {
 
     }
   }

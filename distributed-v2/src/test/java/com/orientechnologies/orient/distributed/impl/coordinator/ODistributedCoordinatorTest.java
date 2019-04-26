@@ -7,6 +7,7 @@ import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeR
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import org.junit.Test;
 
 import java.io.DataInput;
@@ -293,6 +294,21 @@ public class ODistributedCoordinatorTest {
     @Override
     public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
       reply.countDown();
+    }
+
+    @Override
+    public void propagate(OLogId id, ORaftOperation operation) {
+
+    }
+
+    @Override
+    public void ack(OLogId logId) {
+
+    }
+
+    @Override
+    public void confirm(OLogId id) {
+      
     }
   }
 

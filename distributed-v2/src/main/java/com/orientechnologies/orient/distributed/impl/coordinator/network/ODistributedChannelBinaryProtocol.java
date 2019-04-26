@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
@@ -57,6 +58,21 @@ public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
   @Override
   public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
     controller.sendBinaryRequest(new ONetworkSubmitResponse(nodeIdentity, database, operationId, response));
+  }
+
+  @Override
+  public void propagate(OLogId id, ORaftOperation operation) {
+    controller.sendBinaryRequest(new ONetworkPropagate(nodeIdentity, id, operation));
+  }
+
+  @Override
+  public void ack(OLogId logId) {
+    controller.sendBinaryRequest(new ONetworkAck(nodeIdentity, logId));
+  }
+
+  @Override
+  public void confirm(OLogId id) {
+    controller.sendBinaryRequest(new ONetworkConfirm(nodeIdentity, id));
   }
 
   public void close() {

@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.distributed.impl.OIncrementOperationalLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
@@ -150,6 +151,21 @@ public class TestTransactionFlow {
 
     @Override
     public void submit(OSessionOperationId operationId, OStructuralSubmitRequest request) {
+
+    }
+
+    @Override
+    public void propagate(OLogId id, ORaftOperation operation) {
+
+    }
+
+    @Override
+    public void ack(OLogId logId) {
+
+    }
+
+    @Override
+    public void confirm(OLogId id) {
 
     }
   }

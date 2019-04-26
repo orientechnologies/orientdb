@@ -7,6 +7,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySu
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.*;
 import com.orientechnologies.orient.distributed.impl.structural.*;
 import com.orientechnologies.orient.distributed.impl.structural.operations.*;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 
 public class OCoordinateMessagesFactory {
   public static final int TRANSACTION_SUBMIT_REQUEST        = 1;
@@ -139,6 +140,10 @@ public class OCoordinateMessagesFactory {
     case DROP_DATABASE_SUBMIT_RESPONSE:
       return new ODropDatabaseSubmitResponse();
     }
+    return null;
+  }
+
+  public ORaftOperation createRaftOperation(int requestType) {
     return null;
   }
 }

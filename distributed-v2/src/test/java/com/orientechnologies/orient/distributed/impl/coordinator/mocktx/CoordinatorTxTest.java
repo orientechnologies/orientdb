@@ -11,6 +11,7 @@ import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeR
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -144,6 +145,22 @@ public class CoordinatorTxTest {
       latch.countDown();
       callCount.decrementAndGet();
     }
+
+    @Override
+    public void propagate(OLogId id, ORaftOperation operation) {
+
+    }
+
+    @Override
+    public void ack(OLogId logId) {
+
+    }
+
+    @Override
+    public void confirm(OLogId id) {
+
+    }
+
   }
 
 }

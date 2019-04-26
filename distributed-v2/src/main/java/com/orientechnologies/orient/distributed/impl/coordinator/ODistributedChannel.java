@@ -5,6 +5,7 @@ import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeR
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 
 public interface ODistributedChannel {
   /**
@@ -48,4 +49,10 @@ public interface ODistributedChannel {
   void reply(OSessionOperationId operationId, OStructuralSubmitResponse response);
 
   void submit(OSessionOperationId operationId, OStructuralSubmitRequest request);
+
+  void propagate(OLogId id, ORaftOperation operation);
+
+  void confirm(OLogId id);
+
+  void ack(OLogId logId);
 }

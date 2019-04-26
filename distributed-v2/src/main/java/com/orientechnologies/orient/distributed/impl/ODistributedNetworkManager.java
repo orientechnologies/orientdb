@@ -171,6 +171,12 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
       return new OStructuralOperationRequest(coordinateMessagesFactory);
     case DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE:
       return new OStructuralOperationResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_PROPAGATE_REQUEST:
+      return new ONetworkPropagate(coordinateMessagesFactory);
+    case DISTRIBUTED_ACK_RESPONSE:
+      return new ONetworkAck();
+    case DISTRIBUTED_CONFIRM_REQUEST:
+      return new ONetworkConfirm();
     }
     return null;
   }

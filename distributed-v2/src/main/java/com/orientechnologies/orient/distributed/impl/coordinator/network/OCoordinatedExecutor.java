@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+
 public interface OCoordinatedExecutor {
 
   void executeOperationRequest(OOperationRequest request);
@@ -17,4 +20,10 @@ public interface OCoordinatedExecutor {
   void executeStructuralSubmitRequest(ONetworkStructuralSubmitRequest request);
 
   void executeStructuralSubmitResponse(ONetworkStructuralSubmitResponse response);
+
+  void executePropagate(ONetworkPropagate propagate);
+
+  void executeConfirm(ONetworkConfirm confirm);
+
+  void executeAck(ONetworkAck ack);
 }

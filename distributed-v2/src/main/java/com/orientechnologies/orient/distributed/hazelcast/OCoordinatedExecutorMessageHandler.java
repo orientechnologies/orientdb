@@ -106,4 +106,19 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
     OStructuralSubmitContext context = distributedContext.getSubmitContext();
     context.receive(response.getOperationId(), response.getResponse());
   }
+
+  @Override
+  public void executePropagate(ONetworkPropagate propagate) {
+
+  }
+
+  @Override
+  public void executeConfirm(ONetworkConfirm confirm) {
+
+  }
+
+  @Override
+  public void executeAck(ONetworkAck ack) {
+
+  }
 }
