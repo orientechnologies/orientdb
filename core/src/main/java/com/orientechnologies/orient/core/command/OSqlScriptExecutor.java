@@ -84,7 +84,7 @@ public class OSqlScriptExecutor implements OScriptExecutor {
               throw new OCommandExecutionException("Invalid retry number: " + nRetries);
             }
 
-            RetryStep step = new RetryStep(lastRetryBlock, nRetries, scriptContext, false);
+            RetryStep step = new RetryStep(lastRetryBlock, nRetries, ((OCommitStatement) stm).getElseStatements(), ((OCommitStatement) stm).getElseFail(), scriptContext, false);
             ORetryExecutionPlan retryPlan = new ORetryExecutionPlan(scriptContext);
             retryPlan.chain(step);
             plan.chain(retryPlan, false);

@@ -333,6 +333,10 @@ TOKEN:
     |
     < ELSE: ( "E" | "e") ( "L" | "l") ( "S" | "s") ( "E" | "e") >
     |
+    < CONTINUE: ( "C" | "c") ( "O" | "o") ( "N" | "n") ( "T" | "t") ( "I" | "i") ( "N" | "n") ( "U" | "u") ( "E" | "e") >
+    |
+    < FAIL: ( "F" | "f") ( "A" | "a") ( "I" | "i") ( "L" | "l") >
+    |
     < ISOLATION: ( "I" | "i") ( "S" | "s") ( "O" | "o") ( "L" | "l") ( "A" | "a") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") >
     |
     < SLEEP: ( "S" | "s") ( "L" | "l") ( "E" | "e") ( "E" | "e") ( "P" | "p")  >
@@ -858,6 +862,10 @@ OIdentifier Identifier():
     token = <IF>
     |
     token = <ELSE>
+    |
+    token = <CONTINUE>
+    |
+    token = <FAIL>
     |
     token = <ISOLATION>
     |
@@ -4845,13 +4853,23 @@ OCommitStatement CommitStatement():
             <RETRY>
             jjtThis.retry = Integer()
             [
-              <ELSE> { jjtThis.elseStatements = new ArrayList(); }
-              <LBRACE>
+              <ELSE>
               (
-                last = StatementInternal() { jjtThis.elseStatements.add(last); }
-                <SEMICOLON>
-              )+
-              <RBRACE>
+                (
+                  { jjtThis.elseStatements = new ArrayList(); }
+                  <LBRACE>
+                  (
+                    last = StatementInternal() { jjtThis.elseStatements.add(last); }
+                    <SEMICOLON>
+                  )+
+                  <RBRACE>
+                  [
+                    <AND> ( ( <CONTINUE> { jjtThis.elseFail = false; } ) | ( <FAIL> { jjtThis.elseFail = true; } ) )
+                  ]
+                )
+                |
+                ( ( <CONTINUE> { jjtThis.elseFail = false; } ) | ( <FAIL> { jjtThis.elseFail = true; } ) )
+              )
             ]
         ]
     )
