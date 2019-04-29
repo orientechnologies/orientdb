@@ -22,7 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -59,24 +59,21 @@ public class OBackupDBLogger implements OBackupLogger {
 
   private void initLogger() {
 
-    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
-      @Override
-      public Void call(ODatabase db) {
+    getDatabase().executeInDBScope(db -> {
 
-        OSchema schema = db.getMetadata().getSchema();
+      OSchema schema = db.getMetadata().getSchema();
 
-        if (!schema.existsClass(CLASS_NAME)) {
-          OClass clazz = schema.createClass(CLASS_NAME);
-          clazz.createProperty("unitId", OType.LONG);
-          clazz.createProperty("mode", OType.STRING);
-          clazz.createProperty("txId", OType.LONG);
-          clazz.createProperty("uuid", OType.STRING);
-          clazz.createProperty("dbName", OType.STRING);
-          clazz.createProperty("timestamp", OType.DATETIME);
+      if (!schema.existsClass(CLASS_NAME)) {
+        OClass clazz = schema.createClass(CLASS_NAME);
+        clazz.createProperty("unitId", OType.LONG);
+        clazz.createProperty("mode", OType.STRING);
+        clazz.createProperty("txId", OType.LONG);
+        clazz.createProperty("uuid", OType.STRING);
+        clazz.createProperty("dbName", OType.STRING);
+        clazz.createProperty("timestamp", OType.DATETIME);
 
-        }
-        return null;
       }
+      return null;
     });
 
   }
@@ -84,14 +81,11 @@ public class OBackupDBLogger implements OBackupLogger {
   @Override
   public OBackupLog log(final OBackupLog log) {
 
-    return getDatabase().executeWithDB(new OCallable<OBackupLog, ODatabase>() {
-      @Override
-      public OBackupLog call(ODatabase iArgument) {
-        ODocument document = log.toDoc();
-        document.setClassName(CLASS_NAME);
-        ODocument saved = (ODocument) iArgument.save(document);
-        return factory.fromDoc(saved);
-      }
+    return getDatabase().executeWithDB(session -> {
+      ODocument document = log.toDoc();
+      document.setClassName(CLASS_NAME);
+      ODocument saved = session.save(document);
+      return factory.fromDoc(saved);
     });
 
   }
@@ -233,43 +227,40 @@ public class OBackupDBLogger implements OBackupLogger {
       }
     };
 
-    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
-      @Override
-      public Void call(ODatabase iArgument) {
+    getDatabase().executeInDBScope(session -> {
 
-        final List<Long> units = new ArrayList<Long>();
+      final List<Long> units = new ArrayList<Long>();
 
-        iArgument.command(new OSQLAsynchQuery(selectQuery, new OCommandResultListener() {
-          @Override
-          public boolean result(Object iRecord) {
+      session.command(new OSQLAsynchQuery(selectQuery, new OCommandResultListener() {
+        @Override
+        public boolean result(Object iRecord) {
 
-            ODocument doc = (ODocument) iRecord;
+          ODocument doc = (ODocument) iRecord;
 
-            Long unitId = doc.field("unitId");
-            units.add(unitId);
-            return true;
-          }
-
-          @Override
-          public void end() {
-
-          }
-
-          @Override
-          public Object getResult() {
-            return null;
-          }
-        })).execute(queryParams);
-
-        for (Long unit : units) {
-          try {
-            deleteByUUIDAndUnitId(uuid, unit);
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "Error deleting backup unit " + uuid, e);
-          }
+          Long unitId = doc.field("unitId");
+          units.add(unitId);
+          return true;
         }
-        return null;
+
+        @Override
+        public void end() {
+
+        }
+
+        @Override
+        public Object getResult() {
+          return null;
+        }
+      })).execute(queryParams);
+
+      for (Long unit : units) {
+        try {
+          deleteByUUIDAndUnitId(uuid, unit);
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Error deleting backup unit " + uuid, e);
+        }
       }
+      return null;
     });
 
     final String query = String.format("delete from %s where uuid = :uuid and unitId = :unitId", CLASS_NAME);
@@ -288,32 +279,29 @@ public class OBackupDBLogger implements OBackupLogger {
       }
     };
 
-    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
-      @Override
-      public Void call(ODatabase iArgument) {
+    getDatabase().executeInDBScope(session -> {
 
-        iArgument.command(new OSQLAsynchQuery(selectQuery, new OCommandResultListener() {
-          @Override
-          public boolean result(Object iRecord) {
+      session.command(new OSQLAsynchQuery(selectQuery, new OCommandResultListener() {
+        @Override
+        public boolean result(Object iRecord) {
 
-            ODocument doc = (ODocument) iRecord;
-            dropFile(doc);
-            return true;
-          }
+          ODocument doc = (ODocument) iRecord;
+          dropFile(doc);
+          return true;
+        }
 
-          @Override
-          public void end() {
+        @Override
+        public void end() {
 
-          }
+        }
 
-          @Override
-          public Object getResult() {
-            return null;
-          }
-        })).execute(queryParams);
-        iArgument.command(new OCommandSQL(query)).execute(queryParams);
-        return null;
-      }
+        @Override
+        public Object getResult() {
+          return null;
+        }
+      })).execute(queryParams);
+      session.command(new OCommandSQL(query)).execute(queryParams);
+      return null;
     });
 
   }
@@ -333,32 +321,29 @@ public class OBackupDBLogger implements OBackupLogger {
       }
     };
 
-    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
-      @Override
-      public Void call(ODatabase iArgument) {
+    getDatabase().executeInDBScope(session -> {
 
-        iArgument.command(new OSQLAsynchQuery(selectQuery, new OCommandResultListener() {
-          @Override
-          public boolean result(Object iRecord) {
+      session.command(new OSQLAsynchQuery(selectQuery, new OCommandResultListener() {
+        @Override
+        public boolean result(Object iRecord) {
 
-            ODocument doc = (ODocument) iRecord;
-            dropFile(doc);
-            return true;
-          }
+          ODocument doc = (ODocument) iRecord;
+          dropFile(doc);
+          return true;
+        }
 
-          @Override
-          public void end() {
+        @Override
+        public void end() {
 
-          }
+        }
 
-          @Override
-          public Object getResult() {
-            return null;
-          }
-        })).execute(queryParams);
-        iArgument.command(new OCommandSQL(query)).execute(queryParams);
-        return null;
-      }
+        @Override
+        public Object getResult() {
+          return null;
+        }
+      })).execute(queryParams);
+      session.command(new OCommandSQL(query)).execute(queryParams);
+      return null;
     });
 
   }
@@ -419,28 +404,22 @@ public class OBackupDBLogger implements OBackupLogger {
       }
     };
 
-    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
-      @Override
-      public Void call(ODatabase iArgument) {
-        iArgument.command(new OCommandSQL(query)).execute(queryParams);
-        return null;
-      }
+    getDatabase().executeInDBScope(session -> {
+      session.command(new OCommandSQL(query)).execute(queryParams);
+      return null;
     });
   }
 
   @Override
   public void updateLog(final OBackupLog log) {
 
-    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
-      @Override
-      public Void call(ODatabase iArgument) {
-        ODocument document = log.toDoc();
-        ODocument dbVersion = (ODocument) iArgument.load(new ORecordId(log.getInternalId()));
-        ORecordInternal.setIdentity(document, new ORecordId(log.getInternalId()));
-        ORecordInternal.setVersion(document, dbVersion.getVersion());
-        iArgument.save(document);
-        return null;
-      }
+    getDatabase().executeInDBScope(session -> {
+      ODocument document = log.toDoc();
+      ODocument dbVersion = session.load(new ORecordId(log.getInternalId()));
+      ORecordInternal.setIdentity(document, new ORecordId(log.getInternalId()));
+      ORecordInternal.setVersion(document, dbVersion.getVersion());
+      session.save(document);
+      return null;
     });
   }
 
