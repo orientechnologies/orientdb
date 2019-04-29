@@ -31,7 +31,7 @@ public class OStructuralCoordinator implements AutoCloseable, OCoordinationConte
 
   public void submit(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralSubmitRequest request) {
     requestExecutor.execute(() -> {
-      request.begin(new OStructuralSubmitId(member, operationId), this);
+      //request.begin(new OStructuralSubmitId(member, operationId), this);
     });
   }
 

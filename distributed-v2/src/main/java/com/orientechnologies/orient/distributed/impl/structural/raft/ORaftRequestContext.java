@@ -18,7 +18,7 @@ public class ORaftRequestContext {
   public boolean ack(ONodeIdentity node, OStructuralMaster context) {
     answers.add(node);
     if (answers.size() >= quorum) {
-      operation.apply(context.getContext());
+      operation.apply(context.getOrientDB());
       return true;
     }
     return false;

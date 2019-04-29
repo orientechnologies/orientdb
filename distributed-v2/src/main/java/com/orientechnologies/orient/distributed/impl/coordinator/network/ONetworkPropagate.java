@@ -20,7 +20,7 @@ import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBin
 
 public class ONetworkPropagate implements OBinaryRequest, ODistributedExecutable {
   private OCoordinateMessagesFactory factory;
-  private ONodeIdentity              nodeIdentity;
+  private ONodeIdentity              senderNode;
   private OLogId                     id;
   private ORaftOperation             operation;
 
@@ -28,8 +28,8 @@ public class ONetworkPropagate implements OBinaryRequest, ODistributedExecutable
     factory = coordinateMessagesFactory;
   }
 
-  public ONetworkPropagate(ONodeIdentity nodeIdentity, OLogId id, ORaftOperation operation) {
-    this.nodeIdentity = nodeIdentity;
+  public ONetworkPropagate(ONodeIdentity senderNode, OLogId id, ORaftOperation operation) {
+    this.senderNode = senderNode;
     this.id = id;
     this.operation = operation;
   }
@@ -37,7 +37,7 @@ public class ONetworkPropagate implements OBinaryRequest, ODistributedExecutable
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
-    nodeIdentity.serialize(output);
+    senderNode.serialize(output);
     OLogId.serialize(id, output);
     output.writeInt(operation.getRequestType());
     operation.serialize(output);
@@ -46,8 +46,8 @@ public class ONetworkPropagate implements OBinaryRequest, ODistributedExecutable
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     DataInputStream input = new DataInputStream(channel.getDataInput());
-    nodeIdentity = new ONodeIdentity();
-    nodeIdentity.deserialize(input);
+    senderNode = new ONodeIdentity();
+    senderNode.deserialize(input);
     id = OLogId.deserialize(input);
     int requestType = input.readInt();
     operation = factory.createRaftOperation(requestType);
@@ -84,6 +84,10 @@ public class ONetworkPropagate implements OBinaryRequest, ODistributedExecutable
     executor.executePropagate(this);
   }
 
+  public ONodeIdentity getSenderNode() {
+    return senderNode;
+  }
+
   public OLogId getId() {
     return id;
   }
@@ -91,5 +95,5 @@ public class ONetworkPropagate implements OBinaryRequest, ODistributedExecutable
   public ORaftOperation getOperation() {
     return operation;
   }
-  
+
 }

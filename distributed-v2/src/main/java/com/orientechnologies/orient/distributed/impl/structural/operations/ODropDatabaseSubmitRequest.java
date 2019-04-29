@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.distributed.impl.structural.operations;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.distributed.impl.structural.OCoordinationContext;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitId;
+import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OMasterContext;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -20,10 +20,8 @@ public class ODropDatabaseSubmitRequest implements OStructuralSubmitRequest {
   }
 
   @Override
-  public void begin(OStructuralSubmitId id, OCoordinationContext coordinator) {
+  public void begin(OSessionOperationId id, OMasterContext context) {
 
-    coordinator
-        .sendOperation(new ODropDatabaseOperationRequest(database), new ODropDatabaseResponseHandler(id));
   }
 
   @Override

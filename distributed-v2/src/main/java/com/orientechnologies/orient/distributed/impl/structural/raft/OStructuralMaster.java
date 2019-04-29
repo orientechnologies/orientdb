@@ -4,7 +4,9 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
 
 import java.util.Map;
 import java.util.Timer;
@@ -12,8 +14,9 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class OStructuralMaster {
+public class OStructuralMaster implements AutoCloseable, OMasterContext {
   private final ExecutorService                                  executor;
   private final OOperationLog                                    operationLog;
   private final ConcurrentMap<OLogId, ORaftRequestContext>       contexts = new ConcurrentHashMap<>();
@@ -23,13 +26,14 @@ public class OStructuralMaster {
   private       int                                              quorum;
   private       int                                              timeout;
 
-  public OStructuralMaster(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed context, int quorum) {
+  public OStructuralMaster(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed context, int quorum,
+      int timeout) {
     this.executor = executor;
     this.operationLog = operationLog;
     this.timer = new Timer(true);
     this.context = context;
     this.quorum = quorum;
-    this.timeout = 0;
+    this.timeout = timeout;
   }
 
   public void propagateAndApply(ORaftOperation operation) {
@@ -70,8 +74,24 @@ public class OStructuralMaster {
     });
   }
 
-  public OrientDBDistributed getContext() {
-    return context;
+  @Override
+  public void close() {
+    executor.shutdown();
+    try {
+      executor.awaitTermination(1, TimeUnit.HOURS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
+  public void execute(ONodeIdentity senderNode, OSessionOperationId operationId, OStructuralSubmitRequest request) {
+    executor.execute(() -> {
+      request.begin(operationId, this);
+    });
+  }
+
+  @Override
+  public OrientDBDistributed getOrientDB() {
+    return context;
+  }
 }

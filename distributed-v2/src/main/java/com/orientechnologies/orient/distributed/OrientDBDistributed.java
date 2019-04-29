@@ -296,10 +296,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         c.join(member);
       }
     }
-    if (coordinator && structuralDistributedContext.getCoordinator() != null) {
-      OStructuralDistributedMember member = new OStructuralDistributedMember(nodeIdentity, channel);
-      structuralDistributedContext.getCoordinator().nodeConnected(member);
-    }
+//    if (coordinator && structuralDistributedContext.getCoordinator() != null) {
+//      OStructuralDistributedMember member = new OStructuralDistributedMember(nodeIdentity, channel);
+//      structuralDistributedContext.getCoordinator().nodeConnected(member);
+//    }
   }
 
   public synchronized void nodeDisconnected(ONodeIdentity nodeIdentity) {
@@ -315,10 +315,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         if (c == null) {
           c.leave(c.getMember(nodeIdentity));
         }
-        OStructuralCoordinator s = structuralDistributedContext.getCoordinator();
-        if (s != null) {
-          s.nodeDisconnected(nodeIdentity);
-        }
+//        OStructuralCoordinator s = structuralDistributedContext.getCoordinator();
+//        if (s != null) {
+//          s.nodeDisconnected(nodeIdentity);
+//        }
       }
     }
   }
@@ -343,12 +343,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           }
         }
         structuralDistributedContext.makeCoordinator(coordinatorIdentity);
-        OStructuralCoordinator structuralCoordinator = structuralDistributedContext.getCoordinator();
-        for (ONodeIdentity node : networkManager.getRemoteServers()) {
-          OStructuralDistributedMember member = new OStructuralDistributedMember(node, networkManager.getChannel(node));
-          structuralCoordinator.nodeConnected(member);
-        }
-        this.coordinator = true;
+//        OStructuralCoordinator structuralCoordinator = structuralDistributedContext.getCoordinator();
+//        for (ONodeIdentity node : networkManager.getRemoteServers()) {
+//          OStructuralDistributedMember member = new OStructuralDistributedMember(node, networkManager.getChannel(node));
+//          structuralCoordinator.nodeConnected(member);
+//        }
+//        this.coordinator = true;
       }
     } else {
       realignToLog(lastValid);
@@ -376,7 +376,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       Iterator<OOperationLogEntry> list = opLog.iterate(id, lastValid);
       while (list.hasNext()) {
         OOperationLogEntry change = list.next();
-        this.structuralDistributedContext.getExecutor().recover(change.getLogId(), (OStructuralNodeRequest) change.getRequest());
+        //this.structuralDistributedContext.getExecutor().recover(change.getLogId(), (OStructuralNodeRequest) change.getRequest());
       }
       int isCoordinatorLastMoreRecent = lastValid.compareTo(opLog.lastPersistentLog());
       if (isCoordinatorLastMoreRecent > 0) {

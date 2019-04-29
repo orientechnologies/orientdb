@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.impl.structural;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OMasterContext;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import org.junit.Test;
 
@@ -32,7 +33,7 @@ public class OStructuralCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(OStructuralSubmitId id, OCoordinationContext coordinator) {
+      public void begin(OSessionOperationId id, OMasterContext context) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(nodeRequest, new OStructuralResponseHandler() {
           @Override
@@ -86,7 +87,7 @@ public class OStructuralCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(OStructuralSubmitId id, OCoordinationContext coordinator) {
+      public void begin(OSessionOperationId id, OMasterContext context) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(nodeRequest, new OStructuralResponseHandler() {
           @Override
@@ -189,7 +190,7 @@ public class OStructuralCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(OStructuralSubmitId id, OCoordinationContext coordinator) {
+      public void begin(OSessionOperationId id, OMasterContext context) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(nodeRequest, new OStructuralResponseHandler() {
           @Override

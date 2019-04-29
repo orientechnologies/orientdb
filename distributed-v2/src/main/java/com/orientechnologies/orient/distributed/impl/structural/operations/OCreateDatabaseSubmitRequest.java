@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.distributed.impl.structural.operations;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
+import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.*;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OMasterContext;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -26,9 +28,7 @@ public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
   }
 
   @Override
-  public void begin(OStructuralSubmitId id, OCoordinationContext coordinator) {
-    coordinator.sendOperation(new OCreateDatabaseOperationRequest(this.database, this.type, this.configurations),
-        new OCreateDatabaseResponseHandler(this, id, database));
+  public void begin(OSessionOperationId id, OMasterContext context) {
   }
 
   @Override

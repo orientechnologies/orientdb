@@ -308,7 +308,7 @@ public class ODistributedCoordinatorTest {
 
     @Override
     public void confirm(OLogId id) {
-      
+
     }
   }
 
