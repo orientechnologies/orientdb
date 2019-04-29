@@ -74,6 +74,7 @@ public final class ODefaultSQLFunctionFactory extends OSQLFunctionFactoryTemplat
     register(OSQLFunctionAbsoluteValue.NAME, OSQLFunctionAbsoluteValue.class);
     register(OSQLFunctionIndexKeySize.NAME, OSQLFunctionIndexKeySize.class);
     register(OSQLFunctionStrcmpci.NAME, OSQLFunctionStrcmpci.class);
+    register(OSQLFunctionThrowCME.NAME, OSQLFunctionThrowCME.class);
     //graph
     register(OSQLFunctionOut.NAME, OSQLFunctionOut.class);
     register(OSQLFunctionIn.NAME, OSQLFunctionIn.class);
