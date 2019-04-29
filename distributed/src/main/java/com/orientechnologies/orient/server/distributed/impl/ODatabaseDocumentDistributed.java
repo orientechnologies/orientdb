@@ -5,18 +5,12 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -37,33 +31,27 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLimitReachedException;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.tx.*;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitContext;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
-import com.orientechnologies.orient.server.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.server.distributed.impl.metadata.OTransactionContext;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
@@ -78,7 +66,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
@@ -517,9 +504,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       case 1:
         distributedCommitV1(iTx);
         break;
-      case 2:
-        distributedCommitV2(iTx);
-        break;
       default:
         throw new IllegalStateException(
             "Invalid distributed replicaiton protocol version: " + DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger());
@@ -529,101 +513,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
-    try {
-      distributedManager.waitUntilNodeOnline();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) distributedManager.getMessageService()
-        .getDatabase(getName());
-    OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
-    sharedDistributeDb.waitForOnline();
-    OSessionOperationId id = new OSessionOperationId();
-    id.init();
-    OSequenceActionCoordinatorSubmit submitAction = new OSequenceActionCoordinatorSubmit(action,
-        distributedManager.getLocalNodeName());
-    Future<OSubmitResponse> future = submitContext.send(id, submitAction);
-    try {
-      OSequenceActionCoordinatorResponse response = (OSequenceActionCoordinatorResponse) future.get();
-      if (!response.isSuccess()) {
-        if (response.getFailedOn().size() > 0) {
-          throw new ODatabaseException("Sequence action failed on: " + response.getFailedOn() + " nodes");
-        }
-      }
-      if (response.getLimitReachedOn().size() > 0) {
-        if (response.getLimitReachedOn().size() == response.getNumberOfNodesInvolved()) {
-          throw new OSequenceLimitReachedException("Sequence limit reached on: " + response.getLimitReachedOn() + " nodes");
-        } else {
-          throw new ODatabaseException("Inconsistent sequence limit reached on: " + response.getLimitReachedOn() + " nodes");
-        }
-      }
-
-      Object a = response.getResultOfSenderNode();
-      return (T) a;
-    } catch (InterruptedException | ExecutionException e) {
-      throw e;
-    } catch (ODatabaseException exc) {
-      //TODO think about rollback
-      throw exc;
-    }
-  }
-
-  private void distributedCommitV2(OTransactionInternal iTx) {
-    OTransactionSubmit ts = new OTransactionSubmit(iTx.getRecordOperations(),
-        OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx), iTx.isUseDeltas());
-    if (ts.isEmpty()) {
-      return;
-    }
-
-    try {
-      distributedManager.waitUntilNodeOnline();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) distributedManager.getMessageService()
-        .getDatabase(getName());
-    OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
-    sharedDistributeDb.waitForOnline();
-    OSessionOperationId id = new OSessionOperationId();
-    id.init();
-
-    Future<OSubmitResponse> future = submitContext.send(id, ts);
-    try {
-      OTransactionResponse response = (OTransactionResponse) future.get();
-      if (!response.isSuccess()) {
-        throw new ODatabaseException("failed");
-      }
-      for (OCreatedRecordResponse created : response.getCreatedRecords()) {
-        iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
-        ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
-        if (rop != null) {
-          if (created.getVersion() > rop.getRecord().getVersion() + 1)
-            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-            rop.getRecord().unload();
-          ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
-        }
-      }
-      for (OUpdatedRecordResponse updated : response.getUpdatedRecords()) {
-        ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
-        if (rop != null) {
-          if (updated.getVersion() > rop.getRecord().getVersion() + 1)
-            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-            rop.getRecord().unload();
-          ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
-        }
-      }
-      // SET ALL THE RECORDS AS UNDIRTY
-      for (ORecordOperation txEntry : iTx.getRecordOperations())
-        ORecordInternal.unsetDirty(txEntry.getRecord());
-
-      // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT.
-      OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
-
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-    }
+    throw new UnsupportedOperationException();
   }
 
   public void distributedCommitV1(OTransactionInternal iTx) {
@@ -703,39 +593,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       txContext.lockIndexKey(key);
     }
 
-  }
-
-  public void txFirstPhase(OSessionOperationId requestId, OTransactionInternal tx) {
-  }
-
-  public void txFirstPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
-      List<OIndexOperationRequest> indexes, boolean useDeltas) {
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>(), useDeltas);
-    OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
-    sharedContext.getDistributedContext().registerTransaction(operationId, tx);
-    tx.begin(operations, indexes);
-    firstPhaseDataChecks(false, tx);
-  }
-
-  public OTransactionOptimisticDistributed txSecondPhase(OSessionOperationId operationId, boolean success) {
-    OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
-    OTransactionContext context = sharedContext.getDistributedContext().getTransaction(operationId);
-    try {
-      if (success) {
-        OTransactionInternal tx = context.getTransaction();
-        tx.setDatabase(this);
-        ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
-        return (OTransactionOptimisticDistributed) tx;
-      } else {
-        //FOR NOW ROLLBACK DO NOTHING ON THE STORAGE ONLY THE CLOSE IS NEEDED
-      }
-    } catch (OLowDiskSpaceException ex) {
-      distributedManager.setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
-      throw ex;
-    } finally {
-      sharedContext.getDistributedContext().closeTransaction(operationId);
-    }
-    return null;
   }
 
   public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {
@@ -1103,92 +960,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OServer server = distributedManager.getServerInstance();
     return server.getPlugins().stream().filter(OEnterpriseEndpoint.class::isInstance).findFirst()
         .map(OEnterpriseEndpoint.class::cast).orElse(null);
-  }
-
-  @Override
-  public int addCluster(String iClusterName, Object... iParameters) {
-    if (isRunLocal()) {
-      final StringBuilder cmd = new StringBuilder("create cluster `");
-      cmd.append(iClusterName);
-      cmd.append("`");
-      sendDDLCommand(cmd.toString());
-      return getClusterIdByName(iClusterName);
-    } else {
-      return super.addCluster(iClusterName, iParameters);
-    }
-  }
-
-  @Override
-  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
-    if (isRunLocal()) {
-      final StringBuilder cmd = new StringBuilder("create cluster `");
-      cmd.append(iClusterName);
-      cmd.append("`");
-      cmd.append(" ID ");
-      cmd.append(iRequestedId);
-      sendDDLCommand(cmd.toString());
-      return iRequestedId;
-    } else {
-      return super.addCluster(iClusterName, iRequestedId, iParameters);
-    }
-  }
-
-  @Override
-  public boolean dropCluster(String iClusterName, boolean iTruncate) {
-    if (isRunLocal()) {
-      final StringBuilder cmd = new StringBuilder();
-      if (iTruncate) {
-        cmd.append("truncate cluster `");
-      } else {
-        cmd.append("create cluster `");
-      }
-      cmd.append(iClusterName);
-      cmd.append("`");
-      sendDDLCommand(cmd.toString());
-      return true;
-    } else {
-      return super.dropCluster(iClusterName, iTruncate);
-    }
-  }
-
-  @Override
-  public boolean dropCluster(int iClusterId, boolean iTruncate) {
-    if (isRunLocal()) {
-      final StringBuilder cmd = new StringBuilder();
-      if (iTruncate) {
-        cmd.append("truncate cluster ");
-      } else {
-        cmd.append("create cluster ");
-      }
-      cmd.append(iClusterId);
-      sendDDLCommand(cmd.toString());
-      return true;
-    } else {
-      return super.dropCluster(iClusterId, iTruncate);
-    }
-  }
-
-  private boolean isDistributeVersionTwo() {
-    return getConfiguration().getValueAsInteger(DISTRIBUTED_REPLICATION_PROTOCOL_VERSION) == 2;
-  }
-
-  protected boolean isRunLocal() {
-    return isDistributeVersionTwo() && getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) getStorage())
-        .isLocalEnv();
-
-  }
-
-  public void sendDDLCommand(String command) {
-    ODistributedContext distributed = ((OSharedContextDistributed) getSharedContext()).getDistributedContext();
-    Future<OSubmitResponse> response = distributed.getSubmitContext()
-        .send(new OSessionOperationId(), new ODDLQuerySubmitRequest(command));
-    try {
-      response.get();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-    }
   }
 
   public ODistributedServerManager getDistributedManager() {
