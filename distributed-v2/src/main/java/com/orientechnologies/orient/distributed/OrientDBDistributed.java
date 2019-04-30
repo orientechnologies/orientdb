@@ -80,8 +80,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void onAfterActivate() {
-    structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this,
-        this.nodeConfiguration.getNodeName());
+    structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this);
     checkPort();
     structuralDistributedContext = new OStructuralDistributedContext(this);
     networkManager = new ODistributedNetworkManager(this, getNodeConfig(), generateInternalConfiguration());
@@ -343,12 +342,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           }
         }
         structuralDistributedContext.makeCoordinator(coordinatorIdentity);
-//        OStructuralCoordinator structuralCoordinator = structuralDistributedContext.getCoordinator();
-//        for (ONodeIdentity node : networkManager.getRemoteServers()) {
-//          OStructuralDistributedMember member = new OStructuralDistributedMember(node, networkManager.getChannel(node));
-//          structuralCoordinator.nodeConnected(member);
-//        }
-//        this.coordinator = true;
+
+        for (ONodeIdentity node : networkManager.getRemoteServers()) {
+          OStructuralDistributedMember member = new OStructuralDistributedMember(node, networkManager.getChannel(node));
+          structuralDistributedContext.getMaster().join(member);
+        }
+        this.coordinator = true;
       }
     } else {
       realignToLog(lastValid);
@@ -556,7 +555,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void close() {
-    this.networkManager.shutdown();
+    if (networkManager != null) {
+      this.networkManager.shutdown();
+    }
     super.close();
   }
 

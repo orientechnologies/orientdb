@@ -21,7 +21,7 @@ public class ODistributedLockManagerImpl implements ODistributedLockManager {
     }
   }
 
-  private void unlock(OLockGuard guard) {
+  private synchronized void unlock(OLockGuard guard) {
     Queue<OWaitingTracker> result = locks.get(guard.getKey());
     assert result != null : guard.getKey().toString();
     OWaitingTracker waiting = result.poll();
@@ -54,5 +54,15 @@ public class ODistributedLockManagerImpl implements ODistributedLockManager {
     for (OLockGuard guard : guards) {
       unlock(guard);
     }
+  }
+
+  @Override
+  public synchronized void lockResource(String name, OnLocksAcquired acquired) {
+    OWaitingTracker waitingTracker = new OWaitingTracker(acquired);
+    OResourceLockKey key = new OResourceLockKey(name);
+    OLockGuard guard = new OLockGuard(key);
+    lock(key, waitingTracker);
+    waitingTracker.setGuards(Collections.singletonList(guard));
+    waitingTracker.acquireIfNoWaiting();
   }
 }

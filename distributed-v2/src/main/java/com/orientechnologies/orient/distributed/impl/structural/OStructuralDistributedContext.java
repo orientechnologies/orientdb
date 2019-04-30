@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
-import com.orientechnologies.orient.distributed.impl.coordinator.network.ONetworkStructuralSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralMaster;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralSlave;
@@ -70,7 +69,7 @@ public class OStructuralDistributedContext {
 
   public void execute(ONodeIdentity senderNode, OSessionOperationId operationId, OStructuralSubmitRequest request) {
     if(master != null) {
-      master.execute(senderNode,operationId,request);
+      master.receiveSubmit(senderNode,operationId,request);
     }
   }
 }

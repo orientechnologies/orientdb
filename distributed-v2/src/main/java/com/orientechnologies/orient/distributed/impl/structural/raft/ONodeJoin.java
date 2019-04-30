@@ -11,6 +11,10 @@ import java.io.IOException;
 public class ONodeJoin implements ORaftOperation {
   private ONodeIdentity nodeIdentity;
 
+  public ONodeJoin(ONodeIdentity identity) {
+    this.nodeIdentity = identity;
+  }
+
   @Override
   public void apply(OrientDBDistributed context) {
     context.getStructuralConfiguration().getSharedConfiguration().addNode(new OStructuralNodeConfiguration(nodeIdentity));

@@ -1,11 +1,13 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.server.OSystemDatabase;
 
@@ -19,12 +21,12 @@ public class OStructuralConfiguration {
   private              OLogId                         lastUpdateId;
   private              OStructuralSharedConfiguration sharedConfiguration;
 
-  public OStructuralConfiguration(OSystemDatabase systemDatabase, OrientDBInternal context, String nodeName) {
+  public OStructuralConfiguration(OSystemDatabase systemDatabase, OrientDBDistributed context) {
     this.systemDatabase = systemDatabase;
-    load(nodeName);
+    load(context.getNodeConfig().getNodeName(), context.getNodeConfig().getQuorum());
   }
 
-  private synchronized void load(String nodeName) {
+  private synchronized void load(String nodeName, int quorum) {
     systemDatabase.executeInDBScope((session) -> {
       try {
         if (!session.existsCluster(CLUSTER_NAME)) {
@@ -36,7 +38,7 @@ public class OStructuralConfiguration {
 
           this.discDeserialize(new DataInputStream(new ByteArrayInputStream(record.toStream())));
         } else {
-          this.init(nodeName);
+          this.init(nodeName, quorum);
 
           ByteArrayOutputStream buffer = new ByteArrayOutputStream();
           this.discSerialize(new DataOutputStream(buffer));
@@ -55,10 +57,10 @@ public class OStructuralConfiguration {
     this.sharedConfiguration.serialize(output);
   }
 
-  private void init(String nodeName) {
+  private void init(String nodeName, int quorum) {
     this.currentNodeIdentity = ONodeIdentity.generate(nodeName);
     this.sharedConfiguration = new OStructuralSharedConfiguration();
-    this.sharedConfiguration.init();
+    this.sharedConfiguration.init(quorum);
   }
 
   protected void discDeserialize(DataInput input) throws IOException {

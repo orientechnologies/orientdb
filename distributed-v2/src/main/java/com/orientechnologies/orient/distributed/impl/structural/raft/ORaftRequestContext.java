@@ -6,11 +6,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ORaftRequestContext {
-  private Set<ONodeIdentity> answers = new HashSet<>();
-  private ORaftOperation     operation;
-  private int                quorum;
+  private Set<ONodeIdentity>           answers = new HashSet<>();
+  private ORaftOperation               operation;
+  private int                          quorum;
+  private OStructuralMaster.OpFinished finished;
 
-  public ORaftRequestContext(ORaftOperation operation, int quorum) {
+  public ORaftRequestContext(ORaftOperation operation, int quorum, OStructuralMaster.OpFinished finished) {
+    this.finished = finished;
     this.operation = operation;
     this.quorum = quorum;
   }
@@ -19,6 +21,7 @@ public class ORaftRequestContext {
     answers.add(node);
     if (answers.size() >= quorum) {
       operation.apply(context.getOrientDB());
+      finished.finished();
       return true;
     }
     return false;

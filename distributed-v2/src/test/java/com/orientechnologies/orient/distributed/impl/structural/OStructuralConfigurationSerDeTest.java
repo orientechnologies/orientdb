@@ -2,8 +2,10 @@ package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import org.junit.After;
 import org.junit.Before;
@@ -17,16 +19,18 @@ import static org.junit.Assert.assertNotNull;
 
 public class OStructuralConfigurationSerDeTest {
 
-  private OrientDBInternal context;
+  private OrientDBDistributed context;
 
   @Before
   public void before() {
-    context = OrientDBInternal.extract(new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig()));
+    OrientDBConfigBuilder builder = OrientDBConfig.builder();
+    builder.getNodeConfigurationBuilder().setNodeName("node1").setQuorum(2);
+    context = (OrientDBDistributed) OrientDBInternal.distributed("./target/", builder.build());
   }
 
   @Test
   public void testDiscSerializationDeserialization() throws IOException {
-    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
+    OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context);
 
     OStructuralNodeConfiguration nodeConfiguration = new OStructuralNodeConfiguration(ONodeIdentity.generate("node2"));
     OStructuralNodeDatabase database = new OStructuralNodeDatabase(UUID.randomUUID(), "one",
@@ -47,7 +51,7 @@ public class OStructuralConfigurationSerDeTest {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     configuration.discSerialize(new DataOutputStream(outputStream));
 
-    OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context,"node1");
+    OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context);
     configuration1.discDeserialize(new DataInputStream(new ByteArrayInputStream(outputStream.toByteArray())));
 
     assertEquals(configuration1.getCurrentNodeIdentity(), configuration.getCurrentNodeIdentity());

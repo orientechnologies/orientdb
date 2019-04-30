@@ -12,8 +12,10 @@ import java.util.Map;
 public class OStructuralSharedConfiguration {
 
   private Map<ONodeIdentity, OStructuralNodeConfiguration> knownNodes;
+  private int                                              quorum;
 
   public void deserialize(DataInput input) throws IOException {
+    this.quorum = input.readInt();
     int nKnowNodes = input.readInt();
     knownNodes = new HashMap<>();
     while (nKnowNodes-- > 0) {
@@ -23,11 +25,13 @@ public class OStructuralSharedConfiguration {
     }
   }
 
-  public void init() {
+  public void init(int quorum) {
     knownNodes = new HashMap<>();
+    this.quorum = quorum;
   }
 
   public void serialize(DataOutput output) throws IOException {
+    output.writeInt(quorum);
     output.writeInt(knownNodes.size());
     for (OStructuralNodeConfiguration node : knownNodes.values()) {
       node.serialize(output);
@@ -54,5 +58,13 @@ public class OStructuralSharedConfiguration {
 
   public OStructuralNodeConfiguration getNode(ONodeIdentity nodeIdentity) {
     return knownNodes.get(nodeIdentity);
+  }
+
+  public boolean existsNode(ONodeIdentity identity) {
+    return knownNodes.containsKey(identity);
+  }
+
+  public boolean canAddNode(ONodeIdentity identity) {
+    return knownNodes.size() < (quorum - 1) * 2;
   }
 }
