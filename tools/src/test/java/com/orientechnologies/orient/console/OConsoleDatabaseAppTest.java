@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.console;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -108,10 +109,15 @@ public class OConsoleDatabaseAppTest {
       console.setOutput(stream);
       String resultString = new String(result);
 
-      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("#") + 5).trim();
+      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("{") ).trim();
 
       console.set("maxBinaryDisplay", "10000");
-      console.displayRawRecord(rid);
+      try {
+        console.displayRawRecord(rid);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "testDisplayRawRecord - Result from console: " + resultString, e);
+        throw e;
+      }
       result = out.toByteArray();
       resultString = new String(result);
 
@@ -324,13 +330,10 @@ public class OConsoleDatabaseAppTest {
 
 //    builder.append("create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
 
-    builder.append("create edge from \n"
-        + "(select from V where name = 'foo') \n"
-        + "to (select from V where name = 'bar');\n");
+    builder.append("create edge from \n" + "(select from V where name = 'foo') \n" + "to (select from V where name = 'bar');\n");
 
     ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
     OConsoleDatabaseApp console = c.console();
-
 
     try {
       console.run();

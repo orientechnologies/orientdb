@@ -19,8 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -38,11 +39,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
+import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 
 import java.io.IOException;
 import java.util.*;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
 
 /**
  * Distributed transaction manager.
@@ -66,75 +70,61 @@ public class ONewDistributedTransactionManager {
 
   public List<ORecordOperation> commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
       final ODistributedStorageEventListener eventListener) {
-    int nretry = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
-    int delay = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+    int nretry = database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
+    int delay = database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+    ODistributedDatabaseImpl distributedDatabase = (ODistributedDatabaseImpl) dManager.getMessageService()
+        .getDatabase(database.getName());
     int count = 0;
-    do {
 
+    do {
+      final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
+          dManager.getNextMessageIdCounter());
+      distributedDatabase.startOperation();
       try {
-        return retriedCommit(database, iTx, count);
-      } catch (ODistributedRecordLockedException ex) {
-        if (count == nretry) {
+        return retriedCommit(database, iTx, requestId);
+      } catch (OConcurrentCreateException | ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
+        // Nothing just retry
+        if (count > nretry) {
           throw ex;
         }
-        int v = new Random().nextInt(1000);
         try {
-          Thread.sleep(delay * count + v);
+          Thread.sleep(new Random().nextInt(delay));
         } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          return null;
+          OException.wrapException(new OInterruptedException(e.getMessage()), e);
         }
-      } catch (OConcurrentCreateException ex) {
-        if (count == nretry) {
-          throw ex;
-        }
-        int v = new Random().nextInt(1000);
-        try {
-          Thread.sleep(delay * count + v);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          return null;
-        }
+
+      } finally {
+        distributedDatabase.endOperation();
       }
       count++;
     } while (true);
-
   }
 
   public List<ORecordOperation> retriedCommit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
-      int retryCount) {
+      final ODistributedRequestId requestId) {
     final String localNodeName = dManager.getLocalNodeName();
 
     iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
 
     final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
 
-    // CHECK THE LOCAL NODE IS THE OWNER OF THE CLUSTER IDS
-    //checkForClusterIds(iTx);
-
-    final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
-        dManager.getNextMessageIdCounter());
-
     final Set<String> involvedClusters = getInvolvedClusters(iTx.getRecordOperations());
     Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
     OTransactionResultPayload localResult;
-    int nretry = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
-    int delay = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
-    int count = 0;
-    do {
-      localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1);
-      //Make sure to do this retry only the first time
-      if (count != 0 && retryCount == 0) {
-        int v = new Random().nextInt(1000);
-        try {
-          Thread.sleep(delay * count + v);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          return null;
-        }
-      }
-      count++;
-    } while (localResult.getResponseType() == OTxLockTimeout.ID && count < nretry && retryCount == 0);
+
+    //This retry happen only the first time i try to lock on local server
+    localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1);
+    if (localResult.getResponseType() == OTxRecordLockTimeout.ID) {
+      dManager.getMessageService().getDatabase(database.getName()).popTxContext(requestId).destroy();
+      int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+      throw new ODistributedRecordLockedException(dManager.getLocalNodeName(), ((OTxRecordLockTimeout) localResult).getLockedId(),
+          null, timeout);
+    }
+    if (localResult.getResponseType() == OTxKeyLockTimeout.ID) {
+      dManager.getMessageService().getDatabase(database.getName()).popTxContext(requestId).destroy();
+      int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+      throw new ODistributedKeyLockedException(dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout);
+    }
 
     final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
     try {
@@ -172,9 +162,16 @@ public class ONewDistributedTransactionManager {
         //TODO include all paramenter in response
         throw new OConcurrentModificationException(id, version, 0, 0);
       }
-      case OTxLockTimeout.ID:
-        throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId,
-            database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+      case OTxRecordLockTimeout.ID: {
+        int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+        throw new ODistributedRecordLockedException(dManager.getLocalNodeName(), ((OTxRecordLockTimeout) localResult).getLockedId(),
+            null, timeout);
+      }
+      case OTxKeyLockTimeout.ID: {
+        int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+        throw new ODistributedKeyLockedException(dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout);
+      }
+
       }
       return null;
     }
@@ -208,7 +205,7 @@ public class ONewDistributedTransactionManager {
 
   private void handleResponse(ODistributedRequestId requestId, ONewDistributedResponseManager responseManager,
       Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database, OTransactionInternal iTx) {
-
+    int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     int[] involvedClustersIds = new int[involvedClusters.size()];
     int i = 0;
     for (String involvedCluster : involvedClusters) {
@@ -249,11 +246,25 @@ public class ONewDistributedTransactionManager {
         throw new OConcurrentModificationException(id, version, iTx.getRecordEntry(id).getRecord().getVersion(),
             iTx.getRecordEntry(id).getType());
       }
-      case OTxLockTimeout.ID:
+      case OTxConcurrentCreation.ID: {
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
-        throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId,
-            database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+        localKo(requestId, database);
+        throw new OConcurrentCreateException(((OTxConcurrentCreation) resultPayload).getExpectedRid(),
+            ((OTxConcurrentCreation) resultPayload).getActualRid());
       }
+
+      case OTxRecordLockTimeout.ID:
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+        localKo(requestId, database);
+        throw new ODistributedRecordLockedException(((OTxRecordLockTimeout) resultPayload).getNode(),
+            ((OTxRecordLockTimeout) resultPayload).getLockedId(), null, timeout);
+      case OTxKeyLockTimeout.ID:
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+        localKo(requestId, database);
+        throw new ODistributedKeyLockedException(((OTxKeyLockTimeout) resultPayload).getNode(),
+            ((OTxKeyLockTimeout) resultPayload).getKey(), timeout);
+      }
+
     } else {
       List<OTransactionResultPayload> results = responseManager.getAllResponses();
       //If quorum is not reached is enough on a Lock timeout to trigger a deadlock retry.
@@ -261,14 +272,20 @@ public class ONewDistributedTransactionManager {
       List<String> messages = new ArrayList<>();
       for (OTransactionResultPayload result : results) {
         switch (result.getResponseType()) {
-        case OTxLockTimeout.ID:
-          localKo(requestId, database);
+        case OTxRecordLockTimeout.ID:
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
-          throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId,
-              database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+          localKo(requestId, database);
+          throw new ODistributedRecordLockedException(((OTxRecordLockTimeout) result).getNode(),
+              ((OTxRecordLockTimeout) result).getLockedId(), null, timeout);
+        case OTxKeyLockTimeout.ID:
+          sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+          localKo(requestId, database);
+          throw new ODistributedKeyLockedException(((OTxKeyLockTimeout) result).getNode(), ((OTxKeyLockTimeout) result).getKey(),
+              timeout);
+
         case OTxConcurrentCreation.ID:
-          localKo(requestId, database);
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+          localKo(requestId, database);
           throw new OConcurrentCreateException(((OTxConcurrentCreation) result).getExpectedRid(),
               ((OTxConcurrentCreation) result).getActualRid());
 
@@ -294,8 +311,8 @@ public class ONewDistributedTransactionManager {
 
         }
       }
-      localKo(requestId, database);
       sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+      localKo(requestId, database);
 
       ODistributedOperationException ex = new ODistributedOperationException(
           String.format("quorum not reached, responses: [%s]", String.join(",", messages)));

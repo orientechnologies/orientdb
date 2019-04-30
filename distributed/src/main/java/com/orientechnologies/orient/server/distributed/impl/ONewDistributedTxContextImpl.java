@@ -1,16 +1,16 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.ArrayList;
@@ -42,20 +42,38 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void lockIndexKey(Object key) {
-    shared.getIndexKeyLockManager().lock(key);
+    OSimpleLockManager<Object> recordLockManager = shared.getIndexKeyLockManager();
+    try {
+      recordLockManager.lock(key);
+    } catch (OLockException ex) {
+      this.unlock();
+      throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key, recordLockManager.getTimeout());
+    }
     lockedKeys.add(key);
   }
 
   @Override
   public void lock(ORID rid) {
-    shared.getRecordLockManager().lock(rid);
+    OSimpleLockManager<ORID> recordLockManager = shared.getRecordLockManager();
+    try {
+      recordLockManager.lock(rid);
+    } catch (OLockException ex) {
+      this.unlock();
+      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, null, recordLockManager.getTimeout());
+    }
     lockedRids.add(rid);
   }
 
   @Override
   public void lock(ORID rid, long timeout) {
     //TODO: the timeout is only in the lock manager, this implementation may need evolution
-    shared.getRecordLockManager().lock(rid);
+    OSimpleLockManager<ORID> recordLockManager = shared.getRecordLockManager();
+    try {
+      recordLockManager.lock(rid, timeout);
+    } catch (OLockException ex) {
+      this.unlock();
+      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, null, timeout);
+    }
     lockedRids.add(rid);
   }
 
@@ -138,4 +156,5 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public Status getStatus() {
     return status;
   }
+
 }

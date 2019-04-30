@@ -4,11 +4,11 @@ import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
-import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -65,7 +65,8 @@ import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedCont
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -73,17 +74,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Callable;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.FAILED;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.SUCCESS;
@@ -566,7 +561,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     Set<ORID> rids = new TreeSet<>();
     for (ORecordOperation entry : tx.getRecordOperations()) {
       if (entry.getType() != ORecordOperation.CREATED) {
-        rids.add(entry.getRID());
+        rids.add(entry.getRID().copy());
       } else {
         rids.add(new ORecordId(entry.getRID().getClusterId(), -1));
       }
@@ -574,6 +569,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     for (ORID rid : rids) {
       txContext.lock(rid);
     }
+
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
     Set<String> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
@@ -637,8 +633,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       txContext.setStatus(FAILED);
       getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw e;
-    } catch (ODistributedLockException | OLockException ex) {
-      txContext.unlock();
+    } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
       /// ?? do i've to save this state as well ?
       txContext.setStatus(TIMEDOUT);
       getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
@@ -652,7 +647,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     }
-    getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
     return true;
   }
 
@@ -683,41 +677,61 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
         return true;
       } else if (TIMEDOUT.equals(txContext.getStatus())) {
-        for (int i = 0; i < 10; i++) {
+        int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
+        int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+
+        for (int i = 0; i < nretry; i++) {
           try {
+            if (i > 0) {
+              try {
+                Thread.sleep(new Random().nextInt(delay));
+              } catch (InterruptedException e) {
+                OException.wrapException(new OInterruptedException(e.getMessage()), e);
+              }
+            }
             internalBegin2pc(txContext, local);
             txContext.setStatus(SUCCESS);
             break;
+          } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
+            // Just retry
           } catch (Exception ex) {
             OLogManager.instance()
-                .warn(ODatabaseDocumentDistributed.this, "Error beginning timed out transaction: %s", ex, transactionId);
+                .warn(ODatabaseDocumentDistributed.this, "Error beginning timed out transaction: %s ", ex, transactionId);
+            break;
           }
         }
         if (!SUCCESS.equals(txContext.getStatus())) {
+          txContext.destroy();
+          localDistributedDatabase.popTxContext(transactionId);
           Orient.instance().submit(() -> {
             OLogManager.instance()
                 .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
                     transactionId);
             manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
           });
+          return true;
         }
         try {
           txContext.commit(this);
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
+          return true;
         } finally {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
 
       } else {
+        txContext.destroy();
+        localDistributedDatabase.popTxContext(transactionId);
         Orient.instance().submit(() -> {
           OLogManager.instance()
               .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
                   transactionId);
           manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
         });
+        return true;
       }
     }
     return false;
@@ -727,9 +741,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     if (txContext != null) {
-      synchronized (txContext) {
-        txContext.destroy();
-      }
+      txContext.destroy();
       OLiveQueryHook.removePendingDatabaseOps(this);
       OLiveQueryHookV2.removePendingDatabaseOps(this);
       return true;
@@ -756,6 +768,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OTransactionInternal transaction = txContext.getTransaction();
     //This is moved before checks because also the coordinator first node allocate before checks
     if (!local) {
+      ((OTransactionOptimisticDistributed) transaction).setDatabase(this);
       ((OTransactionOptimistic) transaction).begin();
     }
 

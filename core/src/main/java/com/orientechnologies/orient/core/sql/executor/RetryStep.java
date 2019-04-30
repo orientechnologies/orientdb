@@ -16,15 +16,20 @@ import java.util.List;
  */
 public class RetryStep extends AbstractExecutionStep {
   public        List<OStatement> body;
+  public        List<OStatement> elseBody;
+  public        boolean          elseFail;
   private final int              retries;
 
   Iterator iterator;
   private OExecutionStepInternal finalResult = null;
 
-  public RetryStep(List<OStatement> statements, int retries, OCommandContext ctx, boolean enableProfiling) {
+  public RetryStep(List<OStatement> statements, int retries, List<OStatement> elseStatements, Boolean elseFail, OCommandContext ctx,
+      boolean enableProfiling) {
     super(ctx, enableProfiling);
     this.body = statements;
     this.retries = retries;
+    this.elseBody = elseStatements;
+    this.elseFail = !(Boolean.FALSE.equals(elseFail));
   }
 
   @Override
@@ -39,7 +44,7 @@ public class RetryStep extends AbstractExecutionStep {
         if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
           throw new OCommandInterruptedException("The command has been interrupted");
         }
-        OScriptExecutionPlan plan = initPlan(ctx);
+        OScriptExecutionPlan plan = initPlan(body, ctx);
         OExecutionStepInternal result = plan.executeFull();
         if (result != null) {
           this.finalResult = result;
@@ -53,7 +58,19 @@ public class RetryStep extends AbstractExecutionStep {
         }
 
         if (i == retries - 1) {
-          throw ex;
+          if (elseBody != null && elseBody.size() > 0) {
+            OScriptExecutionPlan plan = initPlan(elseBody, ctx);
+            OExecutionStepInternal result = plan.executeFull();
+            if (result != null) {
+              this.finalResult = result;
+              return result.syncPull(ctx, nRecords);
+            }
+          }
+          if (elseFail) {
+            throw ex;
+          } else {
+            return new OInternalResultSet();
+          }
         }
       }
     }
@@ -63,7 +80,7 @@ public class RetryStep extends AbstractExecutionStep {
 
   }
 
-  public OScriptExecutionPlan initPlan(OCommandContext ctx) {
+  public OScriptExecutionPlan initPlan(List<OStatement> body, OCommandContext ctx) {
     OBasicCommandContext subCtx1 = new OBasicCommandContext();
     subCtx1.setParent(ctx);
     OScriptExecutionPlan plan = new OScriptExecutionPlan(subCtx1);

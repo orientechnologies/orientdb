@@ -1,14 +1,8 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -76,15 +70,22 @@ public class OrientGraphFactoryEncryptionTest {
   public void shouldQueryDESEncryptedDatabase() {
     OrientGraphFactory graphFactory = new OrientGraphFactory("plocal:" + dbPath);
 
+    if(graphFactory.exists()) {
+      graphFactory.drop();
+    }else{
+      graphFactory.close();
+    }
+    graphFactory = new OrientGraphFactory("plocal:" + dbPath);
+
     graphFactory.setProperty(STORAGE_ENCRYPTION_METHOD.getKey(), "des");
     graphFactory.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
 
     ODatabaseSession db = graphFactory.getDatabase();
 
-    db.command("create class TestEncryption");
-    db.command("insert into TestEncryption set name = 'Jay'");
+    db.command("create class shouldQueryDESEncryptedDatabase");
+    db.command("insert into shouldQueryDESEncryptedDatabase set name = 'Jay'");
 
-    try (OResultSet result = db.query("select from TestEncryption")) {
+    try (OResultSet result = db.query("select from shouldQueryDESEncryptedDatabase")) {
       assertThat(result).hasSize(1);
     }
 
@@ -96,6 +97,9 @@ public class OrientGraphFactoryEncryptionTest {
   @Test
   public void shouldFailWitWrongKey() {
     try (OrientDB orientDB = new OrientDB("embedded:" + dbDir, OrientDBConfig.defaultConfig())) {
+      if (orientDB.exists(dbName)) {
+        orientDB.drop(dbName);
+      }
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession db = orientDB.open(dbName, "admin", "admin")) {
@@ -113,8 +117,8 @@ public class OrientGraphFactoryEncryptionTest {
 
     ODatabaseSession db = graphFactory.getDatabase();
 
-    db.command("create class TestEncryption");
-    db.command("insert into TestEncryption set name = 'Jay'");
+    db.command("create class shouldFailWitWrongKey");
+    db.command("insert into shouldFailWitWrongKey set name = 'Jay'");
 
     db.close();
     OStorage storage = ((ODatabaseDocumentInternal) db).getStorage();
@@ -129,7 +133,7 @@ public class OrientGraphFactoryEncryptionTest {
     graphFactory.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
 
     db = graphFactory.getDatabase();
-    try (OResultSet result = db.query("select from TestEncryption")) {
+    try (OResultSet result = db.query("select from shouldFailWitWrongKey")) {
       assertThat(result).hasSize(1);
     }
 
