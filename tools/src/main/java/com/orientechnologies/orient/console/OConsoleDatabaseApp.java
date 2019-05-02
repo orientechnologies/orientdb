@@ -128,6 +128,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -231,7 +232,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           bout.write(c);
         }
 
-        p.waitFor();
+        p.waitFor(10, TimeUnit.SECONDS);
 
         exitValue.set(p.exitValue());
       } catch (IOException | InterruptedException e) {
@@ -240,7 +241,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     });
 
     terminalThread.start();
-    terminalThread.join(10 * 1_000);
+    terminalThread.join(20 * 1_000);
 
     if (terminalThread.isAlive()) {
       terminalThread.interrupt();
