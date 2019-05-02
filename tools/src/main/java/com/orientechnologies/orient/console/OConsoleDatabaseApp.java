@@ -126,6 +126,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -204,7 +206,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     final String cmd = "stty " + args + " < /dev/tty";
 
     final Process p = Runtime.getRuntime().exec(new String[] { "sh", "-c", cmd });
+    Timer timer = new Timer();
+    timer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        if (p.isAlive()) {
+          p.destroyForcibly();
+        }
+      }
+    }, 15 * 1000);
+
     p.waitFor(10, TimeUnit.SECONDS);
+
     return p.exitValue();
   }
 
