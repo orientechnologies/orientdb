@@ -48,7 +48,6 @@ import java.util.zip.ZipInputStream;
  * Gremlin specialized console.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OGremlinConsole extends OConsoleDatabaseApp {
 
@@ -58,10 +57,11 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
   public static void main(final String[] args) {
     int result;
+    final boolean interactiveMode = isInteractiveMode(args);
     try {
       boolean tty = false;
       try {
-        if (setTerminalToCBreak())
+        if (setTerminalToCBreak(interactiveMode))
           tty = true;
 
       } catch (Exception e) {
@@ -75,7 +75,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
     } finally {
       try {
-        stty("echo");
+        stty("echo", interactiveMode);
       } catch (Exception e) {
       }
     }
@@ -163,7 +163,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
       } catch (ODatabaseImportException e) {
         printError(e);
-      }finally {
+      } finally {
         g.shutdown(false, true);
       }
     } else if ((format != null && format.equalsIgnoreCase("graphson")) || (fileName != null && (fileName.endsWith(".graphson")))) {
@@ -243,7 +243,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
       } catch (ODatabaseImportException e) {
         printError(e);
-      }finally {
+      } finally {
         g.shutdown(false, true);
       }
     } else

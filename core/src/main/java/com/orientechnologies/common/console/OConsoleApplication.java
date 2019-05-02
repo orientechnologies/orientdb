@@ -209,7 +209,7 @@ public class OConsoleApplication {
     return "";
   }
 
-  protected boolean isInteractiveMode(String[] args) {
+  protected static boolean isInteractiveMode(String[] args) {
     for (String arg : args) {
       if (!isInteractiveConfigParam(arg)) {
         return false;
@@ -218,7 +218,7 @@ public class OConsoleApplication {
     return true;
   }
 
-  private boolean isInteractiveConfigParam(String arg) {
+  private static boolean isInteractiveConfigParam(String arg) {
     if (arg.equalsIgnoreCase(PARAM_DISABLE_HISTORY)) {
       return true;
     }
