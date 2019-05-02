@@ -216,7 +216,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
     }, 15 * 1000);
 
+
     p.waitFor(10, TimeUnit.SECONDS);
+
+    timer.cancel();
 
     return p.exitValue();
   }
