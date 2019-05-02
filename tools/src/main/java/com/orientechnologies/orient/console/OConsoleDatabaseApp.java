@@ -126,8 +126,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -152,20 +150,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public static void main(final String[] args) {
     int result = 0;
 
+    final boolean interactiveMode = isInteractiveMode(args);
     try {
       final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
-
       boolean tty = false;
       try {
-        if (console.isInteractiveMode(args) && setTerminalToCBreak())
+        if (setTerminalToCBreak(interactiveMode))
           tty = true;
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> restoreTerminal()));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> restoreTerminal(interactiveMode)));
 
       } catch (Exception ignored) {
       }
 
-      new OSignalHandler().installDefaultSignals(signal -> restoreTerminal());
+      new OSignalHandler().installDefaultSignals(signal -> restoreTerminal(interactiveMode));
 
       if (tty)
         console.setReader(new TTYConsoleReader(console.historyEnabled()));
@@ -173,50 +171,44 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       result = console.run();
 
     } finally {
-      restoreTerminal();
+      restoreTerminal(interactiveMode);
     }
 
     Orient.instance().shutdown();
     System.exit(result);
   }
 
-  protected static void restoreTerminal() {
+  protected static void restoreTerminal(final boolean interactiveMode) {
     try {
-      stty("echo");
+      stty("echo", interactiveMode);
     } catch (Exception ignored) {
     }
   }
 
-  protected static boolean setTerminalToCBreak() throws IOException, InterruptedException {
+  protected static boolean setTerminalToCBreak(final boolean interactiveMode) throws IOException, InterruptedException {
     // set the console to be character-buffered instead of line-buffered
-    int result = stty("-icanon min 1");
+    int result = stty("-icanon min 1", interactiveMode);
     if (result != 0) {
       return false;
     }
 
     // disable character echoing
-    stty("-echo");
+    stty("-echo", interactiveMode);
     return true;
   }
 
   /**
    * Execute the stty command with the specified arguments against the current active terminal.
    */
-  protected static int stty(final String args) throws IOException, InterruptedException {
+  protected static int stty(final String args, final boolean interactiveMode) throws IOException, InterruptedException {
+    if (!interactiveMode) {
+      return -1;
+    }
+
     final String cmd = "stty " + args + " < /dev/tty";
 
     final Process p = Runtime.getRuntime().exec(new String[] { "sh", "-c", cmd });
-    Timer timer = new Timer();
-    timer.schedule(new TimerTask() {
-      @Override
-      public void run() {
-        p.destroyForcibly();
-      }
-    }, 15 * 1000);
-
     p.waitFor(10, TimeUnit.SECONDS);
-
-    timer.cancel();
 
     return p.exitValue();
   }
