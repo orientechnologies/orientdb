@@ -128,7 +128,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
@@ -166,8 +166,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       new OSignalHandler().installDefaultSignals(signal -> restoreTerminal());
-
-
 
       if (tty)
         console.setReader(new TTYConsoleReader(console.historyEnabled()));
@@ -214,25 +212,41 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
    * Execute the specified command and return the output (both stdout and stderr).
    */
   protected static int exec(final String[] cmd) throws IOException, InterruptedException {
-    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+    final AtomicInteger exitValue = new AtomicInteger(-1);
+    Thread terminalThread = new Thread(() -> {
+      try {
+        final ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
-    Process p = Runtime.getRuntime().exec(cmd);
-    int c;
-    InputStream in = p.getInputStream();
+        final Process p = Runtime.getRuntime().exec(cmd);
+        int c;
+        InputStream in = p.getInputStream();
 
-    while ((c = in.read()) != -1) {
-      bout.write(c);
+        while ((c = in.read()) != -1) {
+          bout.write(c);
+        }
+
+        in = p.getErrorStream();
+
+        while ((c = in.read()) != -1) {
+          bout.write(c);
+        }
+
+        p.waitFor();
+
+        exitValue.set(p.exitValue());
+      } catch (IOException | InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    });
+
+    terminalThread.start();
+    terminalThread.join(10 * 1_000);
+
+    if (terminalThread.isAlive()) {
+      terminalThread.interrupt();
     }
 
-    in = p.getErrorStream();
-
-    while ((c = in.read()) != -1) {
-      bout.write(c);
-    }
-
-    p.waitFor(10, TimeUnit.SECONDS);
-
-    return p.exitValue();
+    return exitValue.get();
   }
 
   @ConsoleCommand(aliases = {
