@@ -210,12 +210,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     timer.schedule(new TimerTask() {
       @Override
       public void run() {
-        if (p.isAlive()) {
-          p.destroyForcibly();
-        }
+        p.destroyForcibly();
       }
     }, 15 * 1000);
-
 
     p.waitFor(10, TimeUnit.SECONDS);
 
