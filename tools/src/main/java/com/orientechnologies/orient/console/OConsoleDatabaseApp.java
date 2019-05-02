@@ -102,12 +102,10 @@ import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -129,7 +127,6 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
@@ -204,50 +201,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
    * Execute the stty command with the specified arguments against the current active terminal.
    */
   protected static int stty(final String args) throws IOException, InterruptedException {
-    String cmd = "stty " + args + " < /dev/tty";
+    final String cmd = "stty " + args + " < /dev/tty";
 
-    return exec(new String[] { "sh", "-c", cmd });
-  }
-
-  /**
-   * Execute the specified command and return the output (both stdout and stderr).
-   */
-  protected static int exec(final String[] cmd) throws IOException, InterruptedException {
-    final AtomicInteger exitValue = new AtomicInteger(-1);
-    Thread terminalThread = new Thread(() -> {
-      try {
-        final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-
-        final Process p = Runtime.getRuntime().exec(cmd);
-        int c;
-        InputStream in = p.getInputStream();
-
-        while ((c = in.read()) != -1) {
-          bout.write(c);
-        }
-
-        in = p.getErrorStream();
-
-        while ((c = in.read()) != -1) {
-          bout.write(c);
-        }
-
-        p.waitFor(10, TimeUnit.SECONDS);
-
-        exitValue.set(p.exitValue());
-      } catch (IOException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    });
-
-    terminalThread.start();
-    terminalThread.join(20 * 1_000);
-
-    if (terminalThread.isAlive()) {
-      terminalThread.interrupt();
-    }
-
-    return exitValue.get();
+    final Process p = Runtime.getRuntime().exec(new String[] { "sh", "-c", cmd });
+    p.waitFor(10, TimeUnit.SECONDS);
+    return p.exitValue();
   }
 
   @ConsoleCommand(aliases = {
