@@ -122,6 +122,20 @@ public class OStructuralMaster implements AutoCloseable, OMasterContext {
     });
   }
 
+  @Override
+  public void createDatabase(String database, String type, Map<String, String> configurations) {
+    submit(new OSessionOperationId(), (requester, id, context) -> {
+      getLockManager().lockResource(CONF_RESOURCE, (guards) -> {
+        OStructuralSharedConfiguration shared = context.getOrientDB().getStructuralConfiguration().getSharedConfiguration();
+        if (!shared.existsDatabase(database)) {
+          this.propagateAndApply(new OCreateDatabase(database, type, configurations), () -> {
+            getLockManager().unlock(guards);
+          });
+        }
+      });
+    });
+  }
+
   public void connected(OStructuralDistributedMember member) {
     members.put(member.getIdentity(), member);
   }

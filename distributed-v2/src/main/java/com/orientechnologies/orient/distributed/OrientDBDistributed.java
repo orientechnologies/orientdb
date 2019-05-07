@@ -347,6 +347,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           OStructuralDistributedMember member = new OStructuralDistributedMember(node, networkManager.getChannel(node));
           structuralDistributedContext.getMaster().connected(member);
         }
+        structuralDistributedContext.getMaster().join(getNodeIdentity());
         for (ONodeIdentity node : networkManager.getRemoteServers()) {
           structuralDistributedContext.getMaster().join(node);
         }
@@ -395,7 +396,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     } else if (lastPersistent != null) {
       //TODO:  I've something that the master has not, rely on what the master tell me.
     } else {
-      //TODO: First join for everyono, do nothing for a while ? and then sync the databases existing on the disc on nodes.
+      //TODO: First join for everyone, do nothing for a while ? and then sync the databases existing on the disc on nodes.
     }
 
   }
@@ -491,6 +492,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public void internalCreateDatabase(String database, String type, Map<String, String> configurations) {
+    getStructuralConfiguration().getSharedConfiguration().addDatabase(database);
     //TODO:INIT CONFIG
     super.create(database, null, null, ODatabaseType.valueOf(type), null);
   }

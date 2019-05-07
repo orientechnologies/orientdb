@@ -7,6 +7,8 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySu
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.*;
 import com.orientechnologies.orient.distributed.impl.structural.*;
 import com.orientechnologies.orient.distributed.impl.structural.operations.*;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OCreateDatabase;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ONodeJoin;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 
 public class OCoordinateMessagesFactory {
@@ -32,6 +34,7 @@ public class OCoordinateMessagesFactory {
   public static final int CREATE_DATABASE_SUBMIT_RESPONSE   = 1;
   public static final int CREATE_DATABASE_REQUEST           = 1;
   public static final int CREATE_DATABASE_RESPONSE          = 1;
+  public static final int NODE_JOIN_REQUEST                 = 2;
   public static final int CREATE_DATABASE_FINALIZE_REQUEST  = 3;
   public static final int CREATE_DATABASE_FINALIZE_RESPONSE = 3;
 
@@ -144,6 +147,13 @@ public class OCoordinateMessagesFactory {
   }
 
   public ORaftOperation createRaftOperation(int requestType) {
+    switch (requestType) {
+    case CREATE_DATABASE_REQUEST:
+      return new OCreateDatabase();
+    case NODE_JOIN_REQUEST:
+      return new ONodeJoin();
+    }
     return null;
+
   }
 }

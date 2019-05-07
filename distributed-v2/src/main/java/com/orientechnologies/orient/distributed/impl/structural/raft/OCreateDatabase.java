@@ -1,38 +1,34 @@
-package com.orientechnologies.orient.distributed.impl.structural.operations;
+package com.orientechnologies.orient.distributed.impl.structural.raft;
 
-import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.*;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OMasterContext;
-import com.orientechnologies.orient.distributed.impl.structural.raft.ONodeJoin;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
-public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.CREATE_DATABASE_REQUEST;
+
+public class OCreateDatabase implements ORaftOperation {
 
   private String              database;
   private String              type;
   private Map<String, String> configurations;
 
-  public OCreateDatabaseSubmitRequest(String database, String type, Map<String, String> configurations) {
+  public OCreateDatabase(String database, String type, Map<String, String> configurations) {
     this.database = database;
     this.type = type;
     this.configurations = configurations;
   }
 
-  public OCreateDatabaseSubmitRequest() {
+  public OCreateDatabase() {
 
   }
 
   @Override
-  public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OMasterContext context) {
-    context.createDatabase(database, type, configurations);
+  public void apply(OrientDBDistributed context) {
+    context.internalCreateDatabase(database, type, configurations);
   }
 
   @Override
@@ -44,6 +40,11 @@ public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
       output.writeUTF(configuration.getKey());
       output.writeUTF(configuration.getValue());
     }
+  }
+
+  @Override
+  public int getRequestType() {
+    return CREATE_DATABASE_REQUEST;
   }
 
   @Override
@@ -59,8 +60,4 @@ public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
     }
   }
 
-  @Override
-  public int getRequestType() {
-    return OCoordinateMessagesFactory.CREATE_DATABASE_SUBMIT_REQUEST;
-  }
 }

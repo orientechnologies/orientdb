@@ -8,11 +8,17 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.NODE_JOIN_REQUEST;
+
 public class ONodeJoin implements ORaftOperation {
   private ONodeIdentity nodeIdentity;
 
   public ONodeJoin(ONodeIdentity identity) {
     this.nodeIdentity = identity;
+  }
+
+  public ONodeJoin() {
+
   }
 
   @Override
@@ -27,7 +33,7 @@ public class ONodeJoin implements ORaftOperation {
 
   @Override
   public int getRequestType() {
-    return 0;
+    return NODE_JOIN_REQUEST;
   }
 
   @Override
