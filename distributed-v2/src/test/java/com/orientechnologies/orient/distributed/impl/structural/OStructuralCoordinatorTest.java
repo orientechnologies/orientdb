@@ -10,6 +10,7 @@ import org.junit.Test;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +34,7 @@ public class OStructuralCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(OSessionOperationId id, OMasterContext context) {
+      public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OMasterContext context) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(nodeRequest, new OStructuralResponseHandler() {
           @Override
@@ -87,7 +88,7 @@ public class OStructuralCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(OSessionOperationId id, OMasterContext context) {
+      public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OMasterContext context) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(nodeRequest, new OStructuralResponseHandler() {
           @Override
@@ -190,7 +191,7 @@ public class OStructuralCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(OSessionOperationId id, OMasterContext context) {
+      public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OMasterContext context) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(nodeRequest, new OStructuralResponseHandler() {
           @Override

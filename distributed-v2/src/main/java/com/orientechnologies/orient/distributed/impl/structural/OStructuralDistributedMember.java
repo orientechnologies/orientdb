@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 
 public class OStructuralDistributedMember {
@@ -53,5 +55,9 @@ public class OStructuralDistributedMember {
 
   public void ack(OLogId logId) {
     channel.ack(logId);
+  }
+
+  public void send(OOperation operation) {
+    //TODO: send on the network
   }
 }

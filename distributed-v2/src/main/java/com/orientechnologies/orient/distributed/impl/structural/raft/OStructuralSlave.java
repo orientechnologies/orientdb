@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
 
@@ -53,5 +54,11 @@ public class OStructuralSlave implements AutoCloseable {
 
   public OStructuralDistributedMember getMember(ONodeIdentity senderNode) {
     return null;
+  }
+
+  public void recover(ORaftOperation request) {
+    executor.execute(() -> {
+      request.apply(orientDB);
+    });
   }
 }

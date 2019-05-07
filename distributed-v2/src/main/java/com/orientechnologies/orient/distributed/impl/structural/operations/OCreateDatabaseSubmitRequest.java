@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural.operations;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.*;
@@ -10,6 +11,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
 
@@ -28,7 +30,7 @@ public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
   }
 
   @Override
-  public void begin(OSessionOperationId id, OMasterContext context) {
+  public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OMasterContext context) {
   }
 
   @Override

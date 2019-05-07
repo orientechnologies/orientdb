@@ -5,16 +5,14 @@ import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedLockManager;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLogEntry;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSharedConfiguration;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
 
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -92,13 +90,13 @@ public class OStructuralMaster implements AutoCloseable, OMasterContext {
 
   public void receiveSubmit(ONodeIdentity senderNode, OSessionOperationId operationId, OStructuralSubmit request) {
     executor.execute(() -> {
-      request.begin(operationId, this);
+      request.begin(Optional.of(senderNode), operationId, this);
     });
   }
 
   public void submit(OSessionOperationId operationId, OStructuralSubmit request) {
     executor.execute(() -> {
-      request.begin(operationId, this);
+      request.begin(Optional.empty(), operationId, this);
     });
   }
 
@@ -107,16 +105,47 @@ public class OStructuralMaster implements AutoCloseable, OMasterContext {
     return context;
   }
 
-  public void join(OStructuralDistributedMember member) {
-    lockManager.lockResource(CONF_RESOURCE, (guards) -> {
-      submit(new OSessionOperationId(), (id, context) -> {
+  public ODistributedLockManager getLockManager() {
+    return lockManager;
+  }
+
+  public void join(ONodeIdentity identity) {
+    submit(new OSessionOperationId(), (requester, id, context) -> {
+      getLockManager().lockResource(CONF_RESOURCE, (guards) -> {
         OStructuralSharedConfiguration conf = context.getOrientDB().getStructuralConfiguration().getSharedConfiguration();
-        if (!conf.existsNode(member.getIdentity()) && conf.canAddNode(member.getIdentity())) {
-          this.propagateAndApply(new ONodeJoin(member.getIdentity()), () -> {
-            lockManager.unlock(guards);
+        if (!conf.existsNode(identity) && conf.canAddNode(identity)) {
+          this.propagateAndApply(new ONodeJoin(identity), () -> {
+            getLockManager().unlock(guards);
           });
         }
       });
+    });
+  }
+
+  public void connected(OStructuralDistributedMember member) {
+    members.put(member.getIdentity(), member);
+  }
+
+  @Override
+  public void tryResend(ONodeIdentity identity, OLogId logId) {
+    //TODO: this may fail, handle the failure.
+    executor.execute(() -> {
+      //TODO: this in single thread executor may cost too much, find a different implementation
+      Iterator<OOperationLogEntry> iter = operationLog.iterate(logId, operationLog.lastPersistentLog());
+      while (iter.hasNext()) {
+        OOperationLogEntry logEntry = iter.next();
+        members.get(identity).propagate(logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());
+      }
+    });
+  }
+
+  @Override
+  public void sendFullConfiguration(ONodeIdentity identity) {
+    executor.execute(() -> {
+      OStructuralConfiguration structuralConfiguration = getOrientDB().getStructuralConfiguration();
+      OLogId lastId = structuralConfiguration.getLastUpdateId();
+      OStructuralSharedConfiguration shared = structuralConfiguration.getSharedConfiguration();
+      members.get(identity).send(new OFullConfiguration(lastId, shared));
     });
   }
 }

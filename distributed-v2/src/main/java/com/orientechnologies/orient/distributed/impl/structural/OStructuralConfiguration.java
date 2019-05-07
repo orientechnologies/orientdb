@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -118,7 +116,8 @@ public class OStructuralConfiguration {
     return sharedConfiguration;
   }
 
-  public synchronized void receiveSharedConfiguration(OStructuralSharedConfiguration sharedConfiguration) {
+  public synchronized void receiveSharedConfiguration(OLogId lastId, OStructuralSharedConfiguration sharedConfiguration) {
+    this.lastUpdateId = lastId;
     this.sharedConfiguration = sharedConfiguration;
     this.save();
   }
