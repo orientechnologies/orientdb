@@ -74,7 +74,7 @@ public class ORecordBytesTest {
   public void testFromInputStream_ReadEmpty() throws Exception {
     final int result = testedInstance.fromInputStream(emptyStream, SMALL_ARRAY);
     Assert.assertEquals(result, 0);
-    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "source");
     Assert.assertEquals(source.length, 0);
   }
 
@@ -82,7 +82,7 @@ public class ORecordBytesTest {
   public void testFromInputStream_ReadSmall() throws Exception {
     final int result = testedInstance.fromInputStream(inputStream, SMALL_ARRAY);
     Assert.assertEquals(result, SMALL_ARRAY);
-    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "source");
     Assert.assertEquals(source.length, SMALL_ARRAY);
     for (int i = 1; i < SMALL_ARRAY + 1; i++) {
       Assert.assertEquals(source[i - 1], i);
@@ -93,7 +93,7 @@ public class ORecordBytesTest {
   public void testFromInputStream_ReadBig() throws Exception {
     final int result = testedInstance.fromInputStream(inputStream, BIG_ARRAY);
     Assert.assertEquals(result, FULL_ARRAY);
-    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "source");
     Assert.assertEquals(source.length, FULL_ARRAY);
     for (int i = 1; i < FULL_ARRAY + 1; i++) {
       Assert.assertEquals(source[i - 1], i);
@@ -104,7 +104,7 @@ public class ORecordBytesTest {
   public void testFromInputStream_ReadFull() throws Exception {
     final int result = testedInstance.fromInputStream(inputStream, FULL_ARRAY);
     Assert.assertEquals(result, FULL_ARRAY);
-    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "source");
     Assert.assertEquals(source.length, FULL_ARRAY);
     for (int i = 1; i < FULL_ARRAY + 1; i++) {
       Assert.assertEquals(source[i - 1], i);
@@ -118,9 +118,9 @@ public class ORecordBytesTest {
 
     final int result = testedInstance.fromInputStream(is);
     Assert.assertEquals(result, data.length);
-    Assert.assertEquals((Integer) getFieldValue(testedInstance, "_size"), Integer.valueOf(data.length));
+    Assert.assertEquals((Integer) getFieldValue(testedInstance, "size"), Integer.valueOf(data.length));
 
-    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "source");
     assertArrayEquals(source, data);
   }
 
@@ -131,9 +131,9 @@ public class ORecordBytesTest {
 
     final int result = testedInstance.fromInputStream(is, 10);
     Assert.assertEquals(result, data.length);
-    Assert.assertEquals((Integer) getFieldValue(testedInstance, "_size"), Integer.valueOf(data.length));
+    Assert.assertEquals((Integer) getFieldValue(testedInstance, "size"), Integer.valueOf(data.length));
 
-    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "source");
     assertArrayEquals(source, data);
   }
 
@@ -144,9 +144,9 @@ public class ORecordBytesTest {
 
     final int result = testedInstance.fromInputStream(is, 15);
     Assert.assertEquals(result, data.length);
-    Assert.assertEquals((Integer) getFieldValue(testedInstance, "_size"), Integer.valueOf(data.length));
+    Assert.assertEquals((Integer) getFieldValue(testedInstance, "size"), Integer.valueOf(data.length));
 
-    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "source");
     assertArrayEquals(source, data);
   }
 
@@ -158,9 +158,9 @@ public class ORecordBytesTest {
 
     final int result = testedInstance.fromInputStream(is, 8);
     Assert.assertEquals(result, expected.length);
-    Assert.assertEquals((Integer) getFieldValue(testedInstance, "_size"), Integer.valueOf(expected.length));
+    Assert.assertEquals((Integer) getFieldValue(testedInstance, "size"), Integer.valueOf(expected.length));
 
-    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "source");
     assertArrayEquals(source, expected);
   }
 
