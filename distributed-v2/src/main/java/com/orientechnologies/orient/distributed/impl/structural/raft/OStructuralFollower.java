@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class OStructuralSlave implements AutoCloseable {
+public class OStructuralFollower implements AutoCloseable {
   private OOperationLog               operationLog;
   private ExecutorService             executor;
   private OrientDBDistributed         orientDB;
   private Map<OLogId, ORaftOperation> pending = new HashMap<>();
 
-  public OStructuralSlave(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed orientDB) {
+  public OStructuralFollower(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed orientDB) {
     this.operationLog = operationLog;
     this.executor = executor;
     this.orientDB = orientDB;

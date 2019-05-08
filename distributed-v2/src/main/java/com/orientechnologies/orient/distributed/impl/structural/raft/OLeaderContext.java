@@ -8,12 +8,13 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 import java.util.Map;
 import java.util.Optional;
 
-public interface OMasterContext {
+public interface OLeaderContext {
   void tryResend(ONodeIdentity identity, OLogId logId);
 
   void sendFullConfiguration(ONodeIdentity identity);
 
-  void createDatabase(Optional<ONodeIdentity> requester, OSessionOperationId operationId, String database, String type, Map<String, String> configurations);
+  void createDatabase(Optional<ONodeIdentity> requester, OSessionOperationId operationId, String database, String type,
+      Map<String, String> configurations);
 
   interface OpFinished {
     void finished();

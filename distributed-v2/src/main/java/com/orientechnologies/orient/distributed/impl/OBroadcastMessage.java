@@ -37,13 +37,13 @@ class OBroadcastMessage {
 
   //MASTER INFO
 
-  ONodeIdentity masterIdentity;
-  int           masterTerm;
-  String        masterAddress;
-  int           masterTcpPort;
-  String        masterConnectionUsername;
-  String        masterConnectionPassword;
-  long          masterPing;
+  ONodeIdentity leaderIdentity;
+  int           leaderTerm;
+  String        leaderAddress;
+  int           leaderTcpPort;
+  String        leaderConnectionUsername;
+  String        leaderConnectionPassword;
+  long          leaderPing;
 
   public void write(DataOutput output) throws IOException {
     output.writeInt(type);
@@ -63,20 +63,20 @@ class OBroadcastMessage {
 
     switch (type) {
     case OBroadcastMessage.TYPE_PING:
-      if (this.masterIdentity != null) {
+      if (this.leaderIdentity != null) {
         output.writeByte(1);
-        masterIdentity.serialize(output);
-        output.writeInt(masterTerm);
-        output.writeUTF(masterAddress);
-        output.writeInt(masterTcpPort);
-        output.writeLong(masterPing);
-        output.writeBoolean(masterConnectionUsername != null);
-        if (masterConnectionUsername != null) {
-          output.writeUTF(masterConnectionUsername);
+        leaderIdentity.serialize(output);
+        output.writeInt(leaderTerm);
+        output.writeUTF(leaderAddress);
+        output.writeInt(leaderTcpPort);
+        output.writeLong(leaderPing);
+        output.writeBoolean(leaderConnectionUsername != null);
+        if (leaderConnectionUsername != null) {
+          output.writeUTF(leaderConnectionUsername);
         }
-        output.writeBoolean(masterConnectionPassword != null);
-        if (masterConnectionPassword != null) {
-          output.writeUTF(masterConnectionPassword);
+        output.writeBoolean(leaderConnectionPassword != null);
+        if (leaderConnectionPassword != null) {
+          output.writeUTF(leaderConnectionPassword);
         }
       } else {
         output.writeByte(0);
@@ -108,17 +108,17 @@ class OBroadcastMessage {
     case OBroadcastMessage.TYPE_PING:
       byte isThereMaster = input.readByte();
       if (isThereMaster == 1) {
-        masterIdentity = new ONodeIdentity();
-        masterIdentity.deserialize(input);
-        masterTerm = input.readInt();
-        masterAddress = input.readUTF();
-        masterTcpPort = input.readInt();
-        masterPing = input.readLong();
+        leaderIdentity = new ONodeIdentity();
+        leaderIdentity.deserialize(input);
+        leaderTerm = input.readInt();
+        leaderAddress = input.readUTF();
+        leaderTcpPort = input.readInt();
+        leaderPing = input.readLong();
         if (input.readBoolean()) {
-          masterConnectionUsername = input.readUTF();
+          leaderConnectionUsername = input.readUTF();
         }
         if (input.readBoolean()) {
-          masterConnectionPassword = input.readUTF();
+          leaderConnectionPassword = input.readUTF();
         }
       }
       break;

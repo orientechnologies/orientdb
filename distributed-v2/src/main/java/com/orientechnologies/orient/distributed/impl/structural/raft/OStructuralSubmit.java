@@ -6,5 +6,5 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 import java.util.Optional;
 
 public interface OStructuralSubmit {
-  void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OMasterContext context);
+  void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OLeaderContext context);
 }

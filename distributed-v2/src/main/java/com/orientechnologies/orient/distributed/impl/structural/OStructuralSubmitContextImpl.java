@@ -36,12 +36,12 @@ public class OStructuralSubmitContextImpl implements OStructuralSubmitContext {
   }
 
   @Override
-  public OStructuralDistributedMember getCoordinator() {
+  public OStructuralDistributedMember getLeader() {
     return coordinator;
   }
 
   @Override
-  public synchronized void setMaster(OStructuralDistributedMember coordinator) {
+  public synchronized void setLeader(OStructuralDistributedMember coordinator) {
     this.coordinator = coordinator;
     notifyAll();
   }

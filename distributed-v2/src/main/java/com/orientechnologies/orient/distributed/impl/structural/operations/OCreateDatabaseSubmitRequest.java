@@ -4,8 +4,7 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.*;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OMasterContext;
-import com.orientechnologies.orient.distributed.impl.structural.raft.ONodeJoin;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OLeaderContext;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -31,7 +30,7 @@ public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
   }
 
   @Override
-  public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OMasterContext context) {
+  public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OLeaderContext context) {
     context.createDatabase(requester, id, database, type, configurations);
   }
 

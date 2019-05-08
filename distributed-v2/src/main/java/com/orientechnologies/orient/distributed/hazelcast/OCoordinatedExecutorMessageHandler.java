@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.distributed.hazelcast;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralCoordinator;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExecutor;
@@ -10,11 +9,10 @@ import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitContext;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedContext;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedExecutor;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitContext;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralMaster;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralSlave;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 
 public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor {
   private OrientDBDistributed distributed;
@@ -96,7 +94,7 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   @Override
   public void executePropagate(ONetworkPropagate propagate) {
     OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
-    OStructuralSlave slave = distributedContext.getSlave();
+    OStructuralFollower slave = distributedContext.getFollower();
     OStructuralDistributedMember member = slave.getMember(propagate.getSenderNode());
     slave.log(member, propagate.getId(), propagate.getOperation());
   }
@@ -104,14 +102,14 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   @Override
   public void executeConfirm(ONetworkConfirm confirm) {
     OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
-    OStructuralSlave slave = distributedContext.getSlave();
+    OStructuralFollower slave = distributedContext.getFollower();
     slave.confirm(confirm.getId());
   }
 
   @Override
   public void executeAck(ONetworkAck ack) {
     OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
-    OStructuralMaster master = distributedContext.getMaster();
+    OStructuralLeader master = distributedContext.getLeader();
     if (master == null) {
       OLogManager.instance().error(this, "Received coordinator response on a node that is not a coordinator ignoring it", null);
     } else {

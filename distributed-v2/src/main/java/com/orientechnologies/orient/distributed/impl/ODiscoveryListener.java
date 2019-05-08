@@ -7,7 +7,7 @@ public interface ODiscoveryListener {
     ONodeIdentity identity;
     String        address;
     int           port;
-    boolean       master;
+    boolean       leader;
     int           term;
     long          lastPingTimestamp;
     String        connectionUsername;

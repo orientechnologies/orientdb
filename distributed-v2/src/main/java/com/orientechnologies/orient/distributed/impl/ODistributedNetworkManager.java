@@ -13,12 +13,10 @@ import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -129,7 +127,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   public void leaderElected(NodeData data) {
     //TODO: Come from a term
     OLogId lastValid = null;
-    orientDB.setCoordinator(data.getNodeIdentity(), lastValid);
+    orientDB.setLeader(data.getNodeIdentity(), lastValid);
   }
 
   public ODistributedChannel getChannel(ONodeIdentity identity) {

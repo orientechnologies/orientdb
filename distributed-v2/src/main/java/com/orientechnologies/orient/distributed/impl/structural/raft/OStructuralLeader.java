@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class OStructuralMaster implements AutoCloseable, OMasterContext {
+public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   private static final String                                           CONF_RESOURCE = "Configuration";
   private final        ExecutorService                                  executor;
   private final        OOperationLog                                    operationLog;
@@ -31,7 +31,7 @@ public class OStructuralMaster implements AutoCloseable, OMasterContext {
   private              int                                              quorum;
   private              int                                              timeout;
 
-  public OStructuralMaster(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed context, int quorum,
+  public OStructuralLeader(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed context, int quorum,
       int timeout) {
     this.executor = executor;
     this.operationLog = operationLog;

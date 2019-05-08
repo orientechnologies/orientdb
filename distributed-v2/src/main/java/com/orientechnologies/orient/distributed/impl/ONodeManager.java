@@ -210,15 +210,15 @@ public abstract class ONodeManager {
     message.connectionPassword = internalConfiguration.getConnectionPassword();
     message.tcpPort = config.getTcpPort();
     //masterData
-    ODiscoveryListener.NodeData master = this.knownServers.values().stream().filter(x -> x.master).findFirst().orElse(null);
+    ODiscoveryListener.NodeData master = this.knownServers.values().stream().filter(x -> x.leader).findFirst().orElse(null);
     if (master != null) {
-      message.masterIdentity = master.getNodeIdentity();
-      message.masterTerm = master.term;
-      message.masterAddress = master.address;
-      message.masterTcpPort = master.port;
-      message.masterConnectionUsername = master.connectionUsername;
-      message.masterConnectionPassword = master.connectionPassword;
-      message.masterPing = master.lastPingTimestamp;
+      message.leaderIdentity = master.getNodeIdentity();
+      message.leaderTerm = master.term;
+      message.leaderAddress = master.address;
+      message.leaderTcpPort = master.port;
+      message.leaderConnectionUsername = master.connectionUsername;
+      message.leaderConnectionPassword = master.connectionPassword;
+      message.leaderPing = master.lastPingTimestamp;
     }
 
     return message;
@@ -237,7 +237,7 @@ public abstract class ONodeManager {
         data.address = fromAddr;
         knownServers.put(message.getNodeIdentity(), data);
         discoveryListener.nodeConnected(data);
-      } else if (data.master) {
+      } else if (data.leader) {
         wasLeader = true;
       }
       data.lastPingTimestamp = System.currentTimeMillis();
@@ -245,9 +245,9 @@ public abstract class ONodeManager {
         data.term = message.term;
         if (message.role == OBroadcastMessage.ROLE_COORDINATOR) {
           resetLeader();
-          data.master = true;
+          data.leader = true;
         } else {
-          data.master = false;
+          data.leader = false;
         }
         leaderStatus.changeTerm(message.term);
         if (this.internalConfiguration.getNodeIdentity().equals(message.getNodeIdentity())) {
@@ -255,31 +255,31 @@ public abstract class ONodeManager {
         }
       } else if (data.term == message.term && message.role == OBroadcastMessage.ROLE_COORDINATOR) {
         resetLeader();
-        data.master = true;
+        data.leader = true;
         if (!message.getNodeIdentity().equals(this.internalConfiguration.getNodeIdentity())) {
           leaderStatus.status = OLeaderElectionStateMachine.Status.FOLLOWER;
         }
       }
-      if (data.master && !wasLeader) {
+      if (data.leader && !wasLeader) {
         discoveryListener.leaderElected(data);
       }
 
       //Master info
-      if (message.masterIdentity != null && message.masterTerm >= this.leaderStatus.currentTerm
-          && message.masterPing + maxInactiveServerTimeMillis > System.currentTimeMillis()) {
-        data = knownServers.get(message.masterIdentity);
+      if (message.leaderIdentity != null && message.leaderTerm >= this.leaderStatus.currentTerm
+          && message.leaderPing + maxInactiveServerTimeMillis > System.currentTimeMillis()) {
+        data = knownServers.get(message.leaderIdentity);
 
         if (data == null) {
           data = new ODiscoveryListener.NodeData();
-          data.identity = message.masterIdentity;
-          data.term = message.masterTerm;
-          data.address = message.masterAddress;
-          data.connectionUsername = message.masterConnectionUsername;
-          data.connectionPassword = message.masterConnectionPassword;
-          data.port = message.masterTcpPort;
-          data.lastPingTimestamp = message.masterPing;
-          data.master = true;
-          knownServers.put(message.masterIdentity, data);
+          data.identity = message.leaderIdentity;
+          data.term = message.leaderTerm;
+          data.address = message.leaderAddress;
+          data.connectionUsername = message.leaderConnectionUsername;
+          data.connectionPassword = message.leaderConnectionPassword;
+          data.port = message.leaderTcpPort;
+          data.lastPingTimestamp = message.leaderPing;
+          data.leader = true;
+          knownServers.put(message.leaderIdentity, data);
           discoveryListener.nodeConnected(data);
           discoveryListener.leaderElected(data);
         }
@@ -365,7 +365,7 @@ public abstract class ONodeManager {
       }
 
       for (ODiscoveryListener.NodeData node : knownServers.values()) {
-        if (node.master && node.term >= leaderStatus.currentTerm) {
+        if (node.leader && node.term >= leaderStatus.currentTerm) {
           return; //master found
         }
       }
@@ -377,7 +377,7 @@ public abstract class ONodeManager {
 
     synchronized (this) {
       for (ODiscoveryListener.NodeData node : knownServers.values()) {
-        if (node.master && node.term >= leaderStatus.currentTerm) {
+        if (node.leader && node.term >= leaderStatus.currentTerm) {
           return; //master found
         }
       }
@@ -418,7 +418,7 @@ public abstract class ONodeManager {
       resetLeader();
       ODiscoveryListener.NodeData data = new ODiscoveryListener.NodeData();
       data.identity = message.nodeIdentity;
-      data.master = true;
+      data.leader = true;
       data.term = message.term;
       data.address = fromAddr;
       data.connectionUsername = message.connectionUsername;
@@ -470,7 +470,7 @@ public abstract class ONodeManager {
       resetLeader();
       ODiscoveryListener.NodeData data = new ODiscoveryListener.NodeData();
       data.term = leaderStatus.currentTerm;
-      data.master = true;
+      data.leader = true;
       data.identity = this.internalConfiguration.getNodeIdentity();
       data.lastPingTimestamp = System.currentTimeMillis();
       discoveryListener.leaderElected(data);
@@ -480,7 +480,7 @@ public abstract class ONodeManager {
   }
 
   private void resetLeader() {
-    knownServers.values().forEach(x -> x.master = false);
+    knownServers.values().forEach(x -> x.leader = false);
   }
 
   private void sendLeaderElected() {

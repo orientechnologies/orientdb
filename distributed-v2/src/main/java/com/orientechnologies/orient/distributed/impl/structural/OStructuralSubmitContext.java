@@ -10,9 +10,9 @@ public interface OStructuralSubmitContext {
 
   void receive(OSessionOperationId requestId, OStructuralSubmitResponse response);
 
-  OStructuralDistributedMember getCoordinator();
+  OStructuralDistributedMember getLeader();
 
-  void setMaster(OStructuralDistributedMember m);
+  void setLeader(OStructuralDistributedMember m);
 
   void receive(OSessionOperationId operationId);
 }

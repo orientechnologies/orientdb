@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OMasterContext;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralSubmit;
 
 import java.io.DataInput;

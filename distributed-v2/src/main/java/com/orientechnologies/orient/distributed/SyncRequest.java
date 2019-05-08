@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OMasterContext;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OLeaderContext;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -44,7 +44,7 @@ public class SyncRequest implements OStructuralSubmitRequest {
   }
 
   @Override
-  public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OMasterContext context) {
+  public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OLeaderContext context) {
     if (this.logId.isPresent()) {
       context.tryResend(requester.get(),this.logId.get());
     } else {

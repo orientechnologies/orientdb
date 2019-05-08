@@ -5,17 +5,17 @@ import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import java.util.TimerTask;
 
 class ORaftOperationTimeoutTimerTask extends TimerTask {
-  private       OStructuralMaster master;
+  private       OStructuralLeader leader;
   private final OLogId            id;
 
-  public ORaftOperationTimeoutTimerTask(OStructuralMaster master, OLogId id) {
-    this.master = master;
+  public ORaftOperationTimeoutTimerTask(OStructuralLeader leader, OLogId id) {
+    this.leader = leader;
     this.id = id;
   }
 
   @Override
   public void run() {
-    master.operationTimeout(id, this);
+    leader.operationTimeout(id, this);
   }
 
 }

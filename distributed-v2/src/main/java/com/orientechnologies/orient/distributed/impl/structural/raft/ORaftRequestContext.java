@@ -9,15 +9,15 @@ public class ORaftRequestContext {
   private Set<ONodeIdentity>           answers = new HashSet<>();
   private ORaftOperation               operation;
   private int                          quorum;
-  private OStructuralMaster.OpFinished finished;
+  private OStructuralLeader.OpFinished finished;
 
-  public ORaftRequestContext(ORaftOperation operation, int quorum, OStructuralMaster.OpFinished finished) {
+  public ORaftRequestContext(ORaftOperation operation, int quorum, OStructuralLeader.OpFinished finished) {
     this.finished = finished;
     this.operation = operation;
     this.quorum = quorum;
   }
 
-  public boolean ack(ONodeIdentity node, OStructuralMaster context) {
+  public boolean ack(ONodeIdentity node, OStructuralLeader context) {
     answers.add(node);
     if (answers.size() >= quorum) {
       operation.apply(context.getOrientDB());

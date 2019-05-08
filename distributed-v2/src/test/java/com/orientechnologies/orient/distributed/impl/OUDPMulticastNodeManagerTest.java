@@ -224,7 +224,7 @@ public class OUDPMulticastNodeManagerTest {
 
     Assert.assertNotEquals(OLeaderElectionStateMachine.Status.LEADER, manager1.leaderStatus.status);
     for (ODiscoveryListener.NodeData value : manager1.knownServers.values()) {
-      Assert.assertFalse(value.master);
+      Assert.assertFalse(value.leader);
     }
 
     ONodeInternalConfiguration internalConfiguration2 = createInternalConfiguration("node2");
@@ -236,7 +236,7 @@ public class OUDPMulticastNodeManagerTest {
     Thread.sleep(10000);
     int numOfMasters = 0;
     for (ODiscoveryListener.NodeData value : manager1.knownServers.values()) {
-      if (value.master) {
+      if (value.leader) {
         numOfMasters++;
       }
       System.out.println(value.lastPingTimestamp);
