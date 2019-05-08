@@ -49,9 +49,9 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
   private ConcurrentHashMap<String, OStaticContentCachedEntry> cacheContents    = new ConcurrentHashMap<String, OStaticContentCachedEntry>();
   private Map<String, String>                                  cacheHttp        = new HashMap<String, String>();
   private String                                               cacheHttpDefault = "Cache-Control: max-age=3000";
-  private String rootPath;
-  private String filePath;
-  private ConcurrentHashMap<String, OCallable<Object, String>> virtualFolders = new ConcurrentHashMap<String, OCallable<Object, String>>();
+  private String                                               rootPath;
+  private String                                               filePath;
+  private ConcurrentHashMap<String, OCallable<Object, String>> virtualFolders   = new ConcurrentHashMap<String, OCallable<Object, String>>();
 
   public static class OStaticContent {
     public InputStream is          = null;
@@ -135,7 +135,8 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
           iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, staticContent.type,
               new ByteArrayInputStream(compressedBytes), compressedBytes.length, null, new HashMap<String, String>() {{
                 put("Content-Encoding", "gzip");
-              }});
+              }
+          });
         } finally {
           stream.close();
           bytesOutput.close();

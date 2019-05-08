@@ -11,22 +11,21 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class OServerCommandGetPing extends OServerCommandAbstract
-{
-	private static final String[] NAMES = { "GET|ping" };
-	
-	@Override
-	public String[] getNames()	{ return NAMES; }
+public class OServerCommandGetPing extends OServerCommandAbstract {
+  private static final String[] NAMES = { "GET|ping" };
 
-	public OServerCommandGetPing()
-	{
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception
-	{
-		iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "pong", null);
-		
-		return false; // Is not a chained command.
-	}
+  public OServerCommandGetPing() {
+  }
+
+  @Override
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "pong", null);
+
+    return false; // Is not a chained command.
+  }
 }

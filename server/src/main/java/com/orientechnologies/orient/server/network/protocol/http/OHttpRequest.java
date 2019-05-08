@@ -38,33 +38,32 @@ import java.util.Set;
  * Maintains information about current HTTP request.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OHttpRequest {
-  public final OContextConfiguration        configuration;
-  public final InputStream                  in;
-  public final ONetworkProtocolData         data;
-  public final ONetworkProtocolHttpAbstract executor;
-  public String                             authorization;
-  public String                             sessionId;
-  public String                             url;
-  public Map<String, String>                parameters;
-  public String                             httpMethod;
-  public String                             httpVersion;
-  public String                             contentType;
-  public String                             contentEncoding;
-  public String                             content;
-  public OHttpMultipartBaseInputStream      multipartStream;
-  public String                             boundary;
-  public String                             databaseName;
-  public boolean                            isMultipart;
-  public String                             ifMatch;
-  public String                             authentication;
-  public boolean                            keepAlive = true;
-  protected Map<String, String>             headers;
+  public final OContextConfiguration         configuration;
+  public final InputStream                   in;
+  public final ONetworkProtocolData          data;
+  public final ONetworkProtocolHttpAbstract  executor;
+  public       String                        authorization;
+  public       String                        sessionId;
+  public       String                        url;
+  public       Map<String, String>           parameters;
+  public       String                        httpMethod;
+  public       String                        httpVersion;
+  public       String                        contentType;
+  public       String                        contentEncoding;
+  public       String                        content;
+  public       OHttpMultipartBaseInputStream multipartStream;
+  public       String                        boundary;
+  public       String                        databaseName;
+  public       boolean                       isMultipart;
+  public       String                        ifMatch;
+  public       String                        authentication;
+  public       boolean                       keepAlive = true;
+  protected    Map<String, String>           headers;
 
-  public String                             bearerTokenRaw;
-  public OToken                             bearerToken;
+  public String bearerTokenRaw;
+  public OToken bearerToken;
 
   public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
       final OContextConfiguration iConfiguration) {
@@ -105,7 +104,8 @@ public class OHttpRequest {
       return null;
     }
     HashMap<String, String> retMap = new HashMap<String, String>();
-    String key, value;
+    String key;
+    String value;
     try {
       String[] pairs = content.split("\\&");
       for (int i = 0; i < pairs.length; i++) {

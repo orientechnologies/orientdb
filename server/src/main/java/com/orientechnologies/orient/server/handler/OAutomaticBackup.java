@@ -159,7 +159,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         public void run() {
           OLogManager.instance().info(this, "Scanning databases to backup...");
 
-          int ok = 0, errors = 0;
+          int ok = 0;
+          int errors = 0;
 
           final Map<String, String> databases = serverInstance.getAvailableStorageNames();
           for (final Entry<String, String> database : databases.entrySet()) {

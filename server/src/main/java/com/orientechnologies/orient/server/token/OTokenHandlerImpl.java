@@ -102,7 +102,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     JsonWebToken token = null;
 
     // / <header>.<payload>.<signature>
-    int firstDot = -1, secondDot = -1;
+    int firstDot = -1;
+    int secondDot = -1;
     for (int x = 0; x < tokenBytes.length; x++) {
       if (tokenBytes[x] == JWT_DELIMITER) {
         if (firstDot == -1)

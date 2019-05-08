@@ -25,7 +25,7 @@ public class OBinaryTokenSerializer {
   private final Map<String, Byte> associetedAlgorithms;
   private final Map<String, Byte> associetedTypes;
 
-  public OBinaryTokenSerializer(String dbTypes[], String keys[], String algorithms[], String entityTypes[]) {
+  public OBinaryTokenSerializer(String[] dbTypes, String[] keys, String[] algorithms, String[] entityTypes) {
     this.dbTypes = dbTypes;
     this.keys = keys;
     this.algorithms = algorithms;
@@ -36,7 +36,7 @@ public class OBinaryTokenSerializer {
     associetedTypes = createMap(entityTypes);
   }
 
-  public Map<String, Byte> createMap(String entries[]) {
+  public Map<String, Byte> createMap(String[] entries) {
     Map<String, Byte> newMap = new HashMap<String, Byte>();
     for (int i = 0; i < entries.length; i++)
       newMap.put(entries[i], (byte) i);

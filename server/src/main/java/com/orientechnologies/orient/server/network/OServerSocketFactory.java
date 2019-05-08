@@ -23,78 +23,39 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
 public abstract class OServerSocketFactory {
 
-	private static OServerSocketFactory theFactory;
-	private String name;
+  private static OServerSocketFactory theFactory;
+  private        String               name;
 
-	public OServerSocketFactory() {
-	}
+  public OServerSocketFactory() {
+  }
 
-	public static OServerSocketFactory getDefault() {
-		synchronized (OServerSocketFactory.class) {
-			if (theFactory == null) {
-				theFactory = new ODefaultServerSocketFactory();
-			}
-		}
+  public static OServerSocketFactory getDefault() {
+    synchronized (OServerSocketFactory.class) {
+      if (theFactory == null) {
+        theFactory = new ODefaultServerSocketFactory();
+      }
+    }
 
-		return theFactory;
-	}
+    return theFactory;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public void config(String name,
-			final OServerParameterConfiguration[] iParameters) {
-		this.name = name;
-	}
+  public void config(String name, final OServerParameterConfiguration[] iParameters) {
+    this.name = name;
+  }
 
-	public abstract ServerSocket createServerSocket(int port)
-			throws IOException;
+  public abstract ServerSocket createServerSocket(int port) throws IOException;
 
-	public abstract ServerSocket createServerSocket(int port, int backlog)
-			throws IOException;
+  public abstract ServerSocket createServerSocket(int port, int backlog) throws IOException;
 
-	public abstract ServerSocket createServerSocket(int port, int backlog,
-			InetAddress ifAddress) throws IOException;
+  public abstract ServerSocket createServerSocket(int port, int backlog, InetAddress ifAddress) throws IOException;
 }
 
-class ODefaultServerSocketFactory extends OServerSocketFactory {
-
-	ODefaultServerSocketFactory() {
-	}
-
-	public ServerSocket createServerSocket() throws IOException {
-		return new ServerSocket();
-	}
-
-	@Override
-	public ServerSocket createServerSocket(int port) throws IOException {
-		return new ServerSocket(port);
-	}
-
-	@Override
-	public ServerSocket createServerSocket(int port, int backlog)
-			throws IOException {
-		return new ServerSocket(port, backlog);
-	}
-
-	@Override
-	public ServerSocket createServerSocket(int port, int backlog,
-			InetAddress ifAddress) throws IOException {
-		return new ServerSocket(port, backlog, ifAddress);
-	}
-
-	@Override
-	public void config(String name, OServerParameterConfiguration[] iParameters) {
-		super.config(name, iParameters);
-	}
-
-	@Override
-	public String getName() {
-		return "default";
-	}
-}
+  

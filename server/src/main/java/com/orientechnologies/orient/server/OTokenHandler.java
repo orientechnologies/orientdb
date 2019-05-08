@@ -15,17 +15,17 @@ import java.security.NoSuchAlgorithmException;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public interface OTokenHandler  {
+public interface OTokenHandler {
   @Deprecated
   public static final String TOKEN_HANDLER_NAME = "OTokenHandler";
 
   // Return null if token is unparseable or fails verification.
   // The returned token should be checked to ensure isVerified == true.
-  OToken parseWebToken(byte tokenBytes[]) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
+  OToken parseWebToken(byte[] tokenBytes) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
 
-  OToken parseNotVerifyBinaryToken(byte tokenBytes[]);
+  OToken parseNotVerifyBinaryToken(byte[] tokenBytes);
 
-  OToken parseBinaryToken(byte tokenBytes[]);
+  OToken parseBinaryToken(byte[] tokenBytes);
 
   boolean validateToken(OToken token, String command, String database);
 
