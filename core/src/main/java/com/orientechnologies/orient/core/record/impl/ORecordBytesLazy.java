@@ -44,9 +44,9 @@ public class ORecordBytesLazy extends ORecordBytes {
 
   @Override
   public byte[] toStream() {
-    if (_source == null)
-      _source = serializableContent.toStream();
-    return _source;
+    if (source == null)
+      source = serializableContent.toStream();
+    return source;
   }
 
   @Override

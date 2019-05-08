@@ -129,7 +129,7 @@ public class ORecordInternal {
   }
 
   public static void setRecordSerializer(final ORecord record, final ORecordSerializer serializer) {
-    ((ORecordAbstract) record)._recordFormat = serializer;
+    ((ORecordAbstract) record).recordFormat = serializer;
   }
 
   public static ODirtyManager getDirtyManager(ORecord record) {
@@ -155,6 +155,6 @@ public class ORecordInternal {
   }
 
   public static ORecordSerializer getRecordSerializer(ORecord iRecord) {
-    return ((ORecordAbstract) iRecord)._recordFormat;
+    return ((ORecordAbstract) iRecord).recordFormat;
   }
 }

@@ -11,6 +11,7 @@ import java.util.Set;
  * @since 03/11/14
  */
 public interface OSecurityRole extends Serializable {
+  @SuppressWarnings("CheckStyle")
   public enum ALLOW_MODES {
     DENY_ALL_BUT, ALLOW_ALL_BUT
   }

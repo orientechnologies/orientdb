@@ -72,7 +72,7 @@ public class ODocumentEntry {
       for (Object element : list) {
         if (element instanceof ODocument) {
           ODocument doc = (ODocument) element;
-          for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()) {
+          for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
             if (field.getValue().isChangedTree(new ArrayList<>())) {
               return true;
             }
@@ -95,7 +95,7 @@ public class ODocumentEntry {
         Object element = entry.getValue();
         if (element instanceof ODocument) {
           ODocument doc = (ODocument) element;
-          for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()) {
+          for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
             if (field.getValue().isChangedTree(new ArrayList<>())) {
               return true;
             }
@@ -136,7 +136,7 @@ public class ODocumentEntry {
 
     if (value instanceof ODocument) {
       ODocument doc = (ODocument) value;
-      for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()) {
+      for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
         if (field.getValue().hasNonExistingTree()) {
           return true;
         }
@@ -148,7 +148,7 @@ public class ODocumentEntry {
       for (Object element : list) {
         if (element instanceof ODocument) {
           ODocument doc = (ODocument) element;
-          for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()) {
+          for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
             if (field.getValue().hasNonExistingTree()) {
               return true;
             }

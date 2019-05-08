@@ -35,9 +35,9 @@ import java.util.Set;
 /**
  * This operator add an item in a set. The set doesn't accept duplicates, so adding multiple times the same value has no effect: the
  * value is contained only once.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ *
  */
 public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>> {
   public static final String NAME = "set";
@@ -106,7 +106,7 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
       final Map<String, Object> doc = new HashMap<String, Object>();
       doc.put("node", getDistributedStorageId());
       doc.put("context", context);
-      return Collections.<Object> singleton(doc);
+      return Collections.<Object>singleton(doc);
     } else {
       return res;
     }

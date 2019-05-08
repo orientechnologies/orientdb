@@ -595,7 +595,8 @@ public abstract class OStringSerializerHelper {
 
     boolean escape = false;
     char insideQuote = ' ';
-    int currentPos, deep;
+    int currentPos;
+    int deep;
     int maxPos = iText.length() - 1;
     for (currentPos = openPos + 1, deep = 1; deep > 0; currentPos++) {
       if (currentPos > maxPos)

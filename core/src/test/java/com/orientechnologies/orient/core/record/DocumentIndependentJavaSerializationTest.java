@@ -61,7 +61,7 @@ public class DocumentIndependentJavaSerializationTest {
       clazz.createProperty("test", OType.STRING);
       ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(ser));
       ODocument doc1 = (ODocument) input.readObject();
-      assertEquals(doc1._recordFormat, db.getSerializer());
+      assertEquals(doc1.recordFormat, db.getSerializer());
       assertEquals(doc1.getClassName(), "Test");
       assertEquals(doc1.field("test"), "Some Value");
     } finally {

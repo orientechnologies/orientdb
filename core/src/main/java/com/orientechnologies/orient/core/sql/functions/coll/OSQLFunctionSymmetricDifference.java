@@ -105,7 +105,7 @@ public class OSQLFunctionSymmetricDifference extends OSQLFunctionMultiValueAbstr
       final Map<String, Object> doc = new HashMap<String, Object>();
       doc.put("result", context);
       doc.put("rejected", rejected);
-      return Collections.<Object> singleton(doc);
+      return Collections.<Object>singleton(doc);
     } else {
       return super.getResult();
     }

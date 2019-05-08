@@ -29,7 +29,10 @@ import java.util.List;
  */
 public class OSystemUser extends OUser {
   private String databaseName;
-  protected String getDatabaseName() { return databaseName; }
+
+  protected String getDatabaseName() {
+    return databaseName;
+  }
 
   /**
    * Constructor used in unmarshalling.
@@ -64,38 +67,39 @@ public class OSystemUser extends OUser {
    * Derived classes can override createRole() to return an extended ORole implementation.
    */
   protected ORole createRole(final ODocument roleDoc) {
-    ORole role = null; 
+    ORole role = null;
 
     // If databaseName is set, then only allow roles with the same databaseName.
     if (databaseName != null && !databaseName.isEmpty()) {
-    	if (roleDoc != null && roleDoc.containsField(OSystemRole.DB_FILTER) && roleDoc.fieldType(OSystemRole.DB_FILTER) == OType.EMBEDDEDLIST) {
-    		
-    	  List<String> dbNames = roleDoc.field(OSystemRole.DB_FILTER, OType.EMBEDDEDLIST);
-  	 	  
-  	 	  for (String dbName : dbNames) {
-  	       if (dbName != null && !dbName.isEmpty() && (dbName.equalsIgnoreCase(databaseName) || dbName.equals("*"))) {
-    	      role = new OSystemRole(roleDoc);
-    	      break;
-    	    }
-    	  }
+      if (roleDoc != null && roleDoc.containsField(OSystemRole.DB_FILTER)
+          && roleDoc.fieldType(OSystemRole.DB_FILTER) == OType.EMBEDDEDLIST) {
+
+        List<String> dbNames = roleDoc.field(OSystemRole.DB_FILTER, OType.EMBEDDEDLIST);
+
+        for (String dbName : dbNames) {
+          if (dbName != null && !dbName.isEmpty() && (dbName.equalsIgnoreCase(databaseName) || dbName.equals("*"))) {
+            role = new OSystemRole(roleDoc);
+            break;
+          }
+        }
       }
     }
     // If databaseName is not set, only return roles without a OSystemRole.DB_FILTER property or if set to "*".
     else {
       if (roleDoc != null) {
         if (!roleDoc.containsField(OSystemRole.DB_FILTER)) {
-    	    role = new OSystemRole(roleDoc);
-    	  } else { // It does use the dbFilter property.
-          if(roleDoc.fieldType(OSystemRole.DB_FILTER) == OType.EMBEDDEDLIST) {
-      	   List<String> dbNames = roleDoc.field(OSystemRole.DB_FILTER, OType.EMBEDDEDLIST);
-  	 	  
-  	 	      for (String dbName : dbNames) {
-  	           if (dbName != null && !dbName.isEmpty() && dbName.equals("*")) {
-    	          role = new OSystemRole(roleDoc);
-    	          break;
-    	        }
-    	      }
-    	    }
+          role = new OSystemRole(roleDoc);
+        } else { // It does use the dbFilter property.
+          if (roleDoc.fieldType(OSystemRole.DB_FILTER) == OType.EMBEDDEDLIST) {
+            List<String> dbNames = roleDoc.field(OSystemRole.DB_FILTER, OType.EMBEDDEDLIST);
+
+            for (String dbName : dbNames) {
+              if (dbName != null && !dbName.isEmpty() && dbName.equals("*")) {
+                role = new OSystemRole(roleDoc);
+                break;
+              }
+            }
+          }
         }
       }
     }

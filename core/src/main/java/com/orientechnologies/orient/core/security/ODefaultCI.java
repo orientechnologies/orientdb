@@ -26,14 +26,18 @@ import com.orientechnologies.orient.core.security.OCredentialInterceptor;
  * Provides a default credential interceptor that does nothing.
  *
  * @author S. Colin Leister
- * 
  */
 public class ODefaultCI implements OCredentialInterceptor {
   private String username;
   private String password;
-  
-  public String getUsername() { return this.username; }
-  public String getPassword() { return this.password; }
+
+  public String getUsername() {
+    return this.username;
+  }
+
+  public String getPassword() {
+    return this.password;
+  }
 
   public void intercept(final String url, final String username, final String password) throws OSecurityException {
     this.username = username;

@@ -60,7 +60,8 @@ public class OZIPCompressionUtil {
     final ZipInputStream zin = new ZipInputStream(in);
     try {
       ZipEntry entry;
-      String name, dir;
+      String name;
+      String dir;
       while ((entry = zin.getNextEntry()) != null) {
         name = entry.getName();
 
@@ -72,7 +73,7 @@ public class OZIPCompressionUtil {
           mkdirs(outdir, name);
           continue;
         }
-        
+
         /*
          * this part is necessary because file entry can come before directory entry where is file located i.e.: /foo/foo.txt /foo/
          */
@@ -121,7 +122,7 @@ public class OZIPCompressionUtil {
     File f = new File(path);
     if (f.exists()) {
       if (f.isDirectory()) {
-        File f2[] = f.listFiles();
+        File[] f2 = f.listFiles();
         for (int i = 0; i < f2.length; i++) {
           addFolder(zos, f2[i].getAbsolutePath(), baseFolderName, iSkipFileExtensions, iOutput, iCompressedFiles);
         }

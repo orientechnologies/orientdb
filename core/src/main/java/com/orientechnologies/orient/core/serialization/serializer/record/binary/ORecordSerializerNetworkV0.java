@@ -206,7 +206,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
     int i = 0;
 
-    final Entry<String, ODocumentEntry> values[] = new Entry[fields.size()];
+    final Entry<String, ODocumentEntry>[] values = new Entry[fields.size()];
     for (Entry<String, ODocumentEntry> entry : fields) {
       ODocumentEntry docEntry = entry.getValue();
       if (!docEntry.exist())
@@ -648,7 +648,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   private int writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
     final int[] pos = new int[map.size()];
     int i = 0;
-    Entry<Object, Object> values[] = new Entry[map.size()];
+    Entry<Object, Object>[] values = new Entry[map.size()];
     final int fullPos = OVarIntSerializer.write(bytes, map.size());
     for (Entry<Object, Object> entry : map.entrySet()) {
       // TODO:check skip of complex types

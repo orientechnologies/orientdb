@@ -58,7 +58,7 @@ final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeLi
         document.setDirtyNoChanged();
     }
 
-    if (!(document._trackingChanges && document.getIdentity().isValid()) || document.getInternalStatus() == STATUS.UNMARSHALLING)
+    if (!(document.trackingChanges && document.getIdentity().isValid()) || document.getInternalStatus() == STATUS.UNMARSHALLING)
       return;
 
     if (entry == null || entry.isChanged())

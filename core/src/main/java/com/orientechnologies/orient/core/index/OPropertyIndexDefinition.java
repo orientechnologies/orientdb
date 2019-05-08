@@ -172,7 +172,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     keyType = OType.valueOf(keyTypeStr);
 
     setCollate((String) document.field("collate"));
-    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
+    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean>field("nullValuesIgnored")));
   }
 
   /**

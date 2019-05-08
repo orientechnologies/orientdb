@@ -788,7 +788,7 @@ public class ODocumentHelper {
       return null;
     }
     doc.checkForFields(iFieldName);
-    ODocumentEntry entry = doc._fields.get(iFieldName);
+    ODocumentEntry entry = doc.fields.get(iFieldName);
     return entry != null ? entry.value : null;
   }
 
@@ -1090,7 +1090,7 @@ public class ODocumentHelper {
     Object otherFieldValue;
     for (Entry<String, Object> f : iCurrent) {
       myFieldValue = f.getValue();
-      otherFieldValue = iOther._fields.get(f.getKey()).value;
+      otherFieldValue = iOther.fields.get(f.getKey()).value;
 
       if (myFieldValue == otherFieldValue)
         continue;

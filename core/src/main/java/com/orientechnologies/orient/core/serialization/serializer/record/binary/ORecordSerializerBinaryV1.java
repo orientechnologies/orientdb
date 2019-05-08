@@ -243,11 +243,11 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     return new Triple<>(Signal.RETURN_VALUE, new OBinaryField(iFieldName, type, bytes, null), cumulativeLength + fieldLength);
   }
 
-  private Triple<Signal, OBinaryField, Integer> processPropertyDeserializeField(int len, final OImmutableSchema _schema,
+  private Triple<Signal, OBinaryField, Integer> processPropertyDeserializeField(int len, final OImmutableSchema schema,
       final String iFieldName, final OClass iClass, final BytesContainer bytes, int cumulativeLength, int headerStart,
       int headerLength) {
     final int id = (len * -1) - 1;
-    final OGlobalProperty prop = _schema.getGlobalPropertyById(id);
+    final OGlobalProperty prop = schema.getGlobalPropertyById(id);
     final int fieldLength = OVarIntSerializer.readAsInteger(bytes);
     final OType type;
     type = getPropertyTypeFromStream(prop, bytes);

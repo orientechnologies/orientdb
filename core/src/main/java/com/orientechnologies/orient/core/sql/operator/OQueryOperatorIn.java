@@ -46,12 +46,14 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     super("IN", 5, false);
   }
 
-  @Override public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+  @Override
+  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
     return OIndexReuseType.INDEX_METHOD;
   }
 
-  @SuppressWarnings("unchecked") @Override public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index,
-      List<Object> keyParams, boolean ascSortOrder) {
+  @SuppressWarnings("unchecked")
+  @Override
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -167,7 +169,8 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     return cursor;
   }
 
-  @Override public ORID getBeginRidRange(Object iLeft, Object iRight) {
+  @Override
+  public ORID getBeginRidRange(Object iLeft, Object iRight) {
     final Iterable<?> ridCollection;
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
@@ -190,7 +193,8 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     return rids == null ? null : Collections.min(rids);
   }
 
-  @Override public ORID getEndRidRange(Object iLeft, Object iRight) {
+  @Override
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
     final Iterable<?> ridCollection;
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
@@ -214,8 +218,10 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     return rids == null ? null : Collections.max(rids);
   }
 
-  @Override @SuppressWarnings("unchecked") protected boolean evaluateExpression(final OIdentifiable iRecord,
-      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, OCommandContext iContext) {
+  @Override
+  @SuppressWarnings("unchecked")
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
     if (OMultiValue.isMultiValue(iLeft)) {
       if (iRight instanceof Collection<?>) {
         // AGAINST COLLECTION OF ITEMS

@@ -22,13 +22,11 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordStringable;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 import java.io.UnsupportedEncodingException;
 
@@ -58,7 +56,7 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   }
 
   public ORecordFlat(final ODatabaseDocument iDatabase, final ORID iRID) {
-    _recordId = (ORecordId) iRID;
+    recordId = (ORecordId) iRID;
   }
 
   public ORecordFlat value(final String iValue) {
@@ -90,24 +88,24 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
 
   public ORecordFlat copy() {
     ORecordFlat cloned = new ORecordFlat();
-    cloned._source = _source;
+    cloned.source = source;
     cloned.value = value;
-    cloned._recordId = _recordId.copy();
-    cloned._dirty = _dirty;
-    cloned._contentChanged = _contentChanged;
-    cloned._recordVersion = _recordVersion;
+    cloned.recordId = recordId.copy();
+    cloned.dirty = dirty;
+    cloned.contentChanged = contentChanged;
+    cloned.recordVersion = recordVersion;
     return cloned;
   }
 
   public String value() {
     if (value == null) {
       // LAZY DESERIALIZATION
-      if (_source == null && getIdentity() != null && getIdentity().isValid())
+      if (source == null && getIdentity() != null && getIdentity().isValid())
         reload();
 
       // LAZY LOADING: LOAD THE RECORD FIRST
       try {
-        value = new String(_source, "UTF-8");
+        value = new String(source, "UTF-8");
       } catch (UnsupportedEncodingException e) {
         throw new RuntimeException(e);
       }
@@ -136,13 +134,13 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
 
   @Override
   public byte[] toStream() {
-    if (_source == null && value != null)
+    if (source == null && value != null)
       try {
-        _source = value.getBytes("UTF-8");
+        source = value.getBytes("UTF-8");
       } catch (UnsupportedEncodingException e) {
         throw new RuntimeException(e);
       }
-    return _source;
+    return source;
   }
 
   public int size() {

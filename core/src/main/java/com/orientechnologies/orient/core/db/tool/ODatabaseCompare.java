@@ -807,6 +807,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               }
 
               if (buffer1.buffer == null && buffer2.buffer == null) {
+                // Both null so both equals
               } else if (buffer1.buffer == null && buffer2.buffer != null) {
                 listener.onMessage(
                     "\n- ERR: RID=" + clusterId1 + ":" + position + " content is different: null <-> " + buffer2.buffer.length);

@@ -705,7 +705,8 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       Integer.class, 20),
 
   QUERY_SCAN_BATCH_SIZE("query.scanBatchSize",
-      "Scan clusters in blocks of records. This setting reduces the lock time on the cluster during scans. A high value mean a faster execution, but also a lower concurrency level. Set to 0 to disable batch scanning. Disabling batch scanning is suggested for read-only databases only",
+      "Scan clusters in blocks of records. This setting reduces the lock time on the cluster during scans."
+          + " A high value mean a faster execution, but also a lower concurrency level. Set to 0 to disable batch scanning. Disabling batch scanning is suggested for read-only databases only",
       Long.class, 1000),
 
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
@@ -1283,4 +1284,6 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   public String getDescription() {
     return description;
-  }}
+  }
+
+}

@@ -113,7 +113,7 @@
                      value="Type name ''{0}'' must match pattern ''{1}''."/>
         </module>
         <module name="MemberName">
-            <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9]*$"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
             <message key="name.invalidPattern"
                      value="Member name ''{0}'' must match pattern ''{1}''."/>
         </module>
@@ -135,7 +135,7 @@
                      value="Local variable name ''{0}'' must match pattern ''{1}''."/>
         </module>
         <module name="ClassTypeParameterName">
-            <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>
+            <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*$)"/>
             <message key="name.invalidPattern"
                      value="Class type name ''{0}'' must match pattern ''{1}''."/>
         </module>
@@ -147,7 +147,7 @@
         </module>
         -->
         <module name="InterfaceTypeParameterName">
-            <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>
+            <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*$)"/>
             <message key="name.invalidPattern"
                      value="Interface type name ''{0}'' must match pattern ''{1}''."/>
         </module>
@@ -219,10 +219,12 @@
         <!--
         <module name="JavadocParagraph"/>
         -->
+        <!--
         <module name="AtclauseOrder">
             <property name="tagOrder" value="@param, @return, @throws, @deprecated"/>
             <property name="target" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
         </module>
+        -->
         <module name="JavadocMethod">
             <property name="scope" value="public"/>
             <property name="excludeScope" value="public"/>
@@ -238,9 +240,11 @@
             <message key="name.invalidPattern"
                      value="Method name ''{0}'' must match pattern ''{1}''."/>
         </module>
+        <!--
         <module name="SingleLineJavadoc">
             <property name="ignoreInlineTags" value="false"/>
         </module>
+        -->
         <!--
         <module name="EmptyCatchBlock">
             <property name="exceptionVariableName" value="expected"/>

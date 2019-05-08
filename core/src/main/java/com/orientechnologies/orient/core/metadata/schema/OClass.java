@@ -44,6 +44,7 @@ public interface OClass extends Comparable<OClass> {
     NAME, SHORTNAME, SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION, DESCRIPTION, ENCRYPTION
   }
 
+  @SuppressWarnings("CheckStyle")
   enum INDEX_TYPE {
     UNIQUE(true),
     NOTUNIQUE(true),

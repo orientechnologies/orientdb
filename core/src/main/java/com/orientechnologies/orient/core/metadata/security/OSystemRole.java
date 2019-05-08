@@ -28,10 +28,13 @@ import java.util.List;
  */
 public class OSystemRole extends ORole {
   public static final String DB_FILTER = "dbFilter";
-	
+
   private List<String> dbFilter;
-  public List<String> getDbFilter() { return dbFilter; }
-	
+
+  public List<String> getDbFilter() {
+    return dbFilter;
+  }
+
   /**
    * Constructor used in unmarshalling.
    */
@@ -39,7 +42,7 @@ public class OSystemRole extends ORole {
   }
 
   public OSystemRole(final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
-  	 super(iName, iParent, iAllowMode);
+    super(iName, iParent, iAllowMode);
   }
 
   /**
@@ -54,7 +57,7 @@ public class OSystemRole extends ORole {
     super.fromStream(iSource);
 
     if (document != null && document.containsField(DB_FILTER) && document.fieldType(DB_FILTER) == OType.EMBEDDEDLIST) {
-    	dbFilter = document.field(DB_FILTER, OType.EMBEDDEDLIST);
+      dbFilter = document.field(DB_FILTER, OType.EMBEDDEDLIST);
     }
   }
 }

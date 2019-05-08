@@ -105,7 +105,7 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
       final Map<String, Object> doc = new HashMap<String, Object>();
       doc.put("node", getDistributedStorageId());
       doc.put("context", res);
-      return Collections.<Object, Object> singletonMap("doc", doc);
+      return Collections.<Object, Object>singletonMap("doc", doc);
     } else {
       return res;
     }

@@ -40,14 +40,15 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_TRUNCATE    = "TRUNCATE";
-  public static final String KEYWORD_CLASS       = "CLASS";
-  public static final String KEYWORD_POLYMORPHIC = "POLYMORPHIC";
-  private OClass schemaClass;
-  private boolean unsafe = false;
-  private boolean deep   = false;
+  public static final String  KEYWORD_TRUNCATE    = "TRUNCATE";
+  public static final String  KEYWORD_CLASS       = "CLASS";
+  public static final String  KEYWORD_POLYMORPHIC = "POLYMORPHIC";
+  private             OClass  schemaClass;
+  private             boolean unsafe              = false;
+  private             boolean deep                = false;
 
-  @SuppressWarnings("unchecked") public OCommandExecutorSQLTruncateClass parse(final OCommandRequest iRequest) {
+  @SuppressWarnings("unchecked")
+  public OCommandExecutorSQLTruncateClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     String queryText = textRequest.getText();
@@ -173,15 +174,18 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
     }
   }
 
-  @Override public long getDistributedTimeout() {
+  @Override
+  public long getDistributedTimeout() {
     return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT);
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "TRUNCATE CLASS <class-name>";
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
   }
 }

@@ -30,7 +30,7 @@ public enum OErrorCode {
 
   GENERIC_ERROR(OErrorCategory.SQL_GENERIC, 5, "Generic Error", OException.class);
 
-  private static OErrorCode codes[] = new OErrorCode[6];
+  private static OErrorCode[] codes = new OErrorCode[6];
 
   static {
     for (OErrorCode code : OErrorCode.values()) {

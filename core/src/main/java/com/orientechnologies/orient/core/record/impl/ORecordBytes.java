@@ -59,19 +59,19 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
 
   public ORecordBytes(final byte[] iSource) {
     super(iSource);
-    _dirty = true;
-    _contentChanged = true;
+    dirty = true;
+    contentChanged = true;
     setup();
   }
 
   public ORecordBytes(final ORID iRecordId) {
-    _recordId = (ORecordId) iRecordId;
+    recordId = (ORecordId) iRecordId;
     setup();
   }
 
   public ORecordBytes reset(final byte[] iSource) {
     reset();
-    _source = iSource;
+    source = iSource;
     return this;
   }
 
@@ -82,8 +82,8 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
 
   @Override
   public ORecordBytes fromStream(final byte[] iRecordBuffer) {
-    _source = iRecordBuffer;
-    _status = ORecordElement.STATUS.LOADED;
+    source = iRecordBuffer;
+    status = ORecordElement.STATUS.LOADED;
     return this;
   }
 
@@ -95,7 +95,7 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
 
   @Override
   public byte[] toStream() {
-    return _source;
+    return source;
   }
 
   public byte getRecordType() {
@@ -129,12 +129,12 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
         out.write(buffer, 0, readBytesCount);
       }
       out.flush();
-      _source = out.toByteArray();
+      source = out.toByteArray();
     } finally {
       out.close();
     }
-    _size = _source.length;
-    return _size;
+    size = source.length;
+    return size;
   }
 
   /**
@@ -162,23 +162,23 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
     }
 
     if (totalBytesCount == 0) {
-      _source = EMPTY_SOURCE;
-      _size = 0;
+      source = EMPTY_SOURCE;
+      size = 0;
     } else if (totalBytesCount == maxSize) {
-      _source = buffer;
-      _size = maxSize;
+      source = buffer;
+      size = maxSize;
     } else {
-      _source = Arrays.copyOf(buffer, totalBytesCount);
-      _size = totalBytesCount;
+      source = Arrays.copyOf(buffer, totalBytesCount);
+      size = totalBytesCount;
     }
-    return _size;
+    return size;
   }
 
   public void toOutputStream(final OutputStream out) throws IOException {
     checkForLoading();
 
-    if (_source.length > 0) {
-      out.write(_source);
+    if (source.length > 0) {
+      out.write(source);
     }
   }
 }
