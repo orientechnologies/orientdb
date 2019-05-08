@@ -184,7 +184,6 @@ public abstract class OSequence {
 
   }
 
-  @SuppressWarnings("CheckStyle")
   public enum SEQUENCE_TYPE {
     CACHED((byte) 0), ORDERED((byte) 1);
 

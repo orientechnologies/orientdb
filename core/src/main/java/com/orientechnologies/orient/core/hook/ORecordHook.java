@@ -29,12 +29,10 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @see ORecordHookAbstract
  */
 public interface ORecordHook {
-  @SuppressWarnings("CheckStyle")
   enum DISTRIBUTED_EXECUTION_MODE {
     TARGET_NODE, SOURCE_NODE, BOTH
   }
 
-  @SuppressWarnings("CheckStyle")
   enum HOOK_POSITION {
     FIRST, EARLY, REGULAR, LATE, LAST
   }

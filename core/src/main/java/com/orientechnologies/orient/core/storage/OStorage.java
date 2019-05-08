@@ -57,7 +57,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
     CLOSED, OPEN, CLOSING, @Deprecated OPENING
   }
 
-  @SuppressWarnings("CheckStyle")
   enum LOCKING_STRATEGY {
     NONE, DEFAULT, SHARED_LOCK, EXCLUSIVE_LOCK,
 
