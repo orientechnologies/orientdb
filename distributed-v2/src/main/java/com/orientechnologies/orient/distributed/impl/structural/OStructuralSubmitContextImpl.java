@@ -30,7 +30,9 @@ public class OStructuralSubmitContextImpl implements OStructuralSubmitContext {
   @Override
   public synchronized void receive(OSessionOperationId requestId, OStructuralSubmitResponse response) {
     CompletableFuture<OStructuralSubmitResponse> future = operations.remove(requestId);
-    future.complete(response);
+    if (future != null) {
+      future.complete(response);
+    }
   }
 
   @Override
@@ -39,8 +41,13 @@ public class OStructuralSubmitContextImpl implements OStructuralSubmitContext {
   }
 
   @Override
-  public synchronized void setCoordinator(OStructuralDistributedMember coordinator) {
+  public synchronized void setMaster(OStructuralDistributedMember coordinator) {
     this.coordinator = coordinator;
     notifyAll();
+  }
+
+  @Override
+  public void receive(OSessionOperationId operationId) {
+    receive(operationId, null);
   }
 }

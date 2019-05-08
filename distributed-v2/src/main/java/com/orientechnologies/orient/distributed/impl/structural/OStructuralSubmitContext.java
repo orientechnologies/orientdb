@@ -12,5 +12,7 @@ public interface OStructuralSubmitContext {
 
   OStructuralDistributedMember getCoordinator();
 
-  void setCoordinator(OStructuralDistributedMember m);
+  void setMaster(OStructuralDistributedMember m);
+
+  void receive(OSessionOperationId operationId);
 }

@@ -85,4 +85,7 @@ public class OStructuralSharedConfiguration {
     databases.add(database);
   }
 
+  public int getQuorum() {
+    return quorum;
+  }
 }

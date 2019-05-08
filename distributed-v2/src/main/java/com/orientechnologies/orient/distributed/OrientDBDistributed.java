@@ -341,7 +341,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
             distributed.getCoordinator().join(member);
           }
         }
-        structuralDistributedContext.makeCoordinator(coordinatorIdentity);
+        structuralDistributedContext.makeMaster(coordinatorIdentity, getStructuralConfiguration().getSharedConfiguration());
 
         for (ONodeIdentity node : networkManager.getRemoteServers()) {
           OStructuralDistributedMember member = new OStructuralDistributedMember(node, networkManager.getChannel(node));
@@ -354,10 +354,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         this.coordinator = true;
       }
     } else {
-      realignToLog(lastValid);
-      structuralDistributedContext.setExternalCoordinator(
+      structuralDistributedContext.setExternalMaster(
           new OStructuralDistributedMember(coordinatorIdentity, networkManager.getChannel(coordinatorIdentity)));
-      nodeFirstJoin();
+      realignToLog(lastValid);
       for (OSharedContext context : sharedContexts.values()) {
         if (isContextToIgnore(context))
           continue;
@@ -491,10 +490,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     networkManager.coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
-  public void internalCreateDatabase(String database, String type, Map<String, String> configurations) {
+  public void internalCreateDatabase(OSessionOperationId operationId, String database, String type, Map<String, String> configurations) {
     getStructuralConfiguration().getSharedConfiguration().addDatabase(database);
     //TODO:INIT CONFIG
     super.create(database, null, null, ODatabaseType.valueOf(type), null);
+    getStructuralDistributedContext().getSubmitContext().receive(operationId);
   }
 
   public void internalDropDatabase(String database) {

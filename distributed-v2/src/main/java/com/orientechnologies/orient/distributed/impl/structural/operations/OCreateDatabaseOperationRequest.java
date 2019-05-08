@@ -29,7 +29,7 @@ public class OCreateDatabaseOperationRequest implements OStructuralNodeRequest {
 
   @Override
   public OStructuralNodeResponse execute(OOperationContext context) {
-    context.getOrientDB().internalCreateDatabase(database, type, configurations);
+    context.getOrientDB().internalCreateDatabase(null, database, type, configurations);
     return new OCreateDatabaseOperationResponse(true);
   }
 

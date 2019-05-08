@@ -11,6 +11,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSharedConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -123,16 +124,24 @@ public class OStructuralMaster implements AutoCloseable, OMasterContext {
   }
 
   @Override
-  public void createDatabase(String database, String type, Map<String, String> configurations) {
-    submit(new OSessionOperationId(), (requester, id, context) -> {
-      getLockManager().lockResource(CONF_RESOURCE, (guards) -> {
-        OStructuralSharedConfiguration shared = context.getOrientDB().getStructuralConfiguration().getSharedConfiguration();
-        if (!shared.existsDatabase(database)) {
-          this.propagateAndApply(new OCreateDatabase(database, type, configurations), () -> {
-            getLockManager().unlock(guards);
-          });
+  public void createDatabase(Optional<ONodeIdentity> requester, OSessionOperationId operationId, String database, String type,
+      Map<String, String> configurations) {
+    getLockManager().lockResource(CONF_RESOURCE, (guards) -> {
+      OStructuralSharedConfiguration shared = getOrientDB().getStructuralConfiguration().getSharedConfiguration();
+      if (!shared.existsDatabase(database)) {
+        this.propagateAndApply(new OCreateDatabase(operationId, database, type, configurations), () -> {
+          getLockManager().unlock(guards);
+          if (requester.isPresent()) {
+            OStructuralDistributedMember requesterChannel = members.get(requester.get());
+            requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(true, ""));
+          }
+        });
+      } else {
+        if (requester.isPresent()) {
+          OStructuralDistributedMember requesterChannel = members.get(requester.get());
+          requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(false, "Database Already Exists"));
         }
-      });
+      }
     });
   }
 

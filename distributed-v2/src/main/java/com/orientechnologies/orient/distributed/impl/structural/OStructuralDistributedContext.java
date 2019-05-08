@@ -46,19 +46,20 @@ public class OStructuralDistributedContext {
     return slave;
   }
 
-  public synchronized void makeCoordinator(ONodeIdentity identity) {
+  public synchronized void makeMaster(ONodeIdentity identity, OStructuralSharedConfiguration sharedConfiguration) {
     if (master == null) {
-      int quorum = 0;
-      int timeout = 0;
+      int quorum = sharedConfiguration.getQuorum();
+      int timeout = 100;
       master = new OStructuralMaster(Executors.newSingleThreadExecutor(), opLog, context, quorum, timeout);
     }
   }
 
-  public synchronized void setExternalCoordinator(OStructuralDistributedMember coordinator) {
+  public synchronized void setExternalMaster(OStructuralDistributedMember coordinator) {
     if (this.master != null) {
       this.master.close();
       this.master = null;
     }
+    this.getSubmitContext().setMaster(coordinator);
   }
 
   public synchronized void close() {
@@ -68,8 +69,8 @@ public class OStructuralDistributedContext {
   }
 
   public void execute(ONodeIdentity senderNode, OSessionOperationId operationId, OStructuralSubmitRequest request) {
-    if(master != null) {
-      master.receiveSubmit(senderNode,operationId,request);
+    if (master != null) {
+      master.receiveSubmit(senderNode, operationId, request);
     }
   }
 }
