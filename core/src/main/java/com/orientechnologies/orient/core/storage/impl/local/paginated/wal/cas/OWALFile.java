@@ -31,9 +31,13 @@ public interface OWALFile extends Closeable {
       } catch (LastErrorException e) {
         OLogManager.instance()
             .errorNoDb(OWALFile.class, "Can not open file using Linux API, Java FileChannel will be used instead", e);
+
       }
     }
 
+    if(path.toFile().exists()){
+      path.toFile().delete();
+    }
     return new OWALChannelFile(
         FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.APPEND));
   }
