@@ -52,6 +52,10 @@ public class OStructuralDistributedContext {
       int timeout = 100;
       leader = new OStructuralLeader(Executors.newSingleThreadExecutor(), opLog, context, quorum, timeout);
     }
+    OStructuralLoopBackDistributeDistributedMember loopbackLeader = new OStructuralLoopBackDistributeDistributedMember(identity,
+        submitContext, leader, follower);
+    leader.connected(loopbackLeader);
+    this.getSubmitContext().setLeader(loopbackLeader);
   }
 
   public synchronized void setExternalLeader(OStructuralDistributedMember coordinator) {

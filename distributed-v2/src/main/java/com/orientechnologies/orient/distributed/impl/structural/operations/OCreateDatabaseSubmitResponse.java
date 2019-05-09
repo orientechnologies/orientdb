@@ -37,4 +37,12 @@ public class OCreateDatabaseSubmitResponse implements OStructuralSubmitResponse 
   public int getResponseType() {
     return OCoordinateMessagesFactory.CREATE_DATABASE_SUBMIT_RESPONSE;
   }
+
+  public boolean isSuccess() {
+    return success;
+  }
+
+  public String getError() {
+    return error;
+  }
 }

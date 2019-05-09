@@ -22,6 +22,7 @@ import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContex
 import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.distributed.impl.structural.*;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -205,7 +206,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     Future<OStructuralSubmitResponse> created = structuralDistributedContext.getSubmitContext()
         .send(new OSessionOperationId(), new OCreateDatabaseSubmitRequest(name, type.name(), new HashMap<>()));
     try {
-      created.get();
+      OCreateDatabaseSubmitResponse response = (OCreateDatabaseSubmitResponse) created.get();
+      if (!response.isSuccess()) {
+        throw new ODatabaseException(response.getError());
+      }
     } catch (InterruptedException e) {
       e.printStackTrace();
       return;
@@ -354,8 +358,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         this.coordinator = true;
       }
     } else {
-      structuralDistributedContext.setExternalLeader(
-          new OStructuralDistributedMember(coordinatorIdentity, networkManager.getChannel(coordinatorIdentity)));
+      structuralDistributedContext
+          .setExternalLeader(new OStructuralDistributedMember(coordinatorIdentity, networkManager.getChannel(coordinatorIdentity)));
       realignToLog(lastValid);
       for (OSharedContext context : sharedContexts.values()) {
         if (isContextToIgnore(context))
@@ -490,7 +494,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     networkManager.coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
-  public void internalCreateDatabase(OSessionOperationId operationId, String database, String type, Map<String, String> configurations) {
+  public void internalCreateDatabase(OSessionOperationId operationId, String database, String type,
+      Map<String, String> configurations) {
     getStructuralConfiguration().getSharedConfiguration().addDatabase(database);
     //TODO:INIT CONFIG
     super.create(database, null, null, ODatabaseType.valueOf(type), null);
