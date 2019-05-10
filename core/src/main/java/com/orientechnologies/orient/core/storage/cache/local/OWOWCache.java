@@ -343,7 +343,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private FileChannel nameIdMapHolder;
 
-  private final Random idGen = new Random();
+  private final Random fileIdGen = new Random();
 
   /**
    * Path to the {@link #nameIdMapHolder} file.
@@ -663,7 +663,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
 
       while (true) {
-        final int nextId = idGen.nextInt(Integer.MAX_VALUE);
+        final int nextId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
         if (!idNameMap.containsKey(nextId) && !idNameMap.containsKey(-nextId)) {
           nameIdMap.put(fileName, -nextId);
           idNameMap.put(-nextId, fileName);
@@ -715,7 +715,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (fileId == null) {
         while (true) {
-          final int nextId = idGen.nextInt(Integer.MAX_VALUE);
+          final int nextId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
           if (!idNameMap.containsKey(nextId) && !idNameMap.containsKey(-nextId)) {
             fileId = nextId;
             break;
@@ -767,7 +767,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (fileId == null) {
         while (true) {
-          final int nextId = idGen.nextInt(Integer.MAX_VALUE);
+          final int nextId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
           if (!idNameMap.containsKey(nextId) && !idNameMap.containsKey(-nextId)) {
             fileId = nextId;
             break;
@@ -1987,7 +1987,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           int fileId;
 
           while (true) {
-            final int nextId = idGen.nextInt(Integer.MAX_VALUE);
+            final int nextId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
             if (!idNameMap.containsKey(nextId) && !idNameMap.containsKey(-nextId)) {
               fileId = nextId;
               break;
