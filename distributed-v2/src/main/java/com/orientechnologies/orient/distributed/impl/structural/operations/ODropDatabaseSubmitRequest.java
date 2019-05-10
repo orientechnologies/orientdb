@@ -23,7 +23,7 @@ public class ODropDatabaseSubmitRequest implements OStructuralSubmitRequest {
 
   @Override
   public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OLeaderContext context) {
-
+    context.dropDatabase(requester, id, database);
   }
 
   @Override

@@ -16,6 +16,8 @@ public interface OLeaderContext {
   void createDatabase(Optional<ONodeIdentity> requester, OSessionOperationId operationId, String database, String type,
       Map<String, String> configurations);
 
+  void dropDatabase(Optional<ONodeIdentity> requester, OSessionOperationId id, String database);
+
   interface OpFinished {
     void finished();
   }

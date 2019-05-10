@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural.raft;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedLockManager;
@@ -12,12 +13,15 @@ import com.orientechnologies.orient.distributed.impl.structural.OStructuralConfi
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSharedConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitResponse;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT;
 
 public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   private static final String                                           CONF_RESOURCE = "Configuration";
@@ -31,14 +35,13 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   private              int                                              quorum;
   private              int                                              timeout;
 
-  public OStructuralLeader(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed context, int quorum,
-      int timeout) {
+  public OStructuralLeader(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed context) {
     this.executor = executor;
     this.operationLog = operationLog;
     this.timer = new Timer(true);
     this.context = context;
-    this.quorum = quorum;
-    this.timeout = timeout;
+    this.quorum = context.getStructuralConfiguration().getSharedConfiguration().getQuorum();
+    this.timeout = context.getConfigurations().getConfigurations().getValueAsInteger(DISTRIBUTED_TX_EXPIRE_TIMEOUT);
   }
 
   public void propagateAndApply(ORaftOperation operation, OpFinished finished) {
@@ -49,6 +52,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
       for (OStructuralDistributedMember value : members.values()) {
         value.propagate(id, operation);
       }
+      receiveAck(getOrientDB().getStructuralConfiguration().getCurrentNodeIdentity(), id);
     });
   }
 
@@ -137,9 +141,32 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
           }
         });
       } else {
+        getLockManager().unlock(guards);
         if (requester.isPresent()) {
           OStructuralDistributedMember requesterChannel = members.get(requester.get());
           requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(false, "Database Already Exists"));
+        }
+      }
+    });
+  }
+
+  @Override
+  public void dropDatabase(Optional<ONodeIdentity> requester, OSessionOperationId operationId, String database) {
+    getLockManager().lockResource(CONF_RESOURCE, (guards) -> {
+      OStructuralSharedConfiguration shared = getOrientDB().getStructuralConfiguration().getSharedConfiguration();
+      if (shared.existsDatabase(database)) {
+        this.propagateAndApply(new ODropDatabase(operationId, database), () -> {
+          getLockManager().unlock(guards);
+          if (requester.isPresent()) {
+            OStructuralDistributedMember requesterChannel = members.get(requester.get());
+            requesterChannel.reply(operationId, new ODropDatabaseSubmitResponse(true, ""));
+          }
+        });
+      } else {
+        getLockManager().unlock(guards);
+        if (requester.isPresent()) {
+          OStructuralDistributedMember requesterChannel = members.get(requester.get());
+          requesterChannel.reply(operationId, new ODropDatabaseSubmitResponse(false, "Database do not exists"));
         }
       }
     });

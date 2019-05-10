@@ -48,9 +48,7 @@ public class OStructuralDistributedContext {
 
   public synchronized void makeLeader(ONodeIdentity identity, OStructuralSharedConfiguration sharedConfiguration) {
     if (leader == null) {
-      int quorum = sharedConfiguration.getQuorum();
-      int timeout = 100;
-      leader = new OStructuralLeader(Executors.newSingleThreadExecutor(), opLog, context, quorum, timeout);
+      leader = new OStructuralLeader(Executors.newSingleThreadExecutor(), opLog, context);
     }
     OStructuralLoopBackDistributeDistributedMember loopbackLeader = new OStructuralLoopBackDistributeDistributedMember(identity,
         submitContext, leader, follower);
