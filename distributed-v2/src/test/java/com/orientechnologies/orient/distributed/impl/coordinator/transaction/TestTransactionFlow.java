@@ -24,6 +24,7 @@ import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmi
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -41,6 +42,7 @@ import java.util.concurrent.Executors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class TestTransactionFlow {
 
   private OrientDB orientDB;

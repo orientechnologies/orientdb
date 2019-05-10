@@ -5,6 +5,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OLeaderContext;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.DataInput;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class OStructuralCoordinatorTest {
 
   @Test

@@ -19,6 +19,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -34,6 +35,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class FirstPhaseOperationTest {
 
   private OrientDB orientDB;

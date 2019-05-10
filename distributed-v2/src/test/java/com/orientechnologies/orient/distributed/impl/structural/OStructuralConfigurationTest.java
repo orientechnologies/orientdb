@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.server.OSystemDatabase;
