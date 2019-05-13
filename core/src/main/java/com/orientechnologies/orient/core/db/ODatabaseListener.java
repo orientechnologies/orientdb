@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 /**
  * Listener Interface for all the events of the Database instances.
@@ -59,6 +60,13 @@ public interface ODatabaseListener {
   }
 
   default void onDropClass(ODatabase iDatabase, OClass iClass) {
+
+  }
+
+  default void onCommandStart(ODatabase database, OResultSet resultSet) {
+
+  }
+  default void onCommandEnd(ODatabase database,OResultSet resultSet) {
 
   }
 
