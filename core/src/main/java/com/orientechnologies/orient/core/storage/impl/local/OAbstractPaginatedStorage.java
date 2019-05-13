@@ -1581,7 +1581,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public final OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan,
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan,
       final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
     try {
       checkOpenness();
@@ -1989,7 +1989,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @return The list of operations applied by the transaction
    */
   @Override
-  public final List<ORecordOperation> commit(final OTransactionInternal clientTx) {
+  public List<ORecordOperation> commit(final OTransactionInternal clientTx) {
     return commit(clientTx, false);
   }
 
@@ -3420,7 +3420,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public final void rollback(final OTransactionInternal clientTx) {
+  public void rollback(final OTransactionInternal clientTx) {
     try {
       checkOpenness();
       stateLock.acquireReadLock();
