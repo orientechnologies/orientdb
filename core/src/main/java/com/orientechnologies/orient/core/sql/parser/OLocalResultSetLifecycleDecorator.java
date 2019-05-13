@@ -89,4 +89,8 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
   public boolean isDetached() {
     return entity instanceof OInternalResultSet;
   }
+
+  public OResultSet getInternal() {
+    return entity;
+  }
 }

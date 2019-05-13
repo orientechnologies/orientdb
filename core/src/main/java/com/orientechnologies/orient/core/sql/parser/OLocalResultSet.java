@@ -22,6 +22,7 @@ public class OLocalResultSet implements OResultSet {
   private final OInternalExecutionPlan executionPlan;
   private boolean finished = false;
 
+  long startTime = 0;
   long totalExecutionTime = 0;
 
   public OLocalResultSet(OInternalExecutionPlan executionPlan) {
@@ -32,6 +33,9 @@ public class OLocalResultSet implements OResultSet {
   private boolean fetchNext() {
     long begin = System.currentTimeMillis();
     try {
+      if(lastFetch ==null) {
+        startTime = begin;
+      }
       lastFetch = executionPlan.fetchNext(100);
       if (!lastFetch.hasNext()) {
         finished = true;
@@ -81,6 +85,14 @@ public class OLocalResultSet implements OResultSet {
                 userString);
       }
     }
+  }
+
+  public long getStartTime() {
+    return startTime;
+  }
+
+  public long getTotalExecutionTime() {
+    return totalExecutionTime;
   }
 
   @Override
