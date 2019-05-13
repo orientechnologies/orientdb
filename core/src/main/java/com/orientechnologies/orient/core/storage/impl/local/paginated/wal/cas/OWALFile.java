@@ -8,6 +8,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -31,8 +32,11 @@ public interface OWALFile extends Closeable {
       } catch (LastErrorException e) {
         OLogManager.instance()
             .errorNoDb(OWALFile.class, "Can not open file using Linux API, Java FileChannel will be used instead", e);
+
       }
     }
+
+    Files.deleteIfExists(path);
 
     return new OWALChannelFile(
         FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.APPEND));

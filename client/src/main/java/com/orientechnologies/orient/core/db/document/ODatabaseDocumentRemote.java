@@ -824,7 +824,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null && getTransaction().isActive()) {
         List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
-        OClassIndexManager.processIndexOnDelete(this, doc, indexChanges);
+        OClassIndexManager.processIndexOnUpdate(this, doc, indexChanges);
         OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
         for (OClassIndexManager.IndexChange indexChange : indexChanges) {
           tx.addIndexChanged(indexChange.index.getName());
