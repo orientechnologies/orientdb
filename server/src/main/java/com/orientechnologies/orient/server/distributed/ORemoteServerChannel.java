@@ -172,6 +172,10 @@ public class ORemoteServerChannel {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
+    networkClose();
+  }
+
+  private void networkClose() {
     if (channel != null)
       channel.close();
 
@@ -200,7 +204,7 @@ public class ORemoteServerChannel {
 
         handleNewError();
 
-        close();
+        networkClose();
 
         if (!autoReconnect)
           break;
