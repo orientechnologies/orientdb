@@ -99,16 +99,15 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private ONodeInternalConfiguration generateInternalConfiguration() {
-
-    OServerUserConfiguration user = server.getUser(DISTRIBUTED_USER);
+    String userName = getNodeIdentity().getName() + DISTRIBUTED_USER;
+    OServerUserConfiguration user = server.getUser(userName);
     if (user == null) {
-      server.addTemporaryUser(DISTRIBUTED_USER, "" + new SecureRandom().nextLong(), "*");
-      user = server.getUser(DISTRIBUTED_USER);
+      server.addTemporaryUser(userName, "" + new SecureRandom().nextLong(), "*");
+      user = server.getUser(userName);
     }
     OLogId lastLogId = structuralDistributedContext.getOpLog().lastPersistentLog();
 
-    return new ONodeInternalConfiguration(lastLogId, structuralConfiguration.getCurrentNodeIdentity(), DISTRIBUTED_USER,
-        user.password);
+    return new ONodeInternalConfiguration(lastLogId, getNodeIdentity(), userName, user.password);
   }
 
   @Override
@@ -494,12 +493,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     networkManager.coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
-  public void internalCreateDatabase(OSessionOperationId operationId, String database, String type,
+  public synchronized void internalCreateDatabase(OSessionOperationId operationId, String database, String type,
       Map<String, String> configurations) {
-    getStructuralConfiguration().getSharedConfiguration().addDatabase(database);
     //TODO:INIT CONFIG
     super.create(database, null, null, ODatabaseType.valueOf(type), null);
+    getStructuralConfiguration().getSharedConfiguration().addDatabase(database);
     getStructuralDistributedContext().getSubmitContext().receive(operationId);
+    this.databasesStatus.put(database, ODistributedStatus.ONLINE);
+    checkCoordinator(database);
+    //TODO: double check this notify, it may unblock as well checkReadyForHandleRequests that is not what is expected
+    this.notifyAll();
   }
 
   public void internalDropDatabase(String database) {
@@ -538,13 +541,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public synchronized void finalizeCreateDatabase(String database) {
-    this.databasesStatus.put(database, ODistributedStatus.ONLINE);
-    checkCoordinator(database);
-    //TODO: double check this notify, it may unblock as well checkReadyForHandleRequests that is not what is expected
-    this.notifyAll();
-  }
-
   public OCoordinateMessagesFactory getCoordinateMessagesFactory() {
     return networkManager.getCoordinateMessagesFactory();
   }
@@ -563,5 +559,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OStructuralConfiguration getStructuralConfiguration() {
     return structuralConfiguration;
+  }
+
+  public ODistributedNetworkManager getNetworkManager() {
+    return networkManager;
   }
 }

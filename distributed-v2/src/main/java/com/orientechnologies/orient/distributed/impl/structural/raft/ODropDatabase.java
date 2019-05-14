@@ -7,6 +7,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DROP_DATABASE_REQUEST;
+
 public class ODropDatabase implements ORaftOperation {
   private OSessionOperationId operationId;
   private String              database;
@@ -34,7 +36,7 @@ public class ODropDatabase implements ORaftOperation {
 
   @Override
   public int getRequestType() {
-    return 0;
+    return DROP_DATABASE_REQUEST;
   }
 
   @Override

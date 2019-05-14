@@ -212,20 +212,20 @@ public abstract class ONodeManager {
     //masterData
     ODiscoveryListener.NodeData master = this.knownServers.values().stream().filter(x -> x.leader).findFirst().orElse(null);
     if (master != null) {
-      message.leaderIdentity = master.getNodeIdentity();
       message.leaderTerm = master.term;
       message.leaderAddress = master.address;
       message.leaderTcpPort = master.port;
       message.leaderConnectionUsername = master.connectionUsername;
       message.leaderConnectionPassword = master.connectionPassword;
       message.leaderPing = master.lastPingTimestamp;
+      message.leaderIdentity = master.getNodeIdentity();
     }
 
     return message;
   }
 
   protected void processReceivePing(OBroadcastMessage message, String fromAddr) {
-    synchronized (knownServers) {
+    synchronized (this) {
       if (leaderStatus.currentTerm > message.term) {
         return;
       }

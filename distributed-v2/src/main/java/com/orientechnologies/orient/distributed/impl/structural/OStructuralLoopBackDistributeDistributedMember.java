@@ -36,6 +36,14 @@ public class OStructuralLoopBackDistributeDistributedMember extends OStructuralD
     leader.receiveSubmit(getIdentity(), operationId, request);
   }
 
+  @Override
+  public void confirm(OLogId id) {
+  }
+
+  @Override
+  public void ack(OLogId logId) {
+  }
+
   public void propagate(OLogId id, ORaftOperation operation) {
   }
 

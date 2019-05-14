@@ -1,11 +1,13 @@
 package com.orientechnologies.orient.core.db.config;
 
+import java.util.UUID;
+
 public class ONodeConfigurationBuilder {
 
   private int                    quorum                = 2;
-  private String                 nodeName              = "OrientDB";
+  private String                 nodeName              = UUID.randomUUID().toString();
   private String                 groupName             = "OrientDB";
-  private int                    tcpPort               = 2424;
+  private Integer                tcpPort               = null;
   private String                 groupPassword         = "OrientDB";
   private OMulticastConfguration multicastConfguration = new OMulticastConfguration();
 

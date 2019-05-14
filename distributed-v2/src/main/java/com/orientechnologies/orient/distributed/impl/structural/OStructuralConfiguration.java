@@ -30,9 +30,9 @@ public class OStructuralConfiguration {
         if (!session.existsCluster(CLUSTER_NAME)) {
           session.addCluster(CLUSTER_NAME);
         }
-        ORecordIteratorCluster<ORecord> config_record = session.browseCluster(CLUSTER_NAME);
-        if (config_record.hasNext()) {
-          ORecordBytes record = (ORecordBytes) config_record.next();
+        ORecordIteratorCluster<ORecord> configRecord = session.browseCluster(CLUSTER_NAME);
+        if (configRecord.hasNext()) {
+          ORecordBytes record = (ORecordBytes) configRecord.next();
 
           this.discDeserialize(new DataInputStream(new ByteArrayInputStream(record.toStream())));
         } else {

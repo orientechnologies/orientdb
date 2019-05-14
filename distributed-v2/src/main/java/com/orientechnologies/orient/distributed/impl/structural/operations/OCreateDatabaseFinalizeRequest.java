@@ -27,7 +27,7 @@ public class OCreateDatabaseFinalizeRequest implements OStructuralNodeRequest {
   @Override
   public OStructuralNodeResponse execute(OOperationContext context) {
     if (success) {
-      context.getOrientDB().finalizeCreateDatabase(database);
+//      context.getOrientDB().finalizeCreateDatabase(database);
     } else {
       context.getOrientDB().internalDropDatabase(database);
     }

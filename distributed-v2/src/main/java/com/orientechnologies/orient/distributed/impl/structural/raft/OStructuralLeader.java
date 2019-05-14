@@ -122,6 +122,8 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
           this.propagateAndApply(new ONodeJoin(identity), () -> {
             getLockManager().unlock(guards);
           });
+        } else {
+          getLockManager().unlock(guards);
         }
       });
     });
@@ -132,7 +134,13 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
       Map<String, String> configurations) {
     getLockManager().lockResource(CONF_RESOURCE, (guards) -> {
       OStructuralSharedConfiguration shared = getOrientDB().getStructuralConfiguration().getSharedConfiguration();
-      if (!shared.existsDatabase(database)) {
+      if (shared.existsDatabase(database)) {
+        getLockManager().unlock(guards);
+        if (requester.isPresent()) {
+          OStructuralDistributedMember requesterChannel = members.get(requester.get());
+          requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(false, "Database Already Exists"));
+        }
+      } else {
         this.propagateAndApply(new OCreateDatabase(operationId, database, type, configurations), () -> {
           getLockManager().unlock(guards);
           if (requester.isPresent()) {
@@ -140,12 +148,6 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
             requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(true, ""));
           }
         });
-      } else {
-        getLockManager().unlock(guards);
-        if (requester.isPresent()) {
-          OStructuralDistributedMember requesterChannel = members.get(requester.get());
-          requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(false, "Database Already Exists"));
-        }
       }
     });
   }

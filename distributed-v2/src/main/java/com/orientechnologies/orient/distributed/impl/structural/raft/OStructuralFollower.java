@@ -53,7 +53,7 @@ public class OStructuralFollower implements AutoCloseable {
   }
 
   public OStructuralDistributedMember getMember(ONodeIdentity senderNode) {
-    return null;
+    return new OStructuralDistributedMember(senderNode, orientDB.getNetworkManager().getChannel(senderNode));
   }
 
   public void recover(ORaftOperation request) {

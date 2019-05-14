@@ -12,7 +12,7 @@ public class ODistributedLockManagerImpl implements ODistributedLockManager {
   private Map<OLockKey, Queue<OWaitingTracker>> locks = new ConcurrentHashMap<>();
 
   private void lock(OLockKey key, OWaitingTracker waitingTracker) {
-    Queue<OWaitingTracker> queue = locks.get(locks);
+    Queue<OWaitingTracker> queue = locks.get(key);
     if (queue == null) {
       locks.put(key, new LinkedList<>());
     } else {

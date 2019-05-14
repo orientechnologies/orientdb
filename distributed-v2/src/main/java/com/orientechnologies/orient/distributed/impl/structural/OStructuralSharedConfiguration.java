@@ -78,7 +78,7 @@ public class OStructuralSharedConfiguration {
   }
 
   public boolean existsDatabase(String database) {
-    return database.contains(database);
+    return databases.contains(database);
   }
 
   public void addDatabase(String database) {

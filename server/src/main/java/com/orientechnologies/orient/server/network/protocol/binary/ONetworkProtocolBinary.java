@@ -160,7 +160,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST
         || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE
         || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE;
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_ACK_RESPONSE
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_CONFIRM_REQUEST
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_PROPAGATE_REQUEST;
   }
 
   @Override
