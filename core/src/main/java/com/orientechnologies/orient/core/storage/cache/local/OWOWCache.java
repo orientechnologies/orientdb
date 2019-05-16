@@ -76,6 +76,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -342,11 +343,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private FileChannel nameIdMapHolder;
 
-  /**
-   * Value of next internal id to be set when file is added. If storage is loaded from disk this value equals to maximum absolute
-   * value of all internal ids + 1.
-   */
-  private int nextInternalId = 1;
+  private final Random fileIdGen = new Random();
 
   /**
    * Path to the {@link #nameIdMapHolder} file.
@@ -665,9 +662,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
       }
 
-      ++nextInternalId;
-
-      return composeFileId(id, nextInternalId);
+      while (true) {
+        final int nextId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
+        if (!idNameMap.containsKey(nextId) && !idNameMap.containsKey(-nextId)) {
+          nameIdMap.put(fileName, -nextId);
+          idNameMap.put(-nextId, fileName);
+          return composeFileId(id, nextId);
+        }
+      }
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -712,9 +714,15 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
 
       if (fileId == null) {
-        ++nextInternalId;
-        fileId = nextInternalId;
+        while (true) {
+          final int nextId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
+          if (!idNameMap.containsKey(nextId) && !idNameMap.containsKey(-nextId)) {
+            fileId = nextId;
+            break;
+          }
+        }
       } else {
+        idNameMap.remove(fileId);
         fileId = -fileId;
       }
 
@@ -758,9 +766,15 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
 
       if (fileId == null) {
-        ++nextInternalId;
-        fileId = nextInternalId;
+        while (true) {
+          final int nextId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
+          if (!idNameMap.containsKey(nextId) && !idNameMap.containsKey(-nextId)) {
+            fileId = nextId;
+            break;
+          }
+        }
       } else {
+        idNameMap.remove(fileId);
         fileId = -fileId;
       }
 
@@ -879,15 +893,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           fileClassic.synch();
         }
       } else {
-        if (nextInternalId < intId) {
-          nextInternalId = intId;
-        }
-
         fileClassic = createFileInstance(fileName, intId);
         createFile(fileClassic, callFsync);
 
         files.add(fileId, fileClassic);
       }
+
+      idNameMap.remove(-intId);
 
       nameIdMap.put(fileName, intId);
       idNameMap.put(intId, fileName);
@@ -1283,8 +1295,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       if (fileName != null) {
         final String name = idNameMap.get(intId);
 
-        nameIdMap.put(name, -intId);
         idNameMap.remove(intId);
+
+        nameIdMap.put(name, -intId);
+        idNameMap.put(-intId, name);
 
         writeNameIdEntry(new NameFileIdEntry(name, -intId, fileName), true);
       }
@@ -1857,16 +1871,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
 
       nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
-
-      if (nameFileIdEntry.fileId >= 0) {
-        idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
-      }
+      idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
 
       idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
-    }
-
-    if (localFileCounter > 0 && nextInternalId < localFileCounter) {
-      nextInternalId = (int) localFileCounter;
     }
 
     for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
@@ -1883,8 +1890,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             fileClassic.open();
             files.add(externalId, fileClassic);
           } else {
-            nameIdMap.put(nameIdEntry.getKey(), -fileId);
             idNameMap.remove(fileId);
+
+            nameIdMap.put(nameIdEntry.getKey(), -fileId);
+            idNameMap.put(-fileId, nameIdEntry.getKey());
           }
         }
       }
@@ -1942,10 +1951,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
     }
 
-    if (localFileCounter > 0 && nextInternalId < localFileCounter) {
-      nextInternalId = (int) localFileCounter;
-    }
-
     for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
       if (nameIdEntry.getValue() >= 0) {
         final long externalId = composeFileId(id, nameIdEntry.getValue());
@@ -1979,11 +1984,18 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         idNameMap.remove(entry.getKey());
 
         for (final String fileName : files) {
-          nextInternalId++;
+          int fileId;
 
-          final int nextId = -nextInternalId;
-          nameIdMap.put(fileName, nextId);
-          idNameMap.put(nextId, fileName);
+          while (true) {
+            final int nextId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
+            if (!idNameMap.containsKey(nextId) && !idNameMap.containsKey(-nextId)) {
+              fileId = nextId;
+              break;
+            }
+          }
+
+          nameIdMap.put(fileName, -fileId);
+          idNameMap.put(-fileId, fileName);
 
           fixedFiles.add(fileName);
         }

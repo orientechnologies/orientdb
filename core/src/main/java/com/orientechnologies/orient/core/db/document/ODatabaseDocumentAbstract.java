@@ -2702,10 +2702,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
     }
     this.activeQueries.put(id, rs);
+
+    getListeners().forEach(l -> l.onCommandStart(this,rs));
   }
 
   public synchronized void queryClosed(String id) {
-    this.activeQueries.remove(id);
+    OResultSet rs = this.activeQueries.remove(id);
+    getListeners().forEach(l -> l.onCommandEnd(this,rs));
   }
 
   protected synchronized void closeActiveQueries() {
