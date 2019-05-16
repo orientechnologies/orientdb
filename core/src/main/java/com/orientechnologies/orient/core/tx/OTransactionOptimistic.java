@@ -59,6 +59,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   private        boolean       alreadyCleared = false;
   private        boolean       usingLog       = true;
   private        int           txStartCounter;
+  private        boolean       sentToServer   = false;
 
   public OTransactionOptimistic(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
@@ -532,7 +533,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.COMMITTING;
 
-    if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
+    if (sentToServer || !allEntries.isEmpty() || !indexEntries.isEmpty()) {
       database.internalCommit(this);
     }
 
@@ -588,6 +589,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   @Override
   public boolean isUseDeltas() {
     return false;
+  }
+
+  public void setSentToServer(boolean sentToServer) {
+    this.sentToServer = sentToServer;
+  }
+
+  public boolean getSentToServer() {
+    return sentToServer;
   }
 
 }
