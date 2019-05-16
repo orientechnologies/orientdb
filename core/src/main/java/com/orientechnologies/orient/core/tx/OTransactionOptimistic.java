@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.RecordReader;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -57,6 +58,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   private        boolean       alreadyCleared = false;
   private        boolean       usingLog       = true;
   private        int           txStartCounter;
+  private        boolean       sentToServer   = false;
 
   public OTransactionOptimistic(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
@@ -401,7 +403,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       break;
       case ORecordOperation.LOADED:
         /**
-         * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
+         * Read hooks already invoked in {@link ODatabaseDocumentTx#executeReadRecord}
          */
         break;
       case ORecordOperation.UPDATED: {
@@ -476,7 +478,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         case ORecordOperation.LOADED:
           /**
            * Read hooks already invoked in
-           * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord} .
+           * {@link ODatabaseDocumentTx#executeReadRecord} .
            */
           break;
         case ORecordOperation.UPDATED:
@@ -530,7 +532,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.COMMITTING;
 
-    if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
+    if (sentToServer || !allEntries.isEmpty() || !indexEntries.isEmpty()) {
       database.internalCommit(this);
     }
 
@@ -571,5 +573,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   public boolean isAlreadyCleared() {
     return alreadyCleared;
+  }
+
+  public void setSentToServer(boolean sentToServer) {
+    this.sentToServer = sentToServer;
+  }
+
+  public boolean getSentToServer() {
+    return sentToServer;
   }
 }
