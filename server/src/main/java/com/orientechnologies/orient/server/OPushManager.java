@@ -143,25 +143,34 @@ public class OPushManager implements OMetadataUpdateListener {
   private void genericNotify(Map<String, Set<WeakReference<ONetworkProtocolBinary>>> context, String database,
       OBinaryPushRequest<?> request) {
     Orient.instance().submit(() -> {
+      Set<WeakReference<ONetworkProtocolBinary>> clients = null;
       synchronized (OPushManager.this) {
-        Set<WeakReference<ONetworkProtocolBinary>> clients = context.get(database);
-        if (clients != null) {
-          Iterator<WeakReference<ONetworkProtocolBinary>> iter = clients.iterator();
-          while (iter.hasNext()) {
-            WeakReference<ONetworkProtocolBinary> ref = iter.next();
-            ONetworkProtocolBinary protocolBinary = ref.get();
-            if (protocolBinary != null) {
-              try {
-                OBinaryPushResponse response = protocolBinary.push(request);
-              } catch (IOException e) {
-                iter.remove();
+        Set<WeakReference<ONetworkProtocolBinary>> cl = context.get(database);
+        if (cl != null) {
+          clients = new HashSet<>(cl);
+        }
+      }
+      if (clients != null) {
+        Iterator<WeakReference<ONetworkProtocolBinary>> iter = clients.iterator();
+        while (iter.hasNext()) {
+          WeakReference<ONetworkProtocolBinary> ref = iter.next();
+          ONetworkProtocolBinary protocolBinary = ref.get();
+          if (protocolBinary != null) {
+            try {
+              OBinaryPushResponse response = protocolBinary.push(request);
+            } catch (IOException e) {
+              synchronized (OPushManager.this) {
+                context.get(database).remove(ref);
               }
-            } else {
-              iter.remove();
+            }
+          } else {
+            synchronized (OPushManager.this) {
+              context.get(database).remove(ref);
             }
           }
         }
       }
+
     });
   }
 
