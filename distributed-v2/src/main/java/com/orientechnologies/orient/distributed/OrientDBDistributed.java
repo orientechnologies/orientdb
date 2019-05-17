@@ -375,25 +375,24 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void realignToLog(OLogId lastValid) {
-    OLogId id = this.structuralConfiguration.getLastUpdateId();
+    OLogId lastStateId = this.structuralConfiguration.getLastUpdateId();
     OOperationLog opLog = this.structuralDistributedContext.getOpLog();
     OLogId lastPersistent = opLog.lastPersistentLog();
     if (lastPersistent != null && lastValid != null) {
-      Iterator<OOperationLogEntry> list = opLog.iterate(id, lastValid);
+      Iterator<OOperationLogEntry> list = opLog.iterate(lastStateId, lastValid);
       while (list.hasNext()) {
         OOperationLogEntry change = list.next();
         this.getStructuralDistributedContext().getFollower().recover((ORaftOperation) change.getRequest());
       }
       int isCoordinatorLastMoreRecent = lastValid.compareTo(lastPersistent);
       if (isCoordinatorLastMoreRecent > 0) {
-        //TODO: Fetch the missing from network
+        nodeSyncRequest(lastPersistent);
       } else if (isCoordinatorLastMoreRecent < 0) {
         //Remove from the log the staff i've after the master id, this should not have been applied to the state yet.
         //TODO: double check if state has an id more recent, this should not happen just add an assert.
         opLog.removeAfter(lastValid);
       }
     } else if (lastValid != null) {
-      //TODO:  I've nothing fetch all from the master that has staff
       nodeFirstJoin();
     } else if (lastPersistent != null) {
       //TODO:  I've something that the master has not, rely on what the master tell me.
@@ -405,6 +404,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   private void nodeFirstJoin() {
     this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new SyncRequest(Optional.empty()));
+  }
+
+  private void nodeSyncRequest(OLogId logId) {
+    this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new SyncRequest(Optional.of(logId)));
   }
 
   private synchronized void syncDatabase(OStructuralNodeDatabase configuration) {
