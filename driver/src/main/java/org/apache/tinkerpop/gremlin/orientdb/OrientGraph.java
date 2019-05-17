@@ -34,12 +34,24 @@ import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.Ori
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
-import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Element;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.T;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.Io;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -80,19 +92,19 @@ public final class OrientGraph implements OGraph {
   public static String CONFIG_MAX_PARTITION_SIZE = "orient-max-partitionsize";
   public static String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
-  protected       boolean                connectionFailed;
-  protected       ODatabaseDocument      database;
-  protected final Features               features;
-  protected final Configuration          configuration;
-  protected final String                 user;
-  protected final String                 password;
-  protected       OrientGraphBaseFactory factory;
-  protected boolean shouldCloseFactory = false;
-  protected OElementFactory   elementFactory;
-  protected OrientTransaction tx;
+  protected            boolean                connectionFailed;
+  protected            ODatabaseDocument      database;
+  protected final      Features               features;
+  protected final      Configuration          configuration;
+  protected final      String                 user;
+  protected final      String                 password;
+  protected            OrientGraphBaseFactory factory;
+  protected            boolean                shouldCloseFactory = false;
+  protected            OElementFactory        elementFactory;
+  protected            OrientTransaction      tx;
 
   public static OrientGraph open() {
-    return open("memory:orientdb-" + Math.random(), "admin", "admin");
+    return open("memory:orientdb-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE), "admin", "admin");
   }
 
   public static OrientGraph open(String url) {
@@ -344,11 +356,14 @@ public final class OrientGraph implements OGraph {
    * @param nRetries the maximum number of retries (> 0)
    * @param function a lambda containing application code to execute in a commit/retry loop
    * @param <T>      the return type of the lambda
+   *
    * @return The result of the execution of the lambda
+   *
    * @throws IllegalStateException         if there are operations in the current transaction
    * @throws ONeedRetryException           if the maximum number of retries is executed and all failed with an ONeedRetryException
    * @throws IllegalArgumentException      if nRetries is <= 0
-   * @throws UnsupportedOperationException if this type of graph does not support automatic commit/retry or does not support transactions
+   * @throws UnsupportedOperationException if this type of graph does not support automatic commit/retry or does not support
+   *                                       transactions
    */
   public <T> T executeWithRetry(int nRetries, Function<OrientGraph, T> function) {
 

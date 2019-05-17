@@ -13,9 +13,10 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseFactory {
-  public static String ADMIN = "admin";
+  public static      String                              ADMIN = "admin";
   protected          String                              connectionURI;
   protected          String                              dbName;
   protected final    String                              user;
@@ -58,8 +59,8 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   public OrientGraphFactory(Configuration config) {
-    this(config.getString(OrientGraph.CONFIG_URL, "memory:test-" + Math.random()), config.getString(OrientGraph.CONFIG_USER, ADMIN),
-        config.getString(OrientGraph.CONFIG_PASS, ADMIN));
+    this(config.getString(OrientGraph.CONFIG_URL, "memory:test-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE)),
+        config.getString(OrientGraph.CONFIG_USER, ADMIN), config.getString(OrientGraph.CONFIG_PASS, ADMIN));
     this.configuration = config;
   }
 

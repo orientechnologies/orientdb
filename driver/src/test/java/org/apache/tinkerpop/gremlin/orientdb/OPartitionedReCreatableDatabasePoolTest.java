@@ -5,6 +5,8 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import org.junit.Test;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
@@ -14,7 +16,7 @@ public class OPartitionedReCreatableDatabasePoolTest {
 
         OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
-        String dbName = "memorydb" + Math.random();
+        String dbName = "memorydb" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE);
 
         orientDB.create(dbName, ODatabaseType.MEMORY);
 

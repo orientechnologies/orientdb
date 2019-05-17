@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
@@ -23,7 +24,7 @@ import static org.junit.Assert.*;
 public class OrientGraphTest {
 
     protected OrientGraphFactory graphFactory() {
-        return new OrientGraphFactory("memory:tinkerpop-" + Math.random());
+        return new OrientGraphFactory("memory:tinkerpop-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE));
     }
 
     public static final String TEST_VALUE = "SomeValue";
