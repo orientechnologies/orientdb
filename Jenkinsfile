@@ -18,7 +18,7 @@ node {
 
                 // needed after the release and tag change, otherwise Studio is not found on Sonatype
                 checkout(
-                        [$class: 'GitSCM', branches: [[name: ${env.BRANCH_NAME}]],
+                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
                          doGenerateSubmoduleConfigurations: false,
                          extensions: [],
                          submoduleCfg: [],
@@ -26,7 +26,7 @@ node {
                          userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb-studio']]])
 
                 checkout(
-                        [$class: 'GitSCM', branches: [[name: ${env.BRANCH_NAME}]],
+                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
                          doGenerateSubmoduleConfigurations: false,
                          extensions: [],
                          submoduleCfg: [],
