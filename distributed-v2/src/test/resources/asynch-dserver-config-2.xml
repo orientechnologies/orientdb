@@ -22,15 +22,6 @@
                 <parameter value="false" name="enabled"/>
             </parameters>
         </handler>
-        <handler class="com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin">
-            <parameters>
-                <parameter value="true" name="enabled"/>
-                <parameter value="src/test/resources/asynch-distributed-db-config.json" name="configuration.db.default"/>
-                <parameter value="src/test/resources/hazelcast-2.xml" name="configuration.hazelcast"/>
-                <parameter value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" name="conflict.resolver.impl"/>
-                <parameter value="node-3" name="nodeName"/>
-            </parameters>
-        </handler>
     </handlers>
     <network>
         <protocols>

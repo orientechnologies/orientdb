@@ -140,7 +140,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     startTxTimeoutTimerTask();
 
-    repairer = new OConflictResolverDatabaseRepairer(manager, databaseName);
 
     Orient.instance().getProfiler()
         .registerHookValue("distributed.db." + databaseName + ".msgSent", "Number of replication messages sent from current node",

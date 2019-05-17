@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distributed.hazelcast;
+package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;

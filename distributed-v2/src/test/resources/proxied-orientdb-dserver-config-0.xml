@@ -2,17 +2,6 @@
 <orient-server>
     <handlers>
         <handler
-                class="com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin">
-            <parameters>
-                <parameter value="europe-0" name="nodeName"/>
-                <parameter value="true" name="enabled"/>
-                <parameter value="src/test/resources/hazelcast-0.xml"
-                           name="configuration.hazelcast"/>
-                <parameter name="configuration.db.default"
-                           value="src/test/resources/static-default-distributed-db-config.json"/>
-            </parameters>
-        </handler>
-        <handler
                 class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
             <parameters>
                 <parameter value="false" name="enabled"/>
