@@ -1,74 +1,53 @@
-#!groovy
-node("master") {
-    properties([[$class  : 'BuildDiscarderProperty',
-                 strategy: [$class              : 'LogRotator', artifactDaysToKeepStr: '',
-                            artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10']]])
+@Library(['piper-lib', 'piper-lib-os']) _
 
-    milestone()
-    lock(resource: "${env.BRANCH_NAME}", inversePrecedence: true) {
-        ansiColor('xterm') {
-            milestone()
-            def mvnHome = tool 'mvn'
-            def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
-            def mvnJdk7Image = "orientdb/mvn-gradle-zulu-jdk-7"
-
-            def containerName = env.JOB_NAME.replaceAll(/\//, "_") +
-                    "_build_${currentBuild.number}"
-
-            def appNameLabel = "docker_ci";
-            def taskLabel = env.JOB_NAME.replaceAll(/\//, "_")
+node {
 
 
-            stage('Source checkout') {
-                checkout scm
+    stage('build')   {
+        sh "rm -rf *"
+        sh "cp /var/jenkins_home/uploadedContent/settings.xml ."
+
+        executeDocker(
+                dockerImage:'ldellaquila/maven-gradle-node-zulu-openjdk8:1.0.0',
+                dockerWorkspace: '/orientdb-${env.BRANCH_NAME}'
+        ) {
+
+            try{
+                sh "rm -rf orientdb-studio"
+                sh "rm -rf orientdb"
+
+                // needed after the release and tag change, otherwise Studio is not found on Sonatype
+                checkout(
+                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
+                         doGenerateSubmoduleConfigurations: false,
+                         extensions: [],
+                         submoduleCfg: [],
+                         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'orientdb-studio']],
+                         userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb-studio']]])
+
+                checkout(
+                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
+                         doGenerateSubmoduleConfigurations: false,
+                         extensions: [],
+                         submoduleCfg: [],
+                         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'orientdb']],
+                         userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb']]])
+
+
+                withMaven(globalMavenSettingsFilePath: 'settings.xml') {
+                    sh "cd orientdb-studio && mvn clean install -DskipTests"
+                    sh "cd orientdb && mvn clean deploy"
+
+                    //TODO publish javadoc
+                    //sh "cd orientdb && mvn  javadoc:aggregate"
+                    //sh "cd orientdb && rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
+                }
+            }catch(e){
+                slackSend(color: '#FF0000', channel: '#jenkins-failures', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${e}")
+                throw e
             }
-
-            try {
-                stage('Run tests on Java7') {
-                    lock("label": "memory", "quantity":6) {
-                        docker.image("${mvnJdk7Image}")
-                                .inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
-                                "--name ${containerName} --memory=6g ${env.VOLUMES} --cap-add=SYS_PTRACE") {
-                            try {
-                                //skip integration test for now
-                                sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
-                                sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
-                                sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests -DskipITs"
-                            } finally {
-                                junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
-
-                            }
-                        }
-                    }
-                }
-
-                stage('Publish Javadoc') {
-                    lock("label": "memory", "quantity":1) {
-                        docker.image("${mvnJdk8Image}")
-                                .inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
-                                "--name ${containerName} --memory=1g ${env.VOLUMES}") {
-                            sh "${mvnHome}/bin/mvn  javadoc:aggregate"
-                            sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
-                        }
-                    }
-                }
-
-                stage("Downstream projects") {
-                    build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}", wait: false
-                    build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
-                    build job: "orientdb-neo4j-importer-multibranch/${env.BRANCH_NAME}", wait: false
-                    build job: "orientdb-teleporter-multibranch/${env.BRANCH_NAME}", wait: false
-                    build job: "spring-data-orientdb-multibranch/${env.BRANCH_NAME}", wait: false
-                }
-
-                slackSend(color: '#00FF00', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-
-            } catch (e) {
-                currentBuild.result = 'FAILURE'
-                slackSend(channel: '#jenkins-failures', color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) ${e}")
-                throw e;
-            }
+            slackSend(color: '#00FF00', channel: '#jenkins', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
-
     }
+
 }
