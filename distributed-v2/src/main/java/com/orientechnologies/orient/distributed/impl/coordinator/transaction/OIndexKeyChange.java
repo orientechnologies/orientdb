@@ -90,7 +90,7 @@ public class OIndexKeyChange {
         return null;
       OType keyType = OType.getById(input.readByte());
       int keySize = input.readInt();
-      byte bytes[] = new byte[keySize];
+      byte[] bytes = new byte[keySize];
       input.readFully(bytes);
       return ORecordSerializerNetwork.INSTANCE.deserializeValue(bytes, keyType);
     }

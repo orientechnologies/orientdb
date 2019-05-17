@@ -82,9 +82,9 @@ public class OStructuralConfiguration {
     systemDatabase.executeInDBScope((session) -> {
       try {
         assert session.existsCluster(CLUSTER_NAME);
-        ORecordIteratorCluster<ORecord> config_record = session.browseCluster(CLUSTER_NAME);
-        if (config_record.hasNext()) {
-          ORecordBytes record = (ORecordBytes) config_record.next();
+        ORecordIteratorCluster<ORecord> configRecord = session.browseCluster(CLUSTER_NAME);
+        if (configRecord.hasNext()) {
+          ORecordBytes record = (ORecordBytes) configRecord.next();
           ByteArrayOutputStream buffer = new ByteArrayOutputStream();
           this.discSerialize(new DataOutputStream(buffer));
           record.setDirty();
