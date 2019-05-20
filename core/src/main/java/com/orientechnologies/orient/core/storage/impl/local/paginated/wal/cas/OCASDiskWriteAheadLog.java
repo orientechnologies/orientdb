@@ -20,17 +20,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestLi
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
 import com.sun.jna.Platform;
@@ -48,27 +38,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -190,11 +161,20 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   private long currentPosition = 0;
 
-  private ByteBuffer         writeBuffer          = null;
-  private OPointer           writeBufferPointer   = null;
-  private int                writeBufferPageIndex = -1;
-  private OLogSequenceNumber lastLSN              = null;
-  private OLogSequenceNumber checkPointLSN        = null;
+  private boolean useFirstBuffer = true;
+
+  private ByteBuffer writeBuffer          = null;
+  private OPointer   writeBufferPointer   = null;
+  private int        writeBufferPageIndex = -1;
+
+  private final ByteBuffer writeBufferOne;
+  private final OPointer   writeBufferPointerOne;
+
+  private final ByteBuffer writeBufferTwo;
+  private final OPointer   writeBufferPointerTwo;
+
+  private OLogSequenceNumber lastLSN       = null;
+  private OLogSequenceNumber checkPointLSN = null;
 
   private final boolean callFsync;
 
@@ -220,6 +200,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       boolean callFsync, boolean printPerformanceStatistic, int statisticPrintInterval) throws IOException {
 
     this.bufferSize = bufferSize * 1024 * 1024;
+
     this.segmentsInterval = segmentsInterval;
     this.callFsync = callFsync;
     this.printPerformanceStatistic = printPerformanceStatistic;
@@ -302,6 +283,12 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     log(new OEmptyWALRecord());
 
     this.commitDelay = commitDelay;
+
+    writeBufferPointerOne = allocator.allocate(this.bufferSize, blockSize);
+    writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
+
+    writeBufferPointerTwo = allocator.allocate(this.bufferSize, blockSize);
+    writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
     this.recordsWriterFuture = commitExecutor.schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
 
@@ -1429,8 +1416,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     segments.clear();
     fileCloseQueue.clear();
 
+    allocator.deallocate(writeBufferPointerOne);
+    allocator.deallocate(writeBufferPointerTwo);
+
     if (writeBufferPointer != null) {
-      allocator.deallocate(writeBufferPointer);
+      writeBufferPointer = null;
       writeBuffer = null;
       writeBufferPageIndex = -1;
     }
@@ -1879,8 +1869,18 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                         writeBuffer(walFile, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
                       }
 
-                      writeBufferPointer = allocator.allocate(bufferSize, blockSize);
-                      writeBuffer = writeBufferPointer.getNativeByteBuffer().order(ByteOrder.nativeOrder());
+                      if (useFirstBuffer) {
+                        writeBufferPointer = writeBufferPointerOne;
+                        writeBuffer = writeBufferOne;
+                      } else {
+                        writeBufferPointer = writeBufferPointerTwo;
+                        writeBuffer = writeBufferTwo;
+                      }
+
+                      writeBuffer.limit(writeBuffer.capacity());
+                      writeBuffer.rewind();
+                      useFirstBuffer = !useFirstBuffer;
+
                       writeBufferPageIndex = -1;
 
                       checkPointLSN = null;
@@ -2066,7 +2066,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         final OLogSequenceNumber checkpointLSN) throws IOException {
 
       if (buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
-        allocator.deallocate(pointer);
         return;
       }
 
@@ -2173,8 +2172,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         } catch (final IOException e) {
           OLogManager.instance().errorNoDb(this, "Error during WAL data write", e);
           throw e;
-        } finally {
-          allocator.deallocate(pointer);
         }
 
         return null;

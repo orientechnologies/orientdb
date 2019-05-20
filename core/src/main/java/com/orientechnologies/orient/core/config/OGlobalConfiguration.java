@@ -39,7 +39,6 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -258,7 +257,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       65536),
 
   WAL_BUFFER_SIZE("storage.wal.bufferSize",
-      "Size of the direct memory WAL buffer which is used inside of " + "the background write thread (in MB)", Integer.class, 128),
+      "Size of the direct memory WAL buffer which is used inside of " + "the background write thread (in MB)", Integer.class, 64),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
       "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
