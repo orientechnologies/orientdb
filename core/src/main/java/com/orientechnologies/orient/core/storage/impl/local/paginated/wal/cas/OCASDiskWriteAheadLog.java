@@ -190,11 +190,20 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   private long currentPosition = 0;
 
-  private ByteBuffer         writeBuffer          = null;
-  private OPointer           writeBufferPointer   = null;
-  private int                writeBufferPageIndex = -1;
-  private OLogSequenceNumber lastLSN              = null;
-  private OLogSequenceNumber checkPointLSN        = null;
+  private boolean useFirstBuffer = true;
+
+  private ByteBuffer writeBuffer          = null;
+  private OPointer   writeBufferPointer   = null;
+  private int        writeBufferPageIndex = -1;
+
+  private final ByteBuffer writeBufferOne;
+  private final OPointer   writeBufferPointerOne;
+
+  private final ByteBuffer writeBufferTwo;
+  private final OPointer   writeBufferPointerTwo;
+
+  private OLogSequenceNumber lastLSN       = null;
+  private OLogSequenceNumber checkPointLSN = null;
 
   private final boolean callFsync;
 
@@ -220,6 +229,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       boolean callFsync, boolean printPerformanceStatistic, int statisticPrintInterval) throws IOException {
 
     this.bufferSize = bufferSize * 1024 * 1024;
+
     this.segmentsInterval = segmentsInterval;
     this.callFsync = callFsync;
     this.printPerformanceStatistic = printPerformanceStatistic;
@@ -302,6 +312,12 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     log(new OEmptyWALRecord());
 
     this.commitDelay = commitDelay;
+
+    writeBufferPointerOne = allocator.allocate(this.bufferSize, blockSize);
+    writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
+
+    writeBufferPointerTwo = allocator.allocate(this.bufferSize, blockSize);
+    writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
     this.recordsWriterFuture = commitExecutor.schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
 
@@ -1429,8 +1445,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     segments.clear();
     fileCloseQueue.clear();
 
+    allocator.deallocate(writeBufferPointerOne);
+    allocator.deallocate(writeBufferPointerTwo);
+
     if (writeBufferPointer != null) {
-      allocator.deallocate(writeBufferPointer);
+      writeBufferPointer = null;
       writeBuffer = null;
       writeBufferPageIndex = -1;
     }
@@ -1879,8 +1898,18 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                         writeBuffer(walFile, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
                       }
 
-                      writeBufferPointer = allocator.allocate(bufferSize, blockSize);
-                      writeBuffer = writeBufferPointer.getNativeByteBuffer().order(ByteOrder.nativeOrder());
+                      if (useFirstBuffer) {
+                        writeBufferPointer = writeBufferPointerOne;
+                        writeBuffer = writeBufferOne;
+                      } else {
+                        writeBufferPointer = writeBufferPointerTwo;
+                        writeBuffer = writeBufferTwo;
+                      }
+
+                      writeBuffer.limit(writeBuffer.capacity());
+                      writeBuffer.rewind();
+                      useFirstBuffer = !useFirstBuffer;
+
                       writeBufferPageIndex = -1;
 
                       checkPointLSN = null;
@@ -2066,7 +2095,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         final OLogSequenceNumber checkpointLSN) throws IOException {
 
       if (buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
-        allocator.deallocate(pointer);
         return;
       }
 
@@ -2173,8 +2201,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         } catch (final IOException e) {
           OLogManager.instance().errorNoDb(this, "Error during WAL data write", e);
           throw e;
-        } finally {
-          allocator.deallocate(pointer);
         }
 
         return null;

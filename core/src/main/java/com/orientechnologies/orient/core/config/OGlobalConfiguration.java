@@ -252,7 +252,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       65536),
 
   WAL_BUFFER_SIZE("storage.wal.bufferSize",
-      "Size of the direct memory WAL buffer which is used inside of " + "the background write thread (in MB)", Integer.class, 128),
+      "Size of the direct memory WAL buffer which is used inside of " + "the background write thread (in MB)", Integer.class, 64),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
       "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
@@ -1274,4 +1274,5 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   public String getDescription() {
     return description;
-  }}
+  }
+}
