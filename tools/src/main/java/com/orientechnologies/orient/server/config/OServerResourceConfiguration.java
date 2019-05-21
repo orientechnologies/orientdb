@@ -24,7 +24,7 @@ import javax.xml.bind.annotation.XmlAttribute;
  import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "resource")
- @XmlType(propOrder = { "resources", "roles" })
+@XmlType(propOrder = { "resources", "roles" })
  public class OServerResourceConfiguration {
    @XmlAttribute
    public String name;

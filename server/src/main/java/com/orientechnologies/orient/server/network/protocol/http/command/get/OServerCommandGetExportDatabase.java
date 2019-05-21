@@ -39,8 +39,7 @@ public class OServerCommandGetExportDatabase extends OServerCommandAuthenticated
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: export/<database>/[<name>][?params*]");
 
-    if (urlParts.length > 2) {
-    } else {
+    if (urlParts.length <= 2) {
       exportStandard(iRequest, iResponse);
     }
     return false;

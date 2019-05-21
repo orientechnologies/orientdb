@@ -47,10 +47,6 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
   public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
     super.config(oServer, serverCfg, jsonConfig);
 
-    try {
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "config()", ex);
-    }
   }
 
   // OSecurityComponent

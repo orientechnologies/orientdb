@@ -45,21 +45,18 @@ public class OServerCommandGetConnections extends OServerCommandAuthenticatedSer
 
     iRequest.data.commandInfo = "Server status";
 
-    try {
-      final StringWriter jsonBuffer = new StringWriter();
-      final OJSONWriter json = new OJSONWriter(jsonBuffer);
-      json.beginObject();
+    final StringWriter jsonBuffer = new StringWriter();
+    final OJSONWriter json = new OJSONWriter(jsonBuffer);
+    json.beginObject();
 
-      final String databaseName = args.length > 1 && args[1].length() > 0 ? args[1] : null;
+    final String databaseName = args.length > 1 && args[1].length() > 0 ? args[1] : null;
 
-      OServerInfo.getConnections(server, json, databaseName);
+    OServerInfo.getConnections(server, json, databaseName);
 
-      json.endObject();
+    json.endObject();
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
 
-    } finally {
-    }
     return false;
   }
 

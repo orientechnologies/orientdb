@@ -43,9 +43,11 @@ import com.orientechnologies.orient.object.jpa.parsing.PersistenceXmlUtil;
 
 @SuppressWarnings("rawtypes")
 public class OJPAPersistenceProvider implements PersistenceProvider {
-	/** the log used by this class. */
-	private static Logger															logger						= Logger.getLogger(OJPAPersistenceProvider.class.getName());
-	private static OJPAProviderUtil providerUtil=new OJPAProviderUtil();
+	/**
+	 * the log used by this class.
+	 */
+	private static Logger           logger       = Logger.getLogger(OJPAPersistenceProvider.class.getName());
+	private static OJPAProviderUtil providerUtil = new OJPAProviderUtil();
 
  
 	private Collection<? extends PersistenceUnitInfo>	persistenceUnits	= null;

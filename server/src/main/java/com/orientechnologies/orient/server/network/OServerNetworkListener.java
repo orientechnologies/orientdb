@@ -220,7 +220,6 @@ public class OServerNetworkListener extends Thread {
         } catch (Exception e) {
           if (active)
             OLogManager.instance().error(this, "Error on client connection", e);
-        } finally {
         }
       }
     } catch (NoSuchMethodException e) {

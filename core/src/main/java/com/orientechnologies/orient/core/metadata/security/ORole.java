@@ -156,7 +156,7 @@ public class ORole extends OIdentity implements OSecurityRole {
       final Set<ODocument> storedRules = (Set<ODocument>) loadedRules;
       if (storedRules != null) {
         for (ODocument ruleDoc : storedRules) {
-          final ORule.ResourceGeneric resourceGeneric = ORule.ResourceGeneric.valueOf(ruleDoc.<String> field("resourceGeneric"));
+          final ORule.ResourceGeneric resourceGeneric = ORule.ResourceGeneric.valueOf(ruleDoc.<String>field("resourceGeneric"));
           if(resourceGeneric==null) continue;
           final Map<String, Byte> specificResources = ruleDoc.field("specificResources");
           final Byte access = ruleDoc.field("access");

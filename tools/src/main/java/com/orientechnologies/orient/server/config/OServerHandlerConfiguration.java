@@ -22,7 +22,7 @@ package com.orientechnologies.orient.server.config;
 import javax.xml.bind.annotation.*;
 
 @XmlRootElement(name = "handler")
- @XmlType(propOrder = { "parameters", "clazz" })
+@XmlType(propOrder = { "parameters", "clazz" })
  public class OServerHandlerConfiguration {
 
    @XmlAttribute(name = "class", required = true)

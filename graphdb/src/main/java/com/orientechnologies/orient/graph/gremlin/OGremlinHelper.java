@@ -251,7 +251,7 @@ public class OGremlinHelper {
       try {
         Object newClone;
         for (Class<?> obj = objectToClone.getClass(); !obj.equals(Object.class); obj = obj.getSuperclass()) {
-          Method m[] = obj.getDeclaredMethods();
+          Method[] m = obj.getDeclaredMethods();
           for (int i = 0; i < m.length; i++) {
             if (m[i].getName().equals("clone")) {
               m[i].setAccessible(true);

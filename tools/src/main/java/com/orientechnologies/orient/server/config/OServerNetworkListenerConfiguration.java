@@ -22,7 +22,7 @@ package com.orientechnologies.orient.server.config;
 import javax.xml.bind.annotation.*;
 
 @XmlRootElement(name = "listener")
- @XmlType(propOrder = { "commands", "parameters", "protocol", "socket", "portRange", "ipAddress" })
+@XmlType(propOrder = { "commands", "parameters", "protocol", "socket", "portRange", "ipAddress" })
  public class OServerNetworkListenerConfiguration {
 
    @XmlAttribute(name = "ip-address", required = true)

@@ -107,6 +107,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private static final String KEYWORD_AS                    = "AS";
   private static final String KEYWORD_PARALLEL              = "PARALLEL";
   private static final int    PARTIAL_SORT_BUFFER_THRESHOLD = 10000;
+  private static final String NULL_VALUE                    = "null";
 
   private static class AsyncResult {
     final OIdentifiable   record;
@@ -147,7 +148,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private ConcurrentHashMap<ORID, ORID> uniqueResult;
   private boolean noCache = false;
   private int tipLimitThreshold;
-  private String NULL_VALUE = "null";
+
 
   private AtomicLong tmpQueueOffer = new AtomicLong();
   private Object     resultLock    = new Object();
