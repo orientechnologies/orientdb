@@ -5,5 +5,5 @@ package com.orientechnologies.orient.etl.http;
  */
 public interface OETLListener {
 
-  void onEnd(OETLJob OETLJob);
+  void onEnd(OETLJob oetlJob);
 }

@@ -105,12 +105,9 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       try {
         v.save(clusterName);
       } catch (ORecordDuplicatedException e) {
-        if (skipDuplicates) {
-        } else {
+        if (!skipDuplicates) {
           throw e;
         }
-      } finally {
-
       }
     } else if (input instanceof ODocument) {
 

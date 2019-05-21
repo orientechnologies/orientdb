@@ -68,8 +68,6 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
       return search.totalHits;
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error during searcher index instantiation on deleted documents ", e);
-    } finally {
-
     }
 
     return 0;

@@ -126,9 +126,6 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   public void validate(ODocument doc) {
 
-    if (!doc.getClassName().equals(getName())) {
-    }
-
   }
 
   Geometry toGeometry(Shape shape) {

@@ -126,9 +126,7 @@ public class OLuceneIndexType {
 
     Map<String, String> values = new HashMap<>();
     // TODO Implementation of Composite keys with Collection
-    if (key instanceof OCompositeKey) {
-
-    } else {
+    if (!(key instanceof OCompositeKey)) {
       values.put(fields.iterator().next(), key.toString());
     }
     for (String s : values.keySet()) {

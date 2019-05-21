@@ -183,10 +183,7 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
       for (OIdentifiable oIdentifiable : container) {
         addDocument(newGeoDocument(oIdentifiable, legacyBuilder.makeShape(compositeKey, ctx)));
       }
-    } else {
-
     }
-
   }
 
   @Override

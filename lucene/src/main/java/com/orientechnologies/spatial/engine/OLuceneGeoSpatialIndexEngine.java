@@ -69,8 +69,6 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
       if (key instanceof Map) {
         return newGeoSearch((Map<String, Object>) key, changes);
 
-      } else {
-
       }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on getting entry against Lucene index", e);
@@ -116,8 +114,6 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
         updateLastAccess();
         addDocument(newGeoDocument(oIdentifiable, factory.fromDoc(location)));
       }
-    } else {
-
     }
   }
 

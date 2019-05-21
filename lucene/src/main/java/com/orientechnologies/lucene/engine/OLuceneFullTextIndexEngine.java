@@ -112,7 +112,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       });
 
       put("$score", score.score);
-    }});
+    }
+    });
   }
 
   @Override

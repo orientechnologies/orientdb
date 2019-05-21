@@ -33,7 +33,8 @@ public class OLuceneSpatialOperatorFactory implements OQueryOperatorFactory {
       add(new OLuceneNearOperator());
       add(new OLuceneWithinOperator());
       add(new OLuceneOverlapOperator());
-    }};
+    }
+    };
 
     OPERATORS = Collections.unmodifiableSet(operators);
   }
