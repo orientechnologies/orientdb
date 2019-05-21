@@ -51,12 +51,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SQL UPDATE command.
@@ -369,6 +364,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
    *
    * @param iRecord     The record object
    * @param orientClass The schema class
+   *
+   * @return
    */
   private boolean isRecordInstanceOf(Object iRecord, String orientClass) {
     if (iRecord == null) {
@@ -448,9 +445,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
   @Override
   public String getSyntax() {
-    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] "
-        + "<field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] "
-        + "[RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
+    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
   }
 
   @Override

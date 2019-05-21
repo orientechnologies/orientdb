@@ -36,13 +36,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.net.BindException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -226,6 +220,7 @@ public class OServerNetworkListener extends Thread {
         } catch (Exception e) {
           if (active)
             OLogManager.instance().error(this, "Error on client connection", e);
+        } finally {
         }
       }
     } catch (NoSuchMethodException e) {

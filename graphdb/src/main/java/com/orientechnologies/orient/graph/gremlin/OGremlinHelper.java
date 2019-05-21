@@ -42,13 +42,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class OGremlinHelper {
@@ -257,7 +251,7 @@ public class OGremlinHelper {
       try {
         Object newClone;
         for (Class<?> obj = objectToClone.getClass(); !obj.equals(Object.class); obj = obj.getSuperclass()) {
-          Method[] m = obj.getDeclaredMethods();
+          Method m[] = obj.getDeclaredMethods();
           for (int i = 0; i < m.length; i++) {
             if (m[i].getName().equals("clone")) {
               m[i].setAccessible(true);

@@ -69,6 +69,7 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
       }
     } catch (Exception e) {
       throw e;
+    } finally {
     }
     return false;
   }
