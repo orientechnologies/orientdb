@@ -13,11 +13,42 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OAndBlock;
+import com.orientechnologies.orient.core.sql.parser.OBaseExpression;
+import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
+import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
+import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
+import com.orientechnologies.orient.core.sql.parser.OCollection;
+import com.orientechnologies.orient.core.sql.parser.OContainsAnyCondition;
+import com.orientechnologies.orient.core.sql.parser.OContainsKeyOperator;
+import com.orientechnologies.orient.core.sql.parser.OContainsTextCondition;
+import com.orientechnologies.orient.core.sql.parser.OContainsValueOperator;
+import com.orientechnologies.orient.core.sql.parser.OEqualsCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OGeOperator;
+import com.orientechnologies.orient.core.sql.parser.OGtOperator;
+import com.orientechnologies.orient.core.sql.parser.OInCondition;
+import com.orientechnologies.orient.core.sql.parser.OLeOperator;
+import com.orientechnologies.orient.core.sql.parser.OLtOperator;
+import com.orientechnologies.orient.core.sql.parser.OValueExpression;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -277,7 +308,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         }
         OIndexCursor localCursor = createCursor(equals, definition, item, ctx);
 
-        Object item_ = item;
+        final Object itemRef = item;
         customIterator.add(new Iterator<Map.Entry>() {
           @Override
           public boolean hasNext() {
@@ -294,7 +325,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
               @Override
               public Object getKey() {
-                return item_;
+                return itemRef;
               }
 
               @Override

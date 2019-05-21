@@ -19,13 +19,8 @@
   */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
@@ -33,7 +28,12 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 
 /**
@@ -73,19 +73,6 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
 
     public OSQLFunctionHeuristicPathFinderAbstract(final String iName, final int iMinParams, final int iMaxParams) {
         super(iName, iMinParams, iMaxParams);
-    }
-
-    // Approx Great-circle distance.  Args in degrees, result in kilometers
-    // obtains from https://github.com/enderceylan/CS-314--Data-Structures/blob/master/HW10-Graph.java
-    public double gcdist(double lata, double longa, double latb, double longb) {
-        double midlat, psi, dist;
-        midlat = 0.5 * (lata + latb);
-        psi = 0.0174532925
-                * Math.sqrt(Math.pow(lata - latb, 2)
-                + Math.pow((longa - longb)
-                * Math.cos(0.0174532925 * midlat), 2));
-        dist = 6372.640112 * psi;
-        return dist;
     }
 
     protected boolean isVariableEdgeWeight() {
@@ -139,9 +126,9 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
     protected double getDiagonalHeuristicCost(double x, double y, double gx, double gy, double dFactor) {
         double dx = Math.abs(x - gx);
         double dy = Math.abs(y - gy);
-        double h_diagonal = Math.min(dx, dy);
-        double h_straight = dx + dy;
-        return (dFactor * 2) * h_diagonal + dFactor * (h_straight - 2 * h_diagonal);
+        double hDiagonal = Math.min(dx, dy);
+        double hStraight = dx + dy;
+        return (dFactor * 2) * hDiagonal + dFactor * (hStraight - 2 * hDiagonal);
     }
 
     // obtains from http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
@@ -159,7 +146,10 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
         return (dFactor * (Math.pow(dx, 2) + Math.pow(dy, 2)));
     }
 
-    protected double getCustomHeuristicCost(final String functionName, final String[] vertextAxisNames, final OrientVertex start, final OrientVertex goal, final OrientVertex current, final OrientVertex parent, final long depth, double dFactor) {
+    protected double getCustomHeuristicCost(final String functionName,
+        final String[] vertextAxisNames, final OrientVertex start,
+        final OrientVertex goal, final OrientVertex current, final OrientVertex parent,
+        final long depth, double dFactor) {
 
         double heuristic = 0.0;
         OrientGraph ff;
@@ -219,13 +209,13 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
                                               final Map<String, Double> plist, final Map<String, Double> glist, long depth, double dFactor) {
 
         Double heuristic = 0.0;
-        double h_diagonal = 0.0;
-        double h_straight = 0.0;
+        double hDiagonal = 0.0;
+        double hStraight = 0.0;
         for (String str : axisNames) {
-            h_diagonal = Math.min(Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0)), h_diagonal);
-            h_straight += Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0));
+            hDiagonal = Math.min(Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0)), hDiagonal);
+            hStraight += Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0));
         }
-        heuristic = (dFactor * 2) * h_diagonal + dFactor * (h_straight - 2 * h_diagonal);
+        heuristic = (dFactor * 2) * hDiagonal + dFactor * (hStraight - 2 * hDiagonal);
         return heuristic;
     }
 

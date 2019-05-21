@@ -136,6 +136,7 @@ public class ScalableRWLock implements ReadWriteLock, java.io.Serializable {
       this.state = state;
     }
 
+    @SuppressWarnings({"checkstyle:NoFinalizer"})
     protected void finalize() throws Throwable {
       removeState(state);
       super.finalize();

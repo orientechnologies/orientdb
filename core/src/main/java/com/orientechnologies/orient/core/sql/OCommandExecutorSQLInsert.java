@@ -292,7 +292,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
 
   @Override
   public String getSyntax() {
-    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT {<JSON>} [RETURN <expression>] [FROM select-query]";
+    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> "
+        + "[(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT {<JSON>} "
+        + "[RETURN <expression>] [FROM select-query]";
   }
 
   @Override

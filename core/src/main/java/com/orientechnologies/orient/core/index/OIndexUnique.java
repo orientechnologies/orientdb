@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  */
 public class OIndexUnique extends OIndexOneValue {
 
-  private final OBaseIndexEngine.Validator<Object, ORID> UNIQUE_VALIDATOR = (key, oldValue, newValue) -> {
+  private final OBaseIndexEngine.Validator<Object, ORID> uniqueValidator = (key, oldValue, newValue) -> {
     if (oldValue != null) {
       // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
       if (!oldValue.equals(newValue)) {
@@ -69,7 +69,7 @@ public class OIndexUnique extends OIndexOneValue {
     try {
       while (true) {
         try {
-          storage.validatedPutIndexValue(indexId, key, iSingleValue.getIdentity(), UNIQUE_VALIDATOR);
+          storage.validatedPutIndexValue(indexId, key, iSingleValue.getIdentity(), uniqueValidator);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();

@@ -36,7 +36,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-import javax.script.*;
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import java.lang.reflect.Method;
 
 /**
@@ -263,8 +267,8 @@ public class OClassTrigger {
         }
         if (scriptEngine instanceof Invocable) {
           final Invocable invocableEngine = (Invocable) scriptEngine;
-          Object[] EMPTY = OCommonConst.EMPTY_OBJECT_ARRAY;
-          result = (String) invocableEngine.invokeFunction(func.getName(), EMPTY);
+          Object[] empty = OCommonConst.EMPTY_OBJECT_ARRAY;
+          result = (String) invocableEngine.invokeFunction(func.getName(), empty);
         }
       } catch (ScriptException e) {
         throw OException

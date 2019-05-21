@@ -30,8 +30,17 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
@@ -816,7 +825,6 @@ public class OMultiValue {
         set.add(Array.get(o, i));
       }
       return set;
-    } else if (o instanceof OMultiValue) {
     } else if (o instanceof Iterator<?>) {
       final HashSet set = new HashSet();
       while (((Iterator<?>) o).hasNext()) {

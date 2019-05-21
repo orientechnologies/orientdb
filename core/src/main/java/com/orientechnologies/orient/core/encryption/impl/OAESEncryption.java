@@ -21,8 +21,8 @@ import java.util.Base64;
  */
 public class OAESEncryption extends OAbstractEncryption {
   // @see https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#SunJCEProvider
-  private final String TRANSFORMATION = "AES/ECB/PKCS5Padding"; // we use ECB because we cannot store the
-  private final String ALGORITHM_NAME = "AES";
+  private static final String TRANSFORMATION = "AES/ECB/PKCS5Padding"; // we use ECB because we cannot store the
+  private static final String ALGORITHM_NAME = "AES";
 
   private SecretKeySpec theKey;
 

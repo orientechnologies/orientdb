@@ -108,8 +108,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   }
 
-  private final int DELETE_MAX_RETRIES;
-  private final int DELETE_WAIT_TIME;
+  private final int deleteMaxRetries;
+  private final int deleteWaitTime;
 
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
@@ -136,8 +136,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
     variableParser = new OStorageVariableParser(storagePath);
 
-    DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
-    DELETE_WAIT_TIME = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
+    deleteMaxRetries = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
+    deleteWaitTime = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
 
     dirtyFlag = new OPaginatedStorageDirtyFlag(storagePath.resolve("dirty.fl"));
   }
@@ -492,7 +492,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   protected void postDeleteSteps() {
     String databasePath = OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url));
-    deleteFilesFromDisc(name, DELETE_MAX_RETRIES, DELETE_WAIT_TIME, databasePath);
+    deleteFilesFromDisc(name, deleteMaxRetries, deleteWaitTime, databasePath);
   }
 
   public static void deleteFilesFromDisc(String name, int maxRetries, int waitTime, String databaseDirectory) {

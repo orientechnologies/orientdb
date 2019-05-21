@@ -24,12 +24,24 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Locale;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 /**
  * A*'s algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph with husrestic
@@ -162,12 +174,12 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
           continue;
         }
         // The distance from start to a neighbor
-        double tentative_gScore = gScore.get(current) + getDistance(neighborEdge);
+        double tentativeGScore = gScore.get(current) + getDistance(neighborEdge);
         boolean contains = open.contains(neighbor);
 
-        if (!contains || tentative_gScore < gScore.get(neighbor)) {
-          gScore.put(neighbor, tentative_gScore);
-          fScore.put(neighbor, tentative_gScore + getHeuristicCost(neighbor, current, goal, iContext));
+        if (!contains || tentativeGScore < gScore.get(neighbor)) {
+          gScore.put(neighbor, tentativeGScore);
+          fScore.put(neighbor, tentativeGScore + getHeuristicCost(neighbor, current, goal, iContext));
 
           if (contains) {
             open.remove(neighbor);
@@ -258,7 +270,9 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
   }
 
   public String getSyntax() {
-    return "astar(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<options>]) \n // options  : {direction:\"OUT\",edgeTypeNames:[] , vertexAxisNames:[] , parallel : false , tieBreaker:true,maxDepth:99999,dFactor:1.0,customHeuristicFormula:'custom_Function_Name_here'  }";
+    return "astar(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<options>]) \n "
+        + "// options  : {direction:\"OUT\",edgeTypeNames:[] , vertexAxisNames:[] , parallel : false , "
+        + "tieBreaker:true,maxDepth:99999,dFactor:1.0,customHeuristicFormula:'custom_Function_Name_here'  }";
   }
 
   @Override

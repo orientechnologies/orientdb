@@ -37,7 +37,12 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL CREATE EDGE command.
@@ -54,7 +59,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
   private String                      edgeLabel;
   private String                      clusterName;
   private List<OPair<String, Object>> fields;
-  private int batch = 100;
+  private int                         batch = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateEdge parse(final OCommandRequest iRequest) {
@@ -232,7 +237,6 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
         throw new OCommandExecutionException("No edge has been created because no target vertices");
       throw new OCommandExecutionException("No edge has been created between " + fromIds + " and " + toIds);
     }
-
     return edges;
 
   }
@@ -274,6 +278,8 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
 
   @Override
   public String getSyntax() {
-    return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) [SET <field> = <expression>[,]*]|CONTENT {<JSON>} [RETRY <retry> [WAIT <pauseBetweenRetriesInMs]] [BATCH <batch-size>]";
+    return "CREATE EDGE [<class>] [CLUSTER <cluster>] " + "FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) "
+        + "[SET <field> = <expression>[,]*]|CONTENT {<JSON>} "
+        + "[RETRY <retry> [WAIT <pauseBetweenRetriesInMs]] [BATCH <batch-size>]";
   }
 }

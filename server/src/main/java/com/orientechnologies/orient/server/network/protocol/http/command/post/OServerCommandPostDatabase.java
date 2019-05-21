@@ -44,7 +44,11 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "POST|database/*" };
@@ -59,25 +63,22 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
     iRequest.data.commandInfo = "Create database";
 
-    try {
-      final String databaseName = urlParts[1];
-      final String storageMode = urlParts[2];
-      String url = getStoragePath(databaseName, storageMode);
-      final String type = urlParts.length > 3 ? urlParts[3] : "document";
-      if (url != null) {
-        if (server.existsDatabase(databaseName)) {
-          sendJsonError(iResponse,OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-              "Database '" + databaseName + "' already exists.", null);
-        } else {
-          server.createDatabase(databaseName, ODatabaseType.valueOf(storageMode.toUpperCase(Locale.ENGLISH)), null);
-          try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, serverUser, serverPassword, null, false)) {
-            sendDatabaseInfo(iRequest, iResponse, database);
-          }
-        }
+    final String databaseName = urlParts[1];
+    final String storageMode = urlParts[2];
+    String url = getStoragePath(databaseName, storageMode);
+    final String type = urlParts.length > 3 ? urlParts[3] : "document";
+    if (url != null) {
+      if (server.existsDatabase(databaseName)) {
+        sendJsonError(iResponse,OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+            "Database '" + databaseName + "' already exists.", null);
       } else {
-        throw new OCommandExecutionException("The '" + storageMode + "' storage mode does not exists.");
+        server.createDatabase(databaseName, ODatabaseType.valueOf(storageMode.toUpperCase(Locale.ENGLISH)), null);
+        try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, serverUser, serverPassword, null, false)) {
+          sendDatabaseInfo(iRequest, iResponse, database);
+        }
       }
-    } finally {
+    } else {
+      throw new OCommandExecutionException("The '" + storageMode + "' storage mode does not exists.");
     }
     return false;
   }

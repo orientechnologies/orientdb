@@ -26,7 +26,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.command.OScriptExecutorRegister;
-import com.orientechnologies.orient.core.command.script.formatter.*;
+import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -37,9 +41,21 @@ import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngine;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngineFactory;
 
-import javax.script.*;
-import java.util.*;
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -52,11 +68,11 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
  * @see OCommandScript
  */
 public class OScriptManager {
-  protected static final Object[] EMPTY_PARAMS       = new Object[] {};
-  protected static final int      LINES_AROUND_ERROR = 5;
-  protected final        String   DEF_LANGUAGE       = "javascript";
-  protected              String   defaultLanguage    = DEF_LANGUAGE;
-  protected ScriptEngineManager scriptEngineManager;
+  protected static final Object[]                             EMPTY_PARAMS       = new Object[] {};
+  protected static final int                                  LINES_AROUND_ERROR = 5;
+  protected final        String                               defLanguage        = "javascript";
+  protected              String                               defaultLanguage    = defLanguage;
+  protected ScriptEngineManager                               scriptEngineManager;
   protected Map<String, ScriptEngineFactory>                  engines            = new HashMap<String, ScriptEngineFactory>();
   protected Map<String, OScriptFormatter>                     formatters         = new HashMap<String, OScriptFormatter>();
   protected List<OScriptInjection>                            injections         = new ArrayList<OScriptInjection>();
@@ -77,19 +93,19 @@ public class OScriptManager {
         defaultLanguage = f.getLanguageName();
     }
 
-    if (!existsEngine(DEF_LANGUAGE)) {
-      final ScriptEngine defEngine = scriptEngineManager.getEngineByName(DEF_LANGUAGE);
+    if (!existsEngine(defLanguage)) {
+      final ScriptEngine defEngine = scriptEngineManager.getEngineByName(defLanguage);
       if (defEngine == null) {
-        OLogManager.instance().warnNoDb(this, "Cannot find default script language for %s", DEF_LANGUAGE);
+        OLogManager.instance().warnNoDb(this, "Cannot find default script language for %s", defLanguage);
       } else {
         // GET DIRECTLY THE LANGUAGE BY NAME (DON'T KNOW WHY SOMETIMES DOESN'T RETURN IT WITH getEngineFactories() ABOVE!
-        registerEngine(DEF_LANGUAGE, defEngine.getFactory());
-        defaultLanguage = DEF_LANGUAGE;
+        registerEngine(defLanguage, defEngine.getFactory());
+        defaultLanguage = defLanguage;
       }
     }
 
     registerFormatter(OSQLScriptEngine.NAME, new OSQLScriptFormatter());
-    registerFormatter(DEF_LANGUAGE, new OJSScriptFormatter());
+    registerFormatter(defLanguage, new OJSScriptFormatter());
     registerFormatter("ruby", new ORubyScriptFormatter());
     registerFormatter("groovy", new OGroovyScriptFormatter());
     for (String lang : engines.keySet()) {

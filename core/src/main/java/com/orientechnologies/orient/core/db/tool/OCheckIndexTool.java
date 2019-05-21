@@ -102,7 +102,7 @@ public class OCheckIndexTool extends ODatabaseTool {
     long totRecordsForCluster = database.countClusterElements(clusterId);
     String clusterName = database.getClusterNameById(clusterId);
 
-    int TOT_STEPS = 20;
+    int totSteps = 20;
     message("Checking cluster " + clusterName + "  for index " + index.getName()+"\n");
     ORecordIteratorCluster<ORecord> iter = database.browseCluster(clusterName);
     long count = 0;
@@ -110,7 +110,7 @@ public class OCheckIndexTool extends ODatabaseTool {
     while (iter.hasNext()) {
       long currentStep = count * 20 / totRecordsForCluster;
       if (currentStep > step) {
-        printProgress(clusterName, clusterId, (int) currentStep, TOT_STEPS);
+        printProgress(clusterName, clusterId, (int) currentStep, totSteps);
         step = currentStep;
       }
       ORecord record = iter.next();
@@ -120,7 +120,7 @@ public class OCheckIndexTool extends ODatabaseTool {
       }
       count++;
     }
-    printProgress(clusterName, clusterId, TOT_STEPS, TOT_STEPS);
+    printProgress(clusterName, clusterId, totSteps, totSteps);
     message("\n");
   }
 

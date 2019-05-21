@@ -3287,8 +3287,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         return null;
       }
 
-      final Iterator<Map.Entry<PageKey, OCachePointer>> entryIterator = writeCachePages.
-          entrySet().iterator();
+      final Iterator<Map.Entry<PageKey, OCachePointer>> entryIterator = writeCachePages.entrySet().iterator();
 
       while (entryIterator.hasNext()) {
         final Map.Entry<PageKey, OCachePointer> entry = entryIterator.next();

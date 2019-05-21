@@ -203,7 +203,7 @@ public class OWALChangesTree implements OWALChanges {
     if (value == null || value.length == 0)
       return;
 
-    final Node fNode = bSearch(start);
+    final Node fNode = binarySearch(start);
 
     final Node node = new Node(value, start, RED, version);
 
@@ -628,7 +628,7 @@ public class OWALChangesTree implements OWALChanges {
       findIntervals(node.right, start, end, result);
   }
 
-  private Node bSearch(int start) {
+  private Node binarySearch(int start) {
     if (root == null)
       return null;
 

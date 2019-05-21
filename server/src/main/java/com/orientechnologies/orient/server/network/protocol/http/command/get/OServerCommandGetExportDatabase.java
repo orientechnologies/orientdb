@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-import java.net.SocketException;
-import java.util.Date;
-import java.util.zip.GZIPOutputStream;
-
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -32,6 +27,11 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
+import java.io.IOException;
+import java.net.SocketException;
+import java.util.Date;
+import java.util.zip.GZIPOutputStream;
+
 public class OServerCommandGetExportDatabase extends OServerCommandAuthenticatedDbAbstract implements OCommandOutputListener {
   private static final String[] NAMES = { "GET|export/*" };
 
@@ -39,8 +39,7 @@ public class OServerCommandGetExportDatabase extends OServerCommandAuthenticated
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: export/<database>/[<name>][?params*]");
 
-    if (urlParts.length > 2) {
-    } else {
+    if (urlParts.length <= 2) {
       exportStandard(iRequest, iResponse);
     }
     return false;

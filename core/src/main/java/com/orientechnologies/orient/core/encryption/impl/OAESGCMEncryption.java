@@ -1,26 +1,35 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
-import static java.lang.String.format;
-import static javax.crypto.Cipher.DECRYPT_MODE;
-import static javax.crypto.Cipher.ENCRYPT_MODE;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 
+import javax.crypto.AEADBadTagException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.ShortBufferException;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import javax.crypto.*;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.encryption.OEncryption;
-import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
+import static java.lang.String.format;
+import static javax.crypto.Cipher.DECRYPT_MODE;
+import static javax.crypto.Cipher.ENCRYPT_MODE;
 
 /**
  * OEncryption implementation using AES/GCM/NoPadding with a 12 byte nonce and 16 byte tag size.
@@ -43,7 +52,8 @@ public class OAESGCMEncryption implements OEncryption {
   private static final int                 MIN_CIPHERTEXT_SIZE              = GCM_NONCE_SIZE_IN_BYTES + GCM_TAG_SIZE_IN_BYTES;
 
   private static final String              NO_SUCH_CIPHER                   = "AES/GCM/NoPadding not supported.";
-  private static final String              MISSING_KEY_ERROR                = "AESGCMEncryption encryption has been selected, but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '%s'";
+  private static final String              MISSING_KEY_ERROR                = "AESGCMEncryption encryption has been selected, "
+      + "but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '%s'";
   private static final String              INVALID_KEY_ERROR                = "Failed to initialize AESGCMEncryption. Assure the key is a 128, 192 or 256 bits long BASE64 value";
   private static final String              ENCRYPTION_NOT_INITIALIZED_ERROR = "OAESGCMEncryption not properly initialized";
   private static final String              AUTHENTICATION_ERROR             = "Authentication of encrypted data failed. The encrypted data may have been altered or the used key is incorrect";

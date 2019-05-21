@@ -20,13 +20,9 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,6 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
+import org.apache.commons.configuration.Configuration;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://orientdb.com)
@@ -43,7 +40,7 @@ import com.tinkerpop.blueprints.util.ExceptionFactory;
 public class OrientGraph extends OrientTransactionalGraph {
   private boolean          featuresInitialized = false;
 
-  protected final Features FEATURES            = new Features();
+  protected final Features features = new Features();
 
   /**
    * Creates a new Transactional Graph using an existent database instance. User and password are passed in case of re-open.
@@ -237,46 +234,46 @@ public class OrientGraph extends OrientTransactionalGraph {
     makeActive();
 
     if (!featuresInitialized) {
-      FEATURES.supportsDuplicateEdges = true;
-      FEATURES.supportsSelfLoops = true;
-      FEATURES.isPersistent = true;
-      FEATURES.supportsVertexIteration = true;
-      FEATURES.supportsVertexIndex = true;
-      FEATURES.ignoresSuppliedIds = true;
-      FEATURES.supportsTransactions = true;
-      FEATURES.supportsVertexKeyIndex = true;
-      FEATURES.supportsKeyIndices = true;
-      FEATURES.isWrapper = false;
-      FEATURES.supportsIndices = true;
-      FEATURES.supportsVertexProperties = true;
-      FEATURES.supportsEdgeProperties = true;
+      features.supportsDuplicateEdges = true;
+      features.supportsSelfLoops = true;
+      features.isPersistent = true;
+      features.supportsVertexIteration = true;
+      features.supportsVertexIndex = true;
+      features.ignoresSuppliedIds = true;
+      features.supportsTransactions = true;
+      features.supportsVertexKeyIndex = true;
+      features.supportsKeyIndices = true;
+      features.isWrapper = false;
+      features.supportsIndices = true;
+      features.supportsVertexProperties = true;
+      features.supportsEdgeProperties = true;
 
       // For more information on supported types, please see:
       // http://code.google.com/p/orient/wiki/Types
-      FEATURES.supportsSerializableObjectProperty = true;
-      FEATURES.supportsBooleanProperty = true;
-      FEATURES.supportsDoubleProperty = true;
-      FEATURES.supportsFloatProperty = true;
-      FEATURES.supportsIntegerProperty = true;
-      FEATURES.supportsPrimitiveArrayProperty = true;
-      FEATURES.supportsUniformListProperty = true;
-      FEATURES.supportsMixedListProperty = true;
-      FEATURES.supportsLongProperty = true;
-      FEATURES.supportsMapProperty = true;
-      FEATURES.supportsStringProperty = true;
-      FEATURES.supportsThreadedTransactions = false;
-      FEATURES.supportsThreadIsolatedTransactions = false;
+      features.supportsSerializableObjectProperty = true;
+      features.supportsBooleanProperty = true;
+      features.supportsDoubleProperty = true;
+      features.supportsFloatProperty = true;
+      features.supportsIntegerProperty = true;
+      features.supportsPrimitiveArrayProperty = true;
+      features.supportsUniformListProperty = true;
+      features.supportsMixedListProperty = true;
+      features.supportsLongProperty = true;
+      features.supportsMapProperty = true;
+      features.supportsStringProperty = true;
+      features.supportsThreadedTransactions = false;
+      features.supportsThreadIsolatedTransactions = false;
 
-      // DYNAMIC FEATURES BASED ON CONFIGURATION
-      FEATURES.supportsEdgeIndex = !isUseLightweightEdges();
-      FEATURES.supportsEdgeKeyIndex = !isUseLightweightEdges();
-      FEATURES.supportsEdgeIteration = !isUseLightweightEdges();
-      FEATURES.supportsEdgeRetrieval = !isUseLightweightEdges();
+      // DYNAMIC features BASED ON CONFIGURATION
+      features.supportsEdgeIndex = !isUseLightweightEdges();
+      features.supportsEdgeKeyIndex = !isUseLightweightEdges();
+      features.supportsEdgeIteration = !isUseLightweightEdges();
+      features.supportsEdgeRetrieval = !isUseLightweightEdges();
 
       featuresInitialized = true;
     }
 
-    return FEATURES;
+    return features;
   }
 
   OrientEdge addEdgeInternal(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,

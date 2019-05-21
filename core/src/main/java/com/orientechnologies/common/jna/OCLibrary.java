@@ -28,17 +28,17 @@ public interface OCLibrary extends Library {
   int RLIM_INFINITY = 0;
 
   class Rlimit extends Structure {
-    public static final List<String> FIELDS = createFieldsOrder("rlim_cur", "rlim_max");
+    public static final List<String> FIELDS = createFieldsOrder("rlimCur", "rlimMax");
 
     /**
      * The current (soft) limit.
      */
-    public long rlim_cur;
+    public long rlimCur;
 
     /**
      * The hard limit.
      */
-    public long rlim_max;
+    public long rlimMax;
 
     @Override
     protected List<String> getFieldOrder() {

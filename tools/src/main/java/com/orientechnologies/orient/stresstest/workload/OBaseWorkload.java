@@ -64,7 +64,7 @@ public abstract class OBaseWorkload implements OWorkload {
     public long latencyMaxNs;
     public int  latencyPercentileAvg;
     public long latencyPercentile99Ns;
-    public long latencyPercentile99_9Ns;
+    public long latencyPercentile999Ns;
 
     public AtomicInteger conflicts = new AtomicInteger();
 
@@ -76,7 +76,7 @@ public abstract class OBaseWorkload implements OWorkload {
       return String.format(
           "\n%s- Throughput: %.3f/sec (Avg %.3fms/op)\n%s- Latency Avg: %.3fms/op (%dth percentile) - Min: %.3fms - 99th Perc: %.3fms - 99.9th Perc: %.3fms - Max: %.3fms - Conflicts: %d",
           indent, total * 1000 / (float) totalTime, throughputAvgNs / 1000000f, indent, latencyAvgNs / 1000000f,
-          latencyPercentileAvg, latencyMinNs / 1000000f, latencyPercentile99Ns / 1000000f, latencyPercentile99_9Ns / 1000000f,
+          latencyPercentileAvg, latencyMinNs / 1000000f, latencyPercentile99Ns / 1000000f, latencyPercentile999Ns / 1000000f,
           latencyMaxNs / 1000000f, conflicts.get());
     }
 
@@ -93,7 +93,7 @@ public abstract class OBaseWorkload implements OWorkload {
       json.field("latencyMin", latencyMinNs / 1000000f);
       json.field("latencyPercAvg", latencyPercentileAvg);
       json.field("latencyPerc99", latencyPercentile99Ns / 1000000f);
-      json.field("latencyPerc99_9", latencyPercentile99_9Ns / 1000000f);
+      json.field("latencyPerc99_9", latencyPercentile999Ns / 1000000f);
       json.field("latencyMax", latencyMaxNs / 1000000f);
       json.field("conflicts", conflicts.get());
       return json;
@@ -244,7 +244,7 @@ public abstract class OBaseWorkload implements OWorkload {
     result.latencyAvgNs = (int) (result.totalTimeOperationsNs / operationTiming.length);
     result.latencyPercentileAvg = getPercentile(operationTiming, result.latencyAvgNs);
     result.latencyPercentile99Ns = operationTiming[(int) (operationTiming.length * 99f / 100f)];
-    result.latencyPercentile99_9Ns = operationTiming[(int) (operationTiming.length * 99.9f / 100f)];
+    result.latencyPercentile999Ns = operationTiming[(int) (operationTiming.length * 99.9f / 100f)];
 
     return contexts;
   }

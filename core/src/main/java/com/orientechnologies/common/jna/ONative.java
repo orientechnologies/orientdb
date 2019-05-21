@@ -111,18 +111,18 @@ public class ONative {
       final OCLibrary.Rlimit rlimit = new OCLibrary.Rlimit();
       final int result = C_LIBRARY.getrlimit(OCLibrary.RLIMIT_NOFILE, rlimit);
 
-      if (result == 0 && rlimit.rlim_cur > 0) {
+      if (result == 0 && rlimit.rlimCur > 0) {
         if (verbose) {
           OLogManager.instance().infoNoDb(this, "Detected limit of amount of simultaneously open files is %d, "
-              + " limit of open files for disk cache will be set to %d", rlimit.rlim_cur, rlimit.rlim_cur / 2 - 512);
+              + " limit of open files for disk cache will be set to %d", rlimit.rlimCur, rlimit.rlimCur / 2 - 512);
         }
 
-        if (rlimit.rlim_cur < recommended) {
+        if (rlimit.rlimCur < recommended) {
           OLogManager.instance()
               .warnNoDb(this, "Value of limit of simultaneously open files is too small, recommended value is %d", recommended);
         }
 
-        return (int) rlimit.rlim_cur / 2 - 512;
+        return (int) rlimit.rlimCur / 2 - 512;
       } else {
         if (verbose) {
           OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.");
@@ -174,16 +174,16 @@ public class ONative {
       //no errors during the call
       if (result == 0) {
         if (printSteps)
-          OLogManager.instance().infoNoDb(this, "Soft memory limit for this process is set to %d B/%d MB/%d GB", rlimit.rlim_cur,
-              convertToMB(rlimit.rlim_cur), convertToGB(rlimit.rlim_cur));
+          OLogManager.instance().infoNoDb(this, "Soft memory limit for this process is set to %d B/%d MB/%d GB", rlimit.rlimCur,
+              convertToMB(rlimit.rlimCur), convertToGB(rlimit.rlimCur));
 
-        memoryLimit = updateMemoryLimit(memoryLimit, rlimit.rlim_cur);
+        memoryLimit = updateMemoryLimit(memoryLimit, rlimit.rlimCur);
 
         if (printSteps)
-          OLogManager.instance().infoNoDb(this, "Hard memory limit for this process is set to %d B/%d MB/%d GB", rlimit.rlim_max,
-              convertToMB(rlimit.rlim_max), convertToGB(rlimit.rlim_max));
+          OLogManager.instance().infoNoDb(this, "Hard memory limit for this process is set to %d B/%d MB/%d GB", rlimit.rlimMax,
+              convertToMB(rlimit.rlimMax), convertToGB(rlimit.rlimMax));
 
-        memoryLimit = updateMemoryLimit(memoryLimit, rlimit.rlim_max);
+        memoryLimit = updateMemoryLimit(memoryLimit, rlimit.rlimMax);
       }
 
       final String memoryCGroupPath = findMemoryGCGroupPath();
@@ -294,7 +294,7 @@ public class ONative {
       return false;
     }
 
-    return rlimit.rlim_cur == -1;
+    return rlimit.rlimCur == -1;
   }
 
   private long updateMemoryLimit(long memoryLimit, final long newMemoryLimit) {

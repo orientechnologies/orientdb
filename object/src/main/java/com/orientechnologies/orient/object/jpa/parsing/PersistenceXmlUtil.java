@@ -20,16 +20,9 @@
 
 package com.orientechnologies.orient.object.jpa.parsing;
 
-import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXml.ATTR_SCHEMA_VERSION;
-import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXml.TAG_PERSISTENCE;
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
-
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Collection;
-import java.util.EnumSet;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import javax.persistence.PersistenceException;
 import javax.persistence.spi.PersistenceUnitInfo;
@@ -39,10 +32,15 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Collection;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXml.ATTR_SCHEMA_VERSION;
+import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXml.TAG_PERSISTENCE;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 
 /**
  * Simple handler for persistence.xml files.
@@ -187,54 +185,3 @@ public final class PersistenceXmlUtil {
   }
 }
 
-/**
- * This parser provides a quick mechanism for determining the JPA schema level, and throws an StopSAXParser with the Schema to
- * validate with
- */
-class SchemaLocatingHandler extends DefaultHandler {
-
-  /** The value of the version attribute in the xml */
-  private String schemaVersion = "";
-
-  /**
-   * Create a new SchemaLocatingHandler
-   */
-  public SchemaLocatingHandler() {
-  }
-
-  /**
-   * Fist tag of 'persistence.xml' (<persistence>) have to have 'version' attribute
-   * 
-   * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String,
-   *      org.xml.sax.Attributes)
-   */
-  @Override
-  public void startElement(String uri, String localName, String name, Attributes attributes) throws SAXException {
-    PersistenceXml element = PersistenceXml.parse((localName == null || localName.isEmpty()) ? name : localName);
-    schemaVersion = PersistenceXmlUtil.parseSchemaVersion(uri, element, attributes);
-    // found, stop parsing
-    if (schemaVersion != null) {
-      throw new StopSAXParser();
-    }
-
-    // This should never occurs, however check if contain known tag other than TAG_PERSISTENCE
-    if (TAG_PERSISTENCE != element && EnumSet.allOf(PersistenceXml.class).contains(element)) {
-      throw new PersistenceException("Cannot find schema version attribute in <persistence> tag");
-    }
-  }
-
-  /**
-   * @return The version of the JPA schema used
-   */
-  public String getVersion() {
-    return schemaVersion;
-  }
-}
-
-/**
- * A convenience mechanism for finding the schema to validate with
- */
-class StopSAXParser extends SAXException {
-  /** This class is serializable */
-  private static final long serialVersionUID = 6173561761817524327L;
-}

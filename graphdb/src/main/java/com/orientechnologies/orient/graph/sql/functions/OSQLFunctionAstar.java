@@ -33,10 +33,19 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Locale;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 /**
- * A*'s algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph with husrestic function.
+ * A*'s algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph with husrestic
+ * function.
  * <p>
  * The first parameter is source record. The second parameter is destination record. The third parameter is a name of property that
  * represents 'weight' and fourth represnts the map of options.
@@ -74,7 +83,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     final OSQLFunctionAstar context = this;
     return OGraphCommandExecutorSQLFactory
         .runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<LinkedList<OrientVertex>>() {
-          @Override public LinkedList<OrientVertex> call(final OrientBaseGraph graph) {
+          @Override
+          public LinkedList<OrientVertex> call(final OrientBaseGraph graph) {
 
             final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 
@@ -142,7 +152,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       for (OrientEdge neighborEdge : getNeighborEdges(current)) {
 
         OrientVertex neighbor = getNeighbor(current, neighborEdge, graph);
-        if(neighbor==null){
+        if (neighbor == null) {
           continue;
         }
         // Ignore the neighbor which is already evaluated.
@@ -150,12 +160,12 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
           continue;
         }
         // The distance from start to a neighbor
-        double tentative_gScore = gScore.get(current) + getDistance(neighborEdge);
+        double tentativeGScore = gScore.get(current) + getDistance(neighborEdge);
         boolean contains = open.contains(neighbor);
 
-        if (!contains || tentative_gScore < gScore.get(neighbor)) {
-          gScore.put(neighbor, tentative_gScore);
-          fScore.put(neighbor, tentative_gScore + getHeuristicCost(neighbor, current, goal));
+        if (!contains || tentativeGScore < gScore.get(neighbor)) {
+          gScore.put(neighbor, tentativeGScore);
+          fScore.put(neighbor, tentativeGScore + getHeuristicCost(neighbor, current, goal));
 
           if (contains) {
             open.remove(neighbor);
@@ -181,10 +191,10 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
   }
 
   private OrientVertex toVertex(OIdentifiable outVertex, OrientBaseGraph graph) {
-    if(outVertex==null){
+    if (outVertex == null) {
       return null;
     }
-    if (outVertex instanceof OrientVertex){
+    if (outVertex instanceof OrientVertex) {
       return (OrientVertex) outVertex;
     }
     return graph.getVertex(outVertex);
@@ -234,8 +244,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       ctx.paramDFactor = doubleOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_D_FACTOR), ctx.paramDFactor);
       if (mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA) != null) {
         if (mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA) instanceof String) {
-          ctx.paramHeuristicFormula = HeuristicFormula
-              .valueOf(stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA), "MANHATAN").toUpperCase(Locale.ENGLISH));
+          ctx.paramHeuristicFormula = HeuristicFormula.valueOf(
+              stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA), "MANHATAN").toUpperCase(Locale.ENGLISH));
         } else {
           ctx.paramHeuristicFormula = (HeuristicFormula) mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA);
         }
@@ -246,14 +256,18 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
   }
 
   public String getSyntax() {
-    return "astar(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<options>]) \n // options  : {direction:\"OUT\",edgeTypeNames:[] , vertexAxisNames:[] , parallel : false , tieBreaker:true,maxDepth:99999,dFactor:1.0,customHeuristicFormula:'custom_Function_Name_here'  }";
+    return "astar(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<options>]) \n"
+        + " // options  : {direction:\"OUT\",edgeTypeNames:[] , vertexAxisNames:[] , parallel : false , "
+        + "tieBreaker:true,maxDepth:99999,dFactor:1.0,customHeuristicFormula:'custom_Function_Name_here'  }";
   }
 
-  @Override public Object getResult() {
+  @Override
+  public Object getResult() {
     return getPath();
   }
 
-  @Override protected double getDistance(final OrientVertex node, final OrientVertex parent, final OrientVertex target) {
+  @Override
+  protected double getDistance(final OrientVertex node, final OrientVertex parent, final OrientVertex target) {
     final Iterator<Edge> edges = node.getEdges(target, paramDirection).iterator();
     if (edges.hasNext()) {
       final Edge e = edges.next();
@@ -282,11 +296,13 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     return MIN;
   }
 
-  @Override public boolean aggregateResults() {
+  @Override
+  public boolean aggregateResults() {
     return false;
   }
 
-  @Override protected double getHeuristicCost(final OrientVertex node, OrientVertex parent, final OrientVertex target) {
+  @Override
+  protected double getHeuristicCost(final OrientVertex node, OrientVertex parent, final OrientVertex target) {
     double hresult = 0.0;
 
     if (paramVertexAxisNames.length == 0) {
@@ -383,7 +399,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
 
   }
 
-  @Override protected boolean isVariableEdgeWeight() {
+  @Override
+  protected boolean isVariableEdgeWeight() {
     return true;
   }
 

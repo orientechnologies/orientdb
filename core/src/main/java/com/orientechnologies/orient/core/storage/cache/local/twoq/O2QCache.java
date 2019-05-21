@@ -1016,7 +1016,7 @@ public final class O2QCache implements OReadCache {
           throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
         }
 
-        if (a1in.size() > memoryData.K_IN * 0.95) {
+        if (a1in.size() > memoryData.kIn * 0.95) {
           OCacheEntry removedFromAInEntry = a1in.getLRU();
           if (removedFromAInEntry == null) {
             throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
@@ -1043,7 +1043,7 @@ public final class O2QCache implements OReadCache {
             }
           }
 
-          while (a1out.size() > memoryData.K_OUT) {
+          while (a1out.size() > memoryData.kOut) {
             OCacheEntry removedEntry = a1out.getLRU();
             if (removedEntry != null) {
               final Lock lock = pageLockManager
@@ -1244,12 +1244,12 @@ public final class O2QCache implements OReadCache {
     /**
      * Max size for {@link O2QCache#a1in} queue in amount of pages
      */
-    private final int K_IN;
+    private final int kIn;
 
     /**
      * Max size for {@link O2QCache#a1out} queue in amount of pages
      */
-    private final int K_OUT;
+    private final int kOut;
 
     /**
      * Maximum size of memory consumed by 2Q cache in amount of pages.
@@ -1262,8 +1262,8 @@ public final class O2QCache implements OReadCache {
     private final int pinnedPages;
 
     MemoryData(final int maxSize, final int pinnedPages) {
-      K_IN = (maxSize - pinnedPages) >> 2;
-      K_OUT = (maxSize - pinnedPages) >> 1;
+      kIn = (maxSize - pinnedPages) >> 2;
+      kOut = (maxSize - pinnedPages) >> 1;
 
       this.maxSize = maxSize;
       this.pinnedPages = pinnedPages;

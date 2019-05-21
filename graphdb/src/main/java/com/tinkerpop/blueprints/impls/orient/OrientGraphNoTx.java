@@ -40,7 +40,7 @@ import org.apache.commons.configuration.Configuration;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public class OrientGraphNoTx extends OrientBaseGraph {
-  private final Features FEATURES = new Features();
+  private final Features features = new Features();
 
   /**
    * Constructs a new object using an existent database instance.
@@ -91,44 +91,44 @@ public class OrientGraphNoTx extends OrientBaseGraph {
   public Features getFeatures() {
     makeActive();
 
-    // DYNAMIC FEATURES BASED ON CONFIGURATION
-    FEATURES.supportsEdgeIndex = !isUseLightweightEdges();
-    FEATURES.supportsEdgeKeyIndex = !isUseLightweightEdges();
-    FEATURES.supportsEdgeIteration = !isUseLightweightEdges();
-    FEATURES.supportsEdgeRetrieval = !isUseLightweightEdges();
-    return FEATURES;
+    // DYNAMIC features BASED ON CONFIGURATION
+    features.supportsEdgeIndex = !isUseLightweightEdges();
+    features.supportsEdgeKeyIndex = !isUseLightweightEdges();
+    features.supportsEdgeIteration = !isUseLightweightEdges();
+    features.supportsEdgeRetrieval = !isUseLightweightEdges();
+    return features;
   }
 
   protected void config() {
-    FEATURES.supportsDuplicateEdges = true;
-    FEATURES.supportsSelfLoops = true;
-    FEATURES.isPersistent = true;
-    FEATURES.supportsVertexIteration = true;
-    FEATURES.supportsVertexIndex = true;
-    FEATURES.ignoresSuppliedIds = true;
-    FEATURES.supportsTransactions = false;
-    FEATURES.supportsVertexKeyIndex = true;
-    FEATURES.supportsKeyIndices = true;
-    FEATURES.isWrapper = false;
-    FEATURES.supportsIndices = true;
-    FEATURES.supportsVertexProperties = true;
-    FEATURES.supportsEdgeProperties = true;
+    features.supportsDuplicateEdges = true;
+    features.supportsSelfLoops = true;
+    features.isPersistent = true;
+    features.supportsVertexIteration = true;
+    features.supportsVertexIndex = true;
+    features.ignoresSuppliedIds = true;
+    features.supportsTransactions = false;
+    features.supportsVertexKeyIndex = true;
+    features.supportsKeyIndices = true;
+    features.isWrapper = false;
+    features.supportsIndices = true;
+    features.supportsVertexProperties = true;
+    features.supportsEdgeProperties = true;
 
     // For more information on supported types, please see:
     // http://code.google.com/p/orient/wiki/Types
-    FEATURES.supportsSerializableObjectProperty = true;
-    FEATURES.supportsBooleanProperty = true;
-    FEATURES.supportsDoubleProperty = true;
-    FEATURES.supportsFloatProperty = true;
-    FEATURES.supportsIntegerProperty = true;
-    FEATURES.supportsPrimitiveArrayProperty = true;
-    FEATURES.supportsUniformListProperty = true;
-    FEATURES.supportsMixedListProperty = true;
-    FEATURES.supportsLongProperty = true;
-    FEATURES.supportsMapProperty = true;
-    FEATURES.supportsStringProperty = true;
-    FEATURES.supportsThreadedTransactions = false;
-    FEATURES.supportsThreadIsolatedTransactions = false;
+    features.supportsSerializableObjectProperty = true;
+    features.supportsBooleanProperty = true;
+    features.supportsDoubleProperty = true;
+    features.supportsFloatProperty = true;
+    features.supportsIntegerProperty = true;
+    features.supportsPrimitiveArrayProperty = true;
+    features.supportsUniformListProperty = true;
+    features.supportsMixedListProperty = true;
+    features.supportsLongProperty = true;
+    features.supportsMapProperty = true;
+    features.supportsStringProperty = true;
+    features.supportsThreadedTransactions = false;
+    features.supportsThreadIsolatedTransactions = false;
   }
 
   OrientEdge addEdgeInternal(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
