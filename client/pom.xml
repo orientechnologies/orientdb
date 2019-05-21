@@ -48,6 +48,7 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dstorage.diskCache.bufferSize=4096
         </argLine>
+        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
     <dependencies>

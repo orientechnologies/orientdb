@@ -19,6 +19,7 @@
             -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
         </argLine>
+        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
     <dependencies>
         <dependency>

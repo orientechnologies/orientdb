@@ -63,6 +63,7 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
         </argLine>
         <exclude.test.distributed>NONE</exclude.test.distributed>
+        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
     <profiles>

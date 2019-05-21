@@ -30,6 +30,7 @@
         <BUILD>${implementation.build}; ${maven.build.timestamp}</BUILD>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-Xmx${heapSize} -Xms${heapSize} -XX:MaxDirectMemorySize=512g -Dstorage.diskCache.bufferSize=4096</argLine>
+        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
     <dependencies>

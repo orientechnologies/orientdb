@@ -191,6 +191,7 @@
         <heapSize>2048m</heapSize>
         <javaassist.version>3.23.1-GA</javaassist.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
+        <project.rootdir>${project.basedir}/</project.rootdir>
     </properties>
 
     <build>
@@ -538,8 +539,16 @@
                 <version>3.0.0</version>
                 <configuration>
                     <excludes>com/orientechnologies/orient/core/sql/parser/*.java</excludes>
-			        <configLocation>${user.dir}/_base/orient_checks.xml</configLocation>
+			        <configLocation>${project.rootdir}/_base/orient_checks.xml</configLocation>
                 </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
