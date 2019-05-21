@@ -151,6 +151,9 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
           OLogManager.instance().warn(this, "Failed to create CSV Aggregates metrics dir {}", outputDir);
         }
       }
+
+      builder.filter((name, metric) -> !name.matches("db.*.query.*"));
+
       csvReporter = builder.build(outputDir);
       csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
     }
@@ -173,6 +176,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
           OLogManager.instance().warn(this, "Failed to create CSV metrics dir {}", outputDir);
         }
       }
+
       csvReporter = builder.build(outputDir);
       csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
     }
@@ -186,59 +190,48 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     return MetricRegistry.name(name, names);
   }
 
-  @Override
-  public String name(Class<?> klass, String... names) {
+  @Override public String name(Class<?> klass, String... names) {
     return MetricRegistry.name(klass, names);
   }
 
-  @Override
-  public OCounter counter(String name, String description) {
+  @Override public OCounter counter(String name, String description) {
     return registerOrGetMetric(name, (key) -> new DropWizardCounter(registry.counter(key), key, description));
   }
 
-  @Override
-  public OMeter meter(String name, String description) {
-    return meter(name, description,":");
+  @Override public OMeter meter(String name, String description) {
+    return meter(name, description, ":");
   }
 
-  @Override
-  public OMeter meter(String name, String description, String unitOfMeasure) {
+  @Override public OMeter meter(String name, String description, String unitOfMeasure) {
     return registerOrGetMetric(name, (k) -> new DropWizardMeter(registry.meter(k), k, description, unitOfMeasure));
   }
 
-  @Override
-  public <T> OGauge<T> gauge(String name, String description, Supplier<T> valueFunction) {
+  @Override public <T> OGauge<T> gauge(String name, String description, Supplier<T> valueFunction) {
     return gauge(name, description, "", valueFunction);
   }
 
-  @Override
-  public <T> OGauge<T> gauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
+  @Override public <T> OGauge<T> gauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
     return registerOrGetMetric(name,
         (k) -> new DropWizardGauge<T>(registry.register(k, () -> valueFunction.get()), k, description, unitOfMeasure));
   }
 
-  @Override
-  public <T> OGauge<T> newGauge(String name, String description, Supplier<T> valueFunction) {
+  @Override public <T> OGauge<T> newGauge(String name, String description, Supplier<T> valueFunction) {
     return new DropWizardGauge<T>(valueFunction::get, name, description);
   }
 
-  @Override
-  public <T> OGauge<T> newGauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
+  @Override public <T> OGauge<T> newGauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
     return new DropWizardGauge<T>(valueFunction::get, name, description, unitOfMeasure);
   }
 
-  @Override
-  public OHistogram histogram(String name, String description) {
+  @Override public OHistogram histogram(String name, String description) {
     return registerOrGetMetric(name, (k) -> new DropWizardHistogram(registry.histogram(k), k, description));
   }
 
-  @Override
-  public OTimer timer(String name, String description) {
+  @Override public OTimer timer(String name, String description) {
     return registerOrGetMetric(name, (k) -> new DropWizardTimer(registry.timer(k), k, description));
   }
 
-  @Override
-  public Map<String, OMetric> getMetrics() {
+  @Override public Map<String, OMetric> getMetrics() {
     return Collections.unmodifiableMap(metrics);
   }
 
@@ -246,8 +239,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     return (T) metrics.computeIfAbsent(name, metric);
   }
 
-  @Override
-  public <T extends OMetric> T register(String name, String description, Class<T> klass) {
+  @Override public <T extends OMetric> T register(String name, String description, Class<T> klass) {
     return registerOrGetMetric(name, (k) -> {
 
       Function<String, Metric> function = metricFactory.get(klass);
@@ -264,8 +256,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     });
   }
 
-  @Override
-  public <T extends OMetric> T register(String name, T metric) {
+  @Override public <T extends OMetric> T register(String name, T metric) {
 
     if (metric instanceof DropWizardGeneric) {
       Metric m = ((DropWizardGeneric) metric).getMetric();
@@ -274,13 +265,11 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     return registerOrGetMetric(name, (k) -> metric);
   }
 
-  @Override
-  public void registerAll(OMetricSet metricSet) {
+  @Override public void registerAll(OMetricSet metricSet) {
     registerAll(null, metricSet);
   }
 
-  @Override
-  public void registerAll(String prefix, OMetricSet metricSet) {
+  @Override public void registerAll(String prefix, OMetricSet metricSet) {
 
     for (Map.Entry<String, OMetric> entry : metricSet.getMetrics().entrySet()) {
       if (entry.getValue() instanceof OMetricSet) {
@@ -304,8 +293,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     return registry.remove(name);
   }
 
-  @Override
-  public void toJSON(OutputStream outputStream) throws IOException {
+  @Override public void toJSON(OutputStream outputStream) throws IOException {
 
     ObjectWriter writer = mapper.writer();
 
