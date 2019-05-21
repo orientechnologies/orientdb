@@ -4,6 +4,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OQueryMetrics;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
@@ -15,18 +16,25 @@ import java.util.Optional;
 /**
  * Created by Enrico Risa on 24/01/17.
  */
-public class OGremlinScriptResultSet implements OResultSet {
+public class OGremlinScriptResultSet implements OResultSet, OQueryMetrics {
 
+    private final String textTraversal;
     protected Traversal traversal;
     private OScriptTransformer transformer;
     private boolean closeGraph;
     private boolean closing = false;
 
-    public OGremlinScriptResultSet(Traversal traversal, OScriptTransformer transformer) {
-        this(traversal, transformer, false);
+    long startTime = 0;
+    long totalExecutionTime = 0;
+
+    boolean first  = true;
+
+    public OGremlinScriptResultSet(String iText,Traversal traversal, OScriptTransformer transformer) {
+        this(iText,traversal, transformer, false);
     }
 
-    public OGremlinScriptResultSet(Traversal traversal, OScriptTransformer transformer, boolean closeGraph) {
+    public OGremlinScriptResultSet(String iText,Traversal traversal, OScriptTransformer transformer, boolean closeGraph) {
+        this.textTraversal = iText;
         this.traversal = traversal;
         this.transformer = transformer;
         this.closeGraph = closeGraph;
@@ -40,8 +48,18 @@ public class OGremlinScriptResultSet implements OResultSet {
     @Override
     public OResult next() {
 
-        Object next = traversal.next();
-        return transformer.toResult(next);
+        long begin = System.currentTimeMillis();
+
+        if(first) {
+            first = false;
+            startTime = begin;
+        }
+        try {
+          Object next = traversal.next();
+          return transformer.toResult(next);
+        } finally {
+          totalExecutionTime += (System.currentTimeMillis() - begin);
+        }
     }
 
     @Override
@@ -75,4 +93,20 @@ public class OGremlinScriptResultSet implements OResultSet {
     public Map<String, Long> getQueryStats() {
         return null;
     }
+
+  @Override public String getStatement() {
+    return textTraversal;
+  }
+
+  @Override public long getStartTime() {
+    return startTime;
+  }
+
+  @Override public long getElapsedTimeMillis() {
+    return totalExecutionTime;
+  }
+
+  @Override public String getLanguage() {
+    return "gremlin";
+  }
 }
