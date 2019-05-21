@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.distributed.impl.OIncrementOperationalLog;
@@ -163,6 +164,11 @@ public class TestTransactionFlow {
 
     @Override
     public void ack(OLogId logId) {
+
+    }
+
+    @Override
+    public void send(OFullConfiguration fullConfiguration) {
 
     }
 

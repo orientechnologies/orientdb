@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 import java.util.HashMap;
@@ -9,12 +10,12 @@ import java.util.concurrent.Future;
 
 public class OStructuralSubmitContextImpl implements OStructuralSubmitContext {
 
-  private          Map<OSessionOperationId, CompletableFuture<OStructuralSubmitResponse>> operations = new HashMap<>();
-  private volatile OStructuralDistributedMember                                           coordinator;
+  private Map<OSessionOperationId, CompletableFuture<OStructuralSubmitResponse>> operations = new HashMap<>();
+  private ODistributedChannel                                                    channel;
 
   @Override
   public synchronized Future<OStructuralSubmitResponse> send(OSessionOperationId operationId, OStructuralSubmitRequest request) {
-    while (coordinator == null) {
+    while (channel == null) {
       try {
         this.wait();
       } catch (InterruptedException e) {
@@ -23,7 +24,7 @@ public class OStructuralSubmitContextImpl implements OStructuralSubmitContext {
     }
     CompletableFuture<OStructuralSubmitResponse> value = new CompletableFuture<>();
     operations.put(operationId, value);
-    coordinator.submit(operationId, request);
+    channel.submit(operationId, request);
     return value;
   }
 
@@ -36,13 +37,8 @@ public class OStructuralSubmitContextImpl implements OStructuralSubmitContext {
   }
 
   @Override
-  public OStructuralDistributedMember getLeader() {
-    return coordinator;
-  }
-
-  @Override
-  public synchronized void setLeader(OStructuralDistributedMember coordinator) {
-    this.coordinator = coordinator;
+  public synchronized void setLeader(ODistributedChannel channel) {
+    this.channel = channel;
     notifyAll();
   }
 

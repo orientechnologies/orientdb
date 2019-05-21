@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.impl.structural;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
@@ -50,18 +51,17 @@ public class OStructuralDistributedContext {
     if (leader == null) {
       leader = new OStructuralLeader(Executors.newSingleThreadExecutor(), opLog, context);
     }
-    OStructuralLoopBackDistributeDistributedMember loopbackLeader = new OStructuralLoopBackDistributeDistributedMember(identity,
-        submitContext, leader, follower);
-    leader.connected(loopbackLeader);
-    this.getSubmitContext().setLeader(loopbackLeader);
+    OLoopBackDistributedChannel loopback = new OLoopBackDistributedChannel(identity, submitContext, leader, follower);
+    leader.connected(identity, loopback);
+    this.getSubmitContext().setLeader(loopback);
   }
 
-  public synchronized void setExternalLeader(OStructuralDistributedMember coordinator) {
+  public synchronized void setExternalLeader(ODistributedChannel leader) {
     if (this.leader != null) {
       this.leader.close();
       this.leader = null;
     }
-    this.getSubmitContext().setLeader(coordinator);
+    this.getSubmitContext().setLeader(leader);
   }
 
   public synchronized void close() {

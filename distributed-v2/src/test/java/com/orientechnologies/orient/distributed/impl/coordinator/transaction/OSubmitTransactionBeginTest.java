@@ -10,6 +10,7 @@ import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeR
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import org.junit.Test;
 
@@ -104,6 +105,11 @@ public class OSubmitTransactionBeginTest {
 
     @Override
     public void confirm(OLogId id) {
+
+    }
+
+    @Override
+    public void send(OFullConfiguration fullConfiguration) {
 
     }
   }
