@@ -271,7 +271,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
       } else if (badResult.getIdentity().getClusterId() == goodResult.getIdentity().getClusterId()
           && badResult.getIdentity().getClusterPosition() > goodResult.getIdentity().getClusterPosition()) {
-
+        // Do nothing
       } else {
         // ANY OTHER CASE JUST DELETE IT
         final OFixCreateRecordTask task = (OFixCreateRecordTask) dManager.getTaskFactoryManager()
