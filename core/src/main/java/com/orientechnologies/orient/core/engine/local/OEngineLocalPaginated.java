@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.engine.local;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.jna.ONative;
@@ -37,6 +38,8 @@ import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,15 +77,32 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
     super.startup();
 
+    final long diskCacheSize = calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024);
+    final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+
+    if (OGlobalConfiguration.DIRECT_MEMORY_PREALLOCATE.getValueAsBoolean()) {
+      final int pageCount = (int) (diskCacheSize / pageSize);
+      OLogManager.instance().info(this, "Allocation of " + pageCount + " pages.");
+
+      final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+      final List<OPointer> pages = new ArrayList<>(pageCount);
+
+      for (int i = 0; i < pageCount; i++) {
+        pages.add(bufferPool.acquireDirect(false));
+      }
+
+      for (final OPointer pointer : pages) {
+        bufferPool.release(pointer);
+      }
+
+      pages.clear();
+    }
+
     if (OGlobalConfiguration.USE_CHM_CACHE.getValueAsBoolean()) {
-      readCache = new AsyncReadCache(OByteBufferPool.instance(null),
-          calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+      readCache = new AsyncReadCache(OByteBufferPool.instance(null), diskCacheSize, pageSize,
           OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean());
     } else {
-      readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
-          OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger(),
+      readCache = new O2QCache(diskCacheSize, pageSize, true, OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger(),
           OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean(),
           OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL.getValueAsInteger());
     }
