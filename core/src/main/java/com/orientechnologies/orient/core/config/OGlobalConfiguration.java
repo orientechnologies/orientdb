@@ -88,7 +88,11 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       Boolean.class, true),
 
   DIRECT_MEMORY_POOL_LIMIT("memory.pool.limit",
-      "Limit of the pages cached inside of direct memory pool to avoid frequent reallocation of memory in OS", Integer.class, 256),
+      "Limit of the pages cached inside of direct memory pool to avoid frequent reallocation of memory in OS", Integer.class,
+      Integer.MAX_VALUE),
+
+  DIRECT_MEMORY_PREALLOCATE("memory.directMemory.preallocate",
+      "Preallocate amount of direct memory which is needed for the disk cache", Boolean.class, true),
 
   DIRECT_MEMORY_TRACK_MODE("memory.directMemory.trackMode",
       "Activates the direct memory pool [leak detector](Leak-Detector.md). This detector causes a large overhead and should be used for debugging "
