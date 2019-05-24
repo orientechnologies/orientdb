@@ -52,7 +52,7 @@ public abstract class OPropertyImpl implements OProperty {
   protected final   OClassImpl owner;
   protected         OType      linkedType;
   protected         OClass     linkedClass;
-  transient private String     linkedClassName;
+  private transient String     linkedClassName;
 
   protected String              description;
   protected boolean             mandatory;

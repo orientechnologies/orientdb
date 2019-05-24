@@ -12,7 +12,7 @@ import java.util.TreeMap;
  */
 public class ORule implements Serializable {
 
-  public static abstract class ResourceGeneric implements Serializable {
+  public abstract static class ResourceGeneric implements Serializable {
     private static final long                             serialVersionUID     = 1L;
     private static final TreeMap<String, ResourceGeneric> nameToGenericMap     = new TreeMap<String, ResourceGeneric>();
     private static final TreeMap<String, ResourceGeneric> legacyToGenericMap   = new TreeMap<String, ResourceGeneric>();

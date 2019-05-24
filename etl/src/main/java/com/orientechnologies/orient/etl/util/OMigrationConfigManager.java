@@ -35,8 +35,8 @@ import java.io.IOException;
 public class OMigrationConfigManager {
 
   // config info
-  private final static String configurationDirectoryName = "etl-config/";
-  private final static String configFileDefaultName      = "migration-config.json";           // path ORIENTDB_HOME/<db-name>/teleporter-config/migration-config.json
+  private static final String configurationDirectoryName = "etl-config/";
+  private static final String configFileDefaultName      = "migration-config.json";           // path ORIENTDB_HOME/<db-name>/teleporter-config/migration-config.json
 
 
   /**

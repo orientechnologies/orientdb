@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
-  protected final static String QUERY_GET = "select rid from index:`%s` where key = ?";
+  protected static final String QUERY_GET = "select rid from index:`%s` where key = ?";
 
   public OIndexRemoteOneValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {

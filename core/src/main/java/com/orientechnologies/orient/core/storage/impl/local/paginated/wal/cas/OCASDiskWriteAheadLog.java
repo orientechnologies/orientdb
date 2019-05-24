@@ -81,7 +81,7 @@ import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
-  private final static XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
+  private static final XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
   private static final int           XX_SEED       = 0x9747b28c;
 
   private static final int MASTER_RECORD_SIZE = 20;

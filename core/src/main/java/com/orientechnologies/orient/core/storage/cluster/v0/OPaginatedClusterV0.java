@@ -74,7 +74,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   private static final int BINARY_VERSION           = 0;
   private static final int DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
   private static final int LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
-  private final static int FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
+  private static final int FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
   private static final int PAGE_INDEX_OFFSET        = 16;
   private static final int RECORD_POSITION_MASK     = 0xFFFF;
   private static final int ONE_KB                   = 1024;

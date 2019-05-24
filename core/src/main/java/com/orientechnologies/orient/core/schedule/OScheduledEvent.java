@@ -45,7 +45,7 @@ import java.util.TimerTask;
  */
 
 public class OScheduledEvent extends ODocumentWrapper {
-  public final static String CLASS_NAME = "OSchedule";
+  public static final String CLASS_NAME = "OSchedule";
 
   public static final String PROP_NAME      = "name";
   public static final String PROP_RULE      = "rule";

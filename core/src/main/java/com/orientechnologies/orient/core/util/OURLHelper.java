@@ -12,7 +12,7 @@ import java.util.Optional;
  */
 public class OURLHelper {
 
-  static public OURLConnection parse(String url) {
+  public static OURLConnection parse(String url) {
     if (url.endsWith("/"))
       url = url.substring(0, url.length() - 1);
     url = url.replace('\\', '/');
@@ -48,7 +48,7 @@ public class OURLHelper {
     return new OURLConnection(url, type, baseUrl, dbName);
   }
 
-  static public OURLConnection parseNew(String url) {
+  public static OURLConnection parseNew(String url) {
     if ((url.startsWith("'") && url.endsWith("'")) || (url.startsWith("\"") && url.endsWith("\""))) {
       url = url.substring(1, url.length() - 1);
     }

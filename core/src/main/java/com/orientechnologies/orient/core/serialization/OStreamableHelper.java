@@ -31,15 +31,15 @@ import java.io.*;
  * 
  */
 public class OStreamableHelper {
-  final static byte NULL         = 0;
-  final static byte STREAMABLE   = 1;
-  final static byte SERIALIZABLE = 2;
+  static final byte NULL         = 0;
+  static final byte STREAMABLE   = 1;
+  static final byte SERIALIZABLE = 2;
 
-  final static byte STRING       = 10;
-  final static byte INTEGER      = 11;
-  final static byte SHORT        = 12;
-  final static byte LONG         = 13;
-  final static byte BOOLEAN      = 14;
+  static final byte STRING       = 10;
+  static final byte INTEGER      = 11;
+  static final byte SHORT        = 12;
+  static final byte LONG         = 13;
+  static final byte BOOLEAN      = 14;
 
   private static ClassLoader streamableClassLoader;
 

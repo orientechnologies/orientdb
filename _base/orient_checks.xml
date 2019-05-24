@@ -88,9 +88,7 @@
         <!--
         <module name="UpperEll"/>
         -->
-        <!--
         <module name="ModifierOrder"/>
-        -->
         <!--
         <module name="EmptyLineSeparator">
             <property name="allowNoEmptyLineBetweenFields" value="true"/>

@@ -30,8 +30,8 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public class ORecordTrackedIterator implements Iterator<OIdentifiable> {
-  final private ORecord     sourceRecord;
-  final private Iterator<?> underlying;
+  private final ORecord     sourceRecord;
+  private final Iterator<?> underlying;
 
   public ORecordTrackedIterator(final ORecord iSourceRecord, final Iterator<?> iIterator) {
     this.sourceRecord = iSourceRecord;

@@ -38,7 +38,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   protected final ORecord                                               sourceRecord;
   protected Map<OIdentifiable, Object>                                  map             = new HashMap<OIdentifiable, Object>();
   private STATUS                                                        status          = STATUS.NOT_LOADED;
-  protected final static Object                                         ENTRY_REMOVAL   = new Object();
+  protected static final Object                                         ENTRY_REMOVAL   = new Object();
   private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
 
   public ORecordTrackedSet(final ORecord iSourceRecord) {

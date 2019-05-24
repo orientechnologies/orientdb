@@ -9,8 +9,8 @@ import java.io.IOException;
 
 public class OIndexKeyOperation {
   // Key Change Operation
-  public final static byte PUT    = 1;
-  public final static byte REMOVE = 2;
+  public static final byte PUT    = 1;
+  public static final byte REMOVE = 2;
 
   private byte type;
   private ORID value;

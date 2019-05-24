@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
  */
 @SuppressWarnings("serial")
 public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
-  final protected ORecord                            sourceRecord;
+  protected final ORecord                            sourceRecord;
   private STATUS                                     status          = STATUS.NOT_LOADED;
   private List<OMultiValueChangeListener<Object, T>> changeListeners = null;
   protected Class<?>                                 genericClass;

@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine {
-  private final static int    BINARY_VERSION             = 2;
+  private static final int    BINARY_VERSION             = 2;
   public static final  String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
   public static final  String M_CONTAINER_EXTENSION      = ".mbt";

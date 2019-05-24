@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * Created by luigidellaquila on 01/07/15.
  */
 public abstract class OIdentity extends ODocumentWrapper {
-  public final static String CLASS_NAME = "OIdentity";
+  public static final String CLASS_NAME = "OIdentity";
 
   public OIdentity() {
   }

@@ -13,8 +13,8 @@ import java.util.List;
 public class OIndexKeyChange {
 
   // Key Type
-  private final static int SIMPLE    = 1;
-  private final static int COMPOSITE = 2;
+  private static final int SIMPLE    = 1;
+  private static final int COMPOSITE = 2;
 
   private Object                   key;
   private List<OIndexKeyOperation> operations;

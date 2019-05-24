@@ -86,8 +86,8 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
 
   private static final int MAX_PATH_LENGTH = OGlobalConfiguration.SBTREE_MAX_DEPTH.getValueAsInteger();
 
-  private final static int  ENTRY_POINT_INDEX = 0;
-  private final static long ROOT_INDEX        = 1;
+  private static final int  ENTRY_POINT_INDEX = 0;
+  private static final long ROOT_INDEX        = 1;
 
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
   private final String                nullFileExtension;

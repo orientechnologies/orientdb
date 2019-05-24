@@ -53,8 +53,8 @@ public final class PersistenceXmlUtil {
    */
   public static final String            PERSISTENCE_NS_URI        = "http://java.sun.com/xml/ns/persistence";
 
-  private final static SchemaFactory    schemaFactory             = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
-  private final static SAXParserFactory parserFactory             = SAXParserFactory.newInstance();
+  private static final SchemaFactory    schemaFactory             = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
+  private static final SAXParserFactory parserFactory             = SAXParserFactory.newInstance();
   static {
     parserFactory.setNamespaceAware(true);
   }

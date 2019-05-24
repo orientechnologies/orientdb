@@ -85,7 +85,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
   private static final int MAX_PATH_LENGTH = OGlobalConfiguration.SBTREE_MAX_DEPTH.getValueAsInteger();
 
-  private final static long                  ROOT_INDEX       = 0;
+  private static final long                  ROOT_INDEX       = 0;
   private final        Comparator<? super K> comparator       = ODefaultComparator.INSTANCE;
   private final        String                nullFileExtension;
   private              long                  fileId;

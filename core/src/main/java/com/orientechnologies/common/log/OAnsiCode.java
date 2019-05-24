@@ -60,7 +60,7 @@ public enum OAnsiCode {
     return code;
   }
 
-  private final static boolean supportsColors;
+  private static final boolean supportsColors;
 
   public static boolean isSupportsColors() {
     return supportsColors;

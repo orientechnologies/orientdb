@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @SuppressWarnings({ "serial" })
 public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecordLazyMultiValue {
-  final private byte                                      recordType;
+  private final byte                                      recordType;
   private ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE status              = MULTIVALUE_CONTENT_TYPE.EMPTY;
   protected boolean                                       marshalling         = false;
   private boolean                                         autoConvertToRecord = true;

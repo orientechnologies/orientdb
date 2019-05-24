@@ -29,7 +29,7 @@ public class OLRUCache<K, V> extends LinkedHashMap<K, V> {
 
   private static final long serialVersionUID = 0;
 
-  final private int         cacheSize;
+  private final int         cacheSize;
 
   public OLRUCache(final int iCacheSize) {
     super(16, (float) 0.75, true);

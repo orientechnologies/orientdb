@@ -709,7 +709,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     }
   }
 
-  private final static class SegmentAppenderFactory implements ThreadFactory {
+  private static final class SegmentAppenderFactory implements ThreadFactory {
     SegmentAppenderFactory() {
     }
 

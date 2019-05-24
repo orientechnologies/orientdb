@@ -31,13 +31,13 @@ import java.util.Properties;
 final class OJPAProperties extends Properties {
 	private static final long		serialVersionUID				= -8158054712863843518L;
 
-	public final static String	URL											= "javax.persistence.jdbc.url";
-	public final static String	USER										= "javax.persistence.jdbc.user";
-	public final static String	PASSWORD								= "javax.persistence.jdbc.password";
+	public static final String	URL											= "javax.persistence.jdbc.url";
+	public static final String	USER										= "javax.persistence.jdbc.user";
+	public static final String	PASSWORD								= "javax.persistence.jdbc.password";
 	/**
 	 * OrientDB specific
 	 */
-	public final static String	ENTITY_CLASSES_PACKAGE	= "com.orientdb.entityClasses";
+	public static final String	ENTITY_CLASSES_PACKAGE	= "com.orientdb.entityClasses";
 
 	public OJPAProperties() {
 	}

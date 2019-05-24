@@ -2036,7 +2036,7 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Snapshot of all performance data of current container.
    */
-  public final static class PerformanceSnapshot {
+  public static final class PerformanceSnapshot {
     public final PerformanceCountersHolder performanceCountersHolder;
     public final WritCacheCountersHolder   writCacheCountersHolder;
     public final StorageCountersHolder     storageCountersHolder;

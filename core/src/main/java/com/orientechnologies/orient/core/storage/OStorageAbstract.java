@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OStorageAbstract implements OStorage, OSharedContainer {
-  public final static ThreadGroup storageThreadGroup;
+  public static final ThreadGroup storageThreadGroup;
 
   static {
     ThreadGroup parentThreadGroup = Thread.currentThread().getThreadGroup();

@@ -54,7 +54,7 @@ import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
 import static com.orientechnologies.common.io.OIOUtils.writeByteBuffers;
 
 public final class OFileClassic implements OClosableItem {
-  public final static  String NAME            = "classic";
+  public static final  String NAME            = "classic";
   private static final int    CURRENT_VERSION = 2;
 
   public static final int HEADER_SIZE    = 1024;

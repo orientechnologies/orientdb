@@ -44,16 +44,16 @@ import java.util.Set;
 public class ORole extends OIdentity implements OSecurityRole {
   public static final String                ADMIN              = "admin";
   public static final String                CLASS_NAME         = "ORole";
-  public final static int                   PERMISSION_NONE    = 0;
-  public final static int                   PERMISSION_CREATE  = registerPermissionBit(0, "Create");
-  public final static int                   PERMISSION_READ    = registerPermissionBit(1, "Read");
-  public final static int                   PERMISSION_UPDATE  = registerPermissionBit(2, "Update");
-  public final static int                   PERMISSION_DELETE  = registerPermissionBit(3, "Delete");
-  public final static int                   PERMISSION_EXECUTE = registerPermissionBit(4, "Execute");
-  public final static int                   PERMISSION_ALL     = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
+  public static final int                   PERMISSION_NONE    = 0;
+  public static final int                   PERMISSION_CREATE  = registerPermissionBit(0, "Create");
+  public static final int                   PERMISSION_READ    = registerPermissionBit(1, "Read");
+  public static final int                   PERMISSION_UPDATE  = registerPermissionBit(2, "Update");
+  public static final int                   PERMISSION_DELETE  = registerPermissionBit(3, "Delete");
+  public static final int                   PERMISSION_EXECUTE = registerPermissionBit(4, "Execute");
+  public static final int                   PERMISSION_ALL     = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
                                                                   + PERMISSION_DELETE + PERMISSION_EXECUTE;
-  protected final static byte               STREAM_DENY        = 0;
-  protected final static byte               STREAM_ALLOW       = 1;
+  protected static final byte               STREAM_DENY        = 0;
+  protected static final byte               STREAM_ALLOW       = 1;
   private static final long                 serialVersionUID   = 1L;
   // CRUD OPERATIONS
   private static Map<Integer, String>       PERMISSION_BIT_NAMES;

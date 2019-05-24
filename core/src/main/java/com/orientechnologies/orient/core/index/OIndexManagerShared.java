@@ -61,7 +61,7 @@ import java.util.Set;
  * @author Artem Orobets added composite index managemement
  */
 public class OIndexManagerShared extends OIndexManagerAbstract {
-  private volatile transient Thread   recreateIndexesThread = null;
+  private transient volatile Thread   recreateIndexesThread = null;
   private volatile           boolean  rebuildCompleted      = false;
   private final              OStorage storage;
 

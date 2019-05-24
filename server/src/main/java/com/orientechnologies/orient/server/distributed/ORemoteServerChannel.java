@@ -70,7 +70,7 @@ public class ORemoteServerChannel {
   private              Date                  createdOn     = new Date();
 
   private volatile     int             totalConsecutiveErrors = 0;
-  private final static int             MAX_CONSECUTIVE_ERRORS = 10;
+  private static final int             MAX_CONSECUTIVE_ERRORS = 10;
   private              ExecutorService executor;
 
   public ORemoteServerChannel(final ORemoteServerAvailabilityCheck check, String localNodeName, final String iServer,

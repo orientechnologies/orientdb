@@ -33,7 +33,7 @@ import java.util.*;
  * 
  */
 public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
-  protected final static String       DEFAULT_EXT               = ".json";
+  protected static final String       DEFAULT_EXT               = ".json";
   protected ODatabaseDocumentInternal database;
   protected String                    fileName;
   protected Set<String>               includeClusters;

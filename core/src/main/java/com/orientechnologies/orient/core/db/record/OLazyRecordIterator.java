@@ -37,10 +37,10 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  */
 public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OResettable {
-  final private ORecord                           sourceRecord;
-  final private Iterable<? extends OIdentifiable> source;
+  private final ORecord                           sourceRecord;
+  private final Iterable<? extends OIdentifiable> source;
   private Iterator<? extends OIdentifiable>       underlying;
-  final private boolean                           autoConvert2Record;
+  private final boolean                           autoConvert2Record;
 
   public OLazyRecordIterator(final Iterator<? extends OIdentifiable> iIterator, final boolean iConvertToRecord) {
     this.sourceRecord = null;

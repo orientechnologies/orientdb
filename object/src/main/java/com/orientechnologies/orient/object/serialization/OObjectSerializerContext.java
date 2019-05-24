@@ -34,7 +34,7 @@ import com.orientechnologies.orient.object.entity.OObjectEntityClassHandler;
 // the parameter iFieldValue (which is of type Object) to the defined type LOCAL_TYPE.
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class OObjectSerializerContext implements OObjectSerializer<Object, Object> {
-  final private Map<Class<?>, OObjectSerializer> customSerializers = new LinkedHashMap<Class<?>, OObjectSerializer>();
+  private final Map<Class<?>, OObjectSerializer> customSerializers = new LinkedHashMap<Class<?>, OObjectSerializer>();
 
   public void bind(final OObjectSerializer serializer, ODatabase database) {
     final Type[] actualTypes = OReflectionHelper.getGenericTypes(serializer.getClass());
