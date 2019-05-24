@@ -102,13 +102,6 @@ public class OChannelBinaryProtocol {
   public static final byte SUBSCRIBE_PUSH                 = 100;
   public static final byte UNSUBSCRIBE_PUSH               = 101;
   public static final byte EXPERIMENTAL                   = 102;
-  public static final byte DISTRIBUTED_SUBMIT_REQUEST     = 103;
-  public static final byte DISTRIBUTED_SUBMIT_RESPONSE    = 104;
-  public static final byte DISTRIBUTED_OPERATION_REQUEST  = 105;
-  public static final byte DISTRIBUTED_OPERATION_RESPONSE = 106;
-  public static final byte DISTRIBUTED_PROPAGATE_REQUEST  = 107;
-  public static final byte DISTRIBUTED_ACK_RESPONSE       = 108;
-  public static final byte DISTRIBUTED_CONFIRM_REQUEST    = 109;
 
   // REMOTE SB-TREE COLLECTIONS
   public static final byte REQUEST_CREATE_SBTREE_BONSAI            = 110;
@@ -117,15 +110,12 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR = 113;
   public static final byte REQUEST_RIDBAG_GET_SIZE                 = 114;
 
-  public static final byte DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST     = 115;
-  public static final byte DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE    = 116;
-  public static final byte DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST  = 117;
-  public static final byte DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE = 118;
 
   // TASK
-  public static final byte DISTRIBUTED_REQUEST  = 120;
-  public static final byte DISTRIBUTED_RESPONSE = 121;
-  public static final byte DISTRIBUTED_CONNECT  = 122;
+  public static final byte DISTRIBUTED_REQUEST             = 120;
+  public static final byte DISTRIBUTED_RESPONSE            = 121;
+  public static final byte DISTRIBUTED_CONNECT             = 122;
+  public static final byte COORDINATED_DISTRIBUTED_MESSAGE = 123;
 
   // INCOMING
   public static final byte RESPONSE_STATUS_OK    = 0;

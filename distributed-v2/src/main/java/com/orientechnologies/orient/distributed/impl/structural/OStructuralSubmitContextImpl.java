@@ -42,8 +42,4 @@ public class OStructuralSubmitContextImpl implements OStructuralSubmitContext {
     notifyAll();
   }
 
-  @Override
-  public void receive(OSessionOperationId operationId) {
-    receive(operationId, null);
-  }
 }

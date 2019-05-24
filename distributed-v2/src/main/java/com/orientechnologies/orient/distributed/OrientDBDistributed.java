@@ -89,13 +89,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public void checkPort() {
-
     // Use the inbound port in case it's not provided
     if (this.nodeConfiguration.getTcpPort() == null) {
       OServerNetworkListener protocol = server.getListenerByProtocol(ONetworkProtocolBinary.class);
       this.nodeConfiguration.setTcpPort(protocol.getInboundAddr().getPort());
     }
-
   }
 
   private ONodeInternalConfiguration generateInternalConfiguration() {
@@ -498,7 +496,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     //TODO:INIT CONFIG
     super.create(database, null, null, ODatabaseType.valueOf(type), null);
     getStructuralConfiguration().getSharedConfiguration().addDatabase(database);
-    getStructuralDistributedContext().getSubmitContext().receive(operationId);
     this.databasesStatus.put(database, ODistributedStatus.ONLINE);
     checkCoordinator(database);
     //TODO: double check this notify, it may unblock as well checkReadyForHandleRequests that is not what is expected
@@ -539,10 +536,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     } catch (InterruptedException e) {
       throw OException.wrapException(new OInterruptedException("Interrupted while waiting to start"), e);
     }
-  }
-
-  public OCoordinateMessagesFactory getCoordinateMessagesFactory() {
-    return networkManager.getCoordinateMessagesFactory();
   }
 
   @Override

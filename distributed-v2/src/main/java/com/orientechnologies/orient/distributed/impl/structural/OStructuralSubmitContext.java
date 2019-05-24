@@ -13,5 +13,4 @@ public interface OStructuralSubmitContext {
 
   void setLeader(ODistributedChannel channel);
 
-  void receive(OSessionOperationId operationId);
 }

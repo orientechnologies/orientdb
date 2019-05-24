@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.impl.structural;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
+import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
@@ -28,7 +29,7 @@ public class OStructuralDistributedContext {
 
   private void initOpLog() {
     this.opLog = OPersistentOperationalLogV1
-        .newInstance("OSystem", context, (x) -> context.getCoordinateMessagesFactory().createStructuralOperationRequest(x));
+        .newInstance("OSystem", context, (x) -> OCoordinateMessagesFactory.createRaftOperation(x));
   }
 
   public OStructuralSubmitContext getSubmitContext() {

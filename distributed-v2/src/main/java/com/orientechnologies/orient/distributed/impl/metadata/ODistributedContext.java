@@ -37,9 +37,8 @@ public class ODistributedContext {
   }
 
   private void initOpLog() {
-    this.opLog = OPersistentOperationalLogV1.newInstance(databaseName, context,
-        (x) -> ((OrientDBDistributed) context).getCoordinateMessagesFactory().createOperationRequest(x));
-//    this.opLog = new OIncrementOperationalLog();
+    this.opLog = OPersistentOperationalLogV1
+        .newInstance(databaseName, context, (x) -> OCoordinateMessagesFactory.createOperationRequest(x));
   }
 
   public ODistributedExecutor getExecutor() {

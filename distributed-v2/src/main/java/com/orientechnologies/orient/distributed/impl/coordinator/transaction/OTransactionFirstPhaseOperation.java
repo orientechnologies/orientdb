@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.network.OOperationRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.Type;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OExceptionResult;

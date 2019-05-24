@@ -153,17 +153,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   private boolean isCoordinated(int requestType) {
-    return requestType == OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_OPERATION_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_OPERATION_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_ACK_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_CONFIRM_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_PROPAGATE_REQUEST;
+    return requestType == OChannelBinaryProtocol.COORDINATED_DISTRIBUTED_MESSAGE;
   }
 
   @Override

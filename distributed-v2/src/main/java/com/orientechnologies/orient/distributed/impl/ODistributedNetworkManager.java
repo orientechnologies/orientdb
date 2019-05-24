@@ -9,7 +9,9 @@ import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
-import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedExecutable;
+import com.orientechnologies.orient.distributed.impl.network.binary.OBinaryDistributedMessage;
+import com.orientechnologies.orient.distributed.impl.network.binary.ODistributedChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
@@ -20,9 +22,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE;
-
 public class ODistributedNetworkManager implements ODiscoveryListener {
 
   private final ConcurrentMap<ONodeIdentity, ODistributedChannelBinaryProtocol> remoteServers = new ConcurrentHashMap<>();
@@ -31,7 +30,6 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   private final ONodeInternalConfiguration                                      internalConfiguration;
   private       OUDPMulticastNodeManager                                        discoveryManager;
   private       OCoordinatedExecutorMessageHandler                              requestHandler;
-  private       OCoordinateMessagesFactory                                      coordinateMessagesFactory;
 
   public ODistributedNetworkManager(OrientDBDistributed orientDB, ONodeConfiguration config,
       ONodeInternalConfiguration internalConfiguration) {
@@ -39,9 +37,6 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     this.config = config;
     this.internalConfiguration = internalConfiguration;
     this.requestHandler = new OCoordinatedExecutorMessageHandler(orientDB);
-
-    //This now si simple but should be replaced by a factory depending to the protocol version
-    coordinateMessagesFactory = new OCoordinateMessagesFactory();
   }
 
   public ODistributedChannelBinaryProtocol getRemoteServer(final ONodeIdentity rNodeName) {
@@ -139,7 +134,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
 
   public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
       throws IOException {
-    OBinaryRequest<OBinaryResponse> request = newDistributedRequest(requestType);
+    OBinaryRequest<OBinaryResponse> request = new OBinaryDistributedMessage();
     try {
       request.read(channel, 0, null);
     } catch (IOException e) {
@@ -150,35 +145,4 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     executable.executeDistributed(requestHandler);
   }
 
-  private OBinaryRequest<OBinaryResponse> newDistributedRequest(int requestType) {
-    switch (requestType) {
-    case DISTRIBUTED_SUBMIT_REQUEST:
-      return new ONetworkSubmitRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_SUBMIT_RESPONSE:
-      return new ONetworkSubmitResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_OPERATION_REQUEST:
-      return new OOperationRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_OPERATION_RESPONSE:
-      return new OOperationResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST:
-      return new ONetworkStructuralSubmitRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE:
-      return new ONetworkStructuralSubmitResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST:
-      return new OStructuralOperationRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE:
-      return new OStructuralOperationResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_PROPAGATE_REQUEST:
-      return new ONetworkPropagate(coordinateMessagesFactory);
-    case DISTRIBUTED_ACK_RESPONSE:
-      return new ONetworkAck();
-    case DISTRIBUTED_CONFIRM_REQUEST:
-      return new ONetworkConfirm();
-    }
-    return null;
-  }
-
-  public OCoordinateMessagesFactory getCoordinateMessagesFactory() {
-    return coordinateMessagesFactory;
-  }
 }
