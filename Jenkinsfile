@@ -34,7 +34,7 @@ node {
                          userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb']]])
 
 
-                withMaven(globalMavenSettingsFilePath: 'settings.xml') {
+                withMaven(mavenLocalRepo: '.repository', globalMavenSettingsFilePath: 'settings.xml') {
                     sh "cd orientdb-studio && mvn clean install -DskipTests"
                     sh "cd orientdb && mvn clean deploy"
 
