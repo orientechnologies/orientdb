@@ -1,38 +1,59 @@
-#!groovy
-node("master") {
-    ansiColor('xterm') {
-        def containerName = env.JOB_NAME.replaceAll(/\//, "_") +
-                "_build_${currentBuild.number}"
+@Library(['piper-lib', 'piper-lib-os']) _
+  
+node {
 
-        def appNameLabel = "docker_ci";
-        def taskLabel = env.JOB_NAME.replaceAll(/\//, "_")
 
-        def mvnHome = tool 'mvn'
-        def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
+    stage('build')   {
+        sh "rm -rf *"
+        sh "cp /var/jenkins_home/uploadedContent/settings.xml ."
 
-        stage('Source checkout') {
+        executeDocker(
+                dockerImage:'ldellaquila/maven-gradle-node-zulu-openjdk8:1.0.0',
+                dockerWorkspace: '/orientdb-security-${env.BRANCH_NAME}'
+        ) {
 
-            checkout scm
-        }
+            try{
+                sh "rm -rf orientdb"
+                sh "rm -rf orientdb-studio"
+                sh "rm -rf orientdb-security"
 
-        stage('Run tests on Java8') {
-            lock("label": "memory", "quantity": 4) {
-                docker.image("${mvnJdk8Image}").inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
-                        "--name ${containerName} --memory=4g ${env.VOLUMES}") {
-                    try {
+                checkout(
+                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
+                         doGenerateSubmoduleConfigurations: false,
+                         extensions: [],
+                         submoduleCfg: [],
+                         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'orientdb']],
+                         userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb']]])
 
-                        sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install -Dsurefire.useFile=false"
-                        slackSend(color: '#00FF00', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+                checkout(
+                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
+                         doGenerateSubmoduleConfigurations: false,
+                         extensions: [],
+                         submoduleCfg: [],
+                         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'orientdb-studio']],
+                         userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb-studio']]])
 
-                    } catch (e) {
-                        currentBuild.result = 'FAILURE'
-                        slackSend(channel: '#jenkins-failures', color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${e}")
-                        throw e;
-                    } finally {
-                        junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
-                    }
+                checkout(
+                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
+                         doGenerateSubmoduleConfigurations: false,
+                         extensions: [],
+                         submoduleCfg: [],
+                         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'orientdb-security']],
+                         userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb-securty']]])
+
+
+                withMaven(mavenLocalRepo: '${HOME}/.m2/repository', globalMavenSettingsFilePath: 'settings.xml') {
+                    sh "cd orientdb-studio && mvn clean install -DskipTests"
+                    sh "cd orientdb && mvn clean install -DskipTests"
+                    sh "cd orientdb-security && mvn clean install"
                 }
+            }catch(e){
+                slackSend(color: '#FF0000', channel: '#jenkins-failures', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${e}")
+                throw e
             }
+            slackSend(color: '#00FF00', channel: '#jenkins', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
     }
+
 }
+
