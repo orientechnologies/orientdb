@@ -13,7 +13,25 @@ node {
         ) {
 
             try{
+                sh "rm -rf orientdb"
+                sh "rm -rf orientdb-studio"
                 sh "rm -rf orientdb-gremlin"
+
+                checkout(
+                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
+                         doGenerateSubmoduleConfigurations: false,
+                         extensions: [],
+                         submoduleCfg: [],
+                         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'orientdb']],
+                         userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb']]])
+
+                checkout(
+                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
+                         doGenerateSubmoduleConfigurations: false,
+                         extensions: [],
+                         submoduleCfg: [],
+                         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'orientdb-studio']],
+                         userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb-studio']]])
 
                 checkout(
                         [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
@@ -24,8 +42,10 @@ node {
                          userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb-gremlin']]])
 
 
-                withMaven(globalMavenSettingsFilePath: 'settings.xml') {
-                    sh "cd orientdb-gremlin && mvn clean install -DskipTests"
+                withMaven(mavenLocalRepo: '${HOME}/.m2/repository', globalMavenSettingsFilePath: 'settings.xml') {
+                    sh "cd orientdb-studio && mvn clean install -DskipTests"
+                    sh "cd orientdb && mvn clean install -DskipTests"
+                    sh "cd orientdb-gremlin && mvn clean deploy"
                 }
             }catch(e){
                 slackSend(color: '#FF0000', channel: '#jenkins-failures', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${e}")
