@@ -39,7 +39,7 @@ node {
                          extensions: [],
                          submoduleCfg: [],
                          extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'orientdb-security']],
-                         userRemoteConfigs: [[url: 'https://github.com/orientechnologies/orientdb-securty']]])
+                         userRemoteConfigs: [[credentialsId: 'f85695bf-fab8-4c9a-9a73-7fdc7524eb17', url: 'https://github.com/orientechnologies/orientdb-securty']]])
 
 
                 withMaven(mavenLocalRepo: '${HOME}/.m2/repository', globalMavenSettingsFilePath: 'settings.xml') {
