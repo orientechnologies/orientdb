@@ -80,7 +80,7 @@ public class OrientGraphSONV3 extends OrientGraphSON {
     }
   }
 
-  final static class ORecordIdDeserializer extends AbstractObjectDeserializer<Object> {
+  static final class ORecordIdDeserializer extends AbstractObjectDeserializer<Object> {
 
     public ORecordIdDeserializer() {
       super(Object.class);

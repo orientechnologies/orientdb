@@ -1,4 +1,4 @@
-package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect;
+package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideeffect;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.common.log.OLogManager;

@@ -1,7 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization;
 
 import org.apache.tinkerpop.gremlin.orientdb.traversal.step.map.OrientClassCountStep;
-import org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect.OrientGraphStep;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideeffect.OrientGraphStep;
 import org.apache.tinkerpop.gremlin.process.traversal.*;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.CountGlobalStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyStep;

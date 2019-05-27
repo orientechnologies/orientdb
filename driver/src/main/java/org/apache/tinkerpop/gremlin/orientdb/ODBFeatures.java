@@ -39,7 +39,7 @@ public class ODBFeatures {
         }
     }
 
-    public static abstract class OrientElementFeatures implements Features.ElementFeatures {
+    public abstract static class OrientElementFeatures implements Features.ElementFeatures {
 
         @Override
         public boolean supportsAnyIds() {

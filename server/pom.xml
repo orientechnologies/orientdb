@@ -17,6 +17,7 @@
     <properties>
         <tinkerpop.version>3.4.0</tinkerpop.version>
         <slf4j.version>1.7.21</slf4j.version>
+        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
     <dependencies>
         <dependency>

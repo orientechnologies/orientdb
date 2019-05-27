@@ -77,7 +77,7 @@ public class OrientGraphQueryBuilder {
 
     if (params.size() > 0) {
       whereBuilder.append(" WHERE ");
-      boolean first[] = { true };
+      boolean[] first = { true };
 
       AtomicInteger paramNum = new AtomicInteger();
       params.entrySet().forEach((e) -> {
