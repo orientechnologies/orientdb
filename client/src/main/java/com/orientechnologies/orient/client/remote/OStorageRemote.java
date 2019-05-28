@@ -1236,11 +1236,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @SuppressWarnings("unchecked")
   public void updateDistributedNodes(List<String> hosts) {
-    if (!clientConfiguration.getValueAsBoolean(CLIENT_CONNECTION_FETCH_HOST_LIST)) {
-      return;
-    }
     // TEMPORARY FIX: DISTRIBUTED MODE DOESN'T SUPPORT TREE BONSAI, KEEP ALWAYS EMBEDDED RIDS
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
+
+    if (!clientConfiguration.getValueAsBoolean(CLIENT_CONNECTION_FETCH_HOST_LIST)) {
+      List<String> definedHosts = parseAddressesFromUrl(url);
+      synchronized (serverURLs) {
+        for (String host : hosts) {
+          if (definedHosts.contains(host)) {
+            addHost(host);
+          }
+        }
+      }
+      return;
+    }
     // UPDATE IT
     synchronized (serverURLs) {
       for (String host : hosts) {
@@ -1605,7 +1614,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
     String lastHost = null;
     List<String> hosts = parseAddressesFromUrl(url);
-    for (String host: hosts) {
+    for (String host : hosts) {
       lastHost = host;
       addHost(host);
     }
