@@ -27,12 +27,12 @@ import java.util.logging.Level;
  */
 public class LevelHelper {
 
-    public final static List<Level> levels = Collections.unmodifiableList(Arrays.asList(Level.OFF, Level.SEVERE, Level.WARNING, Level.INFO, Level.CONFIG,
+    public static final List<Level> levels = Collections.unmodifiableList(Arrays.asList(Level.OFF, Level.SEVERE, Level.WARNING, Level.INFO, Level.CONFIG,
             Level.FINE, Level.FINER, Level.FINEST, Level.ALL));
 
-    public final static Map<String, Level> levelsByName;
-    public final static Map<Integer, Level> levelsByValue;
-    private final static Map<Level, Severity> julLevelToSyslogSeverity;
+    public static final Map<String, Level> levelsByName;
+    public static final Map<Integer, Level> levelsByValue;
+    private static final Map<Level, Severity> julLevelToSyslogSeverity;
 
     static {
         Map<String, Level> levelsByNameMap = new HashMap<String, Level>();

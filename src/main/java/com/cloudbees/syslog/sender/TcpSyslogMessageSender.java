@@ -43,8 +43,8 @@ import java.util.logging.Level;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class TcpSyslogMessageSender extends AbstractSyslogMessageSender {
-    public final static int SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE = 500;
-    public final static int SETTING_MAX_RETRY = 2;
+    public static final int SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE = 500;
+    public static final int SETTING_MAX_RETRY = 2;
 
     /**
      * {@link java.net.InetAddress InetAddress} of the remote Syslog Server.

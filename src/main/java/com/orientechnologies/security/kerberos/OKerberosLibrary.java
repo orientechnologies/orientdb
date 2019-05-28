@@ -84,7 +84,8 @@ public class OKerberosLibrary
 					
 						GSSCredential serverCredsX = managerX.createCredential(null, GSSCredential.DEFAULT_LIFETIME, (Oid)null, GSSCredential.INITIATE_ONLY);
 						
-						OLogManager.instance().info(null, "OKerberosLibrary.getSPNegoSource() Kerberos credentialX name = " + serverCredsX.getName().toString());						
+						OLogManager.instance().info(null, "OKerberosLibrary.getSPNegoSource() Kerberos credentialX name = "
+						+ serverCredsX.getName().toString());
 					}
 					catch(Exception exX)
 					{

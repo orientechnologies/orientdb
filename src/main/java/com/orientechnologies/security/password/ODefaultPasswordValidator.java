@@ -33,13 +33,13 @@ import java.util.regex.Pattern;
  * 
  */
 public class ODefaultPasswordValidator implements OPasswordValidator {
-  private boolean _Enabled    = true;
-  private boolean _IgnoreUUID = true;
-  private int     _MinLength  = 0;
-  private Pattern _HasNumber;
-  private Pattern _HasSpecial;
-  private Pattern _HasUppercase;
-  private Pattern _IsUUID     = Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+  private boolean enabled = true;
+  private boolean ignoreUUID = true;
+  private int minLength = 0;
+  private Pattern hasNumber;
+  private Pattern hasSpecial;
+  private Pattern hasUppercase;
+  private Pattern isUUID = Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
 
   // OSecurityComponent
   public void active() {
@@ -50,27 +50,27 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
   public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
     try {
       if (jsonConfig.containsField("enabled")) {
-        _Enabled = jsonConfig.field("enabled");
+        enabled = jsonConfig.field("enabled");
       }
 
       if (jsonConfig.containsField("ignoreUUID")) {
-        _IgnoreUUID = jsonConfig.field("ignoreUUID");
+        ignoreUUID = jsonConfig.field("ignoreUUID");
       }
 
       if (jsonConfig.containsField("minimumLength")) {
-        _MinLength = jsonConfig.field("minimumLength");
+        minLength = jsonConfig.field("minimumLength");
       }
 
       if (jsonConfig.containsField("numberRegEx")) {
-        _HasNumber = Pattern.compile((String) jsonConfig.field("numberRegEx"));
+        hasNumber = Pattern.compile((String) jsonConfig.field("numberRegEx"));
       }
 
       if (jsonConfig.containsField("specialRegEx")) {
-        _HasSpecial = Pattern.compile((String) jsonConfig.field("specialRegEx"));
+        hasSpecial = Pattern.compile((String) jsonConfig.field("specialRegEx"));
       }
 
       if (jsonConfig.containsField("uppercaseRegEx")) {
-        _HasUppercase = Pattern.compile((String) jsonConfig.field("uppercaseRegEx"));
+        hasUppercase = Pattern.compile((String) jsonConfig.field("uppercaseRegEx"));
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "ODefaultPasswordValidator.config()", ex);
@@ -83,37 +83,37 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
 
   // OSecurityComponent
   public boolean isEnabled() {
-    return _Enabled;
+    return enabled;
   }
 
   // OPasswordValidator
   public void validatePassword(final String password) throws OInvalidPasswordException {
-    if (!_Enabled)
+    if (!enabled)
       return;
 
     if (password != null && !password.isEmpty()) {
-      if (_IgnoreUUID && isUUID(password))
+      if (ignoreUUID && isUUID(password))
         return;
 
-      if (password.length() < _MinLength) {
+      if (password.length() < minLength) {
         OLogManager.instance().debug(this, "ODefaultPasswordValidator.validatePassword() Password length (%d) is too short",
             password.length());
-        throw new OInvalidPasswordException("Password length is too short.  Minimum password length is " + _MinLength);
+        throw new OInvalidPasswordException("Password length is too short.  Minimum password length is " + minLength);
       }
 
-      if (_HasNumber != null && !isValid(_HasNumber, password)) {
+      if (hasNumber != null && !isValid(hasNumber, password)) {
         OLogManager.instance().debug(this,
             "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of numbers");
         throw new OInvalidPasswordException("Password requires a minimum count of numbers");
       }
 
-      if (_HasSpecial != null && !isValid(_HasSpecial, password)) {
+      if (hasSpecial != null && !isValid(hasSpecial, password)) {
         OLogManager.instance().debug(this,
             "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of special characters");
         throw new OInvalidPasswordException("Password requires a minimum count of special characters");
       }
 
-      if (_HasUppercase != null && !isValid(_HasUppercase, password)) {
+      if (hasUppercase != null && !isValid(hasUppercase, password)) {
         OLogManager.instance().debug(this,
             "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of uppercase characters");
         throw new OInvalidPasswordException("Password requires a minimum count of uppercase characters");
@@ -129,6 +129,6 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
   }
 
   private boolean isUUID(final String password) {
-    return _IsUUID.matcher(password).find();
+    return isUUID.matcher(password).find();
   }
 }

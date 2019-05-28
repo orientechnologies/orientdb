@@ -24,9 +24,13 @@ import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
 
 public abstract class OAuditingConfig {
-  public boolean isEnabled(OAuditingOperation operation) { return false; }
+  public boolean isEnabled(OAuditingOperation operation) {
+    return false;
+  }
     
-  public String formatMessage(final OAuditingOperation op, final String subject) { return subject; }
+  public String formatMessage(final OAuditingOperation op, final String subject) {
+    return subject;
+  }
 
   // Usage
   // message: The node ${node} has joined

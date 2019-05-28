@@ -31,13 +31,13 @@ import javax.security.auth.login.Configuration;
  */
 public class OKrb5LoginModuleConfig extends Configuration
 {
-	final String LoginModule = "com.sun.security.auth.module.Krb5LoginModule";
+	final String loginModule = "com.sun.security.auth.module.Krb5LoginModule";
 		
-	private final AppConfigurationEntry[] _appConfigEntries = new AppConfigurationEntry[1];
+	private final AppConfigurationEntry[] appConfigEntries = new AppConfigurationEntry[1];
 
 	public AppConfigurationEntry[] getAppConfigurationEntry(String applicationName)
 	{
-		return _appConfigEntries;
+		return appConfigEntries;
 	}
 
 	public OKrb5LoginModuleConfig(String principal, String keyTabPath)
@@ -59,7 +59,7 @@ public class OKrb5LoginModuleConfig extends Configuration
 			
 			options.put("doNotPrompt", "true");
 
-			_appConfigEntries[0] = new AppConfigurationEntry(LoginModule, AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options);
+			appConfigEntries[0] = new AppConfigurationEntry(loginModule, AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options);
 		}
 	}
 }

@@ -39,12 +39,12 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class SyslogMessage {
-    public final static char SP = ' ';
-    public final static char NILVALUE = '-';
+    public static final char SP = ' ';
+    public static final char NILVALUE = '-';
 
-    private final static int DEFAULT_CONCURRENCY = 50;
-    protected final static ConcurrentDateFormat rfc3339DateFormat;
-    protected final static ConcurrentDateFormat rfc3164DateFormat;
+    private static final int DEFAULT_CONCURRENCY = 50;
+    protected static final ConcurrentDateFormat rfc3339DateFormat;
+    protected static final ConcurrentDateFormat rfc3164DateFormat;
     private static CachingReference<String> localhostNameReference = new CachingReference<String>(10, TimeUnit.SECONDS) {
         @Override
         protected String newObject() {

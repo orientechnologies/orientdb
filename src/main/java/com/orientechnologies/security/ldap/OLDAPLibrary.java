@@ -291,7 +291,7 @@ public class OLDAPLibrary
 	{
 		String name = null;
 		
-		String names[] = dn.split(",");
+		String[] names = dn.split(",");
 		
 		if(names.length >= 1)
 		{

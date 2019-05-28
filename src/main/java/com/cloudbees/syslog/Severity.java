@@ -61,8 +61,8 @@ public enum Severity {
     DEBUG(7, "DEBUG");
 
     // mapping
-    private final static Map<String, Severity> severityFromLabel = new HashMap<String, Severity>();
-    private final static Map<Integer, Severity> severityFromNumericalCode = new HashMap<Integer, Severity>();
+    private static final Map<String, Severity> severityFromLabel = new HashMap<String, Severity>();
+    private static final Map<Integer, Severity> severityFromNumericalCode = new HashMap<Integer, Severity>();
 
     static {
         for (Severity severity : Severity.values()) {

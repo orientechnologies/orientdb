@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public abstract class AbstractSyslogMessageSender implements SyslogMessageSender {
-    protected final static Charset UTF_8 = Charset.forName("UTF-8");
+    protected static final Charset UTF_8 = Charset.forName("UTF-8");
     protected final InternalLogger logger = InternalLogger.getLogger(getClass());
     // default values
     protected String defaultAppName;

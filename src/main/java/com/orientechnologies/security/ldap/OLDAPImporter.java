@@ -41,30 +41,30 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author S. Colin Leister
  */
 public class OLDAPImporter implements OSecurityComponent {
-  private final String OLDAPUserClass = "_OLDAPUser";
+  private final String oldapUserClass = "_OLDAPUser";
 
-  private boolean _Debug   = false;
-  private boolean _Enabled = true;
+  private boolean debug = false;
+  private boolean enabled = true;
 
-  private OServer _Server;
+  private OServer server;
 
-  private int _ImportPeriod = 60;                                       // Default to 60
+  private int importPeriod = 60;                                       // Default to 60
   // seconds.
-  private Timer _ImportTimer;
+  private Timer importTimer;
 
   // Used to track what roles are assigned to each database user.
   // Holds a map of the import databases and their corresponding dbGroups.
-  private final ConcurrentHashMap<String, Database> _DatabaseMap = new ConcurrentHashMap<String, Database>();
+  private final ConcurrentHashMap<String, Database> databaseMap = new ConcurrentHashMap<String, Database>();
 
   // OSecurityComponent
   public void active() {
     // Go through each database entry and check the _OLDAPUsers schema.
-    for (Map.Entry<String, Database> dbEntry : _DatabaseMap.entrySet()) {
+    for (Map.Entry<String, Database> dbEntry : databaseMap.entrySet()) {
       Database db = dbEntry.getValue();
       ODatabase<?> odb = null;
 
       try {
-        odb = _Server.getSecurity().openDatabase(db.getName());
+        odb = server.getSecurity().openDatabase(db.getName());
 
         verifySchema(odb);
       } catch (Exception ex) {
@@ -76,8 +76,8 @@ public class OLDAPImporter implements OSecurityComponent {
     }
 
     ImportTask importTask = new ImportTask();
-    _ImportTimer = new Timer(true);
-    _ImportTimer.scheduleAtFixedRate(importTask, 30000, _ImportPeriod * 1000); // Wait 30 seconds before starting
+    importTimer = new Timer(true);
+    importTimer.scheduleAtFixedRate(importTask, 30000, importPeriod * 1000); // Wait 30 seconds before starting
 
     OLogManager.instance().info(this, "**************************************");
     OLogManager.instance().info(this, "** OrientDB LDAP Importer Is Active **");
@@ -87,23 +87,23 @@ public class OLDAPImporter implements OSecurityComponent {
   // OSecurityComponent
   public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument importDoc) {
     try {
-      _Server = oServer;
+      server = oServer;
 
-      _DatabaseMap.clear();
+      databaseMap.clear();
 
       if (importDoc.containsField("debug")) {
-        _Debug = importDoc.field("debug");
+        debug = importDoc.field("debug");
       }
 
       if (importDoc.containsField("enabled")) {
-        _Enabled = importDoc.field("enabled");
+        enabled = importDoc.field("enabled");
       }
 
       if (importDoc.containsField("period")) {
-        _ImportPeriod = importDoc.field("period");
+        importPeriod = importDoc.field("period");
 
-        if (_Debug)
-          OLogManager.instance().info(this, "Import Period = " + _ImportPeriod);
+        if (debug)
+          OLogManager.instance().info(this, "Import Period = " + importPeriod);
       }
 
       if (importDoc.containsField("databases")) {
@@ -113,7 +113,7 @@ public class OLDAPImporter implements OSecurityComponent {
           if (dbDoc.containsField("database")) {
             String dbName = dbDoc.field("database");
 
-            if (_Debug)
+            if (debug)
               OLogManager.instance().info(this, "config() database: %s", dbName);
 
             boolean ignoreLocal = true;
@@ -170,7 +170,7 @@ public class OLDAPImporter implements OSecurityComponent {
 
                     final List<ODocument> userDocList = dbDomainDoc.field("users");
 
-                    // userDocList can be null if only the OLDAPUserClass is used instead security.json.
+                    // userDocList can be null if only the oldapUserClass is used instead security.json.
                     if (userDocList != null) {
                       for (ODocument userDoc : userDocList) {
                         if (userDoc.containsField("baseDN") && userDoc.containsField("filter")) {
@@ -178,7 +178,7 @@ public class OLDAPImporter implements OSecurityComponent {
                             final String baseDN = userDoc.field("baseDN");
                             final String filter = userDoc.field("filter");
 
-                            if (_Debug)
+                            if (debug)
                               OLogManager.instance()
                                   .info(this, "config() database: %s, baseDN: %s, filter: %s", dbName, baseDN, filter);
 
@@ -214,7 +214,7 @@ public class OLDAPImporter implements OSecurityComponent {
 
               if (dbName != null) {
                 Database db = new Database(dbName, ignoreLocal, dbDomainsList);
-                _DatabaseMap.put(dbName, db);
+                databaseMap.put(dbName, db);
               }
             } else {
               OLogManager.instance().error(this, "Import LDAP database %s contains no \"domains\" property", null);
@@ -233,25 +233,25 @@ public class OLDAPImporter implements OSecurityComponent {
 
   // OSecurityComponent
   public void dispose() {
-    if (_ImportTimer != null) {
-      _ImportTimer.cancel();
-      _ImportTimer = null;
+    if (importTimer != null) {
+      importTimer.cancel();
+      importTimer = null;
     }
   }
 
   // OSecurityComponent
   public boolean isEnabled() {
-    return _Enabled;
+    return enabled;
   }
 
   private void verifySchema(ODatabase<?> odb) {
     try {
       System.out.println("calling existsClass odb = " + odb);
 
-      if (!odb.getMetadata().getSchema().existsClass(OLDAPUserClass)) {
+      if (!odb.getMetadata().getSchema().existsClass(oldapUserClass)) {
         System.out.println("calling createClass");
 
-        OClass ldapUser = odb.getMetadata().getSchema().createClass(OLDAPUserClass);
+        OClass ldapUser = odb.getMetadata().getSchema().createClass(oldapUserClass);
 
         System.out.println("calling createProperty");
 
@@ -280,112 +280,112 @@ public class OLDAPImporter implements OSecurityComponent {
   }
 
   private class Database {
-    private String _Name;
+    private String name;
 
     public String getName() {
-      return _Name;
+      return name;
     }
 
-    private boolean _IgnoreLocal;
+    private boolean ignoreLocal;
 
     public boolean ignoreLocal() {
-      return _IgnoreLocal;
+      return ignoreLocal;
     }
 
-    private List<DatabaseDomain> _DatabaseDomains;
+    private List<DatabaseDomain> databaseDomains;
 
     public List<DatabaseDomain> getDatabaseDomains() {
-      return _DatabaseDomains;
+      return databaseDomains;
     }
 
     public Database(final String name, final boolean ignoreLocal, final List<DatabaseDomain> dbDomains) {
-      _Name = name;
-      _IgnoreLocal = ignoreLocal;
-      _DatabaseDomains = dbDomains;
+      this.name = name;
+      this.ignoreLocal = ignoreLocal;
+      databaseDomains = dbDomains;
     }
   }
 
   private class DatabaseDomain {
-    private String _Domain;
+    private String domain;
 
     public String getDomain() {
-      return _Domain;
+      return domain;
     }
 
-    private String            _Authenticator;
-    private List<OLDAPServer> _LDAPServers;
-    private List<User>        _Users;
+    private String authenticator;
+    private List<OLDAPServer> ldapServers;
+    private List<User> users;
 
     public String getAuthenticator() {
-      return _Authenticator;
+      return authenticator;
     }
 
     public List<OLDAPServer> getLDAPServers() {
-      return _LDAPServers;
+      return ldapServers;
     }
 
     public List<User> getUsers() {
-      return _Users;
+      return users;
     }
 
     public DatabaseDomain(final String domain, final List<OLDAPServer> ldapServers, final List<User> userList,
         String authenticator) {
-      _Domain = domain;
-      _LDAPServers = ldapServers;
-      _Users = userList;
-      _Authenticator = authenticator;
+      this.domain = domain;
+      this.ldapServers = ldapServers;
+      users = userList;
+      this.authenticator = authenticator;
     }
   }
 
   private class DatabaseUser {
-    private String _User;
-    private Set<String> _Roles = new LinkedHashSet<String>();
+    private String user;
+    private Set<String> roles = new LinkedHashSet<String>();
 
     private String getUser() {
-      return _User;
+      return user;
     }
 
     public Set<String> getRoles() {
-      return _Roles;
+      return roles;
     }
 
     public void addRoles(Set<String> roles) {
       if (roles != null) {
         for (String role : roles) {
-          _Roles.add(role);
+          this.roles.add(role);
         }
       }
     }
 
     public DatabaseUser(final String user) {
-      _User = user;
+      this.user = user;
     }
   }
 
   private class User {
-    private String _BaseDN;
-    private String _Filter;
-    private Set<String> _Roles = new LinkedHashSet<String>();
+    private String baseDN;
+    private String filter;
+    private Set<String> roles = new LinkedHashSet<String>();
 
     public String getBaseDN() {
-      return _BaseDN;
+      return baseDN;
     }
 
     public String getFilter() {
-      return _Filter;
+      return filter;
     }
 
     public Set<String> getRoles() {
-      return _Roles;
+      return roles;
     }
 
     public User(final String baseDN, final String filter, final List<String> roleList) {
-      _BaseDN = baseDN;
-      _Filter = filter;
+      this.baseDN = baseDN;
+      this.filter = filter;
 
       // Convert the list into a set, for convenience.
       for (String role : roleList) {
-        _Roles.add(role);
+        roles.add(role);
       }
     }
   }
@@ -398,9 +398,9 @@ public class OLDAPImporter implements OSecurityComponent {
 
     // If authName is null, use the primary authentication method.
     if (authName == null)
-      authMethod = _Server.getSecurity().getPrimaryAuthenticator();
+      authMethod = server.getSecurity().getPrimaryAuthenticator();
     else
-      authMethod = _Server.getSecurity().getAuthenticator(authName);
+      authMethod = server.getSecurity().getAuthenticator(authName);
 
     if (authMethod != null)
       subject = authMethod.getClientSubject();
@@ -412,19 +412,19 @@ public class OLDAPImporter implements OSecurityComponent {
    * LDAP Import
    ***/
   private synchronized void importLDAP() {
-    if (_Server.getSecurity() == null) {
+    if (server.getSecurity() == null) {
       OLogManager.instance().error(this, "OLDAPImporter.importLDAP() ServerSecurity is null", null);
       return;
     }
 
-    if (_Debug)
+    if (debug)
       OLogManager.instance().info(this, "OLDAPImporter.importLDAP() \n");
 
-    for (Map.Entry<String, Database> dbEntry : _DatabaseMap.entrySet()) {
+    for (Map.Entry<String, Database> dbEntry : databaseMap.entrySet()) {
       try {
         Database db = dbEntry.getValue();
 
-        ODatabase<?> odb = _Server.getSecurity().openDatabase(db.getName());
+        ODatabase<?> odb = server.getSecurity().openDatabase(db.getName());
 
         // This set will be filled with all users from the database (unless ignoreLocal is true).
         // As each usersRetrieved list is filled, any matching user will be removed.
@@ -447,13 +447,13 @@ public class OLDAPImporter implements OSecurityComponent {
               Subject ldapSubject = getLDAPSubject(dd.getAuthenticator());
 
               if (ldapSubject != null) {
-                DirContext dc = OLDAPLibrary.openContext(ldapSubject, dd.getLDAPServers(), _Debug);
+                DirContext dc = OLDAPLibrary.openContext(ldapSubject, dd.getLDAPServers(), debug);
 
                 if (dc != null) {
                   deleteUsers = true;
 
                   try {
-                    // Combine the "users" from security.json's "ldapImporter" and the class OLDAPUserClass.
+                    // Combine the "users" from security.json's "ldapImporter" and the class oldapUserClass.
                     List<User> userList = new ArrayList<User>();
                     userList.addAll(dd.getUsers());
 
@@ -466,7 +466,7 @@ public class OLDAPImporter implements OSecurityComponent {
                           .info(this, "OLDAPImporter.importLDAP() Calling retrieveUsers for Database: %s, Filter: %s", db.getName(),
                               user.getFilter());
 
-                      OLDAPLibrary.retrieveUsers(dc, user.getBaseDN(), user.getFilter(), usersRetrieved, _Debug);
+                      OLDAPLibrary.retrieveUsers(dc, user.getBaseDN(), user.getFilter(), usersRetrieved, debug);
 
                       if (!usersRetrieved.isEmpty()) {
                         for (String upn : usersRetrieved) {
@@ -532,11 +532,11 @@ public class OLDAPImporter implements OSecurityComponent {
     }
   }
 
-  // Loads the User object from the OLDAPUserClass class for each domain.
+  // Loads the User object from the oldapUserClass class for each domain.
   // This is equivalent to the "users" objects in "ldapImporter" of security.json.
   private void retrieveLDAPUsers(final ODatabase<?> odb, final String domain, final List<User> userList) {
     try {
-      String sql = String.format("SELECT FROM %s WHERE Domain = \"%s\"", OLDAPUserClass, domain);
+      String sql = String.format("SELECT FROM %s WHERE Domain = \"%s\"", oldapUserClass, domain);
 
       List<ODocument> users = new OSQLSynchQuery<ODocument>(sql).run();
 

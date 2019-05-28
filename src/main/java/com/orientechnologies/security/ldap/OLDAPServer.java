@@ -22,31 +22,36 @@ import java.net.URISyntaxException;
 
 public class OLDAPServer
 {
-	private String _Scheme, _Host;
-	private int _Port;
-	private boolean _IsAlias;
+	private String scheme;
+	private String host;
+	private int port;
+	private boolean isAlias;
 	
-	public String getHostname() { return _Host; }
+	public String getHostname() {
+		return host;
+	}
 
 	public String getURL()
 	{
-		return String.format("%s://%s:%d", _Scheme, _Host, _Port);
+		return String.format("%s://%s:%d", scheme, host, port);
 	}
 
 	// Replaces the current URL's host port with hostname and returns it.
 	public String getURL(final String hostname)
 	{
-		return String.format("%s://%s:%d", _Scheme, hostname, _Port);
+		return String.format("%s://%s:%d", scheme, hostname, port);
 	}
 
-	public boolean isAlias() { return _IsAlias; }
+	public boolean isAlias() {
+		return isAlias;
+	}
 
 	public OLDAPServer(final String scheme, final String host, int port, boolean isAlias)
 	{
-		_Scheme = scheme;
-		_Host = host;
-		_Port = port;
-		_IsAlias = isAlias;
+		this.scheme = scheme;
+		this.host = host;
+		this.port = port;
+		this.isAlias = isAlias;
 	}
 	
 	public static OLDAPServer validateURL(final String url, boolean isAlias)
