@@ -20,6 +20,7 @@ package com.orientechnologies.security.auditing;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -57,9 +58,9 @@ public class OAuditingLoggingThread extends Thread {
 
     className = ODefaultAuditing.getClassName(databaseName);
 
-    server.getSystemDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
+    server.getSystemDatabase().executeInDBScope(new OCallable<Void, ODatabaseSession>() {
       @Override
-      public Void call(ODatabase iArgument) {
+      public Void call(ODatabaseSession iArgument) {
         OSchema schema = iArgument.getMetadata().getSchema();
         if (!schema.existsClass(className)) {
           OClass clazz = schema.getClass(ODefaultAuditing.AUDITING_LOG_CLASSNAME);
