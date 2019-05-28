@@ -19,6 +19,24 @@
                       ip-address="0.0.0.0"/>
         </listeners>
     </network>
+    <distributed enabled="true">
+        <node-name>server1</node-name>
+        <quorum>2</quorum>
+        <group>
+            <name>OrientDB</name>
+            <password>OrientDB</password>
+        </group>
+        <network>
+            <multicast enabled="false">
+                <address>230.0.0.0</address>
+                <port>4321</port>
+                <discovery-ports>
+                    <port>4321</port>
+                    <port>4322</port>
+                </discovery-ports>
+            </multicast>
+        </network>
+    </distributed>
     <storages>
     </storages>
     <users>
