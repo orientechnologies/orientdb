@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
+
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlElementRef;
@@ -59,6 +61,9 @@ public class OServerConfiguration {
   @XmlElementWrapper
   @XmlElementRef(type = OServerEntryConfiguration.class)
   public OServerEntryConfiguration[]                properties;
+
+  @XmlElementRef(type = OServerDistributedConfiguration.class)
+  public OServerDistributedConfiguration distributed;
 
   public boolean                                    isAfterFirstTime;
 
