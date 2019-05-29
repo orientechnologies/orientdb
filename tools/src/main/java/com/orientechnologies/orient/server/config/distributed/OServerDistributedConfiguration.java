@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.config.distributed;
 
-
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementRef;

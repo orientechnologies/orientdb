@@ -108,15 +108,20 @@ public class OServer {
   private              OrientDBInternal                               databases;
   protected            Date                                           startedOn              = new Date();
 
-  public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
+  public OServer()
+      throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
+      MBeanRegistrationException, NotCompliantMBeanException {
     this(!Orient.instance().isInsideWebContainer());
   }
 
-  public OServer(boolean shutdownEngineOnExit) throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
+  public OServer(boolean shutdownEngineOnExit)
+      throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
+      MBeanRegistrationException, NotCompliantMBeanException {
     final boolean insideWebContainer = Orient.instance().isInsideWebContainer();
 
     if (insideWebContainer && shutdownEngineOnExit) {
-      OLogManager.instance().warnNoDb(this, "OrientDB instance is running inside of web application, " + "it is highly unrecommended to force to shutdown OrientDB engine on server shutdown");
+      OLogManager.instance().warnNoDb(this, "OrientDB instance is running inside of web application, "
+          + "it is highly unrecommended to force to shutdown OrientDB engine on server shutdown");
     }
 
     this.shutdownEngineOnExit = shutdownEngineOnExit;
@@ -142,8 +147,9 @@ public class OServer {
   }
 
   public static OServer startFromFileConfig(String config)
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException, NoSuchMethodException,
-      InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
     OServer server = new OServer(false);
     server.startup(config);
     server.activate();
@@ -151,8 +157,9 @@ public class OServer {
   }
 
   public static OServer startFromClasspathConfig(String config)
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException, NoSuchMethodException,
-      InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
     OServer server = new OServer(false);
     server.startup(Thread.currentThread().getContextClassLoader().getResourceAsStream(config));
     server.activate();
@@ -160,8 +167,9 @@ public class OServer {
   }
 
   public static OServer startFromStreamConfig(InputStream config)
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException, NoSuchMethodException,
-      InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
     OServer server = new OServer(false);
     server.startup(config);
     server.activate();
@@ -231,7 +239,8 @@ public class OServer {
     serverCfg.saveConfiguration();
   }
 
-  public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException, IllegalAccessException, IOException {
+  public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException,
+      IllegalAccessException, IOException {
     try {
       deinit();
     } finally {
@@ -281,7 +290,9 @@ public class OServer {
     return null;
   }
 
-  public OServer startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
+  public OServer startup()
+      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
+      InvocationTargetException, NoSuchMethodException {
     String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
     if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
       config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
@@ -294,7 +305,8 @@ public class OServer {
   }
 
   public OServer startup(final File iConfigurationFile)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
+      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
+      InvocationTargetException, NoSuchMethodException {
     // Startup function split to allow pre-activation changes
     try {
       serverCfg = new OServerConfigurationManager(iConfigurationFile);
@@ -308,12 +320,14 @@ public class OServer {
   }
 
   public OServer startup(final String iConfiguration)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
+      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
+      InvocationTargetException, NoSuchMethodException, IOException {
     return startup(new ByteArrayInputStream(iConfiguration.getBytes()));
   }
 
   public OServer startup(final InputStream iInputStream)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
+      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
+      InvocationTargetException, NoSuchMethodException, IOException {
     if (iInputStream == null)
       throw new OConfigurationException("Configuration file is null");
 
@@ -323,12 +337,14 @@ public class OServer {
     return startupFromConfiguration();
   }
 
-  public OServer startup(final OServerConfiguration iConfiguration) throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
+  public OServer startup(final OServerConfiguration iConfiguration)
+      throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
     serverCfg = new OServerConfigurationManager(iConfiguration);
     return startupFromConfiguration();
   }
 
-  public OServer startupFromConfiguration() throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
+  public OServer startupFromConfiguration()
+      throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
     Orient.instance();
@@ -374,7 +390,8 @@ public class OServer {
       if (configuration.distributed != null && configuration.distributed.enabled) {
         try {
 
-          databases = OrientDBInternal.distributed(this.databaseDirectory, ODistributedConfig.buildConfig(contextConfiguration, configuration.distributed));
+          databases = OrientDBInternal
+              .distributed(this.databaseDirectory, ODistributedConfig.buildConfig(contextConfiguration, configuration.distributed));
         } catch (ODatabaseException ex) {
           databases = OrientDBInternal.embedded(this.databaseDirectory, config);
         }
@@ -391,17 +408,20 @@ public class OServer {
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
-    Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT, new OProfilerHookValue() {
-      @Override public Object getValue() {
-        final StringBuilder dbs = new StringBuilder(64);
-        for (String dbName : getAvailableStorageNames().keySet()) {
-          if (dbs.length() > 0)
-            dbs.append(',');
-          dbs.append(dbName);
-        }
-        return dbs.toString();
-      }
-    });
+    Orient.instance().getProfiler()
+        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
+            new OProfilerHookValue() {
+              @Override
+              public Object getValue() {
+                final StringBuilder dbs = new StringBuilder(64);
+                for (String dbName : getAvailableStorageNames().keySet()) {
+                  if (dbs.length() > 0)
+                    dbs.append(',');
+                  dbs.append(dbName);
+                }
+                return dbs.toString();
+              }
+            });
 
     return this;
   }
@@ -443,7 +463,9 @@ public class OServer {
 
         // STARTUP LISTENERS
         for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-          networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange, l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+          networkListeners.add(
+              new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange, l.protocol,
+                  networkProtocols.get(l.protocol), l.parameters, l.commands));
 
       } else
         OLogManager.instance().warn(this, "Network configuration was not found");
@@ -643,12 +665,18 @@ public class OServer {
 
     System.out.println();
     System.out.println();
-    System.out.println(OAnsiCode.format("$ANSI{yellow +--------------------------------------------------------------------------+}"));
-    System.out.println(OAnsiCode.format(String.format("$ANSI{yellow | INSERT THE KEY FOR THE ENCRYPTED DATABASE %-31s|}", "'" + iDatabaseName + "'")));
-    System.out.println(OAnsiCode.format("$ANSI{yellow +--------------------------------------------------------------------------+}"));
-    System.out.println(OAnsiCode.format("$ANSI{yellow | To avoid this message set the environment variable or JVM setting        |}"));
-    System.out.println(OAnsiCode.format("$ANSI{yellow | 'storage.encryptionKey' to the key to use.                               |}"));
-    System.out.println(OAnsiCode.format("$ANSI{yellow +--------------------------------------------------------------------------+}"));
+    System.out
+        .println(OAnsiCode.format("$ANSI{yellow +--------------------------------------------------------------------------+}"));
+    System.out.println(OAnsiCode
+        .format(String.format("$ANSI{yellow | INSERT THE KEY FOR THE ENCRYPTED DATABASE %-31s|}", "'" + iDatabaseName + "'")));
+    System.out
+        .println(OAnsiCode.format("$ANSI{yellow +--------------------------------------------------------------------------+}"));
+    System.out
+        .println(OAnsiCode.format("$ANSI{yellow | To avoid this message set the environment variable or JVM setting        |}"));
+    System.out
+        .println(OAnsiCode.format("$ANSI{yellow | 'storage.encryptionKey' to the key to use.                               |}"));
+    System.out
+        .println(OAnsiCode.format("$ANSI{yellow +--------------------------------------------------------------------------+}"));
     System.out.print(OAnsiCode.format("\n$ANSI{yellow Database encryption key [BLANK=to skip opening]: }"));
 
     final OConsoleReader reader = new ODefaultConsoleReader();
@@ -684,6 +712,7 @@ public class OServer {
    *
    * @param iUserName Username to authenticate
    * @param iPassword Password in clear
+   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
@@ -692,7 +721,8 @@ public class OServer {
   }
 
   // Returns null if the user cannot be authenticated. Otherwise returns the OServerUserConfiguration user.
-  protected OServerUserConfiguration authenticateUser(final String iUserName, final String iPassword, final String iResourceToCheck) {
+  protected OServerUserConfiguration authenticateUser(final String iUserName, final String iPassword,
+      final String iResourceToCheck) {
     if (serverSecurity != null && serverSecurity.isEnabled()) {
       // Returns the authenticated username, if successful, otherwise null.
       String authUsername = serverSecurity.authenticate(iUserName, iPassword);
@@ -720,6 +750,7 @@ public class OServer {
    * Checks if a server user is allowed to operate with a resource.
    *
    * @param iUserName Username to authenticate
+   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
@@ -865,7 +896,8 @@ public class OServer {
     }
 
     // HASH THE PASSWORD
-    iPassword = OSecurityManager.instance().createHash(iPassword, getContextConfiguration().getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM), true);
+    iPassword = OSecurityManager.instance().createHash(iPassword,
+        getContextConfiguration().getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM), true);
 
     serverCfg.setUser(iName, iPassword, iPermissions);
     serverCfg.saveConfiguration();
@@ -891,11 +923,13 @@ public class OServer {
     return openDatabase(iDbUrl, user, password, null, false);
   }
 
-  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data) {
+  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final String user, final String password,
+      ONetworkProtocolData data) {
     return openDatabase(iDbUrl, user, password, data, false);
   }
 
-  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, String user, final String password, ONetworkProtocolData data, final boolean iBypassAccess) {
+  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, String user, final String password, ONetworkProtocolData data,
+      final boolean iBypassAccess) {
     final ODatabaseDocumentInternal database;
     // TODO: memory used to be created on the fly not sure for which reason.
     // TODO: final String path = getStoragePath(iDbUrl); it use to resolve the path in some way
@@ -1015,7 +1049,8 @@ public class OServer {
 
         int typeIndex = url.indexOf(':');
         if (typeIndex <= 0)
-          throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + Orient.URL_SYNTAX + ". URL was: " + url);
+          throw new OConfigurationException(
+              "Error in database URL: the engine was not specified. Syntax is: " + Orient.URL_SYNTAX + ". URL was: " + url);
 
         String remoteUrl = url.substring(typeIndex + 1);
         int index = remoteUrl.lastIndexOf('/');
@@ -1089,7 +1124,8 @@ public class OServer {
           }
 
           if (!rootPassword.equals(rootConfirmPassword)) {
-            System.out.println(OAnsiCode.format("$ANSI{red ERROR: Passwords don't match, please reinsert both of them, or press ENTER to auto generate it}"));
+            System.out.println(OAnsiCode.format(
+                "$ANSI{red ERROR: Passwords don't match, please reinsert both of them, or press ENTER to auto generate it}"));
           } else
             // PASSWORDS MATCH
             break;

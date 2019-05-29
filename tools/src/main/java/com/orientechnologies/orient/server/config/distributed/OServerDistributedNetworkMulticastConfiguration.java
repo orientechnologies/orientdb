@@ -9,19 +9,14 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class OServerDistributedNetworkMulticastConfiguration {
 
   @XmlAttribute
-  public boolean enabled        = false;
-  @XmlElement(name="address")
-  public String  ip             = "230.0.0.0";
+  public boolean enabled = false;
+  @XmlElement(name = "address")
+  public String  ip      = "230.0.0.0";
   @XmlElement
-  public Integer     port           = 4321;
+  public Integer port    = 2424;
 
   @XmlElementWrapper(name = "discovery-ports")
   @XmlElement(name = "port")
-  public int[]   discoveryPorts = new int[] { 4321 };
-
-
-
-
-
+  public int[] discoveryPorts = new int[] { 2424 };
 
 }

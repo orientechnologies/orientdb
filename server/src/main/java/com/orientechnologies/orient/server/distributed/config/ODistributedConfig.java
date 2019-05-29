@@ -27,15 +27,19 @@ public class ODistributedConfig {
     configurators.put("ORIENTDB_DISTRIBUTED_QUORUM", (value, config) -> config.quorum = Integer.parseInt(value));
     configurators.put("ORIENTDB_DISTRIBUTED_GROUP_NAME", (value, config) -> config.group.name = value);
     configurators.put("ORIENTDB_DISTRIBUTED_GROUP_PASSWORD", (value, config) -> config.group.password = value);
-    configurators.put("ORIENTDB_DISTRIBUTED_NETWORK_MULTICAST_ENABLED", (value, config) -> config.network.multicast.enabled = Boolean.parseBoolean(value));
+    configurators.put("ORIENTDB_DISTRIBUTED_NETWORK_MULTICAST_ENABLED",
+        (value, config) -> config.network.multicast.enabled = Boolean.parseBoolean(value));
     configurators.put("ORIENTDB_DISTRIBUTED_NETWORK_MULTICAST_IP", (value, config) -> config.network.multicast.ip = value);
-    configurators.put("ORIENTDB_DISTRIBUTED_NETWORK_MULTICAST_PORT", (value, config) -> config.network.multicast.port = Integer.parseInt(value));
-    configurators
-        .put("ORIENTDB_DISTRIBUTED_NETWORK_MULTICAST_DISCOVERY_PORTS", (value, config) -> config.network.multicast.discoveryPorts = Arrays.stream(value.split(",")).map(Integer::parseInt).mapToInt(i -> i).toArray());
+    configurators.put("ORIENTDB_DISTRIBUTED_NETWORK_MULTICAST_PORT",
+        (value, config) -> config.network.multicast.port = Integer.parseInt(value));
+    configurators.put("ORIENTDB_DISTRIBUTED_NETWORK_MULTICAST_DISCOVERY_PORTS",
+        (value, config) -> config.network.multicast.discoveryPorts = Arrays.stream(value.split(",")).map(Integer::parseInt)
+            .mapToInt(i -> i).toArray());
 
   }
 
-  public static OServerDistributedConfiguration fromEnv(OServerDistributedConfiguration distributed) throws OConfigurationException {
+  public static OServerDistributedConfiguration fromEnv(OServerDistributedConfiguration distributed)
+      throws OConfigurationException {
     final OServerDistributedConfiguration config;
     if (distributed == null) {
       config = new OServerDistributedConfiguration();
@@ -46,11 +50,7 @@ public class ODistributedConfig {
 
     configurators.entrySet().stream().forEach((entry) -> {
 
-      String env = OSystemVariableResolver.resolveVariable(entry.getKey());
-
-      if (env == null) {
-        env = OSystemVariableResolver.resolveVariable(entry.getKey().toLowerCase().replaceAll("_", "."));
-      }
+      String env = System.getenv(entry.getKey());
 
       if (env != null) {
         entry.getValue().accept(env, config);
@@ -99,17 +99,21 @@ public class ODistributedConfig {
     }
   }
 
-  public static OrientDBConfig buildConfig(OContextConfiguration contextConfiguration, OServerDistributedConfiguration distributed) {
+  public static OrientDBConfig buildConfig(OContextConfiguration contextConfiguration,
+      OServerDistributedConfiguration distributed) {
 
     OrientDBConfigBuilder builder = OrientDBConfig.builder().fromContext(contextConfiguration);
 
     ONodeConfigurationBuilder nodeConfigurationBuilder = builder.getNodeConfigurationBuilder();
 
-    nodeConfigurationBuilder.setNodeName(distributed.nodeName).setQuorum(distributed.quorum).setGroupName(distributed.group.name).setGroupPassword(distributed.group.password);
+    nodeConfigurationBuilder.setNodeName(distributed.nodeName).setQuorum(distributed.quorum).setGroupName(distributed.group.name)
+        .setGroupPassword(distributed.group.password);
 
     OServerDistributedNetworkMulticastConfiguration multicast = distributed.network.multicast;
 
-    nodeConfigurationBuilder.setMulticast(OMulticastConfguration.builder().setEnabled(multicast.enabled).setIp(multicast.ip).setPort(multicast.port).setDiscoveryPorts(multicast.discoveryPorts).build());
+    nodeConfigurationBuilder.setMulticast(
+        OMulticastConfguration.builder().setEnabled(multicast.enabled).setIp(multicast.ip).setPort(multicast.port)
+            .setDiscoveryPorts(multicast.discoveryPorts).build());
 
     return builder.build();
   }
