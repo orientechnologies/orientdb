@@ -39,7 +39,8 @@ export class CronComponent implements OnInit, OnChanges {
       },
       customValues: {
         "5 Minutes": "0 0/5 * * * ?",
-        "10 Minutes": "0 0/10 * * * ?"
+        "10 Minutes": "0 0/10 * * * ?",
+        "30 Minutes": "0 0/30 * * * ?"
       }
     });
   }
