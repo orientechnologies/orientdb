@@ -85,26 +85,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer    serializer;
-  protected String               url;
-  protected STATUS               status;
-  protected OIntent              currentIntent;
-  protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault     metadata;
-  protected OImmutableUser       user;
+  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
+  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
+  protected       ORecordSerializer                           serializer;
+  protected       String                                      url;
+  protected       STATUS                                      status;
+  protected       OIntent                                     currentIntent;
+  protected       ODatabaseInternal<?>                        databaseOwner;
+  protected       OMetadataDefault                            metadata;
+  protected       OImmutableUser                              user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected OLocalRecordCache                localCache;
-  protected OCurrentStorageComponentsFactory componentsFactory;
-  protected boolean initialized = false;
-  protected OTransaction currentTx;
+  protected       OLocalRecordCache                           localCache;
+  protected       OCurrentStorageComponentsFactory            componentsFactory;
+  protected       boolean                                     initialized   = false;
+  protected       OTransaction                                currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected       OSharedContext  sharedContext;
 
   private boolean prefetchRecords;
 
@@ -1848,7 +1848,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (prop == null) {
       return false;
     }
-    if(prop.getLinkedClass() == null ){
+    if (prop.getLinkedClass() == null) {
       return false;
     }
     return linkedClass.isSubClassOf(prop.getLinkedClass());
@@ -2041,11 +2041,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpenness();
 
+    boolean lightweight = false;
     if (iRecord instanceof OVertex) {
       iRecord = iRecord.getRecord();
     }
     if (iRecord instanceof OEdge) {
       if (((OEdge) iRecord).isLightweight()) {
+        lightweight = true;
         iRecord = ((OEdge) iRecord).getFrom();
       } else {
         iRecord = iRecord.getRecord();
@@ -2053,8 +2055,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
 
     ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
-    if (iRecord instanceof OElement && dirtyManager != null && dirtyManager.getReferences() != null && !dirtyManager.getReferences()
-        .isEmpty()) {
+    if ((iRecord instanceof OElement && dirtyManager != null && dirtyManager.getReferences() != null && !dirtyManager
+        .getReferences().isEmpty()) || lightweight) {
       if ((((OElement) iRecord).isVertex() || ((OElement) iRecord).isEdge()) && !getTransaction().isActive() && inHook.isEmpty()) {
         return saveGraph(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
       }
@@ -2703,12 +2705,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
     this.activeQueries.put(id, rs);
 
-    getListeners().forEach(l -> l.onCommandStart(this,rs));
+    getListeners().forEach(l -> l.onCommandStart(this, rs));
   }
 
   public synchronized void queryClosed(String id) {
     OResultSet rs = this.activeQueries.remove(id);
-    getListeners().forEach(l -> l.onCommandEnd(this,rs));
+    getListeners().forEach(l -> l.onCommandEnd(this, rs));
   }
 
   protected synchronized void closeActiveQueries() {
