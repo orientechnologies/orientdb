@@ -396,7 +396,11 @@ public class OServer {
           databases = OrientDBInternal.embedded(this.databaseDirectory, config);
         }
       } else {
-        databases = OrientDBInternal.embedded(this.databaseDirectory, config);
+        try {
+          databases = OrientDBInternal.distributed(this.databaseDirectory, config);
+        } catch (ODatabaseException ex) {
+          databases = OrientDBInternal.embedded(this.databaseDirectory, config);
+        }
       }
     }
 
