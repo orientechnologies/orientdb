@@ -383,8 +383,6 @@ public abstract class ORecordAbstract implements ORecord {
     if (source != null && source.length > 0) {
       dirty = iDirty;
       contentChanged = iDirty;
-      if (!iDirty && dirtyManager != null)
-        dirtyManager.removePointed(this);
     }
 
     return this;
@@ -401,8 +399,6 @@ public abstract class ORecordAbstract implements ORecord {
     if (source != null && source.length > 0) {
       dirty = iDirty;
       contentChanged = iDirty;
-      if (!iDirty && dirtyManager != null)
-        dirtyManager.removePointed(this);
     }
 
     return this;
@@ -421,8 +417,6 @@ public abstract class ORecordAbstract implements ORecord {
   protected void unsetDirty() {
     contentChanged = false;
     dirty = false;
-    if (dirtyManager != null)
-      dirtyManager.removePointed(this);
   }
 
   protected abstract byte getRecordType();

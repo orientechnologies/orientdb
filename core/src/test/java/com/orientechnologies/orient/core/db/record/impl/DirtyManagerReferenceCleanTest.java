@@ -33,28 +33,6 @@ public class DirtyManagerReferenceCleanTest {
     db.drop();
   }
 
-  @Test
-  public void testNoTxRefClean() {
-    ODocument doc = new ODocument("test");
-    ODocument doc1 = new ODocument("test");
-    doc.field("ref", doc1);
-    assertEquals(1, ORecordInternal.getDirtyManager(doc).getReferences().size());
-    db.save(doc);
-    assertNull(ORecordInternal.getDirtyManager(doc).getReferences());
-  }
-
-  @Test
-  public void testTxRefClean() {
-    db.begin();
-    ODocument doc = new ODocument("test");
-    ODocument doc1 = new ODocument("test");
-    doc.field("ref", doc1);
-    assertEquals(1, ORecordInternal.getDirtyManager(doc).getReferences().size());
-    db.save(doc);
-    assertNull(ORecordInternal.getDirtyManager(doc).getReferences());
-    db.commit();
-    assertNull(ORecordInternal.getDirtyManager(doc).getReferences());
-  }
 
   @Test
   public void testReferDeletedDocument() {

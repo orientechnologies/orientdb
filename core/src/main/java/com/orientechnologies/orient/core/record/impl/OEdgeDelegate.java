@@ -453,7 +453,6 @@ public class OEdgeDelegate implements OEdge {
       element.save();
     } else {
       vIn.save();
-      vOut.save();
     }
     return (RET) this;
   }
@@ -464,7 +463,6 @@ public class OEdgeDelegate implements OEdge {
       element.save(iCluster);
     } else {
       vIn.save();
-      vOut.save();
     }
     return (RET) this;
   }
@@ -475,7 +473,6 @@ public class OEdgeDelegate implements OEdge {
       element.save(forceCreate);
     } else {
       vIn.save();
-      vOut.save();
     }
     return (RET) this;
   }
@@ -486,7 +483,6 @@ public class OEdgeDelegate implements OEdge {
       element.save(iCluster, forceCreate);
     } else {
       vIn.save();
-      vOut.save();
     }
     return (RET) this;
   }
