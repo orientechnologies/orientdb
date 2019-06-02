@@ -4,6 +4,7 @@ package com.orientechnologies.common.collection;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,19 @@ import java.util.List;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OMultiValueTest {
+
+  @Test
+  public void testArrayFromCollection() {
+    List<String> collection = new ArrayList<String>();
+    collection.add("foo");
+    collection.add("bar");
+    collection.add("baz");
+    final String[] result = OMultiValue.array(collection, String.class);
+    Assert.assertEquals(result.length, 3);
+    Assert.assertEquals(result[0], "foo");
+    Assert.assertEquals(result[1], "bar");
+    Assert.assertEquals(result[2], "baz");
+  }
 
   @Test
   public void testListSize() {

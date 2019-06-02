@@ -395,10 +395,11 @@ public class OResultSerializerNetwork {
       break;
     case EMBEDDEDSET:
     case EMBEDDEDLIST:
-      if (value.getClass().isArray())
-        writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)));
-      else
+      if (Collection.class.isAssignableFrom(value.getClass())) {
         writeEmbeddedCollection(bytes, (Collection<?>) value);
+      } else {
+        writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)));
+      }
       break;
     case DECIMAL:
       BigDecimal decimalValue = (BigDecimal) value;
