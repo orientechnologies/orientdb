@@ -7,15 +7,15 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
-public class OStructuralSharedConfiguration {
+public class OStructuralSharedConfiguration implements OReadStructuralSharedConfiguration, Cloneable {
 
   private List<String>                                     databases;
   private Map<ONodeIdentity, OStructuralNodeConfiguration> knownNodes;
   private int                                              quorum;
 
   public void init(int quorum) {
-    databases = new ArrayList<>();
-    knownNodes = new HashMap<>();
+    this.databases = new ArrayList<>();
+    this.knownNodes = new HashMap<>();
     this.quorum = quorum;
   }
 
@@ -87,5 +87,14 @@ public class OStructuralSharedConfiguration {
 
   public int getQuorum() {
     return quorum;
+  }
+
+  @Override
+  public OStructuralSharedConfiguration clone() throws CloneNotSupportedException {
+    return (OStructuralSharedConfiguration) super.clone();
+  }
+
+  public void removeDatabase(String database) {
+    databases.remove(database);
   }
 }

@@ -5,7 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.UUID;
 
-public class OStructuralNodeDatabase {
+public class OStructuralNodeDatabase implements Cloneable {
 
   public OStructuralNodeDatabase() {
 

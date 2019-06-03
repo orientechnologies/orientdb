@@ -48,7 +48,7 @@ public class OStructuralDistributedContext {
     return follower;
   }
 
-  public synchronized void makeLeader(ONodeIdentity identity, OStructuralSharedConfiguration sharedConfiguration) {
+  public synchronized void makeLeader(ONodeIdentity identity) {
     if (leader == null) {
       leader = new OStructuralLeader(Executors.newSingleThreadExecutor(), opLog, context);
     }

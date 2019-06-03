@@ -43,12 +43,13 @@ public class OStructuralConfigurationTest {
   public void testChangeSaveLoad() {
     OStructuralConfiguration configuration = new OStructuralConfiguration(new OSystemDatabase(context), context);
     ONodeIdentity generatedId = configuration.getCurrentNodeIdentity();
-    configuration.getSharedConfiguration().addNode(new OStructuralNodeConfiguration(ONodeIdentity.generate("node2")));
-    configuration.save();
+    OStructuralSharedConfiguration config = configuration.modifySharedConfiguration();
+    config.addNode(new OStructuralNodeConfiguration(ONodeIdentity.generate("node2")));
+    configuration.update(config);
 
     OStructuralConfiguration configuration1 = new OStructuralConfiguration(new OSystemDatabase(context), context);
     assertEquals(generatedId, configuration1.getCurrentNodeIdentity());
-    assertEquals(1, configuration1.getSharedConfiguration().listNodes().size());
+    assertEquals(1, configuration1.readSharedConfiguration().listNodes().size());
   }
 
   @After

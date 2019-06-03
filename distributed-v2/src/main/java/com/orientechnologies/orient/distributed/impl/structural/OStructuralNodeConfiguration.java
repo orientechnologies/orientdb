@@ -7,7 +7,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
-public class OStructuralNodeConfiguration {
+public class OStructuralNodeConfiguration implements Cloneable {
 
   private ONodeIdentity                      identity;
   private Map<UUID, OStructuralNodeDatabase> databases;

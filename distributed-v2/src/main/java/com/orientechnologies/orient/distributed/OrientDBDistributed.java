@@ -341,7 +341,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
             distributed.getCoordinator().join(member);
           }
         }
-        structuralDistributedContext.makeLeader(coordinatorIdentity, getStructuralConfiguration().getSharedConfiguration());
+        structuralDistributedContext.makeLeader(coordinatorIdentity);
 
         for (ONodeIdentity node : networkManager.getRemoteServers()) {
           structuralDistributedContext.getLeader().connected(node, networkManager.getChannel(node));
@@ -430,9 +430,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     });
   }
 
-  public synchronized void syncToConfiguration(OLogId lastId, OStructuralSharedConfiguration sharedConfiguration) {
+  public synchronized void syncToConfiguration(OLogId lastId, OReadStructuralSharedConfiguration sharedConfiguration) {
     getStructuralConfiguration().receiveSharedConfiguration(lastId, sharedConfiguration);
-    OStructuralNodeConfiguration nodeConfig = getStructuralConfiguration().getSharedConfiguration().getNode(getNodeIdentity());
+    OStructuralNodeConfiguration nodeConfig = getStructuralConfiguration().readSharedConfiguration().getNode(getNodeIdentity());
     assert nodeConfig != null : "if arrived here the configuration should have this node configured";
     super.loadAllDatabases();
     Collection<OStorage> storages = super.getStorages();
@@ -495,7 +495,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       Map<String, String> configurations) {
     //TODO:INIT CONFIG
     super.create(database, null, null, ODatabaseType.valueOf(type), null);
-    getStructuralConfiguration().getSharedConfiguration().addDatabase(database);
+    OStructuralSharedConfiguration config = getStructuralConfiguration().modifySharedConfiguration();
+    config.addDatabase(database);
+    getStructuralConfiguration().update(config);
     this.databasesStatus.put(database, ODistributedStatus.ONLINE);
     checkCoordinator(database);
     //TODO: double check this notify, it may unblock as well checkReadyForHandleRequests that is not what is expected
@@ -504,6 +506,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void internalDropDatabase(String database) {
     super.drop(database, null, null);
+    OStructuralSharedConfiguration config = getStructuralConfiguration().modifySharedConfiguration();
+    config.removeDatabase(database);
+    getStructuralConfiguration().update(config);
   }
 
   public synchronized void checkReadyForHandleRequests() {

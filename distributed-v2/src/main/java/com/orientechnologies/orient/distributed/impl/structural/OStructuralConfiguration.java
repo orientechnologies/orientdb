@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -112,17 +113,30 @@ public class OStructuralConfiguration {
     return currentNodeIdentity;
   }
 
-  public OStructuralSharedConfiguration getSharedConfiguration() {
+  public OReadStructuralSharedConfiguration readSharedConfiguration() {
     return sharedConfiguration;
   }
 
-  public synchronized void receiveSharedConfiguration(OLogId lastId, OStructuralSharedConfiguration sharedConfiguration) {
+  public OStructuralSharedConfiguration modifySharedConfiguration() {
+    try {
+      return sharedConfiguration.clone();
+    } catch (CloneNotSupportedException e) {
+      throw OException.wrapException(new ODatabaseException("Cloning error"), e);
+    }
+  }
+
+  public synchronized void receiveSharedConfiguration(OLogId lastId, OReadStructuralSharedConfiguration sharedConfiguration) {
     this.lastUpdateId = lastId;
-    this.sharedConfiguration = sharedConfiguration;
+    this.sharedConfiguration = (OStructuralSharedConfiguration) sharedConfiguration;
     this.save();
   }
 
   public OLogId getLastUpdateId() {
     return lastUpdateId;
+  }
+
+  public synchronized void update(OStructuralSharedConfiguration config) {
+    this.sharedConfiguration = config;
+    save();
   }
 }
