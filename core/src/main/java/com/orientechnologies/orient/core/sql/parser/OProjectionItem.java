@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -136,6 +137,14 @@ public class OProjectionItem extends SimpleNode {
       ((OInternalResultSet) value).reset();
       value = ((OInternalResultSet) value).stream().collect(Collectors.toList());
     }
+    if (value instanceof Iterator && !(value instanceof OIdentifiable)) {
+      Iterator iter = (Iterator) value;
+      value = new ArrayList<>();
+      while(iter.hasNext()){
+        ((List)value).add(iter.next());
+      }
+    }
+
     return value;
   }
 
