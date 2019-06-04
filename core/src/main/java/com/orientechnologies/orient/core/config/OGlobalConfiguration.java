@@ -39,6 +39,7 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -1066,7 +1067,21 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   AUTO_CLOSE_AFTER_DELAY("storage.autoCloseAfterDelay",
       "Enable auto close of storage after a specified delay if no session are active", Boolean.class, false),
 
-  AUTO_CLOSE_DELAY("storage.autoCloseDelay", "Storage auto close delay time in minutes", Integer.class, 20);
+  AUTO_CLOSE_DELAY("storage.autoCloseDelay", "Storage auto close delay time in minutes", Integer.class, 20),
+
+  /**
+   * @Since 3.1
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+
+  DISTRIBUTED("distributed", "Enable the clustering mode", Boolean.class, false, false, false, true),
+
+  /**
+   * @Since 3.1
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+
+  DISTRIBUTED_NODE_NAME("distributed.nodeName", "Name of the OrientDB node in the cluster", String.class, null, false, false, true);
 
   static {
     readConfiguration();
@@ -1084,6 +1099,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   private final OConfigurationChangeCallback changeCallback;
   private final Boolean                      canChangeAtRuntime;
   private final boolean                      hidden;
+  private       boolean                      env;
 
   private volatile Object value = nullValue;
 
@@ -1109,13 +1125,20 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final boolean iCanChange, final boolean iHidden) {
+    this(iKey, iDescription, iType, iDefValue, iCanChange, iHidden, false);
+  }
+
+  OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
+      final boolean iCanChange, final boolean iHidden, final boolean iEnv) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
     canChangeAtRuntime = iCanChange;
     hidden = iHidden;
+    env = iEnv;
     changeCallback = null;
+
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -1182,6 +1205,24 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       if (prop != null)
         config.setValue(prop);
     }
+
+    for (OGlobalConfiguration config : values()) {
+
+      String key = getEnvKey(config);
+      if (key != null) {
+        prop = System.getenv(key);
+        if (prop != null) {
+          config.setValue(prop);
+        }
+      }
+    }
+  }
+
+  public static String getEnvKey(OGlobalConfiguration config) {
+
+    if (!config.env)
+      return null;
+    return "ORIENTDB_" + config.name();
   }
 
   public <T> T getValue() {
