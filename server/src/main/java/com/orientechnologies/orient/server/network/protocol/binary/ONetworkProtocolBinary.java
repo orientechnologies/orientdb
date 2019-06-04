@@ -345,6 +345,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } catch (IOException e) {
             OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
             sendShutdown();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error while binary response serialization", e);
+            sendShutdown();
+            throw e;
           } finally {
             afterOperationRequest(connection);
           }
