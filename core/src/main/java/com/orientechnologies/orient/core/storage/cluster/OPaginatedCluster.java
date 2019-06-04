@@ -17,7 +17,7 @@ public abstract class OPaginatedCluster extends ODurableComponent implements OCl
 
   @SuppressWarnings("SameReturnValue")
   public static int getLatestBinaryVersion() {
-    return 1;
+    return 2;
   }
 
   protected OPaginatedCluster(final OAbstractPaginatedStorage storage, final String name, final String extension,
