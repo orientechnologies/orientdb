@@ -101,7 +101,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
   protected OEnterpriseProfiler profiler;
 
-  private OEnterpriseCloudManager cloudManager;
 
   private NodesManager nodesManager;
 
@@ -192,9 +191,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         installer.setDaemon(true);
         installer.start();
         Orient.instance().addDbLifecycleListener(this);
-        cloudManager = new OEnterpriseCloudManager(this);
 
-        cloudManager.start();
 
       }
     } catch (Exception e) {
@@ -207,7 +204,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   public void shutdown() {
     if (enabled) {
 
-      cloudManager.shutdown();
 
       uninstallCommands();
       uninstallProfiler();
@@ -487,9 +483,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     }
   }
 
-  public OEnterpriseCloudManager getCloudManager() {
-    return cloudManager;
-  }
+
 
   public boolean isDistributed() {
     return server.getDistributedManager() != null;
@@ -500,13 +494,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     return server.getDistributedManager();
   }
 
-  public boolean isCloudConnected() {
-    return cloudManager.isConnected();
-  }
-
-  public String getMonitoringUrl() {
-    return cloudManager.getMonitoringUrl();
-  }
 
   public String getNodeName() {
     return isDistributed() ? server.getDistributedManager().getLocalNodeName() : "orientdb";

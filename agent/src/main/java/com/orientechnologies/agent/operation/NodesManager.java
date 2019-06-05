@@ -1,7 +1,6 @@
 package com.orientechnologies.agent.operation;
 
 import com.orientechnologies.agent.cloud.processor.tasks.*;
-import com.orientechnologies.agent.cloud.processor.tasks.backup.*;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperation;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationTask;
@@ -22,17 +21,7 @@ public class NodesManager {
   }
 
   private void initCommands() {
-    NodeOperationTask.register(1, () -> new EnterpriseStatsTask(), () -> new EnterpriseStatsResponse());
     NodeOperationTask.register(2, () -> new NewEnterpriseStatsTask(), () -> new EnterpriseStatsResponse());
-    NodeOperationTask.register(10, () -> new AddBackupTask(), () -> new AddBackupTaskResponse());
-    NodeOperationTask.register(11, () -> new ListBackupTask(), () -> new ListBackupTaskResponse());
-    NodeOperationTask.register(12, () -> new RemoveBackupTask(), () -> new OkEmptyResponse());
-    NodeOperationTask.register(13, () -> new ListBackupLogsTask(), () -> new ListBackupLogsResponse());
-    NodeOperationTask.register(14, () -> new ChangeBackupTask(), () -> new ChangeBackupTaskResponse());
-    NodeOperationTask.register(15, () -> new RestoreBackupTask(), () -> new OkEmptyResponse());
-
-    NodeOperationTask.register(20, () -> new ListConnectionsTask(), () -> new ListConnectionsTaskResponse());
-    NodeOperationTask.register(21, () -> new ThreadDumpTask(), () -> new ThreadDumpTaskResponse());
   }
 
   public List<OperationResponseFromNode> sendAll(NodeOperation task) {
