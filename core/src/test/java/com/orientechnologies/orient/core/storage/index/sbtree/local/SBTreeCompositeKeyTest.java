@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,11 +27,11 @@ import static org.junit.Assert.assertTrue;
  */
 public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
-  private OSBTree<OCompositeKey, OIdentifiable> localSBTree;
+  private OSBTreeV1<OCompositeKey, OIdentifiable> localSBTree;
 
   @Before
   public void beforeMethod() throws Exception {
-    localSBTree = new OSBTree<>("localSBTreeCompositeKeyTest", ".sbt", ".nbt",
+    localSBTree = new OSBTreeV1<>("localSBTreeCompositeKeyTest", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) database.getStorage().getUnderlying());
     localSBTree.create(OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 2, false, null);
 

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,9 +57,9 @@ final class ONullBucket extends ODurablePage {
   private static final int RIDS_SIZE_OFFSET          = EMBEDDED_RIDS_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int RIDS_OFFSET               = RIDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private final OSBTree<OMultiValueEntry, Byte> multiContainer;
+  private final OSBTreeV1<OMultiValueEntry, Byte> multiContainer;
 
-  ONullBucket(final OCacheEntry cacheEntry, final OSBTree<OMultiValueEntry, Byte> multiContainer) {
+  ONullBucket(final OCacheEntry cacheEntry, final OSBTreeV1<OMultiValueEntry, Byte> multiContainer) {
     super(cacheEntry);
 
     this.multiContainer = multiContainer;

@@ -18,7 +18,7 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.index.sbtree.local;
+package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 
 import com.orientechnologies.orient.core.exception.ODurableComponentException;
 
@@ -32,7 +32,7 @@ public class OSBTreeException extends ODurableComponentException {
     super(exception);
   }
 
-  public OSBTreeException(String message, OSBTree component) {
+  public OSBTreeException(String message, OSBTreeV1 component) {
     super(message, component);
   }
 }

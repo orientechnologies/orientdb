@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeValuePage;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;

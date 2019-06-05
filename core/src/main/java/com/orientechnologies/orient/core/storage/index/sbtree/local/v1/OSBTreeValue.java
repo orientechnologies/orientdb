@@ -18,7 +18,7 @@
   *
   */
 
-package com.orientechnologies.orient.core.storage.index.sbtree.local;
+package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)

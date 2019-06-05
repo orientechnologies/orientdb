@@ -6,6 +6,8 @@ import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.ONullBucket;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeValue;
 import org.junit.Assert;
 import org.junit.Test;
 

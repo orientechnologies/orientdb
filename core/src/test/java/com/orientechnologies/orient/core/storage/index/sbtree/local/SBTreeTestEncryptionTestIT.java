@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 
 import java.io.File;
 
@@ -27,7 +28,7 @@ public class SBTreeTestEncryptionTestIT extends SBTreeTestIT {
     orientDB.create(dbName, ODatabaseType.PLOCAL);
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
-    sbTree = new OSBTree<>("sbTreeEncrypted", ".sbt", ".nbt",
+    sbTree = new OSBTreeV1<>("sbTreeEncrypted", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 
     final OEncryption encryption = OEncryptionFactory.INSTANCE.getEncryption("aes/gcm", "T1JJRU5UREJfSVNfQ09PTA==");

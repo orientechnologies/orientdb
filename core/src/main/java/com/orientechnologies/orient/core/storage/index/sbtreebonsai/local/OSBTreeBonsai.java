@@ -23,7 +23,7 @@ package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.index.sbtree.OTreeInternal;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 
@@ -32,9 +32,9 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * The tree that have similar structure to {@link OSBTree} and designed to store small entries. <br>
+ * The tree that have similar structure to {@link OSBTreeV1} and designed to store small entries. <br>
  * <br>
- * The tree algorithm is the same as in {@link OSBTree}, but it have tiny buckets.<br>
+ * The tree algorithm is the same as in {@link OSBTreeV1}, but it have tiny buckets.<br>
  * The {@link OReadCache} could contain several buckets. That's why there is no huge resource consuming when you have lots of
  * OSBTreeBonsai that contain only few records.<br>
  * <br>

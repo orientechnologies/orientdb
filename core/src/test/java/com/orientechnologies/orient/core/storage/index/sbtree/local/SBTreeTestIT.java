@@ -2,31 +2,20 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -34,7 +23,7 @@ import java.util.TreeSet;
  */
 public class SBTreeTestIT {
   private static final int KEYS_COUNT = 500000;
-  OSBTree<Integer, OIdentifiable> sbTree;
+  OSBTreeV1<Integer, OIdentifiable> sbTree;
   protected ODatabaseSession databaseDocumentTx;
   protected String           buildDirectory;
   protected OrientDB         orientDB;
@@ -54,7 +43,7 @@ public class SBTreeTestIT {
 
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
-    sbTree = new OSBTree<>("sbTree", ".sbt", ".nbt",
+    sbTree = new OSBTreeV1<>("sbTree", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, null);
   }
@@ -491,7 +480,7 @@ public class SBTreeTestIT {
 
   @Test
   public void testNullKeysInSBTree() throws Exception {
-    final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<>("nullSBTree", ".sbt", ".nbt",
+    final OSBTreeV1<Integer, OIdentifiable> nullSBTree = new OSBTreeV1<>("nullSBTree", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     nullSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true, null);
 
