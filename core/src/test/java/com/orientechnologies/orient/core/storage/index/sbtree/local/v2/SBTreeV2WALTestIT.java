@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.local;
+package com.orientechnologies.orient.core.storage.index.sbtree.local.v2;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -32,7 +32,7 @@ import java.util.Locale;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/27/13
  */
-public class SBTreeWALTestIT extends SBTreeTestIT {
+public class SBTreeV2WALTestIT extends SBTreeV2TestIT {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
@@ -48,9 +48,9 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   private String expectedStorageDir;
   private String actualStorageDir;
 
-  private static final String DIR_NAME         = SBTreeWALTestIT.class.getSimpleName();
-  private static final String ACTUAL_DB_NAME   = "sbtreeWithWALTestActual";
-  private static final String EXPECTED_DB_NAME = "sbtreeWithWALTestExpected";
+  private static final String DIR_NAME         = SBTreeV2WALTestIT.class.getSimpleName();
+  private static final String ACTUAL_DB_NAME   = "sbtreeV2WithWALTestActual";
+  private static final String EXPECTED_DB_NAME = "sbtreeV2WithWALTestExpected";
 
   @Before
   public void before() throws Exception {
@@ -271,6 +271,11 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
 
               final long fileId = updatePageRecord.getFileId();
               final long pageIndex = updatePageRecord.getPageIndex();
+
+              if (!expectedWriteCache.exists(fileId)) {
+                //some files can be absent for example configuration files
+                continue;
+              }
 
               OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false, null);
               if (cacheEntry == null) {

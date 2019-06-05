@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.local;
+package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -10,11 +10,10 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 
 import java.io.File;
 
-public class SBTreeTestEncryptionTestIT extends SBTreeTestIT {
+public class SBTreeV1TestEncryptionTestIT extends SBTreeTestIT {
   @Override
   public void before() throws Exception {
     buildDirectory = System.getProperty("buildDirectory", ".");

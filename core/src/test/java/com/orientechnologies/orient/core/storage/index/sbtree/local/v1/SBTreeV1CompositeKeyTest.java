@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.local;
+package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 
 import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 15.08.13
  */
-public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
+public class SBTreeV1CompositeKeyTest extends DatabaseAbstractTest {
 
   private OSBTreeV1<OCompositeKey, OIdentifiable> localSBTree;
 

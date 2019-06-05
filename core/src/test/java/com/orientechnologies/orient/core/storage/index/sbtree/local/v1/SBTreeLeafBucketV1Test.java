@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.local;
+package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
@@ -9,8 +9,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeBucket;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeValue;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,7 +18,7 @@ import java.util.*;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 09.08.13
  */
-public class SBTreeLeafBucketTest {
+public class SBTreeLeafBucketV1Test {
   @Test
   public void testInitialization() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);

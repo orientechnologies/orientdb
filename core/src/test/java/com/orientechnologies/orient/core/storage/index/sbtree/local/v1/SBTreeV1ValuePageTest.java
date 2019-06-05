@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.local;
+package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeValuePage;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
@@ -17,7 +16,7 @@ import java.util.Random;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/1/13
  */
-public class SBTreeValuePageTest {
+public class SBTreeV1ValuePageTest {
   @Test
   public void fillPageDataTest() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
