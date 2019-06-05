@@ -107,7 +107,7 @@
 //  private void createActualHashTable() {
 //    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<>(OIntegerSerializer.INSTANCE);
 //
-//    localHashTable = new OLocalHashTableV2<>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
+//    localHashTable = new OLocalHashTableV3<>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
 //        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 //    localHashTable
 //        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
