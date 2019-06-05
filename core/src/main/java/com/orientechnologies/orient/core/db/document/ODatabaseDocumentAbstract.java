@@ -1429,17 +1429,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * Creates a new ODocument.
    */
   public ODocument newInstance() {
-    return new ODocument();
+    return new ODocument(this);
   }
 
   @Override
   public OBlob newBlob(byte[] bytes) {
-    return new ORecordBytes(bytes);
+    return new ORecordBytes(this, bytes);
   }
 
   @Override
   public OBlob newBlob() {
-    return new ORecordBytes();
+    return new ORecordBytes(this);
   }
 
   /**
@@ -1451,7 +1451,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public ODocument newInstance(final String iClassName) {
-    return new ODocument(iClassName);
+    return new ODocument(this, iClassName);
   }
 
   @Override
@@ -1469,12 +1469,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public OVertex newVertex(final String iClassName) {
-    OClass cl = getClass(iClassName);
-    if (cl == null || !cl.isVertexType()) {
-      throw new IllegalArgumentException("" + iClassName + " is not a vertex class");
-    }
-    OVertex doc = new OVertexDocument(cl);
-    return doc;
+    return new OVertexDocument(this, iClassName);
   }
 
   @Override
@@ -1639,7 +1634,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (prop == null) {
       return false;
     }
-    if(prop.getLinkedClass() == null ){
+    if (prop.getLinkedClass() == null) {
       return false;
     }
     return linkedClass.isSubClassOf(prop.getLinkedClass());

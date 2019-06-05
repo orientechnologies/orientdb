@@ -56,7 +56,6 @@ public abstract class ORecordAbstract implements ORecord {
   protected           boolean               dirty          = true;
   protected           boolean               contentChanged = true;
   protected           ORecordElement.STATUS status         = ORecordElement.STATUS.LOADED;
-  protected transient Set<ORecordListener>  listeners      = null;
 
   private transient Set<OIdentityChangeListener> newIdentityChangeListeners = null;
   protected         ODirtyManager                dirtyManager;
@@ -94,7 +93,6 @@ public abstract class ORecordAbstract implements ORecord {
 
   public ORecordAbstract clear() {
     setDirty();
-    invokeListenerEvent(ORecordListener.EVENT.CLEAR);
     return this;
   }
 
@@ -108,16 +106,12 @@ public abstract class ORecordAbstract implements ORecord {
     if (recordId != null)
       recordId.reset();
 
-    invokeListenerEvent(ORecordListener.EVENT.RESET);
-
     return this;
   }
 
   public byte[] toStream() {
     if (source == null)
       source = recordFormat.toStream(this, false);
-
-    invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
     return source;
   }
@@ -129,8 +123,6 @@ public abstract class ORecordAbstract implements ORecord {
     source = iRecordBuffer;
     size = iRecordBuffer != null ? iRecordBuffer.length : 0;
     status = ORecordElement.STATUS.LOADED;
-
-    invokeListenerEvent(ORecordListener.EVENT.UNMARSHALL);
 
     return this;
   }
@@ -215,7 +207,6 @@ public abstract class ORecordAbstract implements ORecord {
     status = ORecordElement.STATUS.NOT_LOADED;
     source = null;
     unsetDirty();
-    invokeListenerEvent(ORecordListener.EVENT.UNLOAD);
     return this;
   }
 
@@ -366,7 +357,6 @@ public abstract class ORecordAbstract implements ORecord {
     cloned.recordVersion = recordVersion;
     cloned.status = status;
     cloned.recordFormat = recordFormat;
-    cloned.listeners = null;
     cloned.dirty = false;
     cloned.contentChanged = false;
     cloned.dirtyManager = null;
@@ -429,8 +419,6 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   protected void onAfterIdentityChanged(final ORecord iRecord) {
-    invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
-
     if (newIdentityChangeListeners != null) {
       for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
         changeListener.onAfterIdentityChange(this);
@@ -444,33 +432,6 @@ public abstract class ORecordAbstract implements ORecord {
 
   protected ODatabaseDocumentInternal getDatabaseIfDefinedInternal() {
     return ODatabaseRecordThreadLocal.instance().getIfDefined();
-  }
-
-  /**
-   * Add a listener to the current document to catch all the supported events.
-   *
-   * @param iListener ODocumentListener implementation
-   *
-   * @see ORecordListener ju
-   */
-  protected void addListener(final ORecordListener iListener) {
-    if (listeners == null)
-      listeners = Collections.newSetFromMap(new WeakHashMap<ORecordListener, Boolean>());
-
-    listeners.add(iListener);
-  }
-
-  /**
-   * Remove the current event listener.
-   *
-   * @see ORecordListener
-   */
-  protected void removeListener(final ORecordListener listener) {
-    if (listeners != null) {
-      listeners.remove(listener);
-      if (listeners.isEmpty())
-        listeners = null;
-    }
   }
 
   protected <RET extends ORecord> RET flatCopy() {
@@ -488,16 +449,9 @@ public abstract class ORecordAbstract implements ORecord {
       newIdentityChangeListeners.remove(identityChangeListener);
   }
 
-  protected void setup() {
+  protected void setup(ODatabaseDocumentInternal db) {
     if (recordId == null)
       recordId = new ORecordId();
-  }
-
-  protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
-    if (listeners != null)
-      for (final ORecordListener listener : listeners)
-        if (listener != null)
-          listener.onEvent(this, iEvent);
   }
 
   protected void checkForLoading() {

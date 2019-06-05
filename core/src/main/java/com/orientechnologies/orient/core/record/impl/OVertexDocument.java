@@ -4,6 +4,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -25,10 +26,24 @@ public class OVertexDocument extends ODocument implements OVertex {
 
   public OVertexDocument(OClass cl) {
     super(cl);
+    if (!getSchemaClass().isVertexType()) {
+      throw new IllegalArgumentException("" + getClassName() + " is not a vertex class");
+    }
   }
 
   public OVertexDocument() {
     super();
+  }
+
+  public OVertexDocument(ODatabaseSession session) {
+    super(session);
+  }
+
+  public OVertexDocument(ODatabaseSession session, String klass) {
+    super(session, klass);
+    if (!getSchemaClass().isVertexType()) {
+      throw new IllegalArgumentException("" + getClassName() + " is not a vertex class");
+    }
   }
 
   public OVertexDocument(String klass) {

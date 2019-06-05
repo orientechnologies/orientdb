@@ -44,11 +44,11 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
   private static final byte[] EMPTY_SOURCE     = new byte[] {};
 
   public ORecordBytes() {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   public ORecordBytes(final ODatabaseDocumentInternal iDatabase) {
-    setup();
+    setup(iDatabase);
     ODatabaseRecordThreadLocal.instance().set(iDatabase);
   }
 
@@ -61,12 +61,12 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
     super(iSource);
     dirty = true;
     contentChanged = true;
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   public ORecordBytes(final ORID iRecordId) {
     recordId = (ORecordId) iRecordId;
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   public ORecordBytes reset(final byte[] iSource) {
@@ -103,8 +103,8 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
   }
 
   @Override
-  protected void setup() {
-    super.setup();
+  protected void setup(ODatabaseDocumentInternal db) {
+    super.setup(db);
   }
 
   /**

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
@@ -147,8 +148,16 @@ public class ODocument extends ORecordAbstract
    * Internal constructor used on unmarshalling.
    */
   public ODocument() {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
+
+  /**
+   * Internal constructor used on unmarshalling.
+   */
+  public ODocument(ODatabaseSession database) {
+    setup((ODatabaseDocumentInternal) database);
+  }
+
 
   /**
    * Creates a new instance by the raw stream usually read from the database. New instances are not persistent until {@link #save()}
@@ -159,7 +168,7 @@ public class ODocument extends ORecordAbstract
   @Deprecated
   public ODocument(final byte[] iSource) {
     source = iSource;
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   /**
@@ -172,7 +181,7 @@ public class ODocument extends ORecordAbstract
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     OIOUtils.copyStream(iSource, out, -1);
     source = out.toByteArray();
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   /**
@@ -182,7 +191,7 @@ public class ODocument extends ORecordAbstract
    * @param iRID Record Id
    */
   public ODocument(final ORID iRID) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     recordId = (ORecordId) iRID;
     status = STATUS.NOT_LOADED;
     dirty = false;
@@ -220,9 +229,23 @@ public class ODocument extends ORecordAbstract
    * @param iClassName Class name
    */
   public ODocument(final String iClassName) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     setClassName(iClassName);
   }
+
+
+  /**
+   * Creates a new instance in memory of the specified class. New instances are not persistent until {@link #save()} is called.
+   *
+   * @param session the session the instance will be attached to
+   * @param iClassName Class name
+   */
+  public ODocument(ODatabaseSession session,final String iClassName) {
+    setup((ODatabaseDocumentInternal) session);
+    setClassName(iClassName);
+  }
+
+
 
   /**
    * Creates a new instance in memory of the specified schema class. New instances are not persistent until {@link #save()} is
@@ -240,7 +263,7 @@ public class ODocument extends ORecordAbstract
    * @param iFields Array of field pairs
    */
   public ODocument(final Object[] iFields) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     if (iFields != null && iFields.length > 0)
       for (int i = 0; i < iFields.length; i += 2) {
         field(iFields[i].toString(), iFields[i + 1]);
@@ -253,7 +276,7 @@ public class ODocument extends ORecordAbstract
    * @param iFieldMap Map of Object/Object
    */
   public ODocument(final Map<?, Object> iFieldMap) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     if (iFieldMap != null && !iFieldMap.isEmpty())
       for (Entry<?, Object> entry : iFieldMap.entrySet()) {
         field(entry.getKey().toString(), entry.getValue());
@@ -1026,7 +1049,7 @@ public class ODocument extends ORecordAbstract
   @Override
   public byte[] toStream() {
     if (recordFormat == null)
-      setup();
+      setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     return toStream(false);
   }
 
@@ -2484,7 +2507,7 @@ public class ODocument extends ORecordAbstract
     }
 
     if (recordFormat == null)
-      setup();
+      setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
 
     status = ORecordElement.STATUS.UNMARSHALLING;
     try {
@@ -3065,7 +3088,6 @@ public class ODocument extends ORecordAbstract
     } finally {
       status = prev;
     }
-    invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
     return source;
   }
@@ -3311,12 +3333,12 @@ public class ODocument extends ORecordAbstract
 
   /**
    * Internal.
+   * @param db
    */
   @Override
-  protected void setup() {
-    super.setup();
+  protected void setup(ODatabaseDocumentInternal db) {
+    super.setup(db);
 
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null)
       recordFormat = db.getSerializer();
 
