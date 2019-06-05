@@ -49,6 +49,7 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
   }
 
   @Test
+  @Ignore
   public void testCreatedDESEncryptedDatabase() {
     OFileUtils.deleteRecursively(new File("target/" + DBNAME_DATABASETEST));
 
@@ -111,6 +112,9 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
 
     } finally {
       db.activateOnCurrentThread();
+      if (db.isClosed()) {
+        db.open("admin", "admin");
+      }
       db.drop();
     }
   }

@@ -5,11 +5,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -17,6 +13,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1.OCellBTreeMultiValueV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.OCellBTreeMultiValueV2;
+import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v3.OCellBTreeMultiValueV3;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,7 +21,8 @@ import java.util.Map;
 import java.util.Set;
 
 public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine {
-  private static final int    BINARY_VERSION             = 2;
+  private static final int    BINARY_VERSION             = 3;
+
   public static final  String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
   public static final  String M_CONTAINER_EXTENSION      = ".mbt";
@@ -34,10 +32,14 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
   public OCellBTreeMultiValueIndexEngine(String name, OAbstractPaginatedStorage storage, final int version) {
     this.name = name;
+
     if (version == 1) {
       this.sbTree = new OCellBTreeMultiValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 2) {
       this.sbTree = new OCellBTreeMultiValueV2<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
+          storage);
+    } else if (version == 3) {
+      this.sbTree = new OCellBTreeMultiValueV3<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
           storage);
     } else {
       throw new IllegalStateException("Invalid tree version " + version);

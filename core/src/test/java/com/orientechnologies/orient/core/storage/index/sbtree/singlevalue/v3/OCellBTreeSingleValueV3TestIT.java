@@ -1,39 +1,30 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue;
+package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
-public class OCellBTreeSingleValueTestIT {
-  private OCellBTreeSingleValue<String> singleValueTree;
-  private OrientDB                      orientDB;
+public class OCellBTreeSingleValueV3TestIT {
+  private OCellBTreeSingleValueV3<String> singleValueTree;
+  private OrientDB                        orientDB;
 
   private String dbName;
 
   @Before
   public void before() throws Exception {
     final String buildDirectory =
-        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeSingleValueTestIT.class.getSimpleName();
+        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeSingleValueV3TestIT.class.getSimpleName();
 
     dbName = "localSingleBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);
@@ -44,7 +35,7 @@ public class OCellBTreeSingleValueTestIT {
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
-    singleValueTree = new OCellBTreeSingleValue<>("singleBTree", ".sbt", ".nbt",
+    singleValueTree = new OCellBTreeSingleValueV3<>("singleBTree", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     singleValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
@@ -307,7 +298,7 @@ public class OCellBTreeSingleValueTestIT {
     Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
 
-    final OCellBTreeSingleValue.OSBTreeKeyCursor<String> cursor = singleValueTree.keyCursor();
+    final OCellBTreeSingleValue.OCellBTreeKeyCursor<String> cursor = singleValueTree.keyCursor();
 
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = cursor.next(-1);
@@ -417,7 +408,7 @@ public class OCellBTreeSingleValueTestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = singleValueTree
+      final OCellBTreeSingleValue.OCellBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
@@ -458,7 +449,7 @@ public class OCellBTreeSingleValueTestIT {
         toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = singleValueTree
+      final OCellBTreeSingleValue.OCellBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
@@ -515,7 +506,7 @@ public class OCellBTreeSingleValueTestIT {
         fromKey = toKey;
       }
 
-      OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = singleValueTree
+      OCellBTreeSingleValue.OCellBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;

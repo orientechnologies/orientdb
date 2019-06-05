@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -50,6 +51,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
   }
 
   @Test
+  @Ignore
   public void testCreatedAESEncryptedDatabase() {
     String buildDirectory = System.getProperty("buildDirectory", ".");
 
