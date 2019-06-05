@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
@@ -11,7 +11,7 @@ public class OLocalHashTableException extends ODurableComponentException {
     super(exception);
   }
 
-  public OLocalHashTableException(String message, OLocalHashTable component) {
+  public OLocalHashTableException(String message, OLocalHashTableV2 component) {
     super(message, component);
   }
 }

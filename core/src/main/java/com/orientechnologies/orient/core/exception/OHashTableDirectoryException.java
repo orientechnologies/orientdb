@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableDirectory;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OHashTableDirectory;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.

@@ -18,9 +18,7 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.index.hashindex.local;
-
-import java.io.IOException;
+package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -41,7 +39,7 @@ public class ONullBucket<V> extends ODurablePage {
       setByteValue(NEXT_FREE_POSITION, (byte) 0);
   }
 
-  public void setValue(V value) throws IOException {
+  public void setValue(V value) {
     setByteValue(NEXT_FREE_POSITION, (byte) 1);
 
     final int valueSize = valueSerializer.getObjectSize(value);

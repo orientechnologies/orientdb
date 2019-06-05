@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -11,9 +12,9 @@ import java.util.Set;
 /**
  * Created by frank on 24/04/2016.
  */
-public abstract class OLocalHashTableBase {
-  protected static final int                              KEYS_COUNT = 500000;
-  protected              OLocalHashTable<Integer, String> localHashTable;
+public abstract class OLocalHashTableV2Base {
+  protected static final int                                KEYS_COUNT = 500000;
+  protected              OLocalHashTableV2<Integer, String> localHashTable;
 
   @Test
   public void testKeyPut() throws IOException {

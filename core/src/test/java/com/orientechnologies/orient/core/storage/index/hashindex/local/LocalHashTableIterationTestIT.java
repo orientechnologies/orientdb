@@ -5,18 +5,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OHashIndexBucket;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
+import org.junit.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -27,7 +20,7 @@ public class LocalHashTableIterationTestIT {
 
   private ODatabaseDocumentTx databaseDocumentTx;
 
-  private OLocalHashTable<Integer, String> localHashTable;
+  private OLocalHashTableV2<Integer, String> localHashTable;
 
   @Before
   public void beforeClass() throws Exception {
@@ -50,7 +43,7 @@ public class LocalHashTableIterationTestIT {
       }
     };
 
-    localHashTable = new OLocalHashTable<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTableV2<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     localHashTable

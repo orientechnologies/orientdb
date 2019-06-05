@@ -18,7 +18,7 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.index.hashindex.local;
+package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -40,11 +40,11 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
 
   private static final int ITEM_SIZE                  = OByteSerializer.BYTE_SIZE + 3 * OLongSerializer.LONG_SIZE;
 
-  public OHashIndexFileLevelMetadataPage(OCacheEntry cacheEntry, boolean isNewPage) throws IOException {
+  OHashIndexFileLevelMetadataPage(OCacheEntry cacheEntry, boolean isNewPage) {
     super(cacheEntry);
 
     if (isNewPage) {
-      for (int i = 0; i < OLocalHashTable.HASH_CODE_SIZE; i++)
+      for (int i = 0; i < OLocalHashTableV2.HASH_CODE_SIZE; i++)
         remove(i);
 
       setRecordsCount(0);
@@ -53,15 +53,15 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
     }
   }
 
-  public void setRecordsCount(long recordsCount) throws IOException {
+  void setRecordsCount(long recordsCount) {
     setLongValue(RECORDS_COUNT_OFFSET, recordsCount);
   }
 
-  public long getRecordsCount() throws IOException {
+  long getRecordsCount() {
     return getLongValue(RECORDS_COUNT_OFFSET);
   }
 
-  public void setKeySerializerId(byte keySerializerId) throws IOException {
+  private void setKeySerializerId(byte keySerializerId) {
     setByteValue(KEY_SERIALIZER_ID_OFFSET, keySerializerId);
   }
 
@@ -69,7 +69,7 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
     return getByteValue(KEY_SERIALIZER_ID_OFFSET);
   }
 
-  public void setValueSerializerId(byte valueSerializerId) throws IOException {
+  private void setValueSerializerId(byte valueSerializerId) {
     setByteValue(VALUE_SERIALIZER_ID_OFFSET, valueSerializerId);
   }
 
@@ -77,7 +77,7 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
     return getByteValue(VALUE_SERIALIZER_ID_OFFSET);
   }
 
-  public void setFileMetadata(int index, long fileId, long bucketsCount, long tombstoneIndex) throws IOException {
+  public void setFileMetadata(int index, long fileId, long bucketsCount, long tombstoneIndex) {
     int offset = METADATA_ARRAY_OFFSET + index * ITEM_SIZE;
 
     setByteValue(offset, (byte) 1);
@@ -94,7 +94,7 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
     offset += OLongSerializer.LONG_SIZE;
   }
 
-  public void setBucketsCount(int index, long bucketsCount) throws IOException {
+  public void setBucketsCount(int index, long bucketsCount) {
     assert !isRemoved(index);
 
     int offset = METADATA_ARRAY_OFFSET + index * ITEM_SIZE;
@@ -103,7 +103,7 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
     setLongValue(offset, bucketsCount);
   }
 
-  public long getBucketsCount(int index) throws IOException {
+  public long getBucketsCount(int index) {
     assert !isRemoved(index);
 
     int offset = METADATA_ARRAY_OFFSET + index * ITEM_SIZE;
@@ -112,7 +112,7 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
     return getLongValue(offset);
   }
 
-  public void setTombstoneIndex(int index, long tombstoneIndex) throws IOException {
+  public void setTombstoneIndex(int index, long tombstoneIndex) {
     assert !isRemoved(index);
 
     int offset = METADATA_ARRAY_OFFSET + index * ITEM_SIZE;
@@ -139,7 +139,7 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
     return getLongValue(offset);
   }
 
-  public boolean isRemoved(int index) {
+  private boolean isRemoved(int index) {
     final int offset = METADATA_ARRAY_OFFSET + index * ITEM_SIZE;
     return getByteValue(offset) == 0;
   }

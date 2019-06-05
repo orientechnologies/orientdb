@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.hashindex.local;
+package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -16,6 +16,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,7 +28,7 @@ import java.util.List;
 /**
  * Implementation of hash index which is based on <a href="http://en.wikipedia.org/wiki/Extendible_hashing">extendible hashing
  * algorithm</a>. The directory for extindible hashing is implemented in
- * {@link com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableDirectory} class. Directory is not implemented
+ * {@link OHashTableDirectory} class. Directory is not implemented
  * according
  * to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead it is implemented
  * according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002". Which has much less
@@ -73,7 +75,7 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.03.13
  */
-public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTable<K, V> {
+public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashTable<K, V> {
   private static final int MAX_KEY_SIZE = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
 
   private static final long HASH_CODE_MIN_VALUE = 0;
@@ -110,7 +112,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   private OEncryption encryption;
 
-  public OLocalHashTable(final String name, final String metadataConfigurationFileExtension, final String treeStateFileExtension,
+  public OLocalHashTableV2(final String name, final String metadataConfigurationFileExtension, final String treeStateFileExtension,
       final String bucketFileExtension, final String nullBucketFileExtension,
       final OAbstractPaginatedStorage abstractPaginatedStorage) {
     super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);

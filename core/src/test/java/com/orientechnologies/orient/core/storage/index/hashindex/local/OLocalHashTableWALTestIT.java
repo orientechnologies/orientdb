@@ -47,7 +47,7 @@
 // * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
 // * @since 5/19/14
 // */
-//public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
+//public class OLocalHashTableWALTestIT extends OLocalHashTableV2Base {
 //  private static final String ACTUAL_DB_NAME   = OLocalHashTableWALTestIT.class.getSimpleName() + "Actual";
 //  private static final String EXPECTED_DB_NAME = OLocalHashTableWALTestIT.class.getSimpleName() + "Expected";
 //
@@ -107,7 +107,7 @@
 //  private void createActualHashTable() {
 //    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<>(OIntegerSerializer.INSTANCE);
 //
-//    localHashTable = new OLocalHashTable<>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
+//    localHashTable = new OLocalHashTableV2<>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
 //        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 //    localHashTable
 //        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
