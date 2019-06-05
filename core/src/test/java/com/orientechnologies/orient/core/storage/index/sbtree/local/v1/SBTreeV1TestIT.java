@@ -21,7 +21,7 @@ import java.util.*;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.08.13
  */
-public class SBTreeTestIT {
+public class SBTreeV1TestIT {
   private static final int KEYS_COUNT = 500000;
   OSBTreeV1<Integer, OIdentifiable> sbTree;
   protected ODatabaseSession databaseDocumentTx;
@@ -32,7 +32,7 @@ public class SBTreeTestIT {
 
   @Before
   public void before() throws Exception {
-    buildDirectory = System.getProperty("buildDirectory", ".") + File.separator + SBTreeTestIT.class.getSimpleName();
+    buildDirectory = System.getProperty("buildDirectory", ".") + File.separator + SBTreeV1TestIT.class.getSimpleName();
 
     dbName = "localSBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);

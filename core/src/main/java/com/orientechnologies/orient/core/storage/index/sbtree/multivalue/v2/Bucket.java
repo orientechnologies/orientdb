@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
 
 import java.io.IOException;
 import java.util.*;
@@ -58,10 +58,10 @@ final class Bucket<K> extends ODurablePage {
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
   private final OEncryption                       encryption;
-  private final OSBTreeV1<OMultiValueEntry, Byte> multiContainer;
+  private final OSBTreeV2<OMultiValueEntry, Byte> multiContainer;
 
   Bucket(final OCacheEntry cacheEntry, final boolean isLeaf, final OBinarySerializer<K> keySerializer, final OEncryption encryption,
-      final OSBTreeV1<OMultiValueEntry, Byte> multiContainer) {
+      final OSBTreeV2<OMultiValueEntry, Byte> multiContainer) {
     super(cacheEntry);
 
     this.isLeaf = isLeaf;
@@ -78,7 +78,7 @@ final class Bucket<K> extends ODurablePage {
   }
 
   Bucket(final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer, final OEncryption encryption,
-      final OSBTreeV1<OMultiValueEntry, Byte> multiContainer) {
+      final OSBTreeV2<OMultiValueEntry, Byte> multiContainer) {
     super(cacheEntry);
     this.encryption = encryption;
 
