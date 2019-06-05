@@ -42,6 +42,11 @@ node {
                   //sh "cd orientdb && mvn  javadoc:aggregate"
                   //sh "cd orientdb && rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
               }
+
+              build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
+              build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
+              build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
+
           }catch(e){
               slackSend(color: '#FF0000', channel: '#jenkins-failures', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${e}")
               throw e
