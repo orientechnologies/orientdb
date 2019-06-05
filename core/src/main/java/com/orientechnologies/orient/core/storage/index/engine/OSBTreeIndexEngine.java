@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -44,20 +45,26 @@ import java.util.Set;
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine implements OIndexEngine {
-  public static final int VERSION = 1;
+  public static final int VERSION = 2;
 
   public static final String DATA_FILE_EXTENSION        = ".sbt";
   public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OSBTree<Object, Object> sbTree;
-  private final int                       version;
-  private final String                    name;
+  private final int                     version;
+  private final String                  name;
 
   public OSBTreeIndexEngine(String name, OAbstractPaginatedStorage storage, int version) {
     this.name = name;
     this.version = version;
 
-    sbTree = new OSBTreeV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+    if (version == 1) {
+      sbTree = new OSBTreeV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+    } else if (version == 2) {
+      sbTree = new OSBTreeV2<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+    } else {
+      throw new IllegalStateException("Invalid version of index, version = " + version);
+    }
   }
 
   @Override
