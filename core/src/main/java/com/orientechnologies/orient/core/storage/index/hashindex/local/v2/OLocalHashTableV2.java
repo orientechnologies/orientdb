@@ -225,7 +225,7 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
             final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
                 encryption);
 
-            final OHashIndexBucket.Entry<K, V> entry = bucket.find(key, hashCode);
+            final Entry<K, V> entry = bucket.find(key, hashCode);
             if (entry == null) {
               return null;
             }
@@ -398,12 +398,12 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public OHashIndexBucket.Entry<K, V>[] higherEntries(final K key) {
+  public Entry<K, V>[] higherEntries(final K key) {
     return higherEntries(key, -1);
   }
 
   @Override
-  public OHashIndexBucket.Entry<K, V>[] higherEntries(K key, final int limit) {
+  public Entry<K, V>[] higherEntries(K key, final int limit) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -553,11 +553,11 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
     }
   }
 
-  private OHashIndexBucket.Entry<K, V>[] convertBucketToEntries(final OHashIndexBucket<K, V> bucket, final int startIndex,
+  private Entry<K, V>[] convertBucketToEntries(final OHashIndexBucket<K, V> bucket, final int startIndex,
       final int endIndex) {
     @SuppressWarnings("unchecked")
-    final OHashIndexBucket.Entry<K, V>[] entries = new OHashIndexBucket.Entry[endIndex - startIndex];
-    final Iterator<OHashIndexBucket.Entry<K, V>> iterator = bucket.iterator(startIndex);
+    final Entry<K, V>[] entries = new Entry[endIndex - startIndex];
+    final Iterator<Entry<K, V>> iterator = bucket.iterator(startIndex);
 
     for (int i = 0, k = startIndex; k < endIndex; i++, k++) {
       entries[i] = iterator.next();
@@ -677,7 +677,7 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key) {
+  public Entry<K, V>[] ceilingEntries(K key) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -738,7 +738,7 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public OHashIndexBucket.Entry<K, V> firstEntry() {
+  public Entry<K, V> firstEntry() {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -785,7 +785,7 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public OHashIndexBucket.Entry<K, V> lastEntry() {
+  public Entry<K, V> lastEntry() {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -836,7 +836,7 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key) {
+  public Entry<K, V>[] lowerEntries(K key) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -901,7 +901,7 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public OHashIndexBucket.Entry<K, V>[] floorEntries(K key) {
+  public Entry<K, V>[] floorEntries(K key) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -1684,14 +1684,14 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
       final int newBucketDepth) throws IOException {
     assert checkBucketDepth(bucket);
 
-    final List<OHashIndexBucket.Entry<K, V>> entries = new ArrayList<>(bucket.size());
-    for (final OHashIndexBucket.Entry<K, V> entry : bucket) {
+    final List<Entry<K, V>> entries = new ArrayList<>(bucket.size());
+    for (final Entry<K, V> entry : bucket) {
       entries.add(entry);
     }
 
     bucket.init(newBucketDepth);
 
-    for (final OHashIndexBucket.Entry<K, V> entry : entries) {
+    for (final Entry<K, V> entry : entries) {
       if (((keyHashFunction.hashCode(entry.key) >>> (HASH_CODE_SIZE - newBucketDepth)) & 1) == 0) {
         bucket.appendEntry(entry.hashCode, entry.key, entry.value);
       } else {
@@ -1734,7 +1734,7 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
       return true;
     }
 
-    final Iterator<OHashIndexBucket.Entry<K, V>> positionIterator = bucket.iterator();
+    final Iterator<Entry<K, V>> positionIterator = bucket.iterator();
 
     final long firstValue = keyHashFunction.hashCode(positionIterator.next().key) >>> (HASH_CODE_SIZE - bucketDepth);
     while (positionIterator.hasNext()) {

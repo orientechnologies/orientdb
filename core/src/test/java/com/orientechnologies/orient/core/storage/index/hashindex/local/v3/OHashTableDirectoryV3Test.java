@@ -1,13 +1,9 @@
-package com.orientechnologies.orient.core.storage.index.hashindex.local;
+package com.orientechnologies.orient.core.storage.index.hashindex.local.v3;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.ODirectoryFirstPage;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.ODirectoryPage;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OHashTableDirectory;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
 import org.assertj.core.api.Assertions;
 import org.junit.*;
 
@@ -17,18 +13,14 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/15/14
  */
-public class OHashTableDirectoryTest {
+public class OHashTableDirectoryV3Test {
   private static ODatabaseDocumentTx databaseDocumentTx;
 
   private static OHashTableDirectory directory;
 
   @BeforeClass
   public static void beforeClass() throws IOException {
-    String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
-
-    databaseDocumentTx = new ODatabaseDocumentTx("memory:" + OHashTableDirectoryTest.class.getSimpleName());
+    databaseDocumentTx = new ODatabaseDocumentTx("memory:" + OHashTableDirectoryV3Test.class.getSimpleName());
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -89,7 +81,7 @@ public class OHashTableDirectoryTest {
   public void addFirstLevel() throws IOException {
     OAtomicOperation atomicOperation = startTx();
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV3.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -110,7 +102,7 @@ public class OHashTableDirectoryTest {
   @Test
   public void changeFirstLevel() throws IOException {
     OAtomicOperation atomicOperation = startTx();
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV3.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -137,7 +129,7 @@ public class OHashTableDirectoryTest {
   public void addThreeRemoveSecondAddNewAndChange() throws IOException {
     OAtomicOperation atomicOperation = startTx();
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV3.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -178,7 +170,7 @@ public class OHashTableDirectoryTest {
   public void addRemoveChangeMix() throws IOException {
     OAtomicOperation atomicOperation = startTx();
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV3.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -262,7 +254,7 @@ public class OHashTableDirectoryTest {
     int secondIndex = -1;
     int thirdIndex = -1;
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV3.MAX_LEVEL_SIZE];
 
     for (int n = 0; n < ODirectoryFirstPage.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
@@ -359,7 +351,7 @@ public class OHashTableDirectoryTest {
   public void changeLastNodeSecondPage() throws IOException {
     OAtomicOperation atomicOperation = startTx();
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV3.MAX_LEVEL_SIZE];
 
     for (int n = 0; n < ODirectoryFirstPage.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)

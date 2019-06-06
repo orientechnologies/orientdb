@@ -1,12 +1,12 @@
-package com.orientechnologies.orient.core.storage.index.hashindex.local;
+package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OHashIndexBucket;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 import org.junit.*;
 
 import java.util.*;
@@ -15,7 +15,7 @@ import java.util.*;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 13.03.13
  */
-public class LocalHashTableIterationTestIT {
+public class LocalHashTableV2IterationTestIT {
   private static final int KEYS_COUNT = 500000;
 
   private ODatabaseDocumentTx databaseDocumentTx;
@@ -28,7 +28,7 @@ public class LocalHashTableIterationTestIT {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableIterationTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableV2IterationTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -36,12 +36,7 @@ public class LocalHashTableIterationTestIT {
 
     databaseDocumentTx.create();
 
-    OHashFunction<Integer> hashFunction = new OHashFunction<Integer>() {
-      @Override
-      public long hashCode(Integer value) {
-        return Long.MAX_VALUE / 2 + value;
-      }
-    };
+    OHashFunction<Integer> hashFunction = value -> Long.MAX_VALUE / 2 + value;
 
     localHashTable = new OLocalHashTableV2<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
@@ -79,7 +74,7 @@ public class LocalHashTableIterationTestIT {
       }
     }
 
-    OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(Integer.MIN_VALUE);
+    OHashTable.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(Integer.MIN_VALUE);
     int curPos = 0;
     for (int key : keys) {
       int sKey = entries[curPos].key;
@@ -110,7 +105,7 @@ public class LocalHashTableIterationTestIT {
 
     Collections.sort(keys);
 
-    OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(keys.get(10));
+    OHashTable.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(keys.get(10));
     int curPos = 0;
     for (int key : keys) {
       if (key < keys.get(10)) {
@@ -147,7 +142,7 @@ public class LocalHashTableIterationTestIT {
     Collections.sort(keys);
 
     for (int key : keys) {
-      OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(key);
+      OHashTable.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(key);
       Assert.assertTrue(key == entries[0].key);
     }
 
