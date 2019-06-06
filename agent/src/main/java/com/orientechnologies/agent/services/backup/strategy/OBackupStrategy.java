@@ -178,7 +178,8 @@ public abstract class OBackupStrategy {
     }
   }
 
-  private void startRestoreBackup(OEnterpriseServer server, OBackupFinishedLog finished, String databaseName, OBackupListener listener) {
+  private void startRestoreBackup(OEnterpriseServer server, OBackupFinishedLog finished, String databaseName,
+      OBackupListener listener) {
     ORestoreStartedLog restoreStartedLog = null;
     try {
 
@@ -211,13 +212,11 @@ public abstract class OBackupStrategy {
         logger.log(error);
         listener.onEvent(cfg, error);
       }
-    } finally {
-
     }
   }
 
-  private void doRestore(OEnterpriseServer server, OBackupFinishedLog finished, String path, String databaseName, OBackupListener listener,
-      ORestoreStartedLog restoreStartedLog, Consumer<ORestoreFinishedLog> consumer) {
+  private void doRestore(OEnterpriseServer server, OBackupFinishedLog finished, String path, String databaseName,
+      OBackupListener listener, ORestoreStartedLog restoreStartedLog, Consumer<ORestoreFinishedLog> consumer) {
     server.restore(databaseName, path);
     ORestoreFinishedLog finishedLog = new ORestoreFinishedLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(), getUUID(),
         getDbName(), restoreStartedLog.getMode());

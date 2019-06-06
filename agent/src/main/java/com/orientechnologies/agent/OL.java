@@ -1,18 +1,18 @@
 /*
  * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
  * All Rights Reserved. Commercial License.
- * 
+ *
  * NOTICE:  All information contained herein is, and remains the property of
  * Orient Technologies LTD and its suppliers, if any.  The intellectual and
  * technical concepts contained herein are proprietary to
  * Orient Technologies LTD and its suppliers and may be covered by United
  * Kingdom and Foreign Patents, patents in process, and are protected by trade
  * secret or copyright law.
- * 
+ *
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
  * from Orient Technologies LTD.
- * 
+ *
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.agent;
@@ -31,12 +31,12 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("restriction")
 public class OL {
 
-  public static final int    DELAY = 60;
-  public static final String AES   = "AES";
-  private static SecretKeySpec key;
-  private static final byte[] keyValue = new byte[] { 'T', 'h', 'e', 'B', 'e', 's', 't', 'S', 'e', 'c', 'r', 'e', 't', 'K', 'e',
-      'y' };
-  public static final  String UTF_8    = "UTF-8";
+  public static final  int           DELAY    = 60;
+  public static final  String        AES      = "AES";
+  private static       SecretKeySpec key;
+  private static final byte[]        keyValue = new byte[] { 'T', 'h', 'e', 'B', 'e', 's', 't', 'S', 'e', 'c', 'r', 'e', 't', 'K',
+      'e', 'y' };
+  public static final  String        UTF_8    = "UTF-8";
 
   static {
     try {
@@ -127,18 +127,23 @@ public class OL {
         System.arraycopy(k, 0, key, 0, k.length);
         k = key;
       }
-      int z = v[n], y = v[0], sum = 0, e;
-      int p, q = 6 + 52 / (n + 1);
+      int z = v[n];
+      int y = v[0];
+      int sum = 0;
+      int e;
+
+      int p;
+      int q = 6 + 52 / (n + 1);
 
       while (q-- > 0) {
         sum = sum + delta;
         e = sum >>> 2 & 3;
         for (p = 0; p < n; p++) {
           y = v[p + 1];
-          z = v[p] += MX(sum, y, z, p, e, k);
+          z = v[p] += mx(sum, y, z, p, e, k);
         }
         y = v[0];
-        z = v[n] += MX(sum, y, z, p, e, k);
+        z = v[n] += mx(sum, y, z, p, e, k);
       }
       return v;
     }
@@ -155,18 +160,22 @@ public class OL {
         System.arraycopy(k, 0, key, 0, k.length);
         k = key;
       }
-      int z = v[n], y = v[0], sum, e;
-      int p, q = 6 + 52 / (n + 1);
+      int z = v[n];
+      int y = v[0];
+      int sum;
+      int e;
+      int p;
+      int q = 6 + 52 / (n + 1);
 
       sum = q * delta;
       while (sum != 0) {
         e = sum >>> 2 & 3;
         for (p = n; p > 0; p--) {
           z = v[p - 1];
-          y = v[p] -= MX(sum, y, z, p, e, k);
+          y = v[p] -= mx(sum, y, z, p, e, k);
         }
         z = v[n];
-        y = v[0] -= MX(sum, y, z, p, e, k);
+        y = v[0] -= mx(sum, y, z, p, e, k);
         sum = sum - delta;
       }
       return v;
@@ -209,7 +218,7 @@ public class OL {
       return result;
     }
 
-    private static final int MX(int sum, int y, int z, int p, int e, int[] k) {
+    private static final int mx(int sum, int y, int z, int p, int e, int[] k) {
       return (z >>> 5 ^ y << 2) + (y >>> 3 ^ z << 4) ^ (sum ^ y) + (k[p & 3 ^ e] ^ z);
     }
   }

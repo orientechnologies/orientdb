@@ -72,10 +72,10 @@ public class CSVAggregateReporter {
     }
 
     /**
-     * Builds a {@link CsvReporter} with the given properties, writing {@code .csv} files to the
-     * given directory.
+     * Builds a {@link CsvReporter} with the given properties, writing {@code .csv} files to the given directory.
      *
      * @param directory the directory in which the {@code .csv} files will be created
+     *
      * @return a {@link CsvReporter}
      */
     public CSVAggregateReporter build(File directory) {
@@ -131,7 +131,8 @@ public class CSVAggregateReporter {
     List<List<Object>> stats = getConnections();
 
     report(timestamp, "server.network.activeSessions",
-        "connectionId,remoteAddress,database,user,totalRequests,commandInfo,commandDetail,lastCommandOn,lastCommandInfo,lastCommandDetail,lastExecutionTime,totalWorkingTime,activeQueries,connectedOn,protocol,sessionId,clientId,driver",
+        "connectionId,remoteAddress,database,user,totalRequests,commandInfo,commandDetail,lastCommandOn,lastCommandInfo,"
+            + "lastCommandDetail,lastExecutionTime,totalWorkingTime,activeQueries,connectedOn,protocol,sessionId,clientId,driver",
         stats);
   }
 
@@ -277,9 +278,7 @@ public class CSVAggregateReporter {
       final boolean fileAlreadyExists = file.exists();
       if (fileAlreadyExists || file.createNewFile()) {
 
-        List<Object> v = new ArrayList() {{
-          add(timestamp);
-        }};
+        List<Object> v = Collections.singletonList(timestamp);
 
         try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
           writer.writeNext(("timestamp" + DEFAULT_SEPARATOR + header).split(DEFAULT_SEPARATOR));

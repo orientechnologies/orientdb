@@ -176,19 +176,14 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
     iRequest.databaseName = db;
 
-
-    try {
-
-      ODocument config = null;
-      if (server.getSecurity().getAuditing() != null) {
-        config = server.getSecurity().getAuditing().getConfig(db);
-      } else {
-        config = new ODocument();
-      }
-
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
-    } finally {
+    ODocument config = null;
+    if (server.getSecurity().getAuditing() != null) {
+      config = server.getSecurity().getAuditing().getConfig(db);
+    } else {
+      config = new ODocument();
     }
+
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
   }
 
   @Override

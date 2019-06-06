@@ -39,31 +39,32 @@ import java.util.Map;
 
 public class EventHelper {
 
-  private final static String VAR_BEGIN  = "$";
+  private static final String VAR_BEGIN = "$";
 
-  private final static String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.69 Safari/537.36";
+  private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.69 Safari/537.36";
 
   public static Object resolve(final Map<String, Object> body2name2, final Object iContent) {
     Object value = null;
     if (iContent instanceof String) {
-      value = OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN,
-          OSystemVariableResolver.VAR_END, new OVariableParserListener() {
+      value = OVariableParser
+          .resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END,
+              new OVariableParserListener() {
 
-            @Override
-            public Object resolve(final String iVariable) {
+                @Override
+                public Object resolve(final String iVariable) {
 
-              Object val = body2name2.get(iVariable);
-              if (val == null)
-                return null;
+                  Object val = body2name2.get(iVariable);
+                  if (val == null)
+                    return null;
 
-              if (val instanceof Date) {
-                return ODateHelper.getDateTimeFormatInstance().format(Date.class.cast(val));
-              }
+                  if (val instanceof Date) {
+                    return ODateHelper.getDateTimeFormatInstance().format(Date.class.cast(val));
+                  }
 
-              return val.toString();
-            }
+                  return val.toString();
+                }
 
-          });
+              });
     } else {
       value = iContent;
     }

@@ -56,8 +56,8 @@
    * @copyrights Orient Technologies.com
    */
   public class OEnterpriseProfiler extends OAbstractProfiler implements ODistributedLifecycleListener {
-    protected final static Timer                          timer                   = new Timer(true);
-    protected final static int                            BUFFER_SIZE             = 2048;
+    protected final        Timer                          timer                   = new Timer(true);
+    protected static final int                            BUFFER_SIZE             = 2048;
     public static final    int                            KEEP_ALIVE              = 60 * 1000;
     protected final        int                            metricProcessors        = Runtime.getRuntime().availableProcessors();
     private                OEnterpriseAgent               agent;

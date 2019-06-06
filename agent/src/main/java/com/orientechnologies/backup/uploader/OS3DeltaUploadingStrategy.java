@@ -41,17 +41,18 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This strategy performs an upload to a S3 bucket. The upload of the delta between the local backup directory and the remote one is performed.
+ * This strategy performs an upload to a S3 bucket. The upload of the delta between the local backup directory and the remote one is
+ * performed.
  *
  * @param
  */
 
 public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
 
-  private final String SUFFIX = "/";
-  private String bucketName;
-  private String accessKey;
-  private String secretKey;
+  private final String suffix = "/";
+  private       String bucketName;
+  private       String accessKey;
+  private       String secretKey;
 
   public OS3DeltaUploadingStrategy() {
   }
@@ -64,6 +65,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
    * @param sourceBackupDirectory
    * @param destinationDirectoryPath
    * @param accessParameters         (String bucketName, String accessKey, String secretKey)
+   *
    * @return success
    */
   public boolean executeUpload(String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
@@ -130,7 +132,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
 
       // compare files in the bucket with the local ones and populate filesToUpload list
       for (String fileName : localFileName2File.keySet()) {
-        if (remoteFileNames.contains(destinationDirectoryPath + SUFFIX + fileName)) {
+        if (remoteFileNames.contains(destinationDirectoryPath + suffix + fileName)) {
           localFileName2File.remove(fileName);
         }
       }
@@ -138,7 +140,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
       // upload each file contained in the filesToUpload list
       for (File currentFile : localFileName2File.values()) {
         s3client
-            .putObject(new PutObjectRequest(bucketName, destinationDirectoryPath + SUFFIX + currentFile.getName(), currentFile));
+            .putObject(new PutObjectRequest(bucketName, destinationDirectoryPath + suffix + currentFile.getName(), currentFile));
       }
 
       success = true;
@@ -186,7 +188,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     }
 
     File file = new File(sourceFile);
-    s3client.putObject(bucketName, destinationDirectoryPath + SUFFIX + file.getName(), file);
+    s3client.putObject(bucketName, destinationDirectoryPath + suffix + file.getName(), file);
 
     long end = System.currentTimeMillis();
     long elapsed = end - start;
@@ -216,7 +218,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     InputStream emptyContent = new ByteArrayInputStream(new byte[0]);
 
     // create a PutObjectRequest passing the folder name suffixed by /
-    PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, folderName + SUFFIX, emptyContent, metadata);
+    PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, folderName + suffix, emptyContent, metadata);
 
     // send request to S3 to create folder
     s3Client.putObject(putObjectRequest);
