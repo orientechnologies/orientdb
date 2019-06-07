@@ -1,6 +1,11 @@
 package com.orientechnologies.orient.client.remote.message;
 
+import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
@@ -77,6 +82,65 @@ public class ORemotePushMessagesTest {
     readRequest.read(channel);
     assertNotNull(readRequest.getIndexManager());
 
+  }
+
+  @Test
+  public void testStorageConfiguration() throws IOException {
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create("test", ODatabaseType.MEMORY);
+    ODatabaseSession session = orientDB.open("test", "admin", "admin");
+    OStorageConfiguration configuration = ((ODatabaseDocumentInternal) session).getStorage().getConfiguration();
+    session.close();
+    orientDB.close();
+    MockChannel channel = new MockChannel();
+
+    OPushStorageConfigurationRequest request = new OPushStorageConfigurationRequest(configuration);
+    request.write(channel);
+    channel.close();
+
+    OPushStorageConfigurationRequest readRequest = new OPushStorageConfigurationRequest();
+    readRequest.read(channel);
+    OStorageConfigurationPayload readPayload = readRequest.getPayload();
+    OStorageConfigurationPayload payload = request.getPayload();
+    assertEquals(readPayload.getName(), payload.getName());
+    assertEquals(readPayload.getDateFormat(), payload.getDateFormat());
+    assertEquals(readPayload.getDateTimeFormat(), payload.getDateTimeFormat());
+    assertEquals(readPayload.getVersion(), payload.getVersion());
+    assertEquals(readPayload.getDirectory(), payload.getDirectory());
+    for (OStorageEntryConfiguration readProperty : readPayload.getProperties()) {
+      boolean found = false;
+      for (OStorageEntryConfiguration property : payload.getProperties()) {
+        if (readProperty.name.equals(property.name) && readProperty.value.equals(property.value)) {
+          found = true;
+          break;
+        }
+      }
+      assertTrue(found);
+    }
+    assertEquals(readPayload.getSchemaRecordId(), payload.getSchemaRecordId());
+    assertEquals(readPayload.getIndexMgrRecordId(), payload.getIndexMgrRecordId());
+    assertEquals(readPayload.getClusterSelection(), payload.getClusterSelection());
+    assertEquals(readPayload.getConflictStrategy(), payload.getConflictStrategy());
+    assertEquals(readPayload.isValidationEnabled(), payload.isValidationEnabled());
+    assertEquals(readPayload.getLocaleLanguage(), payload.getLocaleLanguage());
+    assertEquals(readPayload.getMinimumClusters(), payload.getMinimumClusters());
+    assertEquals(readPayload.isStrictSql(), payload.isStrictSql());
+    assertEquals(readPayload.getCharset(), payload.getCharset());
+    assertEquals(readPayload.getTimeZone(), payload.getTimeZone());
+    assertEquals(readPayload.getLocaleCountry(), payload.getLocaleCountry());
+    assertEquals(readPayload.getRecordSerializer(), payload.getRecordSerializer());
+    assertEquals(readPayload.getRecordSerializerVersion(), payload.getRecordSerializerVersion());
+    assertEquals(readPayload.getBinaryFormatVersion(), payload.getBinaryFormatVersion());
+    for (OStorageClusterConfiguration readCluster : readPayload.getClusters()) {
+      boolean found = false;
+      for (OStorageClusterConfiguration cluster : payload.getClusters()) {
+        if (readCluster.getName().equals(cluster.getName()) && readCluster.getId() == cluster.getId()) {
+          found = true;
+          break;
+        }
+      }
+      assertTrue(found);
+    }
   }
 
   @Test

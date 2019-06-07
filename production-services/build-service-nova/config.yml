@@ -1,0 +1,7 @@
+defaultTemplate: all
+templates:
+  - Template: all
+    variants:
+      - Variant: linuxx86_64
+      - Variant: fortify
+        args: [ '--buildplugin-option', 'fortify-plugin-version=1.9.0' ]
