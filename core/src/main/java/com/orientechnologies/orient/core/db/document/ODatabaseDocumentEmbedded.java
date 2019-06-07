@@ -761,7 +761,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     assert microTransaction != null;
 
     try {
-      if (success)
+      if (success) {
         try {
           microTransaction.commit();
           OLiveQueryHook.notifyForTxChanges(this);
@@ -772,7 +772,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           OLiveQueryHookV2.removePendingDatabaseOps(this);
           throw e;
         }
-      else {
+      } else {
         microTransaction.rollback();
         OLiveQueryHook.removePendingDatabaseOps(this);
         OLiveQueryHookV2.removePendingDatabaseOps(this);

@@ -58,7 +58,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   private static final AtomicInteger transactionSerial = new AtomicInteger(0);
 
-  private ODatabaseDocumentInternal database;
+  private       ODatabaseDocumentInternal database;
   private final OAbstractPaginatedStorage storage;
 
   private final int id;
@@ -377,14 +377,15 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     for (ORecordOperation recordOperation : recordOperations.values()) {
       final ORecord record = recordOperation.record.getRecord();
 
-      if (record.isDirty())
-        if (record instanceof ODocument) {
-          final ODocument document = (ODocument) record;
+      if (record.isDirty() && record instanceof ODocument) {
+        final ODocument document = (ODocument) record;
 
-          if (document.isTrackingChanges())
-            document.undo();
-        } else
-          record.unload();
+        if (document.isTrackingChanges())
+          document.undo();
+        else
+          document.unload();
+      } else
+        record.unload();
     }
 
     reset();
@@ -750,9 +751,9 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
   }
-  
+
   @Override
-  public boolean isUseDeltas(){
+  public boolean isUseDeltas() {
     return false;
   }
 }
