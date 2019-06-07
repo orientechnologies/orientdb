@@ -4,17 +4,8 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,28 +15,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.NavigableMap;
-import java.util.Random;
-import java.util.SortedMap;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class OCASDiskWriteAheadLogIT {
   private static Path testDirectory;
 
@@ -63,8 +37,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o000_testAddSingleOnePageRecord() throws Exception {
-    final int iterations = 10_000;
+  public void testAddSingleOnePageRecord() throws Exception {
+    final int iterations = 10;
 
     for (int i = 0; i < iterations; i++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -121,15 +95,15 @@ public class OCASDiskWriteAheadLogIT {
           System.out.printf("%d iterations out of %d were passed\n", i, iterations);
         }
       } catch (Exception | Error e) {
-        System.out.println("o000_testAddSingleOnePageRecord : " + seed);
+        System.out.println("testAddSingleOnePageRecord : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o001_testAddSingleRecordSeveralPages() throws Exception {
-    final int iterations = 10_000;
+  public void testAddSingleRecordSeveralPages() throws Exception {
+    final int iterations = 10;
     for (int i = 0; i < iterations; i++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
@@ -186,15 +160,15 @@ public class OCASDiskWriteAheadLogIT {
           System.out.printf("%d iterations out of %d were passed\n", i, iterations);
         }
       } catch (Exception | Error e) {
-        System.out.println("o001_testAddSingleRecordSeveralPages : " + seed);
+        System.out.println("testAddSingleRecordSeveralPages : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o002_testAddFewSmallRecords() throws Exception {
-    final int iterations = 10_000;
+  public void testAddFewSmallRecords() throws Exception {
+    final int iterations = 10;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
@@ -275,15 +249,15 @@ public class OCASDiskWriteAheadLogIT {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
       } catch (Exception | Error e) {
-        System.out.println("o002_testAddFewSmallRecords : " + seed);
+        System.out.println("testAddFewSmallRecords : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o003_testNextAddFewSmallRecords() throws Exception {
-    final int iterations = 10_000;
+  public void testNextAddFewSmallRecords() throws Exception {
+    final int iterations = 10;
 
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -372,15 +346,15 @@ public class OCASDiskWriteAheadLogIT {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
       } catch (Exception | Error e) {
-        System.out.println("o003_testNextAddFewSmallRecords : " + seed);
+        System.out.println("testNextAddFewSmallRecords : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o004_testAddFewBigRecords() throws Exception {
-    final int iterations = 10_000;
+  public void testAddFewBigRecords() throws Exception {
+    final int iterations = 10;
 
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -460,15 +434,15 @@ public class OCASDiskWriteAheadLogIT {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
       } catch (Exception | Error e) {
-        System.out.println("o004_testAddFewBigRecords : " + seed);
+        System.out.println("testAddFewBigRecords : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o005_testNextAddFewBigRecords() throws Exception {
-    final int iterations = 10_000;
+  public void testNextAddFewBigRecords() throws Exception {
+    final int iterations = 10;
 
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -556,15 +530,15 @@ public class OCASDiskWriteAheadLogIT {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
       } catch (Exception | Error e) {
-        System.out.println("o005_testNextAddFewBigRecords : " + seed);
+        System.out.println("testNextAddFewBigRecords : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o006_testAddNSmallRecords() throws Exception {
-    final int iterations = 1_000;
+  public void testAddNSmallRecords() throws Exception {
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -650,15 +624,15 @@ public class OCASDiskWriteAheadLogIT {
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
 
       } catch (Exception | Error e) {
-        System.out.println("o006_testAddNSmallRecords : " + seed);
+        System.out.println("testAddNSmallRecords : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o007_testNextAddNSmallRecords() throws Exception {
-    final int iterations = 1_000;
+  public void testNextAddNSmallRecords() throws Exception {
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -742,15 +716,15 @@ public class OCASDiskWriteAheadLogIT {
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
 
       } catch (Exception | Error e) {
-        System.out.println("o007_testNextAddNSmallRecords : " + seed);
+        System.out.println("testNextAddNSmallRecords : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o008_testAddNSegments() throws Exception {
-    int iterations = 1_000;
+  public void testAddNSegments() throws Exception {
+    int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -894,15 +868,15 @@ public class OCASDiskWriteAheadLogIT {
 
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
       } catch (Exception | Error e) {
-        System.out.println("o008_testAddNSegments seed : " + seed);
+        System.out.println("testAddNSegments seed : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o009_testAddNBigRecords() throws Exception {
-    final int iterations = 1_000;
+  public void testAddNBigRecords() throws Exception {
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -978,15 +952,15 @@ public class OCASDiskWriteAheadLogIT {
         Thread.sleep(1);
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
       } catch (Exception | Error e) {
-        System.out.println("o009_testAddNBigRecords : " + seed);
+        System.out.println("testAddNBigRecords : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o010_testNextAddNBigRecords() throws Exception {
-    final int iterations = 1_000;
+  public void testNextAddNBigRecords() throws Exception {
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -1070,15 +1044,15 @@ public class OCASDiskWriteAheadLogIT {
         Thread.sleep(2);
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
       } catch (Exception | Error e) {
-        System.out.println("o010_testNextAddNBigRecords : " + seed);
+        System.out.println("testNextAddNBigRecords : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o011_testAddRecordsMix() throws Exception {
-    final int iterations = 1_000;
+  public void testAddRecordsMix() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
 
@@ -1152,15 +1126,15 @@ public class OCASDiskWriteAheadLogIT {
 
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
       } catch (Exception | Error e) {
-        System.out.println("o011_testAddRecordsMix : " + seed);
+        System.out.println("testAddRecordsMix : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o012_testNextAddRecordsMix() throws Exception {
-    final int iterations = 1_000;
+  public void testNextAddRecordsMix() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
 
@@ -1242,15 +1216,15 @@ public class OCASDiskWriteAheadLogIT {
         Thread.sleep(2);
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
       } catch (Exception | Error e) {
-        System.out.println("o012_testNextAddRecordsMix : " + seed);
+        System.out.println("testNextAddRecordsMix : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o013_testSegSize() throws Exception {
-    final int iterations = 1_000;
+  public void testSegSize() throws Exception {
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -1290,7 +1264,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-   public void o014_appendMT10MSegSmallCacheTest() throws Exception {
+  @Ignore
+  public void appendMT10MSegSmallCacheTest() throws Exception {
     final int iterations = 240;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -1373,7 +1348,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o015_appendMT10MSegSmallCacheBackwardTest() throws Exception {
+  @Ignore
+  public void appendMT10MSegSmallCacheBackwardTest() throws Exception {
     final int iterations = 240;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -1455,7 +1431,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o016_appendMT10MSegBigCacheTest() throws Exception {
+  @Ignore
+  public void appendMT10MSegBigCacheTest() throws Exception {
     final int iterations = 240;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -1536,7 +1513,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o017_appendMT10MSegBigCacheBackwardTest() throws Exception {
+  @Ignore
+  public void appendMT10MSegBigCacheBackwardTest() throws Exception {
     final int iterations = 240;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -1618,7 +1596,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o018_appendMT256MSegSmallCacheTest() throws Exception {
+  @Ignore
+  public void appendMT256MSegSmallCacheTest() throws Exception {
     final int iterations = 240;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -1700,7 +1679,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o019_appendMT256MSegSmallCacheBackwardTest() throws Exception {
+  @Ignore
+  public void appendMT256MSegSmallCacheBackwardTest() throws Exception {
     final int iterations = 240;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -1782,7 +1762,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o020_appendMT256MSegBigCacheTest() throws Exception {
+  @Ignore
+  public void appendMT256MSegBigCacheTest() throws Exception {
     final int iterations = 240;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -1864,7 +1845,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o021_appendMT256MSegBigCacheBackwardTest() throws Exception {
+  @Ignore
+  public void appendMT256MSegBigCacheBackwardTest() throws Exception {
     final int iterations = 240;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -1946,7 +1928,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o022_testMasterRecordOne() throws Exception {
+  public void testMasterRecordOne() throws Exception {
     final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
@@ -1989,8 +1971,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o023_testMasterSeveralMasterRecords() throws Exception {
-    for (int n = 0; n < 1_000; n++) {
+  public void testMasterSeveralMasterRecords() throws Exception {
+    for (int n = 0; n < 1; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, Integer.MAX_VALUE,
@@ -2049,8 +2031,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o024_testFlush() throws Exception {
-    final int iterations = 1_000;
+  public void testFlush() throws Exception {
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -2095,8 +2077,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o025_cutTillTest() throws Exception {
-    int iterations = 1_000;
+  public void cutTillTest() throws Exception {
+    int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
@@ -2229,7 +2211,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o026_testCutTillLimit() throws Exception {
+  public void testCutTillLimit() throws Exception {
     OFileUtils.deleteRecursively(testDirectory.toFile());
 
     final long seed = System.nanoTime();
@@ -2339,7 +2321,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o027_testCutTillMT() throws Exception {
+  @Ignore
+  public void testCutTillMT() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, Integer.MAX_VALUE,
         10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
 
@@ -2411,8 +2394,8 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o028_testAppendSegment() throws Exception {
-    int iterations = 1_000;
+  public void testAppendSegment() throws Exception {
+    int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
@@ -2494,15 +2477,15 @@ public class OCASDiskWriteAheadLogIT {
         Thread.sleep(2);
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
       } catch (Error | Exception e) {
-        System.out.println("o028_testAppendSegment seed : " + seed);
+        System.out.println("testAppendSegment seed : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o029_testAppendSegmentNext() throws Exception {
-    final int iterations = 1_000;
+  public void testAppendSegmentNext() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
@@ -2592,20 +2575,20 @@ public class OCASDiskWriteAheadLogIT {
         Thread.sleep(2);
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
       } catch (Error | Exception e) {
-        System.out.println("o029_testAppendSegmentNext seed : " + seed);
+        System.out.println("testAppendSegmentNext seed : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o030_testDelete() throws Exception {
+  public void testDelete() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, Integer.MAX_VALUE,
         10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
 
     final long seed = System.nanoTime();
     final Random random = new Random(seed);
-    System.out.println("o030_testDelete seed : " + seed);
+    System.out.println("testDelete seed : " + seed);
 
     final int recordsCount = 30_000;
     for (int i = 0; i < recordsCount; i++) {
@@ -2633,8 +2616,9 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o031_testAddSmallRecords10MSeg() throws Exception {
-    final int iterations = 100;
+  @Ignore
+  public void testAddSmallRecords10MSeg() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
       final Random random = new Random(seed);
@@ -2725,15 +2709,16 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
         timer.cancel();
       } catch (Exception | Error e) {
-        System.out.println("o031_testAddSmallRecords10MSeg : " + seed);
+        System.out.println("testAddSmallRecords10MSeg : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o032_testAddSmallRecords512MSeg() throws Exception {
-    final int iterations = 100;
+  @Ignore
+  public void testAddSmallRecords512MSeg() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
       final Random random = new Random(seed);
@@ -2824,15 +2809,16 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
         timer.cancel();
       } catch (Exception | Error e) {
-        System.out.println("o032_testAddSmallRecords512MSeg : " + seed);
+        System.out.println("testAddSmallRecords512MSeg : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o033_testAddBigRecords10MSeg() throws Exception {
-    final int iterations = 100;
+  @Ignore
+  public void testAddBigRecords10MSeg() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
       final Random random = new Random(seed);
@@ -2923,15 +2909,16 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
         timer.cancel();
       } catch (Exception | Error e) {
-        System.out.println("o033_testAddBigRecords10MSeg : " + seed);
+        System.out.println("testAddBigRecords10MSeg : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o034_testAddBigRecords512MSeg() throws Exception {
-    final int iterations = 100;
+  @Ignore
+  public void testAddBigRecords512MSeg() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
       final Random random = new Random(seed);
@@ -3022,15 +3009,16 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
         timer.cancel();
       } catch (Exception | Error e) {
-        System.out.println("o034_testAddBigRecords512MSeg : " + seed);
+        System.out.println("testAddBigRecords512MSeg : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o035_testAddBigSmallRecords10MSeg() throws Exception {
-    final int iterations = 100;
+  @Ignore
+  public void testAddBigSmallRecords10MSeg() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
       final Random random = new Random(seed);
@@ -3126,15 +3114,16 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
         timer.cancel();
       } catch (Exception | Error e) {
-        System.out.println("o035_testAddBigSmallRecords10MSeg : " + seed);
+        System.out.println("testAddBigSmallRecords10MSeg : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o036_testAddBigSmallRecords512MSeg() throws Exception {
-    final int iterations = 100;
+  @Ignore
+  public void testAddBigSmallRecords512MSeg() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
       final Random random = new Random(seed);
@@ -3230,15 +3219,16 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
         timer.cancel();
       } catch (Exception | Error e) {
-        System.out.println("o036_testAddBigSmallRecords512MSeg : " + seed);
+        System.out.println("testAddBigSmallRecords512MSeg : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o037_testAddBigMiddleSmallRecords10MSeg() throws Exception {
-    final int iterations = 100;
+  @Ignore
+  public void testAddBigMiddleSmallRecords10MSeg() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
       final Random random = new Random(seed);
@@ -3338,15 +3328,16 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
         timer.cancel();
       } catch (Exception | Error e) {
-        System.out.println("o037_testAddBigMiddleSmallRecords10MSeg : " + seed);
+        System.out.println("testAddBigMiddleSmallRecords10MSeg : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o038_testAddBigMiddleSmallRecords512MSeg() throws Exception {
-    final int iterations = 100;
+  @Ignore
+  public void testAddBigMiddleSmallRecords512MSeg() throws Exception {
+    final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
       final Random random = new Random(seed);
@@ -3446,15 +3437,15 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
         timer.cancel();
       } catch (Exception | Error e) {
-        System.out.println("o038_testAddBigMiddleSmallRecords512MSeg : " + seed);
+        System.out.println("testAddBigMiddleSmallRecords512MSeg : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o039_testWALCrash() throws Exception {
-    final int iterations = 100;
+  public void testWALCrash() throws Exception {
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
@@ -3565,14 +3556,14 @@ public class OCASDiskWriteAheadLogIT {
 
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
       } catch (Exception | Error e) {
-        System.out.println("o039_testWALCrash seed : " + seed);
+        System.out.println("testWALCrash seed : " + seed);
         throw e;
       }
     }
   }
 
   @Test
-  public void o040_testMasterRecordCrashTwoRecords() throws Exception {
+  public void testMasterRecordCrashTwoRecords() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, Integer.MAX_VALUE,
         10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
 
@@ -3608,7 +3599,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o041_testMasterRecordCrashThreeRecordsFirstDamage() throws Exception {
+  public void testMasterRecordCrashThreeRecordsFirstDamage() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, Integer.MAX_VALUE,
         10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
 
@@ -3647,7 +3638,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
-  public void o042_testMasterRecordCrashThreeRecordsSecondDamage() throws Exception {
+  public void testMasterRecordCrashThreeRecordsSecondDamage() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, Integer.MAX_VALUE,
         10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
 
