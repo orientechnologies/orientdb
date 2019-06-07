@@ -301,27 +301,28 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
       final ScoreDoc score) {
 
-    recordId.setContext(new HashMap<String, Object>() {{
+    recordId.setContext(new HashMap<String, Object>() {
+      {
+        HashMap<String, TextFragment[]> frag = queryContext.getFragments();
 
-      HashMap<String, TextFragment[]> frag = queryContext.getFragments();
+        frag.entrySet()
+            .stream()
+            .forEach(f -> {
 
-      frag.entrySet()
-          .stream()
-          .forEach(f -> {
-
-                TextFragment[] fragments = f.getValue();
-                StringBuilder hlField = new StringBuilder();
-                for (int j = 0; j < fragments.length; j++) {
-                  if ((fragments[j] != null) && (fragments[j].getScore() > 0)) {
-                    hlField.append(fragments[j].toString());
+                  TextFragment[] fragments = f.getValue();
+                  StringBuilder hlField = new StringBuilder();
+                  for (int j = 0; j < fragments.length; j++) {
+                    if ((fragments[j] != null) && (fragments[j].getScore() > 0)) {
+                      hlField.append(fragments[j].toString());
+                    }
                   }
+                  put("$" + f.getKey() + "_hl", hlField.toString());
                 }
-                put("$" + f.getKey() + "_hl", hlField.toString());
-              }
-          );
+            );
 
-      put("$score", score.score);
-    }});
+        put("$score", score.score);
+      }
+    });
 
   }
 

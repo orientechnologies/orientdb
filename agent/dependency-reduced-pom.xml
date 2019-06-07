@@ -44,6 +44,8 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire.version}</version>
         <configuration>
+          <forkCount>1</forkCount>
+          <reuseForks>false</reuseForks>
           <excludes>
             <exclude>${exclude.kerberos.tests}</exclude>
           </excludes>
@@ -148,6 +150,18 @@
           <artifactId>concurrentlinkedhashmap-lru</artifactId>
           <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>lz4-java</artifactId>
+          <groupId>org.lz4</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>commons-lang</artifactId>
+          <groupId>commons-lang</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>javax.activation-api</artifactId>
+          <groupId>javax.activation</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -233,6 +247,18 @@
           <artifactId>concurrentlinkedhashmap-lru</artifactId>
           <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>lz4-java</artifactId>
+          <groupId>org.lz4</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>commons-lang</artifactId>
+          <groupId>commons-lang</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>javax.activation-api</artifactId>
+          <groupId>javax.activation</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -247,10 +273,6 @@
       <version>3.1.0-SNAPSHOT</version>
       <scope>provided</scope>
       <exclusions>
-        <exclusion>
-          <artifactId>mail</artifactId>
-          <groupId>javax.mail</groupId>
-        </exclusion>
         <exclusion>
           <artifactId>jaxb-api</artifactId>
           <groupId>javax.xml.bind</groupId>
@@ -346,6 +368,12 @@
       <artifactId>orientdb-tools</artifactId>
       <version>3.1.0-SNAPSHOT</version>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>jaxb-api</artifactId>
+          <groupId>javax.xml.bind</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.orientechnologies</groupId>
