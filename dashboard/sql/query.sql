@@ -1,1 +1,0 @@
-insert into server set name = 'Luca', url = 'localhost:2480', user = 'root', password = 'root'
