@@ -29,6 +29,7 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -107,9 +108,9 @@ public class OrientGraphExecuteFunctionTest extends OrientGraphBaseTest {
 
         OGremlinResult result = iterator.next();
 
-        Iterator value = result.getProperty("gremlin");
+        Collection value = result.getProperty("gremlin");
 
-        Assert.assertEquals(2, StreamUtils.asStream(value).count());
+        Assert.assertEquals(2, value.size());
     }
 
     @Test
