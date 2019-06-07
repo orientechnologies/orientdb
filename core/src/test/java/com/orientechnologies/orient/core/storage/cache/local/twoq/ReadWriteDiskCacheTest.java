@@ -21,12 +21,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,11 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
+import java.util.*;
 
 public class ReadWriteDiskCacheTest {
   private static final int                   userDataSize            = 8;
@@ -196,7 +187,7 @@ public class ReadWriteDiskCacheTest {
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
 
     writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, writeAheadLog, -1, 10, WRITE_CACHE_MAX_SIZE, storagePath, storageName,
-        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, false, true, 10);
+        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, null, null, false, true, 10);
     writeBuffer.loadRegisteredFiles();
 
     readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50, true, 10);

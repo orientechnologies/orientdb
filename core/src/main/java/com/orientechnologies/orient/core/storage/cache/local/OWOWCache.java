@@ -40,9 +40,7 @@ import com.orientechnologies.common.util.OQuarto;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OWriteCacheException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
@@ -56,6 +54,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListene
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -68,32 +69,11 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -101,18 +81,14 @@ import java.util.zip.CRC32;
 
 /**
  * Write part of disk cache which is used to collect pages which were changed on read cache and store them to the disk in background
- * thread.
- * In current implementation only single background thread is used to store all changed data, despite of SSD parallelization
+ * thread. In current implementation only single background thread is used to store all changed data, despite of SSD parallelization
  * capabilities we suppose that better to write data in single big chunk by one thread than by many small chunks from many threads
  * introducing contention and multi threading overhead. Another reasons for usage of only one thread are
- * <ol> <li>That we should give room for readers to read data during data write phase</li> <li>It provides much less synchronization
- * overhead</li> </ol>
- * Background thread is running by with predefined intervals. Such approach allows SSD GC to use pauses to make some clean up of
- * half empty erase blocks.
- * Also write cache is used for checking of free space left on disk and putting of database in "read mode" if space limit is reached
- * and to perform fuzzy checkpoints.
- * Write cache holds two different type of pages, pages which are shared with read cache and pages which belong only to write cache
- * (so called exclusive pages).
+ * <ol> <li>That we should give room for readers to read data during data write phase</li> <li>It provides much less
+ * synchronization overhead</li> </ol> Background thread is running by with predefined intervals. Such approach allows SSD GC to use
+ * pauses to make some clean up of half empty erase blocks. Also write cache is used for checking of free space left on disk and
+ * putting of database in "read mode" if space limit is reached and to perform fuzzy checkpoints. Write cache holds two different
+ * type of pages, pages which are shared with read cache and pages which belong only to write cache (so called exclusive pages).
  * Files in write cache are accessed by id , there are two types of ids, internal used inside of write cache and external used
  * outside of write cache. Presence of two types of ids is caused by the fact that read cache is global across all storages but each
  * storage has its own write cache. So all ids of files should be global across whole read cache. External id is created from
@@ -124,6 +100,11 @@ import java.util.zip.CRC32;
  * @since 7/23/13
  */
 public final class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCachePointer.WritersListener {
+  private static final String ALGORITHM_NAME = "AES";
+  private static final String TRANSFORMATION = "AES/CTR/NoPadding";
+
+  private static final ThreadLocal<Cipher> CIPHER = ThreadLocal.withInitial(OWOWCache::getCipherInstance);
+
   /**
    * Extension for the file which contains mapping between file name and file id
    */
@@ -156,9 +137,19 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   public static final long MAGIC_NUMBER_WITH_CHECKSUM = 0xFACB03FEL;
 
   /**
+   * Marks pages which have a checksum stored and data encrypted
+   */
+  public static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0xFBCAE5FEL;
+
+  /**
    * Marks pages which have no checksum stored.
    */
   private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM = 0xEF30BCAFL;
+
+  /**
+   * Marks pages which have no checksum stored but have data encrypted
+   */
+  private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED = 0xBF41BCAEL;
 
   private static final int MAGIC_NUMBER_OFFSET = 0;
 
@@ -241,30 +232,26 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   /**
    * Container for dirty pages. Dirty pages table is concept taken from ARIES protocol. It contains earliest LSNs of operations on
-   * each page which is potentially changed but not flushed to the disk.
-   * It allows us by calculation of minimal LSN contained by this container calculate which part of write ahead log may be already
-   * truncated.
-   * "dirty pages" itself is managed using following algorithm.
+   * each page which is potentially changed but not flushed to the disk. It allows us by calculation of minimal LSN contained by
+   * this container calculate which part of write ahead log may be already truncated. "dirty pages" itself is managed using
+   * following algorithm.
    * <ol> <li>Just after acquiring the exclusive lock on page we fetch LSN of latest record logged into WAL</li> <li>If page with
-   * given index is absent into table we add it to this container</li> </ol>
-   * Because we add last WAL LSN if we are going to modify page, it means that we can calculate smallest LSN of operation which is
-   * not flushed to the log yet without locking of all operations on database.
-   * There is may be situation when thread locks the page but did not add LSN to the dirty pages table yet. If at the moment of
-   * start of iteration over the dirty pages table we have a non empty dirty pages table it means that new operation on page will
-   * have LSN bigger than any LSN already stored in table.
-   * If dirty pages table is empty at the moment of iteration it means at the moment of start of iteration all page changes were
-   * flushed to the disk.
+   * given index is absent into table we add it to this container</li> </ol> Because we add last WAL LSN if we are going to modify
+   * page, it means that we can calculate smallest LSN of operation which is not flushed to the log yet without locking of all
+   * operations on database. There is may be situation when thread locks the page but did not add LSN to the dirty pages table yet.
+   * If at the moment of start of iteration over the dirty pages table we have a non empty dirty pages table it means that new
+   * operation on page will have LSN bigger than any LSN already stored in table. If dirty pages table is empty at the moment of
+   * iteration it means at the moment of start of iteration all page changes were flushed to the disk.
    */
   private final ConcurrentHashMap<PageKey, OLogSequenceNumber> dirtyPages = new ConcurrentHashMap<>();
 
   /**
    * Copy of content of {@link #dirtyPages} table at the moment when {@link #convertSharedDirtyPagesToLocal()} was called. This
    * field is not thread safe because it is used inside of tasks which are running inside of {@link #commitExecutor} thread. It is
-   * used to keep results of postprocessing of {@link #dirtyPages} table.
-   * Every time we invoke {@link #convertSharedDirtyPagesToLocal()} all content of dirty pages is removed and copied to current
-   * field and {@link #localDirtyPagesBySegment} filed.
-   * Such approach is possible because {@link #dirtyPages} table is filled by many threads but is read only from inside of {@link
-   * #commitExecutor} thread.
+   * used to keep results of postprocessing of {@link #dirtyPages} table. Every time we invoke {@link
+   * #convertSharedDirtyPagesToLocal()} all content of dirty pages is removed and copied to current field and {@link
+   * #localDirtyPagesBySegment} filed. Such approach is possible because {@link #dirtyPages} table is filled by many threads but is
+   * read only from inside of {@link #commitExecutor} thread.
    */
   private final HashMap<PageKey, OLogSequenceNumber> localDirtyPages = new HashMap<>();
 
@@ -336,10 +323,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   /**
    * File which contains map between names and ids of files used in write cache. Each record in file has following format (size of
-   * file name in bytes (int), file name (string), internal file id)
-   * Internal file id may have negative value, it means that this file existed in storage but was deleted. We still keep mapping
-   * between files so if file with given name will be created again it will get the same file id, which can be handy during process
-   * of restore of storage data after crash.
+   * file name in bytes (int), file name (string), internal file id) Internal file id may have negative value, it means that this
+   * file existed in storage but was deleted. We still keep mapping between files so if file with given name will be created again
+   * it will get the same file id, which can be handy during process of restore of storage data after crash.
    */
   private FileChannel nameIdMapHolder;
 
@@ -365,10 +351,19 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private volatile OChecksumMode checksumMode;
 
   /**
-   * Error thrown during data flush.
-   * Once error registered no more write operations are allowed.
+   * Error thrown during data flush. Once error registered no more write operations are allowed.
    */
   private Throwable flushError;
+
+  /**
+   * IV is used for AES encryption
+   */
+  private final byte[] iv;
+
+  /**
+   * Key is used for AES encryption
+   */
+  private final byte[] aesKey;
 
   private long flushedPagesSum;
   private long flushedPagesTime;
@@ -428,11 +423,21 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
       final long pagesFlushInterval, final int shutdownTimeout, final long exclusiveWriteCacheMaxSize, final Path storagePath,
       final String storageName, final OBinarySerializer<String> stringSerializer,
-      final OClosableLinkedContainer<Long, OFileClassic> files, final int id, final OChecksumMode checksumMode,
-      final boolean callFsync, final boolean printCacheStatistics, final int statisticsPrintInterval) {
+      final OClosableLinkedContainer<Long, OFileClassic> files, final int id, final OChecksumMode checksumMode, byte[] iv,
+      byte[] aesKey, final boolean callFsync, final boolean printCacheStatistics, final int statisticsPrintInterval) {
+
+    if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
+      throw new OInvalidStorageEncryptionKeyException("Invalid length of the encryption key, provided size is " + aesKey.length);
+    }
+
+    if (aesKey != null && iv == null) {
+      throw new OInvalidStorageEncryptionKeyException("IV can not be null");
+    }
 
     this.shutdownTimeout = shutdownTimeout;
     this.pagesFlushInterval = pagesFlushInterval;
+    this.iv = iv;
+    this.aesKey = aesKey;
     this.callFsync = callFsync;
 
     this.printCacheStatistics = printCacheStatistics;
@@ -589,12 +594,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   /**
-   * This method is called once new pages are added to the disk inside of
-   * {@link OWriteCache#load(long, long, int, OModifiableBoolean, boolean)}  method.
-   * If total amount of added pages minus amount of added pages at the time of last disk space check bigger than threshold value
-   * {@link #diskSizeCheckInterval} new disk space check is performed and if amount of space left on disk less than threshold
-   * {@link
-   * #freeSpaceLimit} then database is switched in "read only" mode
+   * This method is called once new pages are added to the disk inside of {@link OWriteCache#load(long, long, int,
+   * OModifiableBoolean, boolean)}  method. If total amount of added pages minus amount of added pages at the time of last disk
+   * space check bigger than threshold value {@link #diskSizeCheckInterval} new disk space check is performed and if amount of space
+   * left on disk less than threshold {@link #freeSpaceLimit} then database is switched in "read only" mode
    */
   private void freeSpaceCheckAfterNewPageAdd() throws IOException {
     final long newPagesAdded = amountOfNewPagesAdded.addAndGet(1);
@@ -1586,7 +1589,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         final long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, MAGIC_NUMBER_OFFSET);
 
-        if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
+        if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM
+            && magicNumber != MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
           magicNumberIncorrect = true;
           if (commandOutputListener != null) {
             commandOutputListener
@@ -1846,11 +1850,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   /**
-   * Read information about files are registered inside of write cache/storage
-   * File consist of rows of variable length which contains following entries: <ol> <li>Internal file id, may be positive or
-   * negative depends on whether file is removed or not</li> <li>Name of file inside of write cache, this name is case
-   * sensitive</li> <li>Name of file which is used inside file system it can be different from name of file used inside write
-   * cache</li> </ol>
+   * Read information about files are registered inside of write cache/storage File consist of rows of variable length which
+   * contains following entries: <ol> <li>Internal file id, may be positive or negative depends on whether file is removed or
+   * not</li> <li>Name of file inside of write cache, this name is case sensitive</li> <li>Name of file which is used inside file
+   * system it can be different from name of file used inside write cache</li> </ol>
    */
   private void readNameIdMapV2() throws IOException, InterruptedException {
     nameIdMap.clear();
@@ -2161,7 +2164,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
                   || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
-                verifyMagicAndChecksum(buffer, pointer, fileId, startPageIndex, null);
+                verifyMagicAndChecksum(buffer, pointer, fileId, intId, startPageIndex, null);
               }
 
               buffer.position(0);
@@ -2187,7 +2190,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
                 || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
               for (int i = 0; i < pointers.length; ++i) {
-                verifyMagicAndChecksum(buffers[i], pointers[i], fileId, startPageIndex + i, pointers);
+                verifyMagicAndChecksum(buffers[i], pointers[i], fileId, intId, startPageIndex + i, pointers);
               }
             }
 
@@ -2220,13 +2223,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private void addMagicAndChecksum(final ByteBuffer buffer) {
+  private void addMagicChecksumAndEncryption(final int intId, final int pageIndex, final ByteBuffer buffer) {
     assert buffer.order() == ByteOrder.nativeOrder();
 
     buffer.position(MAGIC_NUMBER_OFFSET);
-    OLongSerializer.INSTANCE
-        .serializeInByteBufferObject(checksumMode == OChecksumMode.Off ? MAGIC_NUMBER_WITHOUT_CHECKSUM : MAGIC_NUMBER_WITH_CHECKSUM,
-            buffer);
+    OLongSerializer.INSTANCE.serializeInByteBufferObject(checksumMode == OChecksumMode.Off ?
+        (aesKey == null ? MAGIC_NUMBER_WITHOUT_CHECKSUM : MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) :
+        (aesKey == null ? MAGIC_NUMBER_WITH_CHECKSUM : MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED), buffer);
 
     if (checksumMode != OChecksumMode.Off) {
       buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
@@ -2237,16 +2240,60 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       buffer.position(CHECKSUM_OFFSET);
       OIntegerSerializer.INSTANCE.serializeInByteBufferObject(computedChecksum, buffer);
     }
+
+    if (aesKey != null) {
+      doEncryptionDecryption(intId, pageIndex, Cipher.ENCRYPT_MODE, buffer);
+    }
   }
 
-  private void verifyMagicAndChecksum(final ByteBuffer buffer, final OPointer pointer, final long fileId, final long pageIndex,
-      final OPointer[] pointersToRelease) {
+  private void doEncryptionDecryption(int intId, int pageIndex, int mode, ByteBuffer buffer) {
+    try {
+      final Cipher cipher = CIPHER.get();
+      final SecretKey aesKey = new SecretKeySpec(this.aesKey, ALGORITHM_NAME);
+
+      final byte[] updatedIv = new byte[iv.length];
+
+      for (int i = 0; i < OIntegerSerializer.INT_SIZE; i++) {
+        updatedIv[i] = (byte) (iv[i] ^ ((pageIndex >> i) & 0xFF));
+      }
+
+      for (int i = 0; i < OIntegerSerializer.INT_SIZE; i++) {
+        updatedIv[i + OIntegerSerializer.INT_SIZE] = (byte) (iv[i + OIntegerSerializer.INT_SIZE] ^ ((intId >> i) & 0xFF));
+      }
+
+      System.arraycopy(iv, 2 * OIntegerSerializer.INT_SIZE, updatedIv, 2 * OIntegerSerializer.INT_SIZE,
+          iv.length - 2 * OIntegerSerializer.INT_SIZE);
+
+      cipher.init(mode, aesKey, new IvParameterSpec(updatedIv));
+
+      final ByteBuffer outBuffer = ByteBuffer
+          .allocate(buffer.capacity() - (PAGE_OFFSET_TO_CHECKSUM_FROM + OIntegerSerializer.INT_SIZE))
+          .order(ByteOrder.nativeOrder());
+
+      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM + OIntegerSerializer.INT_SIZE);
+      cipher.doFinal(buffer, outBuffer);
+
+      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM + OIntegerSerializer.INT_SIZE);
+      outBuffer.position(0);
+      buffer.put(outBuffer);
+
+    } catch (InvalidKeyException e) {
+      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(e.getMessage()), e);
+    } catch (InvalidAlgorithmParameterException e) {
+      throw new IllegalArgumentException("Invalid IV.", e);
+    } catch (IllegalBlockSizeException | BadPaddingException | ShortBufferException e) {
+      throw new IllegalStateException("Unexpected exception during CRT encryption.", e);
+    }
+  }
+
+  private void verifyMagicAndChecksum(final ByteBuffer buffer, final OPointer pointer, final long fileId, int intId,
+      final long pageIndex, final OPointer[] pointersToRelease) {
     assert buffer.order() == ByteOrder.nativeOrder();
 
     buffer.position(MAGIC_NUMBER_OFFSET);
     final long magicNumber = OLongSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
-    if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM) {
-      if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
+    if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM && magicNumber != MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED) {
+      if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
         final String message = "Magic number verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
         OLogManager.instance().error(this, "%s", null, message);
 
@@ -2266,7 +2313,23 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
       }
 
+      if (magicNumber == MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
+        if (aesKey == null) {
+          throw new OStorageException("Page is encrypted but encryption key is absent");
+        }
+
+        doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer);
+      }
+
       return;
+    }
+
+    if (magicNumber == MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED) {
+      if (aesKey == null) {
+        throw new OStorageException("Page is encrypted but encryption key is absent");
+      }
+
+      doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer);
     }
 
     buffer.position(CHECKSUM_OFFSET);
@@ -2344,7 +2407,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     try {
       final OFileClassic fileClassic = entry.get();
 
-      addMagicAndChecksum(buffer);
+      addMagicChecksumAndEncryption(fileId, (int) pageIndex, buffer);
       buffer.position(0);
       fileClassic.write(pageIndex * pageSize, buffer);
     } finally {
@@ -3066,7 +3129,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> quarto = chunk.get(i);
       final ByteBuffer buffer = quarto.two;
 
-      addMagicAndChecksum(buffer);
+      final OCachePointer pointer = quarto.four;
+
+      addMagicChecksumAndEncryption(extractFileId(pointer.getFileId()), (int) pointer.getPageIndex(), buffer);
 
       buffer.position(0);
       buffers[i] = buffer;
@@ -3349,6 +3414,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
 
       return null;
+    }
+  }
+
+  private static Cipher getCipherInstance() {
+    try {
+      return Cipher.getInstance(TRANSFORMATION);
+    } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+      throw OException.wrapException(new OSecurityException("Implementation of encryption " + TRANSFORMATION + " is absent"), e);
     }
   }
 

@@ -106,6 +106,19 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
+  protected void readIv() throws IOException {
+  }
+
+  @Override
+  protected byte[] getIv() {
+    return new byte[0];
+  }
+
+  @Override
+  protected void initIv() throws IOException {
+  }
+
+  @Override
   public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
     try {

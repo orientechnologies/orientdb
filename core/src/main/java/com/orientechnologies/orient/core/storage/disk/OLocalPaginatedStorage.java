@@ -54,29 +54,17 @@ import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEng
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import net.jpountz.xxhash.XXHash64;
+import net.jpountz.xxhash.XXHashFactory;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -86,9 +74,12 @@ import java.util.zip.ZipOutputStream;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
+  private static final long   IV_SEED = 234120934;
+  private static final String IV_EXT  = ".iv";
+  private static final String IV_NAME = "data" + IV_EXT;
 
   private static final String[] ALL_FILE_EXTENSIONS = { ".cm", ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
-      ".oem", ".oet", ".fl", OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION, OCASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+      ".oem", ".oet", ".fl", IV_EXT, OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION, OCASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION,
@@ -122,6 +113,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private final long walMaxSegSize;
 
   private final AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
+
+  private volatile byte[] iv;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id,
       final OReadCache readCache, final OClosableLinkedContainer<Long, OFileClassic> files, final long walMaxSegSize) {
@@ -562,6 +555,51 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
+  protected void initIv() throws IOException {
+    try (final RandomAccessFile ivFile = new RandomAccessFile(storagePath.resolve(IV_NAME).toAbsolutePath().toFile(), "rw")) {
+      final byte[] iv = new byte[16];
+
+      final SecureRandom random = new SecureRandom();
+      random.nextBytes(iv);
+
+      final XXHashFactory hashFactory = XXHashFactory.fastestInstance();
+      final XXHash64 hash64 = hashFactory.hash64();
+
+      final long hash = hash64.hash(iv, 0, iv.length, IV_SEED);
+      ivFile.write(iv);
+      ivFile.writeLong(hash);
+      ivFile.getFD().sync();
+
+      this.iv = iv;
+    }
+  }
+
+  @Override
+  protected void readIv() throws IOException {
+    try (final RandomAccessFile ivFile = new RandomAccessFile(storagePath.resolve(IV_NAME).toAbsolutePath().toFile(), "r")) {
+      final byte[] iv = new byte[16];
+      ivFile.read(iv);
+
+      final long storedHash = ivFile.readLong();
+
+      final XXHashFactory hashFactory = XXHashFactory.fastestInstance();
+      final XXHash64 hash64 = hashFactory.hash64();
+
+      final long expectedHash = hash64.hash(iv, 0, iv.length, IV_SEED);
+      if (storedHash != expectedHash) {
+        throw new OStorageException("iv data are broken");
+      }
+
+      this.iv = iv;
+    }
+  }
+
+  @Override
+  protected byte[] getIv() {
+    return iv;
+  }
+
+  @Override
   protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration) throws IOException, InterruptedException {
     if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       fuzzyCheckpointTask = fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
@@ -619,12 +657,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final boolean printCacheStatistics = contextConfiguration
         .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS);
     final int statisticsPrintInterval = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL);
+    final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
     final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize, storagePath, getName(),
         OStringSerializer.INSTANCE, files, getId(),
-        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class),
+        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), iv,
+        aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC), printCacheStatistics,
         statisticsPrintInterval);
 
