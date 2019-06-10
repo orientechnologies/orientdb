@@ -1,17 +1,14 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
@@ -23,8 +20,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticator;
@@ -43,12 +40,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OLDAPImporter implements OSecurityComponent {
   private final String oldapUserClass = "_OLDAPUser";
 
-  private boolean debug = false;
+  private boolean debug   = false;
   private boolean enabled = true;
 
   private OServer server;
 
-  private int importPeriod = 60;                                       // Default to 60
+  private int   importPeriod = 60;                                       // Default to 60
   // seconds.
   private Timer importTimer;
 
@@ -312,9 +309,9 @@ public class OLDAPImporter implements OSecurityComponent {
       return domain;
     }
 
-    private String authenticator;
+    private String            authenticator;
     private List<OLDAPServer> ldapServers;
-    private List<User> users;
+    private List<User>        users;
 
     public String getAuthenticator() {
       return authenticator;
@@ -338,7 +335,7 @@ public class OLDAPImporter implements OSecurityComponent {
   }
 
   private class DatabaseUser {
-    private String user;
+    private String      user;
     private Set<String> roles = new LinkedHashSet<String>();
 
     private String getUser() {
@@ -363,8 +360,8 @@ public class OLDAPImporter implements OSecurityComponent {
   }
 
   private class User {
-    private String baseDN;
-    private String filter;
+    private String      baseDN;
+    private String      filter;
     private Set<String> roles = new LinkedHashSet<String>();
 
     public String getBaseDN() {
@@ -536,12 +533,13 @@ public class OLDAPImporter implements OSecurityComponent {
   // This is equivalent to the "users" objects in "ldapImporter" of security.json.
   private void retrieveLDAPUsers(final ODatabase<?> odb, final String domain, final List<User> userList) {
     try {
-      String sql = String.format("SELECT FROM %s WHERE Domain = \"%s\"", oldapUserClass, domain);
+      String sql = String.format("SELECT FROM `%s` WHERE Domain = ?", oldapUserClass);
 
-      List<ODocument> users = new OSQLSynchQuery<ODocument>(sql).run();
+      OResultSet users = odb.query(sql, domain);
 
-      for (ODocument userDoc : users) {
-        String roles = userDoc.field("Roles");
+      while (users.hasNext()) {
+        OResult userDoc = users.next();
+        String roles = userDoc.getProperty("Roles");
 
         if (roles != null) {
           List<String> roleList = new ArrayList<String>();
@@ -552,7 +550,7 @@ public class OLDAPImporter implements OSecurityComponent {
             roleList.add(role.trim());
           }
 
-          User user = new User((String) userDoc.field("BaseDN"), (String) userDoc.field("Filter"), roleList);
+          User user = new User(userDoc.getProperty("BaseDN"), userDoc.getProperty("Filter"), roleList);
           userList.add(user);
         } else {
           OLogManager.instance()
@@ -571,11 +569,12 @@ public class OLDAPImporter implements OSecurityComponent {
 
       if (ignoreLocal)
         sql = "SELECT FROM OUser WHERE _externalUser = true";
+      OResultSet users = odb.query(sql);
 
-      List<ODocument> users = new OSQLSynchQuery<ODocument>(sql).run();
 
-      for (ODocument user : users) {
-        String name = user.field("name");
+      while(users.hasNext()) {
+        OResult user = users.next();
+        String name = user.getProperty("name");
 
         if (name != null) {
           if (!(name.equals("admin") || name.equals("reader") || name.equals("writer"))) {
@@ -593,7 +592,7 @@ public class OLDAPImporter implements OSecurityComponent {
   private void deleteUsers(final ODatabase<?> odb, final Set<String> usersToBeDeleted) {
     try {
       for (String user : usersToBeDeleted) {
-        odb.command(new OCommandSQL("DELETE FROM OUser WHERE name = ?")).execute(user);
+        odb.command("DELETE FROM OUser WHERE name = ?", user);
 
         OLogManager.instance().info(this, "OLDAPImporter.deleteUsers() Deleted User: %s from Database: %s", user, odb.getName());
       }
@@ -620,9 +619,9 @@ public class OLDAPImporter implements OSecurityComponent {
   /*
    * private boolean dbUserExists(ODatabase<?> db, String upn) { try { List<ODocument> list = new OSQLSynchQuery<ODocument>(
    * "SELECT FROM OUser WHERE name = ?").run(upn);
-   * 
+   *
    * return !list.isEmpty(); } catch(Exception ex) { OLogManager.instance().debug(this, "dbUserExists() Exception: ", ex); }
-   * 
+   *
    * return true; // Better to not add a user than to overwrite one. }
    */
   private boolean upsertDbUser(ODatabase<?> db, String upn, Set<String> roles) {
@@ -660,8 +659,7 @@ public class OLDAPImporter implements OSecurityComponent {
 
       sb.append("]) UPSERT WHERE name = ?");
 
-      // db.command(new OCommandSQL(sb.toString())).execute(upn, password, roleParams, upn);
-      db.command(new OCommandSQL(sb.toString())).execute(upn, password, upn);
+      db.command(sb.toString(), upn, password, upn);
 
       return true;
     } catch (Exception ex) {
