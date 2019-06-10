@@ -8,11 +8,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class OMatchesCondition extends OBooleanExpression {
-  protected OExpression expression;
-  protected String      right;
+  protected OExpression     expression;
+  protected String          right;
   protected OInputParameter rightParam;
+
+  Pattern pattern;
 
   public OMatchesCondition(int id) {
     super(id);
@@ -22,22 +25,42 @@ public class OMatchesCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    return false;
-  }
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    Object leftVal = expression.execute(currentRecord, ctx);
+    if (leftVal == null || !(leftVal instanceof String)) {
+      return false;
+    }
+    if (pattern == null) {
+      String patternString = right;
+      if (patternString != null) {
+        patternString = patternString.substring(1, patternString.length() - 1);
+      }
+      if (rightParam != null) {
+        patternString = String.valueOf(rightParam.bindFromInputParams(ctx.getInputParameters()));
+      }
+      if (patternString == null) {
+        return false;
+      }
 
+      pattern = Pattern.compile(patternString);
+    }
+    return pattern.matcher((String) leftVal).matches();
+  }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     expression.toString(params, builder);
     builder.append(" MATCHES ");
-    if(right!=null) {
+    if (right != null) {
       builder.append(right);
-    }else{
+    } else {
       rightParam.toString(params, builder);
     }
   }
@@ -63,7 +86,8 @@ public class OMatchesCondition extends OBooleanExpression {
     return Collections.EMPTY_LIST;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     return expression.getMatchPatternInvolvedAliases();
   }
 
