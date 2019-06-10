@@ -869,7 +869,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           Orient.instance().getScriptManager().close(this.getName());
         }
         if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
+          sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
@@ -898,7 +898,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           Orient.instance().getScriptManager().close(this.getName());
         }
         if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
+          sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
@@ -924,7 +924,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           Orient.instance().getScriptManager().close(this.getName());
         }
         if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
+          sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);

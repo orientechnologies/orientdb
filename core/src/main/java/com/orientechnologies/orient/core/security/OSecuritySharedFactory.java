@@ -20,18 +20,16 @@
 package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 
 /**
  * Implements the OSecurityFactory interface for OSecurityShared instances.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
-public class OSecuritySharedFactory implements OSecurityFactory
-{
-	public OSecurity newSecurity()
-	{
-		return new OSecurityShared();
-	}
+public class OSecuritySharedFactory implements OSecurityFactory {
+  public OSecurityInternal newSecurity() {
+    return new OSecurityShared();
+  }
 }

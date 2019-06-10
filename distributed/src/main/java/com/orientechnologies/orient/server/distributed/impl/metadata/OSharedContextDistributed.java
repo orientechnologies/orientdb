@@ -62,7 +62,7 @@ public class OSharedContextDistributed extends OSharedContext {
           indexManager.load(database);
           //The Immutable snapshot should be after index and schema that require and before everything else that use it
           schema.forceSnapshot(database);
-          security.load();
+          security.load(database);
           functionLibrary.load(database);
           scheduler.load(database);
           sequenceLibrary.load(database);
@@ -82,7 +82,7 @@ public class OSharedContextDistributed extends OSharedContext {
   public synchronized void close() {
     viewManager.close();
     schema.close();
-    security.close(false);
+    security.close();
     indexManager.close();
     functionLibrary.close();
     scheduler.close();
@@ -100,7 +100,7 @@ public class OSharedContextDistributed extends OSharedContext {
       indexManager.reload();
       //The Immutable snapshot should be after index and schema that require and before everything else that use it
       schema.forceSnapshot(database);
-      security.load();
+      security.load(database);
       functionLibrary.load(database);
       sequenceLibrary.load(database);
       commandCache.clear();
@@ -113,10 +113,10 @@ public class OSharedContextDistributed extends OSharedContext {
     OScenarioThreadLocal.executeAsDistributed(() -> {
       schema.create(database);
       indexManager.create(database);
-      security.create();
+      security.create(database);
       functionLibrary.create(database);
       sequenceLibrary.create(database);
-      security.createClassTrigger();
+      security.createClassTrigger(database);
       scheduler.create(database);
 
       // CREATE BASE VERTEX AND EDGE CLASSES

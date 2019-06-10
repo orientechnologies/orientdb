@@ -36,7 +36,7 @@ public class OSharedContextRemote extends OSharedContext {
         indexManager.load(database);
         //The Immutable snapshot should be after index and schema that require and before everything else that use it
         schema.forceSnapshot(database);
-        security.load();
+        security.load(database);
         sequenceLibrary.load(database);
         schema.onPostIndexManagement();
         loaded = true;
@@ -51,7 +51,7 @@ public class OSharedContextRemote extends OSharedContext {
   @Override
   public synchronized void close() {
     schema.close();
-    security.close(false);
+    security.close();
     indexManager.close();
     sequenceLibrary.close();
     loaded = false;
@@ -62,7 +62,7 @@ public class OSharedContextRemote extends OSharedContext {
     indexManager.reload();
     //The Immutable snapshot should be after index and schema that require and before everything else that use it
     schema.forceSnapshot(database);
-    security.load();
+    security.load(database);
     scheduler.load(database);
     sequenceLibrary.load(database);
     functionLibrary.load(database);

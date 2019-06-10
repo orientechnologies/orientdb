@@ -28,9 +28,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Manages users and roles.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ *
  */
 public interface OSecurity {
   static final String RESTRICTED_CLASSNAME   = "ORestricted";
@@ -43,17 +43,11 @@ public interface OSecurity {
   static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
   static final String ONCREATE_FIELD         = "onCreate.fields";
 
-  @Deprecated
-  OUser create();
-
-  @Deprecated
-  void load();
-
   boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation);
 
   /**
    * Record level security: allows a user to access to a record.
-   * 
+   *
    * @param iDocument
    *          ODocument instance to give access
    * @param iOperationType
@@ -127,42 +121,6 @@ public interface OSecurity {
    */
   OIdentifiable denyRole(final ODocument iDocument, final ORestrictedOperation iOperationType, final String iRoleName);
 
-  /**
-   * Uses the version with ENUM instead.
-   */
-  @Deprecated
-  OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
-
-  /**
-   * Uses the version with ENUM instead.
-   */
-  @Deprecated
-  OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
-
-  /**
-   * Uses the version with ENUM instead.
-   */
-  @Deprecated
-  OIdentifiable allowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
-
-  /**
-   * Uses the version with ENUM instead.
-   */
-  @Deprecated
-  OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
-
-  /**
-   * Uses the version with ENUM instead.
-   */
-  @Deprecated
-  OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
-
-  /**
-   * Uses the version with ENUM instead.
-   */
-  @Deprecated
-  OIdentifiable disallowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
-
   OUser authenticate(String iUsername, String iUserPassword);
 
   OUser authenticate(final OToken authToken);
@@ -190,19 +148,4 @@ public interface OSecurity {
   List<ODocument> getAllUsers();
 
   List<ODocument> getAllRoles();
-
-  @Deprecated
-  void close(boolean onDelete);
-
-  @Deprecated
-  void createClassTrigger();
-
-  @Deprecated
-  OSecurity getUnderlying();
-
-  @Deprecated
-  long getVersion();
-
-  @Deprecated
-  void incrementVersion();
 }

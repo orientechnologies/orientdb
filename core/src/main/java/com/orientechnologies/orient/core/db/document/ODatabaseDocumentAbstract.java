@@ -521,8 +521,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (user instanceof OUser) {
       OMetadata metadata = getMetadata();
       if (metadata != null) {
-        final OSecurity security = metadata.getSecurity();
-        this.user = new OImmutableUser(security.getVersion(), (OUser) user);
+        final OSecurityInternal security = sharedContext.getSecurity();
+        this.user = new OImmutableUser(security.getVersion(this), (OUser) user);
       } else
         this.user = new OImmutableUser(-1, (OUser) user);
     } else
@@ -536,11 +536,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         OMetadata metadata = getMetadata();
 
         if (metadata != null) {
-          final OSecurity security = metadata.getSecurity();
-          OUser secGetUser = security.getUser(user.getName());
+          final OSecurityInternal security = sharedContext.getSecurity();
+          OUser secGetUser = security.getUser(this, user.getName());
 
           if (secGetUser != null)
-            user = new OImmutableUser(security.getVersion(), secGetUser);
+            user = new OImmutableUser(security.getVersion(this), secGetUser);
           else
             user = new OImmutableUser(-1, new OUser());
         } else
