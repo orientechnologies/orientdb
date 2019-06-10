@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.common.concur.resource.OCloseable;
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -43,15 +41,11 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSE
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
@@ -307,11 +301,10 @@ public class OSecurityShared implements OSecurityInternal {
     if (iRoleName == null)
       return null;
 
-    final List<ODocument> result = session.<OCommandRequest>command(
-        new OSQLSynchQuery<ODocument>("select from ORole where name = ? limit 1")).execute(iRoleName);
+    final OResultSet result = session.query("select from ORole where name = ? limit 1", iRoleName);
 
-    if (result != null && !result.isEmpty())
-      return new ORole(result.get(0));
+    if (result.hasNext())
+      return new ORole((ODocument) result.next().getElement().get());
 
     return null;
   }
@@ -320,11 +313,10 @@ public class OSecurityShared implements OSecurityInternal {
     if (iRoleName == null)
       return null;
 
-    final List<ODocument> result = session.<OCommandRequest>command(
-        new OSQLSynchQuery<ODocument>("select rid from index:ORole.name where key = ? limit 1")).execute(iRoleName);
+    final OResultSet result = session.query("select rid from index:ORole.name where key = ? limit 1", iRoleName);
 
-    if (result != null && !result.isEmpty())
-      return result.get(0).rawField("rid");
+    if (result.hasNext())
+      return result.next().getProperty("rid");
 
     return null;
   }
@@ -346,11 +338,11 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   public List<ODocument> getAllUsers(final ODatabaseSession session) {
-    return session.<OCommandRequest>command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
+    return session.query("select from OUser").stream().map((e) -> (ODocument) e.getElement().get()).collect(Collectors.toList());
   }
 
   public List<ODocument> getAllRoles(final ODatabaseSession session) {
-    return session.<OCommandRequest>command(new OSQLSynchQuery<ODocument>("select from ORole")).execute();
+    return session.query("select from ORole").stream().map((e) -> (ODocument) e.getElement().get()).collect(Collectors.toList());
   }
 
   public OUser create(final ODatabaseSession session) {
