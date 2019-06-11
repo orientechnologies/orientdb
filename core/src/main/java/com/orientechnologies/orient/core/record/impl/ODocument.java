@@ -72,6 +72,8 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
+import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
+import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.OEdge;
@@ -79,7 +81,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -130,7 +131,8 @@ public class ODocument extends ORecordAbstract
   public static final    byte     RECORD_TYPE      = 'd';
   protected static final String[] EMPTY_STRINGS    = new String[] {};
   private static final   long     serialVersionUID = 1L;
-  protected              int      fieldSize;
+
+  protected int fieldSize;
 
   protected Map<String, ODocumentEntry> fields;
 
@@ -143,6 +145,8 @@ public class ODocument extends ORecordAbstract
   private             String                              className;
   private             OImmutableClass                     immutableClazz;
   private             int                                 immutableSchemaVersion = 1;
+  protected           OPropertyAccess                     propertyAccess;
+  protected           OPropertyEncryption                 propertyEncryption;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -157,7 +161,6 @@ public class ODocument extends ORecordAbstract
   public ODocument(ODatabaseSession database) {
     setup((ODatabaseDocumentInternal) database);
   }
-
 
   /**
    * Creates a new instance by the raw stream usually read from the database. New instances are not persistent until {@link #save()}
@@ -233,19 +236,16 @@ public class ODocument extends ORecordAbstract
     setClassName(iClassName);
   }
 
-
   /**
    * Creates a new instance in memory of the specified class. New instances are not persistent until {@link #save()} is called.
    *
-   * @param session the session the instance will be attached to
+   * @param session    the session the instance will be attached to
    * @param iClassName Class name
    */
-  public ODocument(ODatabaseSession session,final String iClassName) {
+  public ODocument(ODatabaseSession session, final String iClassName) {
     setup((ODatabaseDocumentInternal) session);
     setClassName(iClassName);
   }
-
-
 
   /**
    * Creates a new instance in memory of the specified schema class. New instances are not persistent until {@link #save()} is
@@ -3331,8 +3331,22 @@ public class ODocument extends ORecordAbstract
     return true;
   }
 
+  protected Object accessProperty(final String field) {
+    if (checkForFields(field)) {
+      if (propertyAccess == null || propertyAccess.isReadable(this, field)) {
+        ODocumentEntry entry = fields.get(field);
+        return entry != null ? entry.value : null;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Internal.
+   *
    * @param db
    */
   @Override

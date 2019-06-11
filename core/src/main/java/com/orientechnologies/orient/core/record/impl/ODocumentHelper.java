@@ -787,9 +787,7 @@ public class ODocumentHelper {
     if (doc == null) {// broken link
       return null;
     }
-    doc.checkForFields(iFieldName);
-    ODocumentEntry entry = doc.fields.get(iFieldName);
-    return entry != null ? entry.value : null;
+    return doc.accessProperty(iFieldName);
   }
 
   public static Object evaluateFunction(final Object currentValue, final String iFunction, final OCommandContext iContext) {

@@ -62,4 +62,6 @@ public interface OSecurityInternal {
   void load(ODatabaseSession session);
 
   void close();
+
+  Set<String> getFilteredProperties(ODocument document);
 }

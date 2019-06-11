@@ -208,7 +208,13 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
+  public Set<String> getFilteredProperties(ODocument document) {
+    return delegate.getFilteredProperties(document);
+  }
+
+  @Override
   public void close() {
 
   }
+
 }

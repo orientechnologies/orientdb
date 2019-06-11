@@ -600,4 +600,8 @@ public class OSecurityShared implements OSecurityInternal {
     version.incrementAndGet();
   }
 
+  @Override
+  public Set<String> getFilteredProperties(ODocument document) {
+    return null;
+  }
 }

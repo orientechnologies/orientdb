@@ -1011,7 +1011,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterDelete(doc, this);
         }
-
         getSharedContext().getViewManager().recordDeleted(clazz, doc, this);
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
@@ -1051,6 +1050,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
             return true;
           }
         }
+        ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(doc, getSharedContext().getSecurity()));
+        ODocumentInternal.setPropertyEncryption(doc, new OPropertyEncryption());
       }
     }
     return callbackHooks(ORecordHook.TYPE.BEFORE_READ, identifiable) == ORecordHook.RESULT.SKIP;

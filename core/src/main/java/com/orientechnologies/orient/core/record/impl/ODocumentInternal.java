@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
+import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.record.OElement;
 
 import java.util.Map.Entry;
@@ -109,4 +111,11 @@ public class ODocumentInternal {
     return null;
   }
 
+  public static void setPropertyAccess(ODocument doc, OPropertyAccess propertyAccess) {
+    doc.propertyAccess = propertyAccess;
+  }
+
+  public static void setPropertyEncryption(ODocument doc, OPropertyEncryption propertyEncryption) {
+    doc.propertyEncryption = propertyEncryption;
+  }
 }
