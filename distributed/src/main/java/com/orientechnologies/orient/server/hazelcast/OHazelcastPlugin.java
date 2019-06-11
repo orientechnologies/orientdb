@@ -828,17 +828,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     List<String> hosts = new ArrayList<>();
     for (Member member : activeNodes.values()) {
       ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true);
-      final String nodeStatus = memberConfig.field("status");
+      if (memberConfig != null) {
+        final String nodeStatus = memberConfig.field("status");
 
-      if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
-        final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
-        if (listeners != null)
-          for (Map<String, Object> listener : listeners) {
-            if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
-              String url = (String) listener.get("listen");
-              hosts.add(url);
+        if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
+          final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
+          if (listeners != null)
+            for (Map<String, Object> listener : listeners) {
+              if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
+                String url = (String) listener.get("listen");
+                hosts.add(url);
+              }
             }
-          }
+        }
       }
     }
     serverInstance.getPushManager().pushDistributedConfig(databaseName, hosts);
@@ -1383,8 +1385,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
         try {
-          if(!installDatabase(true, databaseName, false,
-              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean())){
+          if (!installDatabase(true, databaseName, false,
+              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean())) {
             setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
           }
         } catch (Exception e) {
