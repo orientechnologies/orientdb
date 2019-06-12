@@ -37,7 +37,7 @@
     <name>OrientDB Distributed Server</name>
 
     <properties>
-        <hz.version>3.10.4</hz.version>
+        <hz.version>3.10.6</hz.version>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
