@@ -1009,7 +1009,12 @@ OStatement Statement():
 OStatement StatementSemicolon():
 {OStatement result = null;}
 {
-    result = StatementInternal()
+    (
+        LOOKAHEAD(StatementInternal())
+        result = StatementInternal()
+        |
+        result = ExpressionStatement()
+    )
     <SEMICOLON>
     {return result;}
 }
@@ -1185,6 +1190,15 @@ OStatement StatementInternal():
 	    return result;
 	}
 }
+
+OStatement ExpressionStatement():
+{}
+{
+    (
+      jjtThis.expression = Expression()
+    ) { return jjtThis; }
+}
+
 
 OStatement QueryStatement():
 {

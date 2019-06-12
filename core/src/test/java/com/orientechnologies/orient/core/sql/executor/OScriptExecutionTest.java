@@ -2,11 +2,15 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.math.BigDecimal;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -271,5 +275,27 @@ public class OScriptExecutionTest {
     Assert.assertEquals("foo", item.getProperty("name"));
     Assert.assertFalse(result.hasNext());
     result.close();
+  }
+
+  @Test
+  public void testFunctionAsStatement() {
+    String script = "";
+    script += "decimal('10');";
+
+    try {
+      db.command(script);
+      Assert.fail();
+    }catch (OCommandSQLParsingException e){
+
+    }
+
+
+    OResultSet rs =  db.execute("SQL", script);
+    Assert.assertTrue(rs.hasNext());
+    OResult item = rs.next();
+    Assert.assertTrue(item.getProperty("result") instanceof BigDecimal);
+    Assert.assertFalse(rs.hasNext());
+
+    rs.close();
   }
 }
