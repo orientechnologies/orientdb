@@ -67,7 +67,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

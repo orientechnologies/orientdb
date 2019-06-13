@@ -75,7 +75,7 @@ public class MatchStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

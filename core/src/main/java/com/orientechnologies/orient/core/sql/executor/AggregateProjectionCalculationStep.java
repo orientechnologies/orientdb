@@ -65,7 +65,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

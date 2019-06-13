@@ -118,7 +118,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override
