@@ -325,7 +325,7 @@ public class OResultInternal implements OResult {
     if (isBlob()) {
       return Optional.ofNullable(this.element.getRecord());
     }
-    return null;
+    return Optional.empty();
   }
 
   @Override
