@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.exception;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.id.ORID;
 
+import java.util.Objects;
+
 public class ORecordNotFoundException extends OCoreException implements OHighLevelException {
 
   private static final long serialVersionUID = -265573123216968L;
@@ -52,6 +54,11 @@ public class ORecordNotFoundException extends OCoreException implements OHighLev
       return toString().equals(obj.toString());
 
     return rid != null ? rid.equals(((ORecordNotFoundException) obj).rid) : ((ORecordNotFoundException) obj).rid.equals(rid);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(rid);
   }
 
   public ORID getRid() {
