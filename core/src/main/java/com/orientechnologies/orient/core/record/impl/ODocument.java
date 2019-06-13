@@ -1117,8 +1117,13 @@ public class ODocument extends ORecordAbstract
         && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
       final String[] fieldNames = recordFormat.getFieldNamesRoot(this, source);
-      if (fieldNames != null)
-        return fieldNames;
+      if (propertyAccess != null) {
+        return Arrays.stream(fieldNames).filter((e) -> propertyAccess.isReadable(this, e)).collect(Collectors.toList())
+            .toArray(new String[] {});
+      } else {
+        if (fieldNames != null)
+          return fieldNames;
+      }
     }
 
     checkForFields();
@@ -1127,7 +1132,7 @@ public class ODocument extends ORecordAbstract
       return EMPTY_STRINGS;
     final List<String> names = new ArrayList<>(fields.size());
     for (Entry<String, ODocumentEntry> entry : fields.entrySet()) {
-      if (entry.getValue().exist())
+      if (entry.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(this, entry.getKey())))
         names.add(entry.getKey());
     }
     return names.toArray(new String[names.size()]);
@@ -1145,12 +1150,12 @@ public class ODocument extends ORecordAbstract
   public Object[] fieldValues() {
     checkForLoading();
     checkForFields();
-    Object[] res = new Object[fields.size()];
-    int i = 0;
-    for (ODocumentEntry entry : fields.values()) {
-      res[i++] = entry.value;
+    final List<Object> res = new ArrayList<>(fields.size());
+    for (Map.Entry<String, ODocumentEntry> entry : fields.entrySet()) {
+      if (entry.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(this, entry.getKey())))
+        res.add(entry.getValue().value);
     }
-    return res;
+    return res.toArray();
   }
 
   public <RET> RET rawField(final String iFieldName) {
@@ -1164,11 +1169,7 @@ public class ODocument extends ORecordAbstract
 
     // OPTIMIZATION
     if (!allowChainedAccess || (iFieldName.charAt(0) != '@' && OStringSerializerHelper.indexOf(iFieldName, 0, '.', '[') == -1)) {
-      ODocumentEntry entry = fields.get(iFieldName);
-      if (entry != null && entry.exist())
-        return (RET) entry.value;
-      else
-        return null;
+      return (RET) accessProperty(iFieldName);
     }
 
     // NOT FOUND, PARSE THE FIELD NAME
@@ -1960,7 +1961,8 @@ public class ODocument extends ORecordAbstract
       public boolean hasNext() {
         while (iterator.hasNext()) {
           current = iterator.next();
-          if (current.getValue().exist()) {
+          if (current.getValue().exist() && (propertyAccess == null || propertyAccess
+              .isReadable(ODocument.this, current.getKey()))) {
             read = false;
             return true;
           }
@@ -2021,13 +2023,26 @@ public class ODocument extends ORecordAbstract
    */
   @Override
   public boolean containsField(final String iFieldName) {
-    if (iFieldName == null)
+    return hasProperty(iFieldName);
+  }
+
+  /**
+   * Checks if a property exists.
+   *
+   * @return True if exists, otherwise false.
+   */
+  @Override
+  public boolean hasProperty(final String propertyName) {
+    if (propertyName == null)
       return false;
 
     checkForLoading();
-    checkForFields(iFieldName);
-    ODocumentEntry entry = fields.get(iFieldName);
-    return entry != null && entry.exist();
+    if (checkForFields(propertyName) && (propertyAccess == null || propertyAccess.isReadable(this, propertyName))) {
+      ODocumentEntry entry = fields.get(propertyName);
+      return entry != null && entry.exist();
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -2161,8 +2176,13 @@ public class ODocument extends ORecordAbstract
     checkForFields(iFieldName);
 
     ODocumentEntry entry = fields.get(iFieldName);
-    if (entry != null)
-      return entry.type;
+    if (entry != null) {
+      if (propertyAccess == null || propertyAccess.isReadable(this, iFieldName)) {
+        return entry.type;
+      } else {
+        return null;
+      }
+    }
 
     return null;
   }
@@ -3331,10 +3351,10 @@ public class ODocument extends ORecordAbstract
     return true;
   }
 
-  protected Object accessProperty(final String field) {
-    if (checkForFields(field)) {
-      if (propertyAccess == null || propertyAccess.isReadable(this, field)) {
-        ODocumentEntry entry = fields.get(field);
+  protected Object accessProperty(final String property) {
+    if (checkForFields(property)) {
+      if (propertyAccess == null || propertyAccess.isReadable(this, property)) {
+        ODocumentEntry entry = fields.get(property);
         return entry != null ? entry.value : null;
       } else {
         return null;

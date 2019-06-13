@@ -265,6 +265,11 @@ public class OVertexDelegate implements OVertex {
   }
 
   @Override
+  public boolean hasProperty(String propertyName) {
+    return element.hasProperty(propertyName);
+  }
+
+  @Override
   public void setProperty(String name, Object value) {
     element.setProperty(name, value);
   }
