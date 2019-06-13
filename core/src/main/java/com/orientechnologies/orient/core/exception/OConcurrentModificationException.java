@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * Exception thrown when MVCC is enabled and a record cannot be updated or deleted because versions don't match.
@@ -81,6 +82,11 @@ public class OConcurrentModificationException extends ONeedRetryException implem
     }
 
     return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(rid, databaseVersion, recordVersion, recordOperation);
   }
 
   public int getEnhancedDatabaseVersion() {
