@@ -395,13 +395,13 @@ public enum OType implements OTypeInterface {
           return Double.parseDouble((String) iValue);
         else if (iValue instanceof Float)
           // THIS IS NECESSARY DUE TO A BUG/STRANGE BEHAVIOR OF JAVA BY LOSSING PRECISION
-          return Double.parseDouble((String) iValue.toString());
+          return Double.parseDouble(iValue.toString());
         else
           return ((Number) iValue).doubleValue();
 
       } else if (iTargetClass.equals(Boolean.TYPE) || iTargetClass.equals(Boolean.class)) {
         if (iValue instanceof Boolean)
-          return ((Boolean) iValue).booleanValue();
+          return iValue;
         else if (iValue instanceof String) {
           if (((String) iValue).equalsIgnoreCase("true"))
             return Boolean.TRUE;
