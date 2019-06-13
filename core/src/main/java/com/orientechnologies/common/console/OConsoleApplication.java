@@ -487,7 +487,6 @@ public class OConsoleApplication {
       // COMMENT: JUMP IT
       return null;
 
-    Method lastMethodInvoked = null;
     final StringBuilder lastCommandInvoked = new StringBuilder(1024);
 
     final String commandLowerCase = iCommand.toLowerCase(Locale.ENGLISH);
@@ -550,9 +549,6 @@ public class OConsoleApplication {
       } else
         return m;
     }
-
-    if (lastMethodInvoked != null)
-      syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
 
     error("\n!Unrecognized command: '%s'", iCommand);
     return null;
