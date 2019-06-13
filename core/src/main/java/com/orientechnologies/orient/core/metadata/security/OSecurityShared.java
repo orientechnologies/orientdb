@@ -604,4 +604,9 @@ public class OSecurityShared implements OSecurityInternal {
   public Set<String> getFilteredProperties(ODocument document) {
     return null;
   }
+
+  @Override
+  public boolean isAllowedWrite(ODocument document, String name) {
+    return true;
+  }
 }

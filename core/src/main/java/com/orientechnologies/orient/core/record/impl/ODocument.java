@@ -51,13 +51,7 @@ import com.orientechnologies.orient.core.delta.ODeltaDocumentFieldType;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.delta.UpdateTypeValueType;
 import com.orientechnologies.orient.core.delta.ValueType;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
@@ -72,10 +66,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
-import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
-import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
-import com.orientechnologies.orient.core.metadata.security.OIdentity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -624,7 +615,24 @@ public class ODocument extends ORecordAbstract
     return (RET) oldValue;
   }
 
-  protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
+  protected static void validateFieldSecurity(ODatabaseDocumentInternal internal, ODocument iRecord, OImmutableProperty p)
+      throws OValidationException {
+    if (internal == null) {
+      return;
+    }
+    ODocumentEntry entry = iRecord.fields.get(p.getName());
+    if (entry != null && (entry.isChanged() || entry.timeLine != null)) {
+      OSecurityInternal security = internal.getSharedContext().getSecurity();
+      if (!security.isAllowedWrite(iRecord, p.getName())) {
+        throw new OSecurityException(
+            String.format("Change of field '%s' is not allowed for user '%s'", p.getFullName(), internal.getUser().getName()));
+      }
+    }
+  }
+
+  protected static void validateField(ODatabaseDocumentInternal internal, ODocument iRecord, OImmutableProperty p)
+      throws OValidationException {
+    validateFieldSecurity(internal, iRecord, p);
     final Object fieldValue;
     ODocumentEntry entry = iRecord.fields.get(p.getName());
     if (entry != null && entry.exist()) {
@@ -2692,8 +2700,16 @@ public class ODocument extends ORecordAbstract
 
     autoConvertValues();
 
-    if (ODatabaseRecordThreadLocal.instance().isDefined() && !getDatabase().isValidationEnabled())
+    ODatabaseDocumentInternal internal = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (internal != null && !internal.isValidationEnabled()) {
+      final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
+      if (immutableSchemaClass != null) {
+        for (OProperty p : immutableSchemaClass.properties()) {
+          validateFieldSecurity(internal, this, (OImmutableProperty) p);
+        }
+      }
       return;
+    }
 
     final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
     if (immutableSchemaClass != null) {
@@ -2708,7 +2724,7 @@ public class ODocument extends ORecordAbstract
       }
 
       for (OProperty p : immutableSchemaClass.properties()) {
-        validateField(this, (OImmutableProperty) p);
+        validateField(internal, this, (OImmutableProperty) p);
       }
     }
   }

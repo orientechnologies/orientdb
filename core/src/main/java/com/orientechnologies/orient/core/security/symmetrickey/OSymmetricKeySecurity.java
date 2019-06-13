@@ -213,6 +213,11 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
+  public boolean isAllowedWrite(ODocument document, String name) {
+    return delegate.isAllowedWrite(document, name);
+  }
+
+  @Override
   public void close() {
 
   }

@@ -64,4 +64,6 @@ public interface OSecurityInternal {
   void close();
 
   Set<String> getFilteredProperties(ODocument document);
+
+  boolean isAllowedWrite(ODocument document, String name);
 }
