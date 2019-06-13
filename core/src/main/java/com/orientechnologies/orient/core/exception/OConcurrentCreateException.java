@@ -23,6 +23,8 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.id.ORID;
 
+import java.util.Objects;
+
 /**
  * Exception thrown when a create operation get a non expected RID. This could happen with distributed inserts. The client should
  * retry to re-execute the operation.
@@ -63,6 +65,11 @@ public class OConcurrentCreateException extends ONeedRetryException implements O
     final OConcurrentCreateException other = (OConcurrentCreateException) obj;
 
     return expectedRid.equals(other.expectedRid) && actualRid.equals(other.actualRid);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(expectedRid, actualRid);
   }
 
   public ORID getExpectedRid() {
