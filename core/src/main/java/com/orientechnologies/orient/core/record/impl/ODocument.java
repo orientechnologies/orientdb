@@ -1123,12 +1123,6 @@ public class ODocument extends ORecordAbstract
     return calculatePropertyNames().collect(Collectors.toList()).toArray(new String[] {});
   }
 
-  private Set<String> arrayToSet(String[] fieldNames) {
-    Set<String> result = new HashSet<>();
-    Collections.addAll(result, fieldNames);
-    return result;
-  }
-
   /**
    * Returns the array of field values.
    */
@@ -2747,6 +2741,9 @@ public class ODocument extends ORecordAbstract
 
       boolean first = true;
       for (Entry<String, ODocumentEntry> f : fields.entrySet()) {
+        if (propertyAccess != null && !propertyAccess.isReadable(this, f.getKey())) {
+          continue;
+        }
         buffer.append(first ? '{' : ',');
         buffer.append(f.getKey());
         buffer.append(':');

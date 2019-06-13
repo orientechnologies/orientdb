@@ -113,4 +113,30 @@ public class OPropertyAccessTest {
 
   }
 
+  @Test
+  public void testToMap() {
+    ODocument doc = new ODocument();
+    doc.setProperty("name", "one value");
+    assertTrue(doc.toMap().containsKey("name"));
+
+    Set<String> toHide = new HashSet<>();
+    toHide.add("name");
+    ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(toHide));
+    assertFalse(doc.toMap().containsKey("name"));
+  }
+
+  @Test
+  public void testStringSerialization() {
+    ODocument doc = new ODocument();
+    doc.setProperty("name", "one value");
+    assertTrue(doc.toString().contains("name"));
+
+    Set<String> toHide = new HashSet<>();
+    toHide.add("name");
+    ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(toHide));
+    assertFalse(doc.toString().contains("name"));
+
+  }
+
+
 }
