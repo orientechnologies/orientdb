@@ -74,7 +74,7 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
       }
 
       @Override public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override public Map<String, Long> getQueryStats() {
