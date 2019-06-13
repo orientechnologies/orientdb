@@ -119,6 +119,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -346,8 +347,7 @@ public class ODocument extends ORecordAbstract
     return Optional.ofNullable(getSchemaClass());
   }
 
-  @Override
-  public Set<String> getPropertyNames() {
+  private Stream<String> calculatePropertyNames() {
     checkForLoading();
 
     if (status == ORecordElement.STATUS.LOADED && source != null && ODatabaseRecordThreadLocal.instance().isDefined()
@@ -355,18 +355,27 @@ public class ODocument extends ORecordAbstract
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
       final String[] fieldNames = recordFormat.getFieldNamesRoot(this, source);
       if (fieldNames != null) {
-        Set<String> result = new HashSet<>();
-        Collections.addAll(result, fieldNames);
-        return result;
+        if (propertyAccess != null) {
+          return Arrays.stream(fieldNames).filter((e) -> propertyAccess.isReadable(this, e));
+        } else {
+          return Arrays.stream(fieldNames);
+        }
       }
     }
 
     checkForFields();
 
     if (fields == null || fields.size() == 0)
-      return Collections.EMPTY_SET;
+      return Stream.empty();
 
-    return fields.entrySet().stream().filter(s -> s.getValue().exist()).map(Entry::getKey).collect(Collectors.toSet());
+    return fields.entrySet().stream()
+        .filter(s -> s.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(this, s.getKey())))
+        .map(Entry::getKey);
+  }
+
+  @Override
+  public Set<String> getPropertyNames() {
+    return calculatePropertyNames().collect(Collectors.toSet());
   }
 
   /**
@@ -1111,31 +1120,7 @@ public class ODocument extends ORecordAbstract
    * Returns the set of field names.
    */
   public String[] fieldNames() {
-    checkForLoading();
-
-    if (status == ORecordElement.STATUS.LOADED && source != null && ODatabaseRecordThreadLocal.instance().isDefined()
-        && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
-      // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = recordFormat.getFieldNamesRoot(this, source);
-      if (propertyAccess != null) {
-        return Arrays.stream(fieldNames).filter((e) -> propertyAccess.isReadable(this, e)).collect(Collectors.toList())
-            .toArray(new String[] {});
-      } else {
-        if (fieldNames != null)
-          return fieldNames;
-      }
-    }
-
-    checkForFields();
-
-    if (fields == null || fields.size() == 0)
-      return EMPTY_STRINGS;
-    final List<String> names = new ArrayList<>(fields.size());
-    for (Entry<String, ODocumentEntry> entry : fields.entrySet()) {
-      if (entry.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(this, entry.getKey())))
-        names.add(entry.getKey());
-    }
-    return names.toArray(new String[names.size()]);
+    return calculatePropertyNames().collect(Collectors.toList()).toArray(new String[] {});
   }
 
   private Set<String> arrayToSet(String[] fieldNames) {
