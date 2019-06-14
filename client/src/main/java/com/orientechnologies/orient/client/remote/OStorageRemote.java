@@ -125,7 +125,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final    Map<Integer, OLiveQueryClientListener> liveQueryListener   = new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread               pushThread;
   private final    OrientDBRemote                         context;
-  private volatile int                                    nextServerToConnect = 0;
+  private          int                                    nextServerToConnect = 0;
 
   public OStorageRemote(final String iURL, OrientDBRemote context, final String iMode, ORemoteConnectionManager connectionManager,
       OrientDBConfig config) throws IOException {
@@ -778,7 +778,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     Boolean result = null;
     if (response != null)
       result = response.getResult();
-    return result;
+    return result != null ? result : false;
   }
 
   @Override
@@ -1006,7 +1006,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void closeQuery(ODatabaseDocumentRemote database, String queryId) {
     unstickToSession();
     OCloseQueryRequest request = new OCloseQueryRequest(queryId);
-    OCloseQueryResponse response = networkOperation(request, "Error closing query: " + queryId);
+    networkOperation(request, "Error closing query: " + queryId);
   }
 
   public void fetchNextPage(ODatabaseDocumentRemote database, ORemoteResultSet rs) {
@@ -1735,13 +1735,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
     switch (strategy) {
     case STICKY:
-      url = session != null ? session.getServerUrl() : null;
+      url = session.getServerUrl();
       if (url == null)
         url = getServerURFromList(false, session);
       break;
 
     case ROUND_ROBIN_CONNECT:
-      if (iIsConnectOperation || session == null) {
+      if (iIsConnectOperation) {
         url = getNextConnectUrl(session);
       } else {
         url = session.getServerUrl();
@@ -2105,7 +2105,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void unsubscribeLive(ODatabaseDocumentRemote database, int monitorId) {
     OUnsubscribeRequest request = new OUnsubscribeRequest(new OUnsubscribeLiveQueryRequest(monitorId));
-    OUnsubscribeResponse response = networkOperation(request, "Error on unsubscribe of live query");
+    networkOperation(request, "Error on unsubscribe of live query");
   }
 
   public void registerLiveListener(int monitorId, OLiveQueryClientListener listener) {
