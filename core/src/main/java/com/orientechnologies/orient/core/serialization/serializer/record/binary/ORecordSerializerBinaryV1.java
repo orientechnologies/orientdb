@@ -43,12 +43,9 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
     CONTINUE, RETURN, RETURN_VALUE, NO_ACTION
   }
 
-  private Tuple<Boolean, String> processNamedFieldInDeserializePartial(final String[] iFields, final BytesContainer bytes, int len,
-      byte[][] fields) {
-    boolean match = false;
-    String fieldName = null;
-    for (int i = 0; i < iFields.length; ++i) {
-      if (iFields[i] != null && iFields[i].length() == len) {
+  private int findMatchingFieldName(final BytesContainer bytes, int len, byte[][] fields) {
+    for (int i = 0; i < fields.length; ++i) {
+      if (fields[i] != null && fields[i].length == len) {
         boolean matchField = true;
         for (int j = 0; j < len; ++j) {
           if (bytes.bytes[bytes.offset + j] != fields[i][j]) {
@@ -57,17 +54,12 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
           }
         }
         if (matchField) {
-          match = true;
-          break;
+          return i;
         }
       }
     }
 
-    //field name is used only if match exists
-    if (match)
-      fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
-    bytes.skip(len);
-    return new Tuple<>(match, fieldName);
+    return -1;
   }
 
   private Tuple<Boolean, String> checkIfPropertyNameMatchSome(OGlobalProperty prop, final String[] iFields) {
@@ -114,7 +106,7 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
     // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]            
     final byte[][] fields = new byte[iFields.length][];
     for (int i = 0; i < iFields.length; ++i) {
-      fields[i] = iFields[i].getBytes();
+      fields[i] = bytesFromString(iFields[i]);
     }
 
     String fieldName;
@@ -134,18 +126,17 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
 
       if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
-        Tuple<Boolean, String> matchFieldName = processNamedFieldInDeserializePartial(iFields, bytes, len, fields);
-        boolean match = matchFieldName.getFirstVal();
-        fieldName = matchFieldName.getSecondVal();
+        int fieldPos = findMatchingFieldName(bytes, len, fields);
+        bytes.skip(len);
         Tuple<Integer, OType> pointerAndType = getFieldSizeAndTypeFromCurrentPosition(bytes);
         int fieldLength = pointerAndType.getFirstVal();
 
-        if (!match) {
+        if (fieldPos < 0) {
           // FIELD NOT INCLUDED: SKIP IT
           cumulativeLength += fieldLength;
           continue;
         }
-
+        fieldName = iFields[fieldPos];
         type = pointerAndType.getSecondVal();
         if (fieldLength == 0) {
           valuePos = 0;

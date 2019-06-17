@@ -70,7 +70,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]
     final byte[][] fields = new byte[iFields.length][];
     for (int i = 0; i < iFields.length; ++i)
-      fields[i] = iFields[i].getBytes();
+      fields[i] = bytesFromString(iFields[i]);
 
     String fieldName = null;
     int valuePos;
@@ -87,7 +87,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
         boolean match = false;
         for (int i = 0; i < iFields.length; ++i) {
-          if (iFields[i] != null && iFields[i].length() == len) {
+          if (fields[i] != null && fields[i].length == len) {
             boolean matchField = true;
             for (int j = 0; j < len; ++j) {
               if (bytes.bytes[bytes.offset + j] != fields[i][j]) {
