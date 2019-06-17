@@ -36,8 +36,6 @@ public interface ODocumentSerializer {
 
   void deserialize(ODocument document, BytesContainer bytes);
 
-  void deserializeWithClassName(ODocument document, BytesContainer bytes);
-
   void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
 
   Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);

@@ -129,11 +129,6 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserializeWithClassName(final ODocument document, final BytesContainer bytes) {
-    deserialize(document, bytes);
-  }
-
-  @Override
   public void deserialize(final ODocument document, final BytesContainer bytes) {
     final String className = readString(bytes);
     if (className.length() != 0)
@@ -327,7 +322,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       break;
     case EMBEDDED:
       value = new ODocument();
-      deserializeWithClassName((ODocument) value, bytes);
+      deserialize((ODocument) value, bytes);
       if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
         String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);
         try {

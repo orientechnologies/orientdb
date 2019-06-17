@@ -230,11 +230,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @Override
   public OBinaryField deserializeFieldWithClassName(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
-
     return deserializeField(bytes, iClass, iFieldName);
   }
 
-  @Override
   public void deserializeWithClassName(final ODocument document, final BytesContainer bytes) {
     deserialize(document, bytes);
   }
