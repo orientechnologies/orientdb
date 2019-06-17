@@ -71,16 +71,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private static final Double               MAX_FLOAT             = (double) Float.MAX_VALUE;
   private static final Double               MIN_FLOAT             = (double) Float.MIN_VALUE;
 
-  @Override
-  public <RET> RET deserializeFieldFromRoot(byte[]record, String iFieldName){
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[] record, int offset, String iFieldName, int serializerVersion) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }  
-
   private interface CollectionItemVisitor {
     void visitItem(Object item);
   }
@@ -782,9 +772,5 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   public String getName() {
     return NAME;
   }
-  
-  @Override
-  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion) {
-    return getFieldNamesRoot(reference, iSource);
-  }
+
 }

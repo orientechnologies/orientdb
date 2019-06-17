@@ -32,11 +32,11 @@ import java.util.Base64;
 
 public class ORecordSerializerNetwork implements ORecordSerializer {
 
-  public static final String                   NAME                   = "onet_ser_v0";
-  public static final ORecordSerializerNetwork INSTANCE               = new ORecordSerializerNetwork();
-  private static final byte                    CURRENT_RECORD_VERSION = 0;
+  public static final  String                   NAME                   = "onet_ser_v0";
+  public static final  ORecordSerializerNetwork INSTANCE               = new ORecordSerializerNetwork();
+  private static final byte                     CURRENT_RECORD_VERSION = 0;
 
-  private final ODocumentSerializer[]                serializerByVersion;
+  private final ODocumentSerializer[] serializerByVersion;
 
   public ORecordSerializerNetwork() {
     serializerByVersion = new ODocumentSerializer[1];
@@ -81,8 +81,9 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       else
         serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
     } catch (RuntimeException e) {
-      OLogManager.instance().warn(this, "Error deserializing record with id %s send this data for debugging: %s ",
-          iRecord.getIdentity().toString(), Base64.getEncoder().encodeToString(iSource));
+      OLogManager.instance()
+          .warn(this, "Error deserializing record with id %s send this data for debugging: %s ", iRecord.getIdentity().toString(),
+              Base64.getEncoder().encodeToString(iSource));
       throw e;
     }
     return iRecord;
@@ -116,7 +117,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   public Object deserializeValue(byte[] val, OType type) {
     BytesContainer bytes = new BytesContainer(val);
     return serializerByVersion[0].deserializeValue(bytes, type, null);
-  }  
+  }
 
   @Override
   public byte[] writeClassOnly(ORecord iSource) {
@@ -141,19 +142,9 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   public String getName() {
     return NAME;
   }
-    
-  @Override
-  public <RET> RET deserializeFieldFromRoot(byte[] record, String iFieldName) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
 
   @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[] record, int offset, String iFieldName, int serializerVersion) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public String[] getFieldNamesRoot(ODocument reference, byte[] iSource) {
+  public String[] getFieldNames(ODocument reference, byte[] iSource) {
     if (iSource == null || iSource.length == 0)
       return new String[0];
 
@@ -166,10 +157,5 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
           Base64.getEncoder().encodeToString(iSource));
       throw e;
     }
-  }
-  
-  @Override
-  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion) {
-    return getFieldNamesRoot(reference, iSource);
   }
 }

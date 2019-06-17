@@ -23,28 +23,38 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- *
  * @author mdjurovi
  */
-public class OResultBinary implements OResult{
+public class OResultBinary implements OResult {
 
-  private ORID id;
-  private final byte[] bytes;
-  private final int offset;
-  private final int serializerVersion;
-  private final int fieldLength;
-  
-  public OResultBinary(byte[] bytes, int offset, int fieldLength, int serializerVersion){
+  private       ODocumentSerializer serializer;
+  private       ORID                id;
+  private final byte[]              bytes;
+  private final int                 offset;
+  private final int                 fieldLength;
+  private       boolean             embedded;
+
+  public OResultBinary(byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer) {
     this.bytes = bytes;
-    this.serializerVersion = serializerVersion;
+    this.serializer = serializer;
     this.offset = offset;
     this.fieldLength = fieldLength;
+    this.embedded = true;
+  }
+
+  public OResultBinary(byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer, boolean embedded) {
+    this.bytes = bytes;
+    this.serializer = serializer;
+    this.offset = offset;
+    this.fieldLength = fieldLength;
+    this.embedded = embedded;
   }
 
   public int getFieldLength() {
@@ -53,8 +63,8 @@ public class OResultBinary implements OResult{
 
   public int getOffset() {
     return offset;
-  }  
-  
+  }
+
   public ORID getId() {
     return id;
   }
@@ -67,13 +77,11 @@ public class OResultBinary implements OResult{
     return bytes;
   }
 
-  public int getSerializerVersion() {
-    return serializerVersion;
-  }    
-  
   @Override
   public <T> T getProperty(String name) {
-    return (T)ORecordSerializerBinary.INSTANCE.deserializeFieldFromEmbedded(bytes, offset, name, serializerVersion);
+    BytesContainer bytes = new BytesContainer(this.bytes);
+    bytes.skip(offset);
+    return (T) serializer.deserializeFieldTyped(bytes, name, embedded, 1);
   }
 
   @Override
@@ -98,7 +106,10 @@ public class OResultBinary implements OResult{
 
   @Override
   public Set<String> getPropertyNames() {
-    String[] fields = ORecordSerializerBinary.INSTANCE.getFieldNamesEmbedded(new ODocument(), bytes, offset, serializerVersion);
+    final BytesContainer container = new BytesContainer(bytes);
+    container.skip(offset);
+    //TODO: use something more correct that new ODocument
+    String[] fields = serializer.getFieldNames(new ODocument(), container, embedded);
     return new HashSet<>(Arrays.asList(fields));
   }
 
@@ -156,11 +167,13 @@ public class OResultBinary implements OResult{
   public boolean hasProperty(String varName) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-  
-  private ODocument toDocument(){
+
+  private ODocument toDocument() {
     ODocument doc = new ODocument();
-    ORecordSerializerBinary.INSTANCE.getSerializer(serializerVersion).deserialize(doc, new BytesContainer(bytes));
+    BytesContainer bytes = new BytesContainer(this.bytes);
+    bytes.skip(offset);
+    serializer.deserialize(doc, bytes);
     return doc;
   }
-  
+
 }

@@ -50,16 +50,13 @@ public interface ODocumentSerializer {
    * Returns the array of field names with no values.
    *
    * @param reference TODO
+   * @param embedded
    */
-  String[] getFieldNames(ODocument reference, BytesContainer iBytes, boolean readClassName);
+  String[] getFieldNames(ODocument reference, BytesContainer iBytes, boolean embedded);
 
   boolean isSerializingClassNameByDefault();
 
-  boolean isSerializingClassNameForEmbedded();
-
   <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion);
-
-  HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes);
 
   void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo,
       OImmutableSchema schema);

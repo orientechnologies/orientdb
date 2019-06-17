@@ -344,7 +344,7 @@ public class ODocument extends ORecordAbstract
     if (status == ORecordElement.STATUS.LOADED && source != null && ODatabaseRecordThreadLocal.instance().isDefined()
         && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = recordFormat.getFieldNamesRoot(this, source);
+      final String[] fieldNames = recordFormat.getFieldNames(this, source);
       if (fieldNames != null) {
         if (propertyAccess != null) {
           return Arrays.stream(fieldNames).filter((e) -> propertyAccess.isReadable(e));

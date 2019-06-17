@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record;
 
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 public interface ORecordSerializer {
   ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields);
@@ -34,13 +35,10 @@ public interface ORecordSerializer {
 
   int getMinSupportedVersion();
 
-  String[] getFieldNamesRoot(ODocument reference, byte[] iSource);  
-  String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion);
+  String[] getFieldNames(ODocument reference, byte[] iSource);
 
   boolean getSupportBinaryEvaluate();
 
   String getName();
   
-  <RET> RET deserializeFieldFromRoot(byte[]record, String iFieldName);
-  <RET> RET deserializeFieldFromEmbedded(byte[]record, int offsetOfDocumentInBytes, String iFieldName, int serializerVersion);
 }

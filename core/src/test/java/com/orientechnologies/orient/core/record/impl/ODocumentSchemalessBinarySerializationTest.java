@@ -863,7 +863,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     ODocument document = new ODocument();
     document.fields("a", 1, "b", 2, "c", 3);
     byte[] res = serializer.toStream(document, false);
-    final String[] fields = serializer.getFieldNamesRoot(document, res);
+    final String[] fields = serializer.getFieldNames(document, res);
 
     assertNotNull(fields);
     assertEquals(fields.length, 3);

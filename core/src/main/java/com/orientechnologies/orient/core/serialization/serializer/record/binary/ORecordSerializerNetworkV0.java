@@ -227,7 +227,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public String[] getFieldNames(ODocument reference, final BytesContainer bytes, boolean deserializeClassName) {
+  public String[] getFieldNames(ODocument reference, final BytesContainer bytes, boolean embedded) {
     // SKIP CLASS NAME
     final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
     bytes.skip(classNameLen);
@@ -848,19 +848,6 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   @Override
   public <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public boolean isSerializingClassNameForEmbedded() {
-    return true;
-  }
-
-  @Override
-  public HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes) {
-    int valuePos = readInteger(bytes);
-    byte typeId = readByte(bytes);
-    OType type = OType.getById(typeId);
-    return new HelperClasses.Tuple<>(valuePos, type);
   }
 
   @Override

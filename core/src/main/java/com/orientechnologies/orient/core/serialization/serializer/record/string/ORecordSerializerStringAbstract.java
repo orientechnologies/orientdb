@@ -672,7 +672,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   @Override
-  public String[] getFieldNamesRoot(ODocument reference, byte[] iSource) {
+  public String[] getFieldNames(ODocument reference, byte[] iSource) {
     return null;
   }
 
