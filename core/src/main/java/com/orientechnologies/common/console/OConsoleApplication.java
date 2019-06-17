@@ -374,13 +374,14 @@ public class OConsoleApplication {
     Method lastMethodInvoked = null;
     final StringBuilder lastCommandInvoked = new StringBuilder(1024);
 
-    String commandLowerCase = "";
+    StringBuilder commandLowerCaseBuilder = new StringBuilder();
     for (int i = 0; i < commandWords.length; i++) {
       if (i > 0) {
-        commandLowerCase += " ";
+        commandLowerCaseBuilder.append(" ");
       }
-      commandLowerCase += commandWords[i].toLowerCase(Locale.ENGLISH);
+      commandLowerCaseBuilder.append(commandWords[i].toLowerCase(Locale.ENGLISH));
     }
+    String commandLowerCase = commandLowerCaseBuilder.toString();
 
     for (Entry<Method, Object> entry : getConsoleMethods().entrySet()) {
       final Method m = entry.getKey();

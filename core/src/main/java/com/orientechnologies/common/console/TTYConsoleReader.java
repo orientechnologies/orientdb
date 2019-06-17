@@ -359,36 +359,37 @@ public class TTYConsoleReader implements OConsoleReader {
       String[] bufferComponents = buffer.toString().split(" ");
       String[] suggestionComponents;
       Set<String> bufferPart = new HashSet<String>();
-      String suggestionPart = null;
+      StringBuilder suggestionPart = null;
       boolean appendSpace = true;
       for (String suggestion : suggestions) {
         suggestionComponents = suggestion.split(" ");
         hintBuffer.append("* " + suggestion + " ");
         hintBuffer.append("\n");
-        suggestionPart = "";
+        suggestionPart = new StringBuilder();
         if (bufferComponents.length == 0 || buffer.length() == 0) {
           suggestionPart = null;
         } else if (bufferComponents.length == 1) {
           bufferPart.add(suggestionComponents[0]);
           if (bufferPart.size() > 1) {
-            suggestionPart = bufferComponents[0];
+            suggestionPart=new StringBuilder(bufferComponents[0]);
             appendSpace = false;
           } else {
-            suggestionPart = suggestionComponents[0];
+            suggestionPart = new StringBuilder(suggestionComponents[0]);
           }
         } else {
           bufferPart.add(suggestionComponents[bufferComponents.length - 1]);
           if (bufferPart.size() > 1) {
             for (int i = 0; i < bufferComponents.length; i++) {
-              suggestionPart += bufferComponents[i];
+              suggestionPart.append(bufferComponents[i]);
               if (i < (bufferComponents.length - 1)) {
-                suggestionPart += " ";
+                suggestionPart.append(" ");
               }
               appendSpace = false;
             }
           } else {
             for (int i = 0; i < suggestionComponents.length; i++) {
-              suggestionPart += suggestionComponents[i] + " ";
+              suggestionPart.append(suggestionComponents[i]);
+              suggestionPart.append(" ");
             }
           }
         }
