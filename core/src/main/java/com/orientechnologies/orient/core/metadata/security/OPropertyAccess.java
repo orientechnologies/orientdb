@@ -16,7 +16,7 @@ public class OPropertyAccess {
     this.filtered = filtered;
   }
 
-  public boolean isReadable(ODocument document, String property) {
+  public boolean isReadable(String property) {
     return filtered == null || !filtered.contains(property);
   }
 

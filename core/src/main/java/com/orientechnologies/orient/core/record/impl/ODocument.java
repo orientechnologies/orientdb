@@ -347,7 +347,7 @@ public class ODocument extends ORecordAbstract
       final String[] fieldNames = recordFormat.getFieldNamesRoot(this, source);
       if (fieldNames != null) {
         if (propertyAccess != null) {
-          return Arrays.stream(fieldNames).filter((e) -> propertyAccess.isReadable(this, e));
+          return Arrays.stream(fieldNames).filter((e) -> propertyAccess.isReadable(e));
         } else {
           return Arrays.stream(fieldNames);
         }
@@ -360,7 +360,7 @@ public class ODocument extends ORecordAbstract
       return Stream.empty();
 
     return fields.entrySet().stream()
-        .filter(s -> s.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(this, s.getKey())))
+        .filter(s -> s.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(s.getKey())))
         .map(Entry::getKey);
   }
 
@@ -1139,7 +1139,7 @@ public class ODocument extends ORecordAbstract
     checkForFields();
     final List<Object> res = new ArrayList<>(fields.size());
     for (Map.Entry<String, ODocumentEntry> entry : fields.entrySet()) {
-      if (entry.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(this, entry.getKey())))
+      if (entry.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(entry.getKey())))
         res.add(entry.getValue().value);
     }
     return res.toArray();
@@ -1949,7 +1949,7 @@ public class ODocument extends ORecordAbstract
         while (iterator.hasNext()) {
           current = iterator.next();
           if (current.getValue().exist() && (propertyAccess == null || propertyAccess
-              .isReadable(ODocument.this, current.getKey()))) {
+              .isReadable(current.getKey()))) {
             read = false;
             return true;
           }
@@ -2024,7 +2024,7 @@ public class ODocument extends ORecordAbstract
       return false;
 
     checkForLoading();
-    if (checkForFields(propertyName) && (propertyAccess == null || propertyAccess.isReadable(this, propertyName))) {
+    if (checkForFields(propertyName) && (propertyAccess == null || propertyAccess.isReadable(propertyName))) {
       ODocumentEntry entry = fields.get(propertyName);
       return entry != null && entry.exist();
     } else {
@@ -2164,7 +2164,7 @@ public class ODocument extends ORecordAbstract
 
     ODocumentEntry entry = fields.get(iFieldName);
     if (entry != null) {
-      if (propertyAccess == null || propertyAccess.isReadable(this, iFieldName)) {
+      if (propertyAccess == null || propertyAccess.isReadable(iFieldName)) {
         return entry.type;
       } else {
         return null;
@@ -2757,7 +2757,7 @@ public class ODocument extends ORecordAbstract
 
       boolean first = true;
       for (Entry<String, ODocumentEntry> f : fields.entrySet()) {
-        if (propertyAccess != null && !propertyAccess.isReadable(this, f.getKey())) {
+        if (propertyAccess != null && !propertyAccess.isReadable(f.getKey())) {
           continue;
         }
         buffer.append(first ? '{' : ',');
@@ -3351,7 +3351,7 @@ public class ODocument extends ORecordAbstract
 
   protected Object accessProperty(final String property) {
     if (checkForFields(property)) {
-      if (propertyAccess == null || propertyAccess.isReadable(this, property)) {
+      if (propertyAccess == null || propertyAccess.isReadable(property)) {
         ODocumentEntry entry = fields.get(property);
         return entry != null ? entry.value : null;
       } else {
