@@ -72,7 +72,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]
     final byte[][] fields = new byte[iFields.length][];
     for (int i = 0; i < iFields.length; ++i)
-      fields[i] = iFields[i].getBytes();
+      fields[i] = bytesFromString(iFields[i]);
 
     String fieldName = null;
     int valuePos;
@@ -539,7 +539,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   protected Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument,
       boolean embeddedAsDocument, int valueLengthInBytes, int serializerVersion, boolean justRunThrough) {
-    if (type == null){
+    if (type == null) {
       throw new ODatabaseException("Invalid type value: null");
     }
     Object value = null;
@@ -695,8 +695,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
     return value;
   }
-  
-  protected ORidBag readRidbag(BytesContainer bytes){
+
+  protected ORidBag readRidbag(BytesContainer bytes) {
     ORidBag bag = new ORidBag();
     bag.fromStream(bytes);
     return bag;
@@ -965,8 +965,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     int length = bytes.offset - startOffset;
     return new Tuple<>(pointer, length);
   }
-  
-  protected int writeRidBag(BytesContainer bytes, ORidBag ridbag){
+
+  protected int writeRidBag(BytesContainer bytes, ORidBag ridbag) {
     return ridbag.toStream(bytes);
   }
 

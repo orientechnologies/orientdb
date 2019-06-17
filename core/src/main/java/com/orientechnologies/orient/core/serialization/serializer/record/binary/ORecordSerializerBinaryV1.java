@@ -47,11 +47,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readByte;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOType;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readString;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.stringFromBytes;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeOType;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
 
 public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
 
@@ -131,7 +127,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]            
     final byte[][] fields = new byte[iFields.length][];
     for (int i = 0; i < iFields.length; ++i) {
-      fields[i] = iFields[i].getBytes();
+      fields[i] = bytesFromString(iFields[i]);
     }
 
     String fieldName;
