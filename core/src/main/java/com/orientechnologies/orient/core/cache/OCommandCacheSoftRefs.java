@@ -74,7 +74,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     }
   }
 
-  private class OCommandCacheImplRefs extends OSoftRefsHashMap<String, OCachedResult> {
+  private static class OCommandCacheImplRefs extends OSoftRefsHashMap<String, OCachedResult> {
   }
 
   private final    String                databaseName;
@@ -125,7 +125,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
 
   public void changeConfig(ODocument cfg) {
 
-    synchronized (configuration) {
+    synchronized (this) {
       ODocument oldConfig = configuration;
       configuration = cfg;
       configure();
@@ -191,12 +191,13 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     deleteFileIfExists();
   }
 
-  protected void deleteFileIfExists() {
+  protected boolean deleteFileIfExists() {
     File f = getConfigFile();
     if (f != null) {
       OLogManager.instance().debug(this, "Removing Command Cache config for db: %s", databaseName);
-      f.delete();
+      return f.delete();
     }
+    return false;
   }
 
   @Override
@@ -432,11 +433,12 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     }
   }
 
-  public static void clearFiles(OAbstractPaginatedStorage storage) {
+  public static boolean clearFiles(OAbstractPaginatedStorage storage) {
     String name = ((OLocalPaginatedStorage) storage).getStoragePath().resolve(CONFIG_FILE).toString();
     File file = new File(name);
     if (file.exists())
-      file.delete();
+      return file.delete();
+    return false;
   }
 
 }
