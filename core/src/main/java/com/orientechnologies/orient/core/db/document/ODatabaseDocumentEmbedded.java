@@ -822,9 +822,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       }
       return replaced;
     }
-    if (changed) {
-      return id;
-    }
     return null;
   }
 
