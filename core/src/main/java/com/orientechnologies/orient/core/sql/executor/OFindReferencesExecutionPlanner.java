@@ -48,7 +48,7 @@ public class OFindReferencesExecutionPlanner {
 
   private void handleSubQuerySource(OSelectExecutionPlan plan, OCommandContext ctx, boolean profilingEnabled) {
     if (subQuery != null) {
-      new SubQueryStep(subQuery.createExecutionPlan(ctx, profilingEnabled), ctx, ctx, profilingEnabled);
+      plan.chain(new SubQueryStep(subQuery.createExecutionPlan(ctx, profilingEnabled), ctx, ctx, profilingEnabled));
     }
   }
 
