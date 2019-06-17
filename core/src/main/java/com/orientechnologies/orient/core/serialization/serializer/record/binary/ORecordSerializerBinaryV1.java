@@ -185,16 +185,6 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     }
   }
 
-  @Override
-  public void deserializePartialWithClassName(final ODocument document, final BytesContainer bytes, final String[] iFields) {
-
-    final String className = readString(bytes);
-    if (className.length() != 0)
-      ODocumentInternal.fillClassNameIfNeeded(document, className);
-
-    deserializePartial(document, bytes, iFields);
-  }
-
   private boolean checkMatchForLargerThenZero(final BytesContainer bytes, final byte[] field, int len) {
     if (field.length != len) {
       return false;
@@ -469,9 +459,9 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        Tuple<Integer, Integer> dataPointerAndLength = serializeValue(valuesBuffer, value, type,
-            getLinkedType(document, type, field.getKey()));
-        int valueLength = dataPointerAndLength.getSecondVal();
+        int startOffset = valuesBuffer.offset;
+        serializeValue(valuesBuffer, value, type, getLinkedType(document, type, field.getKey()));
+        int valueLength = valuesBuffer.offset - startOffset;
         OVarIntSerializer.write(headerBuffer, valueLength);
       } else {
         //handle null fields
@@ -630,7 +620,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
    */
   private Tuple<Integer, OType> getFieldSizeAndTypeFromCurrentPosition(BytesContainer bytes) {
     int fieldSize = OVarIntSerializer.readAsInteger(bytes);
-    OType type = readOType(bytes, false);    
+    OType type = readOType(bytes, false);
     return new Tuple<>(fieldSize, type);
   }
 
@@ -755,7 +745,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         OType keyType = readOType(bytes, false);
         Object key = deserializeValue(bytes, keyType, document);
         final OType type = HelperClasses.readType(bytes);
-        if (type != null) {          
+        if (type != null) {
           Object value = deserializeValue(bytes, type, document);
           result.put(key, value);
         } else

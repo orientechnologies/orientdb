@@ -32,15 +32,13 @@ public interface ODocumentSerializer {
 
   void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
-  HelperClasses.Tuple<Integer, Integer> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
+  int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
   void deserialize(ODocument document, BytesContainer bytes);
 
   void deserializeWithClassName(ODocument document, BytesContainer bytes);
 
   void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
-
-  void deserializePartialWithClassName(ODocument document, BytesContainer bytes, String[] iFields);
 
   Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
 

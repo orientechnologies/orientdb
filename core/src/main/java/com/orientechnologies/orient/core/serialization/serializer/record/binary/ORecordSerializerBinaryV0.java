@@ -154,11 +154,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserializePartialWithClassName(final ODocument document, final BytesContainer bytes, final String[] iFields) {
-    deserializePartial(document, bytes, iFields);
-  }
-
-  @Override
   public OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName) {
     // SKIP CLASS NAME
     final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
@@ -398,9 +393,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        Tuple<Integer, Integer> pointerAndLength = serializeValue(bytes, value, type,
-            getLinkedType(document, type, values[i].getKey()));
-        pointer = pointerAndLength.getFirstVal();
+        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         if (values[i].getValue().property == null || values[i].getValue().property.getType() == OType.ANY)
           writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
@@ -867,10 +860,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Tuple<Integer, Integer> serializeValue(final BytesContainer bytes, Object value, final OType type,
-      final OType linkedType) {
+  public int serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
     int pointer = 0;
-    int startOffset = bytes.offset;
     switch (type) {
     case INTEGER:
     case LONG:
@@ -969,8 +960,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case ANY:
       break;
     }
-    int length = bytes.offset - startOffset;
-    return new Tuple<>(pointer, length);
+    return pointer;
   }
 
   protected int writeRidBag(BytesContainer bytes, ORidBag ridbag) {
@@ -1002,8 +992,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        Tuple<Integer, Integer> pointerAndLength = serializeValue(bytes, value, type, null);
-        int pointer = pointerAndLength.getFirstVal();
+        int pointer = serializeValue(bytes, value, type, null);
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       } else {

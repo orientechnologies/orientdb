@@ -59,11 +59,6 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserializePartialWithClassName(final ODocument document, final BytesContainer bytes, final String[] iFields) {
-    deserializePartial(document, bytes, iFields);
-  }
-
-  @Override
   public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields) {
     final String className = readString(bytes);
     if (className.length() != 0)
@@ -228,7 +223,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey())).getFirstVal();
+        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -502,10 +497,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
   @SuppressWarnings("unchecked")
   @Override
-  public HelperClasses.Tuple<Integer, Integer> serializeValue(final BytesContainer bytes, Object value, final OType type,
-      final OType linkedType) {
+  public int serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
     int pointer = 0;
-    int startOffset = bytes.offset;
     switch (type) {
     case INTEGER:
     case LONG:
@@ -604,8 +597,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     case ANY:
       break;
     }
-    int length = bytes.offset - startOffset;
-    return new HelperClasses.Tuple<>(pointer, length);
+    return pointer;
   }
 
   private int writeBinary(final BytesContainer bytes, final byte[] valueBytes) {
@@ -670,7 +662,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        pointer = serializeValue(bytes, value, type, null).getFirstVal();
+        pointer = serializeValue(bytes, value, type, null);
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
