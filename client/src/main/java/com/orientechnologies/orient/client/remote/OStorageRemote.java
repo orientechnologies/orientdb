@@ -1741,7 +1741,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       break;
 
     case ROUND_ROBIN_CONNECT:
-      if (iIsConnectOperation) {
+      if (iIsConnectOperation || session.getServerUrl() == null) {
         url = getNextConnectUrl(session);
       } else {
         url = session.getServerUrl();
