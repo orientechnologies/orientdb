@@ -120,7 +120,7 @@ public class ParallelExecStep extends AbstractExecutionStep {
   }
 
   private String addArrows(String input, int[] blockSizes) {
-    String result = "";
+    StringBuilder result = new StringBuilder();
     String[] rows = input.split("\n");
     int rowNum = 0;
     for (int block = 0; block < blockSizes.length; block++) {
@@ -128,21 +128,22 @@ public class ParallelExecStep extends AbstractExecutionStep {
       for (int subRow = 0; subRow < blockSize; subRow++) {
         for (int col = 0; col < blockSizes.length * 3; col++) {
           if (isHorizontalRow(col, subRow, block, blockSize)) {
-            result += "-";
+            result.append("-");
           } else if (isPlus(col, subRow, block, blockSize)) {
-            result += "+";
+            result.append("+");
           } else if (isVerticalRow(col, subRow, block, blockSize)) {
-            result += "|";
+            result.append("|");
           } else {
-            result += " ";
+            result.append(" ");
           }
         }
-        result += rows[rowNum] + "\n";
+        result.append(rows[rowNum]);
+        result.append("\n");
         rowNum++;
       }
     }
 
-    return result;
+    return result.toString();
   }
 
   private boolean isHorizontalRow(int col, int subRow, int block, int blockSize) {
@@ -182,11 +183,11 @@ public class ParallelExecStep extends AbstractExecutionStep {
   }
 
   private String foot(int[] blockSizes) {
-    String result = "";
+    StringBuilder result = new StringBuilder();
     for (int i = 0; i < blockSizes.length; i++) {
-      result += " V ";//TODO
+      result.append(" V ");
     }
-    return result;
+    return result.toString();
   }
 
   private String spaces(int num) {
