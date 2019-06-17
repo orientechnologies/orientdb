@@ -150,6 +150,11 @@ public class OEdgeDelegate implements OEdge {
   }
 
   @Override
+  public boolean hasProperty(String propertyName) {
+    return element == null ? false : element.hasProperty(propertyName);
+  }
+
+  @Override
   public void setProperty(String name, Object value) {
     if (element == null) {
       promoteToRegularEdge();

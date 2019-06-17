@@ -57,14 +57,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
-import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
@@ -194,18 +187,18 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   public void internalOpen(final String iUserName, final String iUserPassword, boolean checkPassword) {
     try {
-      OSecurity security = metadata.getSecurity();
+      OSecurityInternal security = sharedContext.getSecurity();
 
-      if (user == null || user.getVersion() != security.getVersion() || !user.getName().equalsIgnoreCase(iUserName)) {
+      if (user == null || user.getVersion() != security.getVersion(this) || !user.getName().equalsIgnoreCase(iUserName)) {
         final OUser usr;
 
         if (checkPassword) {
-          usr = security.authenticate(iUserName, iUserPassword);
+          usr = security.authenticate(this, iUserName, iUserPassword);
         } else {
-          usr = security.getUser(iUserName);
+          usr = security.getUser(this, iUserName);
         }
         if (usr != null)
-          user = new OImmutableUser(security.getVersion(), usr);
+          user = new OImmutableUser(security.getVersion(this), usr);
         else
           user = null;
 
@@ -945,7 +938,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           Orient.instance().getScriptManager().close(this.getName());
         }
         if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
+          sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
@@ -957,7 +950,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           OClassTrigger.onRecordAfterCreate(doc, this);
         }
 
-        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordAdded(clazz, doc, this);
+        getSharedContext().getViewManager().recordAdded(clazz, doc, this);
       }
 
       OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
@@ -977,7 +970,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           Orient.instance().getScriptManager().close(this.getName());
         }
         if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
+          sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
@@ -986,7 +979,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           OClassTrigger.onRecordAfterUpdate(doc, this);
         }
 
-        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordUpdated(clazz, doc, this);
+        getSharedContext().getViewManager().recordUpdated(clazz, doc, this);
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
@@ -1006,7 +999,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           Orient.instance().getScriptManager().close(this.getName());
         }
         if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
+          sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
@@ -1018,8 +1011,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterDelete(doc, this);
         }
-
-        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordDeleted(clazz, doc, this);
+        getSharedContext().getViewManager().recordDeleted(clazz, doc, this);
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);
@@ -1058,6 +1050,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
             return true;
           }
         }
+        ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(doc, getSharedContext().getSecurity()));
+        ODocumentInternal.setPropertyEncryption(doc, new OPropertyEncryption());
       }
     }
     return callbackHooks(ORecordHook.TYPE.BEFORE_READ, identifiable) == ORecordHook.RESULT.SKIP;

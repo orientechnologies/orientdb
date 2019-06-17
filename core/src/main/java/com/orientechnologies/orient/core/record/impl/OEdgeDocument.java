@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
@@ -13,6 +14,10 @@ public class OEdgeDocument extends ODocument implements OEdge {
 
   public OEdgeDocument() {
     super();
+  }
+
+  public OEdgeDocument(ODatabaseSession session) {
+    super(session);
   }
 
   @Override

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
@@ -50,13 +51,7 @@ import com.orientechnologies.orient.core.delta.ODeltaDocumentFieldType;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.delta.UpdateTypeValueType;
 import com.orientechnologies.orient.core.delta.ValueType;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
@@ -71,14 +66,12 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
-import com.orientechnologies.orient.core.metadata.security.OIdentity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -117,6 +110,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -129,7 +123,8 @@ public class ODocument extends ORecordAbstract
   public static final    byte     RECORD_TYPE      = 'd';
   protected static final String[] EMPTY_STRINGS    = new String[] {};
   private static final   long     serialVersionUID = 1L;
-  protected              int      fieldSize;
+
+  protected int fieldSize;
 
   protected Map<String, ODocumentEntry> fields;
 
@@ -142,12 +137,21 @@ public class ODocument extends ORecordAbstract
   private             String                              className;
   private             OImmutableClass                     immutableClazz;
   private             int                                 immutableSchemaVersion = 1;
+  protected           OPropertyAccess                     propertyAccess;
+  protected           OPropertyEncryption                 propertyEncryption;
 
   /**
    * Internal constructor used on unmarshalling.
    */
   public ODocument() {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
+  }
+
+  /**
+   * Internal constructor used on unmarshalling.
+   */
+  public ODocument(ODatabaseSession database) {
+    setup((ODatabaseDocumentInternal) database);
   }
 
   /**
@@ -159,7 +163,7 @@ public class ODocument extends ORecordAbstract
   @Deprecated
   public ODocument(final byte[] iSource) {
     source = iSource;
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   /**
@@ -172,7 +176,7 @@ public class ODocument extends ORecordAbstract
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     OIOUtils.copyStream(iSource, out, -1);
     source = out.toByteArray();
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   /**
@@ -182,7 +186,7 @@ public class ODocument extends ORecordAbstract
    * @param iRID Record Id
    */
   public ODocument(final ORID iRID) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     recordId = (ORecordId) iRID;
     status = STATUS.NOT_LOADED;
     dirty = false;
@@ -220,7 +224,18 @@ public class ODocument extends ORecordAbstract
    * @param iClassName Class name
    */
   public ODocument(final String iClassName) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
+    setClassName(iClassName);
+  }
+
+  /**
+   * Creates a new instance in memory of the specified class. New instances are not persistent until {@link #save()} is called.
+   *
+   * @param session    the session the instance will be attached to
+   * @param iClassName Class name
+   */
+  public ODocument(ODatabaseSession session, final String iClassName) {
+    setup((ODatabaseDocumentInternal) session);
     setClassName(iClassName);
   }
 
@@ -240,7 +255,7 @@ public class ODocument extends ORecordAbstract
    * @param iFields Array of field pairs
    */
   public ODocument(final Object[] iFields) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     if (iFields != null && iFields.length > 0)
       for (int i = 0; i < iFields.length; i += 2) {
         field(iFields[i].toString(), iFields[i + 1]);
@@ -253,7 +268,7 @@ public class ODocument extends ORecordAbstract
    * @param iFieldMap Map of Object/Object
    */
   public ODocument(final Map<?, Object> iFieldMap) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     if (iFieldMap != null && !iFieldMap.isEmpty())
       for (Entry<?, Object> entry : iFieldMap.entrySet()) {
         field(entry.getKey().toString(), entry.getValue());
@@ -323,8 +338,7 @@ public class ODocument extends ORecordAbstract
     return Optional.ofNullable(getSchemaClass());
   }
 
-  @Override
-  public Set<String> getPropertyNames() {
+  private Stream<String> calculatePropertyNames() {
     checkForLoading();
 
     if (status == ORecordElement.STATUS.LOADED && source != null && ODatabaseRecordThreadLocal.instance().isDefined()
@@ -332,18 +346,27 @@ public class ODocument extends ORecordAbstract
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
       final String[] fieldNames = recordFormat.getFieldNamesRoot(this, source);
       if (fieldNames != null) {
-        Set<String> result = new HashSet<>();
-        Collections.addAll(result, fieldNames);
-        return result;
+        if (propertyAccess != null) {
+          return Arrays.stream(fieldNames).filter((e) -> propertyAccess.isReadable(e));
+        } else {
+          return Arrays.stream(fieldNames);
+        }
       }
     }
 
     checkForFields();
 
     if (fields == null || fields.size() == 0)
-      return Collections.EMPTY_SET;
+      return Stream.empty();
 
-    return fields.entrySet().stream().filter(s -> s.getValue().exist()).map(Entry::getKey).collect(Collectors.toSet());
+    return fields.entrySet().stream()
+        .filter(s -> s.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(s.getKey())))
+        .map(Entry::getKey);
+  }
+
+  @Override
+  public Set<String> getPropertyNames() {
+    return calculatePropertyNames().collect(Collectors.toSet());
   }
 
   /**
@@ -592,7 +615,24 @@ public class ODocument extends ORecordAbstract
     return (RET) oldValue;
   }
 
-  protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
+  protected static void validateFieldSecurity(ODatabaseDocumentInternal internal, ODocument iRecord, OImmutableProperty p)
+      throws OValidationException {
+    if (internal == null) {
+      return;
+    }
+    ODocumentEntry entry = iRecord.fields.get(p.getName());
+    if (entry != null && (entry.isChanged() || entry.timeLine != null)) {
+      OSecurityInternal security = internal.getSharedContext().getSecurity();
+      if (!security.isAllowedWrite(iRecord, p.getName())) {
+        throw new OSecurityException(
+            String.format("Change of field '%s' is not allowed for user '%s'", p.getFullName(), internal.getUser().getName()));
+      }
+    }
+  }
+
+  protected static void validateField(ODatabaseDocumentInternal internal, ODocument iRecord, OImmutableProperty p)
+      throws OValidationException {
+    validateFieldSecurity(internal, iRecord, p);
     final Object fieldValue;
     ODocumentEntry entry = iRecord.fields.get(p.getName());
     if (entry != null && entry.exist()) {
@@ -1026,7 +1066,7 @@ public class ODocument extends ORecordAbstract
   @Override
   public byte[] toStream() {
     if (recordFormat == null)
-      setup();
+      setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     return toStream(false);
   }
 
@@ -1088,32 +1128,7 @@ public class ODocument extends ORecordAbstract
    * Returns the set of field names.
    */
   public String[] fieldNames() {
-    checkForLoading();
-
-    if (status == ORecordElement.STATUS.LOADED && source != null && ODatabaseRecordThreadLocal.instance().isDefined()
-        && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
-      // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = recordFormat.getFieldNamesRoot(this, source);
-      if (fieldNames != null)
-        return fieldNames;
-    }
-
-    checkForFields();
-
-    if (fields == null || fields.size() == 0)
-      return EMPTY_STRINGS;
-    final List<String> names = new ArrayList<>(fields.size());
-    for (Entry<String, ODocumentEntry> entry : fields.entrySet()) {
-      if (entry.getValue().exist())
-        names.add(entry.getKey());
-    }
-    return names.toArray(new String[names.size()]);
-  }
-
-  private Set<String> arrayToSet(String[] fieldNames) {
-    Set<String> result = new HashSet<>();
-    Collections.addAll(result, fieldNames);
-    return result;
+    return calculatePropertyNames().collect(Collectors.toList()).toArray(new String[] {});
   }
 
   /**
@@ -1122,12 +1137,12 @@ public class ODocument extends ORecordAbstract
   public Object[] fieldValues() {
     checkForLoading();
     checkForFields();
-    Object[] res = new Object[fields.size()];
-    int i = 0;
-    for (ODocumentEntry entry : fields.values()) {
-      res[i++] = entry.value;
+    final List<Object> res = new ArrayList<>(fields.size());
+    for (Map.Entry<String, ODocumentEntry> entry : fields.entrySet()) {
+      if (entry.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(entry.getKey())))
+        res.add(entry.getValue().value);
     }
-    return res;
+    return res.toArray();
   }
 
   public <RET> RET rawField(final String iFieldName) {
@@ -1141,11 +1156,7 @@ public class ODocument extends ORecordAbstract
 
     // OPTIMIZATION
     if (!allowChainedAccess || (iFieldName.charAt(0) != '@' && OStringSerializerHelper.indexOf(iFieldName, 0, '.', '[') == -1)) {
-      ODocumentEntry entry = fields.get(iFieldName);
-      if (entry != null && entry.exist())
-        return (RET) entry.value;
-      else
-        return null;
+      return (RET) accessProperty(iFieldName);
     }
 
     // NOT FOUND, PARSE THE FIELD NAME
@@ -1937,7 +1948,8 @@ public class ODocument extends ORecordAbstract
       public boolean hasNext() {
         while (iterator.hasNext()) {
           current = iterator.next();
-          if (current.getValue().exist()) {
+          if (current.getValue().exist() && (propertyAccess == null || propertyAccess
+              .isReadable(current.getKey()))) {
             read = false;
             return true;
           }
@@ -1998,13 +2010,26 @@ public class ODocument extends ORecordAbstract
    */
   @Override
   public boolean containsField(final String iFieldName) {
-    if (iFieldName == null)
+    return hasProperty(iFieldName);
+  }
+
+  /**
+   * Checks if a property exists.
+   *
+   * @return True if exists, otherwise false.
+   */
+  @Override
+  public boolean hasProperty(final String propertyName) {
+    if (propertyName == null)
       return false;
 
     checkForLoading();
-    checkForFields(iFieldName);
-    ODocumentEntry entry = fields.get(iFieldName);
-    return entry != null && entry.exist();
+    if (checkForFields(propertyName) && (propertyAccess == null || propertyAccess.isReadable(propertyName))) {
+      ODocumentEntry entry = fields.get(propertyName);
+      return entry != null && entry.exist();
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -2138,8 +2163,13 @@ public class ODocument extends ORecordAbstract
     checkForFields(iFieldName);
 
     ODocumentEntry entry = fields.get(iFieldName);
-    if (entry != null)
-      return entry.type;
+    if (entry != null) {
+      if (propertyAccess == null || propertyAccess.isReadable(iFieldName)) {
+        return entry.type;
+      } else {
+        return null;
+      }
+    }
 
     return null;
   }
@@ -2484,7 +2514,7 @@ public class ODocument extends ORecordAbstract
     }
 
     if (recordFormat == null)
-      setup();
+      setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
 
     status = ORecordElement.STATUS.UNMARSHALLING;
     try {
@@ -2670,8 +2700,16 @@ public class ODocument extends ORecordAbstract
 
     autoConvertValues();
 
-    if (ODatabaseRecordThreadLocal.instance().isDefined() && !getDatabase().isValidationEnabled())
+    ODatabaseDocumentInternal internal = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (internal != null && !internal.isValidationEnabled()) {
+      final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
+      if (immutableSchemaClass != null) {
+        for (OProperty p : immutableSchemaClass.properties()) {
+          validateFieldSecurity(internal, this, (OImmutableProperty) p);
+        }
+      }
       return;
+    }
 
     final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
     if (immutableSchemaClass != null) {
@@ -2686,7 +2724,7 @@ public class ODocument extends ORecordAbstract
       }
 
       for (OProperty p : immutableSchemaClass.properties()) {
-        validateField(this, (OImmutableProperty) p);
+        validateField(internal, this, (OImmutableProperty) p);
       }
     }
   }
@@ -2719,6 +2757,9 @@ public class ODocument extends ORecordAbstract
 
       boolean first = true;
       for (Entry<String, ODocumentEntry> f : fields.entrySet()) {
+        if (propertyAccess != null && !propertyAccess.isReadable(f.getKey())) {
+          continue;
+        }
         buffer.append(first ? '{' : ',');
         buffer.append(f.getKey());
         buffer.append(':');
@@ -3065,7 +3106,6 @@ public class ODocument extends ORecordAbstract
     } finally {
       status = prev;
     }
-    invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
     return source;
   }
@@ -3309,14 +3349,28 @@ public class ODocument extends ORecordAbstract
     return true;
   }
 
+  protected Object accessProperty(final String property) {
+    if (checkForFields(property)) {
+      if (propertyAccess == null || propertyAccess.isReadable(property)) {
+        ODocumentEntry entry = fields.get(property);
+        return entry != null ? entry.value : null;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Internal.
+   *
+   * @param db
    */
   @Override
-  protected void setup() {
-    super.setup();
+  protected void setup(ODatabaseDocumentInternal db) {
+    super.setup(db);
 
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null)
       recordFormat = db.getSerializer();
 

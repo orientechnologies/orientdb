@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.security;
 
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 
 /**
  * Provides an interface for creating new OSecurity instances.
@@ -28,5 +28,5 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
  * 
  */
 public interface OSecurityFactory {
-  OSecurity newSecurity();
+  OSecurityInternal newSecurity();
 }

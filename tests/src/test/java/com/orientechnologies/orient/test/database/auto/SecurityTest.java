@@ -120,7 +120,7 @@ public class SecurityTest extends DocumentDBBaseTest {
   public void testParentRole() {
     database.open("admin", "admin");
 
-    final OSecurity security = database.getMetadata().getSecurity();
+    OSecurity security = database.getMetadata().getSecurity();
     ORole writer = security.getRole("writer");
 
     ORole writerChild = security.createRole("writerChild", writer, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
@@ -149,6 +149,7 @@ public class SecurityTest extends DocumentDBBaseTest {
             database.close();
           }
           database.open("admin", "admin");
+          security = database.getMetadata().getSecurity();
         } finally {
           security.dropUser("writerChild");
         }
@@ -205,6 +206,7 @@ public class SecurityTest extends DocumentDBBaseTest {
       Assert.fail();
     } catch (OSecurityAccessException e) {
       database.open("admin", "admin");
+      security = database.getMetadata().getSecurity();
       security.dropUser("noRole");
     }
   }

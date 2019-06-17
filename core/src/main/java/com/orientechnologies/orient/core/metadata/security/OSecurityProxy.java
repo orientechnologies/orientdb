@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.id.ORID;
@@ -30,155 +32,101 @@ import java.util.Set;
 
 /**
  * Proxy class for user management
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
-public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecurity {
-  public OSecurityProxy(final OSecurity iDelegate, final ODatabaseDocumentInternal iDatabase) {
-    super(iDelegate, iDatabase);
+public class OSecurityProxy implements OSecurity {
+  private ODatabaseSession  session;
+  private OSecurityInternal security;
+
+  public OSecurityProxy(OSecurityInternal security, ODatabaseDocumentInternal session) {
+    this.security = security;
+    this.session = session;
   }
 
   @Override
   public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
-    return delegate.isAllowed(iAllowAll, iAllowOperation);
+    return security.isAllowed(session, iAllowAll, iAllowOperation);
   }
 
   @Override
   public OIdentifiable allowUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
-    return delegate.allowUser(iDocument, iOperationType, iUserName);
+    return security.allowUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
   public OIdentifiable allowRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
-    return delegate.allowRole(iDocument, iOperationType, iRoleName);
+    return security.allowRole(session, iDocument, iOperationType, iRoleName);
   }
 
   @Override
   public OIdentifiable denyUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
-    return delegate.denyUser(iDocument, iOperationType, iUserName);
+    return security.denyUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
   public OIdentifiable denyRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
-    return delegate.denyRole(iDocument, iOperationType, iRoleName);
-  }
-
-  public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
-    return delegate.allowUser(iDocument, iAllowFieldName, iUserName);
-  }
-
-  public OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
-    return delegate.allowRole(iDocument, iAllowFieldName, iRoleName);
-  }
-
-  @Override
-  public OIdentifiable allowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
-    return delegate.allowIdentity(iDocument, iAllowFieldName, iId);
-  }
-
-  public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
-    return delegate.disallowUser(iDocument, iAllowFieldName, iUserName);
-  }
-
-  public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
-    return delegate.disallowRole(iDocument, iAllowFieldName, iRoleName);
-  }
-
-  @Override
-  public OIdentifiable disallowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
-    return delegate.disallowIdentity(iDocument, iAllowFieldName, iId);
-  }
-
-  public OUser create() {
-    return delegate.create();
-  }
-
-  public void load() {
-    delegate.load();
-  }
-
-  public void close(boolean onDelete) {
-    if (delegate != null)
-      delegate.close(false);
+    return security.denyRole(session, iDocument, iOperationType, iRoleName);
   }
 
   public OUser authenticate(final String iUsername, final String iUserPassword) {
-    return delegate.authenticate(iUsername, iUserPassword);
+    return security.authenticate(session, iUsername, iUserPassword);
   }
 
   public OUser authenticate(final OToken authToken) {
-    return delegate.authenticate(authToken);
+    return security.authenticate(session, authToken);
   }
 
   public OUser getUser(final String iUserName) {
-    return delegate.getUser(iUserName);
+    return security.getUser(session, iUserName);
   }
 
   public OUser getUser(final ORID iUserId) {
-    return delegate.getUser(iUserId);
+    return security.getUser(session, iUserId);
   }
 
   public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
-    return delegate.createUser(iUserName, iUserPassword, iRoles);
+    return security.createUser(session, iUserName, iUserPassword, iRoles);
   }
 
   public OUser createUser(final String iUserName, final String iUserPassword, final ORole... iRoles) {
-    return delegate.createUser(iUserName, iUserPassword, iRoles);
+    return security.createUser(session, iUserName, iUserPassword, iRoles);
   }
 
   public ORole getRole(final String iRoleName) {
-    return delegate.getRole(iRoleName);
+    return security.getRole(session, iRoleName);
   }
 
   public ORole getRole(final OIdentifiable iRole) {
-    return delegate.getRole(iRole);
+    return security.getRole(session, iRole);
   }
 
   public ORole createRole(final String iRoleName, final OSecurityRole.ALLOW_MODES iAllowMode) {
-    return delegate.createRole(iRoleName, iAllowMode);
+    return security.createRole(session, iRoleName, iAllowMode);
   }
 
   public ORole createRole(final String iRoleName, final ORole iParent, final OSecurityRole.ALLOW_MODES iAllowMode) {
-    return delegate.createRole(iRoleName, iParent, iAllowMode);
+    return security.createRole(session, iRoleName, iParent, iAllowMode);
   }
 
   public List<ODocument> getAllUsers() {
-    return delegate.getAllUsers();
+    return security.getAllUsers(session);
   }
 
   public List<ODocument> getAllRoles() {
-    return delegate.getAllRoles();
+    return security.getAllRoles(session);
   }
 
   public String toString() {
-    return delegate.toString();
+    return security.toString();
   }
 
   public boolean dropUser(final String iUserName) {
-    return delegate.dropUser(iUserName);
+    return security.dropUser(session, iUserName);
   }
 
   public boolean dropRole(final String iRoleName) {
-    return delegate.dropRole(iRoleName);
+    return security.dropRole(session, iRoleName);
   }
 
-  public void createClassTrigger() {
-    delegate.createClassTrigger();
-  }
-
-  @Override
-  public OSecurity getUnderlying() {
-    return delegate;
-  }
-
-  @Override
-  public long getVersion() {
-    return delegate.getVersion();
-  }
-
-  @Override
-  public void incrementVersion() {
-    delegate.incrementVersion();
-  }
 }

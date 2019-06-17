@@ -65,7 +65,7 @@ public class ORestrictedAccessHook {
 
       if (identity != null) {
         for (String f : fields)
-          database.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
+          database.getSharedContext().getSecurity().allowIdentity(database, iDocument, f, identity);
         return true;
       }
     }
@@ -104,4 +104,5 @@ public class ORestrictedAccessHook {
 
     return true;
   }
+
 }

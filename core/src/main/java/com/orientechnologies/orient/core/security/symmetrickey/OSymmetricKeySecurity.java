@@ -22,18 +22,13 @@ package com.orientechnologies.orient.core.security.symmetrickey;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
 import com.orientechnologies.orient.core.security.symmetrickey.OUserSymmetricKeyConfig;
@@ -42,29 +37,31 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Provides a symmetric key specific authentication.
- * Implements an OSecurity interface that delegates to the specified OSecurity object.
+ * Provides a symmetric key specific authentication. Implements an OSecurity interface that delegates to the specified OSecurity
+ * object.
  * <p>
- * This is used with embedded (non-server) databases, like so:
- * db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSymmetricKeySecurity.class);
+ * This is used with embedded (non-server) databases, like so: db.setProperty(ODatabase.OPTIONS.SECURITY.toString(),
+ * OSymmetricKeySecurity.class);
  *
  * @author S. Colin Leister
  */
-public class OSymmetricKeySecurity extends OProxedResource<OSecurity> implements OSecurity {
-  public OSymmetricKeySecurity(final OSecurity iDelegate, final ODatabaseDocumentInternal iDatabase) {
-    super(iDelegate, iDatabase);
+public class OSymmetricKeySecurity implements OSecurityInternal {
+  private OSecurityInternal delegate;
+
+  public OSymmetricKeySecurity(final OSecurityInternal iDelegate) {
+    this.delegate = iDelegate;
   }
 
-  public OUser authenticate(final String username, final String password) {
+  public OUser authenticate(ODatabaseSession session, final String username, final String password) {
     if (delegate == null)
       throw new OSecurityAccessException("OSymmetricKeySecurity.authenticate() Delegate is null for username: " + username);
 
-    if (database == null)
+    if (session == null)
       throw new OSecurityAccessException("OSymmetricKeySecurity.authenticate() Database is null for username: " + username);
 
-    final String dbName = database.getName();
+    final String dbName = session.getName();
 
-    OUser user = delegate.getUser(username);
+    OUser user = delegate.getUser(session, username);
 
     if (user == null)
       throw new OSecurityAccessException(dbName,
@@ -84,150 +81,145 @@ public class OSymmetricKeySecurity extends OProxedResource<OSecurity> implements
         return user;
     } catch (Exception ex) {
       throw OException.wrapException(new OSecurityAccessException(dbName,
-          "OSymmetricKeySecurity.authenticate() Exception for database: " + dbName + ", username: " + username + " " + ex
+          "OSymmetricKeySecurity.authenticate() Exception for session: " + dbName + ", username: " + username + " " + ex
               .getMessage()), ex);
     }
 
     throw new OSecurityAccessException(dbName,
-        "OSymmetricKeySecurity.authenticate() Username or Key is invalid for database: " + dbName + ", username: " + username);
+        "OSymmetricKeySecurity.authenticate() Username or Key is invalid for session: " + dbName + ", username: " + username);
   }
 
   @Override
-  public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
-    return delegate.isAllowed(iAllowAll, iAllowOperation);
+  public boolean isAllowed(ODatabaseSession session, final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
+    return delegate.isAllowed(session, iAllowAll, iAllowOperation);
   }
 
   @Override
-  public OIdentifiable allowUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
-    return delegate.allowUser(iDocument, iOperationType, iUserName);
+  public OIdentifiable allowUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+      String iUserName) {
+    return delegate.allowUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
-  public OIdentifiable allowRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
-    return delegate.allowRole(iDocument, iOperationType, iRoleName);
+  public OIdentifiable allowRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+      String iRoleName) {
+    return delegate.allowRole(session, iDocument, iOperationType, iRoleName);
   }
 
   @Override
-  public OIdentifiable denyUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
-    return delegate.denyUser(iDocument, iOperationType, iUserName);
+  public OIdentifiable denyUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+      String iUserName) {
+    return delegate.denyUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
-  public OIdentifiable denyRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
-    return delegate.denyRole(iDocument, iOperationType, iRoleName);
-  }
-
-  public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
-    return delegate.allowUser(iDocument, iAllowFieldName, iUserName);
-  }
-
-  public OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
-    return delegate.allowRole(iDocument, iAllowFieldName, iRoleName);
+  public OIdentifiable denyRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+      String iRoleName) {
+    return delegate.denyRole(session, iDocument, iOperationType, iRoleName);
   }
 
   @Override
-  public OIdentifiable allowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
-    return delegate.allowIdentity(iDocument, iAllowFieldName, iId);
-  }
-
-  public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
-    return delegate.disallowUser(iDocument, iAllowFieldName, iUserName);
-  }
-
-  public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
-    return delegate.disallowRole(iDocument, iAllowFieldName, iRoleName);
+  public OIdentifiable allowIdentity(ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
+    return delegate.allowIdentity(session, iDocument, iAllowFieldName, iId);
   }
 
   @Override
-  public OIdentifiable disallowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
-    return delegate.disallowIdentity(iDocument, iAllowFieldName, iId);
+  public OIdentifiable disallowIdentity(ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
+    return delegate.disallowIdentity(session, iDocument, iAllowFieldName, iId);
   }
 
-  public OUser create() {
-    return delegate.create();
+  public OUser create(ODatabaseSession session) {
+    return delegate.create(session);
   }
 
-  public void load() {
-    delegate.load();
+  public void load(ODatabaseSession session) {
+    delegate.load(session);
   }
 
-  public void close(boolean onDelete) {
-    if (delegate != null)
-      delegate.close(false);
-  }
-
-  public OUser authenticate(final OToken authToken) {
+  public OUser authenticate(ODatabaseSession session, final OToken authToken) {
     return null;
   }
 
-  public OUser getUser(final String iUserName) {
-    return delegate.getUser(iUserName);
+  public OUser getUser(ODatabaseSession session, final String iUserName) {
+    return delegate.getUser(session, iUserName);
   }
 
-  public OUser getUser(final ORID iUserId) {
-    return delegate.getUser(iUserId);
+  public OUser getUser(ODatabaseSession session, final ORID iUserId) {
+    return delegate.getUser(session, iUserId);
   }
 
-  public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
-    return delegate.createUser(iUserName, iUserPassword, iRoles);
+  public OUser createUser(ODatabaseSession session, final String iUserName, final String iUserPassword, final String... iRoles) {
+    return delegate.createUser(session, iUserName, iUserPassword, iRoles);
   }
 
-  public OUser createUser(final String iUserName, final String iUserPassword, final ORole... iRoles) {
-    return delegate.createUser(iUserName, iUserPassword, iRoles);
+  public OUser createUser(ODatabaseSession session, final String iUserName, final String iUserPassword, final ORole... iRoles) {
+    return delegate.createUser(session, iUserName, iUserPassword, iRoles);
   }
 
-  public ORole getRole(final String iRoleName) {
-    return delegate.getRole(iRoleName);
+  public ORole getRole(ODatabaseSession session, final String iRoleName) {
+    return delegate.getRole(session, iRoleName);
   }
 
-  public ORole getRole(final OIdentifiable iRole) {
-    return delegate.getRole(iRole);
+  public ORole getRole(ODatabaseSession session, final OIdentifiable iRole) {
+    return delegate.getRole(session, iRole);
   }
 
-  public ORole createRole(final String iRoleName, final OSecurityRole.ALLOW_MODES iAllowMode) {
-    return delegate.createRole(iRoleName, iAllowMode);
+  public ORole createRole(ODatabaseSession session, final String iRoleName, final OSecurityRole.ALLOW_MODES iAllowMode) {
+    return delegate.createRole(session, iRoleName, iAllowMode);
   }
 
-  public ORole createRole(final String iRoleName, final ORole iParent, final OSecurityRole.ALLOW_MODES iAllowMode) {
-    return delegate.createRole(iRoleName, iParent, iAllowMode);
+  public ORole createRole(ODatabaseSession session, final String iRoleName, final ORole iParent,
+      final OSecurityRole.ALLOW_MODES iAllowMode) {
+    return delegate.createRole(session, iRoleName, iParent, iAllowMode);
   }
 
-  public List<ODocument> getAllUsers() {
-    return delegate.getAllUsers();
+  public List<ODocument> getAllUsers(ODatabaseSession session) {
+    return delegate.getAllUsers(session);
   }
 
-  public List<ODocument> getAllRoles() {
-    return delegate.getAllRoles();
+  public List<ODocument> getAllRoles(ODatabaseSession session) {
+    return delegate.getAllRoles(session);
   }
 
   public String toString() {
     return delegate.toString();
   }
 
-  public boolean dropUser(final String iUserName) {
-    return delegate.dropUser(iUserName);
+  public boolean dropUser(ODatabaseSession session, final String iUserName) {
+    return delegate.dropUser(session, iUserName);
   }
 
-  public boolean dropRole(final String iRoleName) {
-    return delegate.dropRole(iRoleName);
+  public boolean dropRole(ODatabaseSession session, final String iRoleName) {
+    return delegate.dropRole(session, iRoleName);
   }
 
-  public void createClassTrigger() {
-    delegate.createClassTrigger();
-  }
-
-  @Override
-  public OSecurity getUnderlying() {
-    return delegate;
+  public void createClassTrigger(ODatabaseSession session) {
+    delegate.createClassTrigger(session);
   }
 
   @Override
-  public long getVersion() {
-    return delegate.getVersion();
+  public long getVersion(ODatabaseSession session) {
+    return delegate.getVersion(session);
   }
 
   @Override
-  public void incrementVersion() {
-    delegate.incrementVersion();
+  public void incrementVersion(ODatabaseSession session) {
+    delegate.incrementVersion(session);
   }
+
+  @Override
+  public Set<String> getFilteredProperties(ODocument document) {
+    return delegate.getFilteredProperties(document);
+  }
+
+  @Override
+  public boolean isAllowedWrite(ODocument document, String name) {
+    return delegate.isAllowedWrite(document, name);
+  }
+
+  @Override
+  public void close() {
+
+  }
+
 }

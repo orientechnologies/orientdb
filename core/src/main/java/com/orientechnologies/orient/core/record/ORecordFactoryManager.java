@@ -51,10 +51,10 @@ public class ORecordFactoryManager {
     declareRecordType(ODocument.RECORD_TYPE, "document", ODocument.class, (cluster, database) -> {
       if (database != null && cluster >= 0) {
         if (database.isClusterVertex(cluster)) {
-          return new OVertexDocument();
+          return new OVertexDocument(database);
         } else if (database.isClusterEdge(cluster)) {
-          return new OEdgeDocument();
-        } else if(database.isClusterView(cluster)){
+          return new OEdgeDocument(database);
+        } else if (database.isClusterView(cluster)) {
           return new OViewDocument(database, cluster);
         }
       }

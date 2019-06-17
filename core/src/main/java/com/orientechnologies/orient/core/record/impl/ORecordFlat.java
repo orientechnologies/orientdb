@@ -47,12 +47,12 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   }
 
   public ORecordFlat() {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   public ORecordFlat(final byte[] iSource) {
     super(iSource);
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   public ORecordFlat(final ODatabaseDocument iDatabase, final ORID iRID) {

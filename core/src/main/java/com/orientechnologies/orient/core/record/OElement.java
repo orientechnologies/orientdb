@@ -34,7 +34,7 @@ public interface OElement extends ORecord{
    * Returns all the names of defined properties
    * @return all the names of defined properties
    */
-  public Set<String> getPropertyNames();
+   Set<String> getPropertyNames();
 
   /**
    * Gets a property given its name
@@ -42,14 +42,21 @@ public interface OElement extends ORecord{
    * @param <RET>
    * @return Returns the property value
    */
-  public <RET> RET getProperty(String name);
+   <RET> RET getProperty(String name);
+
+  /**
+   * Check if a property exists in the Element
+   * @param propertyName
+   * @return true if exists otherwise false.
+   */
+   boolean hasProperty(final String propertyName);
 
   /**
    * Sets a property value
    * @param name the property name
    * @param value the property value
    */
-  public void setProperty(String name, Object value);
+   void setProperty(String name, Object value);
 
   /**
    * Sets a property value
@@ -57,41 +64,41 @@ public interface OElement extends ORecord{
    * @param value the property value
    * @param fieldType Forced type (not auto-determined)
    */
-  public void setProperty(String name, Object value, OType... fieldType);
+   void setProperty(String name, Object value, OType... fieldType);
 
   /**
    * Remove a property
    * @param name the property name
    */
-  public <RET> RET removeProperty(String name);
+   <RET> RET removeProperty(String name);
 
   /**
    * Returns an instance of OVertex representing current element
    * @return An OVertex that represents the current element. An empty optional if the current element is not a vertex
    */
-  public Optional<OVertex> asVertex();
+   Optional<OVertex> asVertex();
 
   /**
    * Returns an instance of OEdge representing current element
    * @return An OEdge that represents the current element. An empty optional if the current element is not an edge
    */
-  public Optional<OEdge> asEdge();
+   Optional<OEdge> asEdge();
 
   /**
    * return true if the current element is a vertex
    * @return true if the current element is a vertex
    */
-  public boolean isVertex();
+   boolean isVertex();
 
   /**
    * return true if the current element is an edge
    * @return true if the current element is an edge
    */
-  public boolean isEdge();
+   boolean isEdge();
 
   /**
    * Returns the type of current element, ie the class in the schema (if any)
    * @return the type of current element. An empty optional is returned if current element does not have a schema
    */
-  public Optional<OClass> getSchemaType();
+   Optional<OClass> getSchemaType();
 }

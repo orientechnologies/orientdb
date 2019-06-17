@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -331,7 +332,7 @@ public class OSecurityManager {
       securityFactory = new OSecuritySharedFactory();
   }
 
-  public OSecurity newSecurity() {
+  public OSecurityInternal newSecurity() {
     if (securityFactory != null)
       return securityFactory.newSecurity();
 

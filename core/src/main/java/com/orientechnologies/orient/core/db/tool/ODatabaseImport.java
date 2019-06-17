@@ -414,7 +414,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     // Create a stub at #2:0 to prevent cluster position shifting.
     new ODocument().save(OStorage.CLUSTER_DEFAULT_NAME);
 
-    database.getMetadata().getSecurity().create();
+    database.getSharedContext().getSecurity().create(database);
   }
 
   private void importInfo() throws IOException, ParseException {
