@@ -134,7 +134,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
       int pos = container.alloc(1);
       container.bytes[pos] = currentSerializerVersion;
       // SERIALIZE RECORD
-      serializerByVersion[currentSerializerVersion].serialize(documentToSerialize, container, false);
+      serializerByVersion[currentSerializerVersion].serialize(documentToSerialize, container);
 
       return container.fitBytes();
     }
@@ -154,20 +154,6 @@ public class ORecordSerializerBinary implements ORecordSerializer {
           Base64.getEncoder().encodeToString(iSource));
       throw e;
     }
-  }
-
-  @Override
-  public byte[] writeClassOnly(ORecord iSource) {
-    final BytesContainer container = new BytesContainer();
-
-    // WRITE SERIALIZER VERSION
-    int pos = container.alloc(1);
-    container.bytes[pos] = currentSerializerVersion;
-
-    // SERIALIZE CLASS ONLY
-    serializerByVersion[currentSerializerVersion].serializeWithClassName((ODocument) iSource, container, true);
-
-    return container.fitBytes();
   }
 
   @Override

@@ -147,19 +147,15 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       // CANNOT USE BINARY FIELDS
       return null;
 
-    final ORecord rec = iRecord.getRecord();
+    final ODocument rec = iRecord.getRecord();
     BytesContainer serialized = new BytesContainer(rec.toStream());
     byte version = serialized.bytes[serialized.offset++];
+    ORecordSerializerBinary.INSTANCE.getBinaryResult(rec.toStream());
     ODocumentSerializer serializer = ORecordSerializerBinary.INSTANCE.getSerializer(version);
 
     //check for embedded objects, they have invalid ID and they are serialized with class name
-    if (!serializer.isSerializingClassNameByDefault()) {
-      return ORecordSerializerBinary.INSTANCE.getSerializer(version)
-          .deserializeField(serialized, rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
-    } else {
-      return serializer
-          .deserializeFieldWithClassName(serialized, rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
-    }
+    return serializer
+        .deserializeField(serialized, rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name, rec.isEmbedded());
   }
 
   public String getRoot() {

@@ -81,7 +81,7 @@ public class OResultBinary implements OResult {
   public <T> T getProperty(String name) {
     BytesContainer bytes = new BytesContainer(this.bytes);
     bytes.skip(offset);
-    return (T) serializer.deserializeFieldTyped(bytes, name, embedded, 1);
+    return (T) serializer.deserializeFieldTyped(bytes, name, embedded);
   }
 
   @Override

@@ -28,9 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ODocumentSerializer {
 
-  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
-
-  void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  void serialize(ODocument document, BytesContainer bytes);
 
   int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
@@ -40,9 +38,7 @@ public interface ODocumentSerializer {
 
   Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
 
-  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName);
-
-  OBinaryField deserializeFieldWithClassName(BytesContainer bytes, OClass iClass, String iFieldName);
+  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName, boolean embedded);
 
   OBinaryComparator getComparator();
 
@@ -56,7 +52,7 @@ public interface ODocumentSerializer {
 
   boolean isSerializingClassNameByDefault();
 
-  <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion);
+  <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded);
 
   void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo,
       OImmutableSchema schema);

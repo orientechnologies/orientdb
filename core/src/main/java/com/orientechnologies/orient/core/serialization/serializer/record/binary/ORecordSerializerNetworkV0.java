@@ -175,20 +175,11 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       bytes.offset = last;
   }
 
-  @Override
-  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
-    serialize(document, bytes, iClassOnly);
-  }
-
   @SuppressWarnings("unchecked")
   @Override
-  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
+  public void serialize(final ODocument document, final BytesContainer bytes) {
 
     serializeClass(document, bytes);
-    if (iClassOnly) {
-      writeEmptyString(bytes);
-      return;
-    }
 
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
 
@@ -541,9 +532,9 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       if (value instanceof ODocumentSerializable) {
         ODocument cur = ((ODocumentSerializable) value).toDocument();
         cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
-        serializeWithClassName(cur, bytes, false);
+        serialize(cur, bytes);
       } else {
-        serializeWithClassName((ODocument) value, bytes, false);
+        serialize((ODocument) value, bytes);
       }
       break;
     case EMBEDDEDSET:
@@ -808,12 +799,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public OBinaryField deserializeFieldWithClassName(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
-    return deserializeField(bytes, iClass, iFieldName);
-  }
-
-  @Override
-  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
+  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName, boolean embedded) {
     // TODO: check if integrate the binary disc binary comparator here
     throw new UnsupportedOperationException("network serializer doesn't support comparators");
   }
@@ -846,7 +832,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion) {
+  public <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 

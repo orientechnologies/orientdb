@@ -322,11 +322,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   @Override
-  public byte[] writeClassOnly(ORecord iSource) {
-    return new byte[] {};
-  }
-
-  @Override
   public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat, boolean iOnlyDelta,
       boolean autoDetectCollectionType) {
     try {

@@ -102,7 +102,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       int pos = container.alloc(1);
       container.bytes[pos] = CURRENT_RECORD_VERSION;
       // SERIALIZE RECORD
-      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
+      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container);
 
       return container.fitBytes();
     }
@@ -117,20 +117,6 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   public Object deserializeValue(byte[] val, OType type) {
     BytesContainer bytes = new BytesContainer(val);
     return serializerByVersion[0].deserializeValue(bytes, type, null);
-  }
-
-  @Override
-  public byte[] writeClassOnly(ORecord iSource) {
-    final BytesContainer container = new BytesContainer();
-
-    // WRITE SERIALIZER VERSION
-    int pos = container.alloc(1);
-    container.bytes[pos] = CURRENT_RECORD_VERSION;
-
-    // SERIALIZE CLASS ONLY
-    serializerByVersion[CURRENT_RECORD_VERSION].serializeWithClassName((ODocument) iSource, container, true);
-
-    return container.fitBytes();
   }
 
   @Override

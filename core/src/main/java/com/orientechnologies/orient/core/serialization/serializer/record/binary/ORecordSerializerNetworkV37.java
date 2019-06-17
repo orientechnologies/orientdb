@@ -132,14 +132,8 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
   }
 
-  @SuppressWarnings("unchecked")
-  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
-
+  public void serialize(final ODocument document, final BytesContainer bytes) {
     serializeClass(document, bytes);
-    if (iClassOnly) {
-      writeEmptyString(bytes);
-      return;
-    }
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
     OVarIntSerializer.write(bytes, document.fields());
     for (Entry<String, ODocumentEntry> entry : fields) {
@@ -555,9 +549,9 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       if (value instanceof ODocumentSerializable) {
         ODocument cur = ((ODocumentSerializable) value).toDocument();
         cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
-        serialize(cur, bytes, false);
+        serialize(cur, bytes);
       } else {
-        serialize((ODocument) value, bytes, false);
+        serialize((ODocument) value, bytes);
       }
       break;
     case EMBEDDEDSET:
@@ -644,7 +638,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     }
   }
 
-  @SuppressWarnings("unchecked")
   private int writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
     final int fullPos = OVarIntSerializer.write(bytes, map.size());
     for (Entry<Object, Object> entry : map.entrySet()) {
@@ -870,7 +863,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       ODocument doc = (ODocument) iSource;
       // SERIALIZE RECORD
       if (!iOnlyDelta) {
-        serialize(doc, container, false);
+        serialize(doc, container);
       } else {
         ODocumentDelta deltaDoc = doc.getDeltaFromOriginal();
         return deltaDoc.serialize();
@@ -878,15 +871,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
       return container.fitBytes();
     }
-  }
-
-  @Override
-  public byte[] writeClassOnly(ORecord iSource) {
-    final BytesContainer container = new BytesContainer();
-
-    serialize((ODocument) iSource, container, true);
-
-    return container.fitBytes();
   }
 
   @Override

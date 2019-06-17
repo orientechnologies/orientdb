@@ -259,7 +259,12 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
         cumulativeLength + fieldLength);
   }
 
-  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
+  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName, boolean embedded) {
+    if (embedded) {
+      // skip class name bytes
+      final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
+      bytes.skip(classNameLen);
+    }
     final byte[] field = iFieldName.getBytes();
 
     final OMetadataInternal metadata = ODatabaseRecordThreadLocal.instance().get().getMetadata();
@@ -303,14 +308,6 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
         }
       }
     }
-  }
-
-  public OBinaryField deserializeFieldWithClassName(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
-    // akip class name bytes   
-    final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
-    bytes.skip(classNameLen);
-
-    return deserializeField(bytes, iClass, iFieldName);
   }
 
   public void deserialize(final ODocument document, final BytesContainer bytes) {
@@ -497,48 +494,32 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
     merge(bytes, headerBuffer, valuesBuffer);
   }
 
-  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
-    final OClass clazz = serializeClass(document, bytes, true);
-    if (iClassOnly) {
-      writeEmptyString(bytes);
-      return;
-    }
-    serializeDocument(document, bytes, clazz);
-  }
-
-  @SuppressWarnings("unchecked")
-  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
-    final OClass clazz = serializeClass(document, bytes, false);
-    if (iClassOnly) {
-      writeEmptyString(bytes);
-      return;
-    }
-    serializeDocument(document, bytes, clazz);
-  }
-
-  private OClass serializeClass(final ODocument document, final BytesContainer bytes, boolean serializeClassName) {
+  public void serializeWithClassName(final ODocument document, final BytesContainer bytes) {
     final OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
-    if (serializeClassName) {
-      if (clazz != null && document.isEmbedded())
-        writeString(bytes, clazz.getName());
-      else
-        writeEmptyString(bytes);
-    }
-    return clazz;
+    if (clazz != null && document.isEmbedded())
+      writeString(bytes, clazz.getName());
+    else
+      writeEmptyString(bytes);
+    serializeDocument(document, bytes, clazz);
+  }
+
+  public void serialize(final ODocument document, final BytesContainer bytes) {
+    final OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
+    serializeDocument(document, bytes, clazz);
   }
 
   public boolean isSerializingClassNameByDefault() {
     return false;
   }
 
-  public <RET> RET deserializeFieldTyped(BytesContainer bytes, String iFieldName, boolean isEmbedded, int serializerVersion) {
+  public <RET> RET deserializeFieldTyped(BytesContainer bytes, String iFieldName, boolean isEmbedded) {
     if (isEmbedded) {
       skipClassName(bytes);
     }
-    return deserializeFieldTypedLoopAndReturn(bytes, iFieldName, serializerVersion);
+    return deserializeFieldTypedLoopAndReturn(bytes, iFieldName);
   }
 
-  protected <RET> RET deserializeFieldTypedLoopAndReturn(BytesContainer bytes, String iFieldName, int serializerVersion) {
+  protected <RET> RET deserializeFieldTypedLoopAndReturn(BytesContainer bytes, String iFieldName) {
     final byte[] field = iFieldName.getBytes();
 
     int headerLength = OVarIntSerializer.readAsInteger(bytes);
@@ -1011,9 +992,9 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
       if (value instanceof ODocumentSerializable) {
         ODocument cur = ((ODocumentSerializable) value).toDocument();
         cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
-        serializeWithClassName(cur, bytes, false);
+        serializeWithClassName(cur, bytes);
       } else {
-        serializeWithClassName((ODocument) value, bytes, false);
+        serializeWithClassName((ODocument) value, bytes);
       }
       break;
     case EMBEDDEDSET:
