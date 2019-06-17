@@ -82,9 +82,6 @@ public class OComparableLockManager<T extends  Comparable> {
     if (!enabled)
       return;
 
-    if (!enabled)
-      return;
-
     T immutableResource = getImmutableResourceId(iResourceId);
     if (immutableResource == null)
       immutableResource = (T) NULL_KEY;
