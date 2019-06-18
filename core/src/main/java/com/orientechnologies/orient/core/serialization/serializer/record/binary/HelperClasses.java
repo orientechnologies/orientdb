@@ -89,30 +89,6 @@ public class HelperClasses {
     }
   }
 
-  public static class Triple<T1, T2, T3> {// extends Tuple<T1, T2>{
-    private final T1 firstVal;
-    private final T2 secondVal;
-    private final T3 thirdVal;
-
-    public Triple(T1 firstVal, T2 secondVal, T3 thirdVal) {
-      this.firstVal = firstVal;
-      this.secondVal = secondVal;
-      this.thirdVal = thirdVal;
-    }
-
-    public T3 getThirdVal() {
-      return thirdVal;
-    }
-
-    public T1 getFirstVal() {
-      return firstVal;
-    }
-
-    public T2 getSecondVal() {
-      return secondVal;
-    }
-  }
-
   protected static class RecordInfo {
     public int   fieldStartOffset;
     public int   fieldLength;
@@ -135,13 +111,6 @@ public class HelperClasses {
   public static OTypeInterface readDeltaDocumentType(final BytesContainer bytes) {
     return ODeltaDocumentFieldType.getFromId(readByte(bytes));
   }
-
-//  public static ODeltaDocumentFieldType getDeltaTypeFromType(OType type){
-//    if (type == null){
-//      return null;
-//    }
-//    return ODeltaDocumentFieldType.getFromId(type.getId());
-//  }
 
   public static void writeOType(BytesContainer bytes, int pos, OType type) {
     bytes.bytes[pos] = (byte) type.getId();
