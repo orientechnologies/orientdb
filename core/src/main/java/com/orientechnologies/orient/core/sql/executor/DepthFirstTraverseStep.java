@@ -43,7 +43,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       }
       ((OResultInternal) item).setMetadata("$path", path);
 
-      if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
+      if (item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
         tryAddEntryPoint(item, ctx);
         traversed.add(item.getElement().get().getIdentity());
       } else if (item.getProperty("@rid") != null && item.getProperty("@rid") instanceof OIdentifiable) {

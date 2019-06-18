@@ -51,7 +51,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
         long minClusterPosition = calculateMinClusterPosition();
         long maxClusterPosition = calculateMaxClusterPosition();
         iterator = new ORecordIteratorCluster((ODatabaseDocumentInternal) ctx.getDatabase(), clusterId, minClusterPosition, maxClusterPosition);
-        if (ORDER_DESC == order) {
+        if (ORDER_DESC.equals(order)) {
           iterator.last();
         }
       }
@@ -66,7 +66,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
             if (nFetched >= nRecords) {
               return false;
             }
-            if (ORDER_DESC == order) {
+            if (ORDER_DESC.equals(order)) {
               return iterator.hasPrevious();
             } else {
               return iterator.hasNext();
@@ -88,14 +88,14 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
             if (nFetched >= nRecords) {
               throw new IllegalStateException();
             }
-            if (ORDER_DESC == order && !iterator.hasPrevious()) {
+            if (ORDER_DESC.equals(order) && !iterator.hasPrevious()) {
               throw new IllegalStateException();
-            } else if (ORDER_DESC != order && !iterator.hasNext()) {
+            } else if (!ORDER_DESC.equals(order) && !iterator.hasNext()) {
               throw new IllegalStateException();
             }
 
             ORecord record = null;
-            if (ORDER_DESC == order) {
+            if (ORDER_DESC.equals(order)) {
               record = iterator.previous();
             } else {
               record = iterator.next();
