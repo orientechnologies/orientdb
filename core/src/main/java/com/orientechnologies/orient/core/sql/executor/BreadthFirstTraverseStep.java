@@ -35,7 +35,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
           path.add(item.getIdentity().get());
           ((OResultInternal) item).setMetadata("$path", path);
 
-          if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
+          if (item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
             tryAddEntryPoint(item, ctx);
 
           }
