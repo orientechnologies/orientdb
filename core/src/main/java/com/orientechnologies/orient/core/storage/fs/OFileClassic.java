@@ -123,7 +123,7 @@ public final class OFileClassic implements OClosableItem {
         try {
           ONative.instance().fallocate(fd, currentSize + HEADER_SIZE, size);
         } catch (final LastErrorException e) {
-          OLogManager.instance().warnNoDb(this,
+          OLogManager.instance().debug(this,
               "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
               e.getErrorCode(), osFile.toAbsolutePath().toString());
 
