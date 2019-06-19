@@ -585,7 +585,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         String nextAlias = entryPoint.getKey();
         Iterable<OIdentifiable> matches = fetchAliasCandidates(nextAlias, aliasFilters, iCommandContext, aliasClasses);
 
-        Set<OIdentifiable> ids = new HashSet<OIdentifiable>();
         if (!matches.iterator().hasNext()) {
           if (pattern.get(nextAlias).isOptionalNode()) {
             continue;

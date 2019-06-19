@@ -228,7 +228,6 @@ public class OLevelZeroIdentifier extends SimpleNode {
 
   public AggregationContext getAggregationContext(OCommandContext ctx) {
     if (isAggregate()) {
-      OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
       if (functionCall != null) {
         return functionCall.getAggregationContext(ctx);
       }
