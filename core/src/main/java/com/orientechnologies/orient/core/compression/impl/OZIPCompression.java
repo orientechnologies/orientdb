@@ -74,7 +74,7 @@ public abstract class OZIPCompression extends OAbstractCompression {
 
         int bytesRead;
 
-        ZipEntry entry = gzipInputStream.getNextEntry();
+        gzipInputStream.getNextEntry();
 
         int len = 0;
         while ((bytesRead = gzipInputStream.read(buffer, 0, buffer.length)) > -1) {

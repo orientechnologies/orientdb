@@ -240,9 +240,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
       } catch (Exception e) {
         throwParsingException("Error parsing query: \n" + queryText + "\n" + e.getMessage(), e);
       }
-      OClass clazz = getDatabase().getMetadata().getSchema().getClass("Foo");
-      clazz.setCustom("schemaVersion", "1");
-      String version = clazz.getCustom("schemaVersion");
     }
     return queryText;
   }

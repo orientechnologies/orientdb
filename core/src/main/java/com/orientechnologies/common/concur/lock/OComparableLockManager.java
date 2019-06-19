@@ -50,8 +50,6 @@ public class OComparableLockManager<T extends  Comparable> {
   }
 
   public OComparableLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
-    final int cL = closestInteger(concurrencyLevel);
-
     map = new ConcurrentSkipListMap<T, CountableLock>();
 
     acquireTimeout = iAcquireTimeout;
