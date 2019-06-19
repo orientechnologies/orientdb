@@ -316,7 +316,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             }
             exception = t;
           } catch (Error err) {
-            connection.release();
+            if(connection!=null) {
+              connection.release();
+            }
             throw err;
           }
         }
