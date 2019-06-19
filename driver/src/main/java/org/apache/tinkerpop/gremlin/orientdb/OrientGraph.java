@@ -80,28 +80,28 @@ public final class OrientGraph implements OGraph {
     INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OClass.EDGE_CLASS_NAME, Edge.DEFAULT_LABEL);
   }
 
-  public static String CONFIG_URL                = "orient-url";
-  public static String CONFIG_DB_NAME            = "orient-db-name";
-  public static String CONFIG_DB_TYPE            = "orient-db-type";
-  public static String CONFIG_USER               = "orient-user";
-  public static String CONFIG_PASS               = "orient-pass";
-  public static String CONFIG_CREATE             = "orient-create";
-  public static String CONFIG_OPEN               = "orient-open";
-  public static String CONFIG_TRANSACTIONAL      = "orient-transactional";
-  public static String CONFIG_POOL_SIZE          = "orient-max-poolsize";
-  public static String CONFIG_MAX_PARTITION_SIZE = "orient-max-partitionsize";
-  public static String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
+  public final static String CONFIG_URL                = "orient-url";
+  public final static String CONFIG_DB_NAME            = "orient-db-name";
+  public final static String CONFIG_DB_TYPE            = "orient-db-type";
+  public final static String CONFIG_USER               = "orient-user";
+  public final static String CONFIG_PASS               = "orient-pass";
+  public final static String CONFIG_CREATE             = "orient-create";
+  public final static String CONFIG_OPEN               = "orient-open";
+  public final static String CONFIG_TRANSACTIONAL      = "orient-transactional";
+  public final static String CONFIG_POOL_SIZE          = "orient-max-poolsize";
+  public final static String CONFIG_MAX_PARTITION_SIZE = "orient-max-partitionsize";
+  public final static String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
-  protected            boolean                connectionFailed;
-  protected            ODatabaseDocument      database;
-  protected final      Features               features;
-  protected final      Configuration          configuration;
-  protected final      String                 user;
-  protected final      String                 password;
-  protected            OrientGraphBaseFactory factory;
-  protected            boolean                shouldCloseFactory = false;
-  protected            OElementFactory        elementFactory;
-  protected            OrientTransaction      tx;
+  protected       boolean                connectionFailed;
+  protected       ODatabaseDocument      database;
+  protected final Features               features;
+  protected final Configuration          configuration;
+  protected final String                 user;
+  protected final String                 password;
+  protected       OrientGraphBaseFactory factory;
+  protected       boolean                shouldCloseFactory = false;
+  protected       OElementFactory        elementFactory;
+  protected       OrientTransaction      tx;
 
   public static OrientGraph open() {
     return open("memory:orientdb-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE), "admin", "admin");
@@ -350,8 +350,8 @@ public final class OrientGraph implements OGraph {
   /**
    * Tries to execute a lambda in a transaction, retrying it if an ONeedRetryException is thrown.
    * <p>
-   * If the Graph has an active transaction, then the transaction has to be empty (no operations executed yet)
-   * and after the execution you will be in a new transaction.
+   * If the Graph has an active transaction, then the transaction has to be empty (no operations executed yet) and after the
+   * execution you will be in a new transaction.
    *
    * @param nRetries the maximum number of retries (> 0)
    * @param function a lambda containing application code to execute in a commit/retry loop
@@ -530,8 +530,7 @@ public final class OrientGraph implements OGraph {
   protected OElement getRawDocument(ORecord record) {
     if (record == null)
       throw new NoSuchElementException();
-    if (record instanceof OIdentifiable)
-      record = record.getRecord();
+    record = record.getRecord();
     ODocument currentDocument = (ODocument) record;
     if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
       currentDocument.load();
