@@ -488,8 +488,6 @@ public class OConsoleApplication {
       // COMMENT: JUMP IT
       return null;
 
-    final StringBuilder lastCommandInvoked = new StringBuilder(1024);
-
     final String commandLowerCase = iCommand.toLowerCase(Locale.ENGLISH);
 
     final Map<Method, Object> methodMap = getConsoleMethods();

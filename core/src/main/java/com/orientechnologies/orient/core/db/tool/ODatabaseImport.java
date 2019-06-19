@@ -144,8 +144,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       inStream = bf;
     }
 
-    OMurmurHash3HashFunction<OIdentifiable> keyHashFunction = new OMurmurHash3HashFunction<>(OLinkSerializer.INSTANCE);
-
     jsonReader = new OJSONReader(new InputStreamReader(inStream));
     database.declareIntent(new OIntentMassiveInsert());
   }
