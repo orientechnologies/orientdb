@@ -989,12 +989,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     final long hash = hash64.hash(buffer, XX_SEED);
 
-    buffer.position(OCASWALPage.XX_OFFSET);
-    if (hash != buffer.getLong()) {
-      return true;
-    }
-
-    return false;
+    return hash != buffer.getLong(OCASWALPage.XX_OFFSET);
   }
 
   public void addCutTillLimit(final OLogSequenceNumber lsn) {
@@ -1003,7 +998,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     cuttingLock.lock();
     try {
-      cutTillLimits.merge(lsn, 1, (a, b) -> a + b);
+      cutTillLimits.merge(lsn, 1, Integer::sum);
     } finally {
       cuttingLock.unlock();
     }
@@ -1762,6 +1757,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     } else {
       length -= freeSpace;
 
+      @SuppressWarnings("UnnecessaryLocalVariable")
       final int firstChunk = freeSpace;
       final int pages = length / maxRecordSize;
       final int offset = length - pages * maxRecordSize;
@@ -1869,6 +1865,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                 break;
               }
 
+              assert record != null;
               final OLogSequenceNumber lsn = record.getLsn();
 
               assert lsn.getSegment() >= segmentId;
@@ -1883,7 +1880,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                 if (segmentId != lsn.getSegment()) {
                   if (walFile != null) {
                     if (writeBufferPointer != null) {
-                      writeBuffer(walFile, segmentId, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
+                      writeBuffer(walFile, segmentId, writeBuffer, lastLSN, checkPointLSN);
                     }
 
                     writeBufferPointer = null;
@@ -1932,7 +1929,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                   while (written < bytesToWrite) {
                     if (writeBuffer == null || writeBuffer.remaining() == 0) {
                       if (writeBufferPointer != null) {
-                        writeBuffer(walFile, segmentId, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
+                        assert writeBuffer != null;
+                        writeBuffer(walFile, segmentId, writeBuffer, lastLSN, checkPointLSN);
                       }
 
                       if (useFirstBuffer) {
@@ -2020,7 +2018,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             }
 
             if ((makeFSync || fullWrite) && writeBufferPointer != null) {
-              writeBuffer(walFile, segmentId, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
+              writeBuffer(walFile, segmentId, writeBuffer, lastLSN, checkPointLSN);
 
               writeBufferPointer = null;
               writeBuffer = null;
@@ -2128,8 +2126,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    private void writeBuffer(final OWALFile file, final long segmentId, final ByteBuffer buffer, final OPointer pointer,
-        final OLogSequenceNumber lastLSN, final OLogSequenceNumber checkpointLSN) throws IOException {
+    private void writeBuffer(final OWALFile file, final long segmentId, final ByteBuffer buffer, final OLogSequenceNumber lastLSN,
+        final OLogSequenceNumber checkpointLSN) throws IOException {
 
       if (buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
         return;
@@ -2167,7 +2165,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         buffer.putLong(hash);
 
         if (aesKey != null) {
-          final long pageIndex = (currentPosition + start) / pageSize;
+          final long pageIndex = (currentPosition + start) / OCASDiskWriteAheadLog.this.pageSize;
           doEncryptionDecryption(segmentId, pageIndex, Cipher.ENCRYPT_MODE, start, pageSize, buffer);
         }
       }
@@ -2276,10 +2274,14 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             fsyncCount > 0 ? fsyncTime / fsyncCount / 1_000_000 : -1, threadsWaitingCount,
             threadsWaitingCount > 0 ? threadsWaitingSum / threadsWaitingCount / 1_000_000 : -1);
 
+        //noinspection NonAtomicOperationOnVolatileField
         OCASDiskWriteAheadLog.this.bytesWrittenSum -= bytesWritten;
+        //noinspection NonAtomicOperationOnVolatileField
         OCASDiskWriteAheadLog.this.bytesWrittenTime -= writtenTime;
 
+        //noinspection NonAtomicOperationOnVolatileField
         OCASDiskWriteAheadLog.this.fsyncTime -= fsyncTime;
+        //noinspection NonAtomicOperationOnVolatileField
         OCASDiskWriteAheadLog.this.fsyncCount -= fsyncCount;
 
         OCASDiskWriteAheadLog.this.threadsWaitingSum.add(-threadsWaitingSum);

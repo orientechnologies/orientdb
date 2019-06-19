@@ -139,7 +139,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   /**
    * Marks pages which have a checksum stored and data encrypted
    */
-  public static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0xFBCAE5FEL;
+  private static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0xFBCAE5FEL;
 
   /**
    * Marks pages which have no checksum stored.
