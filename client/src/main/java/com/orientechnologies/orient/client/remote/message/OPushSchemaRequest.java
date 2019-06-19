@@ -24,7 +24,7 @@ public class OPushSchemaRequest implements OBinaryPushRequest<OBinaryPushRespons
 
   @Override
   public void write(OChannelDataOutput channel) throws IOException {
-    channel.writeBytes(ORecordSerializerNetworkV37.INSTANCE.toStream(schema, false));
+    channel.writeBytes(ORecordSerializerNetworkV37.INSTANCE.toStream(schema));
   }
 
   @Override

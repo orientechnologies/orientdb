@@ -664,7 +664,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   public abstract ORecord fromString(String iContent, ORecord iRecord, String[] iFields);
 
   public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat) {
-    return toString(iRecord, iOutput, iFormat, false, true);
+    return toString(iRecord, iOutput, iFormat, true);
   }
 
   public ORecord fromString(final String iSource) {
@@ -691,11 +691,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  public byte[] toStream(final ORecord iRecord, boolean iOnlyDelta) {
+  public byte[] toStream(final ORecord iRecord) {
     final long timer = PROFILER.startChrono();
 
     try {
-      return toString(iRecord, new StringBuilder(2048), null, iOnlyDelta, true).toString().getBytes("UTF-8");
+      return toString(iRecord, new StringBuilder(2048), null, true).toString().getBytes("UTF-8");
     } catch (UnsupportedEncodingException e) {
       throw OException.wrapException(new OSchemaException("error encoding string"), e);
     } finally {
@@ -704,7 +704,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  protected abstract StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat, boolean iOnlyDelta, boolean autoDetectCollectionType);
+  protected abstract StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat, boolean autoDetectCollectionType);
 
   public boolean getSupportBinaryEvaluate() {
     return false;

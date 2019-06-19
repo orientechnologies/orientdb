@@ -78,7 +78,7 @@ public class OMessageHelper {
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
         .equals(serializer.toString()))) {
       ((ODocument) iRecord).deserializeFields();
-      stream = serializer.toStream(iRecord, false);
+      stream = serializer.toStream(iRecord);
     } else
       stream = iRecord.toStream();
 

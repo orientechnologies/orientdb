@@ -90,7 +90,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(final ORecord iSource, final boolean iOnlyDelta) {
+  public byte[] toStream(final ORecord iSource) {
     if (iSource instanceof OBlob) {
       return iSource.toStream();
     } else if (iSource instanceof ORecordFlat) {

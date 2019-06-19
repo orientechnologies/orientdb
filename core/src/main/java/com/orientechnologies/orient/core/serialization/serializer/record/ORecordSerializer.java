@@ -22,12 +22,11 @@ package com.orientechnologies.orient.core.serialization.serializer.record;
 
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 
 public interface ORecordSerializer {
   ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields);
 
-  byte[] toStream(ORecord iSource, boolean iOnlyDelta);
+  byte[] toStream(ORecord iSource);
 
   int getCurrentVersion();
 

@@ -70,7 +70,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED:
-        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
+        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.DELETED:

@@ -134,7 +134,7 @@ public class ODocumentTest {
     assertEquals(doc.fieldType("string"), OType.STRING);
     assertEquals(doc.fieldType("binary"), OType.BINARY);
     ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
-    byte[] bytes = ser.toStream(doc, false);
+    byte[] bytes = ser.toStream(doc);
     doc = new ODocument();
     ser.fromStream(bytes, doc, null);
     assertEquals(doc.fieldType("integer"), OType.INTEGER);
@@ -157,7 +157,7 @@ public class ODocumentTest {
     assertNull(doc.fieldType("string"));
     assertNull(doc.fieldType("binary"));
     ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
-    byte[] bytes = ser.toStream(doc, false);
+    byte[] bytes = ser.toStream(doc);
     doc = new ODocument();
     ser.fromStream(bytes, doc, null);
     assertEquals(doc.fieldType("integer"), OType.INTEGER);
@@ -192,7 +192,7 @@ public class ODocumentTest {
       assertEquals(doc.fieldType("string"), OType.STRING);
       assertEquals(doc.fieldType("binary"), OType.BINARY);
       ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
-      byte[] bytes = ser.toStream(doc, false);
+      byte[] bytes = ser.toStream(doc);
       doc = new ODocument();
       ser.fromStream(bytes, doc, null);
       assertEquals(doc.fieldType("integer"), OType.INTEGER);
@@ -214,7 +214,7 @@ public class ODocumentTest {
     ODocument doc = new ODocument();
     doc.field("link", new ORecordId(1, 2));
     ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
-    byte[] bytes = ser.toStream(doc, false);
+    byte[] bytes = ser.toStream(doc);
     doc = new ODocument();
     ser.fromStream(bytes, doc, null);
     assertEquals(doc.fieldType("link"), OType.LINK);

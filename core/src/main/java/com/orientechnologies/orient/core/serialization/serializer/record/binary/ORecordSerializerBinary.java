@@ -21,7 +21,9 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -115,18 +117,13 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(final ORecord iSource, final boolean iOnlyDelta) {
+  public byte[] toStream(final ORecord iSource) {
     if (iSource instanceof OBlob) {
       return iSource.toStream();
     } else if (iSource instanceof ORecordFlat) {
       return iSource.toStream();
     } else {
       ODocument documentToSerialize = (ODocument) iSource;
-
-      if (iOnlyDelta) {
-        ODocumentDelta deltaDoc = documentToSerialize.getDeltaFromOriginal();
-        return deltaDoc.serialize();
-      }
 
       final BytesContainer container = new BytesContainer();
 
@@ -166,9 +163,9 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     return NAME;
   }
 
-  public OResult getBinaryResult(byte[] bytes) {
+  public OResult getBinaryResult(ODatabaseSession db, byte[] bytes, ORecordId id) {
     ODocumentSerializer serializer = getSerializer(bytes[0]);
-    return new OResultBinary(bytes, 1, bytes.length, serializer, false);
+    return new OResultBinary(db, bytes, 1, bytes.length, serializer, id);
   }
 
 }

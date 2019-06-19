@@ -162,7 +162,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     final byte[] field = iFieldName.getBytes();
 
     final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
-    final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
+    final OImmutableSchema schema = metadata.getImmutableSchemaSnapshot();
 
     while (true) {
       final int len = OVarIntSerializer.readAsInteger(bytes);
@@ -203,7 +203,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         final int id = (len * -1) - 1;
-        final OGlobalProperty prop = _schema.getGlobalPropertyById(id);
+        final OGlobalProperty prop = schema.getGlobalPropertyById(id);
         if (iFieldName.equals(prop.getName())) {
           final int valuePos = readInteger(bytes);
           final OType type;
@@ -1069,7 +1069,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     final byte[] field = iFieldName.getBytes();
 
     final OMetadataInternal metadata = ODatabaseRecordThreadLocal.instance().get().getMetadata();
-    final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
+    final OImmutableSchema schema = metadata.getImmutableSchemaSnapshot();
 
     while (true) {
       int len = OVarIntSerializer.readAsInteger(bytes);
@@ -1116,7 +1116,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         final int id = (len * -1) - 1;
-        final OGlobalProperty prop = _schema.getGlobalPropertyById(id);
+        final OGlobalProperty prop = schema.getGlobalPropertyById(id);
         if (iFieldName.equals(prop.getName())) {
           final int valuePos = readInteger(bytes);
           OType type;

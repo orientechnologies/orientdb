@@ -61,7 +61,7 @@ public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsR
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED:
-        request.setRecord(serializer.toStream(txEntry.getRecord(), false));
+        request.setRecord(serializer.toStream(txEntry.getRecord()));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       }

@@ -66,11 +66,11 @@ public class OTransactionSubmit implements OSubmitRequest {
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
-        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
+        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.UPDATED:
-        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), useDeltas));
+        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.DELETED:

@@ -777,7 +777,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         .getBytes();
     ODocument doc = (ODocument) ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(streamOrigin, new ODocument(), null);
     doc.field("out");
-    final byte[] streamDest = ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc, false);
+    final byte[] streamDest = ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc);
     Assert.assertEquals(streamOrigin, streamDest);
     ODatabaseDocumentTx.setDefaultSerializer(current);
     oldDb.setSerializer(dbser);

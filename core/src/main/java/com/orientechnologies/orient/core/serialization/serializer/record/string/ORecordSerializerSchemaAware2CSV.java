@@ -260,8 +260,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  public byte[] toStream(ORecord iRecord, boolean iOnlyDelta) {
-    final byte[] result = super.toStream(iRecord, iOnlyDelta);
+  public byte[] toStream(ORecord iRecord) {
+    final byte[] result = super.toStream(iRecord);
     if (result == null || result.length > 0)
       return result;
 
@@ -289,8 +289,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat, final boolean iOnlyDelta,
-      final boolean autoDetectCollectionType) {
+  protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat, final boolean autoDetectCollectionType) {
     if (iRecord == null)
       throw new OSerializationException("Expected a record but was null");
 
@@ -299,7 +298,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     final ODocument record = (ODocument) iRecord;
 
-    if (!iOnlyDelta && ODocumentInternal.getImmutableSchemaClass(record) != null) {
+    if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
       iOutput.append(ODocumentInternal.getImmutableSchemaClass(record).getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
     }
@@ -312,7 +311,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     String fieldClassName;
     int i = 0;
 
-    final String[] fieldNames = iOnlyDelta && record.isTrackingChanges() ? record.getDirtyFields() : record.fieldNames();
+    final String[] fieldNames = record.fieldNames();
 
     // MARSHALL ALL THE FIELDS OR DELTA IF TRACKING IS ENABLED
     for (String fieldName : fieldNames) {

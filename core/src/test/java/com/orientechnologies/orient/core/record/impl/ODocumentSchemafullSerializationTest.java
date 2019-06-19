@@ -148,7 +148,7 @@ public abstract class ODocumentSchemafullSerializationTest {
     document.field(DATE_FIELD, new Date());
     document.field(RECORDID_FIELD, new ORecordId(10, 0));
 
-    byte[] res = serializer.toStream(document, false);
+    byte[] res = serializer.toStream(document);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     assertEquals(extr.fields(), document.fields());
@@ -242,7 +242,7 @@ public abstract class ODocumentSchemafullSerializationTest {
     listMixed.add((byte) 10);
     document.field(LIST_MIXED, listMixed);
 
-    byte[] res = serializer.toStream(document, false);
+    byte[] res = serializer.toStream(document);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     assertEquals(extr.fields(), document.fields());
@@ -300,7 +300,7 @@ public abstract class ODocumentSchemafullSerializationTest {
     bytesMap.put("key1", (byte) 11);
     document.field(MAP_BYTES, bytesMap);
 
-    byte[] res = serializer.toStream(document, false);
+    byte[] res = serializer.toStream(document);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), document.fields());
     assertEquals(extr.<Object>field(MAP_STRING), document.field(MAP_STRING));
@@ -321,7 +321,7 @@ public abstract class ODocumentSchemafullSerializationTest {
     embedded.field(CITY, "aaa");
     document.field(EMBEDDED_FIELD, embedded);
 
-    byte[] res = serializer.toStream(document, false);
+    byte[] res = serializer.toStream(document);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(document.fields(), extr.fields());
     ODocument emb = extr.field(EMBEDDED_FIELD);
@@ -337,14 +337,14 @@ public abstract class ODocumentSchemafullSerializationTest {
     ODocument document = new ODocument(simple);
     document.field(ANY_FIELD, false);
 
-    byte[] res = serializer.toStream(document, false);
+    byte[] res = serializer.toStream(document);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(document.fields(), extr.fields());
     assertEquals(extr.<Object>field(ANY_FIELD), false);
 
     extr.field(ANY_FIELD, false);
 
-    res = serializer.toStream(extr, false);
+    res = serializer.toStream(extr);
     ODocument extr2 = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), extr2.fields());
     assertEquals(extr2.<Object>field(ANY_FIELD), false);
@@ -357,7 +357,7 @@ public abstract class ODocumentSchemafullSerializationTest {
     ODocument document = new ODocument();
     document.field("name", "test");
 
-    byte[] res = serializer.toStream(document, false);
+    byte[] res = serializer.toStream(document);
     ODocument extr = new ODocument().fromStream(res);
     assertEquals(OType.STRING, extr.fieldType("name"));
 

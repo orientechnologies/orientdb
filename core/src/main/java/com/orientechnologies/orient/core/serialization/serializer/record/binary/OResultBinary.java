@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -35,26 +37,27 @@ import java.util.Set;
 public class OResultBinary implements OResult {
 
   private       ODocumentSerializer serializer;
-  private       ORID                id;
+  private       Optional<ORecordId> id;
   private final byte[]              bytes;
   private final int                 offset;
   private final int                 fieldLength;
-  private       boolean             embedded;
 
   public OResultBinary(byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer) {
+    this.id = Optional.empty();
     this.bytes = bytes;
     this.serializer = serializer;
     this.offset = offset;
     this.fieldLength = fieldLength;
-    this.embedded = true;
   }
 
-  public OResultBinary(byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer, boolean embedded) {
+  public OResultBinary(ODatabaseSession db, byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer,
+      ORecordId id) {
+    this.id = Optional.of(id);
     this.bytes = bytes;
     this.serializer = serializer;
     this.offset = offset;
     this.fieldLength = fieldLength;
-    this.embedded = embedded;
+
   }
 
   public int getFieldLength() {
@@ -65,14 +68,6 @@ public class OResultBinary implements OResult {
     return offset;
   }
 
-  public ORID getId() {
-    return id;
-  }
-
-  public void setId(ORID id) {
-    this.id = id;
-  }
-
   public byte[] getBytes() {
     return bytes;
   }
@@ -81,7 +76,7 @@ public class OResultBinary implements OResult {
   public <T> T getProperty(String name) {
     BytesContainer bytes = new BytesContainer(this.bytes);
     bytes.skip(offset);
-    return (T) serializer.deserializeFieldTyped(bytes, name, embedded);
+    return (T) serializer.deserializeFieldTyped(bytes, name, !id.isPresent());
   }
 
   @Override
@@ -109,13 +104,13 @@ public class OResultBinary implements OResult {
     final BytesContainer container = new BytesContainer(bytes);
     container.skip(offset);
     //TODO: use something more correct that new ODocument
-    String[] fields = serializer.getFieldNames(new ODocument(), container, embedded);
+    String[] fields = serializer.getFieldNames(new ODocument(), container, !id.isPresent());
     return new HashSet<>(Arrays.asList(fields));
   }
 
   @Override
   public Optional<ORID> getIdentity() {
-    return Optional.of(id);
+    return id.map((id) -> id);
   }
 
   @Override

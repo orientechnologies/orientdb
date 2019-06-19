@@ -444,14 +444,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     case EMBEDDED:
       if (iValue instanceof ORecord) {
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-        toString((ORecord) iValue, iOutput, null, false, true);
+        toString((ORecord) iValue, iOutput, null, true);
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
       } else if (iValue instanceof ODocumentSerializable) {
         final ODocument doc = ((ODocumentSerializable) iValue).toDocument();
         doc.field(ODocumentSerializable.CLASS_NAME, iValue.getClass().getName());
 
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-        toString(doc, iOutput, null, false, true);
+        toString(doc, iOutput, null, true);
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
 
       } else if (iValue != null)
@@ -521,7 +521,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
               record = null;
             }
             iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-            toString(record, iOutput, null, false, true);
+            toString(record, iOutput, null, true);
             iOutput.append(OStringSerializerHelper.EMBEDDED_END);
           } else if (o.getValue() instanceof Set<?>) {
             // SUB SET
@@ -698,7 +698,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (linkedType == OType.EMBEDDED && o instanceof OIdentifiable)
         toString((ORecord) ((OIdentifiable) o).getRecord(), iOutput, null);
       else if (linkedType != OType.LINK && (linkedClass != null || doc != null)) {
-        toString(doc, iOutput, null, false, true);
+        toString(doc, iOutput, null, true);
       } else {
         // EMBEDDED LITERALS
         if (iLinkedType == null) {

@@ -100,7 +100,7 @@ public class ODocumentSerializationPersistentTest {
     doc.field("emb", docs, OType.EMBEDDEDLIST);
     doc.field("some", "test");
 
-    byte[] res = db.getSerializer().toStream(doc, false);
+    byte[] res = db.getSerializer().toStream(doc);
     ODocument extr = (ODocument) db.getSerializer().fromStream(res, new ODocument(), new String[] {});
 
     List<ODocument> emb = extr.field("emb");

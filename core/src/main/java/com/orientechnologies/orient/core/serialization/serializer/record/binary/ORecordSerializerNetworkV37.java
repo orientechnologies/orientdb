@@ -852,7 +852,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(ORecord iSource, boolean iOnlyDelta) {
+  public byte[] toStream(ORecord iSource) {
     if (iSource instanceof OBlob) {
       return iSource.toStream();
     } else if (iSource instanceof ORecordFlat) {
@@ -862,13 +862,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
       ODocument doc = (ODocument) iSource;
       // SERIALIZE RECORD
-      if (!iOnlyDelta) {
-        serialize(doc, container);
-      } else {
-        ODocumentDelta deltaDoc = doc.getDeltaFromOriginal();
-        return deltaDoc.serialize();
-      }
-
+      serialize(doc, container);
       return container.fitBytes();
     }
   }

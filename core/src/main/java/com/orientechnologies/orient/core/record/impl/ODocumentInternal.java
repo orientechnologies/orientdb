@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -117,5 +118,9 @@ public class ODocumentInternal {
 
   public static void setPropertyEncryption(ODocument doc, OPropertyEncryption propertyEncryption) {
     doc.propertyEncryption = propertyEncryption;
+  }
+
+  public static ODocumentDelta getDeltaFromOriginal(ODocument doc) {
+    return doc.getDeltaFromOriginal();
   }
 }

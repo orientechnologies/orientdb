@@ -427,7 +427,7 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
     int cumulativeLength = valuesStart;
 
     final OMetadataInternal metadata = ODatabaseRecordThreadLocal.instance().get().getMetadata();
-    final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
+    final OImmutableSchema schema = metadata.getImmutableSchemaSnapshot();
 
     while (bytes.offset < valuesStart) {
 
@@ -456,7 +456,7 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         final int id = (len * -1) - 1;
-        final OGlobalProperty prop = _schema.getGlobalPropertyById(id);
+        final OGlobalProperty prop = schema.getGlobalPropertyById(id);
         final int fieldLength = OVarIntSerializer.readAsInteger(bytes);
         OType type = getPropertyTypeFromStream(prop, bytes);
 

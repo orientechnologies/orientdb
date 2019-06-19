@@ -25,7 +25,7 @@ public class OListDatabasesResponse implements OBinaryResponse{
   public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     final ODocument result = new ODocument();
     result.field("databases", databases);
-    byte[] toSend = serializer.toStream(result, false);
+    byte[] toSend = serializer.toStream(result);
     channel.writeBytes(toSend);
   }
 

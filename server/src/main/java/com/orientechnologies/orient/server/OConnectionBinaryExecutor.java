@@ -1266,7 +1266,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         .equals(name))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      stream = ser.toStream(iRecord, false);
+      stream = ser.toStream(iRecord);
     } else
       stream = iRecord.toStream();
 

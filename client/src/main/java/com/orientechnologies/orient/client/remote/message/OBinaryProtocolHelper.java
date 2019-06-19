@@ -15,7 +15,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -91,7 +90,7 @@ public class OBinaryProtocolHelper {
         .equals(recordSerializer))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(recordSerializer);
-      stream = ser.toStream(iRecord, false);
+      stream = ser.toStream(iRecord);
     } else
       stream = iRecord.toStream();
 
