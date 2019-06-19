@@ -202,6 +202,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method used in storage"
       + " Possible values : gzip, nothing. Default is 'nothing' that means no compression", String.class, "nothing"),
 
+  @Deprecated
   STORAGE_ENCRYPTION_METHOD("storage.encryptionMethod",
       "Record encryption method used in storage" + " Possible values : 'aes' and 'des'. Default is 'nothing' for no encryption",
       String.class, "nothing"),

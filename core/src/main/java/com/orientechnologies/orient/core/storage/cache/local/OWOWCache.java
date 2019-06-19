@@ -139,7 +139,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   /**
    * Marks pages which have a checksum stored and data encrypted
    */
-  private static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0xFBCAE5FEL;
+  public static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0xFBCAE5FEL;
 
   /**
    * Marks pages which have no checksum stored.
@@ -155,7 +155,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private static final int CHECKSUM_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+  public static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
   private static final int CHUNK_SIZE = 32 * 1024 * 1024;
 

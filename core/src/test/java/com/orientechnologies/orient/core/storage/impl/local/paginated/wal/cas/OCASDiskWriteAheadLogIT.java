@@ -205,7 +205,7 @@ public class OCASDiskWriteAheadLogIT {
         Assert.assertEquals(lsn, walRecord.getLsn());
         wal.close();
 
-        wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64,null, null, Integer.MAX_VALUE,
+        wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
             Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -222,6 +222,72 @@ public class OCASDiskWriteAheadLogIT {
         } catch (Exception e) {
           //ignore
         }
+
+        wal.close();
+
+        Thread.sleep(1);
+
+        if (i > 0 && i % 1000 == 0) {
+          System.out.printf("%d iterations out of %d were passed\n", i, iterations);
+        }
+      } catch (Exception | Error e) {
+        System.out.println("testAddSingleOnePageRecord : " + seed);
+        throw e;
+      }
+    }
+  }
+
+  @Test
+  public void testAddSingleOnePageRecordWrongEncryption() throws Exception {
+    final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
+    final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
+    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+
+    final int iterations = 10;
+
+    for (int i = 0; i < iterations; i++) {
+      OFileUtils.deleteRecursively(testDirectory.toFile());
+
+      final long seed = System.nanoTime();
+      try {
+        final Random random = new Random(seed);
+
+        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+
+        Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
+        Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
+
+        TestRecord walRecord = new TestRecord(random, wal.pageSize(), 1);
+        final OLogSequenceNumber lsn = wal.log(walRecord);
+
+        Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
+        Assert.assertEquals(wal.end(), lsn);
+
+        List<OWriteableWALRecord> records = wal.read(lsn, 10);
+        Assert.assertEquals(1, records.size());
+        TestRecord readRecord = (TestRecord) records.get(0);
+
+        Assert.assertArrayEquals(walRecord.data, readRecord.data);
+        Assert.assertEquals(lsn, walRecord.getLsn());
+        wal.close();
+
+        final String otherAesKeyEncoded = "DD0ViGecppQOx4ijWL4XGBwun9NAfbqFaDnVpn9+lj8=";
+        final byte[] otherAesKey = Base64.getDecoder().decode(otherAesKeyEncoded);
+
+        wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, otherAesKey, iv, Integer.MAX_VALUE,
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+
+        Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
+        Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
+
+        wal.flush();
+
+        Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
+        Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
+
+        records = wal.read(lsn, 10);
+        Assert.assertTrue(records.isEmpty());
 
         wal.close();
 
@@ -2448,9 +2514,8 @@ public class OCASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100,
-            64, aesKey, iv, Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US,
-            -1, -1, 1000, true, false, true, 10);
+        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2490,9 +2555,8 @@ public class OCASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64,
-            aesKey, iv, Integer.MAX_VALUE,   Integer.MAX_VALUE, 20, true, Locale.US, -1,
-            -1, 1000, true, false, true, 10);
+        wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
@@ -2529,7 +2593,6 @@ public class OCASDiskWriteAheadLogIT {
       }
     }
   }
-
 
   @Test
   public void testSegSize() throws Exception {

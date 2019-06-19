@@ -25,7 +25,7 @@ public class SimpleRWNotThreadBoundTest {
 
     }).start();
 
-    assertTrue(error.await(20, TimeUnit.MILLISECONDS));
+    assertTrue(error.await(40, TimeUnit.MILLISECONDS));
     manager.releaseReadLock("aaa");
   }
 
