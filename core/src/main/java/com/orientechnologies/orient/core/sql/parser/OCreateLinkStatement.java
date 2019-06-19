@@ -102,9 +102,6 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     else
       multipleRelationship = false;
 
-    long totRecords = db.countClass(sourceClass.getName());
-    long currRecord = 0;
-
     database.declareIntent(new OIntentMassiveInsert());
     try {
       // BROWSE ALL THE RECORDS OF THE SOURCE CLASS
