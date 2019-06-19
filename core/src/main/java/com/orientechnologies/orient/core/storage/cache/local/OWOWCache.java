@@ -2254,11 +2254,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final byte[] updatedIv = new byte[iv.length];
 
       for (int i = 0; i < OIntegerSerializer.INT_SIZE; i++) {
-        updatedIv[i] = (byte) (iv[i] ^ ((pageIndex >> i) & 0xFF));
+        updatedIv[i] = (byte) (iv[i] ^ ((pageIndex >>> i) & 0xFF));
       }
 
       for (int i = 0; i < OIntegerSerializer.INT_SIZE; i++) {
-        updatedIv[i + OIntegerSerializer.INT_SIZE] = (byte) (iv[i + OIntegerSerializer.INT_SIZE] ^ ((intId >> i) & 0xFF));
+        updatedIv[i + OIntegerSerializer.INT_SIZE] = (byte) (iv[i + OIntegerSerializer.INT_SIZE] ^ ((intId >>> i) & 0xFF));
       }
 
       System.arraycopy(iv, 2 * OIntegerSerializer.INT_SIZE, updatedIv, 2 * OIntegerSerializer.INT_SIZE,
@@ -2266,14 +2266,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       cipher.init(mode, aesKey, new IvParameterSpec(updatedIv));
 
-      final ByteBuffer outBuffer = ByteBuffer
-          .allocate(buffer.capacity() - (PAGE_OFFSET_TO_CHECKSUM_FROM + OIntegerSerializer.INT_SIZE))
+      final ByteBuffer outBuffer = ByteBuffer.allocate(buffer.capacity() - PAGE_OFFSET_TO_CHECKSUM_FROM)
           .order(ByteOrder.nativeOrder());
 
-      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM + OIntegerSerializer.INT_SIZE);
+      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
       cipher.doFinal(buffer, outBuffer);
 
-      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM + OIntegerSerializer.INT_SIZE);
+      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
       outBuffer.position(0);
       buffer.put(outBuffer);
 

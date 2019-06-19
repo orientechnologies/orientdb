@@ -14,6 +14,8 @@ import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
+import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
@@ -27,6 +29,9 @@ import com.sun.jna.Platform;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +43,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,6 +60,11 @@ import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
+  private static final String ALGORITHM_NAME = "AES";
+  private static final String TRANSFORMATION = "AES/CTR/NoPadding";
+
+  private static final ThreadLocal<Cipher> CIPHER = ThreadLocal.withInitial(OCASDiskWriteAheadLog::getCipherInstance);
+
   private static final XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
   private static final int           XX_SEED       = 0x9747b28c;
 
@@ -80,8 +93,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     commitExecutor.setMaximumPoolSize(1);
   }
-
-  private final int bufferSize;
 
   private final long walSizeHardLimit;
 
@@ -176,6 +187,9 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private OLogSequenceNumber lastLSN       = null;
   private OLogSequenceNumber checkPointLSN = null;
 
+  private final byte[] aesKey;
+  private final byte[] iv;
+
   private final boolean callFsync;
 
   private final boolean printPerformanceStatistic;
@@ -195,11 +209,23 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private volatile boolean stopWrite = false;
 
   public OCASDiskWriteAheadLog(final String storageName, final Path storagePath, final Path walPath, final int maxPagesCacheSize,
-      final int bufferSize, long segmentsInterval, final long maxSegmentSize, final int commitDelay, final boolean filterWALFiles,
-      final Locale locale, final long walSizeHardLimit, final long freeSpaceLimit, final int fsyncInterval, boolean allowDirectIO,
-      boolean callFsync, boolean printPerformanceStatistic, int statisticPrintInterval) throws IOException {
+      final int bufferSize, byte[] aesKey, byte[] iv, long segmentsInterval, final long maxSegmentSize, final int commitDelay,
+      final boolean filterWALFiles, final Locale locale, final long walSizeHardLimit, final long freeSpaceLimit,
+      final int fsyncInterval, boolean allowDirectIO, boolean callFsync, boolean printPerformanceStatistic,
+      int statisticPrintInterval) throws IOException {
 
-    this.bufferSize = bufferSize * 1024 * 1024;
+    if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
+      throw new OInvalidStorageEncryptionKeyException("Invalid length of the encryption key, provided size is " + aesKey.length);
+    }
+
+    if (aesKey != null && iv == null) {
+      throw new OInvalidStorageEncryptionKeyException("IV can not be null");
+    }
+
+    this.aesKey = aesKey;
+    this.iv = iv;
+
+    int bufferSize1 = bufferSize * 1024 * 1024;
 
     this.segmentsInterval = segmentsInterval;
     this.callFsync = callFsync;
@@ -284,10 +310,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     this.commitDelay = commitDelay;
 
-    writeBufferPointerOne = allocator.allocate(this.bufferSize, blockSize);
+    writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize);
     writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
-    writeBufferPointerTwo = allocator.allocate(this.bufferSize, blockSize);
+    writeBufferPointerTwo = allocator.allocate(bufferSize1, blockSize);
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
     this.recordsWriterFuture = commitExecutor.schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
@@ -519,7 +545,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     final String walOrder = name.substring(walOrderStartIndex + 1, walOrderEndIndex);
     try {
-      //noinspection ResultOfMethodCallIgnored
       Integer.parseInt(walOrder);
     } catch (final NumberFormatException ignore) {
       return false;
@@ -542,7 +567,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     final String walOrder = name.substring(walOrderStartIndex + 1, walOrderEndIndex);
     try {
-      //noinspection ResultOfMethodCallIgnored
       Integer.parseInt(walOrder);
     } catch (final NumberFormatException ignore) {
       return false;
@@ -707,7 +731,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                 file.readBuffer(buffer);
                 pagesRead++;
 
-                if (pageIsBroken(buffer, pageSize)) {
+                if (checkPageIsBrokenAndDecrypt(buffer, segment, pageIndex, pageSize)) {
                   OLogManager.instance()
                       .errorNoDb(this, "WAL page %d of segment %s is broken, read of records will be stopped", null, pageIndex,
                           segmentName);
@@ -730,10 +754,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                         continue;
                       }
                     } else {
-                      if (recordLenRead < OIntegerSerializer.INT_SIZE) {
-                        buffer.get(recordLenBytes, recordLenRead, OIntegerSerializer.INT_SIZE - recordLenRead);
-                      }
-
+                      buffer.get(recordLenBytes, recordLenRead, OIntegerSerializer.INT_SIZE - recordLenRead);
                       recordLen = OIntegerSerializer.INSTANCE.deserializeNative(recordLenBytes, 0);
                     }
 
@@ -940,11 +961,20 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     }
   }
 
-  private static boolean pageIsBroken(final ByteBuffer buffer, int walPageSize) {
-    buffer.position(OCASWALPage.MAGIC_NUMBER_OFFSET);
+  private boolean checkPageIsBrokenAndDecrypt(final ByteBuffer buffer, final long segmentId, final long pageIndex,
+      final int walPageSize) {
+    final long magicNumber = buffer.getLong(OCASWALPage.MAGIC_NUMBER_OFFSET);
 
-    if (buffer.getLong() != OCASWALPage.MAGIC_NUMBER) {
+    if (magicNumber != OCASWALPage.MAGIC_NUMBER && magicNumber != OCASWALPage.MAGIC_NUMBER_WITH_ENCRYPTION) {
       return true;
+    }
+
+    if (magicNumber == OCASWALPage.MAGIC_NUMBER_WITH_ENCRYPTION) {
+      if (aesKey == null) {
+        throw new OStorageException("Can not decrypt WAL page because decryption key is absent.");
+      }
+
+      doEncryptionDecryption(segmentId, pageIndex, Cipher.DECRYPT_MODE, 0, this.pageSize, buffer);
     }
 
     final int pageSize = buffer.getShort(OCASWALPage.PAGE_SIZE_OFFSET);
@@ -990,7 +1020,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       if (oldCounter == null)
         throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
 
-      final Integer newCounter = oldCounter - 1;
+      final int newCounter = oldCounter - 1;
       if (newCounter == 0) {
         cutTillLimits.remove(lsn);
       } else {
@@ -1496,6 +1526,42 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     return flushedLSN;
   }
 
+  private void doEncryptionDecryption(final long segmentId, final long pageIndex, final int mode, final int start,
+      final int pageSize, final ByteBuffer buffer) {
+    try {
+      final Cipher cipher = CIPHER.get();
+      final SecretKey aesKey = new SecretKeySpec(this.aesKey, ALGORITHM_NAME);
+
+      final byte[] updatedIv = new byte[iv.length];
+
+      for (int i = 0; i < OLongSerializer.LONG_SIZE; i++) {
+        updatedIv[i] = (byte) (iv[i] ^ ((pageIndex >>> i) & 0xFF));
+      }
+
+      for (int i = 0; i < OLongSerializer.LONG_SIZE; i++) {
+        updatedIv[i + OLongSerializer.LONG_SIZE] = (byte) (iv[i + OLongSerializer.LONG_SIZE] ^ ((segmentId >>> i) & 0xFF));
+      }
+
+      cipher.init(mode, aesKey, new IvParameterSpec(updatedIv));
+
+      final ByteBuffer outBuffer = ByteBuffer.allocate(pageSize - OCASWALPage.XX_OFFSET).order(ByteOrder.nativeOrder());
+
+      buffer.position(start + OCASWALPage.XX_OFFSET);
+      cipher.doFinal(buffer, outBuffer);
+
+      buffer.position(start + OCASWALPage.XX_OFFSET);
+      outBuffer.position(0);
+      buffer.put(outBuffer);
+
+    } catch (InvalidKeyException e) {
+      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(e.getMessage()), e);
+    } catch (InvalidAlgorithmParameterException e) {
+      throw new IllegalArgumentException("Invalid IV.", e);
+    } catch (IllegalBlockSizeException | BadPaddingException | ShortBufferException e) {
+      throw new IllegalStateException("Unexpected exception during CRT encryption.", e);
+    }
+  }
+
   private void calculateRecordsLSNs() {
     final List<OWALRecord> unassignedList = new ArrayList<>();
 
@@ -1817,7 +1883,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                 if (segmentId != lsn.getSegment()) {
                   if (walFile != null) {
                     if (writeBufferPointer != null) {
-                      writeBuffer(walFile, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
+                      writeBuffer(walFile, segmentId, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
                     }
 
                     writeBufferPointer = null;
@@ -1866,7 +1932,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                   while (written < bytesToWrite) {
                     if (writeBuffer == null || writeBuffer.remaining() == 0) {
                       if (writeBufferPointer != null) {
-                        writeBuffer(walFile, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
+                        writeBuffer(walFile, segmentId, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
                       }
 
                       if (useFirstBuffer) {
@@ -1954,7 +2020,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             }
 
             if ((makeFSync || fullWrite) && writeBufferPointer != null) {
-              writeBuffer(walFile, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
+              writeBuffer(walFile, segmentId, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
 
               writeBufferPointer = null;
               writeBuffer = null;
@@ -2062,8 +2128,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    private void writeBuffer(final OWALFile file, final ByteBuffer buffer, final OPointer pointer, final OLogSequenceNumber lastLSN,
-        final OLogSequenceNumber checkpointLSN) throws IOException {
+    private void writeBuffer(final OWALFile file, final long segmentId, final ByteBuffer buffer, final OPointer pointer,
+        final OLogSequenceNumber lastLSN, final OLogSequenceNumber checkpointLSN) throws IOException {
 
       if (buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
         return;
@@ -2088,7 +2154,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         buffer.limit(start + pageSize);
 
         buffer.position(start + OCASWALPage.MAGIC_NUMBER_OFFSET);
-        buffer.putLong(OCASWALPage.MAGIC_NUMBER);
+        buffer.putLong(aesKey == null ? OCASWALPage.MAGIC_NUMBER : OCASWALPage.MAGIC_NUMBER_WITH_ENCRYPTION);
 
         buffer.position(start + OCASWALPage.PAGE_SIZE_OFFSET);
         buffer.putShort((short) pageSize);
@@ -2099,6 +2165,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
         buffer.position(start + OCASWALPage.XX_OFFSET);
         buffer.putLong(hash);
+
+        if (aesKey != null) {
+          final long pageIndex = (currentPosition + start) / pageSize;
+          doEncryptionDecryption(segmentId, pageIndex, Cipher.ENCRYPT_MODE, start, pageSize, buffer);
+        }
       }
 
       buffer.position(0);
@@ -2228,6 +2299,14 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     WrittenUpTo(final OLogSequenceNumber lsn, final long position) {
       this.lsn = lsn;
       this.position = position;
+    }
+  }
+
+  private static Cipher getCipherInstance() {
+    try {
+      return Cipher.getInstance(TRANSFORMATION);
+    } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+      throw OException.wrapException(new OSecurityException("Implementation of encryption " + TRANSFORMATION + " is absent"), e);
     }
   }
 }

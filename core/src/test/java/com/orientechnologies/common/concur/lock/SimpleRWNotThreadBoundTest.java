@@ -45,7 +45,7 @@ public class SimpleRWNotThreadBoundTest {
 
     }).start();
 
-    assertTrue(error.await(20, TimeUnit.MILLISECONDS));
+    assertTrue(error.await(40, TimeUnit.MILLISECONDS));
 
     manager.releaseWriteLock("aaa");
 
@@ -67,7 +67,7 @@ public class SimpleRWNotThreadBoundTest {
 
     }).start();
 
-    assertTrue(error.await(20, TimeUnit.MILLISECONDS));
+    assertTrue(error.await(40, TimeUnit.MILLISECONDS));
 
     CountDownLatch ok = new CountDownLatch(1);
     new Thread(() -> {
@@ -111,8 +111,8 @@ public class SimpleRWNotThreadBoundTest {
 
     }).start();
 
-    assertTrue(ok.await(20, TimeUnit.MILLISECONDS));
-    assertTrue(error.await(20, TimeUnit.MILLISECONDS));
+    assertTrue(ok.await(40, TimeUnit.MILLISECONDS));
+    assertTrue(error.await(40, TimeUnit.MILLISECONDS));
     manager.releaseReadLock("aaa");
   }
 

@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 import static org.junit.Assert.*;
 
 /**
@@ -323,7 +322,7 @@ public class OrientDBEmbeddedTests {
       }
     }, 10, 10);
 
-    assertTrue(latch.await(30, TimeUnit.MILLISECONDS));
+    assertTrue(latch.await(80, TimeUnit.MILLISECONDS));
 
     CountDownLatch once = new CountDownLatch(1);
     internal.scheduleOnce(new TimerTask() {
@@ -334,7 +333,7 @@ public class OrientDBEmbeddedTests {
       }
     }, 10);
 
-    assertTrue(once.await(20, TimeUnit.MILLISECONDS));
+    assertTrue(once.await(80, TimeUnit.MILLISECONDS));
   }
 
   @Test

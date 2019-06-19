@@ -404,10 +404,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   protected OWriteAheadLog createWalFromIBUFiles(final File directory, final OContextConfiguration contextConfiguration,
       final Locale locale) throws IOException {
+    final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+    final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
 
     return new OCASDiskWriteAheadLog(name, storagePath, directory.toPath(),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE), aesKey, iv,
         contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60 * 1_000_000_000L,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L, 10, true, locale,
         OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
@@ -601,6 +603,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration) throws IOException, InterruptedException {
+    final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+    final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+
     if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       fuzzyCheckpointTask = fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
           contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL),
@@ -616,7 +621,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
       final OCASDiskWriteAheadLog diskWriteAheadLog = new OCASDiskWriteAheadLog(name, storagePath, walPath,
           contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
-          contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
+          contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE), aesKey, iv,
           contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60 * 1_000_000_000L, walMaxSegSize, 10,
           true, Locale.getDefault(), contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_MAX_SIZE) * 1024 * 1024,
           contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT) * 1024 * 1024,
@@ -657,14 +662,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final boolean printCacheStatistics = contextConfiguration
         .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS);
     final int statisticsPrintInterval = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL);
-    final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
     final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize, storagePath, getName(),
         OStringSerializer.INSTANCE, files, getId(),
-        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), iv,
-        aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded),
+        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), iv, aesKey,
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC), printCacheStatistics,
         statisticsPrintInterval);
 
