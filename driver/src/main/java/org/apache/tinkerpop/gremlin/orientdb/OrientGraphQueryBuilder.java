@@ -154,6 +154,8 @@ public class OrientGraphQueryBuilder {
       case neq:
         condition = "<>";
         break;
+      default:
+        throw new UnsupportedOperationException(String.format("Predicate %s not supported!", cond.toString()));
       }
       return condition;
     } else if (cond.getBiPredicate() instanceof Contains) {
@@ -166,6 +168,8 @@ public class OrientGraphQueryBuilder {
       case without:
         condition = "NOT IN";
         break;
+      default:
+        throw new UnsupportedOperationException(String.format("Predicate %s not supported!", cond.toString()));
       }
       return condition;
     }
