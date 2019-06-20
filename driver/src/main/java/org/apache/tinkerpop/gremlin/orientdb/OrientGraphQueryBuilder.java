@@ -100,7 +100,7 @@ public class OrientGraphQueryBuilder {
     for (int i = 0; i < classes.size(); i++) {
       builder.append(String.format("$q%d", i));
       if (i < classes.size() - 1) {
-        builder.append(String.format(",", i));
+        builder.append(",");
       }
     }
     return builder.toString();
