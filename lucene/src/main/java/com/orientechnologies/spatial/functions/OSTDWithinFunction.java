@@ -52,7 +52,6 @@ public class OSTDWithinFunction extends OSpatialFunctionAbstractIndexable {
 
     Number distance = (Number) iParams[2];
 
-    System.out.println("distance = " + distance);
     return factory.operation().isWithInDistance(shape, shape1, distance.doubleValue());
   }
 

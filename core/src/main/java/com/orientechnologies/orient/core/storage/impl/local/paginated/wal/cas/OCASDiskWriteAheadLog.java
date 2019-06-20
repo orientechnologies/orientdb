@@ -1514,7 +1514,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
       final Cursor<OWALRecord> nextCursor = MPSCFAAArrayDequeue.prev(cursor);
       if (nextCursor == null && record.getLsn().getPosition() < 0) {
-        System.out.println(cursor.toString());
+        OLogManager.instance().warn(this, cursor.toString());
         throw new IllegalStateException("Invalid last record");
       }
 

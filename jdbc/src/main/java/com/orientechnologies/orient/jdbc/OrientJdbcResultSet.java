@@ -283,8 +283,6 @@ public class OrientJdbcResultSet implements ResultSet {
 
     assert columnType.isEmbedded() && columnType.isMultiValue();
 
-//    System.out.println("columnType.name() = " + columnType.getDefaultJavaType());
-
     Array array = new OrientJdbcArray(result.getProperty(columnLabel));
 
     lastReadWasNull = array == null;
