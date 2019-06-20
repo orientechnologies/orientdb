@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -149,6 +150,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
 
     final ODocument param = new ODocument();
 
+    OImmutableSchema schema = ODatabaseRecordThreadLocal.instance().get().getMetadata().getImmutableSchemaSnapshot();
     serializer.fromStream(paramBuffer, param, null);
     param.setFieldType("params", OType.EMBEDDEDMAP);
     final Map<String, Object> params = param.rawField("params");

@@ -28,38 +28,36 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
-public class ODocumentSchemalessBinarySerializationTest {  
-    
-  @Parameters  
+public class ODocumentSchemalessBinarySerializationTest {
+
+  @Parameters
   public static Collection<Object[]> generateParams() {
     List<Object[]> params = new ArrayList<Object[]>();
     //first we want to run tests for all registreted serializers, and then for two network serializers
     //testig for each serializer type has its own index
     for (byte i = 0; i < ORecordSerializerBinary.INSTANCE.getNumberOfSupportedVersions() + 2; i++) {
-      params.add(new Object[]{i});
+      params.add(new Object[] { i });
     }
     return params;
   }
-  
-  protected ORecordSerializer serializer;
-  private final byte serializerVersion;
+
+  protected     ORecordSerializer serializer;
+  private final byte              serializerVersion;
 
   //first to test for all registreted serializers , then for network serializers
   public ODocumentSchemalessBinarySerializationTest(byte serializerVersion) {
     int numOfRegistretedSerializers = ORecordSerializerBinary.INSTANCE.getNumberOfSupportedVersions();
-    if (serializerVersion < numOfRegistretedSerializers){
+    if (serializerVersion < numOfRegistretedSerializers) {
       serializer = new ORecordSerializerBinary(serializerVersion);
-    }
-    else if (serializerVersion == numOfRegistretedSerializers){
+    } else if (serializerVersion == numOfRegistretedSerializers) {
       serializer = new ORecordSerializerNetwork();
-    }
-    else if (serializerVersion == numOfRegistretedSerializers + 1){
+    } else if (serializerVersion == numOfRegistretedSerializers + 1) {
       serializer = new ORecordSerializerNetworkV37();
     }
-    
+
     this.serializerVersion = serializerVersion;
   }
-  
+
   @Before
   public void createSerializer() {
     //we want new instance before method only for network serializers
@@ -68,9 +66,9 @@ public class ODocumentSchemalessBinarySerializationTest {
     else if (serializerVersion == ORecordSerializerBinary.INSTANCE.getNumberOfSupportedVersions() + 1)
       serializer = new ORecordSerializerNetworkV37();
   }
-  
+
   @Test
-  public void testSimpleSerialization() {    
+  public void testSimpleSerialization() {
     ODatabaseRecordThreadLocal.instance().remove();
     ODocument document = new ODocument();
 
@@ -930,11 +928,11 @@ public class ODocumentSchemalessBinarySerializationTest {
 
     assertEquals(document.fieldNames().length, extr.fieldNames().length);
   }
-  
+
   @Test
-  public void testPartialNotFound() {   
+  public void testPartialNotFound() {
     //this test want to do only for ORecordSerializerNetworkV37
-    if (serializer instanceof ORecordSerializerNetworkV37){
+    if (serializer instanceof ORecordSerializerNetworkV37) {
       System.out.println("ISIDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
       ODocument document = new ODocument();
       document.field("name", "name");
@@ -943,20 +941,19 @@ public class ODocumentSchemalessBinarySerializationTest {
       document.field("oldAge", (long) 20);
 
       byte[] res = serializer.toStream(document);
-      ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[]{"foo"});
+      ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] { "foo" });
 
       assertEquals(document.field("name"), extr.<Object>field("name"));
       assertEquals(document.<Object>field("age"), extr.field("age"));
       assertEquals(document.<Object>field("youngAge"), extr.field("youngAge"));
-      assertEquals(document.<Object>field("oldAge"), extr.field("oldAge"));        
-    }    
+      assertEquals(document.<Object>field("oldAge"), extr.field("oldAge"));
+    }
   }
 
   @Test
-  public void testListOfMapsWithNull(){
+  public void testListOfMapsWithNull() {
     ODatabaseRecordThreadLocal.instance().remove();
     ODocument document = new ODocument();
-
 
     List lista = new ArrayList<>();
     Map mappa = new LinkedHashMap<>();
@@ -969,13 +966,11 @@ public class ODocumentSchemalessBinarySerializationTest {
     lista.add(mappa);
     document.setProperty("list", lista);
 
-
     byte[] res = serializer.toStream(document);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), document.fields());
     assertEquals(extr.<Object>field("list"), document.field("list"));
   }
-
 
   public static class Custom implements OSerializableStream {
     byte[] bytes = new byte[10];

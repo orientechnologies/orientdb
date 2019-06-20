@@ -11,7 +11,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput
 import java.io.IOException;
 import java.util.Map;
 
-public class OListDatabasesResponse implements OBinaryResponse{
+public class OListDatabasesResponse implements OBinaryResponse {
   private Map<String, String> databases;
 
   public OListDatabasesResponse(Map<String, String> databases) {
@@ -33,7 +33,7 @@ public class OListDatabasesResponse implements OBinaryResponse{
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     ORecordSerializer serializer = ORecordSerializerNetworkFactory.INSTANCE.current();
     final ODocument result = new ODocument();
-    serializer.fromStream(network.readBytes(),result,null);
+    serializer.fromStream(network.readBytes(), result, null);
     databases = result.field("databases");
   }
 

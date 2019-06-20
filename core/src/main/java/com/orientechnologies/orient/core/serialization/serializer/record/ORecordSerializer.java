@@ -37,5 +37,5 @@ public interface ORecordSerializer {
   boolean getSupportBinaryEvaluate();
 
   String getName();
-  
+
 }

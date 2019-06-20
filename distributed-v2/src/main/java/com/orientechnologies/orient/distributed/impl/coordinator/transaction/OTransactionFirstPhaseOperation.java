@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.distributed.impl.coordinator.network.OOperationRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.Type;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OExceptionResult;
@@ -82,7 +81,7 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
       ORecord record = null;
       switch (type) {
       case ORecordOperation.CREATED:
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
         break;
       case ORecordOperation.UPDATED: {
@@ -93,7 +92,7 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
           ORecordOperation op = new ORecordOperation(updateRecord, type);
           ops.add(op);
         } else{
-          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
           ORecordInternal.setRecordSerializer(record, database.getSerializer());
         }
       }

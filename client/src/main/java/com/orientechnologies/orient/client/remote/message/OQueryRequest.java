@@ -39,7 +39,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   public static byte QUERY   = 1;
   public static byte EXECUTE = 2;
 
-  private int recordsPerPage = 100;
+  private int                 recordsPerPage = 100;
   private ORecordSerializer   serializer;
   private String              language;
   private String              statement;
@@ -154,7 +154,8 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   }
 
   public Object[] getPositionalParameters() {
-    if(params==null) return  null;
+    if (params == null)
+      return null;
     Object[] result = new Object[params.size()];
     params.entrySet().forEach(e -> {
       result[Integer.parseInt(e.getKey())] = e.getValue();

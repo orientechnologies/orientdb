@@ -52,8 +52,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   protected static final int TOT_RECORDS         = 100;
   protected static final int TOT_RECORDS_COMPANY = 10;
 
-  protected long    startRecordNumber;
-  String            base64;
+  protected long startRecordNumber;
+  String base64;
   private ODocument record;
 
   @Parameters(value = "url")
@@ -155,7 +155,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       ids.add(i);
 
     ORecordIteratorCluster<ODocument> it = database.browseCluster("Account");
-    for (it.last(); it.hasPrevious();) {
+    for (it.last(); it.hasPrevious(); ) {
       ODocument rec = it.previous();
 
       if (rec != null) {
@@ -269,8 +269,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testUnderscoreField() {
     ODocument vDoc = database.newInstance();
     vDoc.setClassName("Profile");
-    vDoc.field("nick", "MostFamousJack").field("name", "Kiefer").field("surname", "Sutherland").field("tag_list",
-        new String[] { "actor", "myth" });
+    vDoc.field("nick", "MostFamousJack").field("name", "Kiefer").field("surname", "Sutherland")
+        .field("tag_list", new String[] { "actor", "myth" });
     vDoc.save();
 
     List<ODocument> result = database
@@ -449,8 +449,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     // The link between jamie and tyrion is not saved properly
     ODocument tyrionDoc = new ODocument("PersonTest");
-    tyrionDoc.fromJSON("{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"relationship\":\"brother\",\"contact\":"
-        + jaimeDoc.toJSON() + "}}");
+    tyrionDoc.fromJSON(
+        "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"relationship\":\"brother\",\"contact\":" + jaimeDoc.toJSON()
+            + "}}");
     tyrionDoc.save();
 
     // System.out.println("The saved documents are:");
@@ -577,13 +578,13 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testCreate")
   public void testBrowseClassHasNextTwice() {
     ODocument doc1 = null;
-    for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext();) {
+    for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext(); ) {
       doc1 = itDoc.next();
       break;
     }
 
     ODocument doc2 = null;
-    for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext();) {
+    for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext(); ) {
       itDoc.hasNext();
       doc2 = itDoc.next();
       break;
@@ -959,7 +960,6 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     }
     return doc;
   }
-
 
   @Test
   public void testAny() {

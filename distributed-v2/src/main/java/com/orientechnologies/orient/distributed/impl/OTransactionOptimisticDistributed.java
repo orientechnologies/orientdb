@@ -59,7 +59,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       switch (type) {
       case ORecordOperation.CREATED: {
         addUpdatedRid(req.getOldId(), req.getId());
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
         createdRecords.put(req.getOldId(), record);
       }
@@ -71,7 +71,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           ORecordOperation op = new ORecordOperation(updateRecord, type);
           ops.add(op);
         } else{
-          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
           ORecordInternal.setRecordSerializer(record, database.getSerializer());
         }
       }
@@ -128,96 +128,96 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
 
   }
 
-  private void resolveTracking(ORecordOperation change, boolean onlyExecutorCase) {    
+  private void resolveTracking(ORecordOperation change, boolean onlyExecutorCase) {
     List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
-    if (change.getRecordContainer() instanceof ORecord && change.getRecord() instanceof ODocument) {      
+    if (change.getRecordContainer() instanceof ORecord && change.getRecord() instanceof ODocument) {
       ODocument rec = (ODocument) change.getRecord();
       switch (change.getType()) {
       case ORecordOperation.CREATED: {
-          ODocument doc = (ODocument) change.getRecord();
-          OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, database);
-          OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, database);
-          OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
-          if (clazz != null) {
-            if (onlyExecutorCase) {
-              OClassIndexManager.processIndexOnCreate(database, rec, changes);
-            }
-            if (clazz.isFunction()) {
-              database.getSharedContext().getFunctionLibrary().createdFunction(doc);
-              Orient.instance().getScriptManager().close(database.getName());
-            }
-            if (clazz.isSequence()) {
-              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(database, doc);
-            }
-            if (clazz.isScheduler()) {
-              database.getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
-            }
+        ODocument doc = (ODocument) change.getRecord();
+        OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, database);
+        OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, database);
+        OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+        if (clazz != null) {
+          if (onlyExecutorCase) {
+            OClassIndexManager.processIndexOnCreate(database, rec, changes);
+          }
+          if (clazz.isFunction()) {
+            database.getSharedContext().getFunctionLibrary().createdFunction(doc);
+            Orient.instance().getScriptManager().close(database.getName());
+          }
+          if (clazz.isSequence()) {
+            ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(database, doc);
+          }
+          if (clazz.isScheduler()) {
+            database.getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
           }
         }
-        if (onlyExecutorCase) {
-          createdRecords.put(change.getRID().copy(), change.getRecord());
-        }
-        break;
+      }
+      if (onlyExecutorCase) {
+        createdRecords.put(change.getRID().copy(), change.getRecord());
+      }
+      break;
       case ORecordOperation.UPDATED: {
-          OIdentifiable updateRecord = change.getRecord();                      
+        OIdentifiable updateRecord = change.getRecord();
 
-          ODocument original = database.load(updateRecord.getIdentity());
-          if (original == null){
-            throw new ORecordNotFoundException(updateRecord.getIdentity());
+        ODocument original = database.load(updateRecord.getIdentity());
+        if (original == null) {
+          throw new ORecordNotFoundException(updateRecord.getIdentity());
+        }
+
+        original.merge((ODocument) updateRecord, false, false);
+
+        ODocument updateDoc = original;
+        OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
+        OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
+        OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
+        if (clazz != null) {
+          if (onlyExecutorCase) {
+            OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
           }
-
-          original.merge((ODocument) updateRecord, false, false);          
-
-          ODocument updateDoc = original;
-          OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
-          OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
-          OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
-          if (clazz != null) {
-            if (onlyExecutorCase) {
-              OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
-            }
-            if (clazz.isFunction()) {
-              database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
-              Orient.instance().getScriptManager().close(database.getName());
-            }
-            if (clazz.isSequence()) {
-              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate()
-                  .onSequenceUpdated(database, updateDoc);
-            }
+          if (clazz.isFunction()) {
+            database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
+            Orient.instance().getScriptManager().close(database.getName());
+          }
+          if (clazz.isSequence()) {
+            ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate()
+                .onSequenceUpdated(database, updateDoc);
           }
         }
-        updatedRecords.put(change.getRID(), change.getRecord());
-        break;
-      case ORecordOperation.DELETED: {        
-          ODocument doc = (ODocument) change.getRecord();
-          OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
-          if (clazz != null) {
-            if (onlyExecutorCase) {
-              OClassIndexManager.processIndexOnDelete(database, rec, changes);
-            }
-            if (clazz.isFunction()) {
-              database.getSharedContext().getFunctionLibrary().droppedFunction(doc);
-              Orient.instance().getScriptManager().close(database.getName());
-            }
-            if (clazz.isSequence()) {
-              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(database, doc);
-            }
-            if (clazz.isScheduler()) {
-              final String eventName = doc.field(OScheduledEvent.PROP_NAME);
-              database.getSharedContext().getScheduler().removeEventInternal(eventName);
-            }
+      }
+      updatedRecords.put(change.getRID(), change.getRecord());
+      break;
+      case ORecordOperation.DELETED: {
+        ODocument doc = (ODocument) change.getRecord();
+        OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+        if (clazz != null) {
+          if (onlyExecutorCase) {
+            OClassIndexManager.processIndexOnDelete(database, rec, changes);
           }
-          OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, database);
-          OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, database);
+          if (clazz.isFunction()) {
+            database.getSharedContext().getFunctionLibrary().droppedFunction(doc);
+            Orient.instance().getScriptManager().close(database.getName());
+          }
+          if (clazz.isSequence()) {
+            ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(database, doc);
+          }
+          if (clazz.isScheduler()) {
+            final String eventName = doc.field(OScheduledEvent.PROP_NAME);
+            database.getSharedContext().getScheduler().removeEventInternal(eventName);
+          }
         }
-        deletedRecord.add(change.getRID());
-        break;
+        OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, database);
+        OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, database);
+      }
+      deletedRecord.add(change.getRID());
+      break;
       case ORecordOperation.LOADED:
         break;
       default:
         break;
       }
-    } else if (change.getRecordContainer() instanceof ODocumentDelta) {      
+    } else if (change.getRecordContainer() instanceof ODocumentDelta) {
       switch (change.getType()) {
       case ORecordOperation.UPDATED:
 
@@ -247,10 +247,10 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         break;
       }
     }
-    
+
     if (onlyExecutorCase) {
       for (OClassIndexManager.IndexChange indexChange : changes) {
-        addIndexEntry(indexChange.index, indexChange.index.getName(), indexChange.operation, indexChange.key, indexChange.value);      
+        addIndexEntry(indexChange.index, indexChange.index.getName(), indexChange.operation, indexChange.key, indexChange.value);
       }
     }
   }
@@ -275,9 +275,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   public void addUpdatedRid(ORID oldId, ORID id) {
     updatedRids.put(oldId, id);
   }
-  
+
   @Override
-  public boolean isUseDeltas(){
+  public boolean isUseDeltas() {
     return useDeltas;
   }
 }

@@ -18,8 +18,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -82,7 +80,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         case ORecordOperation.CREATED:
           ORecord record = Orient.instance().getRecordFactoryManager()
               .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
-          ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), record, null);
+          ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), record);
           entry = new ORecordOperation(record, ORecordOperation.CREATED);
           ORecordInternal.setIdentity(record, rid);
           ORecordInternal.setVersion(record, 0);
@@ -96,7 +94,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
           int version = operation.getVersion();
           ORecord updated = Orient.instance().getRecordFactoryManager()
               .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
-          ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), updated, null);
+          ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), updated);
           entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
           ORecordInternal.setIdentity(updated, rid);
           ORecordInternal.setVersion(updated, version);

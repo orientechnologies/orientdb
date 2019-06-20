@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
@@ -117,13 +116,13 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(final ORecord iSource) {
-    if (iSource instanceof OBlob) {
-      return iSource.toStream();
-    } else if (iSource instanceof ORecordFlat) {
-      return iSource.toStream();
+  public byte[] toStream(ORecord record) {
+    if (record instanceof OBlob) {
+      return record.toStream();
+    } else if (record instanceof ORecordFlat) {
+      return record.toStream();
     } else {
-      ODocument documentToSerialize = (ODocument) iSource;
+      ODocument documentToSerialize = (ODocument) record;
 
       final BytesContainer container = new BytesContainer();
 

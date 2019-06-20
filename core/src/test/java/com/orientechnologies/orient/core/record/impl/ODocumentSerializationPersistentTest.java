@@ -101,7 +101,8 @@ public class ODocumentSerializationPersistentTest {
     doc.field("some", "test");
 
     byte[] res = db.getSerializer().toStream(doc);
-    ODocument extr = (ODocument) db.getSerializer().fromStream(res, new ODocument(), new String[] {});
+    ODocument extr = (ODocument) db.getSerializer()
+        .fromStream(res, new ODocument(), new String[] {});
 
     List<ODocument> emb = extr.field("emb");
     assertNotNull(emb);

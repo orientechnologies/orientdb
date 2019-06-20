@@ -164,7 +164,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       switch (type) {
       case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED: {
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
       }
       break;

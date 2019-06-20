@@ -25,10 +25,12 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
 import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 
 import java.util.Map.Entry;
 import java.util.Set;
@@ -68,6 +70,13 @@ public class ODocumentInternal {
       return null;
     }
     return oDocument.getImmutableSchemaClass();
+  }
+
+  public static OImmutableSchema getImmutableSchema(final ODocument oDocument) {
+    if (oDocument == null) {
+      return null;
+    }
+    return oDocument.getImmutableSchema();
   }
 
   public static OGlobalProperty getGlobalPropertyById(final ODocument oDocument, final int id) {
@@ -122,5 +131,9 @@ public class ODocumentInternal {
 
   public static ODocumentDelta getDeltaFromOriginal(ODocument doc) {
     return doc.getDeltaFromOriginal();
+  }
+
+  public static OPropertyEncryption getPropertyEncryption(ODocument doc) {
+    return doc.propertyEncryption;
   }
 }

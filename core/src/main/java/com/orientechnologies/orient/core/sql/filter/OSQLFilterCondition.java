@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -94,6 +95,7 @@ public class OSQLFilterCondition {
       right = ((OSQLQuery<?>) right).setContext(iContext).execute();
 
     Object r = evaluate(iCurrentRecord, iCurrentResult, right, iContext, binaryEvaluation);
+    OImmutableSchema schema = ODatabaseRecordThreadLocal.instance().get().getMetadata().getImmutableSchemaSnapshot();
 
     if (binaryEvaluation && l instanceof OBinaryField) {
       if (r != null && !(r instanceof OBinaryField)) {
@@ -101,7 +103,7 @@ public class OSQLFilterCondition {
 
         if (ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isBinaryComparable(type)) {
           final BytesContainer bytes = new BytesContainer();
-          ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, r, type, null);
+          ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, r, type, null, schema, null);
           bytes.offset = 0;
           final OCollate collate = r instanceof OSQLFilterItemField ? ((OSQLFilterItemField) r).getCollate(iCurrentRecord) : null;
           r = new OBinaryField(null, type, bytes, collate);
@@ -119,7 +121,7 @@ public class OSQLFilterCondition {
         final OType type = OType.getTypeByValue(l);
         if (ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isBinaryComparable(type)) {
           final BytesContainer bytes = new BytesContainer();
-          ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, l, type, null);
+          ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, l, type, null, schema, null);
           bytes.offset = 0;
           final OCollate collate = l instanceof OSQLFilterItemField ? ((OSQLFilterItemField) l).getCollate(iCurrentRecord) : null;
           l = new OBinaryField(null, type, bytes, collate);

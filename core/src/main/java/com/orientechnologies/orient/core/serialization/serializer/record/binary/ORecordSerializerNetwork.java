@@ -21,6 +21,8 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
@@ -90,7 +92,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(final ORecord iSource) {
+  public byte[] toStream(ORecord iSource) {
     if (iSource instanceof OBlob) {
       return iSource.toStream();
     } else if (iSource instanceof ORecordFlat) {
@@ -108,9 +110,12 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     }
   }
 
+
+
   public byte[] serializeValue(Object value, OType type) {
+    OImmutableSchema schema = ODatabaseRecordThreadLocal.instance().get().getMetadata().getImmutableSchemaSnapshot();
     BytesContainer bytes = new BytesContainer();
-    serializerByVersion[0].serializeValue(bytes, value, type, null);
+    serializerByVersion[0].serializeValue(bytes, value, type, null, schema, null);
     return bytes.fitBytes();
   }
 

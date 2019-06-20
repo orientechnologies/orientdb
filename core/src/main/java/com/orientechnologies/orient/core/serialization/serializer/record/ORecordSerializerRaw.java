@@ -83,5 +83,5 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   public String getName() {
     return NAME;
   }
-    
+
 }

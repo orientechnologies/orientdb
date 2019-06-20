@@ -4030,4 +4030,7 @@ public class ODocument extends ORecordAbstract
     return false;
   }
 
+  protected OImmutableSchema getImmutableSchema() {
+    return schema;
+  }
 }

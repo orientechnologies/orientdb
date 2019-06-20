@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -818,6 +817,10 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     toCalendar.set(Calendar.SECOND, 0);
     toCalendar.set(Calendar.MILLISECOND, 0);
     return toCalendar.getTimeInMillis();
+  }
+
+  public ORecord fromStream(byte[] iSource, ORecord record) {
+    return fromStream(iSource, record, null);
   }
 
   @Override
