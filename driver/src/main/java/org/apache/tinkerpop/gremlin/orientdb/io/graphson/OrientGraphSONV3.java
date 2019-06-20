@@ -21,7 +21,7 @@ import static org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry.newOReco
  */
 public class OrientGraphSONV3 extends OrientGraphSON {
 
-  public static OrientGraphSONV3 INSTANCE = new OrientGraphSONV3();
+  public static final OrientGraphSONV3 INSTANCE = new OrientGraphSONV3();
 
   protected static final Map<Class, String> TYPES = Collections.unmodifiableMap(new LinkedHashMap<Class, String>() {
     {

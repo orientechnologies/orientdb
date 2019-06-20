@@ -16,15 +16,15 @@ import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseFactory {
-  public static      String                              ADMIN = "admin";
-  protected          String                              connectionURI;
-  protected          String                              dbName;
-  protected final    String                              user;
-  protected final    String                              password;
-  protected          Configuration                       configuration;
-  protected volatile OPartitionedReCreatableDatabasePool pool;
-  protected          boolean                             labelAsClassName;
-  protected          Optional<ODatabaseType>             type;
+  public static final String                              ADMIN = "admin";
+  protected           String                              connectionURI;
+  protected           String                              dbName;
+  protected final     String                              user;
+  protected final     String                              password;
+  protected           Configuration                       configuration;
+  protected volatile  OPartitionedReCreatableDatabasePool pool;
+  protected           boolean                             labelAsClassName;
+  protected           Optional<ODatabaseType>             type;
 
   protected OrientDB factory;
 
@@ -65,12 +65,10 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   /**
-   * Gets transactional graph with the database from pool if pool is
-   * configured. Otherwise creates a graph with new db instance. The Graph
-   * instance inherits the factory's configuration.
+   * Gets transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance. The
+   * Graph instance inherits the factory's configuration.
    *
-   * @param create if true automatically creates database if database with given
-   *               URL does not exist
+   * @param create if true automatically creates database if database with given URL does not exist
    * @param open   if true automatically opens the database
    */
   // TODO: allow to open with these properties
@@ -144,8 +142,7 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   /**
-   * @param create if true automatically creates database if database with given
-   *               URL does not exist
+   * @param create if true automatically creates database if database with given URL does not exist
    * @param open   if true automatically opens the database
    */
   public ODatabaseDocument getDatabase(boolean create, boolean open) {
@@ -158,8 +155,7 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   /**
-   * @param create if true automatically creates database if database with given
-   *               URL does not exist
+   * @param create if true automatically creates database if database with given URL does not exist
    * @param open   if true automatically opens the database
    */
   protected ODatabaseDocument acquireFromPool(boolean create, boolean open) {
@@ -179,11 +175,9 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   /**
-   * Enable or disable the prefixing of class names with V_&lt;label&gt; for
-   * vertices or E_&lt;label&gt; for edges.
+   * Enable or disable the prefixing of class names with V_&lt;label&gt; for vertices or E_&lt;label&gt; for edges.
    *
-   * @param is if true classname equals label, if false classname is prefixed
-   *           with V_ or E_ (default)
+   * @param is if true classname equals label, if false classname is prefixed with V_ or E_ (default)
    */
   public OrientGraphBaseFactory setLabelAsClassName(boolean is) {
     this.labelAsClassName = is;
@@ -191,8 +185,7 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   /**
-   * Setting up the factory to use database pool instead of creation a new
-   * instance of database connection each time.
+   * Setting up the factory to use database pool instead of creation a new instance of database connection each time.
    */
   public OrientGraphBaseFactory setupPool(final int max) {
     pool = new OPartitionedReCreatableDatabasePool(this.factory, dbName, user, password, max);
