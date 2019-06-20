@@ -76,7 +76,7 @@ public class OUDPMulticastNodeManagerTest {
       int[] multicastPorts) {
     ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName).setGroupName(groupName)
         .setGroupPassword(password).setQuorum(2).setTcpPort(2424)
-        .setMulticast(OMulticastConfguration.builder().setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts).build())
+        .setMulticast(OMulticastConfguration.builder().setPort(port).setIp("224.0.0.0").setDiscoveryPorts(multicastPorts).build())
         .build();
     return config;
   }
