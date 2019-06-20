@@ -40,7 +40,8 @@ public interface ODocumentSerializer {
 
   Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
 
-  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName, boolean embedded);
+  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName, boolean embedded, OImmutableSchema schema,
+      OPropertyEncryption encryption);
 
   OBinaryComparator getComparator();
 
@@ -54,7 +55,8 @@ public interface ODocumentSerializer {
 
   boolean isSerializingClassNameByDefault();
 
-  <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded);
+  <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, OImmutableSchema schema,
+      OPropertyEncryption encryption);
 
   void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo,
       OImmutableSchema schema);

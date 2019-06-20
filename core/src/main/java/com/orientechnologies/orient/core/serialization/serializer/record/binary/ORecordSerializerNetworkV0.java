@@ -805,7 +805,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName, boolean embedded) {
+  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName, boolean embedded,
+      OImmutableSchema schema, OPropertyEncryption encryption) {
     // TODO: check if integrate the binary disc binary comparator here
     throw new UnsupportedOperationException("network serializer doesn't support comparators");
   }
@@ -838,7 +839,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded) {
+  public <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, OImmutableSchema schema,
+      OPropertyEncryption encryption) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 

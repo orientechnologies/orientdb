@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -110,10 +111,11 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     }
   }
 
-
-
   public byte[] serializeValue(Object value, OType type) {
-    OImmutableSchema schema = ODatabaseRecordThreadLocal.instance().get().getMetadata().getImmutableSchemaSnapshot();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    OImmutableSchema schema = null;
+    if (db != null)
+      schema = db.getMetadata().getImmutableSchemaSnapshot();
     BytesContainer bytes = new BytesContainer();
     serializerByVersion[0].serializeValue(bytes, value, type, null, schema, null);
     return bytes.fitBytes();

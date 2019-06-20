@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -41,8 +43,10 @@ public class OResultBinary implements OResult {
   private final byte[]              bytes;
   private final int                 offset;
   private final int                 fieldLength;
+  private       OImmutableSchema    schema;
 
-  public OResultBinary(byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer) {
+  public OResultBinary(OImmutableSchema schema, byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer) {
+    this.schema = schema;
     this.id = Optional.empty();
     this.bytes = bytes;
     this.serializer = serializer;
@@ -52,6 +56,7 @@ public class OResultBinary implements OResult {
 
   public OResultBinary(ODatabaseSession db, byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer,
       ORecordId id) {
+    schema = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot();
     this.id = Optional.of(id);
     this.bytes = bytes;
     this.serializer = serializer;
@@ -76,7 +81,7 @@ public class OResultBinary implements OResult {
   public <T> T getProperty(String name) {
     BytesContainer bytes = new BytesContainer(this.bytes);
     bytes.skip(offset);
-    return (T) serializer.deserializeFieldTyped(bytes, name, !id.isPresent());
+    return (T) serializer.deserializeFieldTyped(bytes, name, !id.isPresent(), schema, null);
   }
 
   @Override

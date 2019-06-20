@@ -24,12 +24,15 @@ import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
@@ -148,13 +151,16 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       return null;
 
     final ODocument rec = iRecord.getRecord();
+    OPropertyEncryption encryption = ODocumentInternal.getPropertyEncryption(rec);
     BytesContainer serialized = new BytesContainer(rec.toStream());
     byte version = serialized.bytes[serialized.offset++];
     ODocumentSerializer serializer = ORecordSerializerBinary.INSTANCE.getSerializer(version);
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
     //check for embedded objects, they have invalid ID and they are serialized with class name
     return serializer
-        .deserializeField(serialized, rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name, rec.isEmbedded());
+        .deserializeField(serialized, rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name, rec.isEmbedded(),
+            db.getMetadata().getImmutableSchemaSnapshot(), encryption);
   }
 
   public String getRoot() {
