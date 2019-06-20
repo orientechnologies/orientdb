@@ -101,7 +101,7 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
 
     $.ajax({
       type: "GET",
-      url: "http://www.orientechnologies.com/public-databases/config.json",
+      url: "http://www.orientdb.com/public-databases/3.0.x/config.json",
       crossDomain: true
     }).done(handleResponse).fail(function () {
       var noti = "An error occurred when trying to reach public databases repository. Please check your connection.";
