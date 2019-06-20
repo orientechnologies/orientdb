@@ -80,17 +80,17 @@ public final class OrientGraph implements OGraph {
     INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OClass.EDGE_CLASS_NAME, Edge.DEFAULT_LABEL);
   }
 
-  public final static String CONFIG_URL                = "orient-url";
-  public final static String CONFIG_DB_NAME            = "orient-db-name";
-  public final static String CONFIG_DB_TYPE            = "orient-db-type";
-  public final static String CONFIG_USER               = "orient-user";
-  public final static String CONFIG_PASS               = "orient-pass";
-  public final static String CONFIG_CREATE             = "orient-create";
-  public final static String CONFIG_OPEN               = "orient-open";
-  public final static String CONFIG_TRANSACTIONAL      = "orient-transactional";
-  public final static String CONFIG_POOL_SIZE          = "orient-max-poolsize";
-  public final static String CONFIG_MAX_PARTITION_SIZE = "orient-max-partitionsize";
-  public final static String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
+  public static final String CONFIG_URL                = "orient-url";
+  public static final String CONFIG_DB_NAME            = "orient-db-name";
+  public static final String CONFIG_DB_TYPE            = "orient-db-type";
+  public static final String CONFIG_USER               = "orient-user";
+  public static final String CONFIG_PASS               = "orient-pass";
+  public static final String CONFIG_CREATE             = "orient-create";
+  public static final String CONFIG_OPEN               = "orient-open";
+  public static final String CONFIG_TRANSACTIONAL      = "orient-transactional";
+  public static final String CONFIG_POOL_SIZE          = "orient-max-poolsize";
+  public static final String CONFIG_MAX_PARTITION_SIZE = "orient-max-partitionsize";
+  public static final String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
   protected       boolean                connectionFailed;
   protected       ODatabaseDocument      database;
