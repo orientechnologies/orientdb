@@ -70,9 +70,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     String originalQuery = queryText;
 
     try {
-      // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER TO: " + queryText);
       textRequest.setText(queryText);
 
       init((OCommandRequestText) iRequest);

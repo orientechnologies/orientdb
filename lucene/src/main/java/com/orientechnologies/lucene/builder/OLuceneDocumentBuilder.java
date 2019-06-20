@@ -85,7 +85,6 @@ public class OLuceneDocumentBuilder {
       }
     }
 
-//    System.out.println("doc = " + doc);
     return doc;
   }
 
