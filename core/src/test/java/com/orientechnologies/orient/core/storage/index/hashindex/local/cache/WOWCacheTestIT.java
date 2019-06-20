@@ -724,6 +724,9 @@ public class WOWCacheTestIT {
 
     final SecretKey secretKey = new SecretKeySpec(aesKey, "AES");
 
+    final long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
+    final long updateCounter = magicNumber >>> 8;
+
     final byte[] updatedIv = new byte[iv.length];
 
     for (int i = 0; i < OIntegerSerializer.INT_SIZE; i++) {
@@ -734,19 +737,22 @@ public class WOWCacheTestIT {
       updatedIv[i + OIntegerSerializer.INT_SIZE] = (byte) (iv[i + OIntegerSerializer.INT_SIZE] ^ ((fileId >>> i) & 0xFF));
     }
 
-    System.arraycopy(iv, 2 * OIntegerSerializer.INT_SIZE, updatedIv, 2 * OIntegerSerializer.INT_SIZE,
-        iv.length - 2 * OIntegerSerializer.INT_SIZE);
+    for (int i = 0; i < OLongSerializer.LONG_SIZE - 1; i++) {
+      updatedIv[i + 2 * OIntegerSerializer.INT_SIZE] = (byte) (iv[i + 2 * OIntegerSerializer.INT_SIZE] ^ ((updateCounter >>> i)
+          & 0xFF));
+    }
+
+    updatedIv[updatedIv.length - 1] = iv[iv.length - 1];
 
     cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(updatedIv));
     System.arraycopy(
-        cipher.doFinal(content, OWOWCache.PAGE_OFFSET_TO_CHECKSUM_FROM, content.length - OWOWCache.PAGE_OFFSET_TO_CHECKSUM_FROM), 0,
-        content, OWOWCache.PAGE_OFFSET_TO_CHECKSUM_FROM, content.length - OWOWCache.PAGE_OFFSET_TO_CHECKSUM_FROM);
+        cipher.doFinal(content, OWOWCache.CHECKSUM_OFFSET, content.length - OWOWCache.CHECKSUM_OFFSET), 0,
+        content, OWOWCache.CHECKSUM_OFFSET, content.length - OWOWCache.CHECKSUM_OFFSET);
 
     Assert.assertArrayEquals(Arrays.copyOfRange(content, ODurablePage.NEXT_FREE_POSITION, 8 + ODurablePage.NEXT_FREE_POSITION),
         value);
 
-    long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
-    Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED);
+    Assert.assertEquals(magicNumber & 0xFF, OWOWCache.MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED);
 
     OLogSequenceNumber readLsn = ODurablePage.getLogSequenceNumber(0, content);
 

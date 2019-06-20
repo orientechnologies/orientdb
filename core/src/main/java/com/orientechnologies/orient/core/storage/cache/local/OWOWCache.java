@@ -139,7 +139,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   /**
    * Marks pages which have a checksum stored and data encrypted
    */
-  public static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0xFBCAE5FEL;
+  public static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0x1L;
 
   /**
    * Marks pages which have no checksum stored.
@@ -149,13 +149,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   /**
    * Marks pages which have no checksum stored but have data encrypted
    */
-  private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED = 0xBF41BCAEL;
+  private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED = 0x2L;
 
   private static final int MAGIC_NUMBER_OFFSET = 0;
 
-  private static final int CHECKSUM_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  public static final int CHECKSUM_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+  private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
   private static final int CHUNK_SIZE = 32 * 1024 * 1024;
 
@@ -2226,11 +2226,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private void addMagicChecksumAndEncryption(final int intId, final int pageIndex, final ByteBuffer buffer) {
     assert buffer.order() == ByteOrder.nativeOrder();
 
-    buffer.position(MAGIC_NUMBER_OFFSET);
-    OLongSerializer.INSTANCE.serializeInByteBufferObject(checksumMode == OChecksumMode.Off ?
-        (aesKey == null ? MAGIC_NUMBER_WITHOUT_CHECKSUM : MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) :
-        (aesKey == null ? MAGIC_NUMBER_WITH_CHECKSUM : MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED), buffer);
-
     if (checksumMode != OChecksumMode.Off) {
       buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
       final CRC32 crc32 = new CRC32();
@@ -2242,11 +2237,25 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     if (aesKey != null) {
-      doEncryptionDecryption(intId, pageIndex, Cipher.ENCRYPT_MODE, buffer);
+      long magicNumber = buffer.getLong(MAGIC_NUMBER_OFFSET);
+
+      long updateCounter = magicNumber >>> 8;
+      updateCounter++;
+
+      magicNumber = (updateCounter << 8) | ((checksumMode == OChecksumMode.Off ?
+          MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED :
+          MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED));
+
+      buffer.putLong(MAGIC_NUMBER_OFFSET, magicNumber);
+      doEncryptionDecryption(intId, pageIndex, Cipher.ENCRYPT_MODE, buffer, updateCounter);
+    } else {
+      buffer.putLong(MAGIC_NUMBER_OFFSET,
+          checksumMode == OChecksumMode.Off ? MAGIC_NUMBER_WITHOUT_CHECKSUM : MAGIC_NUMBER_WITH_CHECKSUM);
     }
   }
 
-  private void doEncryptionDecryption(int intId, int pageIndex, int mode, ByteBuffer buffer) {
+  private void doEncryptionDecryption(final int intId, final int pageIndex, final int mode, final ByteBuffer buffer,
+      final long updateCounter) {
     try {
       final Cipher cipher = CIPHER.get();
       final SecretKey aesKey = new SecretKeySpec(this.aesKey, ALGORITHM_NAME);
@@ -2261,18 +2270,21 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         updatedIv[i + OIntegerSerializer.INT_SIZE] = (byte) (iv[i + OIntegerSerializer.INT_SIZE] ^ ((intId >>> i) & 0xFF));
       }
 
-      System.arraycopy(iv, 2 * OIntegerSerializer.INT_SIZE, updatedIv, 2 * OIntegerSerializer.INT_SIZE,
-          iv.length - 2 * OIntegerSerializer.INT_SIZE);
+      for (int i = 0; i < OLongSerializer.LONG_SIZE - 1; i++) {
+        updatedIv[i + 2 * OIntegerSerializer.INT_SIZE] = (byte) (iv[i + 2 * OIntegerSerializer.INT_SIZE] ^ ((updateCounter >>> i)
+            & 0xFF));
+      }
+
+      updatedIv[updatedIv.length - 1] = iv[iv.length - 1];
 
       cipher.init(mode, aesKey, new IvParameterSpec(updatedIv));
 
-      final ByteBuffer outBuffer = ByteBuffer.allocate(buffer.capacity() - PAGE_OFFSET_TO_CHECKSUM_FROM)
-          .order(ByteOrder.nativeOrder());
+      final ByteBuffer outBuffer = ByteBuffer.allocate(buffer.capacity() - CHECKSUM_OFFSET).order(ByteOrder.nativeOrder());
 
-      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
+      buffer.position(CHECKSUM_OFFSET);
       cipher.doFinal(buffer, outBuffer);
 
-      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
+      buffer.position(CHECKSUM_OFFSET);
       outBuffer.position(0);
       buffer.put(outBuffer);
 
@@ -2291,8 +2303,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     buffer.position(MAGIC_NUMBER_OFFSET);
     final long magicNumber = OLongSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
-    if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM && magicNumber != MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED) {
-      if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
+
+    if ((aesKey == null && magicNumber != MAGIC_NUMBER_WITH_CHECKSUM) || (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM
+        && (magicNumber & 0xFF) != MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED)) {
+      if ((aesKey == null && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) || (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM
+          && (magicNumber & 0xFF) != MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED)) {
         final String message = "Magic number verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
         OLogManager.instance().error(this, "%s", null, message);
 
@@ -2312,23 +2327,15 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
       }
 
-      if (magicNumber == MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
-        if (aesKey == null) {
-          throw new OStorageException("Page is encrypted but encryption key is absent");
-        }
-
-        doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer);
+      if (aesKey != null && (magicNumber & 0xFF) == MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
+        doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer, magicNumber >>> 8);
       }
 
       return;
     }
 
-    if (magicNumber == MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED) {
-      if (aesKey == null) {
-        throw new OStorageException("Page is encrypted but encryption key is absent");
-      }
-
-      doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer);
+    if (aesKey != null && (magicNumber & 0xFF) == MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED) {
+      doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer, magicNumber >>> 8);
     }
 
     buffer.position(CHECKSUM_OFFSET);
