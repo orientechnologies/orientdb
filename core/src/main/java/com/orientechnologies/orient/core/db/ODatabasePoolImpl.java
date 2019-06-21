@@ -24,8 +24,7 @@ import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_ACQUIRE_TIMEOUT;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MAX;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
 
 /**
  * Created by tglman on 07/07/16.
@@ -37,8 +36,8 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
 
   public ODatabasePoolImpl(OrientDBInternal factory, String database, String user, String password, OrientDBConfig config) {
     int max = config.getConfigurations().getValueAsInteger(DB_POOL_MAX);
-    // TODO use configured max
-    pool = new OResourcePool(max, new OResourcePoolListener<Void, ODatabaseDocumentInternal>() {
+    int min = config.getConfigurations().getValueAsInteger(DB_POOL_MIN);
+    pool = new OResourcePool(min, max, new OResourcePoolListener<Void, ODatabaseDocumentInternal>() {
       @Override
       public ODatabaseDocumentInternal createNewResource(Void iKey, Object... iAdditionalArgs) {
         return factory.poolOpen(database, user, password, ODatabasePoolImpl.this);
