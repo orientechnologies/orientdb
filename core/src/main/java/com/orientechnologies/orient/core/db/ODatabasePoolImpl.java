@@ -37,6 +37,8 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
   public ODatabasePoolImpl(OrientDBInternal factory, String database, String user, String password, OrientDBConfig config) {
     int max = config.getConfigurations().getValueAsInteger(DB_POOL_MAX);
     int min = config.getConfigurations().getValueAsInteger(DB_POOL_MIN);
+    this.factory = factory;
+    this.config = config;
     pool = new OResourcePool(min, max, new OResourcePoolListener<Void, ODatabaseDocumentInternal>() {
       @Override
       public ODatabaseDocumentInternal createNewResource(Void iKey, Object... iAdditionalArgs) {
@@ -52,8 +54,7 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
         return true;
       }
     });
-    this.factory = factory;
-    this.config = config;
+
   }
 
   @Override
