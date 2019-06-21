@@ -368,7 +368,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   DOCUMENT_BINARY_MAPPING("document.binaryMapping", "Mapping approach for binary fields", Integer.class, 0),
 
   // DATABASE
-  DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
+  DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 5),
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
