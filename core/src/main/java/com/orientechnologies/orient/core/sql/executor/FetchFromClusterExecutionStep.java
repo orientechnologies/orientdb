@@ -209,10 +209,8 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    String result =
-        OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM CLUSTER " + clusterId + " " + (ORDER_DESC.equals(order) ?
-            "DESC" :
-            "ASC");
+    String orderString = ORDER_DESC.equals(order) ? "DESC" : "ASC";
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM CLUSTER " + clusterId + " " + orderString;
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }

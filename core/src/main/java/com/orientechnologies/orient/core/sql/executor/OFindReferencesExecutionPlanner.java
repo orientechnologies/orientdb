@@ -35,13 +35,12 @@ public class OFindReferencesExecutionPlanner {
   }
 
   private void handleFindReferences(OSelectExecutionPlan plan, OCommandContext ctx, boolean profilingEnabled) {
-    List<OIdentifier> classes = targets == null ?
-        null :
-        targets.stream().filter(x -> x instanceof OIdentifier).map(y -> ((OIdentifier) y)).collect(Collectors.toList());
-
-    List<OCluster> clusters = targets == null ?
-        null :
-        targets.stream().filter(x -> x instanceof OCluster).map(y -> ((OCluster) y)).collect(Collectors.toList());
+    List<OIdentifier> classes = null;
+    List<OCluster> clusters = null;
+    if (targets != null) {
+      classes = targets.stream().filter(x -> x instanceof OIdentifier).map(y -> ((OIdentifier) y)).collect(Collectors.toList());
+      clusters = targets.stream().filter(x -> x instanceof OCluster).map(y -> ((OCluster) y)).collect(Collectors.toList());
+    }
 
     plan.chain(new FindReferencesStep(classes, clusters, ctx, profilingEnabled));
   }

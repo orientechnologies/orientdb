@@ -470,9 +470,12 @@ public class ODocumentHelper {
             String to = indexRanges.get(1);
 
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ?
-                Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1) :
-                OMultiValue.getSize(value) - 1;
+            final int rangeTo;
+            if (to != null && !to.isEmpty()) {
+              rangeTo = Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1);
+            } else {
+              rangeTo = OMultiValue.getSize(value) - 1;
+            }
 
             int arraySize = rangeTo - rangeFrom + 1;
             if (arraySize < 0) {

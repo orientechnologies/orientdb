@@ -110,9 +110,11 @@ public class OStressTesterCommandLineParser {
     settings.remoteIp = options.get(OPTION_REMOTE_IP);
     settings.haMetrics = options.get(OPTION_HA_METRICS) != null ? Boolean.parseBoolean(options.get(OPTION_HA_METRICS)) : false;
     settings.workloadCfg = options.get(OPTION_WORKLOAD);
-    settings.keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null ?
-        Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) :
-        false;
+    if (options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null) {
+      settings.keepDatabaseAfterTest = Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST));
+    } else {
+      settings.keepDatabaseAfterTest = false;
+    }
     settings.remotePort = 2424;
     settings.checkDatabase = Boolean.parseBoolean(options.get(OPTION_CHECK_DATABASE));
     if (options.get(OPTION_LOAD_BALANCING) != null)

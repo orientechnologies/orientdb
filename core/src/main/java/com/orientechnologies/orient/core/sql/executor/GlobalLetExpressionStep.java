@@ -20,7 +20,8 @@ public class GlobalLetExpressionStep extends AbstractExecutionStep {
     this.expression = expression;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     calculate(ctx);
     return new OInternalResultSet();
@@ -35,10 +36,10 @@ public class GlobalLetExpressionStep extends AbstractExecutionStep {
     executed = true;
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ LET (once)\n" +
-        spaces + "  " + varname + " = " + expression;
+    return spaces + "+ LET (once)\n" + spaces + "  " + varname + " = " + expression;
   }
 
   @Override

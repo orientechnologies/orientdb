@@ -222,9 +222,11 @@ public class OMultiValue {
         return Array.get(iObject, iIndex);
       else if (iObject instanceof Iterator<?> || iObject instanceof Iterable<?>) {
 
-        final Iterator<Object> it = (iObject instanceof Iterable<?>) ?
-            ((Iterable<Object>) iObject).iterator() :
-            (Iterator<Object>) iObject;
+        final Iterator<Object> it;
+        if (iObject instanceof Iterable<?>)
+          it = ((Iterable<Object>) iObject).iterator();
+        else
+          it = (Iterator<Object>) iObject;
         for (int i = 0; it.hasNext(); ++i) {
           final Object o = it.next();
           if (i == iIndex) {

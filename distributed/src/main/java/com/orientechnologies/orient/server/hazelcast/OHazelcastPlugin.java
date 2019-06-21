@@ -1300,9 +1300,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // NOT YET STARTED
       return null;
 
-    final ODocument doc = (ODocument) (useCache ?
-        configurationMap.getLocalCachedValue(CONFIG_NODE_PREFIX + iNodeId) :
-        configurationMap.get(CONFIG_NODE_PREFIX + iNodeId));
+    final ODocument doc;
+    if (useCache) {
+      doc = (ODocument) configurationMap.getLocalCachedValue(CONFIG_NODE_PREFIX + iNodeId);
+    } else {
+      doc = (ODocument) configurationMap.get(CONFIG_NODE_PREFIX + iNodeId);
+    }
 
     if (doc == null)
       ODistributedServerLog.debug(this, nodeName, null, DIRECTION.OUT, "Cannot find node with id '%s'", iNodeId);
@@ -1314,9 +1317,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(iDatabaseName)) {
       // CHECK THE SERVER STATUS
-      return getActiveServers().contains(iNode) ?
-          ODistributedServerManager.DB_STATUS.ONLINE :
-          ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
+      if (getActiveServers().contains(iNode)) {
+        return DB_STATUS.ONLINE;
+      } else {
+        return DB_STATUS.NOT_AVAILABLE;
+      }
     }
 
     final DB_STATUS status = (DB_STATUS) configurationMap
@@ -1327,9 +1332,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName, final boolean useCache) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(iDatabaseName)) {
       // CHECK THE SERVER STATUS
-      return getActiveServers().contains(iNode) ?
-          ODistributedServerManager.DB_STATUS.ONLINE :
-          ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
+      if (getActiveServers().contains(iNode)) {
+        return DB_STATUS.ONLINE;
+      } else {
+        return DB_STATUS.NOT_AVAILABLE;
+      }
     }
 
     final String key = OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;

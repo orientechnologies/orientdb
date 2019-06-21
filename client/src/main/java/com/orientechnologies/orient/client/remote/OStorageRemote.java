@@ -1679,12 +1679,19 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       host = host.substring(0, host.indexOf("/"));
 
     // REGISTER THE REMOTE SERVER+PORT
-    if (!host.contains(":"))
-      host += ":" + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ?
-          getDefaultSSLPort() :
-          getDefaultPort());
-    else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0)
-      host += (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
+    if (!host.contains(":")) {
+      if (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL)) {
+        host += ":" + getDefaultSSLPort();
+      } else {
+        host += ":" + getDefaultPort();
+      }
+    } else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0) {
+      if (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL)) {
+        host += getDefaultSSLPort();
+      } else {
+        host += getDefaultPort();
+      }
+    }
 
     // DISABLED BECAUSE THIS DID NOT ALLOW TO CONNECT TO LOCAL HOST ANYMORE IF THE SERVER IS BOUND TO 127.0.0.1
     // CONVERT 127.0.0.1 TO THE PUBLIC IP IF POSSIBLE

@@ -1239,10 +1239,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       if (currentResultSet.size() == 0)
         throw new OSystemException("No result set where to find the requested record. Execute a query first.");
 
-      if (currentResultSet.size() <= recNumber)
-        throw new OSystemException("The record requested is not part of current result set (0" + (currentResultSet.size() > 0 ?
-            "-" + (currentResultSet.size() - 1) :
-            "") + ")");
+      if (currentResultSet.size() <= recNumber) {
+        String resultSize = currentResultSet.size() > 0 ? "-" + (currentResultSet.size() - 1) : "";
+        throw new OSystemException("The record requested is not part of current result set (0" + resultSize + ")");
+      }
 
       setCurrentRecord(recNumber);
     }

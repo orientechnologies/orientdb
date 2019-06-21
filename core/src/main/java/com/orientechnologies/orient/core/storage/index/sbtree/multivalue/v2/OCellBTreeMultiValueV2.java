@@ -1974,14 +1974,24 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
                   break mainCycle;
                 }
 
-                if (fromKey != null && (fromKeyInclusive ?
-                    comparator.compare(key, fromKey) < 0 :
-                    comparator.compare(key, fromKey) <= 0)) {
-                  continue;
+                if (fromKeyInclusive) {
+                  if (fromKey != null && comparator.compare(key, fromKey) < 0) {
+                    continue;
+                  }
+                } else {
+                  if (fromKey != null && comparator.compare(key, fromKey) <= 0) {
+                    continue;
+                  }
                 }
 
-                if (toKey != null && (toKeyInclusive ? comparator.compare(key, toKey) > 0 : comparator.compare(key, toKey) >= 0)) {
-                  break mainCycle;
+                if (toKeyInclusive) {
+                  if (toKey != null && comparator.compare(key, toKey) > 0) {
+                    break mainCycle;
+                  }
+                } else {
+                  if (toKey != null && comparator.compare(key, toKey) >= 0) {
+                    break mainCycle;
+                  }
                 }
 
                 lastKey = key;
@@ -2208,14 +2218,24 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
                   break mainCycle;
                 }
 
-                if (toKey != null && (toKeyInclusive ? comparator.compare(key, toKey) > 0 : comparator.compare(key, toKey) >= 0)) {
-                  continue;
+                if (toKeyInclusive) {
+                  if (toKey != null && comparator.compare(key, toKey) > 0) {
+                    continue;
+                  }
+                } else {
+                  if (toKey != null && comparator.compare(key, toKey) >= 0) {
+                    continue;
+                  }
                 }
 
-                if (fromKey != null && (fromKeyInclusive ?
-                    comparator.compare(key, fromKey) < 0 :
-                    comparator.compare(key, fromKey) <= 0)) {
-                  break mainCycle;
+                if (fromKeyInclusive) {
+                  if (fromKey != null && comparator.compare(key, fromKey) < 0) {
+                    break mainCycle;
+                  }
+                } else {
+                  if (fromKey != null && comparator.compare(key, fromKey) <= 0) {
+                    break mainCycle;
+                  }
                 }
 
                 lastKey = key;

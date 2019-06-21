@@ -36,9 +36,11 @@ public class OTraverseExecutionPlanner {
 
   public OTraverseExecutionPlanner(OTraverseStatement statement) {
     //copying the content, so that it can be manipulated and optimized
-    this.projections = statement.getProjections() == null ?
-        null :
-        statement.getProjections().stream().map(x -> x.copy()).collect(Collectors.toList());
+    if (statement.getProjections() == null) {
+      this.projections = null;
+    } else {
+      this.projections = statement.getProjections().stream().map(x -> x.copy()).collect(Collectors.toList());
+    }
 
     this.target = statement.getTarget();
     this.whileClause = statement.getWhileClause() == null ? null : statement.getWhileClause().copy();

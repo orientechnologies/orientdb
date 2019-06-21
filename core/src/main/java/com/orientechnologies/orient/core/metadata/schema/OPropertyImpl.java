@@ -650,9 +650,11 @@ public abstract class OPropertyImpl implements OProperty {
     regexp = (String) (document.containsField("regexp") ? document.field("regexp") : null);
     linkedClassName = (String) (document.containsField("linkedClass") ? document.field("linkedClass") : null);
     linkedType = document.field("linkedType") != null ? OType.getById(((Integer) document.field("linkedType")).byteValue()) : null;
-    customFields = (Map<String, String>) (document.containsField("customFields") ?
-        document.field("customFields", OType.EMBEDDEDMAP) :
-        null);
+    if (document.containsField("customFields")) {
+      customFields = document.field("customFields", OType.EMBEDDEDMAP);
+    } else {
+      customFields = null;
+    }
     description = (String) (document.containsField("description") ? document.field("description") : null);
   }
 

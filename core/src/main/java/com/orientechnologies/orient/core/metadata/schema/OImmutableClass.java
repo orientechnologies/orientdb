@@ -54,7 +54,7 @@ public class OImmutableClass implements OClass {
   @Deprecated
   public static final String VERTEX_CLASS_NAME = OClass.VERTEX_CLASS_NAME;
 
-  private boolean inited = false;
+  private       boolean                   inited = false;
   private final boolean                   isAbstract;
   private final boolean                   strictMode;
   private final String                    name;
@@ -159,9 +159,11 @@ public class OImmutableClass implements OClass {
       getRawIndexes(indexes);
 
       final ODatabaseDocumentInternal db = getDatabase();
-      this.autoShardingIndex = db != null && db.getMetadata() != null && db.getMetadata().getIndexManager() != null ?
-          db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) :
-          null;
+      if (db != null && db.getMetadata() != null && db.getMetadata().getIndexManager() != null) {
+        this.autoShardingIndex = db.getMetadata().getIndexManager().getClassAutoShardingIndex(name);
+      } else {
+        this.autoShardingIndex = null;
+      }
     }
 
     inited = true;

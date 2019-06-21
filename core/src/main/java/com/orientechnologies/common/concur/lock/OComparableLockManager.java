@@ -175,9 +175,10 @@ public class OComparableLockManager<T extends  Comparable> {
   }
 
   private static int defaultConcurrency() {
-    return (Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL ?
-        (Runtime.getRuntime().availableProcessors() << 6) :
-        DEFAULT_CONCURRENCY_LEVEL;
+    if ((Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL)
+      return Runtime.getRuntime().availableProcessors() << 6;
+    else
+      return DEFAULT_CONCURRENCY_LEVEL;
   }
 
   private static int closestInteger(int value) {

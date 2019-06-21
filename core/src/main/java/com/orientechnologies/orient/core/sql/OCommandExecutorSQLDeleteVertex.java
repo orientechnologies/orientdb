@@ -48,17 +48,17 @@ import java.util.*;
  */
 public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final  String NAME          = "DELETE VERTEX";
-  private static final String KEYWORD_BATCH = "BATCH";
-  private ORecordId rid;
-  private int removed = 0;
-  private ODatabaseDocument database;
-  private OCommandRequest   query;
-  private String returning = "COUNT";
-  private List<ORecord> allDeletedRecords;
-  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-  private boolean txAlreadyBegun;
-  private int batch = 100;
+  public static final  String             NAME          = "DELETE VERTEX";
+  private static final String             KEYWORD_BATCH = "BATCH";
+  private              ORecordId          rid;
+  private              int                removed       = 0;
+  private              ODatabaseDocument  database;
+  private              OCommandRequest    query;
+  private              String             returning     = "COUNT";
+  private              List<ORecord>      allDeletedRecords;
+  private              OModifiableBoolean shutdownFlag  = new OModifiableBoolean();
+  private              boolean            txAlreadyBegun;
+  private              int                batch         = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
@@ -273,9 +273,11 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   }
 
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
-    return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ?
-        DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS :
-        DISTRIBUTED_RESULT_MGMT.MERGE;
+    if (getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL) {
+      return DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS;
+    } else {
+      return DISTRIBUTED_RESULT_MGMT.MERGE;
+    }
   }
 
   @Override
@@ -299,9 +301,11 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return query != null && !getDatabase().getTransaction().isActive() ?
-        DISTRIBUTED_EXECUTION_MODE.REPLICATE :
-        DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    if (query != null && !getDatabase().getTransaction().isActive()) {
+      return DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    } else {
+      return DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    }
   }
 
   /**

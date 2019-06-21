@@ -333,9 +333,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (rec instanceof ODocument)
             ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
           if (rec == iRecord) {
-            final byte operation = iForceCreate ?
-                ORecordOperation.CREATED :
-                iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+            final byte operation;
+            if (iForceCreate) {
+              operation = ORecordOperation.CREATED;
+            } else {
+              operation = iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+            }
             recordOperation = addRecord(rec, operation, iClusterName);
             originalSaved = true;
           } else
@@ -345,9 +348,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     } while (dirtyManager.getNewRecords() != null || dirtyManager.getUpdateRecords() != null);
 
     if (!originalSaved && iRecord.isDirty()) {
-      final byte operation = iForceCreate ?
-          ORecordOperation.CREATED :
-          iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+      final byte operation;
+      if (iForceCreate) {
+        operation = ORecordOperation.CREATED;
+      } else {
+        operation = iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+      }
       recordOperation = addRecord(iRecord, operation, iClusterName);
     }
     if (recordOperation != null) {

@@ -162,10 +162,14 @@ public class OTransactionIndexChangesPerKey {
         return new ArrayList<OTransactionIndexEntry>(entries); // don't optimize remove-put on the same RID for safety
       }
 
+      /* latest key removal wins */
+      /* reorder to remove-put */
       if (entryB.operation == OPERATION.REMOVE)
-        return entryB.value == null ?
-            Collections.singletonList(entryB) /* latest key removal wins */ :
-            swap(entries) /* reorder to remove-put */;
+        if (entryB.value == null) {
+          return Collections.singletonList(entryB);
+        } else {
+          return swap(entries);
+        }
 
       return new ArrayList<OTransactionIndexEntry>(entries); // it's either remove-put or put-put
     }
@@ -251,9 +255,13 @@ public class OTransactionIndexChangesPerKey {
       if (entryB.operation == OPERATION.REMOVE && entryB.value == null)
         return Collections.singletonList(entryB); // latest key removal wins
 
-      return entryB.operation == OPERATION.PUT ?
-          Collections.singletonList(entryB) /* latest put wins */ :
-          Collections.singletonList(entryA) /* it's put-remove on different RIDs, put wins */;
+      /* latest put wins */
+      /* it's put-remove on different RIDs, put wins */
+      if (entryB.operation == OPERATION.PUT) {
+        return Collections.singletonList(entryB);
+      } else {
+        return Collections.singletonList(entryA);
+      }
     }
 
     // 2. Calculate observable changes to index.

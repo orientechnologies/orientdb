@@ -24,7 +24,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
   OBooleanExpression condition;
 
-  private boolean inited = false;
+  private boolean      inited = false;
   private OIndexCursor cursor;
 
   private long cost = 0;
@@ -383,11 +383,8 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }
-    result += (condition == null ?
-        "" :
-        ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ?
-            "" :
-            " and " + additional)));
+    String additional = this.additional == null ? "" : " and " + this.additional;
+    result += (condition == null ? "" : ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + additional));
     return result;
   }
 

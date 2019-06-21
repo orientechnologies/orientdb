@@ -38,9 +38,11 @@ public class OUpdateExecutionPlanner {
     }
     this.target = oUpdateStatement.getTarget().copy();
     this.whereClause = oUpdateStatement.getWhereClause() == null ? null : oUpdateStatement.getWhereClause().copy();
-    this.operations = oUpdateStatement.getOperations() == null ?
-        null :
-        oUpdateStatement.getOperations().stream().map(x -> x.copy()).collect(Collectors.toList());
+    if (oUpdateStatement.getOperations() == null) {
+      this.operations = null;
+    } else {
+      this.operations = oUpdateStatement.getOperations().stream().map(x -> x.copy()).collect(Collectors.toList());
+    }
     this.upsert = oUpdateStatement.isUpsert();
 
     this.returnBefore = oUpdateStatement.isReturnBefore();

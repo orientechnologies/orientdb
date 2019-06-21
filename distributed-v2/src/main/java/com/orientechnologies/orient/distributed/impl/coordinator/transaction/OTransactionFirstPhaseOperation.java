@@ -107,8 +107,8 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
         }
         break;
       }
-      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED ||
-          (type == ORecordOperation.UPDATED && !useDeltas)){
+      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED || (type == ORecordOperation.UPDATED
+          && !useDeltas)) {
         ORecordInternal.setIdentity(record, (ORecordId) req.getId());
         ORecordInternal.setVersion(record, req.getVersion());
         ORecordOperation op = new ORecordOperation(record, type);

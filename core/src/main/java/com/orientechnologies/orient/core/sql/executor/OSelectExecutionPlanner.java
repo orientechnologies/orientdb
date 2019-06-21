@@ -2184,10 +2184,12 @@ public class OSelectExecutionPlanner {
         .map(x -> (OPair<Integer, IndexSearchDescriptor>) new OPair(x.cost(ctx), x)).sorted().collect(Collectors.toList());
 
     //get only the descriptors with the lowest cost
-    descriptors = sortedDescriptors.isEmpty() ?
-        Collections.emptyList() :
-        sortedDescriptors.stream().filter(x -> x.key.equals(sortedDescriptors.get(0).key)).map(x -> x.value)
-            .collect(Collectors.toList());
+    if (sortedDescriptors.isEmpty()) {
+      descriptors = Collections.emptyList();
+    } else {
+      descriptors = sortedDescriptors.stream().filter(x -> x.key.equals(sortedDescriptors.get(0).key)).map(x -> x.value)
+          .collect(Collectors.toList());
+    }
 
     //sort remaining by the number of indexed fields
     descriptors = descriptors.stream().sorted(Comparator.comparingInt(x -> x.keyCondition.getSubBlocks().size()))

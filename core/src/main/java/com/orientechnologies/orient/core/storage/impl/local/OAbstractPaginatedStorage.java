@@ -766,10 +766,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           final OPageDataVerificationError[] pageErrors = writeCache.checkStoredPages(verbose ? listener : null);
 
-          listener.onMessage(
-              "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (pageErrors.length > 0 ?
-                  pageErrors.length + " with errors." :
-                  " without errors."));
+          String errors = pageErrors.length > 0 ? pageErrors.length + " with errors." : " without errors.";
+          listener.onMessage("Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + errors);
 
           return pageErrors.length == 0;
         } finally {
@@ -1042,9 +1040,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        return clusters.get(iClusterId) != null ?
-            new long[] { clusters.get(iClusterId).getFirstPosition(), clusters.get(iClusterId).getLastPosition() } :
-            OCommonConst.EMPTY_LONG_ARRAY;
+        if (clusters.get(iClusterId) != null) {
+          return new long[] { clusters.get(iClusterId).getFirstPosition(), clusters.get(iClusterId).getLastPosition() };
+        } else {
+          return OCommonConst.EMPTY_LONG_ARRAY;
+        }
 
       } catch (final IOException ioe) {
         throw OException.wrapException(new OStorageException("Cannot retrieve information about data range"), ioe);

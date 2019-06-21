@@ -448,7 +448,7 @@ public class ODistributedOutput {
 
         final String serverName = m.field("name");
         buffer.append(serverName);
-        buffer.append((Object)m.field("status"));
+        buffer.append((Object) m.field("status"));
 
         final Collection<String> databases = m.field("databases");
         if (databases != null) {
@@ -537,9 +537,12 @@ public class ODistributedOutput {
     final String localNodeName = manager.getLocalNodeName();
 
     // READ DEFAULT CFG (CLUSTER=*)
-    final String defaultWQ = cfg.isLocalDataCenterWriteQuorum() ?
-        ODistributedConfiguration.QUORUM_LOCAL_DC :
-        "" + cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
+    final String defaultWQ;
+    if (cfg.isLocalDataCenterWriteQuorum()) {
+      defaultWQ = ODistributedConfiguration.QUORUM_LOCAL_DC;
+    } else {
+      defaultWQ = "" + cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
+    }
     final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
     final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
     final List<String> defaultServers = cfg.getConfiguredServers(ODistributedConfiguration.ALL_WILDCARD);
@@ -548,9 +551,12 @@ public class ODistributedOutput {
     final Set<String> allServers = new HashSet<String>();
 
     for (String cluster : cfg.getClusterNames()) {
-      final String wQ = cfg.isLocalDataCenterWriteQuorum() ?
-          ODistributedConfiguration.QUORUM_LOCAL_DC :
-          "" + cfg.getWriteQuorum(cluster, totalConfiguredServers, localNodeName);
+      final String wQ;
+      if (cfg.isLocalDataCenterWriteQuorum()) {
+        wQ = ODistributedConfiguration.QUORUM_LOCAL_DC;
+      } else {
+        wQ = "" + cfg.getWriteQuorum(cluster, totalConfiguredServers, localNodeName);
+      }
       final int rQ = cfg.getReadQuorum(cluster, totalConfiguredServers, localNodeName);
       final String owner = cfg.getClusterOwner(cluster);
       final List<String> servers = cfg.getConfiguredServers(cluster);

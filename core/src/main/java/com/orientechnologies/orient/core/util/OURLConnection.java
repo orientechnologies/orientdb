@@ -49,13 +49,8 @@ public class OURLConnection {
 
   @Override
   public String toString() {
-    return "OURLConnection{" +
-        "url='" + url + '\'' +
-        ", type='" + type + '\'' +
-        ", path='" + path + '\'' +
-        ", dbName='" + dbName + '\'' +
-        ", dbType=" + dbType +
-        '}';
+    return "OURLConnection{" + "url='" + url + "', type='" + type + "', path='" + path + "', dbName='" + dbName + "', dbType="
+        + dbType + '}';
   }
 
 }

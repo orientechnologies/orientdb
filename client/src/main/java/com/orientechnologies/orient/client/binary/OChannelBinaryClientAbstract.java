@@ -43,11 +43,11 @@ import java.util.List;
  * Abstract implementation of binary channel.
  */
 public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
-  protected final int   socketTimeout;     // IN MS
-  protected final short srvProtocolVersion;
-  protected String      serverURL;
-  protected byte        currentStatus;
-  protected int         currentSessionId;
+  protected final int    socketTimeout;     // IN MS
+  protected final short  srvProtocolVersion;
+  protected       String serverURL;
+  protected       byte   currentStatus;
+  protected       int    currentSessionId;
 
   public OChannelBinaryClientAbstract(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int protocolVersion) throws IOException {
@@ -157,7 +157,7 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
 
   /**
    * Tells if the channel is connected.
-   * 
+   *
    * @return true if it's connected, otherwise false.
    */
   public boolean isConnected() {
@@ -167,7 +167,6 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
 
   /**
    * Gets the major supported protocol version
-   * 
    */
   public short getSrvProtocolVersion() {
     return srvProtocolVersion;
@@ -268,10 +267,10 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
       throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
     }
     // WRAP IT
-    else
+    else {
+      String exceptionType = throwable != null ? throwable.getClass().getName() : "null";
       OLogManager.instance().error(this,
-          "Error during exception serialization, serialized exception is not Throwable, exception type is " + (throwable != null ?
-              throwable.getClass().getName() :
-              "null"), null);
+          "Error during exception serialization, serialized exception is not Throwable, exception type is " + exceptionType, null);
+    }
   }
 }

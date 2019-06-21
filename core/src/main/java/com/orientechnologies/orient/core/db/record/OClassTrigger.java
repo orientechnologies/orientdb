@@ -189,9 +189,12 @@ public class OClassTrigger {
       } else {
         final Object funcProp = iDocument.field(attr);
         if (funcProp != null) {
-          final String funcName = funcProp instanceof ODocument ?
-              (String) ((ODocument) funcProp).field("name") :
-              funcProp.toString();
+          final String funcName;
+          if (funcProp instanceof ODocument) {
+            funcName = ((ODocument) funcProp).field("name");
+          } else {
+            funcName = funcProp.toString();
+          }
           func = database.getMetadata().getFunctionLibrary().getFunction(funcName);
         }
       }

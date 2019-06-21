@@ -285,9 +285,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               compiledFilter = OSQLEngine.getInstance()
                   .parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition), getContext(), KEYWORD_WHERE);
               optimize();
-              parserSetCurrentPosition(compiledFilter.parserIsEnded() ?
-                  endPosition :
-                  compiledFilter.parserGetCurrentPosition() + parserGetCurrentPosition());
+              if (compiledFilter.parserIsEnded()) {
+                parserSetCurrentPosition(endPosition);
+              } else {
+                parserSetCurrentPosition(compiledFilter.parserGetCurrentPosition() + parserGetCurrentPosition());
+              }
             } else if (w.equals(KEYWORD_LET)) {
               parseLet();
             } else if (w.equals(KEYWORD_GROUP)) {
@@ -680,9 +682,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    */
   public int getTemporaryRIDCounter(final OCommandContext iContext) {
     final OTemporaryRidGenerator parentQuery = (OTemporaryRidGenerator) iContext.getVariable("parentQuery");
-    return parentQuery != null && parentQuery != this ?
-        parentQuery.getTemporaryRIDCounter(iContext) :
-        serialTempRID.getAndIncrement();
+    if (parentQuery != null && parentQuery != this) {
+      return parentQuery.getTemporaryRIDCounter(iContext);
+    } else {
+      return serialTempRID.getAndIncrement();
+    }
   }
 
   protected boolean addResult(OIdentifiable iRecord, final OCommandContext iContext) {
@@ -1534,9 +1538,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final long startFetching = System.currentTimeMillis();
 
-    final int[] clusterIds = iTarget instanceof ORecordIteratorClusters ?
-        ((ORecordIteratorClusters) iTarget).getClusterIds() :
-        null;
+    final int[] clusterIds;
+    if (iTarget instanceof ORecordIteratorClusters) {
+      clusterIds = ((ORecordIteratorClusters) iTarget).getClusterIds();
+    } else {
+      clusterIds = null;
+    }
 
     parallel = (parallel || getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.QUERY_PARALLEL_AUTO))
         && canRunParallel(clusterIds, iTarget);

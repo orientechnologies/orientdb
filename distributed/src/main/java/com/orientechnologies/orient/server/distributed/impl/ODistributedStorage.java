@@ -216,9 +216,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
 
-    final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ?
-        ((OCommandExecutorSQLDelegate) executor).getDelegate() :
-        executor;
+    final OCommandExecutor exec;
+    if (executor instanceof OCommandExecutorSQLDelegate) {
+      exec = ((OCommandExecutorSQLDelegate) executor).getDelegate();
+    } else {
+      exec = executor;
+    }
 
     if (!exec.isIdempotent()) {
       resetLastValidBackup();
@@ -284,9 +287,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             results = executeOnServers(iCommand, exec, involvedClusters, nodeClusterMap);
           }
 
-          final OCommandExecutorSQLSelect select = exec instanceof OCommandExecutorSQLSelect ?
-              (OCommandExecutorSQLSelect) exec :
-              null;
+          final OCommandExecutorSQLSelect select;
+          if (exec instanceof OCommandExecutorSQLSelect) {
+            select = (OCommandExecutorSQLSelect) exec;
+          } else {
+            select = null;
+          }
 
           if (select != null && select.isAnyFunctionAggregates() && !select.hasGroupBy()) {
             result = mergeResultByAggregation(select, results);
@@ -301,9 +307,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             undoCommandOnLocalServer(iCommand);
 
         } else {
-          final OAbstractCommandTask task = iCommand instanceof OCommandScript ?
-              new OScriptTask(iCommand) :
-              new OSQLCommandTask(iCommand, new HashSet<String>());
+          final OAbstractCommandTask task;
+          if (iCommand instanceof OCommandScript) {
+            task = new OScriptTask(iCommand);
+          } else {
+            task = new OSQLCommandTask(iCommand, new HashSet<String>());
+          }
           task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
           final Set<String> nodes = dbCfg.getServers(involvedClusters);
@@ -455,9 +464,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       } else {
 
-        final OAbstractCommandTask task = iCommand instanceof OCommandScript ?
-            new OScriptTask(iCommand) :
-            new OSQLCommandTask(iCommand, c.getValue());
+        final OAbstractCommandTask task;
+        if (iCommand instanceof OCommandScript) {
+          task = new OScriptTask(iCommand);
+        } else {
+          task = new OSQLCommandTask(iCommand, c.getValue());
+        }
         task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
         nodes.clear();

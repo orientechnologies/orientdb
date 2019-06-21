@@ -1731,16 +1731,24 @@ public class OSBTree<K, V> extends ODurableComponent {
               final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex), atomicOperation);
               itemIndex++;
 
-              if (fromKey != null && (fromKeyInclusive ?
-                  comparator.compare(entry.getKey(), fromKey) < 0 :
-                  comparator.compare(entry.getKey(), fromKey) <= 0)) {
-                continue;
+              if (fromKeyInclusive) {
+                if (fromKey != null && comparator.compare(entry.getKey(), fromKey) < 0) {
+                  continue;
+                }
+              } else {
+                if (fromKey != null && comparator.compare(entry.getKey(), fromKey) <= 0) {
+                  continue;
+                }
               }
 
-              if (toKey != null && (toKeyInclusive ?
-                  comparator.compare(entry.getKey(), toKey) > 0 :
-                  comparator.compare(entry.getKey(), toKey) >= 0)) {
-                break;
+              if (toKeyInclusive) {
+                if (toKey != null && comparator.compare(entry.getKey(), toKey) > 0) {
+                  break;
+                }
+              } else {
+                if (toKey != null && comparator.compare(entry.getKey(), toKey) >= 0) {
+                  break;
+                }
               }
 
               dataCache.add(entry);
@@ -1865,16 +1873,24 @@ public class OSBTree<K, V> extends ODurableComponent {
               final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex), atomicOperation);
               itemIndex--;
 
-              if (toKey != null && (toKeyInclusive ?
-                  comparator.compare(entry.getKey(), toKey) > 0 :
-                  comparator.compare(entry.getKey(), toKey) >= 0)) {
-                continue;
+              if (toKeyInclusive) {
+                if (toKey != null && comparator.compare(entry.getKey(), toKey) > 0) {
+                  continue;
+                }
+              } else {
+                if (toKey != null && comparator.compare(entry.getKey(), toKey) >= 0) {
+                  continue;
+                }
               }
 
-              if (fromKey != null && (fromKeyInclusive ?
-                  comparator.compare(entry.getKey(), fromKey) < 0 :
-                  comparator.compare(entry.getKey(), fromKey) <= 0)) {
-                break;
+              if (fromKeyInclusive) {
+                if (fromKey != null && comparator.compare(entry.getKey(), fromKey) < 0) {
+                  break;
+                }
+              } else {
+                if (fromKey != null && comparator.compare(entry.getKey(), fromKey) <= 0) {
+                  break;
+                }
               }
 
               dataCache.add(entry);

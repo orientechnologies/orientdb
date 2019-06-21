@@ -202,9 +202,11 @@ public abstract class ONodeManager {
     message.nodeIdentity = this.internalConfiguration.getNodeIdentity();
     message.group = this.config.getGroupName();
     message.term = leaderStatus.currentTerm;
-    message.role = leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER ?
-        OBroadcastMessage.ROLE_COORDINATOR :
-        OBroadcastMessage.ROLE_REPLICA;
+    if (leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER) {
+      message.role = OBroadcastMessage.ROLE_COORDINATOR;
+    } else {
+      message.role = OBroadcastMessage.ROLE_REPLICA;
+    }
 
     message.connectionUsername = internalConfiguration.getConnectionUsername();
     message.connectionPassword = internalConfiguration.getConnectionPassword();

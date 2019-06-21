@@ -386,9 +386,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
   }
 
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
-    return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ?
-        DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS :
-        DISTRIBUTED_RESULT_MGMT.MERGE;
+    if (getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL) {
+      return DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS;
+    } else {
+      return DISTRIBUTED_RESULT_MGMT.MERGE;
+    }
   }
 
   @Override
@@ -397,9 +399,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return query != null && !getDatabase().getTransaction().isActive() ?
-        DISTRIBUTED_EXECUTION_MODE.REPLICATE :
-        DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    if (query != null && !getDatabase().getTransaction().isActive()) {
+      return DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    } else {
+      return DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    }
   }
 
   @Override

@@ -906,9 +906,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     if (condition != null) {
-      result += ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additionalRangeCondition == null ?
-          "" :
-          " and " + additionalRangeCondition));
+      String additional = additionalRangeCondition == null ? "" : " and " + additionalRangeCondition;
+      result += ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + additional);
     }
 
     return result;

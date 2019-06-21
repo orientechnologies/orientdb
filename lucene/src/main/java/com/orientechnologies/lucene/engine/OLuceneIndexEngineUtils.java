@@ -152,11 +152,7 @@ public class OLuceneIndexEngineUtils {
       indexDefinition.fromStream(defAsJson);
       return indexDefinition;
 
-    } catch (ClassNotFoundException |
-        NoSuchMethodException |
-        InvocationTargetException |
-        InstantiationException |
-        IllegalAccessException e) {
+    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
       throw OException.wrapException(new OLuceneIndexException("Error during deserialization of index definition"), e);
     }
   }

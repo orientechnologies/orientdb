@@ -149,9 +149,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           boolean setFieldType = false;
 
           // SEARCH FOR A CONFIGURED PROPERTY
-          prop = ODocumentInternal.getImmutableSchemaClass(record) != null ?
-              ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName) :
-              null;
+          if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+            prop = ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName);
+          } else {
+            prop = null;
+          }
           if (prop != null && prop.getType() != OType.ANY) {
             // RECOGNIZED PROPERTY
             type = prop.getType();
@@ -319,9 +321,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
       // SEARCH FOR A CONFIGURED PROPERTY
-      prop = ODocumentInternal.getImmutableSchemaClass(record) != null ?
-          ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName) :
-          null;
+      if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+        prop = ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName);
+      } else {
+        prop = null;
+      }
       fieldClassName = getClassName(fieldValue);
 
       type = record.fieldType(fieldName);

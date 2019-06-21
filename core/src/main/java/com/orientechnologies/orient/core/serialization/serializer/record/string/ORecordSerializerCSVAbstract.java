@@ -554,10 +554,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       return null;
 
     // REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
-    final String value =
-        iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN || iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN ?
-            iValue.substring(1, iValue.length() - 1) :
-            iValue;
+    final String value;
+    if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN || iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN) {
+      value = iValue.substring(1, iValue.length() - 1);
+    } else {
+      value = iValue;
+    }
 
     Collection<?> coll;
     if (iLinkedType == OType.LINK) {
