@@ -580,6 +580,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   protected void readIv() throws IOException {
     final Path ivPath = storagePath.resolve(IV_NAME).toAbsolutePath();
     if (!Files.exists(ivPath)) {
+      OLogManager.instance().info(this, "IV file is absent, will create new one.");
       initIv();
       return;
     }
