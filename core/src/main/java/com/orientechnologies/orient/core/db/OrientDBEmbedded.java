@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -578,12 +579,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
     open = false;
     this.sharedContexts.values().forEach(x -> x.close());
     final List<OAbstractPaginatedStorage> storagesCopy = new ArrayList<>(storages.values());
+
+    Exception storageException = null;
+
     for (OAbstractPaginatedStorage stg : storagesCopy) {
       try {
         OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
         stg.shutdown();
       } catch (Exception e) {
         OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+        storageException = e;
       } catch (Error e) {
         OLogManager.instance().warn(this, "-- error on shutdown storage", e);
         throw e;
@@ -594,6 +599,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
     orient.onEmbeddedFactoryClose(this);
     if (autoCloseTimer != null) {
       autoCloseTimer.cancel();
+    }
+
+    if (storageException != null) {
+      throw OException.wrapException(new OStorageException("Error during closing the storages"), storageException);
     }
   }
 
