@@ -20,7 +20,7 @@ node {
 
                 // needed after the release and tag change, otherwise Studio is not found on Sonatype
                 checkout(
-                        [$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
+                        [$class: 'GitSCM', branches: [[name: '3.0.x']],
                          doGenerateSubmoduleConfigurations: false,
                          extensions: [],
                          submoduleCfg: [],
