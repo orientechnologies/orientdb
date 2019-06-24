@@ -51,17 +51,14 @@ import java.util.*;
  * <ol>
  * <li>Buckets are not compacted/removed if they are empty after deletion of item. They reused later when new items are added.</li>
  * <li>All non-leaf buckets have links to neighbor buckets which contain keys which are less/more than keys contained in current
- * bucket</li> <ol/> There is support of null values for keys, but values itself cannot be null. Null keys support is switched off
- * by default if null keys are supported value which is related to null key will be stored in separate file which has only one page.
- * Buckets/pages for usual (non-null) key-value entries can be considered as sorted array. The first bytes of page contains such
- * auxiliary information as size of entries contained in bucket, links to neighbors which contain entries with keys less/more than
- * keys in current bucket. The next bytes contain sorted array of entries. Array itself is split on two parts. First part is growing
- * from start to end, and second part is growing from end to start. First part is array of offsets to real key-value entries which
- * are stored in second part of array which grows from end to start. This array of offsets is sorted by accessing order according to
- * key value. So we can use binary search to find requested key. When new key-value pair is added we append binary presentation of
- * this pair to the second part of array which grows from end of page to start, remember value of offset for this pair, and find
- * proper position of this offset inside of first part of array. Such approach allows to minimize amount of memory involved in
- * performing of operations and as result speed up data processing.
+ * bucket</li> <ol/> There is support of null values for keys, but values itself cannot be null. Null keys support is switched off by default if null keys are supported value which
+ * is related to null key will be stored in separate file which has only one page. Buckets/pages for usual (non-null) key-value entries can be considered as sorted array. The first
+ * bytes of page contains such auxiliary information as size of entries contained in bucket, links to neighbors which contain entries with keys less/more than keys in current
+ * bucket. The next bytes contain sorted array of entries. Array itself is split on two parts. First part is growing from start to end, and second part is growing from end to
+ * start. First part is array of offsets to real key-value entries which are stored in second part of array which grows from end to start. This array of offsets is sorted by
+ * accessing order according to key value. So we can use binary search to find requested key. When new key-value pair is added we append binary presentation of this pair to the
+ * second part of array which grows from end of page to start, remember value of offset for this pair, and find proper position of this offset inside of first part of array. Such
+ * approach allows to minimize amount of memory involved in performing of operations and as result speed up data processing.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
@@ -91,8 +88,8 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
   private       OSBTreeV1<OMultiValueEntry, Byte> multiContainer;
   private final OModifiableLong                   mIdCounter = new OModifiableLong();
 
-  public OCellBTreeMultiValueV3(final String name, final String dataFileExtension, final String nullFileExtension,
-      final String containerExtension, final OAbstractPaginatedStorage storage) {
+  public OCellBTreeMultiValueV3(final String name, final String dataFileExtension, final String nullFileExtension, final String containerExtension,
+      final OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
     acquireExclusiveLock();
     try {
@@ -103,8 +100,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     }
   }
 
-  public void create(final OBinarySerializer<K> keySerializer, final OType[] keyTypes, final int keySize,
-      final OEncryption encryption) throws IOException {
+  public void create(final OBinarySerializer<K> keySerializer, final OType[] keyTypes, final int keySize, final OEncryption encryption) throws IOException {
     assert keySerializer != null;
 
     boolean rollback = false;
@@ -267,8 +263,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
         releaseSharedLock();
       }
     } catch (final IOException e) {
-      throw OException
-          .wrapException(new OCellBTreeMultiValueException("Error during retrieving  of sbtree with name " + getName(), this), e);
+      throw OException.wrapException(new OCellBTreeMultiValueException("Error during retrieving  of sbtree with name " + getName(), this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -286,15 +281,12 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
           final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
 
           if (keySize > MAX_KEY_SIZE) {
-            throw new OTooBigIndexKeyException(
-                "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
-                getName());
+            throw new OTooBigIndexKeyException("Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE, getName());
           }
 
           UpdateBucketSearchResult bucketSearchResult = findBucketForUpdate(key, atomicOperation);
 
-          OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false,
-              true);
+          OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false, true);
           Bucket<K> keyBucket = new Bucket<>(keyBucketCacheEntry, keySerializer, multiContainer);
 
           final byte[] keyToInsert;
@@ -315,8 +307,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
           }
 
           while (!addEntry(keyBucket, insertionIndex, isNew, keyToInsert, value, atomicOperation)) {
-            bucketSearchResult = splitBucket(keyBucket, keyBucketCacheEntry, bucketSearchResult.path,
-                bucketSearchResult.insertionIndexes, insertionIndex, key, atomicOperation);
+            bucketSearchResult = splitBucket(keyBucket, keyBucketCacheEntry, bucketSearchResult.path, bucketSearchResult.insertionIndexes, insertionIndex, key, atomicOperation);
 
             insertionIndex = bucketSearchResult.itemIndex;
 
@@ -357,8 +348,8 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     }
   }
 
-  private boolean addEntry(final Bucket<K> bucketMultiValue, final int index, final boolean isNew, final byte[] key,
-      final ORID value, final OAtomicOperation atomicOperation) throws IOException {
+  private boolean addEntry(final Bucket<K> bucketMultiValue, final int index, final boolean isNew, final byte[] key, final ORID value, final OAtomicOperation atomicOperation)
+      throws IOException {
 
     final long newCounter = incrementMId(atomicOperation);
     if (isNew) {
@@ -486,8 +477,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     }
   }
 
-  public void load(final String name, final int keySize, final OType[] keyTypes, final OBinarySerializer<K> keySerializer,
-      final OEncryption encryption) {
+  public void load(final String name, final int keySize, final OType[] keyTypes, final OBinarySerializer<K> keySerializer, final OEncryption encryption) {
     acquireExclusiveLock();
     try {
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
@@ -535,8 +525,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
         releaseSharedLock();
       }
     } catch (final IOException e) {
-      throw OException
-          .wrapException(new OCellBTreeMultiValueException("Error during retrieving of size of index " + getName(), this), e);
+      throw OException.wrapException(new OCellBTreeMultiValueException("Error during retrieving of size of index " + getName(), this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -843,9 +832,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
         releaseSharedLock();
       }
     } catch (final IOException e) {
-      throw OException
-          .wrapException(new OCellBTreeMultiValueException("Error during finding first key in sbtree [" + getName() + "]", this),
-              e);
+      throw OException.wrapException(new OCellBTreeMultiValueException("Error during finding first key in sbtree [" + getName() + "]", this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -874,8 +861,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
         releaseSharedLock();
       }
     } catch (final IOException e) {
-      throw OException
-          .wrapException(new OCellBTreeMultiValueException("Error during finding last key in sbtree [" + getName() + "]", this), e);
+      throw OException.wrapException(new OCellBTreeMultiValueException("Error during finding last key in sbtree [" + getName() + "]", this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -897,16 +883,13 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
         releaseSharedLock();
       }
     } catch (final IOException e) {
-      throw OException
-          .wrapException(new OCellBTreeMultiValueException("Error during finding first key in sbtree [" + getName() + "]", this),
-              e);
+      throw OException.wrapException(new OCellBTreeMultiValueException("Error during finding first key in sbtree [" + getName() + "]", this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
   }
 
-  public OCellBTreeCursor<K, ORID> iterateEntriesBetween(final K keyFrom, final boolean fromInclusive, final K keyTo,
-      final boolean toInclusive, final boolean ascSortOrder) {
+  public OCellBTreeCursor<K, ORID> iterateEntriesBetween(final K keyFrom, final boolean fromInclusive, final K keyTo, final boolean toInclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -1144,8 +1127,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     }
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesBetweenAscOrder(K keyFrom, final boolean fromInclusive, K keyTo,
-      final boolean toInclusive) {
+  private OCellBTreeCursor<K, ORID> iterateEntriesBetweenAscOrder(K keyFrom, final boolean fromInclusive, K keyTo, final boolean toInclusive) {
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
@@ -1155,8 +1137,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     return new OCellBTreeCursorForward(keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesBetweenDescOrder(K keyFrom, final boolean fromInclusive, K keyTo,
-      final boolean toInclusive) {
+  private OCellBTreeCursor<K, ORID> iterateEntriesBetweenDescOrder(K keyFrom, final boolean fromInclusive, K keyTo, final boolean toInclusive) {
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
@@ -1214,9 +1195,8 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     return keyFrom;
   }
 
-  private UpdateBucketSearchResult splitBucket(final Bucket<K> bucketToSplit, final OCacheEntry entryToSplit, final List<Long> path,
-      final List<Integer> insertionIndexes, final int keyIndex, final K keyToInsert, final OAtomicOperation atomicOperation)
-      throws IOException {
+  private UpdateBucketSearchResult splitBucket(final Bucket<K> bucketToSplit, final OCacheEntry entryToSplit, final List<Long> path, final List<Integer> insertionIndexes,
+      final int keyIndex, final K keyToInsert, final OAtomicOperation atomicOperation) throws IOException {
     final boolean splitLeaf = bucketToSplit.isLeaf();
     final int bucketSize = bucketToSplit.size();
 
@@ -1238,17 +1218,15 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     }
 
     if (entryToSplit.getPageIndex() != ROOT_INDEX) {
-      return splitNonRootBucket(path, insertionIndexes, keyIndex, keyToInsert, entryToSplit.getPageIndex(), bucketToSplit,
-          splitLeaf, indexToSplit, serializedSeparationKey, rightEntries, atomicOperation);
-    } else {
-      return splitRootBucket(keyIndex, keyToInsert, entryToSplit, bucketToSplit, splitLeaf, indexToSplit, serializedSeparationKey,
+      return splitNonRootBucket(path, insertionIndexes, keyIndex, keyToInsert, entryToSplit.getPageIndex(), bucketToSplit, splitLeaf, indexToSplit, serializedSeparationKey,
           rightEntries, atomicOperation);
+    } else {
+      return splitRootBucket(keyIndex, keyToInsert, entryToSplit, bucketToSplit, splitLeaf, indexToSplit, serializedSeparationKey, rightEntries, atomicOperation);
     }
   }
 
-  private UpdateBucketSearchResult splitNonRootBucket(final List<Long> path, final List<Integer> insertionIndexes,
-      final int keyIndex, final K keyToInsert, final long pageIndex, final Bucket<K> bucketToSplit, final boolean splitLeaf,
-      final int indexToSplit, final byte[] serializedSeparationKey, final List<Bucket.Entry> rightEntries,
+  private UpdateBucketSearchResult splitNonRootBucket(final List<Long> path, final List<Integer> insertionIndexes, final int keyIndex, final K keyToInsert, final long pageIndex,
+      final Bucket<K> bucketToSplit, final boolean splitLeaf, final int indexToSplit, final byte[] serializedSeparationKey, final List<Bucket.Entry> rightEntries,
       final OAtomicOperation atomicOperation) throws IOException {
 
     final OCacheEntry rightBucketEntry;
@@ -1304,16 +1282,13 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
         Bucket<K> parentBucket = new Bucket<>(parentCacheEntry, keySerializer, multiContainer);
         int insertionIndex = insertionIndexes.get(insertionIndexes.size() - 2);
 
-        while (!parentBucket
-            .addNonLeafEntry(insertionIndex, serializedSeparationKey, (int) pageIndex, (int) rightBucketEntry.getPageIndex(),
-                true)) {
+        while (!parentBucket.addNonLeafEntry(insertionIndex, serializedSeparationKey, (int) pageIndex, (int) rightBucketEntry.getPageIndex(), true)) {
           if (separationKey == null) {
             separationKey = keySerializer.deserializeNativeObject(serializedSeparationKey, 0);
           }
 
-          final UpdateBucketSearchResult bucketSearchResult = splitBucket(parentBucket, parentCacheEntry,
-              path.subList(0, path.size() - 1), insertionIndexes.subList(0, insertionIndexes.size() - 1), insertionIndex,
-              separationKey, atomicOperation);
+          final UpdateBucketSearchResult bucketSearchResult = splitBucket(parentBucket, parentCacheEntry, path.subList(0, path.size() - 1),
+              insertionIndexes.subList(0, insertionIndexes.size() - 1), insertionIndex, separationKey, atomicOperation);
 
           parentIndex = bucketSearchResult.getLastPathItem();
           insertionIndex = bucketSearchResult.itemIndex;
@@ -1340,20 +1315,16 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     if (keyIndex < indexToSplit) {
       return addToTheLeftNonRootBucket(keyIndex, pageIndex, resultPath, resultInsertionIndexes);
     } else if (keyIndex > indexToSplit) {
-      return addToTheRightNonRootBucket(keyIndex, splitLeaf, indexToSplit, rightBucketEntry.getPageIndex(), resultPath,
-          resultInsertionIndexes);
-    } else if (splitLeaf && keyToInsert.equals(separationKey != null ? separationKey :
-        keySerializer.deserializeNativeObject(serializedSeparationKey, 0))) {
-      return addToTheRightNonRootBucket(keyIndex, true, indexToSplit, rightBucketEntry.getPageIndex(), resultPath,
-          resultInsertionIndexes);
+      return addToTheRightNonRootBucket(keyIndex, splitLeaf, indexToSplit, rightBucketEntry.getPageIndex(), resultPath, resultInsertionIndexes);
+    } else if (splitLeaf && keyToInsert.equals(separationKey != null ? separationKey : keySerializer.deserializeNativeObject(serializedSeparationKey, 0))) {
+      return addToTheRightNonRootBucket(keyIndex, true, indexToSplit, rightBucketEntry.getPageIndex(), resultPath, resultInsertionIndexes);
     } else {
       return addToTheLeftNonRootBucket(keyIndex, pageIndex, resultPath, resultInsertionIndexes);
     }
   }
 
-  private static UpdateBucketSearchResult addToTheRightNonRootBucket(final int keyIndex, final boolean splitLeaf,
-      final int indexToSplit, final long rightPageIndex, final ArrayList<Long> resultPath,
-      final ArrayList<Integer> resultItemPointers) {
+  private static UpdateBucketSearchResult addToTheRightNonRootBucket(final int keyIndex, final boolean splitLeaf, final int indexToSplit, final long rightPageIndex,
+      final ArrayList<Long> resultPath, final ArrayList<Integer> resultItemPointers) {
     final int parentIndex = resultItemPointers.size() - 1;
     resultItemPointers.set(parentIndex, resultItemPointers.get(parentIndex) + 1);
     resultPath.add(rightPageIndex);
@@ -1369,17 +1340,16 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     return new UpdateBucketSearchResult(resultItemPointers, resultPath, insertionIndex);
   }
 
-  private static UpdateBucketSearchResult addToTheLeftNonRootBucket(final int keyIndex, final long pageIndex,
-      final ArrayList<Long> resultPath, final ArrayList<Integer> resultItemPointers) {
+  private static UpdateBucketSearchResult addToTheLeftNonRootBucket(final int keyIndex, final long pageIndex, final ArrayList<Long> resultPath,
+      final ArrayList<Integer> resultItemPointers) {
     resultPath.add(pageIndex);
     resultItemPointers.add(keyIndex);
 
     return new UpdateBucketSearchResult(resultItemPointers, resultPath, keyIndex);
   }
 
-  private UpdateBucketSearchResult splitRootBucket(final int keyIndex, final K keyToInsert, final OCacheEntry bucketEntry,
-      Bucket<K> bucketToSplit, final boolean splitLeaf, final int indexToSplit, final byte[] serializedSeparationKey,
-      final List<Bucket.Entry> rightEntries, final OAtomicOperation atomicOperation) throws IOException {
+  private UpdateBucketSearchResult splitRootBucket(final int keyIndex, final K keyToInsert, final OCacheEntry bucketEntry, Bucket<K> bucketToSplit, final boolean splitLeaf,
+      final int indexToSplit, final byte[] serializedSeparationKey, final List<Bucket.Entry> rightEntries, final OAtomicOperation atomicOperation) throws IOException {
     final List<Bucket.Entry> leftEntries = new ArrayList<>(indexToSplit);
 
     if (splitLeaf) {
@@ -1392,8 +1362,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
         final List<ORID> values = currentEntry.values;
 
         final long mId = incrementMId(atomicOperation);
-        final Bucket.LeafEntry newEntry = new Bucket.LeafEntry(currentEntry.key, mId,
-            currentEntry.values.subList(values.size() / 2, values.size()));
+        final Bucket.LeafEntry newEntry = new Bucket.LeafEntry(currentEntry.key, mId, currentEntry.values.subList(values.size() / 2, values.size()));
 
         leftEntries.add(newEntry);
       }
@@ -1463,9 +1432,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
 
     bucketToSplit = new Bucket<>(bucketEntry, false, keySerializer, multiContainer);
 
-    bucketToSplit
-        .addNonLeafEntry(0, serializedSeparationKey, (int) leftBucketEntry.getPageIndex(), (int) rightBucketEntry.getPageIndex(),
-            true);
+    bucketToSplit.addNonLeafEntry(0, serializedSeparationKey, (int) leftBucketEntry.getPageIndex(), (int) rightBucketEntry.getPageIndex(), true);
 
     final ArrayList<Long> resultPath = new ArrayList<>(8);
     resultPath.add(ROOT_INDEX);
@@ -1483,9 +1450,8 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     }
   }
 
-  private static UpdateBucketSearchResult addToTheRightRootBucket(final int keyIndex, final boolean splitLeaf,
-      final int indexToSplit, final OCacheEntry rightBucketEntry, final ArrayList<Long> resultPath,
-      final ArrayList<Integer> itemPointers) {
+  private static UpdateBucketSearchResult addToTheRightRootBucket(final int keyIndex, final boolean splitLeaf, final int indexToSplit, final OCacheEntry rightBucketEntry,
+      final ArrayList<Long> resultPath, final ArrayList<Integer> itemPointers) {
     resultPath.add(rightBucketEntry.getPageIndex());
     itemPointers.add(0);
 
@@ -1500,8 +1466,8 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     return new UpdateBucketSearchResult(itemPointers, resultPath, itemPointer);
   }
 
-  private static UpdateBucketSearchResult addToTheLeftRootBucket(final int keyIndex, final OCacheEntry leftBucketEntry,
-      final ArrayList<Long> resultPath, final ArrayList<Integer> itemPointers) {
+  private static UpdateBucketSearchResult addToTheLeftRootBucket(final int keyIndex, final OCacheEntry leftBucketEntry, final ArrayList<Long> resultPath,
+      final ArrayList<Integer> itemPointers) {
     itemPointers.add(-1);
     itemPointers.add(keyIndex);
 
@@ -1517,8 +1483,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
       depth++;
       if (depth > MAX_PATH_LENGTH) {
         throw new OCellBTreeMultiValueException(
-            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.",
-            this);
+            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.", this);
       }
 
       final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
@@ -1555,8 +1520,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
     while (true) {
       if (path.size() > MAX_PATH_LENGTH) {
         throw new OCellBTreeMultiValueException(
-            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.",
-            this);
+            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.", this);
       }
 
       path.add(pageIndex);
@@ -1620,8 +1584,8 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
   }
 
   /**
-   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
-   * or highest partially matched key should be used.
+   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest or highest partially matched key should be
+   * used.
    */
   private enum PartialSearchMode {
     /**
@@ -1752,8 +1716,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
           releaseSharedLock();
         }
       } catch (final IOException e) {
-        throw OException
-            .wrapException(new OCellBTreeMultiValueException("Error during element iteration", OCellBTreeMultiValueV3.this), e);
+        throw OException.wrapException(new OCellBTreeMultiValueException("Error during element iteration", OCellBTreeMultiValueV3.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(OCellBTreeMultiValueV3.this);
       }
@@ -1942,9 +1905,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
                   break mainCycle;
                 }
 
-                if (fromKey != null && (fromKeyInclusive ?
-                    comparator.compare(key, fromKey) < 0 :
-                    comparator.compare(key, fromKey) <= 0)) {
+                if (fromKey != null && (fromKeyInclusive ? comparator.compare(key, fromKey) < 0 : comparator.compare(key, fromKey) <= 0)) {
                   continue;
                 }
 
@@ -1981,8 +1942,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
           releaseSharedLock();
         }
       } catch (final IOException e) {
-        throw OException
-            .wrapException(new OCellBTreeMultiValueException("Error during element iteration", OCellBTreeMultiValueV3.this), e);
+        throw OException.wrapException(new OCellBTreeMultiValueException("Error during element iteration", OCellBTreeMultiValueV3.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(OCellBTreeMultiValueV3.this);
       }
@@ -2180,9 +2140,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
                   continue;
                 }
 
-                if (fromKey != null && (fromKeyInclusive ?
-                    comparator.compare(key, fromKey) < 0 :
-                    comparator.compare(key, fromKey) <= 0)) {
+                if (fromKey != null && (fromKeyInclusive ? comparator.compare(key, fromKey) < 0 : comparator.compare(key, fromKey) <= 0)) {
                   break mainCycle;
                 }
 
@@ -2216,8 +2174,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
           releaseSharedLock();
         }
       } catch (final IOException e) {
-        throw OException
-            .wrapException(new OCellBTreeMultiValueException("Error during element iteration", OCellBTreeMultiValueV3.this), e);
+        throw OException.wrapException(new OCellBTreeMultiValueException("Error during element iteration", OCellBTreeMultiValueV3.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(OCellBTreeMultiValueV3.this);
       }
