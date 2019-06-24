@@ -578,7 +578,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void readIv() throws IOException {
-    try (final RandomAccessFile ivFile = new RandomAccessFile(storagePath.resolve(IV_NAME).toAbsolutePath().toFile(), "r")) {
+    final Path ivPath = storagePath.resolve(IV_NAME).toAbsolutePath();
+    if (!Files.exists(ivPath)) {
+      initIv();
+      return;
+    }
+
+    try (final RandomAccessFile ivFile = new RandomAccessFile(ivPath.toFile(), "r")) {
       final byte[] iv = new byte[16];
       ivFile.read(iv);
 
