@@ -4250,7 +4250,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @SuppressWarnings("unused")
   protected abstract OWriteAheadLog createWalFromIBUFiles(File directory, final OContextConfiguration contextConfiguration,
-      final Locale locale) throws IOException;
+      final Locale locale, byte[] iv) throws IOException;
 
   /**
    * Checks if the storage is open. If it's closed an exception is raised.

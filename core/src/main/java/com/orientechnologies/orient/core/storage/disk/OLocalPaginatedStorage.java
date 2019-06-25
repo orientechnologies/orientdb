@@ -74,9 +74,11 @@ import java.util.zip.ZipOutputStream;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
-  private static final long   IV_SEED = 234120934;
-  private static final String IV_EXT  = ".iv";
-  private static final String IV_NAME = "data" + IV_EXT;
+  protected static final long   IV_SEED = 234120934;
+  private static final   String IV_EXT  = ".iv";
+
+  @SuppressWarnings("WeakerAccess")
+  protected static final String IV_NAME = "data" + IV_EXT;
 
   private static final String[] ALL_FILE_EXTENSIONS = { ".cm", ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
       ".oem", ".oet", ".fl", IV_EXT, OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION, OCASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
@@ -114,7 +116,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   private final AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-  private volatile byte[] iv;
+  protected volatile byte[] iv;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id,
       final OReadCache readCache, final OClosableLinkedContainer<Long, OFileClassic> files, final long walMaxSegSize) {
@@ -396,14 +398,15 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           bufferedOutputStream.write(buffer, 0, bl);
           bl = 0;
 
-        } while (rb >= 0);
+        }
+        while (rb >= 0);
       }
     }
   }
 
   @Override
   protected OWriteAheadLog createWalFromIBUFiles(final File directory, final OContextConfiguration contextConfiguration,
-      final Locale locale) throws IOException {
+      final Locale locale, byte[] iv) throws IOException {
     final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
     final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
 
@@ -587,7 +590,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     try (final RandomAccessFile ivFile = new RandomAccessFile(ivPath.toFile(), "r")) {
       final byte[] iv = new byte[16];
-      ivFile.read(iv);
+      ivFile.readFully(iv);
 
       final long storedHash = ivFile.readLong();
 

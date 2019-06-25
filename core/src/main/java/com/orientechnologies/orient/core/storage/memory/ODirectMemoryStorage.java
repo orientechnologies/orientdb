@@ -169,7 +169,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected OWriteAheadLog createWalFromIBUFiles(final File directory, final OContextConfiguration contextConfiguration,
-      final Locale locale) throws IOException {
+      final Locale locale, byte[] iv) throws IOException {
     return null;
   }
 
