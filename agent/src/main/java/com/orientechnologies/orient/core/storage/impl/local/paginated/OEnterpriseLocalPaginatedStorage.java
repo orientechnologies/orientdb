@@ -29,8 +29,11 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OBackupInProgressException;
+import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -49,12 +52,19 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,16 +73,24 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
-  public static final  String        IBU_EXTENSION                 = ".ibu";
-  public static final  String        CONF_ENTRY_NAME               = "database.ocf";
-  public static final  String        INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
+
+  private static final String ALGORITHM_NAME = "AES";
+  private static final String TRANSFORMATION = "AES/CTR/NoPadding";
+
+  private static final ThreadLocal<Cipher> CIPHER = ThreadLocal.withInitial(OEnterpriseLocalPaginatedStorage::getCipherInstance);
+
+  private static final String        IBU_EXTENSION                 = ".ibu";
+  private static final String        CONF_ENTRY_NAME               = "database.ocf";
+  private static final String        INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
   private static final String        CONF_UTF_8_ENTRY_NAME         = "database_utf8.ocf";
   private final        AtomicBoolean backupInProgress              = new AtomicBoolean(false);
+
+  private static final String ENCRYPTION_IV = "encryption.iv";
 
   private List<OEnterpriseStorageOperationListener> listeners = Collections.synchronizedList(new ArrayList<>());
 
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache,
-      OClosableLinkedContainer<Long, OFileClassic> files, long walMaxSize) throws IOException {
+      OClosableLinkedContainer<Long, OFileClassic> files, long walMaxSize) {
     super(name, filePath, mode, id, readCache, files, walMaxSize);
     OLogManager.instance().info(this, "Enterprise storage installed correctly.");
   }
@@ -185,21 +203,18 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   private String[] fetchIBUFiles(final File backupDirectory) throws IOException {
-    final String[] files = backupDirectory.list(new FilenameFilter() {
-      @Override
-      public boolean accept(final File dir, final String name) {
-        return new File(dir, name).length() > 0 && name.toLowerCase(configuration.getLocaleInstance()).endsWith(IBU_EXTENSION);
-      }
-    });
+    final String[] files = backupDirectory.list(
+        (dir, name) -> new File(dir, name).length() > 0 && name.toLowerCase(configuration.getLocaleInstance())
+            .endsWith(IBU_EXTENSION));
 
     if (files == null)
       throw new OStorageException("Can not read list of backup files from directory " + backupDirectory.getAbsolutePath());
 
-    final List<OPair<Long, String>> indexedFiles = new ArrayList<OPair<Long, String>>(files.length);
+    final List<OPair<Long, String>> indexedFiles = new ArrayList<>(files.length);
 
     for (String file : files) {
       final long fileIndex = extractIndexFromIBUFile(backupDirectory, file);
-      indexedFiles.add(new OPair<Long, String>(fileIndex, file));
+      indexedFiles.add(new OPair<>(fileIndex, file));
     }
 
     Collections.sort(indexedFiles);
@@ -253,16 +268,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
   private long extractIndexFromIBUFile(final File backupDirectory, final String fileName) throws IOException {
     final File file = new File(backupDirectory, fileName);
-    final RandomAccessFile rndFile = new RandomAccessFile(file, "r");
-    final long index;
 
-    try {
-      index = rndFile.readLong();
-    } finally {
-      rndFile.close();
+    try (RandomAccessFile rndFile = new RandomAccessFile(file, "r")) {
+      return rndFile.readLong();
     }
-
-    return index;
   }
 
   private OLogSequenceNumber incrementalBackup(final OutputStream stream, final OLogSequenceNumber fromLsn,
@@ -315,7 +324,24 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             }
 
             try {
-              lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
+              backupIv(zipOutputStream);
+
+              final byte[] encryptionIv = new byte[16];
+              final SecureRandom secureRandom = new SecureRandom();
+              secureRandom.nextBytes(encryptionIv);
+
+              backupEncryptedIv(zipOutputStream, encryptionIv);
+
+              final String aesKeyEncoded = getConfiguration().getContextConfiguration()
+                  .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+              final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+
+              if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
+                throw new OInvalidStorageEncryptionKeyException(
+                    "Invalid length of the encryption key, provided size is " + aesKey.length);
+              }
+
+              lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream, encryptionIv, aesKey);
               final OLogSequenceNumber lastWALLsn = copyWALToIncrementalBackup(zipOutputStream, startSegment);
 
               if (lastWALLsn != null && (lastLsn == null || lastWALLsn.compareTo(lastLsn) > 0)) {
@@ -345,7 +371,59 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     return lastLsn;
   }
 
-  private OLogSequenceNumber backupPagesWithChanges(final OLogSequenceNumber changeLsn, ZipOutputStream stream) throws IOException {
+  private static void doEncryptionDecryption(final int mode, final byte[] aesKey, final long pageIndex, final long fileId,
+      final byte[] backUpPage, final byte[] encryptionIv) {
+    try {
+      final Cipher cipher = CIPHER.get();
+      final SecretKey secretKey = new SecretKeySpec(aesKey, ALGORITHM_NAME);
+
+      final byte[] updatedIv = new byte[16];
+      for (int i = 0; i < OLongSerializer.LONG_SIZE; i++) {
+        updatedIv[i] = (byte) (encryptionIv[i] ^ ((pageIndex >>> i) & 0xFF));
+      }
+
+      for (int i = 0; i < OLongSerializer.LONG_SIZE; i++) {
+        updatedIv[i + OLongSerializer.LONG_SIZE] = (byte) (encryptionIv[i + OLongSerializer.LONG_SIZE] ^ ((fileId >>> i) & 0xFF));
+      }
+
+      cipher.init(mode, secretKey, new IvParameterSpec(updatedIv));
+
+      final byte[] data = cipher.doFinal(backUpPage, OLongSerializer.LONG_SIZE, backUpPage.length - OLongSerializer.LONG_SIZE);
+      System.arraycopy(data, 0, backUpPage, OLongSerializer.LONG_SIZE, backUpPage.length - OLongSerializer.LONG_SIZE);
+    } catch (InvalidKeyException e) {
+      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(e.getMessage()), e);
+    } catch (InvalidAlgorithmParameterException e) {
+      throw new IllegalArgumentException("Invalid IV.", e);
+    } catch (IllegalBlockSizeException | BadPaddingException e) {
+      throw new IllegalStateException("Unexpected exception during CRT encryption.", e);
+    }
+  }
+
+  private void backupEncryptedIv(final ZipOutputStream zipOutputStream, final byte[] encryptionIv) throws IOException {
+    final ZipEntry zipEntry = new ZipEntry(ENCRYPTION_IV);
+    zipOutputStream.putNextEntry(zipEntry);
+
+    zipOutputStream.write(encryptionIv);
+    zipOutputStream.closeEntry();
+  }
+
+  private void backupIv(final ZipOutputStream zipOutputStream) throws IOException {
+    final ZipEntry zipEntry = new ZipEntry(IV_NAME);
+    zipOutputStream.putNextEntry(zipEntry);
+
+    zipOutputStream.write(this.iv);
+    zipOutputStream.closeEntry();
+  }
+
+  private byte[] restoreIv(final ZipInputStream zipInputStream) throws IOException {
+    final byte[] iv = new byte[16];
+    OIOUtils.readFully(zipInputStream, iv, 0, iv.length);
+
+    return iv;
+  }
+
+  private OLogSequenceNumber backupPagesWithChanges(final OLogSequenceNumber changeLsn, final ZipOutputStream stream,
+      final byte[] encryptionIv, final byte[] aesKey) throws IOException {
     OLogSequenceNumber lastLsn = changeLsn;
 
     final Map<String, Long> files = writeCache.files();
@@ -378,6 +456,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
             OLongSerializer.INSTANCE.serializeNative(pageIndex, data, 0);
             ODurablePage.getPageData(cacheEntry.getCachePointer().getBufferDuplicate(), data, OLongSerializer.LONG_SIZE, pageSize);
+
+            if (aesKey != null) {
+              doEncryptionDecryption(Cipher.ENCRYPT_MODE, aesKey, fileId, pageIndex, data, encryptionIv);
+            }
 
             stream.write(data);
 
@@ -429,8 +511,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         for (String file : files) {
           final File ibuFile = new File(backupDirectory, file);
 
-          final RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw");
-          try {
+          try (RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw")) {
             final FileChannel ibuChannel = rndIBUFile.getChannel();
             ibuChannel.position(3 * OLongSerializer.LONG_SIZE);
 
@@ -442,8 +523,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
             final InputStream inputStream = Channels.newInputStream(ibuChannel);
             restoreFromIncrementalBackup(inputStream, fullBackup);
-          } finally {
-            rndIBUFile.close();
           }
 
         }
@@ -456,9 +535,17 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   private void restoreFromIncrementalBackup(final InputStream inputStream, final boolean isFull) throws IOException {
+    final String aesKeyEncoded = getConfiguration().getContextConfiguration()
+        .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+    final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+
+    if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
+      throw new OInvalidStorageEncryptionKeyException("Invalid length of the encryption key, provided size is " + aesKey.length);
+    }
+
     stateLock.acquireWriteLock();
     try {
-      final List<String> currentFiles = new ArrayList<String>(writeCache.files().keySet());
+      final List<String> currentFiles = new ArrayList<>(writeCache.files().keySet());
       final Locale serverLocale = configuration.getLocaleInstance();
       final OContextConfiguration contextConfiguration = configuration.getContextConfiguration();
       final String charset = configuration.getCharset();
@@ -479,7 +566,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       ZipEntry zipEntry;
       OLogSequenceNumber maxLsn = null;
 
-      List<String> processedFiles = new ArrayList<String>();
+      List<String> processedFiles = new ArrayList<>();
 
       if (isFull) {
         final Map<String, Long> files = writeCache.files();
@@ -493,16 +580,29 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       final File walTempDir = createWalTempDirectory();
 
+      byte[] encryptionIv = null;
+      byte[] walIv = null;
+
       entryLoop:
       while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+        if (zipEntry.getName().equals(IV_NAME)) {
+          walIv = restoreIv(zipInputStream);
+          continue;
+        }
+
+        if (zipEntry.getName().equals(ENCRYPTION_IV)) {
+          encryptionIv = restoreEncryptionIv(zipInputStream);
+          continue;
+        }
+
         if (zipEntry.getName().equals(CONF_ENTRY_NAME)) {
-          replaceConfiguration(zipInputStream, Charset.defaultCharset());
+          replaceConfiguration(zipInputStream);
 
           continue;
         }
 
         if (zipEntry.getName().equals(CONF_UTF_8_ENTRY_NAME)) {
-          replaceConfiguration(zipInputStream, Charset.forName("UTF-8"));
+          replaceConfiguration(zipInputStream);
 
           continue;
         }
@@ -521,11 +621,15 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           continue;
         }
 
+        if (aesKey != null && encryptionIv == null) {
+          throw new OSecurityException("IV can not be null if encryption key is provided");
+        }
+
         final byte[] binaryFileId = new byte[OLongSerializer.LONG_SIZE];
         OIOUtils.readFully(zipInputStream, binaryFileId, 0, binaryFileId.length);
 
         final long expectedFileId = OLongSerializer.INSTANCE.deserialize(binaryFileId, 0);
-        Long fileId;
+        long fileId;
 
         if (!writeCache.exists(zipEntry.getName())) {
           fileId = readCache.addFile(zipEntry.getName(), expectedFileId, writeCache);
@@ -558,7 +662,11 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
           final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, false, null);
+          if (aesKey != null) {
+            doEncryptionDecryption(Cipher.DECRYPT_MODE, aesKey, expectedFileId, pageIndex, data, encryptionIv);
+          }
+
+          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, true, null);
 
           if (cacheEntry == null) {
             do {
@@ -566,7 +674,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                 readCache.releaseFromWrite(cacheEntry, writeCache);
 
               cacheEntry = readCache.allocateNewPage(fileId, writeCache, null);
-            } while (cacheEntry.getPageIndex() != pageIndex);
+            }
+            while (cacheEntry.getPageIndex() != pageIndex);
           }
 
           try {
@@ -606,7 +715,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         }
       }
 
-      final OWriteAheadLog restoreLog = createWalFromIBUFiles(walTempDir, contextConfiguration, locale);
+      final OWriteAheadLog restoreLog = createWalFromIBUFiles(walTempDir, contextConfiguration, locale, walIv);
       OLogSequenceNumber restoreLsn = null;
 
       if (restoreLog != null) {
@@ -659,6 +768,22 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
+  private byte[] restoreEncryptionIv(final ZipInputStream zipInputStream) throws IOException {
+    final byte[] iv = new byte[16];
+    int read = 0;
+    while (read < iv.length) {
+      final int localRead = zipInputStream.read(iv, read, iv.length - read);
+
+      if (localRead < 0) {
+        throw new OStorageException("End of stream is reached but IV data were not completely read");
+      }
+
+      read += localRead;
+    }
+
+    return iv;
+  }
+
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
       boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {
@@ -666,9 +791,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     try {
       return super.readRecord(iRid, iFetchPlan, iIgnoreCache, prefetchRecords, iCallback);
     } finally {
-      listeners.forEach((l) -> {
-        l.onRead();
-      });
+      listeners.forEach(OEnterpriseStorageOperationListener::onRead);
     }
   }
 
@@ -682,16 +805,16 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   @Override
   public void rollback(OTransactionInternal clientTx) {
     super.rollback(clientTx);
-    listeners.forEach((l) -> l.onRollback());
+    listeners.forEach(OEnterpriseStorageOperationListener::onRollback);
   }
 
   @Override
   public void rollback(OMicroTransaction microTransaction) {
     super.rollback(microTransaction);
-    listeners.forEach((l) -> l.onRollback());
+    listeners.forEach(OEnterpriseStorageOperationListener::onRollback);
   }
 
-  private void replaceConfiguration(ZipInputStream zipInputStream, Charset charset) throws IOException {
+  private void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
     byte[] buffer = new byte[1024];
 
     int rb = 0;
@@ -712,4 +835,11 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
+  private static Cipher getCipherInstance() {
+    try {
+      return Cipher.getInstance(TRANSFORMATION);
+    } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+      throw OException.wrapException(new OSecurityException("Implementation of encryption " + TRANSFORMATION + " is absent"), e);
+    }
+  }
 }

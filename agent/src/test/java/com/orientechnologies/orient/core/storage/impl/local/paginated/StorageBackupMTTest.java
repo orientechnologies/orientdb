@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -57,7 +57,7 @@ public class StorageBackupMTTest {
       Assert.assertTrue(backupDir.mkdirs());
 
     final ExecutorService executor = Executors.newCachedThreadPool();
-    final List<Future<Void>> futures = new ArrayList<Future<Void>>();
+    final List<Future<Void>> futures = new ArrayList<>();
 
     for (int i = 0; i < 4; i++) {
       futures.add(executor.submit(new DataWriterCallable()));
@@ -108,16 +108,97 @@ public class StorageBackupMTTest {
     OFileUtils.deleteRecursively(backupDir);
   }
 
+  @Test
+  public void testParallelBackupEncryption() throws Exception {
+    String buildDirectory = System.getProperty("buildDirectory", ".");
+    dbName = StorageBackupMTTest.class.getSimpleName();
+    String dbDirectory = buildDirectory + File.separator + dbName;
+
+    OFileUtils.deleteRecursively(new File(dbDirectory));
+
+    final OrientDBConfig config = OrientDBConfig.builder()
+        .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==").build();
+    orientDB = new OrientDB("embedded:" + buildDirectory, config);
+    orientDB.create(dbName, ODatabaseType.PLOCAL);
+
+    ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
+
+    final OSchema schema = db.getMetadata().getSchema();
+    final OClass backupClass = schema.createClass("BackupClass");
+    backupClass.createProperty("num", OType.INTEGER);
+    backupClass.createProperty("data", OType.BINARY);
+
+    backupClass.createIndex("backupIndex", OClass.INDEX_TYPE.NOTUNIQUE, "num");
+
+    File backupDir = new File(buildDirectory, "backupDir");
+    OFileUtils.deleteRecursively(backupDir);
+
+    if (!backupDir.exists())
+      Assert.assertTrue(backupDir.mkdirs());
+
+    final ExecutorService executor = Executors.newCachedThreadPool();
+    final List<Future<Void>> futures = new ArrayList<>();
+
+    for (int i = 0; i < 4; i++) {
+      futures.add(executor.submit(new DataWriterCallable()));
+    }
+
+    futures.add(executor.submit(new DBBackupCallable(backupDir.getAbsolutePath())));
+
+    latch.countDown();
+
+    TimeUnit.MINUTES.sleep(15);
+
+    stop = true;
+
+    for (Future<Void> future : futures) {
+      future.get();
+    }
+
+    System.out.println("do inc backup last time");
+    db.incrementalBackup(backupDir.getAbsolutePath());
+
+    orientDB.close();
+
+    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
+    final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
+    OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
+
+    System.out.println("create and restore");
+
+    OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, config);
+    embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), config);
+    embedded.close();
+
+    OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue("T1JJRU5UREJfSVNfQ09PTA==");
+    final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
+        "admin", System.out::println);
+    System.out.println("compare");
+
+    boolean areSame = compare.compare();
+    Assert.assertTrue(areSame);
+
+    ODatabaseDocumentTx.closeAll();
+    OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue(null);
+
+    orientDB = new OrientDB("embedded:" + buildDirectory, config);
+    orientDB.drop(dbName);
+    orientDB.drop(backupDbName);
+
+    orientDB.close();
+
+    OFileUtils.deleteRecursively(backupDir);
+  }
+
   private final class DataWriterCallable implements Callable<Void> {
     @Override
     public Void call() throws Exception {
       latch.await();
 
       System.out.println(Thread.currentThread() + " - start writing");
-      final ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
-      final Random random = new Random();
-      try {
+      try (ODatabaseDocument db = orientDB.open(dbName, "admin", "admin")) {
+        final Random random = new Random();
         while (!stop) {
           try {
             final byte[] data = new byte[16];
@@ -133,19 +214,11 @@ public class StorageBackupMTTest {
           } catch (OModificationOperationProhibitedException e) {
             System.out.println("Modification prohibited ... wait ...");
             Thread.sleep(1000);
-          } catch (RuntimeException e) {
-            e.printStackTrace();
-            throw e;
-          } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-          } catch (Error e) {
+          } catch (Exception | Error e) {
             e.printStackTrace();
             throw e;
           }
         }
-      } finally {
-        db.close();
       }
 
       System.out.println(Thread.currentThread() + " - done writing");

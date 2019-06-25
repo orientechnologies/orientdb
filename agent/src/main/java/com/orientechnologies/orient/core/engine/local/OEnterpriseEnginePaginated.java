@@ -38,16 +38,8 @@ public class OEnterpriseEnginePaginated extends OEngineLocalPaginated {
 
   @Override
   public OStorage createStorage(final String dbName, final Map<String, String> configuration, long maxWalSegSize) {
-
-    try {
-      return new OEnterpriseLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), getReadCache(),
-          files, maxWalSegSize);
-    } catch (IOException e) {
-      final String message =
-          "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath();
-      OLogManager.instance().error(this, message, e);
-      throw OException.wrapException(new ODatabaseException(message), e);
-    }
+    return new OEnterpriseLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), getReadCache(), files,
+        maxWalSegSize);
   }
 
 }
