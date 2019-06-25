@@ -799,6 +799,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isRestricted()) {
           changed = ORestrictedAccessHook.onRecordBeforeCreate(doc, this);
         }
+        ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
       }
     }
 
@@ -842,6 +843,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_UPDATE, true))
             throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access");
         }
+        ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
       }
     }
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
@@ -1051,7 +1053,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           }
         }
         ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(doc, getSharedContext().getSecurity()));
-        ODocumentInternal.setPropertyEncryption(doc, new OPropertyEncryption());
+        ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
       }
     }
     return callbackHooks(ORecordHook.TYPE.BEFORE_READ, identifiable) == ORecordHook.RESULT.SKIP;
