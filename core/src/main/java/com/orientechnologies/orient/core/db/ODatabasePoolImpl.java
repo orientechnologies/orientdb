@@ -55,6 +55,8 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
       }
     });
 
+    ODatabaseRecordThreadLocal.instance().remove();
+
   }
 
   @Override
