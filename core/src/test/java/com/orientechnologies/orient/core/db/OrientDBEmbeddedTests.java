@@ -199,8 +199,21 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testPoolByUrl() {
-    ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
-    pool.close();
+
+    OrientDB orientDb = new OrientDB("embedded:./target", OrientDBConfig.defaultConfig());
+    orientDb.createIfNotExists("some", ODatabaseType.PLOCAL);
+
+    orientDb.close();
+
+    try {
+
+      ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
+      pool.close();
+
+    } finally {
+
+    }
+
   }
 
   @Test
