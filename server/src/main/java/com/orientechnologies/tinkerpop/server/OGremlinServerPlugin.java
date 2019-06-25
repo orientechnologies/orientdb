@@ -45,6 +45,7 @@ public class OGremlinServerPlugin extends OServerPluginAbstract implements OServ
 
     this.oServer = oServer;
     this.oServer.registerLifecycleListener(this);
+    this.config = new OGraphConfig(new ODocument());
 
   }
 
