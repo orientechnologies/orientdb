@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -386,7 +387,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
       } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
         cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
-      } else if (isFullTextIndex(index)) {
+      } else if (isFullTextIndex(index) || isFullTextHashIndex(index)) {
         cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
       } else {
         throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
@@ -402,6 +403,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private boolean isFullTextIndex(OIndex index) {
     return index.getType().equalsIgnoreCase("FULLTEXT") && !index.getAlgorithm().equalsIgnoreCase("LUCENE");
+  }
+
+  private boolean isFullTextHashIndex(OIndex index) {
+    return index.getType().equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()) && !index.getAlgorithm().equalsIgnoreCase("LUCENE");
   }
 
   private OIndexCursor getCursorForNullKey() {
