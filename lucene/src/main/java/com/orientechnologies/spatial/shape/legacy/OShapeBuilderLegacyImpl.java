@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class OShapeBuilderLegacyImpl implements OShapeBuilderLegacy<Shape> {
 
-  public static OShapeBuilderLegacyImpl INSTANCE = new OShapeBuilderLegacyImpl();
+  public static final OShapeBuilderLegacyImpl INSTANCE = new OShapeBuilderLegacyImpl();
   List<OShapeBuilderLegacy> builders = new ArrayList<OShapeBuilderLegacy>();
 
   protected OShapeBuilderLegacyImpl() {
