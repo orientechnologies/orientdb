@@ -30,7 +30,7 @@ import java.util.List;
 
 public class OPointShapeBuilder extends OShapeBuilder<Point> {
 
-  public static String NAME = "OPoint";
+  public static final String NAME = "OPoint";
 
   @Override
   public String getName() {
