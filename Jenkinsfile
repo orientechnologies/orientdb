@@ -45,9 +45,13 @@ node {
                     //sh "cd orientdb && rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                 }
 
-                build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
-                build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
-                build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
+                try{
+                  build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
+                  build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
+                  build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
+                }catch(ex){
+                    slackSend(color: '#FFFF99', channel: '#jenkins-failures', message: "WARN: not running downstream builds for Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${e}")
+                }
 
             }catch(e){
                 slackSend(color: '#FF0000', channel: '#jenkins-failures', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${e}")
