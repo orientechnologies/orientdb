@@ -23,7 +23,7 @@ public class OMethodCall extends SimpleNode {
       Arrays.asList(new String[] { "out", "in", "both", "outE", "inE", "bothE", "bothV", "outV", "inV" }));
 
   static Set<String> bidirectionalMethods = new HashSet<String>(
-      Arrays.asList(new String[] { "out", "in", "both", "oute", "ine", "inv", "outv" }));
+      Arrays.asList(new String[] { "out", "in", "both", "oute", "ine", "inv", "outv", "bothe", "bothv" }));
 
   protected OIdentifier methodName;
   protected List<OExpression> params = new ArrayList<OExpression>();
@@ -155,6 +155,14 @@ public class OMethodCall extends SimpleNode {
 
     if (straightName.equalsIgnoreCase("inV")) {
       return execute(targetObjects, ctx, "inE", params, null);
+    }
+
+    if (straightName.equalsIgnoreCase("bothE")) {
+      return execute(targetObjects, ctx, "bothV", params, null);
+    }
+
+    if (straightName.equalsIgnoreCase("bothV")) {
+      return execute(targetObjects, ctx, "bothE", params, null);
     }
 
     throw new UnsupportedOperationException("Invalid reverse traversal: " + methodName);
