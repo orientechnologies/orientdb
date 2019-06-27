@@ -155,7 +155,7 @@ public class OrientGraphQueryBuilder {
         condition = "<>";
         break;
       default:
-        throw new UnsupportedOperationException(String.format("Predicate %s not supported!", cond.toString()));
+        throw new UnsupportedOperationException(String.format("Predicate %s not supported!", compare.name()));
       }
       return condition;
     } else if (cond.getBiPredicate() instanceof Contains) {
@@ -169,12 +169,12 @@ public class OrientGraphQueryBuilder {
         condition = "NOT IN";
         break;
       default:
-        throw new UnsupportedOperationException(String.format("Predicate %s not supported!", cond.toString()));
+        throw new UnsupportedOperationException(String.format("Predicate %s not supported!", contains.name()));
       }
       return condition;
     }
 
-    throw new UnsupportedOperationException(String.format("Predicate %s not supported!", cond.toString()));
+    throw new UnsupportedOperationException("Predicate not supported!");
   }
 
   private boolean isLabelKey(String key) {

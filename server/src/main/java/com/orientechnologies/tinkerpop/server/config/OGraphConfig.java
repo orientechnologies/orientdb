@@ -37,7 +37,11 @@ public class OGraphConfig {
 
   public static OGraphConfig read(String file) throws Exception {
     final InputStream input = new FileInputStream(new File(file));
-    return read(input);
+    try {
+      return read(input);
+    } finally {
+      input.close();
+    }
   }
 
   public static OGraphConfig read(InputStream input) throws Exception {

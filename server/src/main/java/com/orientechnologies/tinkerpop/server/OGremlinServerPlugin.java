@@ -18,10 +18,7 @@ import org.apache.tinkerpop.gremlin.server.Settings;
 import org.apache.tinkerpop.gremlin.server.util.ServerGremlinExecutor;
 
 import javax.script.Bindings;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -78,9 +75,11 @@ public class OGremlinServerPlugin extends OServerPluginAbstract implements OServ
   public void onAfterActivate() {
 
     Settings settings;
+    InputStream cfg = null;
     try {
       OLogManager.instance().info(this, "Gremlin Server is starting up...");
-      settings = Settings.read(getServerConfig());
+      cfg = getServerConfig();
+      settings = Settings.read(cfg);
       gremlinServer = new GremlinServer(settings);
       CompletableFuture<ServerGremlinExecutor> start = gremlinServer.start();
 
@@ -90,6 +89,14 @@ public class OGremlinServerPlugin extends OServerPluginAbstract implements OServ
       OLogManager.instance().info(this, "Gremlin started correctly");
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on Gremlin Server startup", e);
+    } finally {
+      if(cfg!=null){
+        try {
+          cfg.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
     }
   }
 
