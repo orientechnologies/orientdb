@@ -1001,13 +1001,15 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
     for (MapRecordInfo recordInfo : positionsWithLengths) {
       String key = recordInfo.key;
       Object value;
-      if (recordInfo.fieldType.isEmbedded()) {
+      if (recordInfo.fieldType != null && recordInfo.fieldType.isEmbedded()) {
         value = new OResultBinary(schema, bytes.bytes, recordInfo.fieldStartOffset, recordInfo.fieldLength, this);
-      } else {
+      } else if (recordInfo.fieldStartOffset != 0) {
         int currentOffset = bytes.offset;
         bytes.offset = recordInfo.fieldStartOffset;
         value = deserializeValue(bytes, recordInfo.fieldType, null);
         bytes.offset = currentOffset;
+      } else {
+        value = null;
       }
       retVal.put(key, value);
     }
