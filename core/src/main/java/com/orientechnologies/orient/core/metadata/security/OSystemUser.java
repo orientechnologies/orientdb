@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.List;
 
 /**
+ *
  */
 public class OSystemUser extends OUser {
   private String databaseName;
@@ -83,9 +84,8 @@ public class OSystemUser extends OUser {
           }
         }
       }
-    }
-    // If databaseName is not set, only return roles without a OSystemRole.DB_FILTER property or if set to "*".
-    else {
+    } else {
+      // If databaseName is not set, only return roles without a OSystemRole.DB_FILTER property or if set to "*".
       if (roleDoc != null) {
         if (!roleDoc.containsField(OSystemRole.DB_FILTER)) {
           role = new OSystemRole(roleDoc);

@@ -54,40 +54,39 @@ import java.util.Map.Entry;
 @SuppressWarnings("unchecked")
 /**
  * Helper class to manage POJO by using the reflection.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @author Luca Molino
  * @author Jacques Desodt
- */
-public class OObjectSerializerHelper {
-  public static final Class<?>[]                            callbackAnnotationClasses = new Class[] { OBeforeDeserialization.class,
-      OAfterDeserialization.class, OBeforeSerialization.class, OAfterSerialization.class };
-  private static final Class<?>[]                           NO_ARGS                   = new Class<?>[] {};
-  private static final HashMap<String, List<Field>>         classes                   = new HashMap<String, List<Field>>();
-  private static final HashMap<String, Method>              callbacks                 = new HashMap<String, Method>();
-  private static final HashMap<String, Object>              getters                   = new HashMap<String, Object>();
-  private static final HashMap<String, Object>              setters                   = new HashMap<String, Object>();
-  private static final HashMap<Class<?>, Field>             boundDocumentFields       = new HashMap<Class<?>, Field>();
-  private static final HashMap<Class<?>, Field>             fieldIds                  = new HashMap<Class<?>, Field>();
-  private static final HashMap<Class<?>, Field>             fieldVersions             = new HashMap<Class<?>, Field>();
-  private static final HashMap<Class<?>, List<String>>      embeddedFields            = new HashMap<Class<?>, List<String>>();
-  public static HashMap<Class<?>, OObjectSerializerContext> serializerContexts        = new LinkedHashMap<Class<?>, OObjectSerializerContext>();
+ */ public class OObjectSerializerHelper {
+  public static final  Class<?>[]                                  callbackAnnotationClasses = new Class[] {
+      OBeforeDeserialization.class, OAfterDeserialization.class, OBeforeSerialization.class, OAfterSerialization.class };
+  private static final Class<?>[]                                  NO_ARGS                   = new Class<?>[] {};
+  private static final HashMap<String, List<Field>>                classes                   = new HashMap<String, List<Field>>();
+  private static final HashMap<String, Method>                     callbacks                 = new HashMap<String, Method>();
+  private static final HashMap<String, Object>                     getters                   = new HashMap<String, Object>();
+  private static final HashMap<String, Object>                     setters                   = new HashMap<String, Object>();
+  private static final HashMap<Class<?>, Field>                    boundDocumentFields       = new HashMap<Class<?>, Field>();
+  private static final HashMap<Class<?>, Field>                    fieldIds                  = new HashMap<Class<?>, Field>();
+  private static final HashMap<Class<?>, Field>                    fieldVersions             = new HashMap<Class<?>, Field>();
+  private static final HashMap<Class<?>, List<String>>             embeddedFields            = new HashMap<Class<?>, List<String>>();
+  public static        HashMap<Class<?>, OObjectSerializerContext> serializerContexts        = new LinkedHashMap<Class<?>, OObjectSerializerContext>();
   @SuppressWarnings("rawtypes")
-  public static Class                                       jpaIdClass;
+  public static        Class                                       jpaIdClass;
   @SuppressWarnings("rawtypes")
-  public static Class                                       jpaVersionClass;
+  public static        Class                                       jpaVersionClass;
   @SuppressWarnings("rawtypes")
-  public static Class                                       jpaAccessClass;
+  public static        Class                                       jpaAccessClass;
   @SuppressWarnings("rawtypes")
-  public static Class                                       jpaEmbeddedClass;
+  public static        Class                                       jpaEmbeddedClass;
   @SuppressWarnings("rawtypes")
-  public static Class                                       jpaTransientClass;
+  public static        Class                                       jpaTransientClass;
   @SuppressWarnings("rawtypes")
-  public static Class                                       jpaOneToOneClass;
+  public static        Class                                       jpaOneToOneClass;
   @SuppressWarnings("rawtypes")
-  public static Class                                       jpaOneToManyClass;
+  public static        Class                                       jpaOneToManyClass;
   @SuppressWarnings("rawtypes")
-  public static Class                                       jpaManyToManyClass;
+  public static        Class                                       jpaManyToManyClass;
 
   static {
     try {
@@ -182,8 +181,8 @@ public class OObjectSerializerHelper {
       Object o = setters.get(className + "." + iProperty);
 
       if (o instanceof Method) {
-        ((Method) o).invoke(iPojo,
-            OObjectSerializerHelper.convertInObject(iPojo, iProperty, iValue, ((Method) o).getParameterTypes()[0]));
+        ((Method) o)
+            .invoke(iPojo, OObjectSerializerHelper.convertInObject(iPojo, iProperty, iValue, ((Method) o).getParameterTypes()[0]));
       } else if (o instanceof Field) {
         ((Field) o).set(iPojo, OType.convert(iValue, ((Field) o).getType()));
       }
@@ -336,11 +335,9 @@ public class OObjectSerializerHelper {
 
   /**
    * Serialize the user POJO to a ORecordDocument instance.
-   * 
-   * @param iPojo
-   *          User pojo to serialize
-   * @param iRecord
-   *          Record where to update
+   *
+   * @param iPojo           User pojo to serialize
+   * @param iRecord         Record where to update
    * @param iObj2RecHandler
    */
   public static ODocument toStream(final Object iPojo, final ODocument iRecord, final OEntityManager iEntityManager,
@@ -646,9 +643,9 @@ public class OObjectSerializerHelper {
 
   /**
    * Returns the declared generic types of a class.
-   * 
-   * @param iObject
-   *          Class to examine
+   *
+   * @param iObject Class to examine
+   *
    * @return The array of Type if any, otherwise null
    */
   public static Type[] getGenericTypes(final Object iObject) {
@@ -672,11 +669,8 @@ public class OObjectSerializerHelper {
         else
           m.invoke(iPojo);
       } catch (Exception e) {
-        throw OException
-            .wrapException(
-                new OConfigurationException(
-                    "Error on executing user callback '" + m.getName() + "' annotated with '" + iAnnotation.getSimpleName() + "'"),
-                e);
+        throw OException.wrapException(new OConfigurationException(
+            "Error on executing user callback '" + m.getName() + "' annotated with '" + iAnnotation.getSimpleName() + "'"), e);
       }
   }
 
@@ -698,7 +692,7 @@ public class OObjectSerializerHelper {
     int fieldModifier;
     boolean autoBinding;
 
-    for (Class<?> currentClass = iClass; currentClass != Object.class;) {
+    for (Class<?> currentClass = iClass; currentClass != Object.class; ) {
       for (Field f : currentClass.getDeclaredFields()) {
         fieldModifier = f.getModifiers();
         if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
@@ -722,7 +716,7 @@ public class OObjectSerializerHelper {
         autoBinding = true;
         if (f.getAnnotation(OAccess.class) == null || f.getAnnotation(OAccess.class).value() == OAccess.OAccessType.PROPERTY)
           autoBinding = true;
-        // JPA 2+ AVAILABLE?
+          // JPA 2+ AVAILABLE?
         else if (jpaAccessClass != null) {
           Annotation ann = f.getAnnotation(jpaAccessClass);
           if (ann != null) {
@@ -740,9 +734,8 @@ public class OObjectSerializerHelper {
           // RECORD ID
           fieldIds.put(iClass, f);
           idFound = true;
-        }
-        // JPA 1+ AVAILABLE?
-        else if (jpaIdClass != null && f.getAnnotation(jpaIdClass) != null) {
+        } else if (jpaIdClass != null && f.getAnnotation(jpaIdClass) != null) {
+          // JPA 1+ AVAILABLE?
           // RECORD ID
           fieldIds.put(iClass, f);
           idFound = true;
@@ -750,12 +743,12 @@ public class OObjectSerializerHelper {
         if (idFound) {
           // CHECK FOR TYPE
           if (fieldType.isPrimitive())
-            OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Record Id",
-                f.toString());
+            OLogManager.instance()
+                .warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Record Id", f.toString());
           else if (!ORID.class.isAssignableFrom(fieldType) && fieldType != String.class && fieldType != Object.class
               && !Number.class.isAssignableFrom(fieldType))
-            OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
-                fieldType);
+            OLogManager.instance()
+                .warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(), fieldType);
         }
 
         boolean vFound = false;
@@ -763,9 +756,8 @@ public class OObjectSerializerHelper {
           // RECORD ID
           fieldVersions.put(iClass, f);
           vFound = true;
-        }
-        // JPA 1+ AVAILABLE?
-        else if (jpaVersionClass != null && f.getAnnotation(jpaVersionClass) != null) {
+        } else if (jpaVersionClass != null && f.getAnnotation(jpaVersionClass) != null) {
+          // JPA 1+ AVAILABLE?
           // RECORD ID
           fieldVersions.put(iClass, f);
           vFound = true;
@@ -773,11 +765,11 @@ public class OObjectSerializerHelper {
         if (vFound) {
           // CHECK FOR TYPE
           if (fieldType.isPrimitive())
-            OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Version",
-                f.toString());
+            OLogManager.instance()
+                .warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Version", f.toString());
           else if (fieldType != String.class && fieldType != Object.class && !Number.class.isAssignableFrom(fieldType))
-            OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
-                fieldType);
+            OLogManager.instance()
+                .warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(), fieldType);
         }
 
         // JPA 1+ AVAILABLE?

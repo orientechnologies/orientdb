@@ -70,8 +70,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           ODocumentDelta updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
           ORecordOperation op = new ORecordOperation(updateRecord, type);
           ops.add(op);
-        }
-        else{
+        } else{
           record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
           ORecordInternal.setRecordSerializer(record, database.getSerializer());
         }

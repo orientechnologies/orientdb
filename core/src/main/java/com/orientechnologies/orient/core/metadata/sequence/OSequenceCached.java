@@ -138,8 +138,7 @@ public class OSequenceCached extends OSequence {
     } else {
       try{
         return sendSequenceActionSetAndNext(currentValue);
-      }
-      catch (InterruptedException | ExecutionException exc){
+      } catch (InterruptedException | ExecutionException exc){
         OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }

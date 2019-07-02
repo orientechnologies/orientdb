@@ -83,7 +83,8 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
     } finally {
       if (db != null)
         db.close();
-    } return false;
+    }
+    return false;
   }
 
   @Override

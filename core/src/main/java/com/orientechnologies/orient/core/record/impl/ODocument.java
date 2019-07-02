@@ -360,8 +360,7 @@ public class ODocument extends ORecordAbstract
       return Stream.empty();
 
     return fields.entrySet().stream()
-        .filter(s -> s.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(s.getKey())))
-        .map(Entry::getKey);
+        .filter(s -> s.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(s.getKey()))).map(Entry::getKey);
   }
 
   @Override
@@ -1784,9 +1783,8 @@ public class ODocument extends ORecordAbstract
       ODocument to = (ODocument) toObj;
       ODocumentDelta from = (ODocumentDelta) fromObj;
       mergeDocumentToDocument(to, from);
-    }
-    //here processing nested lists
-    else if (fromType.isList() && toType.isList()) {
+    } else if (fromType.isList() && toType.isList()) {
+      //here processing nested lists
       //this case should only happen with list of documents
       List fromList = (List) fromObj;
       List toList = (List) toObj;
@@ -1948,8 +1946,7 @@ public class ODocument extends ORecordAbstract
       public boolean hasNext() {
         while (iterator.hasNext()) {
           current = iterator.next();
-          if (current.getValue().exist() && (propertyAccess == null || propertyAccess
-              .isReadable(current.getKey()))) {
+          if (current.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(current.getKey()))) {
             read = false;
             return true;
           }

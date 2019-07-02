@@ -27,20 +27,17 @@ import javax.security.auth.login.Configuration;
 
 /**
  * Custom Kerberos client login configuration.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
-public class OKrb5ClientLoginModuleConfig extends Configuration
-{
-	private final String loginModule = "com.sun.security.auth.module.Krb5LoginModule";
+public class OKrb5ClientLoginModuleConfig extends Configuration {
+  private final String loginModule = "com.sun.security.auth.module.Krb5LoginModule";
 
-	private final AppConfigurationEntry[] appConfigEntries = new AppConfigurationEntry[1];
+  private final AppConfigurationEntry[] appConfigEntries = new AppConfigurationEntry[1];
 
-	public AppConfigurationEntry[] getAppConfigurationEntry(String applicationName)
-	{
-		return appConfigEntries;
-	}
+  public AppConfigurationEntry[] getAppConfigurationEntry(String applicationName) {
+    return appConfigEntries;
+  }
 /*
 	public OKrb5ClientLoginModuleConfig(String ccPath)
 	{
@@ -57,47 +54,40 @@ public class OKrb5ClientLoginModuleConfig extends Configuration
 	}
 */
 
-	public OKrb5ClientLoginModuleConfig(String principal, String ccPath, String ktPath)
-	{
-		this(principal, true, ccPath, ktPath);
-	}
+  public OKrb5ClientLoginModuleConfig(String principal, String ccPath, String ktPath) {
+    this(principal, true, ccPath, ktPath);
+  }
 
-	public OKrb5ClientLoginModuleConfig(String principal, boolean useTicketCache, String ccPath, String ktPath)
-	{
-		final Map<String, Object> options = new HashMap<String, Object>();
+  public OKrb5ClientLoginModuleConfig(String principal, boolean useTicketCache, String ccPath, String ktPath) {
+    final Map<String, Object> options = new HashMap<String, Object>();
 
-		options.put("principal", principal);
+    options.put("principal", principal);
 
-		// This is the default, but let's be specific.
-		// If isInitiator is true, then acquiring a TGT is mandatory.
-		// If we're using a valid ticket cache then we should already have a TGT and this is technically not needed.
-		// If not, and we use the keytab for authentication, then we'll have to acquire a TGT.
-		options.put("isInitiator", "true");
-		
-		if(ccPath != null && ccPath.length() > 0)
-		{
-			if(useTicketCache)
-			{
-				options.put("useTicketCache", "true");
-				options.put("ticketCache", ccPath);
-			}
-			else
-			{
-				options.put("useTicketCache", "false");
-			}
-		}
+    // This is the default, but let's be specific.
+    // If isInitiator is true, then acquiring a TGT is mandatory.
+    // If we're using a valid ticket cache then we should already have a TGT and this is technically not needed.
+    // If not, and we use the keytab for authentication, then we'll have to acquire a TGT.
+    options.put("isInitiator", "true");
 
-		if(ktPath != null && ktPath.length() > 0)
-		{
-			options.put("useKeyTab", "true");
-			options.put("keyTab", ktPath);
-			
-			// storeKey is essential or else you'll get an "Invalid argument (400) - Cannot find key of appropriate type to decrypt AP REP" in your acceptSecContext() call.
-			options.put("storeKey", "true");
-		}
+    if (ccPath != null && ccPath.length() > 0) {
+      if (useTicketCache) {
+        options.put("useTicketCache", "true");
+        options.put("ticketCache", ccPath);
+      } else {
+        options.put("useTicketCache", "false");
+      }
+    }
 
-		options.put("doNotPrompt", "true");
+    if (ktPath != null && ktPath.length() > 0) {
+      options.put("useKeyTab", "true");
+      options.put("keyTab", ktPath);
 
-		appConfigEntries[0] = new AppConfigurationEntry(loginModule, AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options);
-	}
+      // storeKey is essential or else you'll get an "Invalid argument (400) - Cannot find key of appropriate type to decrypt AP REP" in your acceptSecContext() call.
+      options.put("storeKey", "true");
+    }
+
+    options.put("doNotPrompt", "true");
+
+    appConfigEntries[0] = new AppConfigurationEntry(loginModule, AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options);
+  }
 }

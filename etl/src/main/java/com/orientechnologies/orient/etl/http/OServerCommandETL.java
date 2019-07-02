@@ -38,8 +38,7 @@ public class OServerCommandETL extends OServerCommandAuthenticatedServerAbstract
     if ("status".equalsIgnoreCase(parts[1])) {
       ODocument status = handler.status();
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, status.toJSON("prettyPrint"), null);
-    }
-    else {
+    } else {
       throw new IllegalArgumentException("");
     }
   }
@@ -50,8 +49,7 @@ public class OServerCommandETL extends OServerCommandAuthenticatedServerAbstract
       ODocument cfg = new ODocument().fromJSON(iRequest.content);
       handler.executeImport(cfg, super.server);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-    }
-    else if ("save-config".equalsIgnoreCase(parts[1])) {
+    } else if ("save-config".equalsIgnoreCase(parts[1])) {
       ODocument args = new ODocument().fromJSON(iRequest.content);
       try {
         handler.saveConfiguration(args, super.server);

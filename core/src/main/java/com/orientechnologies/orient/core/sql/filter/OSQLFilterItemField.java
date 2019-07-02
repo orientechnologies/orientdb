@@ -50,8 +50,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   protected String[]    preLoadedFieldsArray;
   protected String      name;
   protected OCollate    collate;
-  private boolean       collatePreset = false;
-  private String        stringValue;
+  private   boolean     collatePreset = false;
+  private   String      stringValue;
 
   /**
    * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
@@ -151,15 +151,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     BytesContainer serialized = new BytesContainer(rec.toStream());
     byte version = serialized.bytes[serialized.offset++];
     ODocumentSerializer serializer = ORecordSerializerBinary.INSTANCE.getSerializer(version);
-    
+
     //check for embedded objects, they have invalid ID and they are serialized with class name
-    if (!serializer.isSerializingClassNameByDefault()){
-      return ORecordSerializerBinary.INSTANCE.getSerializer(version).deserializeField(serialized,
-          rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
-    }
-    else{
-      return serializer.deserializeFieldWithClassName(serialized,
-          rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
+    if (!serializer.isSerializingClassNameByDefault()) {
+      return ORecordSerializerBinary.INSTANCE.getSerializer(version)
+          .deserializeField(serialized, rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
+    } else {
+      return serializer
+          .deserializeFieldWithClassName(serialized, rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
     }
   }
 
@@ -210,6 +209,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
    * Creates {@code FieldChain} in case when filter item can have such representation.
    *
    * @return {@code FieldChain} representation of this filter item.
+   *
    * @throws IllegalStateException if this filter item cannot be represented as {@code FieldChain}.
    */
   public FieldChain getFieldChain() {
@@ -232,6 +232,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
    * get the collate of this expression, based on the fully evaluated field chain starting from the passed object.
    *
    * @param doc the root element (document?) of this field chain
+   *
    * @return the collate, null if no collate is defined
    */
   public OCollate getCollate(Object doc) {

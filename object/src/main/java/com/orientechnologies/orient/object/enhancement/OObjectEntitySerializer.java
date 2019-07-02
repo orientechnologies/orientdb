@@ -573,9 +573,8 @@ public class OObjectEntitySerializer {
             // RECORD ID
             serializedSchema.fieldIds.put(currentClass, f);
             idFound = true;
-          }
-          // JPA 1+ AVAILABLE?
-          else if (OObjectSerializerHelper.jpaIdClass != null && f.getAnnotation(OObjectSerializerHelper.jpaIdClass) != null) {
+          } else if (OObjectSerializerHelper.jpaIdClass != null && f.getAnnotation(OObjectSerializerHelper.jpaIdClass) != null) {
+            // JPA 1+ AVAILABLE?
             // RECORD ID
             serializedSchema.fieldIds.put(currentClass, f);
             idFound = true;
@@ -596,10 +595,9 @@ public class OObjectEntitySerializer {
             // RECORD ID
             serializedSchema.fieldVersions.put(currentClass, f);
             vFound = true;
-          }
-          // JPA 1+ AVAILABLE?
-          else if (OObjectSerializerHelper.jpaVersionClass != null
+          } else if (OObjectSerializerHelper.jpaVersionClass != null
               && f.getAnnotation(OObjectSerializerHelper.jpaVersionClass) != null) {
+            // JPA 1+ AVAILABLE?
             // RECORD ID
             serializedSchema.fieldVersions.put(currentClass, f);
             vFound = true;
@@ -793,7 +791,7 @@ public class OObjectEntitySerializer {
       if (fieldClass.isArray()) {
         if (OType.BINARY.equals(iType))
           return iFieldValue;
-          
+
         // ARRAY
         final int arrayLength = Array.getLength(iFieldValue);
         final List<Object> arrayList = new ArrayList<Object>();

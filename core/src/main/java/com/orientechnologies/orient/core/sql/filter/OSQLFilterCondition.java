@@ -58,11 +58,11 @@ import java.util.regex.Pattern;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLFilterCondition {
-  private static final String NULL_VALUE = "null";
-  protected Object            left;
-  protected OQueryOperator    operator;
-  protected Object            right;
-  protected boolean           inBraces   = false;
+  private static final String         NULL_VALUE = "null";
+  protected            Object         left;
+  protected            OQueryOperator operator;
+  protected            Object         right;
+  protected            boolean        inBraces   = false;
 
   public OSQLFilterCondition(final Object iLeft, final OQueryOperator iOperator) {
     this.left = iLeft;
@@ -76,7 +76,9 @@ public class OSQLFilterCondition {
   }
 
   public Object evaluate(final OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
-    boolean binaryEvaluation = operator != null && operator.isSupportingBinaryEvaluate() && iCurrentRecord!= null && iCurrentRecord.getIdentity().isPersistent();
+    boolean binaryEvaluation =
+        operator != null && operator.isSupportingBinaryEvaluate() && iCurrentRecord != null && iCurrentRecord.getIdentity()
+            .isPersistent();
 
     if (left instanceof OSQLQuery<?>)
       // EXECUTE SUB QUERIES ONLY ONCE
@@ -133,7 +135,6 @@ public class OSQLFilterCondition {
     if (binaryEvaluation)
       binaryEvaluation = l instanceof OBinaryField && r instanceof OBinaryField;
 
-
     if (!binaryEvaluation) {
       // no collate for regular expressions, otherwise quotes will result in no match
       final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate(iCurrentRecord);
@@ -146,7 +147,8 @@ public class OSQLFilterCondition {
 
     Object result;
     try {
-      result = operator.evaluateRecord(iCurrentRecord, iCurrentResult, this, l, r, iContext, ORecordSerializerBinary.INSTANCE.getCurrentSerializer());
+      result = operator.evaluateRecord(iCurrentRecord, iCurrentResult, this, l, r, iContext,
+          ORecordSerializerBinary.INSTANCE.getCurrentSerializer());
     } catch (OCommandExecutionException e) {
       throw e;
     } catch (Exception e) {
@@ -212,8 +214,8 @@ public class OSQLFilterCondition {
     if (left != null) {
       if (left instanceof OSQLFilterItemField) {
         if (((OSQLFilterItemField) left).isFieldChain()) {
-          list.add(((OSQLFilterItemField) left).getFieldChain().getItemName(
-              ((OSQLFilterItemField) left).getFieldChain().getItemCount() - 1));
+          list.add(((OSQLFilterItemField) left).getFieldChain()
+              .getItemName(((OSQLFilterItemField) left).getFieldChain().getItemCount() - 1));
         }
       } else if (left instanceof OSQLFilterCondition) {
         ((OSQLFilterCondition) left).getInvolvedFields(list);
@@ -340,8 +342,8 @@ public class OSQLFilterCondition {
       try {
         return new Date(new Double(stringValue).longValue());
       } catch (Exception pe2) {
-        throw OException.wrapException(new OQueryParsingException("Error on conversion of date '" + stringValue
-            + "' using the format: " + formatter.toPattern()), pe2);
+        throw OException.wrapException(new OQueryParsingException(
+            "Error on conversion of date '" + stringValue + "' using the format: " + formatter.toPattern()), pe2);
       }
     }
   }
@@ -426,17 +428,15 @@ public class OSQLFilterCondition {
 
     try {
       // DEFINED OPERATOR
-      if ((oldR instanceof String && oldR.equals(OSQLHelper.DEFINED))
-          || (oldL instanceof String && oldL.equals(OSQLHelper.DEFINED))) {
+      if ((oldR instanceof String && oldR.equals(OSQLHelper.DEFINED)) || (oldL instanceof String && oldL
+          .equals(OSQLHelper.DEFINED))) {
         result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
-      }
-
-      // NOT_NULL OPERATOR
-      else if ((oldR instanceof String && oldR.equals(OSQLHelper.NOT_NULL))
-          || (oldL instanceof String && oldL.equals(OSQLHelper.NOT_NULL))) {
+      } else if ((oldR instanceof String && oldR.equals(OSQLHelper.NOT_NULL)) || (oldL instanceof String && oldL
+          .equals(OSQLHelper.NOT_NULL))) {
+        // NOT_NULL OPERATOR
         result = null;
-      } else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass())
-          && !r.getClass().isAssignableFrom(l.getClass()))
+      } else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass()) && !r.getClass()
+          .isAssignableFrom(l.getClass()))
       // INTEGERS
       {
         if (r instanceof Integer && !(l instanceof Number || l instanceof Collection)) {
@@ -457,26 +457,23 @@ public class OSQLFilterCondition {
               && !(r instanceof Map)) {
             result = new Object[] { l, getInteger(r) };
           }
-        }
-
-        // DATES
-        else if (r instanceof Date && !(l instanceof Collection || l instanceof Date)) {
+        } else if (r instanceof Date && !(l instanceof Collection || l instanceof Date)) {
+          // DATES
           result = new Object[] { getDate(l), r };
         } else if (l instanceof Date && !(r instanceof Collection || r instanceof Date)) {
+          // DATES
           result = new Object[] { l, getDate(r) };
-        }
-
-        // FLOATS
-        else if (r instanceof Float && !(l instanceof Float || l instanceof Collection)) {
+        } else if (r instanceof Float && !(l instanceof Float || l instanceof Collection)) {
+          // FLOATS
           result = new Object[] { getFloat(l), r };
         } else if (l instanceof Float && !(r instanceof Float || r instanceof Collection)) {
+          // FLOATS
           result = new Object[] { l, getFloat(r) };
-        }
-
-        // RIDS
-        else if (r instanceof ORID && l instanceof String && !oldL.equals(OSQLHelper.NOT_NULL)) {
+        } else if (r instanceof ORID && l instanceof String && !oldL.equals(OSQLHelper.NOT_NULL)) {
+          // RIDS
           result = new Object[] { new ORecordId((String) l), r };
         } else if (l instanceof ORID && r instanceof String && !oldR.equals(OSQLHelper.NOT_NULL)) {
+          // RIDS
           result = new Object[] { l, new ORecordId((String) r) };
         }
       }

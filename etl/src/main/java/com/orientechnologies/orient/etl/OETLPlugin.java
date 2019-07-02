@@ -44,20 +44,19 @@ public class OETLPlugin extends OServerPluginAbstract {
 
   private OServer server;
 
-  public OETLPlugin() {}
+  public OETLPlugin() {
+  }
 
   public void executeJob(String jsonConfig, String outDBConfigPath, OPluginMessageHandler messageHandler) {
-
     System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
     if (jsonConfig == null) {
       System.out.println("Syntax error, missing configuration file.");
-    }
-    else {
-      String[] args = {outDBConfigPath};
+    } else {
+      String[] args = { outDBConfigPath };
       final OETLProcessor processor = new OETLProcessorConfigurator().parseConfigAndParameters(args);
 
       // overriding default message handler if the chosen verbosity level is different from the default one
-      if(messageHandler.getOutputManagerLevel() != OETLContextWrapper.getInstance().getMessageHandler().getOutputManagerLevel()) {
+      if (messageHandler.getOutputManagerLevel() != OETLContextWrapper.getInstance().getMessageHandler().getOutputManagerLevel()) {
         OETLContextWrapper.getInstance().setMessageHandler(messageHandler);
       }
 

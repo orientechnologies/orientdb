@@ -81,8 +81,7 @@ public class OMigrationConfigManager {
     String outDBConfigPath;
     if(configName == null) {
       outDBConfigPath = buildConfigurationFilePath(outOrientGraphUri, configFileDefaultName);
-    }
-    else {
+    } else {
       if(!configName.endsWith(".json")) {
         configName += ".json";
       }
