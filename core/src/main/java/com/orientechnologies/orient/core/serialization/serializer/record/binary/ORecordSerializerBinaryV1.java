@@ -473,9 +473,8 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
             getLinkedType(document, type, field.getKey()));
         int valueLength = dataPointerAndLength.getSecondVal();
         OVarIntSerializer.write(headerBuffer, valueLength);
-      }
-      //handle null fields
-      else {
+      } else {
+        //handle null fields
         OVarIntSerializer.write(headerBuffer, 0);
         type = OType.ANY;
       }
@@ -737,7 +736,8 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         serializeValue(bytes, value, type, null);
       } else {
         //signal for null value
-        OByteSerializer.INSTANCE.serialize((byte) -1, bytes.bytes, bytes.alloc(1));
+        int pointer = bytes.alloc(1);
+        OByteSerializer.INSTANCE.serialize((byte) -1, bytes.bytes, pointer);
       }
     }
 
@@ -778,17 +778,20 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       OType keyType = readOType(bytes, false);
       String key = readString(bytes);
       OType valueType = HelperClasses.readType(bytes);
-      if (valueType != null) {        
-        MapRecordInfo recordInfo = new MapRecordInfo();
+      MapRecordInfo recordInfo = new MapRecordInfo();
+      recordInfo.fieldType = valueType;
+      recordInfo.key = key;
+      recordInfo.keyType = keyType;
+      int currentOffset = bytes.offset;
+
+      if (valueType != null) {
         recordInfo.fieldStartOffset = bytes.offset;
-        recordInfo.fieldType = valueType;
-        recordInfo.key = key;
-        recordInfo.keyType = keyType;
-        int currentOffset = bytes.offset;
-
-        deserializeValue(bytes, valueType, null, true, -1, serializerVersion, true);
+        deserializeValue(bytes, valueType, null, true, -1,serializerVersion, true);
         recordInfo.fieldLength = bytes.offset - currentOffset;
-
+        retList.add(recordInfo);
+      } else {
+        recordInfo.fieldStartOffset = 0;
+        recordInfo.fieldLength = 0;
         retList.add(recordInfo);
       }
     }

@@ -40,9 +40,9 @@ import java.util.*;
 @RunWith(Parameterized.class)
 public class ORecordSerializerBinaryTest {
 
-  private static ODatabaseDocumentTx db = null;
-  private final ORecordSerializerBinary serializer;
-  private final int                     serializerVersion;
+  private static ODatabaseDocumentTx     db = null;
+  private final  ORecordSerializerBinary serializer;
+  private final  int                     serializerVersion;
 
   @Parameterized.Parameters
   public static Collection<Object[]> generateParams() {
@@ -252,9 +252,17 @@ public class ORecordSerializerBinaryTest {
     embeddedListElement.field("InnerTestFields", setValue);
     map.put("first", embeddedListElement);
     map.put("second", setValue2);
+    map.put("fake", setValue2);
+    map.put("mock", setValue2);
+    map.put("embed", "Super Embedded field numbe");
+    map.put("nullValue", null);
 
     root.field("TestEmbeddedMap", map, OType.EMBEDDEDMAP);
     byte[] rootBytes = serializer.toStream(root, false);
+
+    ODocument doc = new ODocument();
+
+    serializer.fromStream(rootBytes, doc, null);
 
     Map deserializedMap = serializer.deserializeFieldFromRoot(rootBytes, "TestEmbeddedMap");
     OResultBinary firstValDeserialized = (OResultBinary) deserializedMap.get("first");
@@ -265,6 +273,9 @@ public class ORecordSerializerBinaryTest {
 
     Integer secondDeserializedValue = (Integer) deserializedMap.get("second");
     Assert.assertEquals(setValue2, secondDeserializedValue);
+
+    Assert.assertTrue(deserializedMap.containsKey("nullValue"));
+    Assert.assertNull(deserializedMap.get("nullValue"));
   }
 
   private void decreasePositionsBy(byte[] recordBytes, int stepSize, boolean isNested) {
