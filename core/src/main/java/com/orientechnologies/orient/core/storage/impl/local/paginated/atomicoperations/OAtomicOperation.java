@@ -108,7 +108,8 @@ public final class OAtomicOperation {
 
       if (checkChangesFilledUpTo(changesContainer, pageIndex)) {
         if (pageChangesContainer == null) {
-          final OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
+          final OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages,
+              writeCache, pageCount, verifyChecksum);
           if (delegate != null) {
             pageChangesContainer = new OCacheEntryChanges(verifyChecksum);
             changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
