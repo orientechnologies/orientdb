@@ -40,8 +40,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.config.*;
-import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -385,13 +383,11 @@ public class OServer {
     } else {
       OServerConfiguration configuration = getConfiguration();
 
-      configuration.distributed = ODistributedConfig.fromEnv(configuration.distributed);
-
       if (configuration.distributed != null && configuration.distributed.enabled) {
         try {
-
-          databases = OrientDBInternal
-              .distributed(this.databaseDirectory, ODistributedConfig.buildConfig(contextConfiguration, configuration.distributed));
+          OrientDBConfig orientDBConfig = ODistributedConfig
+              .buildConfig(contextConfiguration, ODistributedConfig.fromEnv(configuration.distributed));
+          databases = OrientDBInternal.distributed(this.databaseDirectory, orientDBConfig);
         } catch (ODatabaseException ex) {
           databases = OrientDBInternal.embedded(this.databaseDirectory, config);
         }
