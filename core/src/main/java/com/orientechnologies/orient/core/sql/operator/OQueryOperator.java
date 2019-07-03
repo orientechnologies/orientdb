@@ -42,7 +42,7 @@ import java.util.List;
 
 /**
  * Query Operators. Remember to handle the operator in OQueryItemCondition.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OQueryOperator {
@@ -104,12 +104,12 @@ public abstract class OQueryOperator {
   }
 
   public abstract Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult,
-      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, 
+      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight,
       OCommandContext iContext, final ODocumentSerializer serializer);
 
   /**
    * Returns hint how index can be used to calculate result of operator execution.
-   * 
+   *
    * @param iLeft
    *          Value of left query parameter.
    * @param iRight
@@ -127,7 +127,7 @@ public abstract class OQueryOperator {
   /**
    * Performs index query and returns index cursor which presents subset of index data which corresponds to result of execution of
    * given operator.
-   * 
+   *
    * <p/>
    * Query that should be executed can be presented like: [[property0 = keyParam0] and [property1 = keyParam1] and] propertyN
    * operator keyParamN.
@@ -136,8 +136,8 @@ public abstract class OQueryOperator {
    * method execute query using given parameters.
    * <p/>
    * Multiple parameters are passed in to implement composite indexes support.
-   * 
-   * 
+   *
+   *
    * @param iContext
    * @param index
    *          Instance of index that will be used to calculate result of operator execution.
@@ -159,7 +159,7 @@ public abstract class OQueryOperator {
 
   /**
    * Default State-less implementation: does not save parameters and just return itself
-   * 
+   *
    * @param iParams
    * @return
    */
@@ -181,7 +181,7 @@ public abstract class OQueryOperator {
 
   /**
    * Check priority of this operator compare to given operator.
-   * 
+   *
    * @param other
    * @return ORDER place of this operator compared to given operator
    */

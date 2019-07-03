@@ -87,7 +87,7 @@ public interface OStorageConfiguration {
   String getUuid();
 
 
-    final class IndexEngineData {
+  final class IndexEngineData {
     private final String              name;
     private final String              algorithm;
     private final String              indexType;

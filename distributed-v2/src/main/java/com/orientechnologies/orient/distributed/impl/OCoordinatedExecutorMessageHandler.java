@@ -69,7 +69,7 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
     }
   }
 
-    @Override
+  @Override
   public void executeStructuralSubmitRequest(ONodeIdentity sender, ONetworkStructuralSubmitRequest request) {
     OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
     distributedContext.execute(sender, request.getOperationId(), request.getRequest());

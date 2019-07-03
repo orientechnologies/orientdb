@@ -70,7 +70,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           ODocumentDelta updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
           ORecordOperation op = new ORecordOperation(updateRecord, type);
           ops.add(op);
-        } else{
+        } else {
           record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
           ORecordInternal.setRecordSerializer(record, database.getSerializer());
         }
@@ -153,9 +153,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
             database.getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
           }
         }
-      }
-      if (onlyExecutorCase) {
-        createdRecords.put(change.getRID().copy(), change.getRecord());
+        if (onlyExecutorCase) {
+          createdRecords.put(change.getRID().copy(), change.getRecord());
+        }
       }
       break;
       case ORecordOperation.UPDATED: {
@@ -185,8 +185,8 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
                 .onSequenceUpdated(database, updateDoc);
           }
         }
+        updatedRecords.put(change.getRID(), change.getRecord());
       }
-      updatedRecords.put(change.getRID(), change.getRecord());
       break;
       case ORecordOperation.DELETED: {
         ODocument doc = (ODocument) change.getRecord();
@@ -209,8 +209,8 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         }
         OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, database);
         OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, database);
+        deletedRecord.add(change.getRID());
       }
-      deletedRecord.add(change.getRID());
       break;
       case ORecordOperation.LOADED:
         break;

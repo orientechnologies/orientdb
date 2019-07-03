@@ -32,7 +32,6 @@ import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
  */
 public class OMetadataObject implements OMetadataInternal {
 
@@ -123,7 +122,7 @@ public class OMetadataObject implements OMetadataInternal {
     return underlying.getSequenceLibrary();
   }
 
-    @Override
+  @Override
   public OScheduler getScheduler() {
     return underlying.getScheduler();
   }

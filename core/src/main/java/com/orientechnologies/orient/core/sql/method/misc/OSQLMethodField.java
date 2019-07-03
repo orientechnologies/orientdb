@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import java.util.*;
 
 /**
- * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -48,7 +47,7 @@ public class OSQLMethodField extends OAbstractSQLMethod {
     final String paramAsString = iParams[0].toString();
 
     if (ioResult != null) {
-      if(ioResult instanceof Iterable && !(ioResult instanceof ODocument)){
+      if (ioResult instanceof Iterable && !(ioResult instanceof ODocument)) {
         ioResult = ((Iterable) ioResult).iterator();
       }
       if (ioResult instanceof String) {
@@ -60,17 +59,17 @@ public class OSQLMethodField extends OAbstractSQLMethod {
         }
       } else if (ioResult instanceof OIdentifiable) {
         ioResult = ((OIdentifiable) ioResult).getRecord();
-      } else if (ioResult instanceof Collection<?> || ioResult instanceof Iterator<?>
-          || ioResult.getClass().isArray()) {
+      } else if (ioResult instanceof Collection<?> || ioResult instanceof Iterator<?> || ioResult.getClass().isArray()) {
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(ioResult));
         for (Object o : OMultiValue.getMultiValueIterable(ioResult, false)) {
           Object newlyAdded = ODocumentHelper.getFieldValue(o, paramAsString);
           if (OMultiValue.isMultiValue(newlyAdded)) {
-            if(newlyAdded instanceof Map || newlyAdded instanceof OIdentifiable){
+            if (newlyAdded instanceof Map || newlyAdded instanceof OIdentifiable) {
               result.add(newlyAdded);
-            }else for (Object item : OMultiValue.getMultiValueIterable(newlyAdded)) {
-              result.add(item);
-            }
+            } else
+              for (Object item : OMultiValue.getMultiValueIterable(newlyAdded)) {
+                result.add(item);
+              }
           } else {
             result.add(newlyAdded);
           }

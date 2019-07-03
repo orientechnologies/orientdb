@@ -189,18 +189,18 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
 
   private void addLikeQueries(List<ORecord> others, MoreLikeThis mlt, Builder queryBuilder) {
     others.stream().map(or -> or.<OElement>load()).forEach(element -> Arrays.stream(mlt.getFieldNames()).forEach(fieldName -> {
-          String property = element.getProperty(fieldName);
+      String property = element.getProperty(fieldName);
 
-          try {
-            Query fieldQuery = mlt.like(fieldName, new StringReader(property));
-            if (!fieldQuery.toString().isEmpty())
-              queryBuilder.add(fieldQuery, Occur.SHOULD);
-          } catch (IOException e) {
-            //FIXME handle me!
-            OLogManager.instance().error(this, "Error during Lucene query generation", e);
-          }
+      try {
+        Query fieldQuery = mlt.like(fieldName, new StringReader(property));
+        if (!fieldQuery.toString().isEmpty())
+          queryBuilder.add(fieldQuery, Occur.SHOULD);
+      } catch (IOException e) {
+        //FIXME handle me!
+        OLogManager.instance().error(this, "Error during Lucene query generation", e);
+      }
 
-        })
+    })
 
     );
   }

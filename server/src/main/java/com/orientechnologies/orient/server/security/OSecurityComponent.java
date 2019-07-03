@@ -25,19 +25,17 @@ import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 
 /**
  * Provides an interface for creating security components.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
-public interface OSecurityComponent
-{
-	// Called once the Server is running.
-	void active();
-	
-	void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig);
+public interface OSecurityComponent {
+  // Called once the Server is running.
+  void active();
 
-	// Called on removal of the component.
-	void dispose();
-	
-	boolean isEnabled();	
+  void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig);
+
+  // Called on removal of the component.
+  void dispose();
+
+  boolean isEnabled();
 }

@@ -167,7 +167,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
       }
-      break;
+        break;
       case ORecordOperation.DELETED:
         record = database.getRecord(req.getId());
         if (record == null) {

@@ -133,7 +133,7 @@ public interface OProperty extends Comparable<OProperty> {
    *
    * @return String, can be null
    */
-   public String getDefaultValue();
+  public String getDefaultValue();
 
   /**
    * @see OProperty#getDefaultValue()

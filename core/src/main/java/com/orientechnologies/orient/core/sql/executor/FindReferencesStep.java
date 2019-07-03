@@ -146,8 +146,9 @@ public class FindReferencesStep extends AbstractExecutionStep {
       }
     }
 
-    List<ORecordIteratorCluster> iterators = targetClusterNames.stream().map(
-        clusterName -> new ORecordIteratorCluster((ODatabaseDocumentInternal) db, db.getClusterIdByName(clusterName))).collect(Collectors.toList());
+    List<ORecordIteratorCluster> iterators = targetClusterNames.stream()
+        .map(clusterName -> new ORecordIteratorCluster((ODatabaseDocumentInternal) db, db.getClusterIdByName(clusterName)))
+        .collect(Collectors.toList());
     this.clusterIterators = iterators.iterator();
   }
 

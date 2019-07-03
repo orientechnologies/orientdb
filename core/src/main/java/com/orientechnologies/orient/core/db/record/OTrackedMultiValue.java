@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * Interface that indicates that collection will send notifications about operations that are performed on it to the listeners.
- * 
+ *
  * @param <K>
  *          Value that indicates position of item inside collection.
  * @param <V>
@@ -34,34 +34,34 @@ public interface OTrackedMultiValue<K, V> {
 
 	/**
 	 * Add change listener.
-	 * 
+	 *
 	 * @param changeListener
 	 *          Change listener instance.
 	 */
-	void addChangeListener(OMultiValueChangeListener<K, V> changeListener);
+  void addChangeListener(OMultiValueChangeListener<K, V> changeListener);
 
 	/**
 	 * Remove change listener.
-	 * 
+	 *
 	 * @param changeListener
 	 *          Change listener instance.
 	 */
-	void removeRecordChangeListener(OMultiValueChangeListener<K, V> changeListener);
+  void removeRecordChangeListener(OMultiValueChangeListener<K, V> changeListener);
 
 	/**
-	 * 
+	 *
 	 * Reverts all operations that were performed on collection and return original collection state.
-	 * 
+	 *
 	 * @param changeEvents
 	 *          List of operations that were performed on collection.
-	 * 
+	 *
 	 * @return Original collection state.
 	 */
-	Object returnOriginalState(List<OMultiValueChangeEvent<K, V>> changeEvents);
+  Object returnOriginalState(List<OMultiValueChangeEvent<K, V>> changeEvents);
 
-	void fireCollectionChangedEvent(final OMultiValueChangeEvent<K, V> event);
+  void fireCollectionChangedEvent(final OMultiValueChangeEvent<K, V> event);
 
-	Class<?> getGenericClass();
+  Class<?> getGenericClass();
 
-	void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue);
+  void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue);
 }

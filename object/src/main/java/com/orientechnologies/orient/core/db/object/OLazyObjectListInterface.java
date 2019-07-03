@@ -20,12 +20,11 @@ import java.util.List;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
  */
 public interface OLazyObjectListInterface<TYPE> extends List<TYPE> {
 
-	public void setConvertToRecord(boolean convertToRecord);
+  public void setConvertToRecord(boolean convertToRecord);
 
-	public boolean isConverted();
+  public boolean isConverted();
 
 }

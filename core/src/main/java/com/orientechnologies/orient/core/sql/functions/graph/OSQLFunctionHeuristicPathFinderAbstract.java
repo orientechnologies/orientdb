@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.functions.graph;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -50,22 +50,22 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
   public static final String PARAM_EMPTY_IF_MAX_DEPTH       = "emptyIfMaxDepth";
   protected static    Random rnd                            = new Random();
 
-  protected Boolean  paramParallel        = false;
-  protected Boolean  paramTieBreaker      = true;
-  protected Boolean  paramEmptyIfMaxDepth = false;
-  protected String[] paramEdgeTypeNames   = new String[] {};
-  protected String[] paramVertexAxisNames = new String[] {};
-  protected OVertex paramSourceVertex;
-  protected OVertex paramDestinationVertex;
+  protected Boolean          paramParallel               = false;
+  protected Boolean          paramTieBreaker             = true;
+  protected Boolean          paramEmptyIfMaxDepth        = false;
+  protected String[]         paramEdgeTypeNames          = new String[] {};
+  protected String[]         paramVertexAxisNames        = new String[] {};
+  protected OVertex          paramSourceVertex;
+  protected OVertex          paramDestinationVertex;
   protected HeuristicFormula paramHeuristicFormula       = HeuristicFormula.MANHATAN;
   protected ODirection       paramDirection              = ODirection.OUT;
   protected long             paramMaxDepth               = Long.MAX_VALUE;
   protected double           paramDFactor                = 1.0;
   protected String           paramCustomHeuristicFormula = "";
 
-  protected OCommandContext context;
-  protected              List<OVertex> route = new LinkedList<OVertex>();
-  protected static final float         MIN   = 0f;
+  protected              OCommandContext context;
+  protected              List<OVertex>   route = new LinkedList<OVertex>();
+  protected static final float           MIN   = 0f;
 
   public OSQLFunctionHeuristicPathFinderAbstract(final String iName, final int iMinParams, final int iMaxParams) {
     super(iName, iMinParams, iMaxParams);

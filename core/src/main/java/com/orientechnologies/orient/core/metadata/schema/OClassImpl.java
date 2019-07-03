@@ -1348,9 +1348,7 @@ public abstract class OClassImpl implements OClass {
   public void fireDatabaseMigration(final ODatabaseDocument database, final String propertyName, final OType type) {
     final boolean strictSQL = ((ODatabaseInternal) database).getStorage().getConfiguration().isStrictSql();
 
-    database.query(new OSQLAsynchQuery<Object>(
-        "select from " + getEscapedName(name, strictSQL) + " where " + getEscapedName(propertyName, strictSQL) + ".type() <> \""
-            + type.name() + "\"", new OCommandResultListener() {
+    OCommandResultListener updateListener = new OCommandResultListener() {
 
       @Override
       public boolean result(Object iRecord) {
@@ -1368,7 +1366,10 @@ public abstract class OClassImpl implements OClass {
       public Object getResult() {
         return null;
       }
-    }));
+    };
+    database.query(new OSQLAsynchQuery<Object>(
+        "select from " + getEscapedName(name, strictSQL) + " where " + getEscapedName(propertyName, strictSQL) + ".type() <> \""
+            + type.name() + "\"", updateListener));
   }
 
   public void firePropertyNameMigration(final ODatabaseDocument database, final String propertyName, final String newPropertyName,

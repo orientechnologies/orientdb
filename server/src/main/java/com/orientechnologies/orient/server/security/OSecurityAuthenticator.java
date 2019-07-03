@@ -28,26 +28,24 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
 /**
  * Provides an interface for creating security authenticators.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
-public interface OSecurityAuthenticator extends OSecurityComponent
-{
-	// Returns the actual username if successful, null otherwise.
-	// Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the service ticket).
-	String authenticate(final String username, final String password);
-	
-	String getAuthenticationHeader(final String databaseName);
-	
-	Subject getClientSubject();
-	
-	// Returns the name of this OSecurityAuthenticator.
-	String getName();
-	
-	OServerUserConfiguration getUser(final String username);
+public interface OSecurityAuthenticator extends OSecurityComponent {
+  // Returns the actual username if successful, null otherwise.
+  // Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the service ticket).
+  String authenticate(final String username, final String password);
 
-	boolean isAuthorized(final String username, final String resource);
+  String getAuthenticationHeader(final String databaseName);
 
-	boolean isSingleSignOnSupported();
+  Subject getClientSubject();
+
+  // Returns the name of this OSecurityAuthenticator.
+  String getName();
+
+  OServerUserConfiguration getUser(final String username);
+
+  boolean isAuthorized(final String username, final String resource);
+
+  boolean isSingleSignOnSupported();
 }

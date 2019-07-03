@@ -5,5 +5,5 @@ package com.orientechnologies.orient.core.storage.impl.local;
  * @since 05/02/15
  */
 public interface OCheckpointRequestListener {
-	void requestCheckpoint();
+  void requestCheckpoint();
 }

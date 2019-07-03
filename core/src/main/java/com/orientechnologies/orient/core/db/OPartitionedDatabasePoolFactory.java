@@ -45,15 +45,12 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
 
   private final ConcurrentLinkedHashMap<PoolIdentity, OPartitionedDatabasePool> poolStore;
 
-  private final EvictionListener<PoolIdentity, OPartitionedDatabasePool>        evictionListener = new EvictionListener<PoolIdentity, OPartitionedDatabasePool>() {
-                                                                                                   @Override
-                                                                                                   public void onEviction(
-                                                                                                       final PoolIdentity poolIdentity,
-                                                                                                       final OPartitionedDatabasePool partitionedDatabasePool) {
-                                                                                                     partitionedDatabasePool
-                                                                                                         .close();
-                                                                                                   }
-                                                                                                 };
+  private final EvictionListener<PoolIdentity, OPartitionedDatabasePool> evictionListener = new EvictionListener<PoolIdentity, OPartitionedDatabasePool>() {
+    @Override
+    public void onEviction(final PoolIdentity poolIdentity, final OPartitionedDatabasePool partitionedDatabasePool) {
+      partitionedDatabasePool.close();
+    }
+  };
 
   public OPartitionedDatabasePoolFactory() {
     this(100);

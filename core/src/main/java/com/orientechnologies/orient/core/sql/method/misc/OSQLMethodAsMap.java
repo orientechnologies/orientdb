@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Transforms current value into a Map.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodAsMap extends OAbstractSQLMethod {

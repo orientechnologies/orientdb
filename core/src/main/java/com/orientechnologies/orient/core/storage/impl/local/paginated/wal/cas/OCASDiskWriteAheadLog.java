@@ -492,12 +492,13 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     final Stream<Path> walFiles;
 
     final OModifiableLong walSize = new OModifiableLong();
-    if (filterWALFiles)
+    if (filterWALFiles) {
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attributes) -> validateName(path.getFileName().toString(), storageName, locale));
-    else
+    } else {
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attrs) -> validateSimpleName(path.getFileName().toString(), locale));
+    }
 
     if (walFiles == null)
       throw new IllegalStateException(

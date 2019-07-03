@@ -34,16 +34,15 @@ import java.util.Map;
 /**
  * Lazy implementation of LinkedHashMap. It's bound to a source ORecord object to keep track of changes. This avoid to call the
  * makeDirty() by hand when the map is changed.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings({ "serial" })
 public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecordLazyMultiValue {
-  private final byte                                      recordType;
-  private ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE status              = MULTIVALUE_CONTENT_TYPE.EMPTY;
-  protected boolean                                       marshalling         = false;
-  private boolean                                         autoConvertToRecord = true;
+  private final byte                                            recordType;
+  private       ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE status              = MULTIVALUE_CONTENT_TYPE.EMPTY;
+  protected     boolean                                         marshalling         = false;
+  private       boolean                                         autoConvertToRecord = true;
 
   public ORecordLazyMap(final ODocument iSourceRecord) {
     super(iSourceRecord);
@@ -182,9 +181,8 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 
   /**
    * Convert the item with the received key to a record.
-   * 
-   * @param iKey
-   *          Key of the item to convert
+   *
+   * @param iKey Key of the item to convert
    */
   private void convertLink2Record(final Object iKey) {
     if (status == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS)
@@ -204,9 +202,9 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
         try {
           // OVERWRITE IT
           ORecord record = rid.getRecord();
-          if(record != null){
-              ORecordInternal.unTrack(sourceRecord, rid);
-              ORecordInternal.track(sourceRecord, record);
+          if (record != null) {
+            ORecordInternal.unTrack(sourceRecord, rid);
+            ORecordInternal.track(sourceRecord, record);
           }
           super.put(iKey, record);
         } catch (ORecordNotFoundException ignore) {

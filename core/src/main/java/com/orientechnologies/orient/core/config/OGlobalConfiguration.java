@@ -128,19 +128,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes, disk size may be changed at runtime, "
       + "but if does not enough to contain all pinned pages exception will be thrown", Integer.class, 4 * 1024,
-      new OConfigurationChangeCallback() {
-
-        @Override
-        public void change(Object currentValue, Object newValue) {
-          final Orient orient = Orient.instance();
-          if (orient != null) {
-            final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) orient
-                .getEngineIfRunning(OEngineLocalPaginated.NAME);
-            if (engineLocalPaginated != null)
-              engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
-          }
-        }
-      }),
+      new OCacheSizeChangeCallback()),
 
   DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percentage of disk cache, which is used as write cache", Integer.class,
       5),
@@ -596,33 +584,13 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   // PROFILER
 
   PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
-      new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          Orient instance = Orient.instance();
-          if (instance != null) {
-            final OProfiler prof = instance.getProfiler();
-            if (prof != null)
-              if ((Boolean) iNewValue)
-                prof.startRecording();
-              else
-                prof.stopRecording();
-          }
-        }
-      }),
+      new OProfileEnabledChangeCallbac()),
 
   PROFILER_CONFIG("profiler.config", "Configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>",
-      String.class, null, new OConfigurationChangeCallback() {
-    public void change(final Object iCurrentValue, final Object iNewValue) {
-      Orient.instance().getProfiler().configure(iNewValue.toString());
-    }
-  }),
+      String.class, null, new OProfileConfigChangeCallback()),
 
   PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval", "Dumps the profiler values at regular intervals (in seconds)",
-      Integer.class, 0, new OConfigurationChangeCallback() {
-    public void change(final Object iCurrentValue, final Object iNewValue) {
-      Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
-    }
-  }),
+      Integer.class, 0, new OProfileDumpIntervalChangeCallback()),
 
   /**
    * @Since 2.2.27
@@ -1332,5 +1300,45 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   public String getDescription() {
     return description;
+  }
+
+  private static class OCacheSizeChangeCallback implements OConfigurationChangeCallback {
+
+    @Override
+    public void change(Object currentValue, Object newValue) {
+      final Orient orient = Orient.instance();
+      if (orient != null) {
+        final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) orient
+            .getEngineIfRunning(OEngineLocalPaginated.NAME);
+        if (engineLocalPaginated != null)
+          engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
+      }
+    }
+  }
+
+  private static class OProfileEnabledChangeCallbac implements OConfigurationChangeCallback {
+    public void change(final Object iCurrentValue, final Object iNewValue) {
+      Orient instance = Orient.instance();
+      if (instance != null) {
+        final OProfiler prof = instance.getProfiler();
+        if (prof != null)
+          if ((Boolean) iNewValue)
+            prof.startRecording();
+          else
+            prof.stopRecording();
+      }
+    }
+  }
+
+  private static class OProfileConfigChangeCallback implements OConfigurationChangeCallback {
+    public void change(final Object iCurrentValue, final Object iNewValue) {
+      Orient.instance().getProfiler().configure(iNewValue.toString());
+    }
+  }
+
+  private static class OProfileDumpIntervalChangeCallback implements OConfigurationChangeCallback {
+    public void change(final Object iCurrentValue, final Object iNewValue) {
+      Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
+    }
   }
 }

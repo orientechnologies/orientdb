@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
@@ -27,15 +27,14 @@ import java.util.Map;
 
 /**
  * Database pool base class.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Thread {
-  protected final String              url;
-  protected final String              userName;
-  protected final String              userPassword;
-  protected ODatabasePoolAbstract<DB> dbPool;
+  protected final String                    url;
+  protected final String                    userName;
+  protected final String                    userPassword;
+  protected       ODatabasePoolAbstract<DB> dbPool;
 
   protected ODatabasePoolBase() {
     url = userName = userPassword = null;
@@ -88,8 +87,8 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
                   // STORAGE HAS BEEN CLOSED: REOPEN IT
                   iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
                 else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
-                  throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
-                      + iValue.getName() + "'");
+                  throw new OSecurityAccessException(iValue.getName(),
+                      "User or password not valid for database: '" + iValue.getName() + "'");
 
                 return true;
               }
@@ -104,7 +103,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
   /**
    * Acquires a connection from the pool using the configured URL, user-name and user-password. If the pool is empty, then the
    * caller thread will wait for it.
-   * 
+   *
    * @return A pooled database instance
    */
   public DB acquire() {
@@ -114,13 +113,11 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
 
   /**
    * Acquires a connection from the pool. If the pool is empty, then the caller thread will wait for it.
-   * 
-   * @param iName
-   *          Database name
-   * @param iUserName
-   *          User name
-   * @param iUserPassword
-   *          User password
+   *
+   * @param iName         Database name
+   * @param iUserName     User name
+   * @param iUserPassword User password
+   *
    * @return A pooled database instance
    */
   public DB acquire(final String iName, final String iUserName, final String iUserPassword) {
@@ -129,13 +126,12 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
   }
 
   /**
-   * Returns amount of available connections which you can acquire for given source and user name. Source id is consist of
-   * "source name" and "source user name".
-   * 
-   * @param name
-   *          Source name.
-   * @param userName
-   *          User name which is used to acquire source.
+   * Returns amount of available connections which you can acquire for given source and user name. Source id is consist of "source
+   * name" and "source user name".
+   *
+   * @param name     Source name.
+   * @param userName User name which is used to acquire source.
+   *
    * @return amount of available connections which you can acquire for given source and user name.
    */
   public int getAvailableConnections(final String name, final String userName) {
@@ -143,20 +139,18 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
     return dbPool.getAvailableConnections(name, userName);
   }
 
-	public int getCreatedInstances(final  String name, final String userName) {
-		setup();
-		return dbPool.getCreatedInstances(name, userName);
-	}
+  public int getCreatedInstances(final String name, final String userName) {
+    setup();
+    return dbPool.getCreatedInstances(name, userName);
+  }
 
   /**
    * Acquires a connection from the pool specifying options. If the pool is empty, then the caller thread will wait for it.
-   * 
-   * @param iName
-   *          Database name
-   * @param iUserName
-   *          User name
-   * @param iUserPassword
-   *          User password
+   *
+   * @param iName         Database name
+   * @param iUserName     User name
+   * @param iUserPassword User password
+   *
    * @return A pooled database instance
    */
   public DB acquire(final String iName, final String iUserName, final String iUserPassword,
@@ -173,7 +167,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
 
   /**
    * Don't call it directly but use database.close().
-   * 
+   *
    * @param iDatabase
    */
   public void release(final DB iDatabase) {
@@ -193,7 +187,6 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
 
   /**
    * Returns the maximum size of the pool
-   * 
    */
   public int getMaxSize() {
     setup();
@@ -202,7 +195,6 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
 
   /**
    * Returns all the configured pools.
-   * 
    */
   public Map<String, OReentrantResourcePool<String, DB>> getPools() {
     return dbPool.getPools();
@@ -210,7 +202,6 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
 
   /**
    * Removes a pool by name/user
-   * 
    */
   public void remove(final String iName, final String iUser) {
     dbPool.remove(iName, iUser);

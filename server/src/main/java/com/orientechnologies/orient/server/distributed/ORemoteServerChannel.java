@@ -133,10 +133,10 @@ public class ORemoteServerChannel {
   public void sendResponse(final ODistributedResponse response) {
     executor.execute(() -> {
       networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, () -> {
-            response.toStream(channel.getDataOutput());
-            channel.flush();
-            return null;
-          }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "' " + response.getClass(), MAX_RETRY,
+        response.toStream(channel.getDataOutput());
+        channel.flush();
+        return null;
+      }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "' " + response.getClass(), MAX_RETRY,
           true);
     });
     this.prevResponse = response;
