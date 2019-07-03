@@ -32,162 +32,207 @@ public class StorageBackupMTTest {
 
   @Test
   public void testParallelBackup() throws Exception {
-    String buildDirectory = System.getProperty("buildDirectory", ".");
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
     dbName = StorageBackupMTTest.class.getSimpleName();
-    String dbDirectory = buildDirectory + File.separator + dbName;
+    final String dbDirectory = buildDirectory + File.separator + dbName;
+    final File backupDir = new File(buildDirectory, "backupDir");
+    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
 
     OFileUtils.deleteRecursively(new File(dbDirectory));
 
-    orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+    try {
 
-    ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
+      orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
+      orientDB.create(dbName, ODatabaseType.PLOCAL);
 
-    final OSchema schema = db.getMetadata().getSchema();
-    final OClass backupClass = schema.createClass("BackupClass");
-    backupClass.createProperty("num", OType.INTEGER);
-    backupClass.createProperty("data", OType.BINARY);
+      ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
-    backupClass.createIndex("backupIndex", OClass.INDEX_TYPE.NOTUNIQUE, "num");
+      final OSchema schema = db.getMetadata().getSchema();
+      final OClass backupClass = schema.createClass("BackupClass");
+      backupClass.createProperty("num", OType.INTEGER);
+      backupClass.createProperty("data", OType.BINARY);
 
-    File backupDir = new File(buildDirectory, "backupDir");
-    OFileUtils.deleteRecursively(backupDir);
+      backupClass.createIndex("backupIndex", OClass.INDEX_TYPE.NOTUNIQUE, "num");
 
-    if (!backupDir.exists())
-      Assert.assertTrue(backupDir.mkdirs());
 
-    final ExecutorService executor = Executors.newCachedThreadPool();
-    final List<Future<Void>> futures = new ArrayList<>();
+      OFileUtils.deleteRecursively(backupDir);
 
-    for (int i = 0; i < 4; i++) {
-      futures.add(executor.submit(new DataWriterCallable()));
+      if (!backupDir.exists())
+        Assert.assertTrue(backupDir.mkdirs());
+
+      final ExecutorService executor = Executors.newCachedThreadPool();
+      final List<Future<Void>> futures = new ArrayList<>();
+
+      for (int i = 0; i < 4; i++) {
+        futures.add(executor.submit(new DataWriterCallable()));
+      }
+
+      futures.add(executor.submit(new DBBackupCallable(backupDir.getAbsolutePath())));
+
+      latch.countDown();
+
+      TimeUnit.MINUTES.sleep(15);
+
+      stop = true;
+
+      for (Future<Void> future : futures) {
+        future.get();
+      }
+
+      System.out.println("do inc backup last time");
+      db.incrementalBackup(backupDir.getAbsolutePath());
+
+      orientDB.close();
+
+
+      final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
+      OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
+
+      System.out.println("create and restore");
+
+      OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, OrientDBConfig.defaultConfig());
+      embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), OrientDBConfig.defaultConfig());
+      embedded.close();
+
+      final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
+              "admin", System.out::println);
+      System.out.println("compare");
+
+      boolean areSame = compare.compare();
+      Assert.assertTrue(areSame);
+
+    }finally {
+
+      try {
+        ODatabaseDocumentTx.closeAll();
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      if(orientDB.isOpen()){
+        try {
+          orientDB.close();
+        }catch (Exception ex){
+          ex.printStackTrace();
+        }
+      }
+      try {
+      orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
+      orientDB.drop(dbName);
+      orientDB.drop(backupDbName);
+
+      orientDB.close();
+
+      OFileUtils.deleteRecursively(backupDir);
+      } catch (Exception ex){
+        ex.printStackTrace();
+      }
     }
-
-    futures.add(executor.submit(new DBBackupCallable(backupDir.getAbsolutePath())));
-
-    latch.countDown();
-
-    TimeUnit.MINUTES.sleep(15);
-
-    stop = true;
-
-    for (Future<Void> future : futures) {
-      future.get();
-    }
-
-    System.out.println("do inc backup last time");
-    db.incrementalBackup(backupDir.getAbsolutePath());
-
-    orientDB.close();
-
-    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
-    final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
-    OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
-
-    System.out.println("create and restore");
-
-    OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, OrientDBConfig.defaultConfig());
-    embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), OrientDBConfig.defaultConfig());
-    embedded.close();
-
-    final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
-        "admin", System.out::println);
-    System.out.println("compare");
-
-    boolean areSame = compare.compare();
-    Assert.assertTrue(areSame);
-
-    ODatabaseDocumentTx.closeAll();
-
-    orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
-    orientDB.drop(dbName);
-    orientDB.drop(backupDbName);
-
-    orientDB.close();
-
-    OFileUtils.deleteRecursively(backupDir);
   }
 
   @Test
   public void testParallelBackupEncryption() throws Exception {
-    String buildDirectory = System.getProperty("buildDirectory", ".");
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
+    final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
+    final File backupDir = new File(buildDirectory, "backupDir");
+
     dbName = StorageBackupMTTest.class.getSimpleName();
     String dbDirectory = buildDirectory + File.separator + dbName;
 
-    OFileUtils.deleteRecursively(new File(dbDirectory));
-
     final OrientDBConfig config = OrientDBConfig.builder()
-        .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==").build();
-    orientDB = new OrientDB("embedded:" + buildDirectory, config);
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+            .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==").build();
 
-    ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
+    try {
 
-    final OSchema schema = db.getMetadata().getSchema();
-    final OClass backupClass = schema.createClass("BackupClass");
-    backupClass.createProperty("num", OType.INTEGER);
-    backupClass.createProperty("data", OType.BINARY);
+      OFileUtils.deleteRecursively(new File(dbDirectory));
 
-    backupClass.createIndex("backupIndex", OClass.INDEX_TYPE.NOTUNIQUE, "num");
+      orientDB = new OrientDB("embedded:" + buildDirectory, config);
+      orientDB.create(dbName, ODatabaseType.PLOCAL);
 
-    File backupDir = new File(buildDirectory, "backupDir");
-    OFileUtils.deleteRecursively(backupDir);
+      ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
-    if (!backupDir.exists())
-      Assert.assertTrue(backupDir.mkdirs());
+      final OSchema schema = db.getMetadata().getSchema();
+      final OClass backupClass = schema.createClass("BackupClass");
+      backupClass.createProperty("num", OType.INTEGER);
+      backupClass.createProperty("data", OType.BINARY);
 
-    final ExecutorService executor = Executors.newCachedThreadPool();
-    final List<Future<Void>> futures = new ArrayList<>();
+      backupClass.createIndex("backupIndex", OClass.INDEX_TYPE.NOTUNIQUE, "num");
 
-    for (int i = 0; i < 4; i++) {
-      futures.add(executor.submit(new DataWriterCallable()));
+
+      OFileUtils.deleteRecursively(backupDir);
+
+      if (!backupDir.exists())
+        Assert.assertTrue(backupDir.mkdirs());
+
+      final ExecutorService executor = Executors.newCachedThreadPool();
+      final List<Future<Void>> futures = new ArrayList<>();
+
+      for (int i = 0; i < 4; i++) {
+        futures.add(executor.submit(new DataWriterCallable()));
+      }
+
+      futures.add(executor.submit(new DBBackupCallable(backupDir.getAbsolutePath())));
+
+      latch.countDown();
+
+      TimeUnit.MINUTES.sleep(15);
+
+      stop = true;
+
+      for (Future<Void> future : futures) {
+        future.get();
+      }
+
+      System.out.println("do inc backup last time");
+      db.incrementalBackup(backupDir.getAbsolutePath());
+
+      orientDB.close();
+
+      OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
+
+      System.out.println("create and restore");
+
+      OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, config);
+      embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), config);
+      embedded.close();
+
+      OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue("T1JJRU5UREJfSVNfQ09PTA==");
+      final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
+              "admin", System.out::println);
+      System.out.println("compare");
+
+      boolean areSame = compare.compare();
+      Assert.assertTrue(areSame);
+
+
+    } finally {
+      try{
+        ODatabaseDocumentTx.closeAll();
+        OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue(null);
+      }catch (Exception ex){
+        ex.printStackTrace();
+      }
+      if(orientDB.isOpen()){
+        try {
+          orientDB.close();
+        }catch (Exception ex){
+          ex.printStackTrace();
+        }
+      }
+      try{
+        orientDB = new OrientDB("embedded:" + buildDirectory, config);
+        orientDB.drop(dbName);
+        orientDB.drop(backupDbName);
+
+        orientDB.close();
+
+        OFileUtils.deleteRecursively(backupDir);
+      }catch (Exception ex){
+        ex.printStackTrace();
+      }
     }
 
-    futures.add(executor.submit(new DBBackupCallable(backupDir.getAbsolutePath())));
 
-    latch.countDown();
-
-    TimeUnit.MINUTES.sleep(15);
-
-    stop = true;
-
-    for (Future<Void> future : futures) {
-      future.get();
-    }
-
-    System.out.println("do inc backup last time");
-    db.incrementalBackup(backupDir.getAbsolutePath());
-
-    orientDB.close();
-
-    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
-    final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
-    OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
-
-    System.out.println("create and restore");
-
-    OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, config);
-    embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), config);
-    embedded.close();
-
-    OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue("T1JJRU5UREJfSVNfQ09PTA==");
-    final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
-        "admin", System.out::println);
-    System.out.println("compare");
-
-    boolean areSame = compare.compare();
-    Assert.assertTrue(areSame);
-
-    ODatabaseDocumentTx.closeAll();
-    OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue(null);
-
-    orientDB = new OrientDB("embedded:" + buildDirectory, config);
-    orientDB.drop(dbName);
-    orientDB.drop(backupDbName);
-
-    orientDB.close();
-
-    OFileUtils.deleteRecursively(backupDir);
   }
 
   private final class DataWriterCallable implements Callable<Void> {
