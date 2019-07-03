@@ -125,7 +125,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       if (ODocumentInternal.rawContainsField(document, fieldName)) {
         continue;
       }
-      ODocumentInternal.rawField(document, fieldName, value, type);
+      document.setProperty(fieldName,value,type);
     }
 
     ORecordInternal.clearSource(document);
