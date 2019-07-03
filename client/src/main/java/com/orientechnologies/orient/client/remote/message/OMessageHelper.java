@@ -154,7 +154,7 @@ public class OMessageHelper {
       final int clusterId = network.readShort();
       if (clusterName != null) {
         clusterName = clusterName.toLowerCase(Locale.ENGLISH);
-        cluster.configure(null, clusterId, clusterName);
+        cluster.configure(clusterId, clusterName);
         if (clusterId >= clusters.length)
           clusters = Arrays.copyOf(clusters, clusterId + 1);
         clusters[clusterId] = cluster;

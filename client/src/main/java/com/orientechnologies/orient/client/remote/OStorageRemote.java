@@ -1892,7 +1892,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           final int clusterId = clusterConfig.getId();
           if (clusterName != null) {
             clusterName = clusterName.toLowerCase(Locale.ENGLISH);
-            cluster.configure(null, clusterId, clusterName);
+            cluster.configure(clusterId, clusterName);
             if (clusterId >= clusters.length)
               clusters = Arrays.copyOf(clusters, clusterId + 1);
             clusters[clusterId] = cluster;
@@ -1986,7 +1986,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       if (clusters.length <= clusterId || clusters[clusterId] == null) {
         //Adding the cluster waiting for the push
         final OClusterRemote cluster = new OClusterRemote();
-        cluster.configure(this, clusterId, iClusterName.toLowerCase(Locale.ENGLISH));
+        cluster.configure(clusterId, iClusterName.toLowerCase(Locale.ENGLISH));
 
         if (clusters.length <= clusterId)
           clusters = Arrays.copyOf(clusters, clusterId + 1);

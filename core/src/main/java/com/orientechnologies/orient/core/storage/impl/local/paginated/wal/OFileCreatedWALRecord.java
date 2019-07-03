@@ -51,37 +51,15 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
-    offset = super.toStream(content, offset);
-
-    OStringSerializer.INSTANCE.serializeNativeObject(fileName, content, offset);
-    offset += OStringSerializer.INSTANCE.getObjectSize(fileName);
-
-    OLongSerializer.INSTANCE.serializeNative(fileId, content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    return offset;
-  }
-
-  @Override
-  public void toStream(final ByteBuffer buffer) {
-    super.toStream(buffer);
-
+  protected void serializeToByteBuffer(ByteBuffer buffer) {
     OStringSerializer.INSTANCE.serializeInByteBufferObject(fileName, buffer);
     buffer.putLong(fileId);
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
-    offset = super.fromStream(content, offset);
-
-    fileName = OStringSerializer.INSTANCE.deserializeNativeObject(content, offset);
-    offset += OStringSerializer.INSTANCE.getObjectSize(fileName);
-
-    fileId = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    return offset;
+  protected void deserializeFromByteBuffer(ByteBuffer buffer) {
+    fileName = OStringSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+    fileId = buffer.getLong();
   }
 
   @Override

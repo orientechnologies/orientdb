@@ -118,6 +118,13 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     super.delete(collectionPointer);
   }
 
+  /**
+   * Stub which will be used to delete ridbag alongside with cluster
+   */
+  public void deleteComponent(final long fileId) throws IOException {
+
+  }
+
   @Override
   public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) throws IOException {
     checkAccess();

@@ -12,16 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public abstract class LocalPaginatedClusterAbstract {
   protected static String              buildDirectory;
@@ -30,6 +21,15 @@ public abstract class LocalPaginatedClusterAbstract {
 
   @AfterClass
   public static void afterClass() throws IOException {
+    final long firstPosition = paginatedCluster.getFirstPosition();
+    OPhysicalPosition[] positions = paginatedCluster.ceilingPositions(new OPhysicalPosition(firstPosition));
+    while (positions.length > 0) {
+      for (OPhysicalPosition position : positions) {
+        paginatedCluster.deleteRecord(position.clusterPosition);
+      }
+
+      positions = paginatedCluster.higherPositions(positions[positions.length - 1]);
+    }
     paginatedCluster.delete();
 
     databaseDocumentTx.drop();

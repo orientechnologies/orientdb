@@ -112,7 +112,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void create(final OContextConfiguration contextConfiguration) throws IOException {
     lock.acquireWriteLock();
     try {
-      cluster.create(-1);
+      cluster.create();
       btree.create(OStringSerializer.INSTANCE, null, 1, null);
 
       this.configuration = contextConfiguration;
@@ -145,7 +145,25 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     try {
       updateListener = null;
 
+      final long firstPosition = cluster.getFirstPosition();
+      OPhysicalPosition[] positions = cluster.ceilingPositions(new OPhysicalPosition(firstPosition));
+      while (positions.length > 0) {
+        for (OPhysicalPosition position : positions) {
+          cluster.deleteRecord(position.clusterPosition);
+        }
+
+        positions = cluster.higherPositions(positions[positions.length - 1]);
+      }
+
       cluster.delete();
+
+      final OCellBTreeSingleValue.OCellBTreeKeyCursor<String> keyCursor = btree.keyCursor();
+      String treeKey = keyCursor.next(-1);
+      while (treeKey != null) {
+        btree.remove(treeKey);
+        treeKey = keyCursor.next(-1);
+      }
+
       btree.delete();
 
       cache.clear();

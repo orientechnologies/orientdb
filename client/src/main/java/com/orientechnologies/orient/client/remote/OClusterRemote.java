@@ -45,7 +45,7 @@ public class OClusterRemote implements OCluster {
    * @see com.orientechnologies.orient.core.storage.OCluster#configure(com.orientechnologies.orient.core.storage.OStorage, int,
    * java.lang.String, java.lang.String, int, java.lang.Object[])
    */
-  public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) {
+  public void configure(int iId, String iClusterName) {
     id = iId;
     name = iClusterName;
   }
@@ -66,7 +66,7 @@ public class OClusterRemote implements OCluster {
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#create(int)
    */
-  public void create(int iStartSize) throws IOException {
+  public void create() throws IOException {
 
   }
 

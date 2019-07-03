@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
+import com.orientechnologies.orient.core.exception.ONonEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -42,11 +43,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPageDebug;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMapBucket;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedClusterDebug;
+import com.orientechnologies.orient.core.storage.cluster.*;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowseEntry;
@@ -54,6 +51,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterCreateCO;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +81,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   private volatile OEncryption                           encryption;
   private final    boolean                               systemCluster;
   private          OClusterPositionMapV0                 clusterPositionMap;
-  private          OAbstractPaginatedStorage             storageLocal;
   private volatile int                                   id;
   private          long                                  fileId;
   private          OStoragePaginatedClusterConfiguration config;
@@ -122,8 +119,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   }
 
   @Override
-  public void configure(final OStorage storage, final int id, final String clusterName, final Object... parameters)
-      throws IOException {
+  public void configure(final int id, final String clusterName) throws IOException {
     acquireExclusiveLock();
     try {
       final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
@@ -136,7 +132,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
           cfgCompression, cfgEncryption, cfgEncryptionKey, null, OStorageClusterConfiguration.STATUS.ONLINE, BINARY_VERSION);
       config.name = clusterName;
 
-      init((OAbstractPaginatedStorage) storage, config);
+      init(config);
     } finally {
       releaseExclusiveLock();
     }
@@ -151,7 +147,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   public void configure(final OStorage storage, final OStorageClusterConfiguration config) throws IOException {
     acquireExclusiveLock();
     try {
-      init((OAbstractPaginatedStorage) storage, config);
+      init(config);
     } finally {
       releaseExclusiveLock();
     }
@@ -174,7 +170,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   }
 
   @Override
-  public void create(final int startSize) throws IOException {
+  public void create() throws IOException {
     boolean rollback = false;
     final OAtomicOperation atomicOperation = startAtomicOperation(false);
     try {
@@ -185,6 +181,8 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
         initCusterState(atomicOperation);
 
         clusterPositionMap.create(atomicOperation);
+
+        atomicOperation.addComponentOperation(new OPaginatedClusterCreateCO(getName(), id));
       } finally {
         releaseExclusiveLock();
       }
@@ -295,6 +293,12 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     try {
       acquireExclusiveLock();
       try {
+        final long entries = getEntries();
+        if (entries > 0) {
+          throw new ONonEmptyComponentCanNotBeRemovedException(
+              getName() + " : Not empty cluster can not be deleted. Cluster has " + entries + " records");
+        }
+
         deleteFile(atomicOperation, fileId);
 
         clusterPositionMap.delete(atomicOperation);
@@ -338,8 +342,8 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
           throw new IllegalStateException("Value of attribute is null");
         }
 
-        return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS
-            .valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
+        return storage.setClusterStatus(id,
+            OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(storage.getConfiguration().getLocaleInstance())));
       }
       case ENCRYPTION:
         if (getEntries() > 0) {
@@ -1541,7 +1545,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     recordConflictStrategy = Orient.instance().getRecordConflictStrategy().getStrategy(stringValue);
     config.conflictStrategy = stringValue;
 
-    ((OClusterBasedStorageConfiguration) storageLocal.getConfiguration()).updateCluster(config);
+    ((OClusterBasedStorageConfiguration) storage.getConfiguration()).updateCluster(config);
   }
 
   private void updateClusterState(final long sizeDiff, final long recordsSizeDiff, final OAtomicOperation atomicOperation)
@@ -1556,7 +1560,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     }
   }
 
-  private void init(final OAbstractPaginatedStorage storage, final OStorageClusterConfiguration config) throws IOException {
+  private void init(final OStorageClusterConfiguration config) throws IOException {
     OFileUtils.checkValidName(config.getName());
 
     this.config = (OStoragePaginatedClusterConfiguration) config;
@@ -1568,8 +1572,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
           .getStrategy(((OStoragePaginatedClusterConfiguration) config).conflictStrategy);
     }
 
-    storageLocal = storage;
-
     this.id = config.getId();
 
     clusterPositionMap = new OClusterPositionMapV0(storage, getName(), getFullName());
@@ -1579,7 +1581,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     try {
       encryption = OEncryptionFactory.INSTANCE.getEncryption(iMethod, iKey);
       config.encryption = iMethod;
-      ((OClusterBasedStorageConfiguration) storageLocal.getConfiguration()).updateCluster(config);
+      ((OClusterBasedStorageConfiguration) storage.getConfiguration()).updateCluster(config);
     } catch (final IllegalArgumentException e) {
       throw OException
           .wrapException(new OPaginatedClusterException("Invalid value for " + ATTRIBUTES.ENCRYPTION + " attribute", this), e);
@@ -1594,7 +1596,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
       }
 
       config.recordOverflowGrowFactor = growFactor;
-      ((OClusterBasedStorageConfiguration) storageLocal.getConfiguration()).updateCluster(config);
+      ((OClusterBasedStorageConfiguration) storage.getConfiguration()).updateCluster(config);
     } catch (final NumberFormatException nfe) {
       throw OException.wrapException(new OPaginatedClusterException(
           "Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " was passed [" + stringValue
@@ -1610,7 +1612,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
       }
 
       config.recordGrowFactor = growFactor;
-      ((OClusterBasedStorageConfiguration) storageLocal.getConfiguration()).updateCluster(config);
+      ((OClusterBasedStorageConfiguration) storage.getConfiguration()).updateCluster(config);
     } catch (final NumberFormatException nfe) {
       throw OException.wrapException(new OPaginatedClusterException(
           "Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " was passed [" + stringValue + "]",
@@ -1624,10 +1626,10 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     clusterPositionMap.rename(newName);
 
     config.name = newName;
-    storageLocal.renameCluster(getName(), newName);
+    storage.renameCluster(getName(), newName);
     setName(newName);
 
-    ((OClusterBasedStorageConfiguration) storageLocal.getConfiguration()).updateCluster(config);
+    ((OClusterBasedStorageConfiguration) storage.getConfiguration()).updateCluster(config);
   }
 
   private OPhysicalPosition createPhysicalPosition(final byte recordType, final long clusterPosition, final int version) {

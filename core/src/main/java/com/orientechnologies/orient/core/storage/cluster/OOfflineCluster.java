@@ -52,7 +52,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException {
+  public void configure(int iId, String iClusterName) throws IOException {
   }
 
   @Override
@@ -61,7 +61,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void create(int iStartSize) throws IOException {
+  public void create() throws IOException {
   }
 
   @Override

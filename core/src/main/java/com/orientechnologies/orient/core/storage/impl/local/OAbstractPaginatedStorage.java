@@ -745,7 +745,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         makeStorageDirty();
-        return addClusterInternal(clusterName, requestedId, parameters);
+        return doAddCluster(clusterName, requestedId, parameters);
 
       } catch (final IOException e) {
         throw OException.wrapException(new OStorageException("Error in creation of new cluster '" + clusterName + "'"), e);
@@ -778,21 +778,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         final OCluster cluster = clusters.get(clusterId);
-        if (cluster == null) {
+
+        final long firstPosition = cluster.getFirstPosition();
+        OPhysicalPosition[] positions = cluster.ceilingPositions(new OPhysicalPosition(firstPosition));
+        while (positions.length > 0) {
+          for (OPhysicalPosition position : positions) {
+            cluster.deleteRecord(position.clusterPosition);
+          }
+
+          positions = cluster.higherPositions(positions[positions.length - 1]);
+        }
+
+        if (dropClusterInternal(clusterId)) {
           return false;
         }
 
-        if (iTruncate) {
-          cluster.truncate();
-        }
-        cluster.delete();
-
-        makeStorageDirty();
-        clusterMap.remove(cluster.getName().toLowerCase(configuration.getLocaleInstance()));
-        clusters.set(clusterId, null);
-
-        // UPDATE CONFIGURATION
         ((OClusterBasedStorageConfiguration) configuration).dropCluster(clusterId);
+
+        sbTreeCollectionManager.deleteComponent(clusterId);
 
         return true;
       } catch (final Exception e) {
@@ -862,7 +865,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           newCluster = OPaginatedClusterFactory
               .createCluster(cluster.getName(), configuration.getVersion(), cluster.getBinaryVersion(), this);
-          newCluster.configure(this, clusterId, cluster.getName());
+          newCluster.configure(clusterId, cluster.getName());
           newCluster.open();
         }
 
@@ -4887,17 +4890,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     }
 
-    return addClusterInternal(clusterName, clusterPos, parameters);
+    return doAddCluster(clusterName, clusterPos, parameters);
   }
 
-  private int addClusterInternal(String clusterName, final int clusterPos, final Object... parameters) throws IOException {
+  private int doAddCluster(String clusterName, final int clusterPos, final Object... parameters) throws IOException {
     final OPaginatedCluster cluster;
     if (clusterName != null) {
       clusterName = clusterName.toLowerCase(configuration.getLocaleInstance());
 
       cluster = OPaginatedClusterFactory
           .createCluster(clusterName, configuration.getVersion(), OPaginatedCluster.getLatestBinaryVersion(), this);
-      cluster.configure(this, clusterPos, clusterName, parameters);
+      cluster.configure(clusterPos, clusterName);
     } else {
       cluster = null;
     }
@@ -4905,13 +4908,42 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     int createdClusterId = -1;
 
     if (cluster != null) {
-      cluster.create(-1);
+      cluster.create();
       createdClusterId = registerCluster(cluster);
 
       cluster.registerInStorageConfig((OClusterBasedStorageConfiguration) configuration);
     }
 
     return createdClusterId;
+  }
+
+  public void addClusterInternal(final String clusterName, final int clusterPos) throws IOException {
+    makeStorageDirty();
+
+    final OPaginatedCluster cluster = OPaginatedClusterFactory.createCluster(clusterName, configuration.getVersion(),
+        configuration.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STORAGE_CLUSTER_VERSION), this);
+
+    cluster.configure(clusterPos, clusterName);
+    cluster.create();
+
+    registerCluster(cluster);
+  }
+
+  public boolean dropClusterInternal(final int clusterId) throws IOException {
+    final OCluster cluster = clusters.get(clusterId);
+
+    if (cluster == null) {
+      return true;
+    }
+
+    makeStorageDirty();
+
+    cluster.delete();
+
+    clusterMap.remove(cluster.getName().toLowerCase(configuration.getLocaleInstance()));
+    clusters.set(clusterId, null);
+
+    return false;
   }
 
   private void doClose(final boolean force, final boolean onDelete) {

@@ -39,7 +39,7 @@ import java.util.Set;
  * @since 24.05.13
  */
 public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
-  private boolean                                  rollback;
+  private boolean rollback;
 
   private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap = new LinkedHashMap<>();
 
@@ -64,45 +64,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public int toStream(final byte[] content, int offset) {
-    offset = super.toStream(content, offset);
-
-    content[offset] = rollback ? (byte) 1 : 0;
-    offset++;
-
-    if (atomicOperationMetadataMap.size() > 0) {
-      for (Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
-        if (entry.getKey().equals(ORecordOperationMetadata.RID_METADATA_KEY)) {
-          content[offset] = 1;
-          offset++;
-
-          final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) entry.getValue();
-          final Set<ORID> rids = recordOperationMetadata.getValue();
-          OIntegerSerializer.INSTANCE.serializeNative(rids.size(), content, offset);
-          offset += OIntegerSerializer.INT_SIZE;
-
-          for (ORID rid : rids) {
-            OLongSerializer.INSTANCE.serializeNative(rid.getClusterPosition(), content, offset);
-            offset += OLongSerializer.LONG_SIZE;
-
-            OIntegerSerializer.INSTANCE.serializeNative(rid.getClusterId(), content, offset);
-            offset += OIntegerSerializer.INT_SIZE;
-          }
-        } else {
-          throw new IllegalStateException("Invalid metadata key " + ORecordOperationMetadata.RID_METADATA_KEY);
-        }
-      }
-    } else {
-      offset++;
-    }
-
-    return offset;
-  }
-
-  @Override
-  public void toStream(final ByteBuffer buffer) {
-    super.toStream(buffer);
-
+  protected void serializeToByteBuffer(ByteBuffer buffer) {
     buffer.put(rollback ? (byte) 1 : 0);
 
     if (atomicOperationMetadataMap.size() > 0) {
@@ -128,37 +90,27 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public int fromStream(final byte[] content, int offset) {
-    offset = super.fromStream(content, offset);
-
-    rollback = content[offset] > 0;
-    offset++;
-
+  protected void deserializeFromByteBuffer(ByteBuffer buffer) {
+    rollback = buffer.get() > 0;
     atomicOperationMetadataMap = new LinkedHashMap<>();
 
-    final int metadataId = content[offset];
-    offset++;
+    final int metadataId = buffer.get();
 
     if (metadataId == 1) {
-      final int collectionsSize = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-      offset += OIntegerSerializer.INT_SIZE;
+      final int collectionsSize = buffer.getInt();
 
       final ORecordOperationMetadata recordOperationMetadata = new ORecordOperationMetadata();
       for (int i = 0; i < collectionsSize; i++) {
-        final long clusterPosition = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-        offset += OLongSerializer.LONG_SIZE;
-
-        final int clusterId = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-        offset += OIntegerSerializer.INT_SIZE;
+        final long clusterPosition = buffer.getLong();
+        final int clusterId = buffer.getInt();
 
         recordOperationMetadata.addRid(new ORecordId(clusterId, clusterPosition));
       }
 
       atomicOperationMetadataMap.put(recordOperationMetadata.getKey(), recordOperationMetadata);
-    } else if (metadataId > 0)
+    } else if (metadataId > 0) {
       throw new IllegalStateException("Invalid metadata entry id " + metadataId);
-
-    return offset;
+    }
   }
 
   public Map<String, OAtomicOperationMetadata<?>> getAtomicOperationMetadata() {

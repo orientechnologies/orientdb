@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
@@ -935,6 +934,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       schema.removeBlobCluster(getClusterNameById(iClusterId));
 
     checkForClusterPermissions(getClusterNameById(iClusterId));
+
     return getStorage().dropCluster(iClusterId, iTruncate);
   }
 

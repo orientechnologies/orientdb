@@ -275,6 +275,41 @@ public class OWALPageV2ChangesPortionTest {
   }
 
   @Test
+  public void testSerializationAndRestoreFromBuffer() {
+    Random random = new Random();
+    byte[] originalData = new byte[1024];
+    random.nextBytes(originalData);
+
+    byte[] data = Arrays.copyOf(originalData, originalData.length);
+
+    ByteBuffer pointer = ByteBuffer.wrap(data).order(ByteOrder.nativeOrder());
+
+    OWALPageChangesPortion changesCollector = new OWALPageChangesPortion(1024);
+
+    byte[] changes = new byte[128];
+    random.nextBytes(changes);
+
+    changesCollector.setBinaryValue(pointer, changes, 32);
+
+    Assertions.assertThat(changesCollector.getBinaryValue(pointer, 32, 128)).isEqualTo(changes);
+    changesCollector.applyChanges(pointer);
+
+    ByteBuffer newBuffer = ByteBuffer.wrap(Arrays.copyOf(originalData, originalData.length)).order(ByteOrder.nativeOrder());
+
+    int size = changesCollector.serializedSize();
+    byte[] content = new byte[size];
+    changesCollector.toStream(0, content);
+
+    OWALPageChangesPortion changesCollectorRestored = new OWALPageChangesPortion(1024);
+    changesCollectorRestored.fromStream(ByteBuffer.wrap(content).order(ByteOrder.nativeOrder()));
+    changesCollectorRestored.applyChanges(newBuffer);
+
+    newBuffer.position(0);
+    pointer.position(0);
+    Assert.assertEquals(pointer.compareTo(newBuffer), 0);
+  }
+
+  @Test
   public void testEmptyChanges() {
     OWALPageChangesPortion changesCollector = new OWALPageChangesPortion(1024);
     int size = changesCollector.serializedSize();

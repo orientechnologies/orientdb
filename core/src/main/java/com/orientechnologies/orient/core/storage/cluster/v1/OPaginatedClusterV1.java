@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.encryption.impl.ONothingEncryption;
+import com.orientechnologies.orient.core.exception.ONonEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -42,12 +43,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPageDebug;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMapBucket;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedClusterDebug;
+import com.orientechnologies.orient.core.storage.cluster.*;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowseEntry;
@@ -55,6 +51,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterCreateCO;
 
 import java.io.File;
 import java.io.IOException;
@@ -134,7 +131,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
   }
 
   @Override
-  public void configure(final OStorage storage, final int id, final String clusterName, final Object... parameters)
+  public void configure(final int id, final String clusterName)
       throws IOException {
     acquireExclusiveLock();
     try {
@@ -186,7 +183,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
   }
 
   @Override
-  public void create(final int startSize) throws IOException {
+  public void create() throws IOException {
     boolean rollback = false;
     final OAtomicOperation atomicOperation = startAtomicOperation(false);
     try {
@@ -197,6 +194,8 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
         initCusterState(atomicOperation);
 
         clusterPositionMap.create(atomicOperation);
+
+        atomicOperation.addComponentOperation(new OPaginatedClusterCreateCO(getName(), id));
       } finally {
         releaseExclusiveLock();
       }
@@ -298,6 +297,12 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireExclusiveLock();
       try {
+        final long entries = getEntries();
+        if (entries > 0) {
+          throw new ONonEmptyComponentCanNotBeRemovedException(
+              getName() + " : Not empty cluster can not be deleted. Cluster has " + entries + " records");
+        }
+
         deleteFile(atomicOperation, fileId);
 
         clusterPositionMap.delete(atomicOperation);
