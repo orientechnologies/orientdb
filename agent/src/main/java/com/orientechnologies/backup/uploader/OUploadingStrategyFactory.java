@@ -29,13 +29,11 @@ public class OUploadingStrategyFactory {
 
     OUploadingStrategy uploadingStrategy;
 
-    if(uploadingStrategyName.equals("s3")) {
+    if (uploadingStrategyName.equals("s3")) {
       uploadingStrategy = new OS3DeltaUploadingStrategy();
-    }
-    else if(uploadingStrategyName.equals("sftp")) {
+    } else if (uploadingStrategyName.equals("sftp")) {
       uploadingStrategy = new OSFTPDeltaUploadingStrategy();
-    }
-    else {
+    } else {
       throw new OConfigurationException("Uploading strategy no supported. Accepted values: s3, sftp.");
     }
 

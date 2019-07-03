@@ -61,8 +61,6 @@
         </module>
         -->
         <module name="RightCurly">
-            <property name="option" value="alone"/>
-            <property name="tokens" value="CLASS_DEF, METHOD_DEF, CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, LITERAL_DO, STATIC_INIT, INSTANCE_INIT"/>
         </module>
         <!--
         <module name="WhitespaceAround">
@@ -192,12 +190,10 @@
         </module>
 	-->
         <module name="MethodParamPad"/>
-        <!--
         <module name="OperatorWrap">
             <property name="option" value="NL"/>
             <property name="tokens" value="BAND, BOR, BSR, BXOR, DIV, EQUAL, GE, GT, LAND, LE, LITERAL_INSTANCEOF, LOR, LT, MINUS, MOD, NOT_EQUAL, PLUS, QUESTION, SL, SR, STAR "/>
         </module>
-        -->
         <module name="AnnotationLocation">
             <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF"/>
         </module>
