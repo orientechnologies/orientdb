@@ -25,6 +25,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterCreateCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterDeleteCO;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
@@ -129,6 +130,9 @@ public final class OWALRecordsFactory {
       break;
     case CREATE_CLUSTER_CO:
       walRecord = new OPaginatedClusterCreateCO();
+      break;
+    case DELETE_CLUSTER_CO:
+      walRecord = new OPaginatedClusterDeleteCO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

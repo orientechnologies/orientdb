@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOpe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterCreateCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterDeleteCO;
 
 import java.io.File;
 import java.io.IOException;
@@ -131,8 +132,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
   }
 
   @Override
-  public void configure(final int id, final String clusterName)
-      throws IOException {
+  public void configure(final int id, final String clusterName) throws IOException {
     acquireExclusiveLock();
     try {
       final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
@@ -306,6 +306,8 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
         deleteFile(atomicOperation, fileId);
 
         clusterPositionMap.delete(atomicOperation);
+
+        atomicOperation.addComponentOperation(new OPaginatedClusterDeleteCO(getName(), id));
       } finally {
         releaseExclusiveLock();
       }

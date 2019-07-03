@@ -16,4 +16,5 @@ public final class WALRecordTypes {
   public static final byte EMPTY_WAL_RECORD                      = 14;
 
   public static final byte CREATE_CLUSTER_CO = 15;
+  public static final byte DELETE_CLUSTER_CO = 16;
 }
