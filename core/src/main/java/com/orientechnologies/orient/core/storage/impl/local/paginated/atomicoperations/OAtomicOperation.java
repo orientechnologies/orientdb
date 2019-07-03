@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.OComponentOperationRecord;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -130,6 +131,13 @@ public final class OAtomicOperation {
       }
     }
     return null;
+  }
+
+  /**
+   * Stub which will be used in next version of atomic operation to log actions on the component level
+   */
+  public void addComponentOperation(final OComponentOperationRecord componentOperation) throws IOException {
+
   }
 
   public OCacheEntry loadPageForRead(long fileId, final long pageIndex, final boolean checkPinnedPages, final int pageCount)
