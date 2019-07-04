@@ -20,7 +20,10 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 public interface OIndexCallback {
   Object getDocumentValueToIndex(ODocument iDocument);
+
+  Object getResultValueToIndex(OResult result);
 }

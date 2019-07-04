@@ -32,16 +32,21 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowseEntry;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
@@ -828,7 +833,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   protected abstract OBinarySerializer determineValueSerializer();
 
-  private void populateIndex(ODocument doc, Object fieldValue) {
+  private void populateIndex(OIdentifiable doc, Object fieldValue) {
     if (fieldValue instanceof Collection) {
       for (final Object fieldValueItem : (Collection<?>) fieldValue) {
         put(fieldValueItem, doc);
@@ -917,35 +922,44 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   private long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,
       long documentIndexed, long documentTotal) {
     try {
-      for (final ORecord record : getDatabase().browseCluster(clusterName)) {
-        if (Thread.interrupted())
-          throw new OCommandExecutionException("The index rebuild has been interrupted");
+      ODatabaseDocumentInternal db = getDatabase();
+      ORecordSerializer serializer = db.getSerializer();
+      int id = db.getClusterIdByName(clusterName);
+      Iterator<OClusterBrowsePage> res = ((OAbstractPaginatedStorage) db.getStorage()).browseCluster(id);
+      while (res.hasNext()) {
+        OClusterBrowsePage page = res.next();
+        for (final OClusterBrowseEntry record : page) {
+          if (Thread.interrupted())
+            throw new OCommandExecutionException("The index rebuild has been interrupted");
 
-        if (record instanceof ODocument) {
-          final ODocument doc = (ODocument) record;
+          if (record.getBuffer().recordType == ODocument.RECORD_TYPE) {
 
-          if (indexDefinition == null)
-            throw new OConfigurationException(
-                "Index '" + name + "' cannot be rebuilt because has no a valid definition (" + indexDefinition + ")");
+            ORecordId rid = new ORecordId(id, record.getClusterPosition());
+            final OResult result = ((ORecordSerializerBinary) serializer).getBinaryResult(db, record.getBuffer().buffer, rid);
 
-          final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
+            if (indexDefinition == null)
+              throw new OConfigurationException(
+                  "Index '" + name + "' cannot be rebuilt because has no a valid definition (" + indexDefinition + ")");
 
-          if (fieldValue != null || !indexDefinition.isNullValuesIgnored()) {
-            try {
-              populateIndex(doc, fieldValue);
-            } catch (OTooBigIndexKeyException | OIndexException e) {
-              OLogManager.instance().error(this,
-                  "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
-                      + " Rebuild will continue from this point", e, fieldValue, doc.getIdentity());
+            final Object fieldValue = indexDefinition.getResultValueToIndex(result);
+
+            if (fieldValue != null || !indexDefinition.isNullValuesIgnored()) {
+              try {
+                populateIndex(rid, fieldValue);
+              } catch (OTooBigIndexKeyException | OIndexException e) {
+                OLogManager.instance().error(this,
+                    "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
+                        + " Rebuild will continue from this point", e, fieldValue, rid);
+              }
+
+              ++documentIndexed;
             }
-
-            ++documentIndexed;
           }
-        }
-        documentNum++;
+          documentNum++;
 
-        if (iProgressListener != null)
-          iProgressListener.onProgress(this, documentNum, (float) (documentNum * 100.0 / documentTotal));
+          if (iProgressListener != null)
+            iProgressListener.onProgress(this, documentNum, (float) (documentNum * 100.0 / documentTotal));
+        }
       }
     } catch (NoSuchElementException ignore) {
       // END OF CLUSTER REACHED, IGNORE IT

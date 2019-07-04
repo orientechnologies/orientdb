@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
 
@@ -59,6 +60,11 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   @Override
   public Object getDocumentValueToIndex(ODocument iDocument) {
     return createValue(iDocument.<Object>field(field));
+  }
+
+  @Override
+  public Object getResultValueToIndex(OResult result) {
+    return createValue(result.<Object>getProperty(field));
   }
 
   @Override

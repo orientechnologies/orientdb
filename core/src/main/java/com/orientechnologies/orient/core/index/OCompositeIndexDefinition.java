@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -155,6 +156,33 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
 
     return compositeKeys;
   }
+
+  public Object getResultValueToIndex(final OResult result) {
+    final List<OCompositeKey> compositeKeys = new ArrayList<OCompositeKey>(10);
+    final OCompositeKey firstKey = new OCompositeKey();
+    boolean containsCollection = false;
+
+    compositeKeys.add(firstKey);
+
+    for (final OIndexDefinition indexDefinition : indexDefinitions) {
+      final Object value = indexDefinition.getResultValueToIndex(result);
+
+      if (value == null && isNullValuesIgnored())
+        return null;
+
+      //for empty collections we add null key in index
+      if (value instanceof Collection && ((Collection) value).isEmpty() && isNullValuesIgnored())
+        return null;
+
+      containsCollection = addKey(firstKey, compositeKeys, containsCollection, value);
+    }
+
+    if (!containsCollection)
+      return firstKey;
+
+    return compositeKeys;
+  }
+
 
   public int getMultiValueDefinitionIndex() {
     return multiValueDefinitionIndex;

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -36,6 +37,7 @@ public class ORebuildIndexStatementExecutionTest {
 
       db.newInstance(className).field("key", "a").field("value", 2).save(className + "secondCluster");
 
+      ((OMetadataInternal)db.getMetadata()).clearThreadLocalSchemaSnapshot();
       // when
       OResultSet result = db.command("rebuild index " + className + "index1");
       Assert.assertTrue(result.hasNext());

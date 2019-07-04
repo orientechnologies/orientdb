@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -177,6 +178,11 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {
+    throw new OIndexException("This method is not supported in given index definition.");
+  }
+
+  @Override
+  public Object getResultValueToIndex(OResult result) {
     throw new OIndexException("This method is not supported in given index definition.");
   }
 

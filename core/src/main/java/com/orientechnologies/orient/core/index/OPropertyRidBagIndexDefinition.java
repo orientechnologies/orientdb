@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +71,11 @@ public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMult
   @Override
   public Object getDocumentValueToIndex(ODocument iDocument) {
     return createValue(iDocument.<Object>field(field));
+  }
+
+  @Override
+  public Object getResultValueToIndex(OResult result) {
+    return createValue(result.<Object>getProperty(field));
   }
 
   @Override

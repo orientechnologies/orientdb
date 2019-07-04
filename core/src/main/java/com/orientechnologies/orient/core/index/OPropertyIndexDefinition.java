@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Collections;
 import java.util.List;
@@ -77,6 +78,19 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     }
     return createValue(iDocument.<Object>field(field));
   }
+
+  public Object getResultValueToIndex(final OResult result) {
+    if (OType.LINK.equals(keyType)) {
+      final OIdentifiable identifiable = result.getProperty(field);
+      if (identifiable != null)
+        return createValue(identifiable.getIdentity());
+      else
+        return null;
+    }
+    return createValue(result.<Object>getProperty(field));
+  }
+
+
 
   @Override
   public boolean equals(final Object o) {
