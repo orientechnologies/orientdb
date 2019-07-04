@@ -49,7 +49,7 @@ public class ODeleteEdgeStatementExecutionTest {
       v1.setProperty("name", "a" + i);
       v1.save();
       if (prev != null) {
-        prev.addEdge(v1, edgeClassName);
+        prev.addEdge(v1, edgeClassName).save();
       }
       prev = v1;
     }
