@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
@@ -197,7 +198,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
 
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
         OIdentifiable oid = (OIdentifiable) o;
-        final OVertex targetVertex = new OVertexDelegate(db.getRecord(oid));
+        final OVertex targetVertex = ((OElement) db.getRecord(oid)).asVertex().get();
 
         try {
           // CREATE THE EDGE
