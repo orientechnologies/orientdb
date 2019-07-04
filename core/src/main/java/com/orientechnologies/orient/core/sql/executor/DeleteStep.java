@@ -32,8 +32,19 @@ public class DeleteStep extends AbstractExecutionStep {
         OResult result = upstream.next();
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
-          if (result.isElement()) {
-            result.getElement().get().delete();
+          boolean newTx = false;
+          if(result.isEdge() && !ctx.getDatabase().getTransaction().isActive()){
+            newTx = true;
+            ctx.getDatabase().begin();
+          }
+          try {
+            if (result.isElement()) {
+              result.getElement().get().delete();
+            }
+          }finally{
+            if(newTx){
+              ctx.getDatabase().commit();
+            }
           }
           return result;
         } finally {
