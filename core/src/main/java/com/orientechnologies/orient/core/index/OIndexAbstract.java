@@ -925,7 +925,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       ODatabaseDocumentInternal db = getDatabase();
       ORecordSerializer serializer = db.getSerializer();
       int id = db.getClusterIdByName(clusterName);
-      Iterator<OClusterBrowsePage> res = ((OAbstractPaginatedStorage) db.getStorage()).browseCluster(id);
+      Iterator<OClusterBrowsePage> res = ((OAbstractPaginatedStorage) db.getStorage().getUnderlying()).browseCluster(id);
       while (res.hasNext()) {
         OClusterBrowsePage page = res.next();
         for (final OClusterBrowseEntry record : page) {

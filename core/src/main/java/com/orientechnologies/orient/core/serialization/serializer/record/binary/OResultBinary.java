@@ -79,6 +79,9 @@ public class OResultBinary implements OResult {
 
   @Override
   public <T> T getProperty(String name) {
+    if ("@rid".equals(name)) {
+      return (T) id.orElse(null);
+    }
     BytesContainer bytes = new BytesContainer(this.bytes);
     bytes.skip(offset);
     return (T) serializer.deserializeFieldTyped(bytes, name, !id.isPresent(), schema, null);
