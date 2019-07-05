@@ -136,12 +136,6 @@ public class OEdgeDelegate implements OEdge {
     if (to != null) {
       OVertexDelegate.detachIncomingEdge(to, delegate);
     }
-    if (from != null) {
-      from.save();
-    }
-    if (to != null) {
-      to.save();
-    }
   }
 
   @Override

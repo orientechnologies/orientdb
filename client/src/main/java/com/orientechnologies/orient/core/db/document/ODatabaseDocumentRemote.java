@@ -545,9 +545,20 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       }
     };
     tx.begin();
+    Set<ORecord> records = ORecordInternal.getDirtyManager((ORecord) record).getUpdateRecords();
+    if (records != null) {
+      for (ORecord rec : records) {
+        tx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      }
+    }
+    Set<ORecord> newRecords = ORecordInternal.getDirtyManager((ORecord) record).getNewRecords();
+    if (newRecords != null) {
+      for (ORecord rec : newRecords) {
+        tx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      }
+    }
     tx.deleteRecord((ORecord) record, iMode);
     tx.commit();
-
   }
 
   @Override
@@ -853,10 +864,10 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
     if (record instanceof OVertex) {
-      reload(record,"in*:2 out*:2");
+      reload(record, "in*:2 out*:2");
       OVertexDelegate.deleteLinks((OVertex) record);
     } else if (record instanceof OEdge) {
-      reload(record,"in:1 out:1");
+      reload(record, "in:1 out:1");
       OEdgeDelegate.deleteLinks((OEdge) record);
     }
 

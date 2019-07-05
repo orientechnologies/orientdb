@@ -721,12 +721,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    *
    * @Internal
    */
-  public void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
-      boolean prohibitTombstones) {
+  public void executeDeleteRecord(OIdentifiable identifiable, final int iVersion, final boolean iRequired,
+      final OPERATION_MODE iMode, boolean prohibitTombstones) {
     checkOpenness();
     checkIfActive();
 
-    final ORecordId rid = (ORecordId) record.getIdentity();
+    final ORecordId rid = (ORecordId) identifiable.getIdentity();
 
     if (rid == null)
       throw new ODatabaseException(
@@ -735,13 +735,26 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     if (!rid.isValid())
       return;
 
-    record = record.getRecord();
+    ORecord record = identifiable.getRecord();
     if (record == null)
       return;
 
     final OMicroTransaction microTx = beginMicroTransaction();
     try {
-      microTx.deleteRecord(record.getRecord(), iMode);
+      Set<ORecord> records = ORecordInternal.getDirtyManager(record).getUpdateRecords();
+      if (records != null) {
+        for (ORecord rec : records) {
+          microTx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+        }
+      }
+
+      Set<ORecord> newRecords = ORecordInternal.getDirtyManager(record).getNewRecords();
+      if (newRecords != null) {
+        for (ORecord rec : newRecords) {
+          microTx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+        }
+      }
+      microTx.deleteRecord(record, iMode);
     } catch (Exception e) {
       endMicroTransaction(false);
       throw e;
