@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
@@ -35,11 +34,8 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -54,19 +50,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -670,21 +654,15 @@ public abstract class OClassImpl implements OClass {
   }
 
   protected void truncateClusterInternal(final String clusterName, final ODatabaseDocumentInternal database) {
-    final OCluster cluster = database.getStorage().getClusterByName(clusterName);
+    database.checkForClusterPermissions(clusterName);
 
-    if (cluster == null) {
+    final ORecordIteratorCluster<ORecord> iteratorCluster = database.browseCluster(clusterName);
+    if (iteratorCluster == null) {
       throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
     }
-
-    try {
-      database.checkForClusterPermissions(clusterName);
-      cluster.truncate();
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during truncate of cluster " + clusterName), e);
-    }
-
-    for (OIndex index : getIndexes()) {
-      index.rebuild();
+    while (iteratorCluster.hasNext()) {
+      final ORecord record = iteratorCluster.next();
+      record.delete();
     }
   }
 
@@ -868,7 +846,7 @@ public abstract class OClassImpl implements OClass {
   /**
    * Truncates all the clusters the class uses.
    */
-  public void truncate() throws IOException {
+  public void truncate() {
     ODatabaseDocumentInternal db = getDatabase();
     db.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE);
 
@@ -878,23 +856,21 @@ public abstract class OClassImpl implements OClass {
               + OSecurityShared.RESTRICTED_CLASSNAME + "')");
     }
 
-    final OStorage storage = db.getStorage();
     acquireSchemaReadLock();
     try {
 
       for (int id : clusterIds) {
-        OCluster cl = storage.getClusterById(id);
-        db.checkForClusterPermissions(cl.getName());
-        cl.truncate();
-      }
-      for (OIndex<?> index : getClassIndexes())
-        index.clear();
+        final String clusterName = db.getClusterNameById(id);
+        db.checkForClusterPermissions(clusterName);
 
-      Set<OIndex<?>> superclassIndexes = new HashSet<OIndex<?>>();
-      superclassIndexes.addAll(getIndexes());
-      superclassIndexes.removeAll(getClassIndexes());
-      for (OIndex index : superclassIndexes) {
-        index.rebuild();
+        final ORecordIteratorCluster<ORecord> iteratorCluster = db.browseCluster(clusterName);
+        if (iteratorCluster == null) {
+          throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
+        }
+        while (iteratorCluster.hasNext()) {
+          final ORecord record = iteratorCluster.next();
+          record.delete();
+        }
       }
     } finally {
       releaseSchemaReadLock();

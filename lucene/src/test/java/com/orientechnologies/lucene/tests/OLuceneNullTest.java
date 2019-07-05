@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +38,7 @@ public class OLuceneNullTest extends OLuceneBaseTest {
 
     OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Test.names");
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
 
   }
 
@@ -62,7 +61,7 @@ public class OLuceneNullTest extends OLuceneBaseTest {
     db.commit();
 
     OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Test.names");
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(0, index.getSize());
 
   }
 }

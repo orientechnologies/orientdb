@@ -1205,27 +1205,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
   }
 
   @Override
-  public void truncate() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
-      acquireExclusiveLock();
-      try {
-        clusterPositionMap.truncate(atomicOperation);
-
-        initCusterState(atomicOperation);
-      } finally {
-        releaseExclusiveLock();
-      }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-  }
-
-  @Override
   public OPhysicalPosition getPhysicalPosition(final OPhysicalPosition position) throws IOException {
     atomicOperationsManager.acquireReadLock(this);
     try {

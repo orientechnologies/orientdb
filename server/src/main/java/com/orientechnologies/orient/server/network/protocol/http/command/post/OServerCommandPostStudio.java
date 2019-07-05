@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -209,7 +208,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     } else if ("del".equals(operation)) {
       iRequest.data.commandInfo = "Studio delete cluster";
 
-      db.dropCluster(rid, false);
+      db.dropCluster(rid);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
           "Cluster " + fields.get("name") + "' deleted successfully", null);

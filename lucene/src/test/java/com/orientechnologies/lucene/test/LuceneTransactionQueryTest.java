@@ -83,14 +83,14 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(1, vertices.size());
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
     db.commit();
 
     query = "select from C1 where p1 lucene \"abc\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(1, vertices.size());
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
 
     db.begin();
 
@@ -114,7 +114,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
       i++;
     }
     Assert.assertEquals(0, i);
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(0, index.getSize());
 
     db.rollback();
 
@@ -123,7 +123,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(1, vertices.size());
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
 
   }
 

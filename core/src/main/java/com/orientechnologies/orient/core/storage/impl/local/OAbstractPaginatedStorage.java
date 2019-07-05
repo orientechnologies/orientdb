@@ -727,7 +727,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public final int addCluster(final String clusterName, final int requestedId, final Object... parameters) {
+  public final int addCluster(final String clusterName, final int requestedId) {
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
@@ -745,7 +745,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         makeStorageDirty();
-        return doAddCluster(clusterName, requestedId, parameters);
+        return doAddCluster(clusterName, requestedId);
 
       } catch (final IOException e) {
         throw OException.wrapException(new OStorageException("Error in creation of new cluster '" + clusterName + "'"), e);
@@ -762,7 +762,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public final boolean dropCluster(final int clusterId, final boolean iTruncate) {
+  public final boolean dropCluster(final int clusterId) {
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
@@ -4890,10 +4890,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     }
 
-    return doAddCluster(clusterName, clusterPos, parameters);
+    return doAddCluster(clusterName, clusterPos);
   }
 
-  private int doAddCluster(String clusterName, final int clusterPos, final Object... parameters) throws IOException {
+  private int doAddCluster(String clusterName, final int clusterPos) throws IOException {
     final OPaginatedCluster cluster;
     if (clusterName != null) {
       clusterName = clusterName.toLowerCase(configuration.getLocaleInstance());

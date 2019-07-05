@@ -59,10 +59,6 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
     readCache.closeFile(fileId, flush, writeCache);
   }
 
-  public void truncate(final OAtomicOperation atomicOperation) throws IOException {
-    truncateFile(atomicOperation, fileId);
-  }
-
   public void delete(final OAtomicOperation atomicOperation) throws IOException {
     deleteFile(atomicOperation, fileId);
   }

@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OElement;
@@ -163,7 +162,7 @@ public class ViewManager {
       viewCluserVisitors.remove(cluster);
       clustersToDrop.remove(cluster);
       oldClustersPerViews.remove(cluster);
-      db.dropCluster(cluster, false);
+      db.dropCluster(cluster);
     }
   }
 
@@ -300,7 +299,7 @@ public class ViewManager {
     view = db.getMetadata().getSchema().getView(view.getName());
     if (view == null) {
       //the view was dropped in the meantime
-      db.dropCluster(clusterName, false);
+      db.dropCluster(clusterName);
       indexes.forEach(x -> x.delete());
       return;
     }

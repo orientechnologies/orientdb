@@ -55,7 +55,7 @@ public class LuceneDropClusterTest extends BaseLuceneTest {
 
     int[] clusterIds = metadata.getSchema().getClass("Song").getClusterIds();
 
-    db.dropCluster(clusterIds[1], true);
+    db.dropCluster(clusterIds[1]);
 
     long afterDropIndexSize = metadata.getIndexManager().getIndex("Song.title").getSize();
 

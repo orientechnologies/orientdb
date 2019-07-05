@@ -99,7 +99,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     Assert.assertEquals(coll.size(), 0);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getSize(), 0);
     vertices.close();
     db.rollback();
 
@@ -108,7 +108,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getSize(), 1);
     vertices.close();
   }
 

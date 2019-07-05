@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-
 /**
  * Created by enricorisa on 28/06/14.
  */
@@ -106,9 +105,7 @@ public class LuceneInsertMultithreadTest {
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
-//    Assert.assertEquals(, THREADS * CYCLE);
-
-    Assertions.assertThat(idx.getSize()).isEqualTo(THREADS * CYCLE + 1);
+    Assertions.assertThat(idx.getSize()).isEqualTo(THREADS * CYCLE);
     orientDB.drop(dbName);
   }
 

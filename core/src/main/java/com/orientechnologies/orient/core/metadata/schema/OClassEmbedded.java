@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -779,7 +778,7 @@ public class OClassEmbedded extends OClassImpl {
     if (name.toLowerCase(Locale.ENGLISH).equals(getDatabase().getClusterNameById(defaultClusterId))) {
       // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
       if (getDatabase().getClusterRecordSizeById(defaultClusterId) == 0)
-        getDatabase().getStorage().dropCluster(defaultClusterId, true);
+        getDatabase().getStorage().dropCluster(defaultClusterId);
     }
   }
 

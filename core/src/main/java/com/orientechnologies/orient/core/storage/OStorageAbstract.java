@@ -174,8 +174,8 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   }
 
   @Override
-  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
-    return dropCluster(getClusterIdByName(iClusterName), iTruncate);
+  public boolean dropCluster(final String iClusterName) {
+    return dropCluster(getClusterIdByName(iClusterName));
   }
 
   @Override

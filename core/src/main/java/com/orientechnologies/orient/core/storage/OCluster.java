@@ -53,11 +53,6 @@ public interface OCluster {
   long getTombstonesCount();
 
   /**
-   * Truncates the cluster content. All the entries will be removed.
-   */
-  void truncate() throws IOException;
-
-  /**
    * Allocates a physical position pointer on the storage for generate an id without a content.
    *
    * @param recordType the type of record of which allocate the position.

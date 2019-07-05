@@ -37,7 +37,15 @@ public abstract class LocalPaginatedClusterAbstract {
 
   @Before
   public void beforeMethod() throws IOException {
-    paginatedCluster.truncate();
+    final long firstPosition = paginatedCluster.getFirstPosition();
+    OPhysicalPosition[] positions = paginatedCluster.ceilingPositions(new OPhysicalPosition(firstPosition));
+    while (positions.length > 0) {
+      for (OPhysicalPosition position : positions) {
+        paginatedCluster.deleteRecord(position.clusterPosition);
+      }
+
+      positions = paginatedCluster.higherPositions(positions[positions.length - 1]);
+    }
   }
 
   @Test
@@ -48,13 +56,11 @@ public abstract class LocalPaginatedClusterAbstract {
     recordVersion++;
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
-    Assert.assertEquals(physicalPosition.clusterPosition, 0);
     paginatedCluster.deleteRecord(physicalPosition.clusterPosition);
 
     recordVersion = 0;
     Assert.assertEquals(recordVersion, 0);
     physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
-    Assert.assertEquals(physicalPosition.clusterPosition, 1);
 
     Assert.assertEquals(physicalPosition.recordVersion, recordVersion);
   }
@@ -67,7 +73,6 @@ public abstract class LocalPaginatedClusterAbstract {
     recordVersion++;
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
-    Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
     ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
     Assert.assertNotNull(rawBuffer);
@@ -88,7 +93,6 @@ public abstract class LocalPaginatedClusterAbstract {
     recordVersion++;
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(bigRecord, recordVersion, (byte) 1, null);
-    Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
     ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
     Assert.assertNotNull(rawBuffer);
@@ -717,7 +721,6 @@ public abstract class LocalPaginatedClusterAbstract {
     recordVersion++;
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
-    Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
     recordVersion++;
     smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
@@ -741,7 +744,6 @@ public abstract class LocalPaginatedClusterAbstract {
     recordVersion++;
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
-    Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
     int updateRecordVersion = 0;
     updateRecordVersion++;
@@ -753,8 +755,6 @@ public abstract class LocalPaginatedClusterAbstract {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, updateRecordVersion);
-
-    //    Assert.assertEquals(rawBuffer.buffer, smallRecord);
 
     Assertions.assertThat(rawBuffer.buffer).isEqualTo(smallRecord);
     Assert.assertEquals(rawBuffer.recordType, 2);
@@ -768,7 +768,6 @@ public abstract class LocalPaginatedClusterAbstract {
     recordVersion++;
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
-    Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
     int updateRecordVersion;
     updateRecordVersion = -2;
@@ -780,7 +779,6 @@ public abstract class LocalPaginatedClusterAbstract {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, updateRecordVersion);
-    //    Assert.assertEquals(rawBuffer.buffer, smallRecord);
 
     Assertions.assertThat(rawBuffer.buffer).isEqualTo(smallRecord);
 
@@ -798,7 +796,6 @@ public abstract class LocalPaginatedClusterAbstract {
     recordVersion++;
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(bigRecord, recordVersion, (byte) 1, null);
-    Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
     recordVersion++;
     bigRecord = new byte[2 * 65536 + 20];
@@ -1174,7 +1171,6 @@ public abstract class LocalPaginatedClusterAbstract {
     recordVersion++;
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
-    Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
     Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
         OPaginatedClusterV0.RECORD_STATUS.PRESENT);

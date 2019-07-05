@@ -129,9 +129,9 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * @param iClusterName name of the cluster
    * @param iRequestedId requested id of the cluster
    */
-  int addCluster(String iClusterName, int iRequestedId, Object... iParameters);
+  int addCluster(String iClusterName, int iRequestedId);
 
-  boolean dropCluster(String iClusterName, final boolean iTruncate);
+  boolean dropCluster(String iClusterName);
 
   /**
    * Drops a cluster.
@@ -140,7 +140,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
    *
    * @return true if has been removed, otherwise false
    */
-  boolean dropCluster(int iId, final boolean iTruncate);
+  boolean dropCluster(int iId);
 
   long count(int iClusterId);
 

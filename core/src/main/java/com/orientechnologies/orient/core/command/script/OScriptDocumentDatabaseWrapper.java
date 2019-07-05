@@ -186,8 +186,8 @@ public class OScriptDocumentDatabaseWrapper {
     return database.save(iRecord);
   }
 
-  public boolean dropCluster(String iClusterName, final boolean iTruncate) {
-    return database.dropCluster(iClusterName, iTruncate);
+  public boolean dropCluster(String iClusterName) {
+    return database.dropCluster(iClusterName);
   }
 
   public <THISDB extends ODatabase> THISDB create() {
@@ -195,7 +195,7 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public boolean dropCluster(int iClusterId, final boolean iTruncate) {
-    return database.dropCluster(iClusterId, true);
+    return database.dropCluster(iClusterId);
   }
 
   public void close() {

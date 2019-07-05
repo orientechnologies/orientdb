@@ -899,13 +899,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
+  public int addCluster(final String iClusterName, final int iRequestedId) {
     checkIfActive();
-    return getStorage().addCluster(iClusterName, iRequestedId, iParameters);
+    return getStorage().addCluster(iClusterName, iRequestedId);
   }
 
   @Override
-  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+  public boolean dropCluster(final String iClusterName) {
     checkIfActive();
     final int clusterId = getClusterIdByName(iClusterName);
     OSchemaProxy schema = metadata.getSchema();
@@ -916,11 +916,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       schema.removeBlobCluster(iClusterName);
     getLocalCache().freeCluster(clusterId);
     checkForClusterPermissions(iClusterName);
-    return getStorage().dropCluster(iClusterName, iTruncate);
+    return getStorage().dropCluster(iClusterName);
   }
 
   @Override
-  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+  public boolean dropCluster(final int iClusterId) {
     checkIfActive();
 
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(iClusterId));
@@ -935,7 +935,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     checkForClusterPermissions(getClusterNameById(iClusterId));
 
-    return getStorage().dropCluster(iClusterId, iTruncate);
+    return getStorage().dropCluster(iClusterId);
   }
 
   public void checkForClusterPermissions(final String iClusterName) {

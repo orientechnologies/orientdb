@@ -113,11 +113,6 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void truncate() throws IOException {
-    throw new OOfflineClusterException("Cannot truncate an offline cluster '" + name + "'");
-  }
-
-  @Override
   public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot allocate a new position on offline cluster '" + name + "'");
   }

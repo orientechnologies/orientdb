@@ -53,13 +53,7 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.ControlledRealTimeReopenThread;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
@@ -68,12 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -462,7 +451,8 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     try {
       IndexReader reader = searcher.getIndexReader();
 
-      return changes == null ? reader.numDocs() : reader.numDocs() + changes.numDocs();
+      //we subtract metadata document added during open
+      return changes == null ? reader.numDocs() - 1 : reader.numDocs() + changes.numDocs() - 1;
     } finally {
 
       release(searcher);

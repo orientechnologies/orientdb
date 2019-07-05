@@ -20,7 +20,6 @@ package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -54,7 +53,7 @@ public class OLuceneDropClusterTest extends OLuceneBaseTest {
 
     int[] clusterIds = metadata.getSchema().getClass("Song").getClusterIds();
 
-    db.dropCluster(clusterIds[1], true);
+    db.dropCluster(clusterIds[1]);
 
     long afterDropIndexSize = metadata.getIndexManager().getIndex("Song.title").getSize();
 

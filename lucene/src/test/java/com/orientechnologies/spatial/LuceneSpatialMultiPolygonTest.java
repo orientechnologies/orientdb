@@ -99,7 +99,7 @@ public class LuceneSpatialMultiPolygonTest extends BaseSpatialLuceneTest {
 
     OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Place.location");
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
 
     InputStream systemResourceAsStream = ClassLoader.getSystemResourceAsStream("multipolygon.txt");
 
@@ -112,7 +112,7 @@ public class LuceneSpatialMultiPolygonTest extends BaseSpatialLuceneTest {
 
     db.command(new OCommandSQL("insert into Place set name = 'Test1' , location = ST_GeomFromText('" + MULTIWKT + "')")).execute();
 
-    Assert.assertEquals(4, index.getSize());
+    Assert.assertEquals(3, index.getSize());
 
     queryMultiPolygon();
 

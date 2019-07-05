@@ -50,7 +50,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     }
 
     if (graph.getRawGraph().existsCluster("Customer_genius"))
-      graph.getRawGraph().dropCluster("Customer_genius", true);
+      graph.getRawGraph().dropCluster("Customer_genius");
 
     customer = (OrientVertexType) graph.createVertexType("Customer").setClusterSelection("default");
     customer.addCluster("Customer_genius");

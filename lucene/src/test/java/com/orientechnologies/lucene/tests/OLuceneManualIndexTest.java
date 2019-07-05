@@ -60,7 +60,7 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
     db.command("insert into index:apiManual (key,rid) values(['Luca','Rome'],#5:0) ");
     db.command("insert into index:apiManual (key,rid) values(['Luigi','Rome'],#5:0) ");
 
-    Assert.assertEquals(index.getSize(), 4);
+    Assert.assertEquals(index.getSize(), 3);
 
     OResultSet docs = db.query("select from  index:apiManual  where  key = 'k0:Enrico'");
     assertThat(docs).hasSize(1);
@@ -81,7 +81,7 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
 
     OIndex<?> manual = db.getMetadata().getIndexManager().getIndex("manual");
 
-    assertThat(manual.getSize()).isEqualTo(4);
+    assertThat(manual.getSize()).isEqualTo(3);
 
     OResultSet docs = db.query("select from index:manual where key = 'Enrico'");
 
@@ -94,7 +94,7 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
 
     OIndex<?> manual = db.getMetadata().getIndexManager().getIndex("manual");
 
-    Assert.assertEquals(manual.getSize(), 4);
+    Assert.assertEquals(manual.getSize(), 3);
 
     OResultSet docs = db.query("select from index:manual where key = '(k0:Enrico)'");
     assertThat(docs).hasSize(1);

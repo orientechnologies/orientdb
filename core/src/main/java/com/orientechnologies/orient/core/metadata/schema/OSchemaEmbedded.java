@@ -672,7 +672,7 @@ public class OSchemaEmbedded extends OSchemaShared {
   }
 
   private void deleteCluster(final ODatabaseDocumentInternal db, final int clusterId) {
-    db.getStorage().dropCluster(clusterId, false);
+    db.getStorage().dropCluster(clusterId);
     db.getLocalCache().freeCluster(clusterId);
   }
 

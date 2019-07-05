@@ -39,21 +39,11 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexes;
-import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -64,33 +54,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -388,7 +361,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     // In v4 new cluster for manual indexes has been implemented. To keep database consistent we should shift back
     // all clusters and recreate cluster for manual indexes in the end.
-    database.dropCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, true);
+    database.dropCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
 
     final OSchema schema = database.getMetadata().getSchema();
     if (schema.existsClass(OUser.CLASS_NAME))
@@ -404,7 +377,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     if (schema.existsClass(OClassTrigger.CLASSNAME))
       schema.dropClass(OClassTrigger.CLASSNAME);
 
-    database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME, true);
+    database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME);
 
     database.getStorage().setDefaultClusterId(database.addCluster(OStorage.CLUSTER_DEFAULT_NAME));
 
@@ -978,7 +951,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (!preserveClusterIDs) {
           if (database.countClusterElements(clusterId - 1) == 0) {
             listener.onMessage("Found previous version: migrating old clusters...");
-            database.dropCluster(name, true);
+            database.dropCluster(name);
             database.addCluster("temp_" + clusterId, null);
             clusterId = database.addCluster(name);
           } else
@@ -987,21 +960,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                     + ". To continue the import drop the cluster '" + database.getClusterNameById(clusterId - 1) + "' that has "
                     + database.countClusterElements(clusterId - 1) + " records");
         } else {
-          database.dropCluster(clusterId, false);
+          database.dropCluster(clusterId);
           database.addCluster(name, id, null);
-        }
-      }
-
-      if (name != null && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME) || name
-          .equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
-          .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
-        if (!merge)
-          database.command("truncate cluster `" + name + "`").close();
-
-        for (OIndex existingIndex : database.getMetadata().getIndexManager().getIndexes()) {
-          if (existingIndex.getClusters().contains(name)) {
-            indexesToRebuild.add(existingIndex.getName());
-          }
         }
       }
 
@@ -1224,9 +1184,20 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       final int clusterId = rid.getClusterId();
 
       if ((clusterId != manualIndexCluster && clusterId != internalCluster && clusterId != indexCluster)) {
-        ORecordInternal.setVersion(record, 0);
+        final ORecord loadedRecord = database.getRecord(rid);
+        if (loadedRecord != null) {
+          if (record.getClass() != loadedRecord.getClass()) {
+            throw new IllegalStateException(
+                "Imported record and record stored in database under id " + rid.toString() + " have different types. "
+                    + "Stored record class is : " + record.getClass() + " and imported " + loadedRecord.getClass() + " .");
+          }
+          ORecordInternal.setVersion(record, loadedRecord.getVersion());
+        } else {
+          ORecordInternal.setVersion(record, 0);
+          ORecordInternal.setIdentity(record, new ORecordId());
+        }
+
         record.setDirty();
-        ORecordInternal.setIdentity(record, new ORecordId());
 
         if (!preserveRids && record instanceof ODocument
             && ODocumentInternal.getImmutableSchemaClass(database, ((ODocument) record)) != null)

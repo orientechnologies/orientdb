@@ -95,7 +95,7 @@ public class LuceneSpatialPolygonTest extends BaseSpatialLuceneTest {
 
     OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Place.location");
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
     queryPolygon();
 
   }

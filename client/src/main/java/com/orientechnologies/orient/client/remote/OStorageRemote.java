@@ -1102,17 +1102,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int addCluster(final String iClusterName, final Object... iArguments) {
-    return addCluster(iClusterName, -1, iArguments);
+    return addCluster(iClusterName, -1);
   }
 
-  public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
+  public int addCluster(final String iClusterName, final int iRequestedId) {
     OAddClusterRequest request = new OAddClusterRequest(iRequestedId, iClusterName);
     OAddClusterResponse response = networkOperationNoRetry(request, "Error on add new cluster");
     addNewClusterToConfiguration(response.getClusterId(), iClusterName);
     return response.getClusterId();
   }
 
-  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+  public boolean dropCluster(final int iClusterId) {
 
     ODropClusterRequest request = new ODropClusterRequest(iClusterId);
 

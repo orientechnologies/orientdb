@@ -32,13 +32,7 @@ import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -48,11 +42,7 @@ import org.junit.Test;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -359,17 +349,17 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+        public int addCluster(String iClusterName, int iRequestedId) {
           return 0;
         }
 
         @Override
-        public boolean dropCluster(String iClusterName, boolean iTruncate) {
+        public boolean dropCluster(String iClusterName) {
           return false;
         }
 
         @Override
-        public boolean dropCluster(int iId, boolean iTruncate) {
+        public boolean dropCluster(int iId) {
           return false;
         }
 

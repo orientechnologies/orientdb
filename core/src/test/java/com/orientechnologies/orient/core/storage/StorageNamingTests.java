@@ -40,11 +40,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -210,12 +206,12 @@ public class StorageNamingTests {
     }
 
     @Override
-    public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    public int addCluster(String iClusterName, int iRequestedId) {
       return 0;
     }
 
     @Override
-    public boolean dropCluster(int iId, boolean iTruncate) {
+    public boolean dropCluster(int iId) {
       return false;
     }
 
