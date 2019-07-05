@@ -175,7 +175,7 @@ public class StorageBackupMTTest {
 
       latch.countDown();
 
-      TimeUnit.MINUTES.sleep(15);
+      TimeUnit.MINUTES.sleep(5);
 
       stop = true;
 
@@ -289,7 +289,7 @@ public class StorageBackupMTTest {
 
       try {
         while (!stop) {
-          TimeUnit.MINUTES.sleep(5);
+          TimeUnit.MINUTES.sleep(1);
 
           System.out.println(Thread.currentThread() + " do inc backup");
           db.incrementalBackup(backupPath);
