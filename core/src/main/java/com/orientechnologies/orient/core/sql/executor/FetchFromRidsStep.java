@@ -77,6 +77,7 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
         internalNext++;
         OResult result = nextResult;
         nextResult = null;
+        ctx.setVariable("$current", result.toElement());
         return result;
       }
 

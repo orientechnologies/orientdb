@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -220,7 +221,7 @@ public class OResultInternal implements OResult {
 
   public Set<String> getPropertyNames() {
     Set<String> result = new LinkedHashSet<>();
-    if (element != null) {
+    if (element != null && !(element instanceof ORecordBytes)) {
       result.addAll(((ODocument) element.getRecord()).getPropertyNames());
     }
     result.addAll(content.keySet());
