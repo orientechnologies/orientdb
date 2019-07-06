@@ -29,7 +29,7 @@ import java.io.IOException;
 public interface OCluster {
 
   enum ATTRIBUTES {
-    NAME, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, CONFLICTSTRATEGY, STATUS, ENCRYPTION
+    NAME, CONFLICTSTRATEGY, STATUS, ENCRYPTION
   }
 
   void configure(int iId, String iClusterName) throws IOException;

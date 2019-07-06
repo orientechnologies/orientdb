@@ -122,8 +122,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
   }
 
   @Override
-  public void configure(final int id, final String clusterName)
-      throws IOException {
+  public void configure(final int id, final String clusterName) throws IOException {
     acquireExclusiveLock();
     try {
       final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
@@ -324,12 +323,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       switch (attribute) {
       case NAME:
         setNameInternal(stringValue);
-        break;
-      case RECORD_GROW_FACTOR:
-        setRecordGrowFactorInternal(stringValue);
-        break;
-      case RECORD_OVERFLOW_GROW_FACTOR:
-        setRecordOverflowGrowFactorInternal(stringValue);
         break;
       case CONFLICTSTRATEGY:
         setRecordConflictStrategy(stringValue);
@@ -1393,37 +1386,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     }
 
     this.id = config.getId();
-  }
-
-  private void setRecordOverflowGrowFactorInternal(final String stringValue) {
-    try {
-      final float growFactor = Float.parseFloat(stringValue);
-      if (growFactor < 1) {
-        throw new OPaginatedClusterException(ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " cannot be less than 1", this);
-      }
-
-      config.recordOverflowGrowFactor = growFactor;
-      ((OClusterBasedStorageConfiguration) storageLocal.getConfiguration()).updateCluster(config);
-    } catch (final NumberFormatException nfe) {
-      throw OException.wrapException(new OPaginatedClusterException(
-          "Invalid value for cluster attribute " + ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " was passed [" + stringValue + "]",
-          this), nfe);
-    }
-  }
-
-  private void setRecordGrowFactorInternal(final String stringValue) {
-    try {
-      final float growFactor = Float.parseFloat(stringValue);
-      if (growFactor < 1) {
-        throw new OPaginatedClusterException(ATTRIBUTES.RECORD_GROW_FACTOR + " cannot be less than 1", this);
-      }
-
-      config.recordGrowFactor = growFactor;
-      ((OClusterBasedStorageConfiguration) storageLocal.getConfiguration()).updateCluster(config);
-    } catch (final NumberFormatException nfe) {
-      throw OException.wrapException(new OPaginatedClusterException(
-          "Invalid value for cluster attribute " + ATTRIBUTES.RECORD_GROW_FACTOR + " was passed [" + stringValue + "]", this), nfe);
-    }
   }
 
   private void setNameInternal(final String newName) throws IOException {

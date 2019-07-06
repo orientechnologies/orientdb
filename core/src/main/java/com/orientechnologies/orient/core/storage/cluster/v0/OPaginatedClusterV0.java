@@ -331,12 +331,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
       case NAME:
         setNameInternal(stringValue);
         break;
-      case RECORD_GROW_FACTOR:
-        setRecordGrowFactorInternal(stringValue);
-        break;
-      case RECORD_OVERFLOW_GROW_FACTOR:
-        setRecordOverflowGrowFactorInternal(stringValue);
-        break;
       case CONFLICTSTRATEGY:
         setRecordConflictStrategy(stringValue);
         break;
@@ -1433,38 +1427,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     } catch (final IllegalArgumentException e) {
       throw OException
           .wrapException(new OPaginatedClusterException("Invalid value for " + ATTRIBUTES.ENCRYPTION + " attribute", this), e);
-    }
-  }
-
-  private void setRecordOverflowGrowFactorInternal(final String stringValue) {
-    try {
-      final float growFactor = Float.parseFloat(stringValue);
-      if (growFactor < 1) {
-        throw new OPaginatedClusterException(ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " cannot be less than 1", this);
-      }
-
-      config.recordOverflowGrowFactor = growFactor;
-      ((OClusterBasedStorageConfiguration) storage.getConfiguration()).updateCluster(config);
-    } catch (final NumberFormatException nfe) {
-      throw OException.wrapException(new OPaginatedClusterException(
-          "Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " was passed [" + stringValue
-              + "]", this), nfe);
-    }
-  }
-
-  private void setRecordGrowFactorInternal(final String stringValue) {
-    try {
-      final float growFactor = Float.parseFloat(stringValue);
-      if (growFactor < 1) {
-        throw new OPaginatedClusterException(ATTRIBUTES.RECORD_GROW_FACTOR + " cannot be less than 1", this);
-      }
-
-      config.recordGrowFactor = growFactor;
-      ((OClusterBasedStorageConfiguration) storage.getConfiguration()).updateCluster(config);
-    } catch (final NumberFormatException nfe) {
-      throw OException.wrapException(new OPaginatedClusterException(
-          "Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " was passed [" + stringValue + "]",
-          this), nfe);
     }
   }
 
