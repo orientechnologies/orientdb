@@ -690,11 +690,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return wrapped.getSBtreeCollectionManager();
   }
 
-  @Override
-  public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
-    return wrapped.recyclePosition(iRecordId, iContent, iVersion, iRecordType);
-  }
-
   public int getConfigurationUpdated() {
     return distributedConfiguration.getVersion();
   }

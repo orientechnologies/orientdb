@@ -728,11 +728,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return new OStorageOperationResult<Integer>(resVersion);
   }
 
-  @Override
-  public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte recordType) {
-    throw new UnsupportedOperationException("recyclePosition");
-  }
-
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     ORecordCallback<ODeleteRecordResponse> realCallback = null;

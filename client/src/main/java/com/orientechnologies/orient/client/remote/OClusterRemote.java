@@ -107,11 +107,6 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
-    throw new UnsupportedOperationException("recyclePosition");
-  }
-
-  @Override
   public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException {
     throw new UnsupportedOperationException("readRecord");
   }

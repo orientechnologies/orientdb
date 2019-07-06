@@ -287,12 +287,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion,
-            byte iRecordType) {
-          return null;
-        }
-
-        @Override
         public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode,
             ORecordCallback<Boolean> iCallback) {
           return null;

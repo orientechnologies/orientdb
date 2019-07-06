@@ -117,11 +117,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
-    return wrapped.recyclePosition(iRecordId, iContent, iVersion, iRecordType);
-  }
-
-  @Override
   public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
     throw new UnsupportedOperationException();
   }

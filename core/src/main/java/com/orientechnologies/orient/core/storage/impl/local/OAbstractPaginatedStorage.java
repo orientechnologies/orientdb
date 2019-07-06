@@ -1579,43 +1579,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public final OStorageOperationResult<Integer> recyclePosition(final ORecordId rid, final byte[] content, final int version,
-      final byte recordType) {
-    try {
-      checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
-      final OCluster cluster = getClusterById(rid.getClusterId());
-      if (transaction.get() != null) {
-        return doRecycleRecord(rid, content, version, cluster, recordType);
-      }
-
-      stateLock.acquireReadLock();
-      try {
-        // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-        final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
-        try {
-          checkOpenness();
-
-          // RECYCLING IT
-          return doRecycleRecord(rid, content, version, cluster, recordType);
-
-        } finally {
-          lock.unlock();
-        }
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
   public OStorageTransaction getStorageTransaction() {
     return transaction.get();
   }
@@ -4658,42 +4621,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           .wrapException(new OStorageException("Error on updating record " + rid + " (cluster: " + cluster.getName() + ")"), ioe);
     }
 
-  }
-
-  private OStorageOperationResult<Integer> doRecycleRecord(final ORecordId rid, final byte[] content, final int version,
-      final OCluster cluster, final byte recordType) {
-
-    try {
-      makeStorageDirty();
-      boolean rollback = false;
-      atomicOperationsManager.startAtomicOperation((String) null, true);
-      try {
-        cluster.recycleRecord(rid.getClusterPosition(), content, version, recordType);
-
-        final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-        if (context != null) {
-          context.executeOperations(this);
-        }
-
-      } catch (final Exception e) {
-        rollback = true;
-        throw e;
-      } finally {
-        atomicOperationsManager.endAtomicOperation(rollback);
-      }
-
-      if (OLogManager.instance().isDebugEnabled()) {
-        OLogManager.instance().debug(this, "Recycled record %s v.%s size=%d", rid, version, content.length);
-      }
-
-      return new OStorageOperationResult<>(version, content, false);
-
-    } catch (final IOException ioe) {
-      OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", ioe);
-
-      throw OException
-          .wrapException(new OStorageException("Error on recycling record " + rid + " (cluster: " + cluster + ")"), ioe);
-    }
   }
 
   private OStorageOperationResult<Boolean> doDeleteRecord(final ORecordId rid, final int version, final OCluster cluster) {

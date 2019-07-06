@@ -134,11 +134,6 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
-    throw new OOfflineClusterException("Cannot resurrect a record on offline cluster '" + name + "'");
-  }
-
-  @Override
   public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException {
     throw OException.wrapException(new ORecordNotFoundException(new ORecordId(id, clusterPosition),
             "Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
