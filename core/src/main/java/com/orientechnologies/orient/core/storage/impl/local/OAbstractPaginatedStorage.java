@@ -777,18 +777,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   + ") in database '" + name + "'");
         }
 
-        final OCluster cluster = clusters.get(clusterId);
-
-        final long firstPosition = cluster.getFirstPosition();
-        OPhysicalPosition[] positions = cluster.ceilingPositions(new OPhysicalPosition(firstPosition));
-        while (positions.length > 0) {
-          for (OPhysicalPosition position : positions) {
-            cluster.deleteRecord(position.clusterPosition);
-          }
-
-          positions = cluster.higherPositions(positions[positions.length - 1]);
-        }
-
         if (dropClusterInternal(clusterId)) {
           return false;
         }

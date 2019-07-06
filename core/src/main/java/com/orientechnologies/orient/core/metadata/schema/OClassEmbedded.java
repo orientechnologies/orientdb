@@ -774,11 +774,12 @@ public class OClassEmbedded extends OClassImpl {
     }
   }
 
-  private void tryDropCluster(final int defaultClusterId) {
-    if (name.toLowerCase(Locale.ENGLISH).equals(getDatabase().getClusterNameById(defaultClusterId))) {
+  private void tryDropCluster(final int clusterId) {
+    if (name.toLowerCase(Locale.ENGLISH).equals(getDatabase().getClusterNameById(clusterId))) {
       // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
-      if (getDatabase().getClusterRecordSizeById(defaultClusterId) == 0)
-        getDatabase().getStorage().dropCluster(defaultClusterId);
+      if (getDatabase().countClusterElements(clusterId) == 0) {
+        getDatabase().getStorage().dropCluster(clusterId);
+      }
     }
   }
 

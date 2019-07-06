@@ -920,22 +920,37 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public boolean dropCluster(final int iClusterId) {
+  public boolean dropCluster(final int clusterId) {
     checkIfActive();
 
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(iClusterId));
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(clusterId));
 
     OSchemaProxy schema = metadata.getSchema();
-    final OClass clazz = schema.getClassByClusterId(iClusterId);
+    final OClass clazz = schema.getClassByClusterId(clusterId);
     if (clazz != null)
-      clazz.removeClusterId(iClusterId);
-    getLocalCache().freeCluster(iClusterId);
-    if (schema.getBlobClusters().contains(iClusterId))
-      schema.removeBlobCluster(getClusterNameById(iClusterId));
+      clazz.removeClusterId(clusterId);
+    getLocalCache().freeCluster(clusterId);
+    if (schema.getBlobClusters().contains(clusterId))
+      schema.removeBlobCluster(getClusterNameById(clusterId));
 
-    checkForClusterPermissions(getClusterNameById(iClusterId));
+    checkForClusterPermissions(getClusterNameById(clusterId));
 
-    return getStorage().dropCluster(iClusterId);
+    final String clusterName = getClusterNameById(clusterId);
+    if (clusterName == null) {
+      return false;
+    }
+
+    final ORecordIteratorCluster<ODocument> iteratorCluster = browseCluster(clusterName);
+    if (iteratorCluster == null) {
+      return false;
+    }
+
+    while (iteratorCluster.hasNext()) {
+      final ODocument document = iteratorCluster.next();
+      document.delete();
+    }
+
+    return getStorage().dropCluster(clusterId);
   }
 
   public void checkForClusterPermissions(final String iClusterName) {
