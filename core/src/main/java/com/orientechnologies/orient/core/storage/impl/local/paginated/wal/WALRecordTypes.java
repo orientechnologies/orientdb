@@ -15,8 +15,9 @@ public final class WALRecordTypes {
   public static final byte FILE_TRUNCATED_WAL_RECORD             = 13;
   public static final byte EMPTY_WAL_RECORD                      = 14;
 
-  public static final byte CREATE_CLUSTER_CO = 15;
-  public static final byte DELETE_CLUSTER_CO = 16;
+  public static final byte CREATE_CLUSTER_CO                   = 15;
+  public static final byte DELETE_CLUSTER_CO                   = 16;
   public static final byte CLUSTER_CREATE_RECORD_CO            = 17;
   public static final byte CLUSTER_DELETE_RECORD_CO            = 18;
+  public static final byte CLUSTER_ALLOCATE_RECORD_POSITION_CO = 19;
 }

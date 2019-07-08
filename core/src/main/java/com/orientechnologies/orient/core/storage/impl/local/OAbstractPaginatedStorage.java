@@ -4646,6 +4646,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     cluster.deleteRecord(recordPosition);
   }
 
+  public void allocatePositionInternal(final int clusterId, final byte recordType) throws IOException {
+    final OCluster cluster = clusters.get(clusterId);
+
+    cluster.allocatePosition(recordType);
+  }
+
   public void createRecordInternal(final int clusterId, final byte[] content, final int recordVersion, final byte recordType,
       final long recordPosition) throws IOException {
     final OCluster cluster = clusters.get(clusterId);
