@@ -205,17 +205,17 @@ public final class OClusterPage extends ODurablePage {
     return true;
   }
 
-  public boolean deleteRecord(int position) {
+  public byte[] deleteRecord(int position) {
     int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
     if (position >= indexesLength) {
-      return false;
+      return null;
     }
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
     int entryPointer = getIntValue(entryIndexPosition);
 
     if ((entryPointer & MARKED_AS_DELETED_FLAG) != 0) {
-      return false;
+      return null;
     }
 
     int entryPosition = entryPointer & POSITION_MASK;
@@ -237,7 +237,7 @@ public final class OClusterPage extends ODurablePage {
 
     decrementEntriesCount();
 
-    return true;
+    return getBinaryValue(entryPosition + 3 * OIntegerSerializer.INT_SIZE, entrySize - 3 * OIntegerSerializer.INT_SIZE);
   }
 
   public boolean isDeleted(final int position) {

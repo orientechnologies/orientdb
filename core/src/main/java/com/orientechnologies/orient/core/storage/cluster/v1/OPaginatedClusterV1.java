@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterCreateCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterCreateRecordCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterDeleteCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.OPaginatedClusterDeleteRecordCO;
 
 import java.io.File;
 import java.io.IOException;
@@ -746,6 +747,11 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
         long nextPagePointer;
         int removedContentSize = 0;
 
+
+        final List<byte[]> recordChunks = new ArrayList<>(2);
+        int contentSize = 0;
+        int recordVersion = -1;
+
         do {
           boolean cacheEntryReleased = false;
           OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
@@ -771,7 +777,15 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
               localPage = new OClusterPage(cacheEntry, false);
             }
 
-            final byte[] content = localPage.getRecordBinaryValue(recordPosition, 0, localPage.getRecordSize(recordPosition));
+            if (removedContentSize == 0) {
+              recordVersion = localPage.getRecordVersion(recordPosition);
+            }
+
+            final byte[] content = localPage.deleteRecord(recordPosition);
+            assert content != null;
+
+            recordChunks.add(content);
+            contentSize += content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
 
             final int initialFreeSpace = localPage.getFreeSpace();
             localPage.deleteRecord(recordPosition);
@@ -794,6 +808,25 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
 
         clusterPositionMap.remove(clusterPosition, atomicOperation);
         addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
+
+        int fullContentPosition = 0;
+
+        final byte[] fullContent = convertRecordChunksToSingleChunk(recordChunks, contentSize);
+        final byte recordType = fullContent[fullContentPosition];
+
+        fullContentPosition++;
+
+        final int readContentSize = OIntegerSerializer.INSTANCE.deserializeNative(fullContent, fullContentPosition);
+        fullContentPosition += OIntegerSerializer.INT_SIZE;
+
+        byte[] recordContent = Arrays.copyOfRange(fullContent, fullContentPosition, fullContentPosition + readContentSize);
+
+        recordContent = encryption.decrypt(recordContent);
+        recordContent = compression.uncompress(recordContent);
+
+        atomicOperation.addComponentOperation(
+            new OPaginatedClusterDeleteRecordCO(id, clusterPosition, recordContent, recordVersion, recordType));
+
 
         return true;
       } finally {
@@ -1507,6 +1540,10 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
       recordPosition = getRecordPosition(nextPagePointer);
     } while (nextPagePointer >= 0);
 
+    return convertRecordChunksToSingleChunk(recordChunks, contentSize);
+  }
+
+  private static byte[] convertRecordChunksToSingleChunk(final List<byte[]> recordChunks, final int contentSize) {
     final byte[] fullContent;
     if (recordChunks.size() == 1) {
       fullContent = recordChunks.get(0);
@@ -1519,9 +1556,9 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
         fullContentPosition += recordChuck.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
       }
     }
-
     return fullContent;
   }
+
 
   private static long createPagePointer(final long pageIndex, final int pagePosition) {
     return pageIndex << PAGE_INDEX_OFFSET | pagePosition;
