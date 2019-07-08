@@ -649,12 +649,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public boolean hide(ORID rid) {
-    checkOpenness();
-    return internal.hide(rid);
-  }
-
-  @Override
   public ODatabaseDocumentInternal cleanOutRecord(ORID rid, int version) {
     checkOpenness();
     internal.cleanOutRecord(rid, version);

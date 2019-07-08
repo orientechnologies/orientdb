@@ -1620,41 +1620,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public final OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode,
-      final ORecordCallback<Boolean> callback) {
-    try {
-      checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
-      final OCluster cluster = getClusterById(rid.getClusterId());
-
-      if (transaction.get() != null) {
-        return doHideMethod(rid, cluster);
-      }
-
-      stateLock.acquireReadLock();
-      try {
-        final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
-        try {
-          checkOpenness();
-
-          return doHideMethod(rid, cluster);
-        } finally {
-          lock.unlock();
-        }
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
   protected OPerformanceStatisticManager getPerformanceStatisticManager() {
     return performanceStatisticManager;
   }
@@ -4693,39 +4658,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     cluster.createRecord(content, recordVersion, recordType, physicalPosition);
-  }
-
-  private OStorageOperationResult<Boolean> doHideMethod(final ORecordId rid, final OCluster cluster) {
-    try {
-      final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
-
-      if (ppos == null) {
-        // ALREADY HIDDEN
-        return new OStorageOperationResult<>(false);
-      }
-
-      makeStorageDirty();
-      boolean rollback = false;
-      atomicOperationsManager.startAtomicOperation((String) null, true);
-      try {
-        cluster.hideRecord(ppos.clusterPosition);
-
-        final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-        if (context != null) {
-          context.executeOperations(this);
-        }
-      } catch (final Exception e) {
-        rollback = true;
-        throw e;
-      } finally {
-        atomicOperationsManager.endAtomicOperation(rollback);
-      }
-
-      return new OStorageOperationResult<>(true);
-    } catch (final IOException ioe) {
-      OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
-      throw OException.wrapException(new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")"), ioe);
-    }
   }
 
   private ORawBuffer doReadRecord(final OCluster clusterSegment, final ORecordId rid, final boolean prefetchRecords) {

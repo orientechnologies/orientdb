@@ -508,11 +508,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
-          return null;
-        }
-
-        @Override
         public OCluster getClusterByName(String clusterName) {
           return null;
         }

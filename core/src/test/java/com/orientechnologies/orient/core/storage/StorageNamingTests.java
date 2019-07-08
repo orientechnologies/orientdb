@@ -311,11 +311,6 @@ public class StorageNamingTests {
     }
 
     @Override
-    public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
-      return null;
-    }
-
-    @Override
     public OCluster getClusterByName(String iClusterName) {
       return null;
     }

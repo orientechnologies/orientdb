@@ -47,8 +47,6 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeDeleteRecord(ODeleteRecordRequest request);
 
-  OBinaryResponse executeHideRecord(OHideRecordRequest request);
-
   OBinaryResponse executeHigherPosition(OHigherPhysicalPositionsRequest request);
 
   OBinaryResponse executeCeilingPosition(OCeilingPhysicalPositionsRequest request);

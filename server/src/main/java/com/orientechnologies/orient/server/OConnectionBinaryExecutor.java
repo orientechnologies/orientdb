@@ -465,24 +465,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
-  public OBinaryResponse executeHideRecord(OHideRecordRequest request) {
-
-    int result;
-    try {
-      connection.getDatabase().hide(request.getRecordId());
-      result = 1;
-    } catch (ORecordNotFoundException e) {
-      result = 0;
-    }
-
-    if (request.getMode() < 2) {
-      return new OHideRecordResponse(result == 1);
-
-    }
-    return null;
-  }
-
-  @Override
   public OBinaryResponse executeHigherPosition(OHigherPhysicalPositionsRequest request) {
     OPhysicalPosition[] nextPositions = connection.getDatabase().getStorage()
         .higherPhysicalPositions(request.getClusterId(), request.getClusterPosition());

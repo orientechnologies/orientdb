@@ -213,23 +213,8 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public float recordGrowFactor() {
-    throw new UnsupportedOperationException("recordGrowFactor()");
-  }
-
-  @Override
-  public float recordOverflowGrowFactor() {
-    throw new UnsupportedOperationException("recordOverflowGrowFactor()");
-  }
-
-  @Override
   public String compression() {
     throw new UnsupportedOperationException("compression()");
-  }
-
-  @Override
-  public boolean hideRecord(long position) {
-    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
   }
 
   @Override

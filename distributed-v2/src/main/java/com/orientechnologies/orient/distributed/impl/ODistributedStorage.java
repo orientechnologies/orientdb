@@ -117,11 +117,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public ORecordMetadata getRecordMetadata(ORID rid) {
     return wrapped.getRecordMetadata(rid);
   }

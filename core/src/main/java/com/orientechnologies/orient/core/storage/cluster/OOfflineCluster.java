@@ -204,16 +204,6 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public float recordGrowFactor() {
-    return 0;
-  }
-
-  @Override
-  public float recordOverflowGrowFactor() {
-    return 0;
-  }
-
-  @Override
   public String compression() {
     return null;
   }
@@ -246,11 +236,6 @@ public class OOfflineCluster implements OCluster {
   @Override
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
     return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
-  }
-
-  @Override
-  public boolean hideRecord(long position) throws IOException {
-    return false;
   }
 
   @Override

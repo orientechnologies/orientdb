@@ -128,9 +128,6 @@ public class ONetworkBinaryProtocolFactory {
     case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
       return new ODeleteRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
-      return new OHideRecordRequest();
-
     case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
       return new OHigherPhysicalPositionsRequest();
 
@@ -311,9 +308,6 @@ public class ONetworkBinaryProtocolFactory {
 
     case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
       return new ODeleteRecordRequest();
-
-    case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
-      return new OHideRecordRequest();
 
     case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
       return new OHigherPhysicalPositionsRequest();

@@ -370,26 +370,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   }
 
   @Override
-  public float recordGrowFactor() {
-    acquireSharedLock();
-    try {
-      return config.recordGrowFactor;
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public float recordOverflowGrowFactor() {
-    acquireSharedLock();
-    try {
-      return config.recordOverflowGrowFactor;
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
   public String compression() {
     acquireSharedLock();
     try {
@@ -830,41 +810,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
         atomicOperation.addComponentOperation(
             new OPaginatedClusterDeleteRecordCO(id, clusterPosition, recordContent, recordVersion, recordType));
-
-        return true;
-      } finally {
-        releaseExclusiveLock();
-      }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-  }
-
-  @Override
-  public boolean hideRecord(final long position) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
-      acquireExclusiveLock();
-      try {
-        final OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(position, 1, atomicOperation);
-
-        if (positionEntry == null) {
-          return false;
-        }
-
-        final long pageIndex = positionEntry.getPageIndex();
-        if (getFilledUpTo(atomicOperation, fileId) <= pageIndex) {
-          return false;
-        }
-
-        updateClusterState(-1, 0, atomicOperation);
-        clusterPositionMap.remove(position, atomicOperation);
-
-        addAtomicOperationMetadata(new ORecordId(id, position), atomicOperation);
 
         return true;
       } finally {

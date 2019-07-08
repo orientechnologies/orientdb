@@ -744,23 +744,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
-  public OStorageOperationResult<Boolean> hideRecord(final ORecordId recordId, final int mode,
-      final ORecordCallback<Boolean> callback) {
-
-    ORecordCallback<OHideRecordResponse> realCallback = null;
-    if (callback != null)
-      realCallback = (iRID, response) -> callback.call(iRID, response.getResult());
-
-    final OHideRecordRequest request = new OHideRecordRequest(recordId);
-    final OHideRecordResponse response = asyncNetworkOperationNoRetry(request, mode, recordId, realCallback,
-        "Error on hide record " + recordId);
-    Boolean resHide = null;
-    if (response != null)
-      resHide = response.getResult();
-    return new OStorageOperationResult<Boolean>(resHide);
-  }
-
-  @Override
   public boolean cleanOutRecord(final ORecordId recordId, final int recordVersion, final int iMode,
       final ORecordCallback<Boolean> callback) {
 
