@@ -81,25 +81,20 @@ public class OOfflineCluster implements OCluster {
   public void delete() throws IOException {
   }
 
+
   @Override
-  public Object set(ATTRIBUTES attribute, Object value) throws IOException {
-    if (attribute == null)
-      throw new IllegalArgumentException("attribute is null");
+  public void setClusterName(final String name) {
+    throw new OOfflineClusterException("Cannot set cluster name on offline cluster '" + name + "'");
+  }
 
-    final String stringValue = value != null ? value.toString() : null;
+  @Override
+  public void setRecordConflictStrategy(final String conflictStrategy) {
+    throw new OOfflineClusterException("Cannot set record conflict strategy on offline cluster '" + name + "'");
+  }
 
-    switch (attribute) {
-    case STATUS: {
-      if (stringValue == null)
-        throw new IllegalStateException("Value of attribute is null.");
-
-      return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS
-          .valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
-    }
-    default:
-      throw new IllegalArgumentException(
-          "Runtime change of attribute '" + attribute + " is not supported on Offline cluster " + getName());
-    }
+  @Override
+  public void setEncryption(final String encryptionName, final String encryptionKey) {
+    throw new OOfflineClusterException("Cannot set encryption on offline cluster '" + name + "'");
   }
 
   @Override

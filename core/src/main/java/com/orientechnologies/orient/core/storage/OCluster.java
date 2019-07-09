@@ -46,7 +46,11 @@ public interface OCluster {
 
   void delete() throws IOException;
 
-  Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+  void setClusterName(String name);
+
+  void setRecordConflictStrategy(String conflictStrategy);
+
+  void setEncryption(String encryptionName, String encryptionKey);
 
   String encryption();
 

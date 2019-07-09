@@ -118,6 +118,21 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
+  public void setClusterName(final String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setRecordConflictStrategy(final String conflictStrategy) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setEncryption(final String encryptionName, final String encryptionKey) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean exists() {
     throw new UnsupportedOperationException("exists");
   }

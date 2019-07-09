@@ -714,6 +714,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
+  public String getClusterName(final int clusterId) {
+    return wrapped.getClusterName(clusterId);
+  }
+
+  @Override
+  public boolean setClusterAttribute(final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
+    return wrapped.setClusterAttribute(id, attribute, value);
+  }
+
+  @Override
   public ORecordConflictStrategy getConflictStrategy() {
     return getUnderlying().getConflictStrategy();
   }

@@ -1100,6 +1100,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return response.getResult();
   }
 
+  @Override
+  public String getClusterName(final int clusterId) {
+    final OCluster cluster = getClusterById(clusterId);
+    if (cluster != null) {
+      return cluster.getName();
+    }
+
+    throw new OStorageException("Cluster " + clusterId + " is absent in storage.");
+  }
+
+  @Override
+  public boolean setClusterAttribute(int id, OCluster.ATTRIBUTES attribute, Object value) {
+    return false;
+  }
+
   public void removeClusterFromConfiguration(int iClusterId) {
     stateLock.acquireWriteLock();
     try {

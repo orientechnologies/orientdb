@@ -128,6 +128,10 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   boolean dropCluster(String iClusterName);
 
+  String getClusterName(final int clusterId);
+
+  boolean setClusterAttribute(final int id, OCluster.ATTRIBUTES attribute, Object value);
+
   /**
    * Drops a cluster.
    *

@@ -215,6 +215,16 @@ public class PostponedEngineStartTest {
         }
 
         @Override
+        public String getClusterName(int clusterId) {
+          return null;
+        }
+
+        @Override
+        public boolean setClusterAttribute(int id, OCluster.ATTRIBUTES attribute, Object value) {
+          return false;
+        }
+
+        @Override
         public String getCreatedAtVersion() {
           return null;
         }

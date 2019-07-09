@@ -122,6 +122,16 @@ public class StorageNamingTests {
     }
 
     @Override
+    public String getClusterName(final int clusterId) {
+      return null;
+    }
+
+    @Override
+    public boolean setClusterAttribute(final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
+      return false;
+    }
+
+    @Override
     public boolean exists() {
       return false;
     }
@@ -135,7 +145,6 @@ public class StorageNamingTests {
     public void delete() {
 
     }
-
 
     @Override
     public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,

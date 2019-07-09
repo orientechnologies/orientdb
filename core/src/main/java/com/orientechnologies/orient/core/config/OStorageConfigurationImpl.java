@@ -476,8 +476,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
             clusterBinaryVersion = 0;
           }
 
-          currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
-              clusterCompression, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+          currentCluster = new OStoragePaginatedClusterConfiguration(clusterId, clusterName, null, cc, bb, aa, clusterCompression,
+              clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
               clusterConflictStrategy, status, clusterBinaryVersion);
 
           break;
@@ -1342,7 +1342,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   @Override
   public String getUuid() {
-    throw  new UnsupportedOperationException();
+    throw new UnsupportedOperationException();
   }
 
   @Override
