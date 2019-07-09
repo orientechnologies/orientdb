@@ -410,6 +410,8 @@ public class OSecurityShared implements OSecurityInternal {
     if (identityClass == null)
       identityClass = session.getMetadata().getSchema().createAbstractClass(OIdentity.CLASS_NAME);
 
+    createOrUpdateOSecurityPolicyClass(session, identityClass);
+
     OClass roleClass = createOrUpdateORoleClass(session, identityClass);
 
     createOrUpdateOUserClass(session, identityClass, roleClass);
@@ -491,6 +493,44 @@ public class OSecurityShared implements OSecurityInternal {
       userClass.createProperty("status", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true);
   }
 
+  private OClass createOrUpdateOSecurityPolicyClass(final ODatabaseDocument database, OClass identityClass) {
+    OClass policyClass = database.getMetadata().getSchema().getClass("OSecurityPolicy");
+    boolean unsafe = false;
+    if (policyClass == null) {
+      policyClass = database.getMetadata().getSchema().createClass("OSecurityPolicy", identityClass);
+      unsafe = true;
+    } else if (!policyClass.getSuperClasses().contains(identityClass))
+      // MIGRATE AUTOMATICALLY TO 1.2.0
+      policyClass.setSuperClasses(Arrays.asList(identityClass));
+
+    if (!policyClass.existsProperty("name")) {
+      policyClass.createProperty("name", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true).setCollate("ci");
+      policyClass.createIndex("OSecurityPolicy.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    } else {
+      final OProperty name = policyClass.getProperty("name");
+      if (name.getAllIndexes().isEmpty())
+        policyClass.createIndex("OSecurityPolicy.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    }
+
+    if (!policyClass.existsProperty("create"))
+      policyClass.createProperty("create", OType.STRING, (OType) null, unsafe);
+    if (!policyClass.existsProperty("read"))
+      policyClass.createProperty("read", OType.STRING, (OType) null, unsafe);
+    if (!policyClass.existsProperty("beforeUpdate"))
+      policyClass.createProperty("beforeUpdate", OType.STRING, (OType) null, unsafe);
+    if (!policyClass.existsProperty("afterUpdate"))
+      policyClass.createProperty("afterUpdate", OType.STRING, (OType) null, unsafe);
+    if (!policyClass.existsProperty("delete"))
+      policyClass.createProperty("delete", OType.STRING, (OType) null, unsafe);
+    if (!policyClass.existsProperty("execute"))
+      policyClass.createProperty("execute", OType.STRING, (OType) null, unsafe);
+
+    if (!policyClass.existsProperty("active"))
+      policyClass.createProperty("active", OType.BOOLEAN, (OType) null, unsafe);
+
+    return policyClass;
+  }
+
   private OClass createOrUpdateORoleClass(final ODatabaseDocument database, OClass identityClass) {
     OClass roleClass = database.getMetadata().getSchema().getClass("ORole");
     boolean unsafe = false;
@@ -517,6 +557,10 @@ public class OSecurityShared implements OSecurityInternal {
       roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE, unsafe);
     if (!roleClass.existsProperty("inheritedRole"))
       roleClass.createProperty("inheritedRole", OType.LINK, roleClass, unsafe);
+
+    if (!roleClass.existsProperty("policies"))
+      roleClass.createProperty("policies", OType.LINKMAP, database.getClass("OSecurityPolicy"), unsafe);
+
     return roleClass;
   }
 

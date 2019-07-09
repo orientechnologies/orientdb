@@ -88,6 +88,7 @@ public abstract class OSchemaShared implements OCloseable {
   static {
     internalClasses.add("ouser");
     internalClasses.add("orole");
+    internalClasses.add("osecuritypolicy");
     internalClasses.add("oidentity");
     internalClasses.add("ofunction");
     internalClasses.add("osequence");
