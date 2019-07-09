@@ -152,7 +152,7 @@ public final class OClusterPage extends ODurablePage {
     return entryIndex;
   }
 
-  public int replaceRecord(int entryIndex, byte[] record, final int recordVersion) {
+  public  byte[]  replaceRecord(int entryIndex, byte[] record, final int recordVersion) {
     int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
 
     if (recordVersion != -1) {
@@ -163,19 +163,15 @@ public final class OClusterPage extends ODurablePage {
     int entryPosition = entryPointer & POSITION_MASK;
 
     int recordSize = getIntValue(entryPosition) - 3 * OIntegerSerializer.INT_SIZE;
-    int writtenBytes;
-    if (record.length <= recordSize) {
-      setIntValue(entryPointer + 2 * OIntegerSerializer.INT_SIZE, record.length);
-      setBinaryValue(entryPointer + 3 * OIntegerSerializer.INT_SIZE, record);
-      writtenBytes = record.length;
-    } else {
-      byte[] newRecord = new byte[recordSize];
-      System.arraycopy(record, 0, newRecord, 0, newRecord.length);
-      setBinaryValue(entryPointer + 3 * OIntegerSerializer.INT_SIZE, newRecord);
-      writtenBytes = newRecord.length;
-    }
+    assert recordSize == record.length;
 
-    return writtenBytes;
+    final byte[] oldRecord = getBinaryValue(entryPointer + 3 * OIntegerSerializer.INT_SIZE, recordSize);
+
+    setIntValue(entryPointer + 2 * OIntegerSerializer.INT_SIZE, record.length);
+    setBinaryValue(entryPointer + 3 * OIntegerSerializer.INT_SIZE, record);
+
+
+    return oldRecord;
   }
 
   public int getRecordVersion(int position) {

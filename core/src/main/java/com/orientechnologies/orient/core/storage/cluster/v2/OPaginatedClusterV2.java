@@ -803,6 +803,10 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
           return;
         }
 
+        final List<byte[]> oldChunks = new ArrayList<>(2);
+        int oldRecordVersion = -1;
+        int oldContentSize = 0;
+
         int nextRecordPosition = positionEntry.getRecordPosition();
         long nextPageIndex = positionEntry.getPageIndex();
 
@@ -919,14 +923,25 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
                     this);
               }
 
+              if (from == 0) {
+                oldRecordVersion = localPage.getRecordVersion(newRecordPosition);
+              }
+
               final int currentEntrySize = localPage.getRecordSize(nextRecordPosition);
               nextEntryPointer = localPage.getRecordLongValue(nextRecordPosition, currentEntrySize - OLongSerializer.LONG_SIZE);
 
               if (currentEntrySize == entrySize) {
-                localPage.replaceRecord(nextRecordPosition, updateEntry, recordVersion);
+                final byte[] oldRecord = localPage.replaceRecord(nextRecordPosition, updateEntry, recordVersion);
+                oldContentSize += oldRecord.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+                oldChunks.add(oldRecord);
+
                 updatedEntryPosition = nextRecordPosition;
               } else {
-                localPage.deleteRecord(nextRecordPosition);
+                final byte[] oldRecord = localPage.deleteRecord(nextRecordPosition);
+                assert oldRecord != null;
+
+                oldContentSize += oldRecord.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+                oldChunks.add(oldRecord);
 
                 if (localPage.getMaxRecordSize() >= entrySize) {
                   updatedEntryPosition = localPage.appendRecord(recordVersion, updateEntry);
@@ -1014,7 +1029,11 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
             freePagesIndex = calculateFreePageIndex(localPage);
 
             nextEntryPointer = localPage.getRecordLongValue(nextRecordPosition, -OLongSerializer.LONG_SIZE);
-            localPage.deleteRecord(nextRecordPosition);
+            final byte[] oldRecord = localPage.deleteRecord(nextRecordPosition);
+            assert oldRecord != null;
+
+            oldContentSize += oldRecord.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+            oldChunks.add(oldRecord);
 
             sizeDiff += freeSpace - localPage.getFreeSpace();
           } finally {
@@ -1035,6 +1054,25 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
         updateClusterState(0, sizeDiff, atomicOperation);
 
         addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
+
+        int oldFullContentPosition = 0;
+
+        final byte[] oldFullContent = convertRecordChunksToSingleChunk(oldChunks, oldContentSize);
+        final byte oldRecordType = oldFullContent[oldFullContentPosition];
+
+        oldFullContentPosition++;
+
+        final int oldReadContentSize = OIntegerSerializer.INSTANCE.deserializeNative(oldFullContent, oldFullContentPosition);
+        oldFullContentPosition += OIntegerSerializer.INT_SIZE;
+
+        byte[] oldRecordContent = Arrays
+            .copyOfRange(oldFullContent, oldFullContentPosition, oldFullContentPosition + oldReadContentSize);
+
+        assert oldRecordVersion >= 0;
+
+        atomicOperation.addComponentOperation(
+            new OPaginatedClusterUpdateRecordCO(id, clusterPosition, content, recordVersion, recordType, oldRecordContent,
+                oldRecordVersion, oldRecordType));
       } finally {
         releaseExclusiveLock();
       }

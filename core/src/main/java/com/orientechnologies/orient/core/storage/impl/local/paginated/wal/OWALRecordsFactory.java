@@ -142,6 +142,9 @@ public final class OWALRecordsFactory {
     case CLUSTER_ALLOCATE_RECORD_POSITION_CO:
       walRecord = new OPaginatedClusterAllocatePositionCO();
       break;
+    case CLUSTER_UPDATE_RECORD_CO:
+      walRecord = new OPaginatedClusterUpdateRecordCO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
