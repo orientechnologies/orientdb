@@ -216,15 +216,19 @@ public class OVertexDocument extends ODocument implements OVertex {
   }
 
   public ORID moveTo(final String iClassName, final String iClusterName) {
-    return moveTo(iClassName, iClusterName, this);
+    return moveTo(iClassName, iClusterName, this, getDatabase());
   }
 
-  protected static ORID moveTo(final String iClassName, final String iClusterName, OVertex toMove) {
+  protected static ORID moveTo(final String iClassName, final String iClusterName, OVertex toMove, ODatabaseSession db) {
     if (toMove == null) {
       throw new ORecordNotFoundException(null, "The vertex is null");
     }
     if (checkDeletedInTx(toMove.getIdentity())) {
       throw new ORecordNotFoundException(toMove.getIdentity(), "The vertex " + toMove.getIdentity() + " has been deleted");
+    }
+    boolean moveTx = !db.getTransaction().isActive();
+    if (moveTx) {
+      db.begin();
     }
 
     final ORID oldIdentity = toMove.getIdentity().copy();
@@ -241,7 +245,7 @@ public class OVertexDocument extends ODocument implements OVertex {
     // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
     copyRidBags(oldRecord, doc);//TODO! check this!!!
     detachRidbags(oldRecord);
-    oldRecord.delete();
+    db.delete(oldRecord);
 
     if (iClassName != null)
       // OVERWRITE CLASS
@@ -253,10 +257,7 @@ public class OVertexDocument extends ODocument implements OVertex {
     // RESET IDENTITY
     ORecordInternal.setIdentity(doc, new ORecordId());
 
-    if (iClusterName != null)
-      doc.save(iClusterName);
-    else
-      doc.save();
+    db.save(doc, iClusterName);
 
     final ORID newIdentity = doc.getIdentity();
 
@@ -274,7 +275,7 @@ public class OVertexDocument extends ODocument implements OVertex {
         // REPLACE WITH NEW VERTEX
         oe.setProperty("out", newIdentity);
       }
-      oe.save();
+      db.save(oe);
     }
 
     for (OEdge oe : inEdges) {
@@ -290,11 +291,14 @@ public class OVertexDocument extends ODocument implements OVertex {
         // REPLACE WITH NEW VERTEX
         oe.setProperty("in", newIdentity);
       }
-      oe.save();
+      db.save(oe);
     }
 
     // FINAL SAVE
-    doc.save();
+    db.save(doc);
+    if (moveTx) {
+      db.commit();
+    }
 
     return newIdentity;
   }

@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -704,7 +705,7 @@ public class OVertexDelegate implements OVertex {
   }
 
   public ORID moveTo(final String iClassName, final String iClusterName) {
-    return OVertexDocument.moveTo(iClassName, iClusterName, this);
+    return OVertexDocument.moveTo(iClassName, iClusterName, this, (ODatabaseSession) getDatabase());
   }
 
   public static String getConnectionFieldName(final ODirection iDirection, final String iClassName,
