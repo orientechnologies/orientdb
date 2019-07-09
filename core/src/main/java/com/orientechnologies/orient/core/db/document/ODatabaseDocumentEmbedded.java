@@ -895,14 +895,18 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    *
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  public ODatabaseDocumentAbstract delete(final ORecord record) {
+  public ODatabaseDocumentAbstract delete(ORecord record) {
     checkOpenness();
+
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
-    if (record instanceof OVertex) {
-      OVertexDelegate.deleteLinks((OVertex) record);
-    } else if (record instanceof OEdge) {
-      OEdgeDelegate.deleteLinks((OEdge) record);
+
+    if (record instanceof OElement) {
+      if (((OElement) record).isVertex()) {
+        OVertexDelegate.deleteLinks(((OElement) record).asVertex().get());
+      } else if (((OElement) record).isEdge()) {
+        OEdgeDelegate.deleteLinks(((OElement) record).asEdge().get());
+      }
     }
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)

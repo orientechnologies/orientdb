@@ -216,20 +216,27 @@ public class OVertexDocument extends ODocument implements OVertex {
   }
 
   public ORID moveTo(final String iClassName, final String iClusterName) {
+    return moveTo(iClassName, iClusterName, this);
+  }
 
-    if (checkDeletedInTx())
-      throw new ORecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
+  protected static ORID moveTo(final String iClassName, final String iClusterName, OVertex toMove) {
+    if (toMove == null) {
+      throw new ORecordNotFoundException(null, "The vertex is null");
+    }
+    if (checkDeletedInTx(toMove.getIdentity())) {
+      throw new ORecordNotFoundException(toMove.getIdentity(), "The vertex " + toMove.getIdentity() + " has been deleted");
+    }
 
-    final ORID oldIdentity = getIdentity().copy();
+    final ORID oldIdentity = toMove.getIdentity().copy();
 
     final ORecord oldRecord = oldIdentity.getRecord();
     if (oldRecord == null)
-      throw new ORecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
+      throw new ORecordNotFoundException(oldIdentity, "The vertex " + oldIdentity + " has been deleted");
 
-    final ODocument doc = ((ODocument) getRecord()).copy();
+    final ODocument doc = toMove.getRecord().copy();
 
-    final Iterable<OEdge> outEdges = getEdges(ODirection.OUT);
-    final Iterable<OEdge> inEdges = getEdges(ODirection.IN);
+    final Iterable<OEdge> outEdges = toMove.getEdges(ODirection.OUT);
+    final Iterable<OEdge> inEdges = toMove.getEdges(ODirection.IN);
 
     // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
     copyRidBags(oldRecord, doc);//TODO! check this!!!
@@ -266,8 +273,8 @@ public class OVertexDocument extends ODocument implements OVertex {
       } else {
         // REPLACE WITH NEW VERTEX
         oe.setProperty("out", newIdentity);
-        oe.save();
       }
+      oe.save();
     }
 
     for (OEdge oe : inEdges) {
@@ -282,8 +289,8 @@ public class OVertexDocument extends ODocument implements OVertex {
       } else {
         // REPLACE WITH NEW VERTEX
         oe.setProperty("in", newIdentity);
-        oe.save();
       }
+      oe.save();
     }
 
     // FINAL SAVE
@@ -292,7 +299,7 @@ public class OVertexDocument extends ODocument implements OVertex {
     return newIdentity;
   }
 
-  private void detachRidbags(ORecord oldRecord) {
+  private static void detachRidbags(ORecord oldRecord) {
     ODocument oldDoc = (ODocument) oldRecord;
     for (String field : oldDoc.fieldNames()) {
       if (field.equalsIgnoreCase("out") || field.equalsIgnoreCase("in") || field.startsWith("out_") || field.startsWith("in_")
@@ -390,16 +397,10 @@ public class OVertexDocument extends ODocument implements OVertex {
     return result;
   }
 
-  protected boolean checkDeletedInTx() {
+  protected static boolean checkDeletedInTx(ORID id) {
 
-    ODatabaseDocument db = getDatabase();
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db == null)
-      return false;
-
-    ORID id;
-    if (getRecord() != null)
-      id = getRecord().getIdentity();
-    else
       return false;
 
     final ORecordOperation oper = db.getTransaction().getRecordEntry(id);
@@ -409,7 +410,7 @@ public class OVertexDocument extends ODocument implements OVertex {
       return oper.type == ORecordOperation.DELETED;
   }
 
-  private void copyRidBags(ORecord oldRecord, ODocument newDoc) {
+  private static void copyRidBags(ORecord oldRecord, ODocument newDoc) {
     ODocument oldDoc = (ODocument) oldRecord;
     for (String field : oldDoc.fieldNames()) {
       if (field.equalsIgnoreCase("out") || field.equalsIgnoreCase("in") || field.startsWith("out_") || field.startsWith("in_")

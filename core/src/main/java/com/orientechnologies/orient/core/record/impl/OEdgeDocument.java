@@ -12,6 +12,10 @@ public class OEdgeDocument extends ODocument implements OEdge {
     super(cl);
   }
 
+  public OEdgeDocument(ODatabaseSession session,String cl) {
+    super(session, cl);
+  }
+
   public OEdgeDocument() {
     super();
   }
@@ -50,12 +54,6 @@ public class OEdgeDocument extends ODocument implements OEdge {
   public boolean isLightweight() {
     //LIGHTWEIGHT EDGES MANAGED BY OEdgeDelegate, IN FUTURE MAY BE WE NEED TO HANDLE THEM WITH THIS
     return false;
-  }
-
-  public OEdgeDocument delete() {
-    OEdgeDelegate.deleteLinks(this);
-    super.delete();
-    return this;
   }
 
 }
