@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
 import com.orientechnologies.orient.core.security.symmetrickey.OUserSymmetricKeyConfig;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -179,6 +180,41 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
 
   public List<ODocument> getAllRoles(ODatabaseSession session) {
     return delegate.getAllRoles(session);
+  }
+
+  @Override
+  public Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, ORole role) {
+    return delegate.getSecurityPolicies(session, role);
+  }
+
+  @Override
+  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, ORole role, String resource) {
+    return delegate.getSecurityPolicy(session, role, resource);
+  }
+
+  @Override
+  public void setSecurityPolicy(ODatabaseSession session, ORole role, String resource, OSecurityPolicy policy) {
+    delegate.setSecurityPolicy(session, role, resource, policy);
+  }
+
+  @Override
+  public OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name) {
+    return delegate.createSecurityPolicy(session, name);
+  }
+
+  @Override
+  public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy) {
+    delegate.saveSecurityPolicy(session, policy);
+  }
+
+  @Override
+  public void deleteSecurityPolicy(ODatabaseSession session, String name) {
+    delegate.deleteSecurityPolicy(session, name);
+  }
+
+  @Override
+  public void removeSecurityPolicy(ODatabaseSession session, ORole role, String resource) {
+    delegate.removeSecurityPolicy(session, role, resource);
   }
 
   public String toString() {

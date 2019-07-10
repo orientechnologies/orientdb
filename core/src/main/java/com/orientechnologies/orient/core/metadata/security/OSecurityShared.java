@@ -39,6 +39,8 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -56,7 +58,7 @@ public class OSecurityShared implements OSecurityInternal {
   private final AtomicLong version = new AtomicLong();
 
   public static final String RESTRICTED_CLASSNAME = "ORestricted";
-  public static final String IDENTITY_CLASSNAME   = "OIdentity";
+  public static final String IDENTITY_CLASSNAME = "OIdentity";
 
   /**
    * Uses the ORestrictedOperation ENUM instead.
@@ -83,7 +85,7 @@ public class OSecurityShared implements OSecurityInternal {
   public static final String ALLOW_DELETE_FIELD = ORestrictedOperation.ALLOW_DELETE.getFieldName();
 
   public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
-  public static final String ONCREATE_FIELD         = "onCreate.fields";
+  public static final String ONCREATE_FIELD = "onCreate.fields";
 
   public static final Set<String> ALLOW_FIELDS = Collections.unmodifiableSet(new HashSet<String>() {
     {
@@ -99,7 +101,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public OIdentifiable allowRole(final ODatabaseSession session, final ODocument iDocument, final ORestrictedOperation iOperation,
-      final String iRoleName) {
+                                 final String iRoleName) {
     final ORID role = getRoleRID(session, iRoleName);
     if (role == null)
       throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
@@ -109,7 +111,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public OIdentifiable allowUser(final ODatabaseSession session, final ODocument iDocument, final ORestrictedOperation iOperation,
-      final String iUserName) {
+                                 final String iUserName) {
     final ORID user = getUserRID(session, iUserName);
     if (user == null)
       throw new IllegalArgumentException("User '" + iUserName + "' not found");
@@ -118,7 +120,7 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   public OIdentifiable allowIdentity(final ODatabaseSession session, final ODocument iDocument, final String iAllowFieldName,
-      final OIdentifiable iId) {
+                                     final OIdentifiable iId) {
     Set<OIdentifiable> field = iDocument.field(iAllowFieldName);
     if (field == null) {
       field = new ORecordLazySet(iDocument);
@@ -131,7 +133,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public OIdentifiable denyUser(final ODatabaseSession session, final ODocument iDocument, final ORestrictedOperation iOperation,
-      final String iUserName) {
+                                final String iUserName) {
     final ORID user = getUserRID(session, iUserName);
     if (user == null)
       throw new IllegalArgumentException("User '" + iUserName + "' not found");
@@ -141,7 +143,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public OIdentifiable denyRole(final ODatabaseSession session, final ODocument iDocument, final ORestrictedOperation iOperation,
-      final String iRoleName) {
+                                final String iRoleName) {
     final ORID role = getRoleRID(session, iRoleName);
     if (role == null)
       throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
@@ -150,7 +152,7 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   public OIdentifiable disallowIdentity(final ODatabaseSession session, final ODocument iDocument, final String iAllowFieldName,
-      final OIdentifiable iId) {
+                                        final OIdentifiable iId) {
     Set<OIdentifiable> field = iDocument.field(iAllowFieldName);
     if (field != null)
       field.remove(iId);
@@ -159,7 +161,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public boolean isAllowed(final ODatabaseSession session, final Set<OIdentifiable> iAllowAll,
-      final Set<OIdentifiable> iAllowOperation) {
+                           final Set<OIdentifiable> iAllowOperation) {
     if ((iAllowAll == null || iAllowAll.isEmpty()) && (iAllowOperation == null || iAllowOperation.isEmpty()))
       // NO AUTHORIZATION: CAN'T ACCESS
       return false;
@@ -257,7 +259,7 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   public OUser createUser(final ODatabaseSession session, final String iUserName, final String iUserPassword,
-      final String... iRoles) {
+                          final String... iRoles) {
     final OUser user = new OUser(iUserName, iUserPassword);
 
     if (iRoles != null)
@@ -326,7 +328,7 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   public ORole createRole(final ODatabaseSession session, final String iRoleName, final ORole iParent,
-      final ORole.ALLOW_MODES iAllowMode) {
+                          final ORole.ALLOW_MODES iAllowMode) {
     final ORole role = new ORole(iRoleName, iParent, iAllowMode);
     return role.save();
   }
@@ -343,6 +345,96 @@ public class OSecurityShared implements OSecurityInternal {
 
   public List<ODocument> getAllRoles(final ODatabaseSession session) {
     return session.query("select from ORole").stream().map((e) -> (ODocument) e.getElement().get()).collect(Collectors.toList());
+  }
+
+  @Override
+  public Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, ORole role) {
+    Map<String, OSecurityPolicy> result = new HashMap<>();
+
+    OElement roleDoc = session.reload(role.getDocument(), null, false);
+    if (roleDoc == null) {
+      return result;
+    }
+    Map<String, OIdentifiable> policies = roleDoc.getProperty("policies");
+    if (policies == null) {
+      return result;
+    }
+    policies.entrySet().forEach(x -> result.put(x.getKey(), new OSecurityPolicy(x.getValue().getRecord())));
+    return result;
+  }
+
+  @Override
+  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, ORole role, String resource) {
+    resource = normalizeSecurityResource(session, resource);
+    OElement roleDoc = session.reload(role.getDocument(), null, false);
+    if (roleDoc == null) {
+      return null;
+    }
+    Map<String, OIdentifiable> policies = roleDoc.getProperty("policies");
+    if (policies == null) {
+      return null;
+    }
+    OIdentifiable entry = policies.get(resource);
+    if (entry == null) {
+      return null;
+    }
+    return new OSecurityPolicy(entry.getRecord());
+  }
+
+  @Override
+  public void setSecurityPolicy(ODatabaseSession session, ORole role, String resource, OSecurityPolicy policy) {
+    resource = normalizeSecurityResource(session, resource);
+    OElement roleDoc = session.reload(role.getDocument(), null, false);
+    if (roleDoc == null) {
+      return;
+    }
+    Map<String, OIdentifiable> policies = roleDoc.getProperty("policies");
+    if (policies == null) {
+      policies = new HashMap<>();
+      roleDoc.setProperty("policies", policies);
+    }
+    policies.put(resource, policy.getElement());
+    roleDoc.save();
+    role.reload();
+  }
+
+  @Override
+  public OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name) {
+    OElement elem = session.newElement(OSecurityPolicy.class.getSimpleName());
+    elem.setProperty("name", name);
+    session.save(elem);
+    return new OSecurityPolicy(elem);
+  }
+
+  @Override
+  public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy) {
+    session.save(policy.getElement());
+  }
+
+  @Override
+  public void deleteSecurityPolicy(ODatabaseSession session, String name) {
+    session.command("DELETE FROM " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", name);
+  }
+
+
+  @Override
+  public void removeSecurityPolicy(ODatabaseSession session, ORole role, String resource) {
+    resource = normalizeSecurityResource(session, resource);
+    OElement roleDoc = session.reload(role.getDocument(), null, false);
+    if (roleDoc == null) {
+      return;
+    }
+    Map<String, OIdentifiable> policies = roleDoc.getProperty("policies");
+    if (policies == null) {
+      return;
+    }
+    policies.remove(resource);
+    roleDoc.save();
+    role.reload();
+  }
+
+  private String normalizeSecurityResource(ODatabaseSession session, String resource) {
+    return resource; //TODO
   }
 
   public OUser create(final ODatabaseSession session) {
@@ -368,15 +460,15 @@ public class OSecurityShared implements OSecurityInternal {
 
     // This will return the global value if a local storage context configuration value does not exist.
     boolean createDefUsers = ((ODatabaseDocumentInternal) session).getStorage().getConfiguration().getContextConfiguration()
-        .getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+            .getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
 
     if (createDefUsers)
-      createUser(session, "reader", "reader", new String[] { readerRole.getName() });
+      createUser(session, "reader", "reader", new String[]{readerRole.getName()});
 
     final ORole writerRole = createRole(session, "writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
     writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
     writerRole
-        .addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
+            .addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
     writerRole.addRule(ORule.ResourceGeneric.CLUSTER, OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
@@ -393,7 +485,7 @@ public class OSecurityShared implements OSecurityInternal {
     writerRole.save();
 
     if (createDefUsers)
-      createUser(session, "writer", "writer", new String[] { writerRole.getName() });
+      createUser(session, "writer", "writer", new String[]{writerRole.getName()});
 
     return adminUser;
   }
@@ -428,7 +520,7 @@ public class OSecurityShared implements OSecurityInternal {
     if (adminUser == null) {
       // This will return the global value if a local storage context configuration value does not exist.
       boolean createDefUsers = ((ODatabaseDocumentInternal) session).getStorage().getConfiguration().getContextConfiguration()
-          .getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+              .getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
 
       if (createDefUsers) {
         adminUser = createUser(session, OUser.ADMIN, OUser.ADMIN, adminRole);
@@ -450,20 +542,20 @@ public class OSecurityShared implements OSecurityInternal {
     }
     if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD))
       restrictedClass
-          .createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
-              unsafe);
+              .createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
+                      unsafe);
     if (!restrictedClass.existsProperty(ALLOW_READ_FIELD))
       restrictedClass
-          .createProperty(ALLOW_READ_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
-              unsafe);
+              .createProperty(ALLOW_READ_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
+                      unsafe);
     if (!restrictedClass.existsProperty(ALLOW_UPDATE_FIELD))
       restrictedClass
-          .createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
-              unsafe);
+              .createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
+                      unsafe);
     if (!restrictedClass.existsProperty(ALLOW_DELETE_FIELD))
       restrictedClass
-          .createProperty(ALLOW_DELETE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
-              unsafe);
+              .createProperty(ALLOW_DELETE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
+                      unsafe);
   }
 
   private void createOrUpdateOUserClass(final ODatabaseDocument database, OClass identityClass, OClass roleClass) {
@@ -478,7 +570,7 @@ public class OSecurityShared implements OSecurityInternal {
 
     if (!userClass.existsProperty("name")) {
       ((OClassImpl) userClass).createProperty("name", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true)
-          .setCollate("ci").setMin("1").setRegexp("\\S+(.*\\S+)*");
+              .setCollate("ci").setMin("1").setRegexp("\\S+(.*\\S+)*");
       userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
       final OProperty name = userClass.getProperty("name");
@@ -574,7 +666,7 @@ public class OSecurityShared implements OSecurityInternal {
       OProperty p = userClass.getProperty("name");
       if (p == null)
         p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setMin("1")
-            .setRegexp("\\S+(.*\\S+)*");
+                .setRegexp("\\S+(.*\\S+)*");
 
       if (userClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);

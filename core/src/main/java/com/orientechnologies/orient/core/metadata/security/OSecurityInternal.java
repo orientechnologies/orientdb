@@ -3,9 +3,11 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface OSecurityInternal {
@@ -46,6 +48,20 @@ public interface OSecurityInternal {
   List<ODocument> getAllUsers(ODatabaseSession session);
 
   List<ODocument> getAllRoles(ODatabaseSession session);
+
+  Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, ORole role);
+
+  OSecurityPolicy getSecurityPolicy(ODatabaseSession session, ORole role, String resource);
+
+  void setSecurityPolicy(ODatabaseSession session, ORole role, String resource, OSecurityPolicy policy);
+
+  OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name);
+
+  void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy);
+
+  void deleteSecurityPolicy(ODatabaseSession session, String name);
+
+  void removeSecurityPolicy(ODatabaseSession session, ORole role, String resource);
 
   boolean dropUser(ODatabaseSession session, String iUserName);
 
