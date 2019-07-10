@@ -252,7 +252,7 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     Assert.assertEquals(resultOne.size(), 1);
     database.commit();
 
-    index.put(1, new ORecordId(clusterId + 1, positions.get(1)));
+    index.put(1, database.newVertex().save().getIdentity());
 
     resultOne = ((OIndexTxAwareMultiValue) index).get(1);
     Assert.assertEquals(resultOne.size(), 2);
