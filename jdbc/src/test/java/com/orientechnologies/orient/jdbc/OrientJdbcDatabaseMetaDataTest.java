@@ -154,7 +154,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     ResultSet rs = metaData.getTables(null, null, null, null);
     int tableCount = sizeOf(rs);
 
-    assertThat(tableCount).isEqualTo(16);
+    assertThat(tableCount).isEqualTo(conn.getDatabase().getMetadata().getSchema().getClasses().size());
 
   }
 
@@ -178,7 +178,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     }
     rs = metaData.getTables(null, null, null, tableTypes.toArray(new String[2]));
     int tableCount = sizeOf(rs);
-    assertThat(tableCount).isEqualTo(16);
+    assertThat(tableCount).isEqualTo(conn.getDatabase().getMetadata().getSchema().getClasses().size());
   }
 
   @Test
