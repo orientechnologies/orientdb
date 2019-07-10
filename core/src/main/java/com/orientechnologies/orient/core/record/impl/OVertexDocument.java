@@ -227,80 +227,86 @@ public class OVertexDocument extends ODocument implements OVertex {
       throw new ORecordNotFoundException(toMove.getIdentity(), "The vertex " + toMove.getIdentity() + " has been deleted");
     }
     boolean moveTx = !db.getTransaction().isActive();
-    if (moveTx) {
-      db.begin();
-    }
-
-    final ORID oldIdentity = toMove.getIdentity().copy();
-
-    final ORecord oldRecord = oldIdentity.getRecord();
-    if (oldRecord == null)
-      throw new ORecordNotFoundException(oldIdentity, "The vertex " + oldIdentity + " has been deleted");
-
-    final ODocument doc = toMove.getRecord().copy();
-
-    final Iterable<OEdge> outEdges = toMove.getEdges(ODirection.OUT);
-    final Iterable<OEdge> inEdges = toMove.getEdges(ODirection.IN);
-
-    // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
-    copyRidBags(oldRecord, doc);//TODO! check this!!!
-    detachRidbags(oldRecord);
-    db.delete(oldRecord);
-
-    if (iClassName != null)
-      // OVERWRITE CLASS
-      doc.setClassName(iClassName);
-
-    // SAVE THE NEW VERTEX
-    doc.setDirty();
-
-    // RESET IDENTITY
-    ORecordInternal.setIdentity(doc, new ORecordId());
-
-    db.save(doc, iClusterName);
-
-    final ORID newIdentity = doc.getIdentity();
-
-    // CONVERT OUT EDGES
-    for (OEdge oe : outEdges) {
-      if (oe.isLightweight()) {
-        // REPLACE ALL REFS IN inVertex
-        final OVertex inV = oe.getVertex(ODirection.IN);
-
-        final String inFieldName = getConnectionFieldName(ODirection.IN, oe.getSchemaType().map(x -> x.getName()).orElse(null),
-            true);
-
-        replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity);
-      } else {
-        // REPLACE WITH NEW VERTEX
-        oe.setProperty("out", newIdentity);
+    try {
+      if (moveTx) {
+        db.begin();
       }
-      db.save(oe);
-    }
 
-    for (OEdge oe : inEdges) {
-      if (oe.isLightweight()) {
-        // REPLACE ALL REFS IN outVertex
-        final OVertex outV = oe.getVertex(ODirection.OUT);
+      final ORID oldIdentity = toMove.getIdentity().copy();
 
-        final String outFieldName = getConnectionFieldName(ODirection.OUT, oe.getSchemaType().map(x -> x.getName()).orElse(null),
-            true);
+      final ORecord oldRecord = oldIdentity.getRecord();
+      if (oldRecord == null)
+        throw new ORecordNotFoundException(oldIdentity, "The vertex " + oldIdentity + " has been deleted");
 
-        replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity);
-      } else {
-        // REPLACE WITH NEW VERTEX
-        oe.setProperty("in", newIdentity);
+      final ODocument doc = toMove.getRecord().copy();
+
+      final Iterable<OEdge> outEdges = toMove.getEdges(ODirection.OUT);
+      final Iterable<OEdge> inEdges = toMove.getEdges(ODirection.IN);
+
+      // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
+      copyRidBags(oldRecord, doc);//TODO! check this!!!
+      detachRidbags(oldRecord);
+      db.delete(oldRecord);
+
+      if (iClassName != null)
+        // OVERWRITE CLASS
+        doc.setClassName(iClassName);
+
+      // SAVE THE NEW VERTEX
+      doc.setDirty();
+
+      // RESET IDENTITY
+      ORecordInternal.setIdentity(doc, new ORecordId());
+
+      db.save(doc, iClusterName);
+
+      final ORID newIdentity = doc.getIdentity();
+
+      // CONVERT OUT EDGES
+      for (OEdge oe : outEdges) {
+        if (oe.isLightweight()) {
+          // REPLACE ALL REFS IN inVertex
+          final OVertex inV = oe.getVertex(ODirection.IN);
+
+          final String inFieldName = getConnectionFieldName(ODirection.IN, oe.getSchemaType().map(x -> x.getName()).orElse(null),
+              true);
+
+          replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity);
+        } else {
+          // REPLACE WITH NEW VERTEX
+          oe.setProperty("out", newIdentity);
+        }
+        db.save(oe);
       }
-      db.save(oe);
-    }
 
-    // FINAL SAVE
-    db.save(doc);
-    if (moveTx) {
-      db.commit();
-    }
+      for (OEdge oe : inEdges) {
+        if (oe.isLightweight()) {
+          // REPLACE ALL REFS IN outVertex
+          final OVertex outV = oe.getVertex(ODirection.OUT);
 
-    return newIdentity;
+          final String outFieldName = getConnectionFieldName(ODirection.OUT, oe.getSchemaType().map(x -> x.getName()).orElse(null),
+              true);
+
+          replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity);
+        } else {
+          // REPLACE WITH NEW VERTEX
+          oe.setProperty("in", newIdentity);
+        }
+        db.save(oe);
+      }
+
+      // FINAL SAVE
+      db.save(doc);
+      if (moveTx) {
+        db.commit();
+      }
+      return newIdentity;
+    } catch (RuntimeException ex) {
+      if (moveTx) {
+        db.rollback();
+      }
+      throw ex;
+    }
   }
 
   private static void detachRidbags(ORecord oldRecord) {
