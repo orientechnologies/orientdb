@@ -1754,7 +1754,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       nameIdMapHolderPath = nameIdMapHolderV1;
       try (final FileChannel nameIdMapHolder = FileChannel
-          .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
+          .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
         readNameIdMapV1(nameIdMapHolder);
         convertNameIdMapFromV1ToV2();
       }
@@ -1765,7 +1765,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     } else {
       nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
       try (final FileChannel nameIdMapHolder = FileChannel
-          .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
+          .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
         readNameIdMapV2(nameIdMapHolder);
       }
     }
