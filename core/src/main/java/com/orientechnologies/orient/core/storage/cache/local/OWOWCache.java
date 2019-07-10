@@ -321,18 +321,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private final ConcurrentMap<Integer, String> idNameMap = new ConcurrentHashMap<>();
 
-  /**
-   * File which contains map between names and ids of files used in write cache. Each record in file has following format (size of
-   * file name in bytes (int), file name (string), internal file id) Internal file id may have negative value, it means that this
-   * file existed in storage but was deleted. We still keep mapping between files so if file with given name will be created again
-   * it will get the same file id, which can be handy during process of restore of storage data after crash.
-   */
-  private FileChannel nameIdMapHolder;
-
   private final Random fileIdGen = new Random();
 
   /**
-   * Path to the {@link #nameIdMapHolder} file.
+   * Path to the file which contains metadata for the files registered in storage.
    */
   private Path nameIdMapHolderPath;
 
@@ -1447,7 +1439,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
       }
 
-      if (nameIdMapHolder != null) {
+      try (final FileChannel nameIdMapHolder = FileChannel
+          .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
         nameIdMapHolder.truncate(0);
 
         for (final Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
@@ -1463,7 +1456,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         nameIdMapHolder.force(true);
-        nameIdMapHolder.close();
       }
 
       nameIdMap.clear();
@@ -1663,12 +1655,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (nameIdMapHolderPath != null) {
         if (Files.exists(nameIdMapHolderPath)) {
-          nameIdMapHolder.close();
-
           Files.delete(nameIdMapHolderPath);
         }
 
-        nameIdMapHolder = null;
         nameIdMapHolderPath = null;
       }
     } finally {
@@ -1751,38 +1740,33 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private void initNameIdMapping() throws IOException, InterruptedException {
-    if (nameIdMapHolder == null) {
-      if (!Files.exists(storagePath)) {
-        Files.createDirectories(storagePath);
+    if (!Files.exists(storagePath)) {
+      Files.createDirectories(storagePath);
+    }
+
+    final Path nameIdMapHolderV1 = storagePath.resolve(NAME_ID_MAP_V1);
+    final Path nameIdMapHolderV2 = storagePath.resolve(NAME_ID_MAP_V2);
+
+    if (Files.exists(nameIdMapHolderV1)) {
+      if (Files.exists(nameIdMapHolderV2)) {
+        Files.delete(nameIdMapHolderV2);
       }
 
-      final Path nameIdMapHolderV1 = storagePath.resolve(NAME_ID_MAP_V1);
-      final Path nameIdMapHolderV2 = storagePath.resolve(NAME_ID_MAP_V2);
-
-      if (Files.exists(nameIdMapHolderV1)) {
-        if (Files.exists(nameIdMapHolderV2)) {
-          Files.delete(nameIdMapHolderV2);
-        }
-
-        nameIdMapHolderPath = nameIdMapHolderV1;
-        nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.READ);
-
-        readNameIdMapV1();
+      nameIdMapHolderPath = nameIdMapHolderV1;
+      try (final FileChannel nameIdMapHolder = FileChannel
+          .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
+        readNameIdMapV1(nameIdMapHolder);
         convertNameIdMapFromV1ToV2();
+      }
 
-        nameIdMapHolder.close();
+      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
 
-        nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
-
-        Files.delete(nameIdMapHolderV1);
-
-        nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.WRITE);
-      } else {
-        nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
-        nameIdMapHolder = FileChannel
-            .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
-
-        readNameIdMapV2();
+      Files.delete(nameIdMapHolderV1);
+    } else {
+      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+      try (final FileChannel nameIdMapHolder = FileChannel
+          .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
+        readNameIdMapV2(nameIdMapHolder);
       }
     }
   }
@@ -1855,7 +1839,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    * not</li> <li>Name of file inside of write cache, this name is case sensitive</li> <li>Name of file which is used inside file
    * system it can be different from name of file used inside write cache</li> </ol>
    */
-  private void readNameIdMapV2() throws IOException, InterruptedException {
+  private void readNameIdMapV2(FileChannel nameIdMapHolder) throws IOException, InterruptedException {
     nameIdMap.clear();
 
     long localFileCounter = -1;
@@ -1866,7 +1850,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     final Map<Integer, String> idFileNameMap = new HashMap<>(1_000);
 
-    while ((nameFileIdEntry = readNextNameIdEntryV2()) != null) {
+    while ((nameFileIdEntry = readNextNameIdEntryV2(nameIdMapHolder)) != null) {
       final long absFileId = Math.abs(nameFileIdEntry.fileId);
 
       if (localFileCounter < absFileId) {
@@ -1903,7 +1887,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private void readNameIdMapV1() throws IOException, InterruptedException {
+  private void readNameIdMapV1(final FileChannel nameIdMapHolder) throws IOException, InterruptedException {
     //older versions of ODB incorrectly logged file deletions
     //some deleted files have the same id
     //because we reuse ids of removed files when we re-create them
@@ -1917,7 +1901,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     nameIdMapHolder.position(0);
 
     NameFileIdEntry nameFileIdEntry;
-    while ((nameFileIdEntry = readNextNameIdEntryV1()) != null) {
+    while ((nameFileIdEntry = readNextNameIdEntryV1(nameIdMapHolder)) != null) {
 
       final long absFileId = Math.abs(nameFileIdEntry.fileId);
       if (localFileCounter < absFileId) {
@@ -2010,7 +1994,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private NameFileIdEntry readNextNameIdEntryV1() throws IOException {
+  private NameFileIdEntry readNextNameIdEntryV1(FileChannel nameIdMapHolder) throws IOException {
     try {
       ByteBuffer buffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
       OIOUtils.readByteBuffer(buffer, nameIdMapHolder);
@@ -2031,7 +2015,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private NameFileIdEntry readNextNameIdEntryV2() throws IOException {
+  private NameFileIdEntry readNextNameIdEntryV2(FileChannel nameIdMapHolder) throws IOException {
     try {
       ByteBuffer buffer = ByteBuffer.allocate(2 * OIntegerSerializer.INT_SIZE);
       OIOUtils.readByteBuffer(buffer, nameIdMapHolder);
@@ -2067,7 +2051,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private void writeNameIdEntry(final NameFileIdEntry nameFileIdEntry, final boolean sync) throws IOException {
-    writeNameIdEntry(nameIdMapHolder, nameFileIdEntry, sync);
+    try (final FileChannel nameIdMapHolder = FileChannel
+        .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+      writeNameIdEntry(nameIdMapHolder, nameFileIdEntry, sync);
+    }
   }
 
   private void writeNameIdEntry(final FileChannel nameIdMapHolder, final NameFileIdEntry nameFileIdEntry, final boolean sync)
