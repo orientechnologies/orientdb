@@ -1435,6 +1435,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return new OVertexDocument(this, iClassName);
   }
 
+  private OEdge newEdgeInternal(final String iClassName) {
+    return new OEdgeDocument(this, iClassName);
+  }
+
   @Override
   public OVertex newVertex(OClass type) {
     if (type == null) {
@@ -1531,7 +1535,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           OVertexDelegate.createLink(from.getRecord(), to.getRecord(), outFieldName);
           OVertexDelegate.createLink(to.getRecord(), from.getRecord(), inFieldName);
         } else {
-          edge = newInstance(iClassName).asEdge().get();
+          edge = newEdgeInternal(iClassName);
           edge.setProperty("out", currentVertex.getRecord());
           edge.setProperty("in", inDocument.getRecord());
 
@@ -1555,7 +1559,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
           // IN-VERTEX ---> OUT-VERTEX/EDGE
           OVertexDelegate.createLink(inDocument, edge.getRecord(), inFieldName);
-
         }
 
         // OK

@@ -120,9 +120,10 @@ public class OEdgeDelegate implements OEdge {
   }
 
   public OEdge delete() {
-    deleteLinks(this);
     if (element != null) {
       element.delete();
+    } else {
+      deleteLinks(this);
     }
     return this;
   }
