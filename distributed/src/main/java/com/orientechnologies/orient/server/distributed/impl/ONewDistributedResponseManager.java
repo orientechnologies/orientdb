@@ -79,7 +79,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public long getSynchTimeout() {
-    return 0;
+    return timeout;
   }
 
   @Override

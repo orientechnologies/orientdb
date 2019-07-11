@@ -12,19 +12,9 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 public class ServerClusterLocalSequenceIT extends AbstractServerClusterSequenceTest {
   @Test
   public void test() throws Exception {
-
-    final long previous = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong();
-    try {
-      OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(0);
-
-      init(2);
-      prepare(false);
-      execute();
-
-    } finally {
-      OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(previous);
-
-    }
+    init(2);
+    prepare(false);
+    execute();
   }
 
   protected String getDatabaseURL(final ServerRun server) {
