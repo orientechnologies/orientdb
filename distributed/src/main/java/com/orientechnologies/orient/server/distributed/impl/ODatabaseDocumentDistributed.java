@@ -467,44 +467,48 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public int assignAndCheckCluster(ORecord record, String iClusterName) {
-    ORecordId rid = (ORecordId) record.getIdentity();
-    // if provided a cluster name use it.
-    if (rid.getClusterId() <= ORID.CLUSTER_POS_INVALID && iClusterName != null) {
-      rid.setClusterId(getClusterIdByName(iClusterName));
-      if (rid.getClusterId() == -1)
-        throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
+    if (hazelcastPlugin.isEnabled()) {
+      ORecordId rid = (ORecordId) record.getIdentity();
+      // if provided a cluster name use it.
+      if (rid.getClusterId() <= ORID.CLUSTER_POS_INVALID && iClusterName != null) {
+        rid.setClusterId(getClusterIdByName(iClusterName));
+        if (rid.getClusterId() == -1)
+          throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
 
-    }
-    OClass schemaClass = null;
-    // if cluster id is not set yet try to find it out
-    if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorage().isAssigningClusterIds()) {
-      if (record instanceof ODocument) {
-        //Immutable Schema Class not support distributed yet.
-        schemaClass = ((ODocument) record).getSchemaClass();
-        if (schemaClass != null) {
-          if (schemaClass.isAbstract())
-            throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
-          rid.setClusterId(((OClassDistributed) schemaClass).getClusterForNewInstance(this, (ODocument) record));
-        } else
-          throw new ODatabaseException("Cannot save (4) document " + record + ": no class or cluster defined");
-      } else {
-        throw new ODatabaseException("Cannot save (5) document " + record + ": no class or cluster defined");
       }
-    } else if (record instanceof ODocument)
-      schemaClass = ((ODocument) record).getSchemaClass();
-    // If the cluster id was set check is validity
-    if (rid.getClusterId() > ORID.CLUSTER_ID_INVALID) {
-      if (schemaClass != null) {
-        String messageClusterName = getClusterNameById(rid.getClusterId());
-        checkRecordClass(schemaClass, messageClusterName, rid);
-        if (!schemaClass.hasClusterId(rid.getClusterId())) {
-          throw new IllegalArgumentException(
-              "Cluster name '" + messageClusterName + "' (id=" + rid.getClusterId() + ") is not configured to store the class '"
-                  + schemaClass.getName() + "', valid are " + Arrays.toString(schemaClass.getClusterIds()));
+      OClass schemaClass = null;
+      // if cluster id is not set yet try to find it out
+      if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorage().isAssigningClusterIds()) {
+        if (record instanceof ODocument) {
+          //Immutable Schema Class not support distributed yet.
+          schemaClass = ((ODocument) record).getSchemaClass();
+          if (schemaClass != null) {
+            if (schemaClass.isAbstract())
+              throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
+            rid.setClusterId(((OClassDistributed) schemaClass).getClusterForNewInstance(this, (ODocument) record));
+          } else
+            throw new ODatabaseException("Cannot save (4) document " + record + ": no class or cluster defined");
+        } else {
+          throw new ODatabaseException("Cannot save (5) document " + record + ": no class or cluster defined");
+        }
+      } else if (record instanceof ODocument)
+        schemaClass = ((ODocument) record).getSchemaClass();
+      // If the cluster id was set check is validity
+      if (rid.getClusterId() > ORID.CLUSTER_ID_INVALID) {
+        if (schemaClass != null) {
+          String messageClusterName = getClusterNameById(rid.getClusterId());
+          checkRecordClass(schemaClass, messageClusterName, rid);
+          if (!schemaClass.hasClusterId(rid.getClusterId())) {
+            throw new IllegalArgumentException(
+                "Cluster name '" + messageClusterName + "' (id=" + rid.getClusterId() + ") is not configured to store the class '"
+                    + schemaClass.getName() + "', valid are " + Arrays.toString(schemaClass.getClusterIds()));
+          }
         }
       }
+      return rid.getClusterId();
+    } else {
+      return super.assignAndCheckCluster(record, iClusterName);
     }
-    return rid.getClusterId();
   }
 
   @Override

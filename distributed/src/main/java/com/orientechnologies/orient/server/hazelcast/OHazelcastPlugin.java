@@ -155,7 +155,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
       }
     }
-    iServer.getDatabases().replaceFactory(new ODistributedEmbeddedDatabaseInstanceFactory(this));
+    if (enabled) {
+      iServer.getDatabases().replaceFactory(new ODistributedEmbeddedDatabaseInstanceFactory(this));
+    }
   }
 
   @Override
