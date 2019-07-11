@@ -1,9 +1,13 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.*;
+
+import java.util.Map;
 
 public class OSecurityPolicyTest {
   static OrientDB orientDB;
@@ -87,38 +91,80 @@ public class OSecurityPolicyTest {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     Assert.assertNull(security.getSecurityPolicy(db, "test"));
     OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
-    try{
+    try {
       policy.setCreateRule("foo bar");
       Assert.fail();
-    }catch(IllegalArgumentException ex){
+    } catch (IllegalArgumentException ex) {
     }
-    try{
+    try {
       policy.setReadRule("foo bar");
       Assert.fail();
-    }catch(IllegalArgumentException ex){
+    } catch (IllegalArgumentException ex) {
     }
-    try{
+    try {
       policy.setBeforeUpdateRule("foo bar");
       Assert.fail();
-    }catch(IllegalArgumentException ex){
+    } catch (IllegalArgumentException ex) {
     }
-    try{
+    try {
       policy.setAfterUpdateRule("foo bar");
       Assert.fail();
-    }catch(IllegalArgumentException ex){
+    } catch (IllegalArgumentException ex) {
     }
-    try{
+    try {
       policy.setDeleteRule("foo bar");
       Assert.fail();
-    }catch(IllegalArgumentException ex){
+    } catch (IllegalArgumentException ex) {
     }
-    try{
+    try {
       policy.setExecuteRule("foo bar");
       Assert.fail();
-    }catch(IllegalArgumentException ex){
+    } catch (IllegalArgumentException ex) {
+    }
+  }
+
+  @Test
+  public void testAddPolicyToRole() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+    Assert.assertNull(security.getSecurityPolicy(db, "test"));
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    policy.setCreateRule("1 = 1");
+    policy.setBeforeUpdateRule("1 = 2");
+    policy.setActive(true);
+    security.saveSecurityPolicy(db, policy);
+
+    ORole reader = security.getRole(db, "reader");
+    String resource = "database.class.Person";
+    security.setSecurityPolicy(db, reader, resource, policy);
+
+    ORID policyRid = policy.getElement().getIdentity();
+    try (OResultSet rs = db.query("select from ORole where name = 'reader'")) {
+      Map<String, OIdentifiable> rolePolicies = rs.next().getProperty("policies");
+      OIdentifiable id = rolePolicies.get(resource);
+      Assert.assertEquals(id.getIdentity(), policyRid);
     }
 
+    OSecurityPolicy policy2 = security.getSecurityPolicy(db, reader, resource);
+    Assert.assertNotNull(policy2);
+    Assert.assertEquals(policy2.getElement().getIdentity(), policyRid);
+  }
 
+  @Test
+  public void testRemovePolicyToRole() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+    Assert.assertNull(security.getSecurityPolicy(db, "test"));
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    policy.setCreateRule("1 = 1");
+    policy.setBeforeUpdateRule("1 = 2");
+    policy.setActive(true);
+    security.saveSecurityPolicy(db, policy);
+
+    ORole reader = security.getRole(db, "reader");
+    String resource = "database.class.Person";
+    security.setSecurityPolicy(db, reader, resource, policy);
+
+    security.removeSecurityPolicy(db, reader, resource);
+    Assert.assertNull(security.getSecurityPolicy(db, reader, resource));
 
   }
 }
