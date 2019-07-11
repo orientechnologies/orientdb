@@ -57,6 +57,8 @@ public interface OSecurityInternal {
 
   OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name);
 
+  OSecurityPolicy getSecurityPolicy(ODatabaseSession session, String name);
+
   void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy);
 
   void deleteSecurityPolicy(ODatabaseSession session, String name);

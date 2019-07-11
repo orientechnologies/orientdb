@@ -203,6 +203,11 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
+  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, String name) {
+    return delegate.getSecurityPolicy(session, name);
+  }
+
+  @Override
   public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy) {
     delegate.saveSecurityPolicy(session, policy);
   }

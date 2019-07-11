@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
@@ -404,6 +405,17 @@ public class OSecurityShared implements OSecurityInternal {
     elem.setProperty("name", name);
     session.save(elem);
     return new OSecurityPolicy(elem);
+  }
+
+  @Override
+  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, String name) {
+    try(OResultSet rs = session.query("SELECT FROM " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", name)){
+      if(rs.hasNext()){
+        OResult result = rs.next();
+        return new OSecurityPolicy(result.getElement().get());
+      }
+    }
+    return null;
   }
 
   @Override
