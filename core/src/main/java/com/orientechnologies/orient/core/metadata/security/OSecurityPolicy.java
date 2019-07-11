@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 
 public class OSecurityPolicy {
   private OElement element;
@@ -39,6 +41,7 @@ public class OSecurityPolicy {
   }
 
   public void setCreateRule(String rule) throws IllegalArgumentException {
+    validatePredicate(rule);
     element.setProperty("create", rule);
   }
 
@@ -48,6 +51,7 @@ public class OSecurityPolicy {
   }
 
   public void setReadRule(String rule) throws IllegalArgumentException {
+    validatePredicate(rule);
     element.setProperty("read", rule);
   }
 
@@ -56,6 +60,7 @@ public class OSecurityPolicy {
   }
 
   public void setBeforeUpdateRule(String rule) throws IllegalArgumentException {
+    validatePredicate(rule);
     element.setProperty("beforeUpdate", rule);
   }
 
@@ -64,6 +69,7 @@ public class OSecurityPolicy {
   }
 
   public void setAfterUpdateRule(String rule) throws IllegalArgumentException {
+    validatePredicate(rule);
     element.setProperty("afterUpdate", rule);
   }
 
@@ -72,6 +78,7 @@ public class OSecurityPolicy {
   }
 
   public void setDeleteRule(String rule) throws IllegalArgumentException {
+    validatePredicate(rule);
     element.setProperty("delete", rule);
   }
 
@@ -80,10 +87,15 @@ public class OSecurityPolicy {
   }
 
   public void setExecuteeRule(String rule) throws IllegalArgumentException {
+    validatePredicate(rule);
     element.setProperty("execute", rule);
   }
 
   void validatePredicate(String predicate) throws IllegalArgumentException {
-    //TODO
+    try {
+      OSQLEngine.parsePredicate(predicate);
+    } catch (OCommandSQLParsingException ex) {
+      throw new IllegalArgumentException("Invalid predicate: " + predicate);
+    }
   }
 }
