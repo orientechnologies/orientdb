@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.List;
@@ -81,7 +80,7 @@ public interface OSecurityInternal {
 
   void close();
 
-  Set<String> getFilteredProperties(ODocument document);
+  Set<String> getFilteredProperties(ODatabaseSession session, ODocument document);
 
-  boolean isAllowedWrite(ODocument document, String name);
+  boolean isAllowedWrite(ODatabaseSession session, ODocument document, String name);
 }

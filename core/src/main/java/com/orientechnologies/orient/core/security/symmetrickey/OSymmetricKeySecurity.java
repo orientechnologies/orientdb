@@ -20,18 +20,13 @@
 package com.orientechnologies.orient.core.security.symmetrickey;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
-import com.orientechnologies.orient.core.security.symmetrickey.OUserSymmetricKeyConfig;
 
 import java.util.List;
 import java.util.Map;
@@ -249,13 +244,13 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
-  public Set<String> getFilteredProperties(ODocument document) {
-    return delegate.getFilteredProperties(document);
+  public Set<String> getFilteredProperties(ODatabaseSession session, ODocument document) {
+    return delegate.getFilteredProperties(session, document);
   }
 
   @Override
-  public boolean isAllowedWrite(ODocument document, String name) {
-    return delegate.isAllowedWrite(document, name);
+  public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String name) {
+    return delegate.isAllowedWrite(session, document, name);
   }
 
   @Override

@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -749,12 +748,12 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   @Override
-  public Set<String> getFilteredProperties(ODocument document) {
+  public Set<String> getFilteredProperties(ODatabaseSession session, ODocument document) {
     return null;
   }
 
   @Override
-  public boolean isAllowedWrite(ODocument document, String name) {
+  public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String name) {
     return true;
   }
 }

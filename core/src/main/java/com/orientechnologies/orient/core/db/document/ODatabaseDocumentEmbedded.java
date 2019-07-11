@@ -1069,7 +1069,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
             return true;
           }
         }
-        ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(doc, getSharedContext().getSecurity()));
+        ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(this, doc, getSharedContext().getSecurity()));
         ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
       }
     }

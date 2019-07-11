@@ -622,7 +622,7 @@ public class ODocument extends ORecordAbstract
     ODocumentEntry entry = iRecord.fields.get(p.getName());
     if (entry != null && (entry.isChanged() || entry.timeLine != null)) {
       OSecurityInternal security = internal.getSharedContext().getSecurity();
-      if (!security.isAllowedWrite(iRecord, p.getName())) {
+      if (!security.isAllowedWrite(internal, iRecord, p.getName())) {
         throw new OSecurityException(
             String.format("Change of field '%s' is not allowed for user '%s'", p.getFullName(), internal.getUser().getName()));
       }
