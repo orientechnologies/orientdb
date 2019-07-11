@@ -86,12 +86,15 @@ public class OSecurityPolicy {
     return element.getProperty("execute");
   }
 
-  public void setExecuteeRule(String rule) throws IllegalArgumentException {
+  public void setExecuteRule(String rule) throws IllegalArgumentException {
     validatePredicate(rule);
     element.setProperty("execute", rule);
   }
 
-  void validatePredicate(String predicate) throws IllegalArgumentException {
+  protected void validatePredicate(String predicate) throws IllegalArgumentException {
+    if (predicate == null || predicate.trim().length() == 0) {
+      return;
+    }
     try {
       OSQLEngine.parsePredicate(predicate);
     } catch (OCommandSQLParsingException ex) {
