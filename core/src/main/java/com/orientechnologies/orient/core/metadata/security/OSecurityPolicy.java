@@ -17,7 +17,73 @@ public class OSecurityPolicy {
     this.element = element;
   }
 
-  public String getName(){
+  public String getName() {
     return element.getProperty("name");
+  }
+
+  public void setName(String name) {
+    element.setProperty("name", name);
+  }
+
+  public boolean isActive() {
+    return Boolean.TRUE.equals(this.element.getProperty("active"));
+  }
+
+  public void setActive(Boolean active) {
+    this.element.setProperty("active", active);
+  }
+
+
+  public String getCreateRule() {
+    return element.getProperty("create");
+  }
+
+  public void setCreateRule(String rule) throws IllegalArgumentException {
+    element.setProperty("create", rule);
+  }
+
+
+  public String getReadRule() {
+    return element.getProperty("read");
+  }
+
+  public void setReadRule(String rule) throws IllegalArgumentException {
+    element.setProperty("read", rule);
+  }
+
+  public String getBeforeUpdateRule() {
+    return element.getProperty("beforeUpdate");
+  }
+
+  public void setBeforeUpdateRule(String rule) throws IllegalArgumentException {
+    element.setProperty("beforeUpdate", rule);
+  }
+
+  public String getAfterUpdateRule() {
+    return element.getProperty("afterUpdate");
+  }
+
+  public void setAfterUpdateRule(String rule) throws IllegalArgumentException {
+    element.setProperty("afterUpdate", rule);
+  }
+
+  public String getDeleteRule() {
+    return element.getProperty("delete");
+  }
+
+  public void setDeleteRule(String rule) throws IllegalArgumentException {
+    element.setProperty("delete", rule);
+  }
+
+  public String getExecuteRule() {
+    return element.getProperty("execute");
+  }
+
+  public void setExecuteeRule(String rule) throws IllegalArgumentException {
+    element.setProperty("execute", rule);
+  }
+
+  void validatePredicate(String predicate) throws IllegalArgumentException {
+    //TODO
   }
 }
