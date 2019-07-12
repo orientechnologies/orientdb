@@ -34,7 +34,16 @@ public class ODatabaseDocumentRemotePooled extends ODatabaseDocumentRemote {
   }
 
   public void realClose() {
-    activateOnCurrentThread();
-    super.close();
+    ODatabaseDocumentInternal old = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    try {
+      activateOnCurrentThread();
+      super.close();
+    } finally {
+      if (old == null) {
+        ODatabaseRecordThreadLocal.instance().remove();
+      } else {
+        ODatabaseRecordThreadLocal.instance().set(old);
+      }
+    }
   }
 }
