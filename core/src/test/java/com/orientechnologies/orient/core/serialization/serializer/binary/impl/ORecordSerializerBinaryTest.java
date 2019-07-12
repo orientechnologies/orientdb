@@ -27,7 +27,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OResultBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -42,7 +44,7 @@ import java.util.*;
 public class ORecordSerializerBinaryTest {
 
   private static ODatabaseDocumentTx     db = null;
-  private final  ORecordSerializerBinary serializer;
+  private static ORecordSerializerBinary serializer;
   private final  int                     serializerVersion;
 
   @Parameterized.Parameters
@@ -57,6 +59,11 @@ public class ORecordSerializerBinaryTest {
   }
 
   public ORecordSerializerBinaryTest(byte serializerIndex) {
+    serializerVersion = serializerIndex;
+  }
+
+  @Before
+  public void before() {
     if (db != null) {
       db.drop();
     }
@@ -64,8 +71,12 @@ public class ORecordSerializerBinaryTest {
     db.createClass("TestClass");
     db.command(new OCommandSQL("create property TestClass.TestEmbedded EMBEDDED")).execute();
     db.command(new OCommandSQL("create property TestClass.TestPropAny ANY")).execute();
-    serializer = new ORecordSerializerBinary(serializerIndex);
-    serializerVersion = serializerIndex;
+    serializer = new ORecordSerializerBinary((byte) serializerVersion);
+  }
+
+  @After
+  public void after() {
+    db.drop();
   }
 
   @Test
