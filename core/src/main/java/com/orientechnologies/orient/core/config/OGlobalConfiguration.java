@@ -717,6 +717,11 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   QUERY_LIMIT_THRESHOLD_TIP("query.limitThresholdTip",
       "If the total number of returned records exceeds this value, then a warning is given. (Use 0 to disable)", Long.class, 10000),
 
+  QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP("query.maxHeapElementsAllowedPerOp",
+          "Maximum number of elements (records) allowed in a single query for memory-intensive operations (eg. ORDER BY in heap). " +
+                  "If exceeded, the query fails with an OCommandExecutionException. Negative number means no limit." +
+                  "This setting is intended as a safety measure against excessive resource consumption from a single query (eg. prevent OutOfMemory)", Long.class, 500_000),
+
   QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 
   STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache", Integer.class, 100),
