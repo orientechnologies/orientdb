@@ -2681,6 +2681,17 @@ public class ODocument extends ORecordAbstract
           continue;
         }
         try {
+          if(type == OType.LINKBAG && entry.value != null && !(entry.value instanceof ORidBag) && entry.value instanceof Collection){
+            ORidBag newValue = new ORidBag();
+            for(Object o :((Collection) entry.value)){
+              if(!(o instanceof OIdentifiable)){
+                throw new OValidationException("Invalid value in ridbag: " + o);
+              }
+              newValue.add((OIdentifiable) o);
+            }
+            entry.value = newValue;
+
+          }
           if (type == OType.LINKMAP) {
             if (entry.value instanceof Map) {
               Map<String, Object> map = (Map) entry.value;
