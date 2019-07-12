@@ -38,11 +38,14 @@ public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     Object result = null;
-    if (started.await() == 0) {
-      result = toRun.execute(requestId, iServer, iManager, database);
-      hasResponse = toRun.hasResponse();
+    try {
+      if (started.await() == 0) {
+        result = toRun.execute(requestId, iServer, iManager, database);
+        hasResponse = toRun.hasResponse();
+      }
+    } finally {
+      finished.await();
     }
-    finished.await();
 
     return result;
   }
