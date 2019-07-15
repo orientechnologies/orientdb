@@ -1,9 +1,10 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.*;
@@ -26,9 +27,10 @@ public class IndexTxTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
 
-    database.command(new OCommandSQL("create class IndexTxTestClass")).execute();
-    database.command(new OCommandSQL("create property IndexTxTestClass.name string")).execute();
-    database.command(new OCommandSQL("create index IndexTxTestIndex on IndexTxTestClass (name) unique METADATA {ignoreNullValues:true}")).execute();
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass cls = schema.createClass("IndexTxTestClass");
+    cls.createProperty("name", OType.STRING);
+    cls.createIndex("IndexTxTestIndex", OClass.INDEX_TYPE.UNIQUE, "name");
   }
 
   @BeforeMethod
@@ -36,10 +38,10 @@ public class IndexTxTest extends DocumentDBBaseTest {
     super.beforeMethod();
 
     final OSchema schema = database.getMetadata().getSchema();
-    schema.reload();
-    database.getStorage().reload();
-
-    schema.getClass("IndexTxTestClass").truncate();
+    final OClass cls = schema.getClass("IndexTxTestClass");
+    if (cls != null) {
+      cls.truncate();
+    }
   }
 
   @Test
@@ -66,7 +68,7 @@ public class IndexTxTest extends DocumentDBBaseTest {
     expectedResult.put("doc1", doc1.getIdentity());
     expectedResult.put("doc2", doc2.getIdentity());
 
-    final List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from index:IndexTxTestIndex"));
+    final List<ODocument> result = database.query(new OSQLSynchQuery<>("select from index:IndexTxTestIndex"));
     for (ODocument o : result) {
       final String key = o.rawField("key");
       final ORID expectedValue = expectedResult.get(key);

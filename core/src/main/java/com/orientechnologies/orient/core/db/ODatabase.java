@@ -503,7 +503,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Returns the Dictionary manual index.
    *
    * @return ODictionary instance
+   *
+   * @deprecated Manual indexes are prohibited and will be removed
    */
+  @Deprecated
   ODictionary<T> getDictionary();
 
   /**

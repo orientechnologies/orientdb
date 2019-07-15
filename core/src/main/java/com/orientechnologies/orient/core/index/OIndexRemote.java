@@ -225,6 +225,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  @Deprecated
   public OIndexRemote<T> clear() {
     getDatabase().command(String.format(QUERY_CLEAR, name)).close();
     return this;

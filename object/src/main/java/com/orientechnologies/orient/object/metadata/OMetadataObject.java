@@ -16,11 +16,9 @@
  */
 package com.orientechnologies.orient.object.metadata;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
@@ -29,6 +27,8 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
+
+import java.io.IOException;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -91,9 +91,18 @@ public class OMetadataObject implements OMetadataInternal {
     return underlying.getSecurity();
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Deprecated
   @Override
   public OIndexManager getIndexManager() {
     return underlying.getIndexManager();
+  }
+
+  @Override
+  public OIndexManagerAbstract getIndexManagerInternal() {
+    return underlying.getIndexManagerInternal();
   }
 
   @Override

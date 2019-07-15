@@ -94,11 +94,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.CompositeIndexWithNullTest"/>
         </classes>
     </test>
-    <test name="Dictionary">
-        <classes>
-            <!-- <class name="com.orientechnologies.orient.test.database.auto.DictionaryTest" /> -->
-        </classes>
-    </test>
     <test name="Query">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest"/>

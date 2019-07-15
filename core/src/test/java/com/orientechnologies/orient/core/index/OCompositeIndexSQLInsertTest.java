@@ -51,12 +51,6 @@ public class OCompositeIndexSQLInsertTest {
         .execute();
   }
 
-  @Test()
-  public void testIndexOfStrings() {
-    db.command(new OCommandSQL("CREATE INDEX test unique string,string")).execute();
-    db.command(new OCommandSQL("insert into index:test (key, rid) values (['a','b'], #12:0)")).execute();
-  }
-
   @Test
   public void testCompositeIndexWithRangeAndContains() {
     final OSchema schema = db.getMetadata().getSchema();

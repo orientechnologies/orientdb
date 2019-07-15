@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
@@ -121,34 +122,33 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private static final AsyncResult PARALLEL_END_EXECUTION_THREAD = new AsyncResult(null, null);
 
-  private final OOrderByOptimizer           orderByOptimizer     = new OOrderByOptimizer();
-  private final OMetricRecorder             metricRecorder       = new OMetricRecorder();
-  private final OFilterOptimizer            filterOptimizer      = new OFilterOptimizer();
-  private final OFilterAnalyzer             filterAnalyzer       = new OFilterAnalyzer();
-  private       Map<String, String>         projectionDefinition = null;
+  private final OOrderByOptimizer                         orderByOptimizer     = new OOrderByOptimizer();
+  private final OMetricRecorder                           metricRecorder       = new OMetricRecorder();
+  private final OFilterOptimizer                          filterOptimizer      = new OFilterOptimizer();
+  private final OFilterAnalyzer                           filterAnalyzer       = new OFilterAnalyzer();
+  private       Map<String, String>                       projectionDefinition = null;
   // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S USED THE PROJECTIONS IN GROUPED-RESULTS
-  private       Map<String, Object>         projections          = null;
-  private       List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
-  private List<String> groupByFields;
-  private ConcurrentHashMap<Object, ORuntimeResult> groupedResult = new ConcurrentHashMap<Object, ORuntimeResult>();
-  private boolean                                   aggregate     = false;
-  private List<String> unwindFields;
-  private Object       expandTarget;
-  private int fetchLimit = -1;
-  private OIdentifiable lastRecord;
-  private String        fetchPlan;
-  private boolean          fullySortedByIndex = false;
-  private LOCKING_STRATEGY lockingStrategy    = LOCKING_STRATEGY.DEFAULT;
+  private       Map<String, Object>                       projections          = null;
+  private       List<OPair<String, String>>               orderedFields        = new ArrayList<OPair<String, String>>();
+  private       List<String>                              groupByFields;
+  private       ConcurrentHashMap<Object, ORuntimeResult> groupedResult        = new ConcurrentHashMap<Object, ORuntimeResult>();
+  private       boolean                                   aggregate            = false;
+  private       List<String>                              unwindFields;
+  private       Object                                    expandTarget;
+  private       int                                       fetchLimit           = -1;
+  private       OIdentifiable                             lastRecord;
+  private       String                                    fetchPlan;
+  private       boolean                                   fullySortedByIndex   = false;
+  private       LOCKING_STRATEGY                          lockingStrategy      = LOCKING_STRATEGY.DEFAULT;
 
-  private          Boolean isAnyFunctionAggregates = null;
-  private volatile boolean parallel                = false;
+  private          Boolean                         isAnyFunctionAggregates = null;
+  private volatile boolean                         parallel                = false;
   private volatile boolean                         parallelRunning;
   private final    ArrayBlockingQueue<AsyncResult> resultQueue;
 
   private ConcurrentHashMap<ORID, ORID> uniqueResult;
-  private boolean noCache = false;
-  private int tipLimitThreshold;
-
+  private boolean                       noCache = false;
+  private int                           tipLimitThreshold;
 
   private AtomicLong tmpQueueOffer = new AtomicLong();
   private Object     resultLock    = new Object();
@@ -2608,6 +2608,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private void searchInIndex() {
+    if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
+      throw new OManualIndexesAreProhibited(
+          "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
+              + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
+    }
+
     final OIndex<Object> index = (OIndex<Object>) getDatabase().getMetadata().getIndexManager()
         .getIndex(parsedTarget.getTargetIndex());
 

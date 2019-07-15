@@ -27,13 +27,11 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -52,14 +50,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -289,7 +280,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         if (indexId == -1) {
           indexId = storage
               .loadExternalIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(), true,
-                  version, 1, this instanceof OIndexMultiValues, getEngineProperties());
+                  version, 1, this instanceof OIndexMultiValues, getEngineProperties(), metadata);
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
 
@@ -526,11 +517,25 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   * @deprecated Manual indexes are deprecated and will be removed
+   */
+  @Override
+  @Deprecated
   public OIndex<T> clear() {
     acquireSharedLock();
     try {
       while (true)
         try {
+          if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean() && (indexDefinition == null
+              || indexDefinition.getClassName() == null || indexDefinition.getFields() == null || indexDefinition.getFields()
+              .isEmpty())) {
+            throw new OManualIndexesAreProhibited(
+                "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
+                    + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
+          }
+
           storage.clearIndex(indexId);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
@@ -675,7 +680,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
    * Interprets transaction index changes for a certain key. Override it to customize index behaviour on interpreting index changes.
    * This may be viewed as an optimization, but in some cases this is a requirement. For example, if you put multiple values under
    * the same key during the transaction for single-valued/unique index, but remove all of them except one before commit, there is
-   * no point in throwing {@link com.orientechnologies.orient.core.storage.ORecordDuplicatedException} while applying index changes.
+   * no point in throwing {@link com.orientechnologies.orient.core.storage.ORecordDuplicatedException} while applying index
+   * changes.
    *
    * @param changes the changes to interpret.
    *

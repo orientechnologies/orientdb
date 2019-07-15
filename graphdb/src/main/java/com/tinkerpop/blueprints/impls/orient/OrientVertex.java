@@ -33,18 +33,13 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ODirection;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
-import com.orientechnologies.orient.core.record.impl.OVertexDocument;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
@@ -516,13 +511,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         final Index<? extends Element> index = it.next();
 
         if (Vertex.class.isAssignableFrom(index.getIndexClass())) {
-          OrientIndex<OrientVertex> idx = (OrientIndex<OrientVertex>) index;
+          final OrientIndex<OrientVertex> idx = (OrientIndex<OrientVertex>) index;
           idx.removeElement(this);
         }
 
         if (Edge.class.isAssignableFrom(index.getIndexClass())) {
-          OrientIndex<OrientEdge> idx = (OrientIndex<OrientEdge>) index;
-          for (Edge e : allEdges)
+          final OrientIndex<OrientEdge> idx = (OrientIndex<OrientEdge>) index;
+          for (final Edge e : allEdges)
             idx.removeElement((OrientEdge) e);
         }
       }

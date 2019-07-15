@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -42,17 +43,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.nio.channels.UnsupportedAddressTypeException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -106,6 +97,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, String type,
       final OIndexDefinition indexDefinition, final int[] clusterIdsToIndex, OProgressListener progressListener, ODocument metadata,
       String algorithm) {
+
+    if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean() && (indexDefinition == null
+        || indexDefinition.getClassName() == null || indexDefinition.getFields() == null || indexDefinition.getFields()
+        .isEmpty())) {
+      throw new OManualIndexesAreProhibited(
+          "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
+              + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
+    }
     if (database.getTransaction().isActive())
       throw new IllegalStateException("Cannot create a new index inside a transaction");
 
@@ -315,10 +314,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       database.getMetadata().reload();
     }
 
-  }
-
-  public void recreateIndexes() {
-    throw new UnsupportedAddressTypeException();
   }
 
   public void waitTillIndexRestore() {

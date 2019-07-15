@@ -425,6 +425,10 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       "Indicates whether index implementation for plocal storage will be durable in non-Tx mode (true by default)", Boolean.class,
       true),
 
+  INDEX_ALLOW_MANUAL_INDEXES("index.allowManualIndexes", "Switch which allows usage of manual indexes inside OrientDB. "
+      + "It is not recommended to switch it on, because manual indexes are deprecated, not supported and will be removed in next versions",
+      Boolean.class, true),
+
   /**
    * @see OIndexDefinition#isNullValuesIgnored()
    * @since 2.2

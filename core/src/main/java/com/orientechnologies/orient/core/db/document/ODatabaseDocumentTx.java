@@ -382,6 +382,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
+  @Deprecated
   public OStorage getStorage() {
     if (internal == null)
       return delegateStorage;
@@ -540,7 +541,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.newInstance();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
+  @Deprecated
   public ODictionary<ORecord> getDictionary() {
     checkOpenness();
     return internal.getDictionary();

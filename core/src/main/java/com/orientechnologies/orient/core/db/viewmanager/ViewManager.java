@@ -376,7 +376,7 @@ public class ViewManager {
     if (requiredIndexesInfo.size() == 1) {
       return new OPropertyIndexDefinition(viewName, requiredIndexesInfo.get(0).getKey(), requiredIndexesInfo.get(0).getValue());
     }
-    OCompositeIndexDefinition result = new OCompositeIndexDefinition();
+    OCompositeIndexDefinition result = new OCompositeIndexDefinition(viewName);
     for (OPair<String, OType> pair : requiredIndexesInfo) {
       result.addIndex(new OPropertyIndexDefinition(viewName, pair.getKey(), pair.getValue()));
     }

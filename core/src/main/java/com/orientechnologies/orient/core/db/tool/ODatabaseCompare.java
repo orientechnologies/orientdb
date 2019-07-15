@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper.ODbRelatedCall;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -54,11 +55,12 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private boolean compareEntriesForAutomaticIndexes = false;
   private boolean autoDetectExportImportMap         = true;
 
-  private OIndex<OIdentifiable> exportImportHashTable = null;
-  private int                   differences           = 0;
-  private boolean               compareIndexMetadata  = false;
+  private int     differences          = 0;
+  private boolean compareIndexMetadata = false;
 
   private Set<String> excludeIndexes = new HashSet<>();
+
+  private int clusterDifference = 0;
 
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final String userName, final String userPassword,
       final OCommandOutputListener iListener) throws IOException {
@@ -77,7 +79,21 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
 
-    excludeIndexes.add(ODatabaseImport.EXPORT_IMPORT_MAP_NAME);
+    excludeIndexes.add(ODatabaseImport.EXPORT_IMPORT_INDEX_NAME);
+
+    final OSchema schema = databaseTwo.getMetadata().getSchema();
+    final OClass cls = schema.getClass(ODatabaseImport.EXPORT_IMPORT_CLASS_NAME);
+
+    if (cls != null) {
+      final int[] clusterIds = cls.getClusterIds();
+      for (final int clusterId : clusterIds) {
+        final String clusterName = databaseTwo.getClusterNameById(clusterId);
+        excludeClusters.add(clusterName);
+      }
+
+      clusterDifference = clusterIds.length;
+    }
+
   }
 
   @Override
@@ -99,25 +115,24 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       if (autoDetectExportImportMap) {
         listener.onMessage(
             "\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
-        exportImportHashTable = (OIndex<OIdentifiable>) databaseTwo.getMetadata().getIndexManager()
-            .getIndex(ODatabaseImport.EXPORT_IMPORT_MAP_NAME);
-        if (exportImportHashTable != null) {
+        if (databaseTwo.getMetadata().getSchema().getClass(ODatabaseImport.EXPORT_IMPORT_CLASS_NAME) != null) {
           listener.onMessage("\nMapping data were found and will be loaded.");
-          ridMapper = new ODocumentHelper.RIDMapper() {
-            @Override
-            public ORID map(ORID rid) {
-              if (rid == null)
-                return null;
+          ridMapper = rid -> {
+            if (rid == null) {
+              return null;
+            }
 
-              if (!rid.isPersistent())
-                return null;
+            if (!rid.isPersistent()) {
+              return null;
+            }
 
-              databaseTwo.activateOnCurrentThread();
-              final OIdentifiable result = exportImportHashTable.get(rid);
-              if (result == null)
-                return null;
-
-              return result.getIdentity();
+            databaseTwo.activateOnCurrentThread();
+            try (final OResultSet resultSet = databaseTwo
+                .query("select value from " + ODatabaseImport.EXPORT_IMPORT_CLASS_NAME + " where key = ?", rid.toString())) {
+              if (resultSet.hasNext()) {
+                return new ORecordId(resultSet.next().<String>getProperty("value"));
+              }
+              return null;
             }
           };
         } else
@@ -316,10 +331,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     int indexesSizeTwo = makeDbCall(databaseTwo, database -> indexManagerTwo.getIndexes().size());
 
-    if (exportImportHashTable != null) {
-      if (makeDbCall(databaseTwo, database -> indexManagerTwo.getIndex(ODatabaseImport.EXPORT_IMPORT_MAP_NAME) != null)) {
-        indexesSizeTwo--;
-      }
+    if (makeDbCall(databaseTwo, database -> indexManagerTwo.getIndex(ODatabaseImport.EXPORT_IMPORT_INDEX_NAME) != null)) {
+      indexesSizeTwo--;
     }
 
     if (indexesSizeOne != indexesSizeTwo) {
@@ -574,7 +587,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
     });
 
-    if (clusterNames1.size() != clusterNames2.size()) {
+    if (clusterNames1.size() != clusterNames2.size() - clusterDifference) {
       listener.onMessage("ERR: cluster sizes are different: " + clusterNames1.size() + " <-> " + clusterNames2.size());
       ++differences;
     }

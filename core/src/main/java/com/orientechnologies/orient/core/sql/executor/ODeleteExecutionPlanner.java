@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -29,7 +31,7 @@ public class ODeleteExecutionPlanner {
   public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteExecutionPlan result = new ODeleteExecutionPlan(ctx);
 
-    if (handleIndexAsTarget(result, fromClause.getItem().getIndex(), whereClause, ctx,enableProfiling)) {
+    if (handleIndexAsTarget(result, fromClause.getItem().getIndex(), whereClause, ctx, enableProfiling)) {
       if (limit != null) {
         throw new OCommandExecutionException("Cannot apply a LIMIT on a delete from index");
       }
@@ -65,6 +67,11 @@ public class ODeleteExecutionPlanner {
 
     switch (indexIdentifier.getType()) {
     case INDEX:
+      if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
+        throw new OManualIndexesAreProhibited(
+            "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
+                + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
+      }
       OBooleanExpression keyCondition = null;
       OBooleanExpression ridCondition = null;
       if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
@@ -143,7 +150,8 @@ public class ODeleteExecutionPlanner {
     }
   }
 
-  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause, boolean profilingEnabled) {
+  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause,
+      boolean profilingEnabled) {
     OSelectStatement sourceStatement = new OSelectStatement(-1);
     sourceStatement.setTarget(target);
     sourceStatement.setWhereClause(whereClause);

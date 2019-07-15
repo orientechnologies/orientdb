@@ -48,6 +48,10 @@ public interface OClass extends Comparable<OClass> {
     UNIQUE(true),
     NOTUNIQUE(true),
     FULLTEXT(true),
+    /**
+     * @deprecated can be used only as manual index and manual indexes are deprecated and will be removed
+     */
+    @Deprecated
     DICTIONARY(false),
     PROXY(true),
     UNIQUE_HASH_INDEX(true),

@@ -106,7 +106,10 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * Clears the index removing all the entries in one shot.
    *
    * @return The index instance itself to allow in chain calls
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   OIndex<T> clear();
 
   /**
@@ -155,9 +158,8 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   public String getAlgorithm();
 
   /**
-   * Returns binary format version for this index.
-   * Index format changes during system development but old formats are supported for binary compatibility.
-   * This method may be used to detect version of binary format which is used by current index and upgrade
+   * Returns binary format version for this index. Index format changes during system development but old formats are supported for
+   * binary compatibility. This method may be used to detect version of binary format which is used by current index and upgrade
    * index to new one.
    *
    * @return Returns binary format version for this index if possible, otherwise -1.
@@ -269,9 +271,8 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * <p>
    * It is used to support so called "live index rebuild" feature.
    * <p>
-   * Value of this version is increased every time when index is going to be rebuild.
-   * So if two sequential calls of this method return different numbers it means that index at least started to rebuild
-   * itself.
+   * Value of this version is increased every time when index is going to be rebuild. So if two sequential calls of this method
+   * return different numbers it means that index at least started to rebuild itself.
    * <p>
    * If you use indexes to increase speed of fetching data from database you should follow following workflow:
    * <ol>
@@ -280,28 +281,27 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * database clusters.</li>
    * <li>Fetch data from index.</li>
    * <li>Read index rebuild version again, if it is not equal to version which was read at first time, go to step 2.
-   * It is VERY important do not reorder steps 1 and 2.
-   * Such recording may lead to situation when index is rebuilding but we miss this state.</li>
+   * It is VERY important do not reorder steps 1 and 2. Such recording may lead to situation when index is rebuilding but we miss
+   * this state.</li>
    * </ol>
    * <p>
-   * This approach works well ONLY if you do not use methods which return {@link OIndexCursor} instance.
-   * In case of you work with cursors index rebuild may cause data inconsistency issues in both:
+   * This approach works well ONLY if you do not use methods which return {@link OIndexCursor} instance. In case of you work with
+   * cursors index rebuild may cause data inconsistency issues in both:
    * <ol>
    * <li>Code which calls index methods to create cursor (can be avoided using steps are listed above)</li>
    * <li>During iteration over the cursor itself</li>
    * </ol>
    * <p>
-   * To detect last data inconsistency issue please use cursor wrapper
-   * {@link OIndexChangesWrapper} which throws {@link com.orientechnologies.orient.core.exception.OIndexIsRebuildingException}
-   * in case of index rebuild.
+   * To detect last data inconsistency issue please use cursor wrapper {@link OIndexChangesWrapper} which throws {@link
+   * com.orientechnologies.orient.core.exception.OIndexIsRebuildingException} in case of index rebuild.
    * <p>
    * Both of these approaches are used in implementation of support of "live index rebuild" for <code>SELECT</code> SQL queries.
    * <ol>
    * <li>In case of index which we are going to use to speed up <code>SELECT</code> query is rebuilding
    * we skip this index.</li>
    * <li>If index is rebuilding at the moment when we iterate over the cursor
-   * we catch {@link com.orientechnologies.orient.core.exception.OIndexIsRebuildingException} exception
-   * and retry whole query again.</li>
+   * we catch {@link com.orientechnologies.orient.core.exception.OIndexIsRebuildingException} exception and retry whole query
+   * again.</li>
    * </ol>
    *
    * @return amount of times  when index was rebuilt since the start of the storage.

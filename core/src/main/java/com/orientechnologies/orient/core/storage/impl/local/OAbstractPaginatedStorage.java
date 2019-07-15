@@ -2133,7 +2133,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public int loadExternalIndexEngine(final String engineName, final String algorithm, final String indexType,
       final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final Boolean durableInNonTxMode, final int version, final int apiVersion, final boolean multivalue,
-      final Map<String, String> engineProperties) {
+      final Map<String, String> engineProperties, final ODocument metadata) {
     try {
       checkOpenness();
 
@@ -2154,7 +2154,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         makeStorageDirty();
 
-        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition, metadata);
+        if (keySerializer == null) {
+          throw new OIndexException("Can not determine key serializer");
+        }
+
         final int keySize = determineKeySize(indexDefinition);
         final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
@@ -2220,7 +2224,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         makeStorageDirty();
 
-        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition, metadata);
+        if (keySerializer == null) {
+          throw new OIndexException("Can not determine key serializer");
+        }
+
         final int keySize = determineKeySize(indexDefinition);
         final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
@@ -2300,7 +2308,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OBinarySerializer determineKeySerializer(final OIndexDefinition indexDefinition) {
+  private OBinarySerializer determineKeySerializer(final OIndexDefinition indexDefinition, final ODocument metadata) {
+    if (metadata != null && metadata.containsField("keySerializer")) {
+      int serializerId = -1;
+      try {
+        serializerId = Integer.parseInt(String.valueOf((Object) metadata.field("keySerializer")));
+      } catch (NumberFormatException e) {
+        //ignore
+      }
+      if (serializerId >= 0) {
+        final OCurrentStorageComponentsFactory currentStorageComponentsFactory = componentsFactory;
+        if (currentStorageComponentsFactory != null) {
+          OBinarySerializer keySerializer = currentStorageComponentsFactory.binarySerializerFactory
+              .getObjectSerializer((byte) serializerId);
+          if (keySerializer != null) {
+            return keySerializer;
+          }
+        }
+      }
+    }
+
     final OBinarySerializer keySerializer;
     if (indexDefinition != null) {
       if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
@@ -2326,6 +2353,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } else {
       keySerializer = new OSimpleKeySerializer();
     }
+
     return keySerializer;
   }
 

@@ -15,23 +15,22 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.testng.Assert;
+import org.testng.annotations.*;
 
 @Test(groups = { "index" })
 public class SQLDropIndexTest {
 
-  private ODatabaseDocumentTx database;
-  private static final OType  EXPECTED_PROP1_TYPE = OType.DOUBLE;
-  private static final OType  EXPECTED_PROP2_TYPE = OType.INTEGER;
-  private final String        url;
+  private              ODatabaseDocumentTx database;
+  private static final OType               EXPECTED_PROP1_TYPE = OType.DOUBLE;
+  private static final OType               EXPECTED_PROP2_TYPE = OType.INTEGER;
+  private final        String              url;
 
   @Parameters(value = "url")
   public SQLDropIndexTest(@Optional final String url) {
@@ -91,23 +90,6 @@ public class SQLDropIndexTest {
   }
 
   @Test(dependsOnMethods = "testOldSyntax")
-  public void testDropIndexWithoutClass() throws Exception {
-    database.command(new OCommandSQL("CREATE INDEX SQLDropIndexWithoutClass UNIQUE double")).execute();
-    database.getMetadata().getIndexManager().reload();
-
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("SQLDropIndexWithoutClass");
-    Assert.assertNotNull(index);
-
-    database.command(new OCommandSQL("DROP INDEX SQLDropIndexWithoutClass")).execute();
-    database.getMetadata().getIndexManager().reload();
-
-    index = database.getMetadata().getIndexManager().getIndex("SQLDropIndexWithoutClass");
-
-    Assert.assertNull(index);
-
-  }
-
-  @Test(dependsOnMethods = "testDropIndexWithoutClass")
   public void testDropCompositeIndex() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX SQLDropIndexCompositeIndex ON SQLDropIndexTestClass (prop1, prop2) UNIQUE"))
         .execute();

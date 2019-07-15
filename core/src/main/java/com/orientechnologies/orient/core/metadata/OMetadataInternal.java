@@ -17,13 +17,13 @@
 package com.orientechnologies.orient.core.metadata;
 
 import com.orientechnologies.orient.core.cache.OCommandCache;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 
 import java.util.*;
 
@@ -45,4 +45,5 @@ public interface OMetadataInternal extends OMetadata {
 
   OCommandCache getCommandCache();
 
+  OIndexManagerAbstract getIndexManagerInternal();
 }

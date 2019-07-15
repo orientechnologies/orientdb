@@ -58,7 +58,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.object.dictionary.ODictionaryWrapper;
@@ -602,6 +601,10 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     return underlying.countClass(iClass.getSimpleName());
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Deprecated
   public ODictionary<Object> getDictionary() {
     checkOpenness();
     if (dictionary == null)

@@ -48,31 +48,16 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverListener;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.TransactionalGraph;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
@@ -81,18 +66,7 @@ import org.apache.commons.configuration.Configuration;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -255,14 +229,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * </tr>
    * <tr>
    * <td>blueprints.orientdb.edgeContainerEmbedded2TreeThreshold</td>
-   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from embedded to tree. Use -1
-   * to disable transformation</td>
+   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from embedded to tree. Use
+   * -1 to disable transformation</td>
    * <td>-1</td>
    * </tr>
    * <tr>
    * <td>blueprints.orientdb.edgeContainerTree2EmbeddedThreshold</td>
-   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from tree to embedded. Use -1
-   * to disable transformation</td>
+   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from tree to embedded. Use
+   * -1 to disable transformation</td>
    * <td>-1</td>
    * </tr>
    * </table>
@@ -432,21 +406,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final Parameter... indexParameters) {
     makeActive();
 
-    return executeOutsideTx(new OCallable<Index<T>, OrientBaseGraph>() {
-      public Index<T> call(final OrientBaseGraph g) {
-
-        final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
-
-        if (indexManager.getIndex(indexName) != null)
-          throw ExceptionFactory.indexAlreadyExists(indexName);
-
-        final OrientIndex<? extends OrientElement> index = new OrientIndex<OrientElement>(g, indexName, indexClass, null);
-
-        // SAVE THE CONFIGURATION INTO THE GLOBAL CONFIG
-        saveIndexConfiguration();
-
-        return (Index<T>) index;
-      }
+    return executeOutsideTx(g -> {
+      return (Index<T>) OrientIndexAuto.create(this, indexName, (Class<? extends OrientElement>) indexClass);
     }, "create index '", indexName, "'");
   }
 
@@ -463,12 +424,18 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public <T extends Element> Index<T> getIndex(final String indexName, final Class<T> indexClass) {
     makeActive();
 
+    Index<? extends Element> index;
+    index = OrientIndexAuto.load(this, indexName, (Class<? extends OrientElement>) indexClass);
+    if (index != null) {
+      return (Index<T>) index;
+    }
+
     final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
     final OIndex idx = indexManager.getIndex(indexName);
     if (idx == null || !hasIndexClass(idx))
       return null;
 
-    final Index<? extends Element> index = new OrientIndex(this, idx);
+    index = new OrientIndexManual(this, idx);
 
     if (indexClass.isAssignableFrom(index.getIndexClass()))
       return (Index<T>) index;
@@ -495,17 +462,16 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public void dropIndex(final String indexName) {
     makeActive();
 
-    executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
-      @Override
-      public Object call(OrientBaseGraph g) {
-        try {
-          final OIndexManager indexManager = getRawGraph().getMetadata().getIndexManager();
-          final OIndex index = indexManager.getIndex(indexName);
+    executeOutsideTx(g -> {
+      try {
+        final OIndexManager indexManager = getRawGraph().getMetadata().getIndexManager();
+        final OIndex index = indexManager.getIndex(indexName);
+        if (index != null) {
           ODocument metadata = index.getConfiguration().field("metadata");
 
           String recordMapIndexName = null;
           if (metadata != null) {
-            recordMapIndexName = metadata.field(OrientIndex.CONFIG_RECORD_MAP_NAME);
+            recordMapIndexName = metadata.field(OrientIndexManual.CONFIG_RECORD_MAP_NAME);
           }
 
           indexManager.dropIndex(indexName);
@@ -514,11 +480,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
           saveIndexConfiguration();
           return null;
-        } catch (Exception e) {
-          g.rollback();
-          throw new RuntimeException(e.getMessage(), e);
         }
+
+        OrientIndexAuto.drop(this, indexName);
+        return null;
+      } catch (Exception e) {
+        g.rollback();
+        throw new RuntimeException(e.getMessage(), e);
       }
+
     }, "drop index '", indexName, "'");
   }
 
@@ -822,8 +792,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Get all the Vertices in Graph filtering by field name and value. Example:<code>
-   * Iterable<Vertex> resultset = getVertices("name", "Jay");
+   * Get all the Vertices in Graph filtering by field name and value. Example:<code> Iterable<Vertex> resultset =
+   * getVertices("name", "Jay");
    * </code>
    *
    * @param iKey   Field name
@@ -879,10 +849,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Lookup for a vertex by id using an index.<br>
-   * This API relies on Unique index (SBTREE/HASH) but is deprecated.<br>
-   * Example:<code>
-   * Vertex v = getVertexByKey("V.name", "name", "Jay");
+   * Lookup for a vertex by id using an index.<br> This API relies on Unique index (SBTREE/HASH) but is deprecated.<br>
+   * Example:<code> Vertex v = getVertexByKey("V.name", "name", "Jay");
    * </code>
    *
    * @param iKey   Name of the indexed property
@@ -915,8 +883,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Get all the Vertices in Graph filtering by field name and value. Example:<code>
-   * Iterable<Vertex> resultset = getVertices("Person",new String[] {"name","surname"},new Object[] { "Sherlock" ,"Holmes"});
+   * Get all the Vertices in Graph filtering by field name and value. Example:<code> Iterable<Vertex> resultset =
+   * getVertices("Person",new String[] {"name","surname"},new Object[] { "Sherlock" ,"Holmes"});
    * </code>
    *
    * @param iKey   Fields name
@@ -1026,8 +994,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Get all the Edges in Graph filtering by field name and value. Example:<code>
-   * Iterable<Edges> resultset = getEdges("name", "Jay");
+   * Get all the Edges in Graph filtering by field name and value. Example:<code> Iterable<Edges> resultset = getEdges("name",
+   * "Jay");
    * </code>
    *
    * @param iKey   Field name
@@ -2034,9 +2002,16 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   private List<Index<? extends Element>> loadManualIndexes() {
     final List<Index<? extends Element>> result = new ArrayList<Index<? extends Element>>();
     for (OIndex<?> idx : getDatabase().getMetadata().getIndexManager().getIndexes()) {
-      if (hasIndexClass(idx))
+      if (hasIndexClass(idx)) {
         // LOAD THE INDEXES
-        result.add(new OrientIndex<OrientElement>(this, idx));
+        result.add(new OrientIndexManual<>(this, idx));
+      }
+    }
+
+    for (OClass cls : getDatabase().getMetadata().getSchema().getClasses()) {
+      if (OrientIndexAuto.isIndexClass(cls.getName())) {
+        result.add(OrientIndexAuto.load(this, OrientIndexAuto.extractIndexName(cls.getName()), null));
+      }
     }
 
     return result;
@@ -2045,9 +2020,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   private boolean hasIndexClass(OIndex<?> idx) {
     final ODocument metadata = idx.getMetadata();
 
-    return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
+    return (metadata != null && metadata.field(OrientIndexManual.CONFIG_CLASSNAME) != null)
         // compatibility with versions earlier 1.6.3
-        || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
+        || idx.getConfiguration().field(OrientIndexManual.CONFIG_CLASSNAME) != null;
   }
 
   protected ODatabaseDocumentInternal getDatabase() {

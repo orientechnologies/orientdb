@@ -24,10 +24,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexes;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -42,31 +39,18 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import com.tinkerpop.blueprints.impls.orient.*;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
 
@@ -205,72 +189,6 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testQueryIndex() {
     List<?> result = database.query(new OSQLSynchQuery<Object>("select from index:Profile.nick where key = 'Jay'"));
     Assert.assertTrue(result.size() > 0);
-  }
-
-  @Test
-  public void testIndexSQL() {
-    database.command(new OCommandSQL("create index idx unique INTEGER METADATA { ignoreNullValues: false }")).execute();
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
-
-    final List<Long> positions = getValidPositions(3);
-
-    database.command(new OCommandSQL("insert into index:idx (key,rid) values (10,#3:" + positions.get(0) + ')')).execute();
-    database.command(new OCommandSQL("insert into index:idx (key,rid) values (20,#3:" + positions.get(1) + ')')).execute();
-
-    List<ODocument> result = database.command(new OCommandSQL("select from index:idx")).execute();
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
-
-      if (d.field("key").equals(10))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(0)));
-      else if (d.field("key").equals(20))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(1)));
-      else
-        Assert.assertTrue(false);
-    }
-
-    result = database.command(new OCommandSQL("select key, rid from index:idx")).execute();
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
-
-      if (d.field("key").equals(10))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(0)));
-      else if (d.field("key").equals(20))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(1)));
-      else
-        Assert.assertTrue(false);
-    }
-
-    result = database.command(new OCommandSQL("select key from index:idx")).execute();
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertFalse(d.containsField("rid"));
-    }
-
-    result = database.command(new OCommandSQL("select rid from index:idx")).execute();
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertFalse(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
-    }
-
-    result = database.command(new OCommandSQL("select rid from index:idx where key = 10")).execute();
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertFalse(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
-    }
   }
 
   @Test(dependsOnMethods = "testQueryIndex")
@@ -1039,148 +957,23 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(11L, result.get(0).<Object>field("testParentProperty"));
   }
 
-  @Test
-  public void testManualIndexInTx() {
-    if (database.getURL().startsWith("remote:"))
-      return;
-
-    ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
-
-    database.getMetadata().getSchema().createClass("ManualIndexTxClass", 1, null);
-
-    OIndexManager idxManager = db.getMetadata().getIndexManager();
-    OIndexFactory indexFactory = OIndexes.getFactory("UNIQUE", null);
-
-    idxManager.createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
-    OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexTest");
-
-    ODocument v0 = new ODocument("ManualIndexTxClass");
-    v0.field("counter", 0);
-    v0.save();
-    idx.put(0, v0);
-    Assert.assertTrue(idx.contains(0));
-
-    db.begin(OTransaction.TXTYPE.OPTIMISTIC);
-    ODocument v = new ODocument("ManualIndexTxClass");
-    v.field("counter", 52);
-    v.save();
-
-    ODocument v2 = new ODocument("ManualIndexTxClass");
-    v2.field("counter", 54);
-    v2.save();
-
-    Assert.assertNotNull(idx);
-    idx.remove(0);
-    idx.put(52, v);
-
-    db.commit();
-
-    Assert.assertTrue(idx.contains(52));
-    Assert.assertFalse(idx.contains(0));
-    Assert.assertTrue(idx.get(52).getIdentity().isPersistent());
-    Assert.assertEquals(idx.get(52).getIdentity(), v.getIdentity());
-  }
-
-  @Test
-  public void testManualIndexInTxRecursiveStore() {
-    if (database.getURL().startsWith("remote:"))
-      return;
-
-    ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
-
-    database.getMetadata().getSchema().createClass("ManualIndexTxRecursiveStoreClass", 1, null);
-
-    OIndexManager idxManager = db.getMetadata().getIndexManager();
-    OIndexFactory factory = OIndexes.getFactory("UNIQUE", null);
-
-    idxManager
-        .createIndex("manualTxIndexRecursiveStoreTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
-
-    OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexRecursiveStoreTest");
-
-    ODocument v0 = new ODocument("ManualIndexTxRecursiveStoreClass");
-    v0.field("counter", 0);
-    v0.save();
-    idx.put(0, v0);
-    Assert.assertTrue(idx.contains(0));
-
-    db.begin(OTransaction.TXTYPE.OPTIMISTIC);
-    ODocument v = new ODocument("ManualIndexTxRecursiveStoreClass");
-    v.field("counter", 52);
-
-    ODocument v2 = new ODocument("ManualIndexTxRecursiveStoreClass");
-    v2.field("counter", 54);
-    v2.field("link", v);
-    v2.save();
-
-    v.field("link", v2);
-    v.save();
-
-    Assert.assertNotNull(idx);
-    idx.remove(0);
-
-    idx.put(52, v);
-    idx.put(54, v2);
-
-    db.commit();
-
-    Assert.assertTrue(idx.contains(52));
-    Assert.assertTrue(idx.contains(54));
-
-    Assert.assertFalse(idx.contains(0));
-
-    Assert.assertTrue(idx.get(52).getIdentity().isPersistent());
-    Assert.assertEquals(idx.get(52).getIdentity(), v.getIdentity());
-
-    Assert.assertTrue(idx.get(54).getIdentity().isPersistent());
-    Assert.assertEquals(idx.get(54).getIdentity(), v2.getIdentity());
-  }
-
-  public void testIndexCountPlusCondition() {
-    OIndexManager idxManager = database.getMetadata().getIndexManager();
-    OIndexFactory factory = OIndexes.getFactory("NOTUNIQUE", null);
-    idxManager.createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
-
-    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexCountPlusCondition");
-
-    final Map<Integer, Long> keyDocsCount = new HashMap<Integer, Long>();
-    for (int i = 1; i < 100; i++) {
-      final Integer key = (int) Math.log(i);
-
-      final ODocument doc = new ODocument();
-      doc.save(database.getClusterNameById(database.getDefaultClusterId()));
-
-      idx.put(key, doc);
-
-      if (keyDocsCount.containsKey(key))
-        keyDocsCount.put(key, keyDocsCount.get(key) + 1);
-      else
-        keyDocsCount.put(key, 1L);
-    }
-
-    for (Map.Entry<Integer, Long> entry : keyDocsCount.entrySet()) {
-      List<ODocument> result = database
-          .query(new OSQLSynchQuery<ODocument>("select count(*) from index:IndexCountPlusCondition where key = ?"), entry.getKey());
-      Assert.assertEquals(result.get(0).<Long>field("count"), entry.getValue());
-    }
-  }
-
   public void testNotUniqueIndexKeySize() {
-    OIndexManager idxManager = database.getMetadata().getIndexManager();
-    idxManager
-        .createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass cls = schema.createClass("IndexNotUniqueIndexKeySize");
+    cls.createProperty("value", OType.INTEGER);
+    cls.createIndex("IndexNotUniqueIndexKeySizeIndex", INDEX_TYPE.NOTUNIQUE, "value");
 
-    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexKeySize");
+    OIndexManager idxManager = database.getMetadata().getIndexManager();
+
+    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexKeySizeIndex");
 
     final Set<Integer> keys = new HashSet<Integer>();
     for (int i = 1; i < 100; i++) {
       final Integer key = (int) Math.log(i);
 
-      final ODocument doc = new ODocument();
-      doc.save(database.getClusterNameById(database.getDefaultClusterId()));
-
-      idx.put(key, doc);
-
+      final ODocument doc = new ODocument("IndexNotUniqueIndexKeySize");
+      doc.field("value", key);
+      doc.save();
       keys.add(key);
     }
 
@@ -1188,18 +981,20 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNotUniqueIndexSize() {
-    OIndexManager idxManager = database.getMetadata().getIndexManager();
-    idxManager.createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass cls = schema.createClass("IndexNotUniqueIndexSize");
+    cls.createProperty("value", OType.INTEGER);
+    cls.createIndex("IndexNotUniqueIndexSizeIndex", INDEX_TYPE.NOTUNIQUE, "value");
 
-    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSize");
+    OIndexManager idxManager = database.getMetadata().getIndexManager();
+    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSizeIndex");
 
     for (int i = 1; i < 100; i++) {
       final Integer key = (int) Math.log(i);
 
-      final ODocument doc = new ODocument();
-      doc.save(database.getClusterNameById(database.getDefaultClusterId()));
-
-      idx.put(key, doc);
+      final ODocument doc = new ODocument("IndexNotUniqueIndexSize");
+      doc.field("value", key);
+      doc.save();
     }
 
     Assert.assertEquals(idx.getSize(), 99);

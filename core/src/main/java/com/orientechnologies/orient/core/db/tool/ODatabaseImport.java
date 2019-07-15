@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldWalker;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -55,9 +56,9 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -72,8 +73,10 @@ import java.util.zip.GZIPInputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
-  public static final String EXPORT_IMPORT_MAP_NAME          = "___exportImportRIDMap";
-  public static final int    IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
+  public static final String EXPORT_IMPORT_CLASS_NAME = "___exportImportRIDMap";
+  public static final String EXPORT_IMPORT_INDEX_NAME = EXPORT_IMPORT_CLASS_NAME + "Index";
+
+  public static final int IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
 
   private       Map<OPropertyImpl, String> linkedClasses   = new HashMap<>();
   private       Map<OClass, List<String>>  superClasses    = new HashMap<>();
@@ -85,8 +88,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private       ORID                       indexMgrRecordId;
 
   private boolean deleteRIDMapping = true;
-
-  protected OIndex<OIdentifiable> exportImportHashTable;
 
   private boolean preserveClusterIDs = true;
   private boolean migrateLinks       = true;
@@ -282,9 +283,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   public ODatabaseImport removeExportImportRIDsMap() {
     listener.onMessage("\nDeleting RID Mapping table...");
-    if (exportImportHashTable != null) {
-      database.command("drop index " + EXPORT_IMPORT_MAP_NAME).close();
-      exportImportHashTable = null;
+
+    OSchema schema = database.getMetadata().getSchema();
+    if (schema.getClass(EXPORT_IMPORT_CLASS_NAME) != null) {
+      schema.dropClass(EXPORT_IMPORT_CLASS_NAME);
     }
 
     listener.onMessage("OK\n");
@@ -503,29 +505,39 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       do {
         final String value = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY).trim();
 
-        if (!value.isEmpty() && !indexName.equalsIgnoreCase(EXPORT_IMPORT_MAP_NAME)) {
+        if (!value.isEmpty()) {
           doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
           doc.setLazyLoad(false);
 
           final OIdentifiable oldRid = doc.field("rid");
+          assert oldRid != null;
+
           final OIdentifiable newRid;
           if (!doc.<Boolean>field("binary")) {
-            if (exportImportHashTable != null)
-              newRid = exportImportHashTable.get(oldRid);
-            else
-              newRid = oldRid;
+            try (final OResultSet result = database
+                .query("select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?", String.valueOf(oldRid))) {
+              if (!result.hasNext()) {
+                newRid = oldRid;
+              } else {
+                newRid = new ORecordId(result.next().<String>getProperty("value"));
+              }
+            }
 
-            index.put(doc.field("key"), newRid != null ? newRid.getIdentity() : oldRid.getIdentity());
+            index.put(doc.field("key"), newRid.getIdentity());
           } else {
             ORuntimeKeyIndexDefinition<?> runtimeKeyIndexDefinition = (ORuntimeKeyIndexDefinition<?>) index.getDefinition();
             OBinarySerializer<?> binarySerializer = runtimeKeyIndexDefinition.getSerializer();
 
-            if (exportImportHashTable != null)
-              newRid = exportImportHashTable.get(doc.<OIdentifiable>field("rid")).getIdentity();
-            else
-              newRid = doc.field("rid");
+            try (final OResultSet result = database.query("select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
+                String.valueOf(doc.<OIdentifiable>field("rid")))) {
+              if (!result.hasNext()) {
+                newRid = doc.field("rid");
+              } else {
+                newRid = new ORecordId(result.next().<String>getProperty("value"));
+              }
+            }
 
-            index.put(binarySerializer.deserialize(doc.field("key"), 0), newRid != null ? newRid : oldRid);
+            index.put(binarySerializer.deserialize(doc.field("key"), 0), newRid);
           }
           tot++;
         }
@@ -1026,13 +1038,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private long importRecords() throws Exception {
     long total = 0;
 
-    database.getMetadata().getIndexManager().dropIndex(EXPORT_IMPORT_MAP_NAME);
-    OIndexFactory factory = OIndexes
-        .getFactory(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(), OHashIndexFactory.HASH_INDEX_ALGORITHM);
+    final OSchema schema = database.getMetadata().getSchema();
+    if (schema.getClass(EXPORT_IMPORT_CLASS_NAME) != null) {
+      schema.dropClass(EXPORT_IMPORT_CLASS_NAME);
+    }
 
-    exportImportHashTable = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager()
-        .createIndex(EXPORT_IMPORT_MAP_NAME, OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
-            new OSimpleKeyIndexDefinition(OType.LINK), null, null, null);
+    final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);
+    cls.createProperty("key", OType.STRING);
+    cls.createProperty("value", OType.STRING);
+    cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
@@ -1205,9 +1219,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         else
           record.save(database.getClusterNameById(clusterId));
 
-        if (!rid.equals(record.getIdentity()))
+        if (!rid.equals(record.getIdentity())) {
           // SAVE IT ONLY IF DIFFERENT
-          exportImportHashTable.put(rid, record.getIdentity());
+          new ODocument(EXPORT_IMPORT_CLASS_NAME).field("key", rid.toString()).field("value", record.getIdentity().toString())
+              .save();
+        }
       }
 
     } catch (Exception t) {
@@ -1289,7 +1305,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 
       // drop automatically created indexes
-      if (!indexName.equalsIgnoreCase(EXPORT_IMPORT_MAP_NAME)) {
+      if (!indexName.equalsIgnoreCase(EXPORT_IMPORT_INDEX_NAME)) {
         listener.onMessage("\n- Index '" + indexName + "'...");
 
         indexManager.dropIndex(indexName);
@@ -1413,7 +1429,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           ORecord record = database.load(new ORecordId(clusterId, position.clusterPosition));
           if (record instanceof ODocument) {
             ODocument document = (ODocument) record;
-            rewriteLinksInDocument(document, brokenRids);
+            rewriteLinksInDocument(database, document, brokenRids);
 
             documents++;
             documentsLastLap++;
@@ -1441,15 +1457,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage(String.format("\nTotal links updated: %,d", totalDocuments));
   }
 
-  protected void rewriteLinksInDocument(ODocument document, Set<ORID> brokenRids) {
-    rewriteLinksInDocument(document, exportImportHashTable, brokenRids);
+  protected static void rewriteLinksInDocument(ODatabaseSession session, ODocument document, Set<ORID> brokenRids) {
+    doRewriteLinksInDocument(session, document, brokenRids);
 
     document.save();
   }
 
-  protected static void rewriteLinksInDocument(ODocument document, OIndex<OIdentifiable> exportImportHashTable,
-      Set<ORID> brokenRids) {
-    final OLinksRewriter rewriter = new OLinksRewriter(new OConverterData(exportImportHashTable, brokenRids));
+  protected static void doRewriteLinksInDocument(ODatabaseSession session, ODocument document, Set<ORID> brokenRids) {
+    final OLinksRewriter rewriter = new OLinksRewriter(new OConverterData(session, brokenRids));
     final ODocumentFieldWalker documentFieldWalker = new ODocumentFieldWalker();
     documentFieldWalker.walkDocument(document, rewriter);
   }

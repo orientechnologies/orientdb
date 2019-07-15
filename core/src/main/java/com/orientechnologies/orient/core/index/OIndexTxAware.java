@@ -27,9 +27,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
-
-import java.util.Map.Entry;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -51,7 +48,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     /**
      * Any partially matched key will be used as search result.
      */
-    NONE, /**
+    NONE,
+    /**
      * The biggest partially matched key will be used as search result.
      */
     HIGHEST_BOUNDARY,
@@ -73,27 +71,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
     if (indexChanges != null) {
-      if (indexChanges.cleared)
-        // BEGIN FROM 0
-        tot = 0;
-
-      for (final Entry<Object, OTransactionIndexChangesPerKey> entry : indexChanges.changesPerKey.entrySet()) {
-        for (final OTransactionIndexEntry e : entry.getValue().entries) {
-          if (e.operation == OPERATION.REMOVE) {
-            if (e.value == null)
-              // KEY REMOVED
-              tot--;
-          }
-        }
-      }
-
-      for (final OTransactionIndexEntry e : indexChanges.nullKeyChanges.entries) {
-        if (e.operation == OPERATION.REMOVE) {
-          if (e.value == null)
-            // KEY REMOVED
-            tot--;
-        }
-      }
+      throw new UnsupportedOperationException("Size of index is undefined if transaction is in progress");
     }
 
     return tot;

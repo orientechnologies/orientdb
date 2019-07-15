@@ -564,6 +564,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /**
    * {@inheritDoc}
    */
+  @Deprecated
   public ODictionary<ORecord> getDictionary() {
     checkOpenness();
     return metadata.getIndexManager().getDictionary();

@@ -3,21 +3,19 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -1055,9 +1053,9 @@ public class OSelectExecutionPlanner {
         handleNoTarget(shardedPlan.getValue(), ctx, profilingEnabled);
       } else if (target.getIdentifier() != null) {
         String className = target.getIdentifier().getStringValue();
-        if(className.startsWith("$") && !ctx.getDatabase().getMetadata().getSchema().existsClass(className)){
+        if (className.startsWith("$") && !ctx.getDatabase().getMetadata().getSchema().existsClass(className)) {
           handleVariableAsTarget(shardedPlan.getValue(), info, ctx, profilingEnabled);
-        }else {
+        } else {
           Set<String> filterClusters = info.serverToClusters.get(shardedPlan.getKey());
 
           OAndBlock ridRangeConditions = extractRidRanges(info.flattenedWhereClause, ctx);
@@ -1294,6 +1292,12 @@ public class OSelectExecutionPlanner {
 
   private void handleIndexAsTarget(OSelectExecutionPlan result, QueryPlanningInfo info, OIndexIdentifier indexIdentifier,
       Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
+
+    if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
+      throw new OManualIndexesAreProhibited(
+          "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
+              + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
+    }
     String indexName = indexIdentifier.getIndexName();
     OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
     if (index == null) {
@@ -1830,10 +1834,8 @@ public class OSelectExecutionPlanner {
       return false;
 
     }
-    return info.projection.getItems().stream()
-        .filter(proj -> proj.getExpression().toString().equals(indexField))
-        .filter(proj -> proj.getAlias()!=null)
-        .anyMatch(proj -> proj.getAlias().getStringValue().equals(alias));
+    return info.projection.getItems().stream().filter(proj -> proj.getExpression().toString().equals(indexField))
+        .filter(proj -> proj.getAlias() != null).anyMatch(proj -> proj.getAlias().getStringValue().equals(alias));
   }
 
   private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier targetClass, Set<String> filterClusters,
@@ -2167,14 +2169,14 @@ public class OSelectExecutionPlanner {
         .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz)).filter(Objects::nonNull)
         .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 
-    List<IndexSearchDescriptor> fullTextIndexDescriptors = indexes.stream()
-        .filter(idx->idx.getType().equalsIgnoreCase("FULLTEXT") || idx.getType().equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()) )
-        .filter(idx->!idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
+    List<IndexSearchDescriptor> fullTextIndexDescriptors = indexes.stream().filter(
+        idx -> idx.getType().equalsIgnoreCase("FULLTEXT") || idx.getType()
+            .equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()))
+        .filter(idx -> !idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
         .map(idx -> buildIndexSearchDescriptorForFulltext(ctx, idx, block, clazz)).filter(Objects::nonNull)
         .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 
     descriptors.addAll(fullTextIndexDescriptors);
-
 
     //remove the redundant descriptors (eg. if I have one on [a] and one on [a, b], the first one is redundant, just discard it)
     descriptors = removePrefixIndexes(descriptors);
@@ -2439,10 +2441,9 @@ public class OSelectExecutionPlanner {
     return null;
   }
 
-
   /**
-   * given a full text index and a flat AND block, returns a descriptor on how to process it with an index (index, index key and additional
-   * filters to apply after index fetch
+   * given a full text index and a flat AND block, returns a descriptor on how to process it with an index (index, index key and
+   * additional filters to apply after index fetch
    *
    * @param ctx
    * @param index
@@ -2451,7 +2452,8 @@ public class OSelectExecutionPlanner {
    *
    * @return
    */
-  private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(OCommandContext ctx, OIndex<?> index, OAndBlock block, OClass clazz) {
+  private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(OCommandContext ctx, OIndex<?> index, OAndBlock block,
+      OClass clazz) {
     List<String> indexFields = index.getDefinition().getFields();
     OBinaryCondition keyCondition = new OBinaryCondition(-1);
     OIdentifier key = new OIdentifier("key");
