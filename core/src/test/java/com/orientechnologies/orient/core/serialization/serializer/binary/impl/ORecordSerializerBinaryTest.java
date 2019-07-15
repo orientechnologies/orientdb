@@ -77,6 +77,7 @@ public class ORecordSerializerBinaryTest {
   @After
   public void after() {
     db.drop();
+    db = null;
   }
 
   @Test
