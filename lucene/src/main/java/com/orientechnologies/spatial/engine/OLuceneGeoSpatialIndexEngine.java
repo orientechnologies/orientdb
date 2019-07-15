@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.spatial.query.OSpatialQueryContext;
 import com.orientechnologies.spatial.shape.OShapeBuilder;
@@ -105,7 +106,9 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
 
   @Override
   public void put(Object key, Object value) {
-
+    if (key instanceof OResult) {
+      key = ((OResult) key).getElement().get();
+    }
     if (key instanceof OIdentifiable) {
       openIfClosed();
       ODocument location = ((OIdentifiable) key).getRecord();

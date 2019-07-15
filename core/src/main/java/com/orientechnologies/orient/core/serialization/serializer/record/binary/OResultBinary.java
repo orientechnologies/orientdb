@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -172,11 +173,15 @@ public class OResultBinary implements OResult {
   }
 
   private ODocument toDocument() {
-    ODocument doc = new ODocument();
-    BytesContainer bytes = new BytesContainer(this.bytes);
-    bytes.skip(offset);
-    serializer.deserialize(doc, bytes);
-    return doc;
+    if (id.isPresent()) {
+      ODocument doc = new ODocument();
+      doc.fromStream(this.bytes);
+      return doc;
+    } else {
+      BytesContainer bytes = new BytesContainer(this.bytes);
+      bytes.skip(offset);
+      return (ODocument) serializer.deserializeValue(bytes, OType.EMBEDDED, null);
+    }
   }
 
 }
