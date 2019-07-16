@@ -128,17 +128,17 @@ public class ODocument extends ORecordAbstract
 
   protected Map<String, ODocumentEntry> fields;
 
-  protected           boolean                             trackingChanges        = true;
-  protected           boolean                             ordered                = true;
-  protected           boolean                             lazyLoad               = true;
-  protected           boolean                             allowChainedAccess     = true;
-  protected transient List<WeakReference<ORecordElement>> owners                 = null;
-  protected           OImmutableSchema                    schema;
-  private             String                              className;
-  private             OImmutableClass                     immutableClazz;
-  private             int                                 immutableSchemaVersion = 1;
-  protected           OPropertyAccess                     propertyAccess;
-  protected           OPropertyEncryption                 propertyEncryption;
+  protected           boolean                       trackingChanges        = true;
+  protected           boolean                       ordered                = true;
+  protected           boolean                       lazyLoad               = true;
+  protected           boolean                       allowChainedAccess     = true;
+  protected transient WeakReference<ORecordElement> owner                  = null;
+  protected           OImmutableSchema              schema;
+  private             String                        className;
+  private             OImmutableClass               immutableClazz;
+  private             int                           immutableSchemaVersion = 1;
+  protected           OPropertyAccess               propertyAccess;
+  protected           OPropertyEncryption           propertyEncryption;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -948,10 +948,7 @@ public class ODocument extends ORecordAbstract
     destination.immutableClazz = null;
 
     destination.trackingChanges = trackingChanges;
-    if (owners != null)
-      destination.owners = new ArrayList<>(owners);
-    else
-      destination.owners = null;
+    destination.owner = owner;
 
     if (fields != null) {
       destination.fields = fields instanceof LinkedHashMap ? new LinkedHashMap<>() : new HashMap<>();
@@ -2033,33 +2030,23 @@ public class ODocument extends ORecordAbstract
    * Returns true if the record has some owner.
    */
   public boolean hasOwners() {
-    return owners != null && !owners.isEmpty();
+    return owner != null && owner.get() != null;
   }
 
   @Override
   public ORecordElement getOwner() {
-    if (owners == null)
+    if (owner == null)
       return null;
-
-    for (WeakReference<ORecordElement> owner : owners) {
-      final ORecordElement e = owner.get();
-      if (e != null)
-        return e;
-    }
-
-    return null;
+    return owner.get();
   }
 
+  @Deprecated
   public Iterable<ORecordElement> getOwners() {
-    if (owners == null)
+    if (owner == null && owner.get() == null)
       return Collections.emptyList();
 
     final List<ORecordElement> result = new ArrayList<>();
-    for (WeakReference<ORecordElement> o : owners) {
-      if (o.get() != null)
-        result.add(o.get());
-    }
-
+    result.add(owner.get());
     return result;
   }
 
@@ -2068,14 +2055,9 @@ public class ODocument extends ORecordAbstract
    */
   @Override
   public ORecordAbstract setDirty() {
-    if (owners != null) {
+    if (owner != null && owner.get() != null) {
       // PROPAGATES TO THE OWNER
-      ORecordElement e;
-      for (WeakReference<ORecordElement> o : owners) {
-        e = o.get();
-        if (e != null)
-          e.setDirty();
-      }
+      owner.get().setDirty();
     } else if (!isDirty())
       getDirtyManager().setDirty(this);
 
@@ -2113,14 +2095,9 @@ public class ODocument extends ORecordAbstract
 
   @Override
   public void setDirtyNoChanged() {
-    if (owners != null) {
+    if (owner != null && owner.get() != null) {
       // PROPAGATES TO THE OWNER
-      ORecordElement e;
-      for (WeakReference<ORecordElement> o : owners) {
-        e = o.get();
-        if (e != null)
-          e.setDirtyNoChanged();
-      }
+      owner.get().setDirtyNoChanged();
     }
 
     getDirtyManager().setDirty(this);
@@ -2191,7 +2168,7 @@ public class ODocument extends ORecordAbstract
   public ODocument clear() {
     super.clear();
     internalReset();
-    owners = null;
+    owner = null;
     return this;
   }
 
@@ -2222,7 +2199,7 @@ public class ODocument extends ORecordAbstract
 
     internalReset();
 
-    owners = null;
+    owner = null;
     return this;
   }
 
@@ -2411,7 +2388,7 @@ public class ODocument extends ORecordAbstract
   }
 
   public boolean isEmbedded() {
-    return owners != null && !owners.isEmpty();
+    return owner != null;
   }
 
   /**
@@ -2984,10 +2961,11 @@ public class ODocument extends ORecordAbstract
           continue;
         }
         try {
-          if (type == OType.LINKBAG && entry.value != null && !(entry.value instanceof ORidBag) && entry.value instanceof Collection) {
+          if (type == OType.LINKBAG && entry.value != null && !(entry.value instanceof ORidBag)
+              && entry.value instanceof Collection) {
             ORidBag newValue = new ORidBag();
-            for(Object o :((Collection) entry.value)){
-              if(!(o instanceof OIdentifiable)){
+            for (Object o : ((Collection) entry.value)) {
+              if (!(o instanceof OIdentifiable)) {
                 throw new OValidationException("Invalid value in ridbag: " + o);
               }
               newValue.add((OIdentifiable) o);
@@ -3131,39 +3109,17 @@ public class ODocument extends ORecordAbstract
   protected void addOwner(final ORecordElement iOwner) {
     if (iOwner == null)
       return;
-    if (owners == null) {
-      owners = new ArrayList<>();
+    if (owner == null) {
       if (dirtyManager != null && this.getIdentity().isNew())
         dirtyManager.removeNew(this);
     }
-
-    boolean found = false;
-    Iterator<WeakReference<ORecordElement>> ref = owners.iterator();
-    while (ref.hasNext()) {
-      final ORecordElement e = ref.next().get();
-      if (e == iOwner) {
-        found = true;
-        break;
-      } else if (e == null)
-        ref.remove();
-    }
-
-    if (!found)
-      this.owners.add(new WeakReference<>(iOwner));
+    this.owner = new WeakReference<>(iOwner);
 
   }
 
   protected void removeOwner(final ORecordElement iRecordElement) {
-    if (owners != null) {
-      // PROPAGATES TO THE OWNER
-      ORecordElement e;
-      for (int i = 0; i < owners.size(); ++i) {
-        e = owners.get(i).get();
-        if (e == iRecordElement) {
-          owners.remove(i);
-          break;
-        }
-      }
+    if (owner != null && owner.get() == iRecordElement) {
+      owner = null;
     }
   }
 
