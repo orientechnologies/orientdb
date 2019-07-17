@@ -829,9 +829,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         break;
       }
     }
-    if (idx == null) {
-      idx = getDatabase().getMetadata().getIndexManager().getIndex(iKey);
-    }
 
     if (idx != null) {
       iValue = convertKey(idx, iValue);

@@ -45,13 +45,6 @@ public class OCompositeIndexSQLInsertTest {
   }
 
   @Test
-  public void testIndexInsert() {
-    db.command(new OCommandSQL(
-        "insert into index:books (key, rid) values ([\"Donald Knuth\", \"The Art of Computer Programming\", 1968], #12:0)"))
-        .execute();
-  }
-
-  @Test
   public void testCompositeIndexWithRangeAndContains() {
     final OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass("CompositeIndexWithRangeAndConditions");

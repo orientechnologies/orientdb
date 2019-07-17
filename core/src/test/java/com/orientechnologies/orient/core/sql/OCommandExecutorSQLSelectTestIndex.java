@@ -13,12 +13,13 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Test;
@@ -29,7 +30,8 @@ import static org.junit.Assert.assertEquals;
 
 public class OCommandExecutorSQLSelectTestIndex {
 
-  @Test public void testIndexSqlEmbeddedList() {
+  @Test
+  public void testIndexSqlEmbeddedList() {
 
     ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx("memory:embeddedList");
     databaseDocumentTx.create();
@@ -41,14 +43,16 @@ public class OCommandExecutorSQLSelectTestIndex {
       databaseDocumentTx.command(new OCommandSQL("insert into Foo set bar = ['yep']")).execute();
       List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("select from Foo where bar = 'yep'")).execute();
       assertEquals(results.size(), 1);
-      results = databaseDocumentTx.command(new OCommandSQL("select from index:Foo.bar where key = 'yep'")).execute();
-      assertEquals(results.size(), 1);
+
+      final OIndex index = databaseDocumentTx.getMetadata().getIndexManagerInternal().getIndex(databaseDocumentTx, "Foo.bar");
+      assertEquals(index.getSize(), 1);
     } finally {
       databaseDocumentTx.drop();
     }
   }
 
-  @Test public void testIndexOnHierarchyChange() {
+  @Test
+  public void testIndexOnHierarchyChange() {
     //issue #5743
     ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(
         "memory:OCommandExecutorSQLSelectTestIndex_testIndexOnHierarchyChange");

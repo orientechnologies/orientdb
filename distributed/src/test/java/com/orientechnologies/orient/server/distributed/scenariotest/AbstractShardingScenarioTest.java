@@ -179,39 +179,6 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       }
       serverId++;
     }
-
-    // checking indexes
-    // serverId = 0;
-    // for (ServerRun server : serverInstance) {
-    // if (server.isActive()) {
-    // graphFactory = new OrientGraphFactory("plocal:target/server" + serverId + "/databases/" + getDatabaseName());
-    // graph = graphFactory.getNoTx();
-    // try {
-    // final long indexSize = graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.name").getSize();
-    //
-    // if (indexSize != count) {
-    // // ERROR: DUMP ALL THE RECORDS
-    // List<ODocument> result = graph.command(new OCommandSQL("select from index:Client.name")).execute();
-    // int i = 0;
-    // for (ODocument d : result) {
-    // System.out.println((i++) + ": " + ((OIdentifiable) d.field("rid")).getRecord());
-    // }
-    // }
-    //
-    // junit.framework.Assert.assertEquals(count, indexSize);
-    //
-    // System.out.println("From metadata: indexes " + indexSize + " items");
-    //
-    // List<ODocument> result = graph.command(new OCommandSQL("select count(*) from index:Client.name")).execute();
-    // junit.framework.Assert.assertEquals(count, ((Long) result.get(0).field("count")).longValue());
-    //
-    // System.out.println("From sql: indexes " + indexSize + " items");
-    // } finally {
-    // graph.getRawGraph().close();
-    // }
-    // }
-    // serverId++;
-    // }
   }
 
   // checks the consistency in the cluster after the writes in a no-replica sharding scenario

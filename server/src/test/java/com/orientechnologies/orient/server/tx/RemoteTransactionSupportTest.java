@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
@@ -29,7 +28,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 
 import static org.junit.Assert.*;
 
@@ -312,27 +310,6 @@ public class RemoteTransactionSupportTest {
     assertEquals(someTx.getIdentity(), next.getProperty("ref"));
     assertEquals(ref2.getIdentity(), next.getProperty("ref2"));
     result1.close();
-  }
-
-  @Test
-  public void testUpdateCreatedInTxIndexGetTransaction() {
-    OIndex<?> index = database.getClass("IndexedTx").getProperty("name").getAllIndexes().iterator().next();
-    database.begin();
-    ODocument doc1 = new ODocument("IndexedTx");
-    doc1.setProperty("name", "Jane");
-    database.save(doc1);
-
-    OResultSet result = database.command("update IndexedTx set name='July' where name = 'Jane' ");
-    assertTrue(result.hasNext());
-    assertEquals((long) result.next().getProperty("count"), 1L);
-    Collection<OIdentifiable> entry = (Collection<OIdentifiable>) index.get("July");
-    assertEquals(entry.size(), 1);
-    result.close();
-    database.commit();
-
-    entry = (Collection<OIdentifiable>) index.get("July");
-    assertEquals(entry.size(), 1);
-
   }
 
   @Test

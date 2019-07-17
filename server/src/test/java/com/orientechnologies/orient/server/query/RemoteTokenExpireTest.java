@@ -6,8 +6,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.OServer;
@@ -19,7 +17,6 @@ import org.junit.Test;
 
 import java.io.File;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE;
 
 /**
@@ -211,39 +208,6 @@ public class RemoteTokenExpireTest {
 
   }
 
-  @Test
-  public void itShouldNotFailWithIndexGet() {
-
-    OIndex<?> index = session.getMetadata().getIndexManager().getIndex("OUser.name");
-
-    waitAndClean();
-
-    session.activateOnCurrentThread();
-
-    try {
-      index.get("admin");
-    } catch (OTokenSecurityException e) {
-      Assert.fail("It should not get the expire exception");
-    }
-
-  }
-
-  @Test
-  public void itShouldNotFailWithIndexPut() {
-
-    OIndex<?> index = session.getMetadata().getIndexManager().getIndex("OUser.name");
-
-    waitAndClean();
-
-    session.activateOnCurrentThread();
-
-    try {
-      index.put("test", new ORecordId(5, 0));
-    } catch (OTokenSecurityException e) {
-      Assert.fail("It should  get the expire exception");
-    }
-
-  }
 
   @Test
   public void itShouldNotFailWithRoundRobin() {

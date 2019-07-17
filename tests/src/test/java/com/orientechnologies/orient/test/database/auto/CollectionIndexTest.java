@@ -15,192 +15,212 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.test.domain.whiz.Collector;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.orientechnologies.orient.test.domain.whiz.Collector;
-
 @Test(groups = { "index" })
 public class CollectionIndexTest extends ObjectDBBaseTest {
 
-	@Parameters(value = "url")
-	public CollectionIndexTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public CollectionIndexTest(@Optional String url) {
+    super(url);
+  }
 
-	@BeforeClass
+  @BeforeClass
   public void setupSchema() {
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
 
     final OClass collector = database.getMetadata().getSchema().getClass("Collector");
     collector.createProperty("id", OType.STRING);
     collector.createProperty("stringCollection", OType.EMBEDDEDLIST, OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
   }
+
   @AfterMethod
   public void afterMethod() throws Exception {
     database.command(new OCommandSQL("delete from Collector")).execute();
 
-		super.afterMethod();
+    super.afterMethod();
   }
 
   public void testIndexCollection() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
-    collector = database.save(collector);
+    database.save(collector);
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("eggs")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("eggs")) {
+        Assert.fail("Unknown key found: " + key);
       }
+      key = (String) keyCursor.next(-1);
     }
   }
 
-  public void testIndexCollectionInTx() throws Exception {
+  public void testIndexCollectionInTx() {
+    checkEmbeddedDB();
+
     try {
       database.begin();
       Collector collector = new Collector();
       collector.setStringCollection(Arrays.asList("spam", "eggs"));
-      collector = database.save(collector);
+      database.save(collector);
       database.commit();
     } catch (Exception e) {
       database.rollback();
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("eggs")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("eggs")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
   public void testIndexCollectionUpdate() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
     collector.setStringCollection(Arrays.asList("spam", "bacon"));
-    collector = database.save(collector);
+    database.save(collector);
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("bacon")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("bacon")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
-  public void testIndexCollectionUpdateInTx() throws Exception {
+  public void testIndexCollectionUpdateInTx() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
     try {
       database.begin();
       collector.setStringCollection(Arrays.asList("spam", "bacon"));
-      collector = database.save(collector);
+      database.save(collector);
       database.commit();
     } catch (Exception e) {
       database.rollback();
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(index.getSize(), 2);
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("bacon")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("bacon")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
-  public void testIndexCollectionUpdateInTxRollback() throws Exception {
+  public void testIndexCollectionUpdateInTxRollback() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
     database.begin();
     collector.setStringCollection(Arrays.asList("spam", "bacon"));
-    collector = database.save(collector);
+    database.save(collector);
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(index.getSize(), 2);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("eggs")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
+
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("eggs")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
   public void testIndexCollectionUpdateAddItem() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
 
     database.command(new OCommandSQL("UPDATE " + collector.getId() + " add stringCollection = 'cookies'")).execute();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
+    Assert.assertEquals(index.getSize(), 3);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 3);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("eggs") && !d.field("key").equals("cookies")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("eggs") && !key.equals("cookies")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
-  public void testIndexCollectionUpdateAddItemInTx() throws Exception {
+  public void testIndexCollectionUpdateAddItemInTx() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
-    collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
+    collector.setStringCollection(new ArrayList<>(Arrays.asList("spam", "eggs")));
     collector = database.save(collector);
 
     try {
       database.begin();
-      Collector loadedCollector = (Collector) database.load(new ORecordId(collector.getId()));
+      Collector loadedCollector = database.load(new ORecordId(collector.getId()));
       loadedCollector.getStringCollection().add("cookies");
       database.save(loadedCollector);
       database.commit();
@@ -209,134 +229,150 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 3);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(index.getSize(), 3);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("eggs") && !d.field("key").equals("cookies")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
+
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("eggs") && !key.equals("cookies")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
-  public void testIndexCollectionUpdateAddItemInTxRollback() throws Exception {
+  public void testIndexCollectionUpdateAddItemInTxRollback() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
-    collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
+    collector.setStringCollection(new ArrayList<>(Arrays.asList("spam", "eggs")));
     collector = database.save(collector);
 
     database.begin();
-    Collector loadedCollector = (Collector) database.load(new ORecordId(collector.getId()));
+    Collector loadedCollector = database.load(new ORecordId(collector.getId()));
     loadedCollector.getStringCollection().add("cookies");
-    loadedCollector = database.save(loadedCollector);
+    database.save(loadedCollector);
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("eggs")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("eggs")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
-  public void testIndexCollectionUpdateRemoveItemInTx() throws Exception {
+  public void testIndexCollectionUpdateRemoveItemInTx() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
-    collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
+    collector.setStringCollection(new ArrayList<>(Arrays.asList("spam", "eggs")));
     collector = database.save(collector);
 
     try {
       database.begin();
-      Collector loadedCollector = (Collector) database.load(new ORecordId(collector.getId()));
+      Collector loadedCollector = database.load(new ORecordId(collector.getId()));
       loadedCollector.getStringCollection().remove("spam");
-      loadedCollector = database.save(loadedCollector);
+      database.save(loadedCollector);
       database.commit();
     } catch (Exception e) {
       database.rollback();
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
+    Assert.assertEquals(index.getSize(), 1);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("eggs")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("eggs")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
-  public void testIndexCollectionUpdateRemoveItemInTxRollback() throws Exception {
+  public void testIndexCollectionUpdateRemoveItemInTxRollback() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
-    collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
+    collector.setStringCollection(new ArrayList<>(Arrays.asList("spam", "eggs")));
     collector = database.save(collector);
 
     database.begin();
-    Collector loadedCollector = (Collector) database.load(new ORecordId(collector.getId()));
+    Collector loadedCollector = database.load(new ORecordId(collector.getId()));
     loadedCollector.getStringCollection().remove("spam");
-    loadedCollector = database.save(loadedCollector);
+    database.save(loadedCollector);
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("eggs")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("eggs")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
   public void testIndexCollectionUpdateRemoveItem() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
 
     database.command(new OCommandSQL("UPDATE " + collector.getId() + " remove stringCollection = 'spam'")).execute();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("eggs")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("eggs")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
   public void testIndexCollectionRemove() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
     database.delete(collector);
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 0);
+    Assert.assertEquals(index.getSize(), 0);
   }
 
-  public void testIndexCollectionRemoveInTx() throws Exception {
+  public void testIndexCollectionRemoveInTx() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
@@ -349,13 +385,14 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 0);
+    Assert.assertEquals(index.getSize(), 0);
   }
 
-  public void testIndexCollectionRemoveInTxRollback() throws Exception {
+  public void testIndexCollectionRemoveInTxRollback() {
+    checkEmbeddedDB();
+
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
@@ -363,27 +400,28 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     database.delete(collector);
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:Collector.stringCollection")).execute();
+    final OIndex index = getIndex("Collector.stringCollection");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("spam") && !d.field("key").equals("eggs")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("spam") && !key.equals("eggs")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
   }
 
   public void testIndexCollectionSQL() {
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
-    collector = database.save(collector);
+    database.save(collector);
 
-    List<Collector> result = database.query(new OSQLSynchQuery<Collector>(
-        "select * from Collector where stringCollection contains ?"), "eggs");
+    List<Collector> result = database
+        .query(new OSQLSynchQuery<Collector>("select * from Collector where stringCollection contains ?"), "eggs");
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(Arrays.asList("spam", "eggs"), result.get(0).getStringCollection());

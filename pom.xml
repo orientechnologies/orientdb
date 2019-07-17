@@ -117,7 +117,6 @@
         <module>etl</module>
         <module>distribution</module>
         <module>distribution-tp2</module>
-        <module>crashtests</module>
     </modules>
 
     <scm>
@@ -552,7 +551,7 @@
                 <version>3.1.0</version>
                 <configuration>
                     <excludes>com/orientechnologies/orient/core/sql/parser/*.java</excludes>
-			        <configLocation>${project.rootdir}/_base/orient_checks.xml</configLocation>
+                    <configLocation>${project.rootdir}/_base/orient_checks.xml</configLocation>
                 </configuration>
                 <executions>
                     <execution>

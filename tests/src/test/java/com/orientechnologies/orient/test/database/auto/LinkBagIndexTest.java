@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -47,17 +50,21 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
   }
 
   @AfterMethod
-  public void afterMethod() throws Exception {
+  public void afterMethod() {
     database.command(new OCommandSQL("DELETE FROM RidBagIndexTestClass")).execute();
 
     List<ODocument> result = database.command(new OCommandSQL("select from RidBagIndexTestClass")).execute();
     Assert.assertEquals(result.size(), 0);
 
-    result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
-    Assert.assertEquals(result.size(), 0);
+    if (!((ODatabaseDocumentInternal) database).getStorage().isRemote()) {
+      final OIndex index = getIndex("ridBagIndex");
+      Assert.assertEquals(index.getSize(), 0);
+    }
   }
 
   public void testIndexRidBag() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -72,21 +79,24 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     document.field("ridBag", ridBag);
     document.save();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
-  public void testIndexRidBagInTx() throws Exception {
+  public void testIndexRidBagInTx() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -108,21 +118,24 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
   public void testIndexRidBagUpdate() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -147,21 +160,24 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     document.field("ridBag", ridBagTwo);
     document.save();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
-  public void testIndexRidBagUpdateInTx() throws Exception {
+  public void testIndexRidBagUpdateInTx() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -194,21 +210,24 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
-  public void testIndexRidBagUpdateInTxRollback() throws Exception {
+  public void testIndexRidBagUpdateInTxRollback() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -236,21 +255,24 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     document.save();
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
   public void testIndexRidBagUpdateAddItem() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -270,22 +292,25 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
     database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " add ridBag = " + docThree.getIdentity())).execute();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 3);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 3);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docTwo.getIdentity())
-          && !d.field("key").equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
+          .equals(docThree.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
-  public void testIndexRidBagUpdateAddItemInTx() throws Exception {
+  public void testIndexRidBagUpdateAddItemInTx() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -306,7 +331,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
-      loadedDocument.<ORidBag> field("ridBag").add(docThree);
+      loadedDocument.<ORidBag>field("ridBag").add(docThree);
       document.save();
       database.commit();
     } catch (Exception e) {
@@ -314,22 +339,25 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 3);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 3);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docTwo.getIdentity())
-          && !d.field("key").equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
+          .equals(docThree.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
-  public void testIndexRidBagUpdateAddItemInTxRollback() throws Exception {
+  public void testIndexRidBagUpdateAddItemInTxRollback() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -349,25 +377,28 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
-    loadedDocument.<ORidBag> field("ridBag").add(docThree);
+    loadedDocument.<ORidBag>field("ridBag").add(docThree);
     loadedDocument.save();
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(index.getSize(), 2);
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
-  public void testIndexRidBagUpdateRemoveItemInTx() throws Exception {
+  public void testIndexRidBagUpdateRemoveItemInTx() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -384,7 +415,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
-      loadedDocument.<ORidBag> field("ridBag").remove(docTwo);
+      loadedDocument.<ORidBag>field("ridBag").remove(docTwo);
       loadedDocument.save();
       database.commit();
     } catch (Exception e) {
@@ -392,21 +423,24 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(index.getSize(), 1);
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
-  public void testIndexRidBagUpdateRemoveItemInTxRollback() throws Exception {
+  public void testIndexRidBagUpdateRemoveItemInTxRollback() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -422,25 +456,28 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
-    loadedDocument.<ORidBag> field("ridBag").remove(docTwo);
+    loadedDocument.<ORidBag>field("ridBag").remove(docTwo);
     loadedDocument.save();
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
   public void testIndexRidBagUpdateRemoveItem() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -457,21 +494,24 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
     database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove ridBag = " + docTwo.getIdentity())).execute();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 1);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
   public void testIndexRidBagRemove() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -488,13 +528,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     document.save();
     document.delete();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 0);
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 0);
   }
 
-  public void testIndexRidBagRemoveInTx() throws Exception {
+  public void testIndexRidBagRemoveInTx() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -518,13 +558,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 0);
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 0);
   }
 
-  public void testIndexRidBagRemoveInTxRollback() throws Exception {
+  public void testIndexRidBagRemoveInTxRollback() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument();
     docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -543,17 +583,18 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     document.delete();
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    final OIndex index = getIndex("ridBagIndex");
+    Assert.assertEquals(index.getSize(), 2);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    final OIndexKeyCursor keyCursor = index.keyCursor();
+    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
 
-      if (!d.field("key").equals(docOne.getIdentity()) && !d.field("key").equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -583,13 +624,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     document.field("ridBag", ridBag);
     document.save();
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
-        "select * from RidBagIndexTestClass where ridBag contains ?"), docOne.getIdentity());
+    List<ODocument> result = database
+        .query(new OSQLSynchQuery<ODocument>("select * from RidBagIndexTestClass where ridBag contains ?"), docOne.getIdentity());
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
 
-    List<OIdentifiable> listResult = new ArrayList<OIdentifiable>();
-    for (OIdentifiable identifiable : result.get(0).<ORidBag> field("ridBag"))
+    List<OIdentifiable> listResult = new ArrayList<>();
+    for (OIdentifiable identifiable : result.get(0).<ORidBag>field("ridBag"))
       listResult.add(identifiable);
 
     Assert.assertEquals(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity()), listResult);

@@ -40,11 +40,9 @@ public class CheckHookCallCountTest {
       first.field(FIELD_STATUS, STATUS);
       db.save(first);
 
-      System.out.println("WITHOUT INDEX: onRecordAfterRead will be called twice");
       db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_STATUS + " = '" + STATUS + "'"));
       assertEquals(hook.readCount, 1);
       hook.readCount = 0;
-      System.out.println("WITH INDEX: onRecordAfterRead will be called only once");
       db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_ID + " = '" + id + "'"));
       assertEquals(hook.readCount, 1);
     } finally {
