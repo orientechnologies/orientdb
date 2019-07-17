@@ -1589,8 +1589,8 @@ public class ODocumentHelper {
 
   public static OMultiValueChangeEvent.OChangeType isNestedValueChanged(ODocumentEntry entry, Object value,
       List<Object> ownersTrace, int ownersTraceOffset, Object valueIdentifier) {
-    if (entry.timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
+    if (entry.getTimeLine()!= null) {
+      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.getTimeLine().getMultiValueChangeEvents();
       if (timeline != null) {
         for (OMultiValueChangeEvent<Object, Object> event : timeline) {
           if (ownersTraceOffset < ownersTrace.size() && event.getKey() == ownersTrace.get(ownersTraceOffset)
@@ -1655,8 +1655,8 @@ public class ODocumentHelper {
       }
     }
 
-    if (entry.timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
+    if (entry.getTimeLine() != null) {
+      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.getTimeLine().getMultiValueChangeEvents();
       if (timeline != null) {
         for (OMultiValueChangeEvent<Object, Object> event : timeline) {
           Object key = event.getKey();
@@ -1676,8 +1676,8 @@ public class ODocumentHelper {
 
   public static boolean isChangedRidbag(ORidBag ridbag, ODocumentEntry entry) {
 
-    if (entry.timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
+    if (entry.getTimeLine() != null) {
+      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.getTimeLine().getMultiValueChangeEvents();
       if (timeline != null) {
         return !timeline.isEmpty();
       }
@@ -1709,8 +1709,8 @@ public class ODocumentHelper {
       }
     }
 
-    if (entry.timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
+    if (entry.getTimeLine() != null) {
+      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.getTimeLine().getMultiValueChangeEvents();
       if (timeline != null) {
         for (OMultiValueChangeEvent<Object, Object> event : timeline) {
           Object key = event.getKey();
