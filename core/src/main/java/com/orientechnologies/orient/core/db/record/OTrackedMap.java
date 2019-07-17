@@ -25,7 +25,9 @@ import java.util.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
 
 /**
  * Implementation of LinkedHashMap bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
@@ -245,4 +247,42 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     super.put(event.getKey(), (T) newValue);
     addNested((T) newValue);
   }
+
+  private OSimpleMultiValueChangeListener<Object, T> changeListener;
+
+  public void enableTracking(ODocument parent, ODocumentEntry entry) {
+    if (changeListener == null) {
+      final OSimpleMultiValueChangeListener<Object, T> listener = new OSimpleMultiValueChangeListener<>(parent, entry);
+      this.addChangeListener(listener);
+      changeListener = listener;
+    }
+  }
+
+  public void disableTracking(ODocument document) {
+    if (changeListener != null) {
+      final OMultiValueChangeListener<Object, T> changeListener = this.changeListener;
+      this.changeListener.timeLine = null;
+      this.changeListener = null;
+      removeRecordChangeListener(changeListener);
+    }
+  }
+
+  @Override
+  public boolean isModified() {
+    if (changeListener == null) {
+      return false;
+    } else {
+      return changeListener.timeLine != null;
+    }
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    if (changeListener == null) {
+      return null;
+    } else {
+      return changeListener.timeLine;
+    }
+  }
+
 }

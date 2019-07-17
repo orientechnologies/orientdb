@@ -19,28 +19,29 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.io.Serializable;
-import java.util.*;
-
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
+
+import java.io.Serializable;
+import java.util.*;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
  * the set is changed.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("serial")
 public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
-  protected final ORecord                       sourceRecord;
-  private final boolean                         embeddedCollection;
-  protected Class<?>                            genericClass;
-  private STATUS                                status          = STATUS.NOT_LOADED;
-  private List<OMultiValueChangeListener<T, T>> changeListeners;
+  protected final ORecord                               sourceRecord;
+  private final   boolean                               embeddedCollection;
+  protected       Class<?>                              genericClass;
+  private         STATUS                                status = STATUS.NOT_LOADED;
+  private         List<OMultiValueChangeListener<T, T>> changeListeners;
 
   public OTrackedSet(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
@@ -101,7 +102,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     }
   }
 
-
   @SuppressWarnings("unchecked")
   @Override
   public boolean remove(final Object o) {
@@ -119,7 +119,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @Override
   public void clear() {
     final Set<T> origValues;
-    if (changeListeners == null )
+    if (changeListeners == null)
       origValues = null;
     else
       origValues = new HashSet<T>(this);
@@ -154,8 +154,8 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
+        .isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return this;
   }
@@ -188,8 +188,8 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   public Set<T> returnOriginalState(final List<OMultiValueChangeEvent<T, T>> multiValueChangeEvents) {
     final Set<T> reverted = new HashSet<T>(this);
 
-    final ListIterator<OMultiValueChangeEvent<T, T>> listIterator = multiValueChangeEvents.listIterator(multiValueChangeEvents
-        .size());
+    final ListIterator<OMultiValueChangeEvent<T, T>> listIterator = multiValueChangeEvents
+        .listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<T, T> event = listIterator.previous();
@@ -241,5 +241,42 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     super.remove(event.getKey());
     super.add((T) newValue);
     addNested((T) newValue);
+  }
+
+  private OSimpleMultiValueChangeListener<T, T> changeListener;
+
+  public void enableTracking(ODocument parent, ODocumentEntry entry) {
+    if (changeListener == null) {
+      final OSimpleMultiValueChangeListener<T, T> listener = new OSimpleMultiValueChangeListener<>(parent, entry);
+      this.addChangeListener(listener);
+      changeListener = listener;
+    }
+  }
+
+  public void disableTracking(ODocument document) {
+    if (changeListener != null) {
+      final OMultiValueChangeListener<T, T> changeListener = this.changeListener;
+      this.changeListener.timeLine = null;
+      this.changeListener = null;
+      removeRecordChangeListener(changeListener);
+    }
+  }
+
+  @Override
+  public boolean isModified() {
+    if (changeListener == null) {
+      return false;
+    } else {
+      return changeListener.timeLine != null;
+    }
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    if (changeListener == null) {
+      return null;
+    } else {
+      return changeListener.timeLine;
+    }
   }
 }

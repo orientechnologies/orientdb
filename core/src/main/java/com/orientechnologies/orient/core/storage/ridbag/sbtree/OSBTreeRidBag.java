@@ -28,15 +28,14 @@ import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -1050,6 +1049,43 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //do nothing not needed
+  }
+
+  private OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener;
+
+  public void enableTracking(ODocument parent, ODocumentEntry entry) {
+    if (changeListener == null) {
+      final OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> listener = new OSimpleMultiValueChangeListener<>(parent, entry);
+      this.addChangeListener(listener);
+      changeListener = listener;
+    }
+  }
+
+  public void disableTracking(ODocument document) {
+    if (changeListener != null) {
+      final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener = this.changeListener;
+      this.changeListener.timeLine = null;
+      this.changeListener = null;
+      removeRecordChangeListener(changeListener);
+    }
+  }
+
+  @Override
+  public boolean isModified() {
+    if (changeListener == null) {
+      return false;
+    } else {
+      return changeListener.timeLine != null;
+    }
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    if (changeListener == null) {
+      return null;
+    } else {
+      return changeListener.timeLine;
+    }
   }
 
 }

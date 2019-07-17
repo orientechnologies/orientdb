@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -537,4 +539,26 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     return true;
   }
+
+
+
+  //  @Override
+  public void enableTracking(ODocument parent, ODocumentEntry entry) {
+    delegate.enableTracking(parent,entry);
+  }
+
+  public void disableTracking(ODocument document) {
+    delegate.disableTracking(document);
+  }
+
+  @Override
+  public boolean isModified() {
+    return delegate.isModified();
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    return delegate.getTimeLine();
+  }
+
 }

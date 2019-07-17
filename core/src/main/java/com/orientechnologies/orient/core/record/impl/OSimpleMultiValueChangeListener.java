@@ -34,20 +34,21 @@ import java.lang.ref.WeakReference;
  * @param <K> Value that uniquely identifies position of item in collection
  * @param <V> Item value.
  */
-final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeListener<K, V> {
+public final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeListener<K, V> {
   /**
    *
    */
-  private final WeakReference<ODocument> oDocument;
-  private final ODocumentEntry           entry;
+  private final WeakReference<ODocument>                  document;
+  private final ODocumentEntry                            entry;
+  public        OMultiValueChangeTimeLine<Object, Object> timeLine;
 
-  OSimpleMultiValueChangeListener(ODocument oDocument, final ODocumentEntry entry) {
-    this.oDocument = new WeakReference<ODocument>(oDocument);
+  public OSimpleMultiValueChangeListener(ODocument document, final ODocumentEntry entry) {
+    this.document = new WeakReference<ODocument>(document);
     this.entry = entry;
   }
 
   public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
-    ODocument document = oDocument.get();
+    ODocument document = this.document.get();
     if (document == null)
       //doc not alive anymore, do nothing.
       return;
@@ -64,10 +65,10 @@ final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeLi
     if (entry == null || entry.isChanged())
       return;
 
-    if (entry.timeLine == null) {
-      entry.timeLine = new OMultiValueChangeTimeLine<Object, Object>();
+    if (timeLine == null) {
+      timeLine = new OMultiValueChangeTimeLine<Object, Object>();
     }
 
-    entry.timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
+    timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
   }
 }

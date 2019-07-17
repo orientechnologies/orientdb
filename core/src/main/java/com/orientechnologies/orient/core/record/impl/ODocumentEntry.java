@@ -39,15 +39,13 @@ import java.util.Map;
  */
 public class ODocumentEntry {
 
-  public  Object                                          value;
-  public  Object                                          original;
-  public  OType                                           type;
-  public  OProperty                                       property;
-  private OSimpleMultiValueChangeListener<Object, Object> changeListener;
-  public  OMultiValueChangeTimeLine<Object, Object>       timeLine;
-  private boolean                                         changed = false;
-  private boolean                                         exist   = true;
-  private boolean                                         created = false;
+  public  Object    value;
+  public  Object    original;
+  public  OType     type;
+  public  OProperty property;
+  private boolean   changed = false;
+  private boolean   exist   = true;
+  private boolean   created = false;
 
   public ODocumentEntry() {
 
@@ -114,8 +112,8 @@ public class ODocumentEntry {
       }
     }
 
-    if (timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = timeLine.getMultiValueChangeEvents();
+    if (getTimeLine() != null) {
+      List<OMultiValueChangeEvent<Object, Object>> timeline = getTimeLine().getMultiValueChangeEvents();
       if (timeline != null) {
         for (OMultiValueChangeEvent<Object, Object> event : timeline) {
           if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD
@@ -198,61 +196,48 @@ public class ODocumentEntry {
   }
 
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    return timeLine;
+    if (value instanceof OTrackedMultiValue) {
+      return ((OTrackedMultiValue) value).getTimeLine();
+    } else {
+      return null;
+    }
   }
 
   public void clear() {
     this.created = false;
     this.changed = false;
     original = null;
-    timeLine = null;
+    removeTimeline();
   }
 
   public void removeTimeline() {
-    this.timeLine = null;
+    if (!(value instanceof OTrackedMultiValue))
+      return;
+    ((OTrackedMultiValue) value).disableTracking(null);
   }
 
   public void replaceListener(ODocument document, Object oldValue) {
-    if (changeListener != null) {
-      // A listener was there, remove on the old value add it to the new value.
-      final OTrackedMultiValue<Object, Object> oldMultiValue = (OTrackedMultiValue<Object, Object>) oldValue;
-      oldMultiValue.removeRecordChangeListener(changeListener);
-      ((OTrackedMultiValue<Object, Object>) value).addChangeListener(changeListener);
-    } else {
-      // no listener was there add it only to the new value
-      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(document, this);
-      ((OTrackedMultiValue<Object, Object>) value).addChangeListener(listener);
-      changeListener = listener;
-    }
-
+    enableTracking(document);
   }
 
   public boolean enableTracking(ODocument document) {
     if (!(value instanceof OTrackedMultiValue))
       return false;
-    if (changeListener == null) {
-      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(document, this);
-      ((OTrackedMultiValue<Object, Object>) value).addChangeListener(listener);
-      changeListener = listener;
-    }
+    ((OTrackedMultiValue) value).enableTracking(document, this);
     return true;
   }
 
   public void disableTracking(ODocument document, Object fieldValue) {
-    if (changeListener != null) {
-      final OMultiValueChangeListener<Object, Object> changeListener = this.changeListener;
-      this.changeListener = null;
-      this.removeTimeline();
-      if (!(fieldValue instanceof OTrackedMultiValue))
-        return;
-
-      final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
-      multiValue.removeRecordChangeListener(changeListener);
-    }
+    if (!(fieldValue instanceof OTrackedMultiValue))
+      return;
+    ((OTrackedMultiValue) fieldValue).disableTracking(document);
   }
 
   public boolean isTrackedModified() {
-    return this.timeLine != null;
+    if (value instanceof OTrackedMultiValue) {
+      return ((OTrackedMultiValue) value).isModified();
+    }
+    return false;
   }
 
   public void markChanged() {

@@ -24,7 +24,9 @@ import java.util.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
@@ -212,6 +214,43 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //not needed do nothing
+  }
+
+  private OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener;
+
+  public void enableTracking(ODocument parent, ODocumentEntry entry) {
+    if (changeListener == null) {
+      final OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> listener = new OSimpleMultiValueChangeListener<>(parent, entry);
+      this.addChangeListener(listener);
+      changeListener = listener;
+    }
+  }
+
+  public void disableTracking(ODocument document) {
+    if (changeListener != null) {
+      final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener = this.changeListener;
+      this.changeListener.timeLine = null;
+      this.changeListener = null;
+      removeRecordChangeListener(changeListener);
+    }
+  }
+
+  @Override
+  public boolean isModified() {
+    if (changeListener == null) {
+      return false;
+    } else {
+      return changeListener.timeLine != null;
+    }
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    if (changeListener == null) {
+      return null;
+    } else {
+      return changeListener.timeLine;
+    }
   }
 
 }
