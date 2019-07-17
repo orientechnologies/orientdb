@@ -110,6 +110,7 @@ public class OrderByStep extends AbstractExecutionStep {
         try {
           cachedResult.add(item);
           if (maxElementsAllowed >= 0 && maxElementsAllowed < cachedResult.size()) {
+            this.cachedResult.clear();
             throw new OCommandExecutionException("Limit of allowed elements for in-heap ORDER BY in a single query exceeded (" + maxElementsAllowed + ") . You can set "
                     + OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getKey() + " to increase this limit");
           }
