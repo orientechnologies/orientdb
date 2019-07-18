@@ -2095,6 +2095,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
     }
 
+    if(!getSerializer().equals(ORecordInternal.getRecordSerializer(doc))){
+      ORecordInternal.setRecordSerializer(doc, getSerializer());
+    }
     doc = (ODocument) currentTx
         .saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
