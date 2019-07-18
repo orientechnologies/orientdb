@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -40,9 +41,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.parser.OOrBlock;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.*;
@@ -755,4 +758,31 @@ public class OSecurityShared implements OSecurityInternal {
   public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String name) {
     return true;
   }
+
+  @Override
+  public boolean canCreate(ODatabaseSession session, ORecord record) {
+    return true; //TODO
+  }
+
+  @Override
+  public boolean canRead(ODatabaseSession session, ORecord record) {
+    return true; //TODO
+  }
+
+  @Override
+  public boolean canUpdate(ODatabaseSession session, ORecord record) {
+    return true; //TODO
+  }
+
+  @Override
+  public boolean canDelete(ODatabaseSession session, ORecord record) {
+    return true; //TODO
+  }
+
+  @Override
+  public boolean canExecute(ODatabaseSession session, OFunction function) {
+    return true; //TODO
+  }
+
+
 }

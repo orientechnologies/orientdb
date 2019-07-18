@@ -24,7 +24,9 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
@@ -251,6 +253,31 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   @Override
   public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String name) {
     return delegate.isAllowedWrite(session, document, name);
+  }
+
+  @Override
+  public boolean canCreate(ODatabaseSession session, ORecord record) {
+    return delegate.canCreate(session, record);
+  }
+
+  @Override
+  public boolean canRead(ODatabaseSession session, ORecord record) {
+    return delegate.canRead(session, record);
+  }
+
+  @Override
+  public boolean canUpdate(ODatabaseSession session, ORecord record) {
+    return delegate.canUpdate(session, record);
+  }
+
+  @Override
+  public boolean canDelete(ODatabaseSession session, ORecord record) {
+    return delegate.canDelete(session, record);
+  }
+
+  @Override
+  public boolean canExecute(ODatabaseSession session, OFunction function) {
+    return delegate.canExecute(session, function);
   }
 
   @Override
