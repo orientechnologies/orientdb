@@ -3,6 +3,9 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.List;
@@ -80,7 +83,31 @@ public interface OSecurityInternal {
 
   void close();
 
+  /**
+   * For property-level security. Returns the list of the properties that are hidden (ie. not allowed to be read) for current session, regarding a specific document
+   * @param session the db session
+   * @param document the document to filter
+   * @return the list of the properties that are hidden (ie. not allowed to be read) on current document for current session
+   */
   Set<String> getFilteredProperties(ODatabaseSession session, ODocument document);
 
+  /**
+   * For property-level security
+   * @param session
+   * @param document
+   * @param name
+   * @return
+   */
   boolean isAllowedWrite(ODatabaseSession session, ODocument document, String name);
+
+  boolean canCreate(ODatabaseSession session, ORecord record);
+
+  boolean canRead(ODatabaseSession session, ORecord record);
+
+  boolean canUpdate(ODatabaseSession session, ORecord record);
+
+  boolean canDelete(ODatabaseSession session, ORecord record);
+
+  boolean canExecute(ODatabaseSession session, OFunction function);
+
 }
