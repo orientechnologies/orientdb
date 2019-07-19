@@ -34,10 +34,10 @@ public class OResultInternal implements OResult {
   }
 
   public void setProperty(String name, Object value) {
-    checkType(value);
     if (value instanceof Optional) {
       value = ((Optional) value).orElse(null);
     }
+    checkType(value);
     if (value instanceof OResult && ((OResult) value).isElement()) {
       content.put(name, ((OResult) value).getElement().get());
     } else {
@@ -46,7 +46,7 @@ public class OResultInternal implements OResult {
   }
 
   private void checkType(Object value) {
-    if(value==null){
+    if(value == null){
       return;
     }
     if(OType.isSimpleType(value) || value instanceof Character){
