@@ -7,7 +7,7 @@ import com.orientechnologies.common.exception.OHighLevelException;
  * Exception which is thrown to inform user that manual indexes are prohibited.
  */
 public class OManualIndexesAreProhibited extends OException implements OHighLevelException {
-  public OManualIndexesAreProhibited(OException exception) {
+  public OManualIndexesAreProhibited(OManualIndexesAreProhibited exception) {
     super(exception);
   }
 

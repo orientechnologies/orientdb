@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -41,17 +42,17 @@ import java.util.concurrent.*;
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
-  protected volatile int delayWriter = 0;
-  protected volatile int delayReader = 1000;
-  protected static   int writerCount = 5;
-  protected          int baseCount   = 0;
-  protected long      expected;
-  protected OIndex<?> idx;
-  protected int             maxRetries            = 5;
-  protected boolean         useTransactions       = false;
-  protected List<ServerRun> executeTestsOnServers = null;
-  protected String          className             = "Person";
-  protected String          indexName             = "Person.name";
+  protected volatile int             delayWriter           = 0;
+  protected volatile int             delayReader           = 1000;
+  protected static   int             writerCount           = 5;
+  protected          int             baseCount             = 0;
+  protected          long            expected;
+  protected          OIndex<?>       idx;
+  protected          int             maxRetries            = 5;
+  protected          boolean         useTransactions       = false;
+  protected          List<ServerRun> executeTestsOnServers = null;
+  protected          String          className             = "Person";
+  protected          String          indexName             = "Person.name";
 
   protected class BaseWriter implements Callable<Void> {
     protected final ServerRun serverRun;
@@ -524,9 +525,10 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
           result.put(server.serverId, indexSize);
 
-          List<ODocument> qResult = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from index:" + indexName));
-          Assert.assertEquals("Index count is different by index content", indexSize,
-              ((Long) qResult.get(0).field("count")).longValue());
+          final OIndex index = ((ODatabaseDocumentInternal) database).getMetadata().getIndexManagerInternal()
+              .getIndex((ODatabaseDocumentInternal) database, indexName);
+
+          Assert.assertEquals("Index count is different by index content", indexSize, index.getSize());
 
           if (indexSize != expected)
             printMissingIndexEntries(server, database);
