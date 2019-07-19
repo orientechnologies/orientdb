@@ -1,5 +1,7 @@
 package com.orientechnologies.lucene.tests;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -10,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,13 +35,9 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
 
     List<String> names = Arrays.asList("John", "Robert", "Jane", "andrew", "Scott", "luke", "Enriquez", "Luis", "Gabriel", "Sara");
     for (int i = 0; i < 10; i++) {
-      db.save(new ODocument("Person")
-          .field("name", names.get(i))
-          .field("surname", "Reese")
+      db.save(new ODocument("Person").field("name", names.get(i)).field("surname", "Reese")
           //from today back one day a time
-          .field("date", System.currentTimeMillis() - (i * 3600 * 24 * 1000))
-          .field("age", i)
-          .field("weight", i + 0.1f));
+          .field("date", System.currentTimeMillis() - (i * 3600 * 24 * 1000)).field("age", i).field("weight", i + 0.1f));
 
     }
   }
@@ -63,7 +62,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   }
 
   @Test
-  public void shouldUseRangeQueryOnSingleIntegerField() throws Exception {
+  public void shouldUseRangeQueryOnSingleIntegerField() {
 
     db.command("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE");
 
@@ -93,8 +92,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     //range
-    OResultSet results = db
-        .command("SELECT FROM Person WHERE search_class('date:[" + fiveDaysAgo + " TO " + today + "]')=true");
+    OResultSet results = db.command("SELECT FROM Person WHERE search_class('date:[" + fiveDaysAgo + " TO " + today + "]')=true");
 
     assertThat(results).hasSize(5);
 
@@ -113,14 +111,12 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     //name and age range
-    OResultSet results = db
-        .command("SELECT * FROM Person WHERE search_class('age:[5 TO 6] name:robert  ')=true");
+    OResultSet results = db.command("SELECT * FROM Person WHERE search_class('age:[5 TO 6] name:robert  ')=true");
 
     assertThat(results).hasSize(3);
 
     //date range
-    results = db.command(
-        "SELECT FROM Person WHERE search_class('date:[" + fiveDaysAgo + " TO " + today + "]')=true");
+    results = db.command("SELECT FROM Person WHERE search_class('date:[" + fiveDaysAgo + " TO " + today + "]')=true");
 
     assertThat(results).hasSize(5);
 
@@ -133,7 +129,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   }
 
   @Test
-  public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() throws Exception {
+  public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() {
     db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE");
 
     assertThat(db.getMetadata().getIndexManager().getIndex("Person.composite").getSize()).isEqualTo(10);
@@ -143,31 +139,14 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     String today = DateTools.timeToString(System.currentTimeMillis(), DateTools.Resolution.MINUTE);
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
-    //anme and age range
-    OResultSet results = db.query("SELECT * FROM index:Person.composite WHERE key ='name:luke  age:[5 TO 6]'");
-//    OResultSet results = db.query("SELECT * FROM index:Person.composite WHERE key ='age:[5 TO 6]'");
+    OIndex index = ((ODatabaseDocumentInternal) db).getMetadata().getIndexManagerInternal()
+        .getIndex((ODatabaseDocumentInternal) db, "Person.composite");
 
-    assertThat(results).hasSize(2);
-
-    results.close();
-    //date range
-    results = db.query("SELECT FROM index:Person.composite WHERE key = 'date:[" + fiveDaysAgo + " TO " + today + "]'");
-
-    assertThat(results).hasSize(5);
-
-    results.close();
-    //age and date range with MUST
-    results = db
-        .query("SELECT FROM index:Person.composite WHERE key = '+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]'");
-
-    assertThat(results).hasSize(2);
-
-    results.close();
-    results = db
-        .query("SELECT FROM index:Person.composite where key = '*:*'");
-
-    assertThat(results).hasSize(11);
-    results.close();
+    //name and age range
+    assertThat((Collection) index.get("name:luke  age:[5 TO 6]")).hasSize(2);
+    assertThat((Collection) index.get("date:[" + fiveDaysAgo + " TO " + today + "]")).hasSize(5);
+    assertThat((Collection) index.get("+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]")).hasSize(2);
+    assertThat((Collection) index.get("*:*")).hasSize(11);
   }
 
 }

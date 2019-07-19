@@ -15,14 +15,13 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class DictionaryPutDocumentSpeedTest extends OrientMonoThreadTest {
@@ -43,7 +42,6 @@ public class DictionaryPutDocumentSpeedTest extends OrientMonoThreadTest {
 
     database = new ODatabaseDocumentTx(url).open("admin", "admin");
     for (OIndex<?> idx : database.getMetadata().getSchema().getClass("Account").getIndexes()) {
-      System.out.println("Deleting existent index: " + idx);
       idx.delete();
     }
 
