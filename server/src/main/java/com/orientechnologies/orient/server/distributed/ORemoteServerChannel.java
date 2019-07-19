@@ -85,11 +85,13 @@ public class ORemoteServerChannel {
     final int sepPos = iURL.lastIndexOf(":");
     remoteHost = iURL.substring(0, sepPos);
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
-
+    long timeout = contextConfig.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT) / 2;
     protocolVersion = currentProtocolVersion;
     RejectedExecutionHandler reject = (task, executor) -> {
       try {
-        executor.getQueue().put(task);
+        if (!executor.getQueue().offer(task, timeout, TimeUnit.MILLISECONDS)) {
+          check.nodeDisconnected(server);
+        }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
