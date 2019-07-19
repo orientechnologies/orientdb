@@ -16,18 +16,18 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import org.junit.Test;
@@ -45,16 +45,10 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server down (quorum=2) with DBs distributed as below:
- * - server1: db A, db B
- * - server2: db B, db C
- * - populating the databases
- * - servers startup
- * - each server deploys its dbs in the cluster of nodes
- * - check consistency on all servers:
- * - all the servers have  db A, db B, db C.
- * - db A, db B and db C are consistent on each server
+ * It checks the consistency in the cluster with the following scenario: - 3 server down (quorum=2) with DBs distributed as below: -
+ * server1: db A, db B - server2: db B, db C - populating the databases - servers startup - each server deploys its dbs in the
+ * cluster of nodes - check consistency on all servers: - all the servers have  db A, db B, db C. - db A, db B and db C are
+ * consistent on each server
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
@@ -96,9 +90,7 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
   }
 
   /**
-   * Creates the databases as follows:
-   * - server1: db A, db B
-   * - server2: db B, db C
+   * Creates the databases as follows: - server1: db A, db B - server2: db B, db C
    *
    * @throws IOException
    */
@@ -368,12 +360,12 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     }
 
     private void checkIndex(ODatabaseDocument database, final String key, final ORID rid) {
-      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
-          .execute(key);
+      final OIndex index = ((ODatabaseDocumentInternal) database).getMetadata().getIndexManagerInternal()
+          .getIndex((ODatabaseDocumentInternal) database, "Person.name");
+      final OIdentifiable result = (OIdentifiable) index.get(key);
       assertNotNull(result);
-      assertEquals(result.size(), 1);
-      assertNotNull(result.get(0).getRecord());
-      assertEquals(((ODocument) result.get(0)).field("rid"), rid);
+      assertNotNull(result.getRecord());
+      assertEquals(result, rid);
     }
 
     private ODocument loadRecord(ODatabaseDocument database, int i) {
