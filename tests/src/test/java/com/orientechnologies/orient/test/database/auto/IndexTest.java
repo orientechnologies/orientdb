@@ -163,6 +163,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
   public void testIndexSize() {
+    checkEmbeddedDB();
+
     List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
 
     int profileSize = result.size();
@@ -700,6 +702,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testIndexParamsAutoConversion() {
+    checkEmbeddedDB();
+
     ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
@@ -977,6 +981,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test
   public void testIndexRebuildDuringNonProxiedObjectDelete() {
+    checkEmbeddedDB();
+
     Profile profile = new Profile("NonProxiedObjectToDelete", "NonProxiedObjectToDelete", "NonProxiedObjectToDelete", null);
     profile = database.save(profile);
 
@@ -993,6 +999,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testIndexRebuildDuringNonProxiedObjectDelete")
   public void testIndexRebuildDuringDetachAllNonProxiedObjectDelete() {
+    checkEmbeddedDB();
+
     Profile profile = new Profile("NonProxiedObjectToDelete", "NonProxiedObjectToDelete", "NonProxiedObjectToDelete", null);
     profile = database.save(profile);
 
@@ -1315,6 +1323,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testPreservingIdentityInIndexTx() {
+    checkEmbeddedDB();
+
     OrientGraph graph = new OrientGraph(database.getUnderlying(), true);
     graph.setAutoScaleEdgeType(true);
 
@@ -1369,6 +1379,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testEmptyNotUniqueIndex() {
+    checkEmbeddedDB();
+
     OClass emptyNotUniqueIndexClazz = database.getMetadata().getSchema().createClass("EmptyNotUniqueIndexTest", 1, null);
     emptyNotUniqueIndexClazz.createProperty("prop", OType.STRING);
 
