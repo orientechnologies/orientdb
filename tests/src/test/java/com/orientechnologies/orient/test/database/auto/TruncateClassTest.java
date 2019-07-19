@@ -42,6 +42,7 @@ public class TruncateClassTest extends DocumentDBBaseTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testTruncateClass() {
+    checkEmbeddedDB();
 
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);

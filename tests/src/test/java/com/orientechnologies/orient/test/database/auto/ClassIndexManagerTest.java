@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -11,8 +12,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.testng.Assert;
-import org.testng.annotations.*;
 import org.testng.annotations.Optional;
+import org.testng.annotations.*;
 
 import java.util.*;
 
@@ -44,11 +45,13 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final OClass superClass = schema.createClass("classIndexManagerTestSuperClass");
     final OProperty propertyZero = superClass.createProperty("prop0", OType.STRING);
-    superClass.createIndex("classIndexManagerTestSuperClass.prop0", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop0"});
+    superClass.createIndex("classIndexManagerTestSuperClass.prop0", OClass.INDEX_TYPE.UNIQUE.toString(), null,
+        new ODocument().fields("ignoreNullValues", true), new String[] { "prop0" });
 
     final OClass oClass = schema.createClass("classIndexManagerTestClass", superClass);
     final OProperty propOne = oClass.createProperty("prop1", OType.STRING);
-    oClass.createIndex("classIndexManagerTestClass.prop1", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop1"});
+    oClass.createIndex("classIndexManagerTestClass.prop1", OClass.INDEX_TYPE.UNIQUE.toString(), null,
+        new ODocument().fields("ignoreNullValues", true), new String[] { "prop1" });
 
     final OProperty propTwo = oClass.createProperty("prop2", OType.INTEGER);
     propTwo.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
@@ -65,8 +68,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OProperty propSix = oClass.createProperty("prop6", OType.EMBEDDEDSET, OType.STRING);
     propSix.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-
-    oClass.createIndex("classIndexManagerComposite", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop1", "prop2"});
+    oClass.createIndex("classIndexManagerComposite", OClass.INDEX_TYPE.UNIQUE.toString(), null,
+        new ODocument().fields("ignoreNullValues", true), new String[] { "prop1", "prop2" });
 
     final OClass oClassTwo = schema.createClass("classIndexManagerTestClassTwo");
     oClassTwo.createProperty("prop1", OType.STRING);
@@ -76,10 +79,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     compositeCollectionClass.createProperty("prop1", OType.STRING);
     compositeCollectionClass.createProperty("prop2", OType.EMBEDDEDLIST, OType.INTEGER);
 
-    compositeCollectionClass
-        .createIndex("classIndexManagerTestIndexValueAndCollection", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop1", "prop2"});
+    compositeCollectionClass.createIndex("classIndexManagerTestIndexValueAndCollection", OClass.INDEX_TYPE.UNIQUE.toString(), null,
+        new ODocument().fields("ignoreNullValues", true), new String[] { "prop1", "prop2" });
 
-    oClass.createIndex("classIndexManagerTestIndexOnPropertiesFromClassAndSuperclass", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop0", "prop1"});
+    oClass.createIndex("classIndexManagerTestIndexOnPropertiesFromClassAndSuperclass", OClass.INDEX_TYPE.UNIQUE.toString(), null,
+        new ODocument().fields("ignoreNullValues", true), new String[] { "prop0", "prop1" });
 
     schema.reload();
 
@@ -92,8 +96,10 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("delete from classIndexManagerTestClassTwo")).execute();
     database.command(new OCommandSQL("delete from classIndexManagerTestSuperClass")).execute();
 
-    Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop1").getSize(), 0);
-    Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop2").getSize(), 0);
+    if (!((ODatabaseDocumentInternal) database).getStorage().isRemote()) {
+      Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop1").getSize(), 0);
+      Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop2").getSize(), 0);
+    }
 
     super.afterMethod();
   }
@@ -225,6 +231,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCreateDocumentWithoutClass() {
+    checkEmbeddedDB();
+
     final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManager().getIndexes();
     final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
 
@@ -245,6 +253,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testUpdateDocumentWithoutClass() {
+    checkEmbeddedDB();
+
     final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManager().getIndexes();
     final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
 
@@ -295,6 +305,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCreateDocumentIndexRecordAdded() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClass");
     doc.field("prop0", "x");
     doc.field("prop1", "a");
@@ -322,6 +334,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testUpdateDocumentIndexRecordRemoved() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClass");
     doc.field("prop0", "x");
     doc.field("prop1", "a");
@@ -351,6 +365,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testUpdateDocumentNullKeyIndexRecordRemoved() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
     doc.field("prop0", "x");
@@ -381,6 +397,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testUpdateDocumentIndexRecordUpdated() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClass");
     doc.field("prop0", "x");
     doc.field("prop1", "a");
@@ -415,6 +433,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testUpdateDocumentIndexRecordUpdatedFromNullField() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClass");
     doc.field("prop1", "a");
     doc.field("prop2", (Object) null);
@@ -442,6 +462,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testListUpdate() {
+    checkEmbeddedDB();
+
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
@@ -481,6 +503,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testMapUpdate() {
+    checkEmbeddedDB();
+
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
@@ -533,6 +557,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testSetUpdate() {
+    checkEmbeddedDB();
+
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
@@ -570,6 +596,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testListDelete() {
+    checkEmbeddedDB();
+
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
@@ -618,6 +646,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testMapDelete() {
+    checkEmbeddedDB();
+
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
@@ -682,6 +712,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testSetDelete() {
+    checkEmbeddedDB();
+
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
@@ -727,6 +759,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testDeleteDocumentIndexRecordDeleted() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClass");
     doc.field("prop0", "x");
     doc.field("prop1", "a");
@@ -754,6 +788,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testDeleteUpdatedDocumentIndexRecordDeleted() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClass");
     doc.field("prop0", "x");
     doc.field("prop1", "a");
@@ -784,6 +820,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testDeleteUpdatedDocumentNullFieldIndexRecordDeleted() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClass");
     doc.field("prop1", "a");
     doc.field("prop2", (Object) null);
@@ -806,6 +844,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testDeleteUpdatedDocumentOrigNullFieldIndexRecordDeleted() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClass");
     doc.field("prop1", "a");
     doc.field("prop2", (Object) null);
@@ -830,6 +870,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testNoClassIndexesUpdate() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestClassTwo");
     doc.field("prop1", "a");
     doc.save();
@@ -855,6 +897,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeCreation() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -874,6 +918,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeNullSimpleFieldCreation() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", (Object) null);
@@ -888,6 +934,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeNullCollectionFieldCreation() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -902,6 +950,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeUpdateSimpleField() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -927,6 +977,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeUpdateCollectionWasAssigned() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -952,6 +1004,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeUpdateCollectionWasChanged() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -984,6 +1038,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeUpdateCollectionWasChangedSimpleFieldWasAssigned() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1018,6 +1074,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeUpdateSimpleFieldNull() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1040,6 +1098,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeUpdateCollectionWasAssignedNull() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1062,6 +1122,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeUpdateBothAssignedNull() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1085,6 +1147,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeUpdateCollectionWasChangedSimpleFieldWasAssignedNull() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1114,6 +1178,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeDeleteSimpleFieldAssigend() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1131,6 +1197,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeDeleteCollectionFieldAssigend() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1148,6 +1216,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeDeleteCollectionFieldChanged() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1170,6 +1240,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeDeleteBothCollectionSimpleFieldChanged() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1194,6 +1266,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeDeleteBothCollectionSimpleFieldAssigend() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1212,6 +1286,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeDeleteSimpleFieldNull() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1229,6 +1305,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeDeleteCollectionFieldNull() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1246,6 +1324,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeDeleteBothSimpleCollectionFieldNull() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1264,6 +1344,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testCollectionCompositeDeleteCollectionFieldChangedSimpleFieldNull() {
+    checkEmbeddedDB();
+
     final ODocument doc = new ODocument("classIndexManagerTestCompositeCollectionClass");
 
     doc.field("prop1", "test1");
@@ -1288,6 +1370,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   }
 
   public void testIndexOnPropertiesFromClassAndSuperclass() {
+    checkEmbeddedDB();
+
     final ODocument docOne = new ODocument("classIndexManagerTestClass");
     docOne.field("prop0", "doc1-prop0");
     docOne.field("prop1", "doc1-prop1");

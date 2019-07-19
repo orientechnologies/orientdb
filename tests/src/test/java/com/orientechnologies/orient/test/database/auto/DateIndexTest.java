@@ -1,20 +1,21 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -66,6 +67,8 @@ public class DateIndexTest  extends DocumentDBBaseTest {
   }
 
   public void testDateIndexes() {
+	  checkEmbeddedDB();
+
     final Date dateOne = new Date();
 
     final Date dateTwo = new Date(dateOne.getTime() + 24 * 60 * 60 * 1000 + 100);

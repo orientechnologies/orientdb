@@ -209,6 +209,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testUpdate")
   public void testDoubleChanges() {
+    checkEmbeddedDB();
+
     ODocument vDoc = database.newInstance();
     vDoc.setClassName("Profile");
     vDoc.field("nick", "JayM1").field("name", "Jay").field("surname", "Miner");

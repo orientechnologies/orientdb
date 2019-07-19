@@ -40,6 +40,8 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
   }
 
   public void testAutomaticUsage() {
+    checkEmbeddedDB();
+
     byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
 
     ODocument doc1 = new ODocument("ByteArrayKeyTest");
@@ -57,6 +59,8 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
   }
 
   public void testAutomaticCompositeUsage() {
+    checkEmbeddedDB();
+
     byte[] key1 = new byte[] { 1, 2, 3 };
     byte[] key2 = new byte[] { 4, 5, 6 };
 
@@ -76,6 +80,8 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
   }
 
   public void testAutomaticCompositeUsageInTX() {
+    checkEmbeddedDB();
+
     byte[] key1 = new byte[] { 7, 8, 9 };
     byte[] key2 = new byte[] { 10, 11, 12 };
 
