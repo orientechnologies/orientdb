@@ -60,11 +60,6 @@ public class UniqueCompositeIndexDistributedIT {
       assertTrue(res.hasNext());
       assertEquals(res.next().getIdentity().get(), doc1.getIdentity());
     }
-
-    try (OResultSet res = session.query("select from index:" + indexName + " where key =[\"1\",\"2\"]")) {
-      assertTrue(res.hasNext());
-    }
-
   }
 
   @After
