@@ -126,6 +126,9 @@ public class OSuffixIdentifier extends SimpleNode {
         if (iCurrentRecord.getMetadataKeys().contains(varName)) {
           return iCurrentRecord.getMetadata(varName);
         }
+        if (iCurrentRecord instanceof OResultInternal && ((OResultInternal)iCurrentRecord).getTemporaryProperties().contains(varName)) {
+          return ((OResultInternal)iCurrentRecord).getTemporaryProperty(varName);
+        }
       }
       return null;
     }
