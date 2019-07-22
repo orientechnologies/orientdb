@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
@@ -108,7 +109,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
       if (o instanceof OVertex)
         vertex = (OVertex) o;
       else if (o instanceof OIdentifiable)
-        vertex = db.getRecord((OIdentifiable) o);
+        vertex = ((OElement)db.getRecord((OIdentifiable) o)).asVertex().get();
       else
         throw new OETLTransformException(getName() + ": input type '" + o + "' is not supported");
 

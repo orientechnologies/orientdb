@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
@@ -34,6 +35,7 @@ import java.util.logging.Level;
 public class OETLCommandTransformer extends OETLAbstractTransformer {
   private String language = "sql";
   private String command;
+  private boolean returnInput = false;
 
   @Override
   public ODocument getConfiguration() {
@@ -50,6 +52,7 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
       language = conf.<String>field("language").toLowerCase(Locale.ENGLISH);
 
     command = conf.field("command");
+    returnInput = Boolean.TRUE.equals(conf.field("returnInput"));
   }
 
   @Override
@@ -58,7 +61,7 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(ODatabaseDocument db,final Object input) {
+  public Object executeTransform(ODatabaseDocument db, Object input) {
     String runtimeCommand = (String) resolve(command);
 
     final OCommandRequest cmd;
@@ -74,6 +77,13 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
 
       log(Level.FINE, "input=%s - command=%s - result=%s", input, cmd, result);
 
+      if(returnInput){
+        if(input instanceof OElement) {
+          input = db.reload(((OElement) input).getRecord(), null, true);
+        }
+        return input;
+
+      }
       return result;
     } catch (Exception e) {
 
