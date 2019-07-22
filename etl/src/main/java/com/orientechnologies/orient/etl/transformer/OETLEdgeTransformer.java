@@ -102,7 +102,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
       if (o instanceof OVertex)
         vertex = (OVertex) o;
       else if (o instanceof OIdentifiable)
-        vertex = db.getRecord((OIdentifiable) o);
+        vertex = ((OElement)db.getRecord((OIdentifiable) o)).asVertex().get();
       else
         throw new OETLTransformException(getName() + ": input type '" + o + "' is not supported");
 
