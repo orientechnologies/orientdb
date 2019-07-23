@@ -5,7 +5,6 @@ import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -25,7 +24,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
-import com.sun.jna.Platform;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
@@ -248,7 +246,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     this.storageName = storageName;
 
     if (allowDirectIO) {
-      blockSize = calculateBlockSize(walLocation.toAbsolutePath().toString());
+      blockSize = OIOUtils.calculateBlockSize(walLocation.toAbsolutePath().toString());
     } else {
       blockSize = -1;
     }
@@ -323,63 +321,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   public int pageSize() {
     return pageSize;
-  }
-
-  private static int calculateBlockSize(String path) {
-    if (!Platform.isLinux()) {
-      return -1;
-    }
-
-    final int linuxVersion = 0;
-    final int majorRev = 1;
-    final int minorRev = 2;
-
-    List<Integer> versionNumbers = new ArrayList<>();
-    for (String v : System.getProperty("os.version").split("[.\\-]")) {
-      if (v.matches("\\d")) {
-        versionNumbers.add(Integer.parseInt(v));
-      }
-    }
-
-    if (versionNumbers.get(linuxVersion) < 2) {
-      return -1;
-    } else if (versionNumbers.get(linuxVersion) == 2) {
-      if (versionNumbers.get(majorRev) < 4) {
-        return -1;
-      } else if (versionNumbers.get(majorRev) == 4 && versionNumbers.get(minorRev) < 10) {
-        return -1;
-      }
-    }
-
-    final int _PC_REC_XFER_ALIGN = 0x11;
-
-    int fsBlockSize = ONative.instance().pathconf(path, _PC_REC_XFER_ALIGN);
-    int pageSize = ONative.instance().getpagesize();
-    fsBlockSize = lcm(fsBlockSize, pageSize);
-
-    // just being completely paranoid:
-    // (512 is the rule for 2.6+ kernels)
-    fsBlockSize = lcm(fsBlockSize, 512);
-
-    if (fsBlockSize <= 0 || ((fsBlockSize & (fsBlockSize - 1)) != 0)) {
-      return -1;
-    }
-
-    return fsBlockSize;
-  }
-
-  private static int lcm(long x, long y) {
-    long g = x; // will hold gcd
-    long yc = y;
-
-    // get the gcd first
-    while (yc != 0) {
-      long t = g;
-      g = yc;
-      yc = t % yc;
-    }
-
-    return (int) (x * y / g);
   }
 
   private void readLastCheckpointInfo() throws IOException {

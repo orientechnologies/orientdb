@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogNoOP;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
@@ -186,8 +187,8 @@ public class ReadWriteDiskCacheTest {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, null, null, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
 
-    writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, writeAheadLog, -1, 10, WRITE_CACHE_MAX_SIZE, storagePath, storageName,
-        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, null, null, false, true, 10);
+    writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, writeAheadLog, new DoubleWriteLogNoOP(),-1, 10, WRITE_CACHE_MAX_SIZE,
+        storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, null, null, false, true, 10);
     writeBuffer.loadRegisteredFiles();
 
     readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50, true, 10);
