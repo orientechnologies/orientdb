@@ -605,8 +605,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   /**
-   * This method is called once new pages are added to the disk inside of {@link OWriteCache#load(long, long, int,
-   * OModifiableBoolean, boolean)}  method. If total amount of added pages minus amount of added pages at the time of last disk
+   * This method is called once new pages are added to the disk inside of {@link OWriteCache#load(long, long, OModifiableBoolean, boolean)}  method. If total amount of added pages minus amount of added pages at the time of last disk
    * space check bigger than threshold value {@link #diskSizeCheckInterval} new disk space check is performed and if amount of space
    * left on disk less than threshold {@link #freeSpaceLimit} then database is switched in "read only" mode
    */
@@ -1111,89 +1110,38 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   @Override
-  public OCachePointer[] load(final long fileId, final long startPageIndex, final int pageCount, final OModifiableBoolean cacheHit,
+  public OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit,
       final boolean verifyChecksums) throws IOException {
     final int intId = extractFileId(fileId);
-    if (pageCount < 1) {
-      throw new IllegalArgumentException("Amount of pages to load should be not less than 1 but provided value is " + pageCount);
-    }
-
     filesLock.acquireReadLock();
     try {
-      //first check that requested page is already cached so we do not need to load it from file
-      final PageKey startPageKey = new PageKey(intId, startPageIndex);
-      final Lock startPageLock = lockManager.acquireSharedLock(startPageKey);
+      final PageKey pageKey = new PageKey(intId, startPageIndex);
+      final Lock pageLock = lockManager.acquireSharedLock(pageKey);
 
       //check if page already presented in write cache
-      final OCachePointer startPagePointer = writeCachePages.get(startPageKey);
+      final OCachePointer pagePointer = writeCachePages.get(pageKey);
 
       //page is not cached load it from file
-      if (startPagePointer == null) {
-        //load it from file and preload requested pages
-        //there is small optimization
-        //if we need single page no need to release already locked page
-        final Lock[] pageLocks;
-        final PageKey[] pageKeys;
-
-        if (pageCount > 1) {
-          startPageLock.unlock();
-
-          pageKeys = new PageKey[pageCount];
-          for (int i = 0; i < pageCount; i++) {
-            pageKeys[i] = new PageKey(intId, startPageIndex + i);
-          }
-
-          pageLocks = lockManager.acquireSharedLocksInBatch(pageKeys);
-        } else {
-          pageLocks = new Lock[] { startPageLock };
-          pageKeys = new PageKey[] { startPageKey };
-        }
-
-        final OCachePointer[] pagePointers;
+      if (pagePointer == null) {
         try {
           //load requested page and preload requested amount of pages
-          pagePointers = loadFileContent(intId, startPageIndex, pageCount, verifyChecksums);
-
-          if (pagePointers != null) {
-            if (pagePointers.length == 0) {
-              return pagePointers;
-            }
-
-            for (int n = 0; n < pagePointers.length; n++) {
-              pagePointers[n].incrementReadersReferrer();
-
-              if (n > 0) {
-                final OCachePointer pagePointer = writeCachePages.get(pageKeys[n]);
-
-                assert pageKeys[n].pageIndex == pagePointers[n].getPageIndex();
-
-                //if page already exists in cache we should drop already loaded page and load cache page instead
-                if (pagePointer != null) {
-                  pagePointers[n].decrementReadersReferrer();
-                  pagePointers[n] = pagePointer;
-                  pagePointers[n].incrementReadersReferrer();
-                }
-              }
-            }
-
-            return pagePointers;
+          final OCachePointer filePagePointer = loadFileContent(intId, startPageIndex, verifyChecksums);
+          if (filePagePointer != null) {
+            filePagePointer.incrementReadersReferrer();
           }
 
+          return filePagePointer;
         } finally {
-          for (final Lock pageLock : pageLocks) {
-            pageLock.unlock();
-          }
+          pageLock.unlock();
         }
-
-        return new OCachePointer[0];
-      } else {
-        startPagePointer.incrementReadersReferrer();
-        startPageLock.unlock();
-
-        cacheHit.setValue(true);
-
-        return new OCachePointer[] { startPagePointer };
       }
+
+      pagePointer.incrementReadersReferrer();
+      pageLock.unlock();
+
+      cacheHit.setValue(true);
+
+      return pagePointer;
     } finally {
       filesLock.releaseReadLock();
     }
@@ -2145,10 +2093,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private OCachePointer[] loadFileContent(final int intId, final long startPageIndex, final int pageCount,
-      final boolean verifyChecksums) throws IOException {
+  private OCachePointer loadFileContent(final int intId, final long startPageIndex, final boolean verifyChecksums)
+      throws IOException {
     final long fileId = composeFileId(id, intId);
-
     try {
       final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
       try {
@@ -2169,52 +2116,20 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           }
 
           try {
-            if (pageCount == 1) {
-              final OPointer pointer = bufferPool.acquireDirect(false);
-              final ByteBuffer buffer = pointer.getNativeByteBuffer();
-              assert buffer.position() == 0;
-              fileClassic.read(firstPageStartPosition, buffer, false);
-
-              if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
-                  || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
-                verifyMagicAndChecksum(buffer, pointer, fileId, intId, startPageIndex, null);
-              }
-
-              buffer.position(0);
-
-              final OCachePointer dataPointer = new OCachePointer(pointer, bufferPool, fileId, startPageIndex);
-              pagesRead = 1;
-              return new OCachePointer[] { dataPointer };
-            }
-
-            final long maxPageCount = (fileClassic.getFileSize() - firstPageStartPosition) / pageSize;
-            final int realPageCount = Math.min((int) maxPageCount, pageCount);
-
-            final OPointer[] pointers = new OPointer[realPageCount];
-            final ByteBuffer[] buffers = new ByteBuffer[realPageCount];
-            for (int i = 0; i < pointers.length; i++) {
-              final OPointer pointer = bufferPool.acquireDirect(false);
-              pointers[i] = pointer;
-              buffers[i] = pointer.getNativeByteBuffer();
-            }
-
-            fileClassic.read(firstPageStartPosition, buffers, false);
+            final OPointer pointer = bufferPool.acquireDirect(false);
+            final ByteBuffer buffer = pointer.getNativeByteBuffer();
+            assert buffer.position() == 0;
+            fileClassic.read(firstPageStartPosition, buffer, false);
 
             if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
                 || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
-              for (int i = 0; i < pointers.length; ++i) {
-                verifyMagicAndChecksum(buffers[i], pointers[i], fileId, intId, startPageIndex + i, pointers);
-              }
+              verifyMagicAndChecksum(buffer, pointer, fileId, intId, startPageIndex, null);
             }
 
-            final OCachePointer[] dataPointers = new OCachePointer[pointers.length];
-            for (int n = 0; n < pointers.length; n++) {
-              buffers[n].position(0);
-              dataPointers[n] = new OCachePointer(pointers[n], bufferPool, fileId, startPageIndex + n);
-            }
-            pagesRead = dataPointers.length;
+            buffer.position(0);
 
-            return dataPointers;
+            pagesRead = 1;
+            return new OCachePointer(pointer, bufferPool, fileId, startPageIndex);
           } finally {
             if (printCacheStatistics) {
               final long endTs = System.nanoTime();
@@ -2224,7 +2139,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               loadedPagesTimeSum.add(loadTime);
             }
           }
-
         } else {
           return null;
         }

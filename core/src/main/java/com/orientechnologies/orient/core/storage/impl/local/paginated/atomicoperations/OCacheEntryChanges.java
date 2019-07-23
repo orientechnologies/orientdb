@@ -16,7 +16,6 @@ public class OCacheEntryChanges implements OCacheEntry {
   final OWALChanges changes = new OWALPageChangesPortion();
 
   boolean isNew;
-  boolean pinPage;
 
   private OLogSequenceNumber changeLSN;
 

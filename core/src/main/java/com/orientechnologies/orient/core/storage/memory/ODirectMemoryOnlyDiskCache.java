@@ -26,13 +26,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
@@ -184,7 +178,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
   @Override
   public final OCacheEntry loadForWrite(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums, final OLogSequenceNumber startLSN) {
+      final OWriteCache writeCache, final boolean verifyChecksums, final OLogSequenceNumber startLSN) {
 
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
 
@@ -199,7 +193,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
   @Override
   public final OCacheEntry loadForRead(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums) {
+      final OWriteCache writeCache, final boolean verifyChecksums) {
 
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
 
@@ -240,10 +234,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
         sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
       }
     }
-  }
-
-  @Override
-  public final void pinPage(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
   }
 
   @Override
@@ -426,20 +416,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   public final void closeStorage(final OWriteCache writeCache) {
     //noinspection ResultOfMethodCallIgnored
     close();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public final void loadCacheState(final OWriteCache writeCache) {
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public final void storeCacheState(final OWriteCache writeCache) {
   }
 
   @Override
@@ -687,8 +663,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public final OCachePointer[] load(final long fileId, final long startPageIndex, final int pageCount,
-      final OModifiableBoolean cacheHit, final boolean verifyChecksums) {
+  public final OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit, final boolean verifyChecksums) {
     throw new UnsupportedOperationException();
   }
 

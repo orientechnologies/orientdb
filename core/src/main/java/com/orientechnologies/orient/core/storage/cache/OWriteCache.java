@@ -95,7 +95,7 @@ public interface OWriteCache {
 
   int allocateNewPage(final long fileId) throws IOException;
 
-  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, OModifiableBoolean cacheHit, boolean verifyChecksums)
+  OCachePointer load(long fileId, long startPageIndex, OModifiableBoolean cacheHit, boolean verifyChecksums)
       throws IOException;
 
   void flush(long fileId);

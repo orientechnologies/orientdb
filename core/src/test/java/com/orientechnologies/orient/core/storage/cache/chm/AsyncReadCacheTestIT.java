@@ -181,7 +181,7 @@ public class AsyncReadCacheTestIT {
         final int fileId = random.nextInt(fileLimit);
         final int pageIndex = random.nextInt(pageLimit);
 
-        final OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, true, null);
+        final OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, true, null);
         readCache.releaseFromWrite(cacheEntry, writeCache);
         pageCounter++;
       }
@@ -216,7 +216,7 @@ public class AsyncReadCacheTestIT {
         final int fileId = random.nextInt(fileLimit);
         final int pageIndex = random.nextInt(pageLimit);
 
-        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, 1, true);
+        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, true);
         readCache.releaseFromRead(cacheEntry, writeCache);
         pageCounter++;
       }
@@ -248,7 +248,7 @@ public class AsyncReadCacheTestIT {
       while (pageCounter < pageCount) {
         final int pageIndex = random.nextInt();
         assert pageIndex < pageLimit;
-        final OCacheEntry cacheEntry = readCache.loadForWrite(0, pageIndex, true, writeCache, 1, true, null);
+        final OCacheEntry cacheEntry = readCache.loadForWrite(0, pageIndex, true, writeCache, true, null);
         readCache.releaseFromWrite(cacheEntry, writeCache);
         pageCounter++;
       }
@@ -280,7 +280,7 @@ public class AsyncReadCacheTestIT {
       while (pageCounter < pageCount) {
         final int pageIndex = random.nextInt();
         assert pageIndex < pageLimit;
-        final OCacheEntry cacheEntry = readCache.loadForRead(0, pageIndex, true, writeCache, 1, true);
+        final OCacheEntry cacheEntry = readCache.loadForRead(0, pageIndex, true, writeCache, true);
         readCache.releaseFromRead(cacheEntry, writeCache);
         pageCounter++;
       }
@@ -375,12 +375,12 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public OCachePointer[] load(final long fileId, final long startPageIndex, final int pageCount,
-        final OModifiableBoolean cacheHit, final boolean verifyChecksums) {
+    public OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit,
+        final boolean verifyChecksums) {
       final OPointer pointer = byteBufferPool.acquireDirect(true);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, fileId, startPageIndex);
       cachePointer.incrementReadersReferrer();
-      return new OCachePointer[] { cachePointer };
+      return cachePointer;
     }
 
     @Override
