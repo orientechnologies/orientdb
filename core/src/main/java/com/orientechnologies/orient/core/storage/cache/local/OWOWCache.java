@@ -605,7 +605,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   /**
-   * This method is called once new pages are added to the disk inside of {@link OWriteCache#load(long, long, OModifiableBoolean, boolean)}  method. If total amount of added pages minus amount of added pages at the time of last disk
+   * This method is called once new pages are added to the disk inside of {@link OWriteCache#load(long, long, OModifiableBoolean, boolean)}
+   *  lmethod. If total amount of added pages minus amount of added pages at the time of last disk
    * space check bigger than threshold value {@link #diskSizeCheckInterval} new disk space check is performed and if amount of space
    * left on disk less than threshold {@link #freeSpaceLimit} then database is switched in "read only" mode
    */
