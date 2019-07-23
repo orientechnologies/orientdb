@@ -157,4 +157,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return status;
   }
 
+  public List<ORID> getLockedRids() {
+    return lockedRids;
+  }
+
 }

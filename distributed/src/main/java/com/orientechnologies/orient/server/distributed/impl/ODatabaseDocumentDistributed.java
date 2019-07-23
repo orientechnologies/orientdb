@@ -639,7 +639,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       throw e;
     } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
       /// ?? do i've to save this state as well ?
-      txContext.setStatus(TIMEDOUT);
+        txContext.setStatus(TIMEDOUT);
       getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw ex;
     } catch (ORecordDuplicatedException ex) {
