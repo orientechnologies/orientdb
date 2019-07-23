@@ -5029,11 +5029,14 @@ OHaStatusStatement HaStatusStatement():
             |
             token = "-messages" { jjtThis.messages = true; }
             |
+            token = "-locks" { jjtThis.locks = true; }
+            |
             token = "-all" {
                 jjtThis.servers = true;
                 jjtThis.db = true;
                 jjtThis.latency = true;
                 jjtThis.messages = true;
+                jjtThis.locks = true;
             }
             |
             token = "-output=text" { jjtThis.outputText = true; }

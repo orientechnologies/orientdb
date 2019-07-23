@@ -1365,4 +1365,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     return buffer.toString();
   }
+
+  public ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> getActiveTxContexts() {
+    return activeTxContexts;
+  }
 }
