@@ -1442,11 +1442,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public long[] close() throws IOException {
+    flush();
+    stopFlush();
+
     synchronized (doubleWriteLock) {
-      flush();
-
-      stopFlush();
-
       filesLock.acquireWriteLock();
       try {
         final Collection<Integer> fileIds = nameIdMap.values();
