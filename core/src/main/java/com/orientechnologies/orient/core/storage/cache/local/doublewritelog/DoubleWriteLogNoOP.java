@@ -21,4 +21,9 @@ public class DoubleWriteLogNoOP implements DoubleWriteLog {
   public void open(String storageName, Path storagePath) {
 
   }
+
+  @Override
+  public ByteBuffer loadPage(long fileId, int pageIndex) {
+    return null;
+  }
 }
