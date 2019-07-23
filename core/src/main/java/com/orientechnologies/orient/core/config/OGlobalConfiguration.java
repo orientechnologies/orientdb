@@ -238,6 +238,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
+  @Deprecated
   USE_CHM_CACHE("storage.useCHMCache",
       "Whether to use new disk cache implementation based on CHM or old one based on cuncurrent queues", Boolean.class, true),
 

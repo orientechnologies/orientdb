@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogNoOP;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
@@ -87,10 +86,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION,
       OSBTreeCollectionManagerShared.DEFAULT_EXTENSION, OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
-      O2QCache.CACHE_STATISTIC_FILE_EXTENSION, OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
-      OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION, OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION,
-      OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION, OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION,
-      OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION };
+      OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION, OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
+      OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION, OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION,
+      OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION, OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION };
 
   private static final int ONE_KB = 1024;
 
@@ -234,8 +232,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               zos.setComment("OrientDB Backup executed on " + new Date());
               zos.setLevel(compressionLevel);
 
-              final List<String> names = OZIPCompressionUtil.compressDirectory(storagePath.toString(), zos,
-                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION, ".lock" }, iOutput);
+              final List<String> names = OZIPCompressionUtil
+                  .compressDirectory(storagePath.toString(), zos, new String[] { ".fl", ".lock" }, iOutput);
               OPaginatedStorageDirtyFlag.addFileToArchive(zos, "dirty.fl");
               names.add("dirty.fl");
               return names;
@@ -288,24 +286,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         }
 
         OZIPCompressionUtil.uncompressDirectory(in, storagePath.toString(), iListener);
-
-        final Path cacheStateFile = storagePath.resolve(O2QCache.CACHE_STATE_FILE);
-        if (Files.exists(cacheStateFile)) {
-          String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
-          OLogManager.instance().warn(this, message);
-          if (iListener != null)
-            iListener.onMessage('\n' + message);
-
-          try {
-            Files.deleteIfExists(cacheStateFile); // delete it, if it still exists
-          } catch (final IOException e) {
-            message =
-                "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
-            OLogManager.instance().warn(this, message, e);
-            if (iListener != null)
-              iListener.onMessage('\n' + message);
-          }
-        }
 
         if (callable != null)
           try {
@@ -399,8 +379,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           bufferedOutputStream.write(buffer, 0, bl);
           bl = 0;
 
-        }
-        while (rb >= 0);
+        } while (rb >= 0);
       }
     }
   }
@@ -674,8 +653,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS);
     final int statisticsPrintInterval = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL);
 
-    final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog,
-        new DoubleWriteLogNoOP(),
+    final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog, new DoubleWriteLogNoOP(),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize, storagePath, getName(),
         OStringSerializer.INSTANCE, files, getId(),

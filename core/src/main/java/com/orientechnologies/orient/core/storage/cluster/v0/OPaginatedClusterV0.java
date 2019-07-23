@@ -80,7 +80,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   private final    OClusterPositionMapV0   clusterPositionMap;
   private volatile int                     id;
   private          long                    fileId;
-  private          long                    pinnedStateEntryIndex;
+  private          long                    stateEntryIndex;
   private          ORecordConflictStrategy recordConflictStrategy;
 
   private static final class AddEntryResult {
@@ -217,8 +217,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
       final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, 0, false);
       try {
-        pinPage(atomicOperation, pinnedStateEntry);
-        pinnedStateEntryIndex = pinnedStateEntry.getPageIndex();
+        stateEntryIndex = pinnedStateEntry.getPageIndex();
       } finally {
         releasePageFromRead(atomicOperation, pinnedStateEntry);
       }
@@ -1169,7 +1168,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
       acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-        final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, pinnedStateEntryIndex, true);
+        final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, stateEntryIndex, true);
         try {
           return new OPaginatedClusterStateV0(pinnedStateEntry).getSize();
         } finally {
@@ -1286,7 +1285,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
-        final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, pinnedStateEntryIndex, true);
+        final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, stateEntryIndex, true);
         try {
           return new OPaginatedClusterStateV0(pinnedStateEntry).getRecordsSize();
         } finally {
@@ -1385,7 +1384,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
   private void updateClusterState(final long sizeDiff, final long recordsSizeDiff, final OAtomicOperation atomicOperation)
       throws IOException {
-    final OCacheEntry pinnedStateEntry = loadPageForWrite(atomicOperation, fileId, pinnedStateEntryIndex, true, true);
+    final OCacheEntry pinnedStateEntry = loadPageForWrite(atomicOperation, fileId, stateEntryIndex, true, true);
     try {
       final OPaginatedClusterStateV0 paginatedClusterState = new OPaginatedClusterStateV0(pinnedStateEntry);
       paginatedClusterState.setSize(paginatedClusterState.getSize() + sizeDiff);
@@ -1576,9 +1575,9 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
       long pageIndex;
 
-      final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, pinnedStateEntryIndex, true);
+      final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, stateEntryIndex, true);
       if (pinnedStateEntry == null) {
-        loadPageForRead(atomicOperation, fileId, pinnedStateEntryIndex, true);
+        loadPageForRead(atomicOperation, fileId, stateEntryIndex, true);
       }
       try {
         final OPaginatedClusterStateV0 freePageLists = new OPaginatedClusterStateV0(pinnedStateEntry);
@@ -1686,7 +1685,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
       if (newFreePageIndex >= 0) {
         long oldFreePage;
-        final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, pinnedStateEntryIndex, true);
+        final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, stateEntryIndex, true);
         try {
           final OPaginatedClusterStateV0 clusterFreeList = new OPaginatedClusterStateV0(pinnedStateEntry);
           oldFreePage = clusterFreeList.getFreeListPage(newFreePageIndex);
@@ -1718,7 +1717,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
   private void updateFreePagesList(final int freeListIndex, final long pageIndex, final OAtomicOperation atomicOperation)
       throws IOException {
-    final OCacheEntry pinnedStateEntry = loadPageForWrite(atomicOperation, fileId, pinnedStateEntryIndex, true, true);
+    final OCacheEntry pinnedStateEntry = loadPageForWrite(atomicOperation, fileId, stateEntryIndex, true, true);
     try {
       final OPaginatedClusterStateV0 paginatedClusterState = new OPaginatedClusterStateV0(pinnedStateEntry);
       paginatedClusterState.setFreeListPage(freeListIndex, pageIndex);
@@ -1744,7 +1743,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     try {
       final OPaginatedClusterStateV0 paginatedClusterState = new OPaginatedClusterStateV0(pinnedStateEntry);
 
-      pinPage(atomicOperation, pinnedStateEntry);
       paginatedClusterState.setSize(0);
       paginatedClusterState.setRecordsSize(0);
 
@@ -1752,7 +1750,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
         paginatedClusterState.setFreeListPage(i, -1);
       }
 
-      pinnedStateEntryIndex = pinnedStateEntry.getPageIndex();
+      stateEntryIndex = pinnedStateEntry.getPageIndex();
     } finally {
       releasePageFromWrite(atomicOperation, pinnedStateEntry);
     }

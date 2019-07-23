@@ -26,65 +26,42 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
+import javax.management.*;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic.ComponentType;
-import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic.PerformanceCountersHolder;
-import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic.PerformanceSnapshot;
-import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic.StorageCountersHolder;
-import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic.WALCountersHolder;
-import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic.WritCacheCountersHolder;
+import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic.*;
 
 /**
- * Aggregator of performance statistic for whole storage.
- * Allows to gather performance statistic for single thread or for all threads in storage.
- * In case of gathering statistics for single thread statistic for all period is gathered and average values are provided.
- * If you gather statistic for whole system time series of measurements are provided.
- * You can not measure statistic for whole system and for chosen threads at the same time.
- * To gather statistic for single thread use following workflow:
+ * Aggregator of performance statistic for whole storage. Allows to gather performance statistic for single thread or for all
+ * threads in storage. In case of gathering statistics for single thread statistic for all period is gathered and average values are
+ * provided. If you gather statistic for whole system time series of measurements are provided. You can not measure statistic for
+ * whole system and for chosen threads at the same time. To gather statistic for single thread use following workflow:
  * <ol>
  * <li>Call {@link #startThreadMonitoring()}</li>
  * <li>Execute database commands</li>
  * <li>Call {@link #stopThreadMonitoring()}</li>
  * </ol>
- * Instance of {@link OSessionStoragePerformanceStatistic} returned as result of call of last method will contain all
- * performance data are gathered during storage monitoring.
- * To gather statistic for whole system use following workflow:
+ * Instance of {@link OSessionStoragePerformanceStatistic} returned as result of call of last method will contain all performance
+ * data are gathered during storage monitoring. To gather statistic for whole system use following workflow:
  * <ol>
  * <li>Call {@link #startMonitoring()}</li>
  * <li>During monitoring of storage use getXXX methods to get information about performance numbers</li>
  * <li>At the end of monitoring call {@link #stopMonitoring()}</li>
  * </ol>
- * You may access performance data both after you stopped gathering statistic and during gathering of statistic.
- * You may manipulate by manager directly from Java or from JMX from bean with name which consist of prefix {@link #MBEAN_PREFIX}
- * and storage name.
- * If {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} participates in
- * performance monitoring it has to register itself using method {@link #registerComponent(String)}
+ * You may access performance data both after you stopped gathering statistic and during gathering of statistic. You may manipulate
+ * by manager directly from Java or from JMX from bean with name which consist of prefix {@link #MBEAN_PREFIX} and storage name. If
+ * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} participates in performance
+ * monitoring it has to register itself using method {@link #registerComponent(String)}
  */
 public class OPerformanceStatisticManager {
   /**
@@ -169,51 +146,42 @@ public class OPerformanceStatisticManager {
   private final List<String> componentNames = new CopyOnWriteArrayList<>();
 
   /**
-   * Amount of full checkpoints are done for current storage.
-   * Value is updated on demand if monitoring is switched on.
-   * Supported only for disk based storage.
+   * Amount of full checkpoints are done for current storage. Value is updated on demand if monitoring is switched on. Supported
+   * only for disk based storage.
    */
   private long fullCheckpointCount = -1;
 
   /**
-   * Size of write ahead log in bytes.
-   * Value is updated on demand if monitoring is switched on.
-   * Supported only for disk based storage.
+   * Size of write ahead log in bytes. Value is updated on demand if monitoring is switched on. Supported only for disk based
+   * storage.
    */
   private long walSize = -1;
 
   /**
-   * Amount of times when WAL cache is completely filled in and force flush is needed.
-   * Value is updated on demand if monitoring is switched on.
-   * Supported only for disk based storage.
+   * Amount of times when WAL cache is completely filled in and force flush is needed. Value is updated on demand if monitoring is
+   * switched on. Supported only for disk based storage.
    */
   private long walCacheOverflowCount = -1;
 
   /**
-   * Size of read cache in bytes.
-   * Value is updated on demand if monitoring is switched on.
-   * Supported only for disk based storage.
+   * Size of read cache in bytes. Value is updated on demand if monitoring is switched on. Supported only for disk based storage.
    */
   private long readCacheSize = -1;
 
   /**
-   * Size of write cache in bytes.
-   * Value is updated on demand if monitoring is switched on.
-   * Supported only for disk based storage.
+   * Size of write cache in bytes. Value is updated on demand if monitoring is switched on. Supported only for disk based storage.
    */
   private long writeCacheSize = -1;
 
   /**
-   * Size of part of write cache which is not shared with read cache in bytes.
-   * Value is updated on demand if monitoring is switched on.
-   * Supported only for disk based storage.
+   * Size of part of write cache which is not shared with read cache in bytes. Value is updated on demand if monitoring is switched
+   * on. Supported only for disk based storage.
    */
   private long exclusiveWriteCacheSize = 1;
 
   /**
-   * Amount of times when size of write cache is not enough to keep dirty pages and flush of write cache is forced.
-   * Value is updated on demand if monitoring is switched on.
-   * Supported only for disk based storage.
+   * Amount of times when size of write cache is not enough to keep dirty pages and flush of write cache is forced. Value is updated
+   * on demand if monitoring is switched on. Supported only for disk based storage.
    */
   private long writeCacheOverflowCount = -1;
 
@@ -223,28 +191,17 @@ public class OPerformanceStatisticManager {
   private final OAbstractPaginatedStorage storage;
 
   /**
-   * Flags which indicates whether {@link #wowCache} field is initialized on demand.
-   * We use separate flag because <code>null</code> can be valid value.
+   * Flags which indicates whether {@link #wowCache} field is initialized on demand. We use separate flag because <code>null</code>
+   * can be valid value.
    */
   private volatile boolean   wowCacheInitialized;
   /**
-   * Instance of write cache which belongs to current storage, may be <code>null</code> if it is not
-   * disk based storage.
-   * Initialized on demand.
+   * Instance of write cache which belongs to current storage, may be <code>null</code> if it is not disk based storage. Initialized
+   * on demand.
    */
   private volatile OWOWCache wowCache;
 
-  /**
-   * Flags which indicates whether {@link #readCache} field is initialized on demand.
-   * We use separate flag because <code>null</code> can be valid value.
-   */
-  private volatile boolean  readCacheInitialized;
-  /**
-   * Instance of read cache which belongs to current storage, may be <code>null</code> if it is not
-   * disk based storage.
-   * Initialized on demand.
-   */
-  private volatile O2QCache readCache;
+  private volatile boolean readCacheInitialized;
 
   private volatile boolean writeAheadLogInitialized;
 
@@ -279,27 +236,8 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * @return Returns current instance of read cache and initializes local reference if such one is not initialized yet.
-   */
-  private O2QCache gerReadCache() {
-    if (readCacheInitialized)
-      return readCache;
-
-    final OReadCache cache = storage.getReadCache();
-    if (cache instanceof O2QCache) {
-      this.readCache = (O2QCache) cache;
-    } else {
-      this.readCache = null;
-    }
-
-    readCacheInitialized = true;
-
-    return readCache;
-  }
-
-  /**
-   * Starts performance monitoring only for single thread.
-   * After call of this method you can not start system wide monitoring till call of {@link #stopThreadMonitoring()} is performed.
+   * Starts performance monitoring only for single thread. After call of this method you can not start system wide monitoring till
+   * call of {@link #stopThreadMonitoring()} is performed.
    */
   public void startThreadMonitoring() {
     switchLock.acquireWriteLock();
@@ -330,8 +268,8 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * Starts performance monitoring only for whole system.
-   * After call of this method you can not start monitoring on thread level till call of {@link #stopMonitoring()} is performed.
+   * Starts performance monitoring only for whole system. After call of this method you can not start monitoring on thread level
+   * till call of {@link #stopMonitoring()} is performed.
    */
   public void startMonitoring() {
     switchLock.acquireWriteLock();
@@ -489,8 +427,8 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * Average amount of pages which were read from cache for component with given name during single data operation.
-   * If null value is passed or data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Average amount of pages which were read from cache for component with given name during single data operation. If null value is
+   * passed or data for component with passed in name does not exist then <code>-1</code> will be returned.
    *
    * @param componentName Name of component data of which should be returned. Name is case sensitive.
    *
@@ -798,8 +736,7 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * @return Amount of time which is spent on each "page flush" operation of write cache or <code>-1</code> if
-   * value is undefined.
+   * @return Amount of time which is spent on each "page flush" operation of write cache or <code>-1</code> if value is undefined.
    */
   public long getWriteCacheFlushOperationsTime() {
     switchLock.acquireReadLock();
@@ -827,8 +764,7 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * @return Amount of time which is spent on "fuzzy checkpoint" operation or <code>-1</code> if
-   * value if undefined.
+   * @return Amount of time which is spent on "fuzzy checkpoint" operation or <code>-1</code> if value if undefined.
    */
   public long getWriteCacheFuzzyCheckpointTime() {
     switchLock.acquireReadLock();
@@ -904,20 +840,7 @@ public class OPerformanceStatisticManager {
    * @return Size of read cache in bytes or <code>-1</code> if value is undefined.
    */
   public long getReadCacheSize() {
-    switchLock.acquireReadLock();
-    try {
-      if (enabled) {
-        final O2QCache cache = gerReadCache();
-        if (cache != null)
-          readCacheSize = cache.getUsedMemory();
-
-        return readCacheSize;
-      } else {
-        return readCacheSize;
-      }
-    } finally {
-      switchLock.releaseReadLock();
-    }
+    return -1;
   }
 
   /**
@@ -1014,8 +937,7 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * @return Time which is spent on logging of "start atomic operation" record or <code>-1</code> if value is
-   * undefined.
+   * @return Time which is spent on logging of "start atomic operation" record or <code>-1</code> if value is undefined.
    */
   public long getWALStartAOLogRecordTime() {
     switchLock.acquireReadLock();
@@ -1043,8 +965,7 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * @return time which is spent on logging of  "stop atomic operation" record or <code>-1</code>
-   * if value is undefined.
+   * @return time which is spent on logging of  "stop atomic operation" record or <code>-1</code> if value is undefined.
    */
   public long getWALStopAOLogRecordTime() {
     switchLock.acquireReadLock();
@@ -1101,8 +1022,8 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * Iterates over all live threads and accumulates write performance statics gathered form threads,
-   * also accumulates statistic from dead threads which were alive when when gathering of performance measurements is started.
+   * Iterates over all live threads and accumulates write performance statics gathered form threads, also accumulates statistic from
+   * dead threads which were alive when when gathering of performance measurements is started.
    *
    * @return Aggregated write cache performance statistic
    */
@@ -1161,8 +1082,8 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * Iterates over all live threads and accumulates storage performance statics gathered form threads,
-   * also accumulates statistic from dead threads which were alive when when gathering of performance measurements is started.
+   * Iterates over all live threads and accumulates storage performance statics gathered form threads, also accumulates statistic
+   * from dead threads which were alive when when gathering of performance measurements is started.
    *
    * @return Aggregated storage performance statistic
    */
@@ -1221,8 +1142,8 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * Iterates over all live threads and accumulates write ahead log performance statics gathered form threads,
-   * also accumulates statistic from dead threads which were alive when when gathering of performance measurements is started.
+   * Iterates over all live threads and accumulates write ahead log performance statics gathered form threads, also accumulates
+   * statistic from dead threads which were alive when when gathering of performance measurements is started.
    *
    * @return Aggregated write ahead log performance statistic
    */
@@ -1281,8 +1202,8 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * Iterates over all live threads and accumulates performance statics gathered form threads on system level,
-   * also accumulates statistic from dead threads which were alive when when gathering of performance measurements is started.
+   * Iterates over all live threads and accumulates performance statics gathered form threads on system level, also accumulates
+   * statistic from dead threads which were alive when when gathering of performance measurements is started.
    *
    * @param countersHolder Holder which is used to accumulate all performance statistic data
    */
@@ -1326,8 +1247,8 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * Iterates over all live threads and accumulates performance statics gathered form threads for provided component,
-   * also accumulates statistic from dead threads which were alive when when gathering of performance measurements is started.
+   * Iterates over all live threads and accumulates performance statics gathered form threads for provided component, also
+   * accumulates statistic from dead threads which were alive when when gathering of performance measurements is started.
    *
    * @param componentCountersHolder Holder which is used to accumulate all performance statistic data for given component
    * @param componentName           Name of component

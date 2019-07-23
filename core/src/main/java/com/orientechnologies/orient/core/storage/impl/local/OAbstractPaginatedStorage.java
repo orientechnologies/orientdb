@@ -318,8 +318,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
           setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
         }
-
-        readCache.loadCacheState(writeCache);
       } catch (final RuntimeException e) {
         try {
           if (writeCache != null) {
@@ -5602,7 +5600,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
-        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, false, null);
+        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, false, null);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null) {

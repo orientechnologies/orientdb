@@ -63,8 +63,6 @@ public class OHashTableDirectory extends ODurableComponent {
       assert firstEntry.getPageIndex() == 0;
     }
 
-    pinPage(atomicOperation, firstEntry);
-
     try {
       final ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
 
@@ -84,7 +82,6 @@ public class OHashTableDirectory extends ODurableComponent {
       final OCacheEntry entry = loadPageForRead(atomicOperation, fileId, i, true);
       assert entry != null;
 
-      pinPage(atomicOperation, entry);
       releasePageFromRead(atomicOperation, entry);
     }
   }
