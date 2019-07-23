@@ -47,8 +47,7 @@ import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.pagelog.PageLog;
-import com.orientechnologies.orient.core.storage.cache.local.pagelog.PageLogNoOP;
+import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
@@ -417,21 +416,22 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   /**
    * Double write log which is used in write cache to prevent page tearing in case of server crash.
    */
-  private final PageLog doubleWriteLog;
+  private final DoubleWriteLog doubleWriteLog;
 
   /**
    * Semaphore which is used to ensure that writing to and truncation of {@link #doubleWriteLog} is performed in crash safe manner.
    * This lock should be wrapped above {@link #filesLock} to prevent deadlocks.
    *
-   * @see PageLog
+   * @see DoubleWriteLog
    */
   private final Object doubleWriteLock = new Object();
 
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
-      final long pagesFlushInterval, final int shutdownTimeout, final long exclusiveWriteCacheMaxSize, final Path storagePath,
-      final String storageName, final OBinarySerializer<String> stringSerializer,
-      final OClosableLinkedContainer<Long, OFileClassic> files, final int id, final OChecksumMode checksumMode, byte[] iv,
-      byte[] aesKey, final boolean callFsync, final boolean printCacheStatistics, final int statisticsPrintInterval) {
+      final DoubleWriteLog doubleWriteLog, final long pagesFlushInterval, final int shutdownTimeout,
+      final long exclusiveWriteCacheMaxSize, final Path storagePath, final String storageName,
+      final OBinarySerializer<String> stringSerializer, final OClosableLinkedContainer<Long, OFileClassic> files, final int id,
+      final OChecksumMode checksumMode, byte[] iv, byte[] aesKey, final boolean callFsync, final boolean printCacheStatistics,
+      final int statisticsPrintInterval) {
 
     if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
       throw new OInvalidStorageEncryptionKeyException("Invalid length of the encryption key, provided size is " + aesKey.length);
@@ -473,7 +473,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       this.stringSerializer = stringSerializer;
       this.storageName = storageName;
 
-      this.doubleWriteLog = new PageLogNoOP();
+      this.doubleWriteLog = doubleWriteLog;
 
       if (pagesFlushInterval > 0) {
         flushFuture = commitExecutor.schedule(new PeriodicFlushTask(), pagesFlushInterval, TimeUnit.MILLISECONDS);
@@ -488,13 +488,15 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    * Loads files already registered in storage. Has to be called before usage of this cache
    */
   public void loadRegisteredFiles() throws IOException, InterruptedException {
-    filesLock.acquireWriteLock();
-    try {
-      initNameIdMapping();
+    synchronized (doubleWriteLock) {
+      filesLock.acquireWriteLock();
+      try {
+        initNameIdMapping();
 
-      doubleWriteLog.open(storagePath);
-    } finally {
-      filesLock.releaseWriteLock();
+        doubleWriteLog.open(storageName, storagePath);
+      } finally {
+        filesLock.releaseWriteLock();
+      }
     }
   }
 
@@ -1440,63 +1442,65 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public long[] close() throws IOException {
-    flush();
+    synchronized (doubleWriteLock) {
+      flush();
 
-    stopFlush();
+      stopFlush();
 
-    filesLock.acquireWriteLock();
-    try {
-      final Collection<Integer> fileIds = nameIdMap.values();
+      filesLock.acquireWriteLock();
+      try {
+        final Collection<Integer> fileIds = nameIdMap.values();
 
-      final List<Long> closedIds = new ArrayList<>(1_000);
-      final Map<Integer, String> idFileNameMap = new HashMap<>(1_000);
+        final List<Long> closedIds = new ArrayList<>(1_000);
+        final Map<Integer, String> idFileNameMap = new HashMap<>(1_000);
 
-      for (final Integer intId : fileIds) {
-        if (intId >= 0) {
-          final long extId = composeFileId(id, intId);
-          final OFileClassic fileClassic = files.remove(extId);
+        for (final Integer intId : fileIds) {
+          if (intId >= 0) {
+            final long extId = composeFileId(id, intId);
+            final OFileClassic fileClassic = files.remove(extId);
 
-          idFileNameMap.put(intId, fileClassic.getName());
-          fileClassic.close();
-          closedIds.add(extId);
+            idFileNameMap.put(intId, fileClassic.getName());
+            fileClassic.close();
+            closedIds.add(extId);
+          }
         }
-      }
 
-      try (final FileChannel nameIdMapHolder = FileChannel
-          .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-        nameIdMapHolder.truncate(0);
+        try (final FileChannel nameIdMapHolder = FileChannel
+            .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+          nameIdMapHolder.truncate(0);
 
-        for (final Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
-          final String fileName;
+          for (final Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
+            final String fileName;
 
-          if (entry.getValue() >= 0) {
-            fileName = idFileNameMap.get(entry.getValue());
-          } else {
-            fileName = entry.getKey();
+            if (entry.getValue() >= 0) {
+              fileName = idFileNameMap.get(entry.getValue());
+            } else {
+              fileName = entry.getKey();
+            }
+
+            writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue(), fileName), false);
           }
 
-          writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue(), fileName), false);
+          nameIdMapHolder.force(true);
         }
 
-        nameIdMapHolder.force(true);
+        doubleWriteLog.truncate();
+
+        nameIdMap.clear();
+        idNameMap.clear();
+
+        final long[] ids = new long[closedIds.size()];
+        int n = 0;
+
+        for (final long id : closedIds) {
+          ids[n] = id;
+          n++;
+        }
+
+        return ids;
+      } finally {
+        filesLock.releaseWriteLock();
       }
-
-      doubleWriteLog.close();
-
-      nameIdMap.clear();
-      idNameMap.clear();
-
-      final long[] ids = new long[closedIds.size()];
-      int n = 0;
-
-      for (final long id : closedIds) {
-        ids[n] = id;
-        n++;
-      }
-
-      return ids;
-    } finally {
-      filesLock.releaseWriteLock();
     }
   }
 
@@ -1696,6 +1700,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     for (final Long fid : result) {
       fIds[n] = fid;
       n++;
+    }
+
+    synchronized (doubleWriteLock) {
+      doubleWriteLog.truncate();
     }
 
     return fIds;
@@ -2425,9 +2433,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     synchronized (doubleWriteLock) {
       buffer.position(0);
-      final boolean fsyncFiles = doubleWriteLog.write(new ByteBuffer[] { buffer });
 
       final long externalId = composeFileId(id, fileId);
+      final boolean fsyncFiles = doubleWriteLog.write(new ByteBuffer[] { buffer }, externalId, (int) pageIndex);
+
       final OClosableEntry<Long, OFileClassic> entry = files.acquire(externalId);
       try {
         final OFileClassic fileClassic = entry.get();
@@ -3190,27 +3199,27 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> firstChunk = chunk.get(0);
 
+    final OCachePointer firstCachePointer = firstChunk.four;
+    final long firstFileId = firstCachePointer.getFileId();
+    final long firstPageIndex = firstCachePointer.getPageIndex();
+
     synchronized (doubleWriteLock) {
-      final boolean fsyncFiles = doubleWriteLog.write(buffers);
+      final boolean fsyncFiles = doubleWriteLog.write(buffers, firstFileId, (int) firstPageIndex);
 
       for (ByteBuffer buffer : buffers) {
         buffer.rewind();
-      }
 
-      final OCachePointer firstCachePointer = firstChunk.four;
-      final long firstFileId = firstCachePointer.getFileId();
-      final long firstPageIndex = firstCachePointer.getPageIndex();
+        final OClosableEntry<Long, OFileClassic> fileEntry = files.acquire(firstFileId);
+        try {
+          final OFileClassic file = fileEntry.get();
+          file.write(firstPageIndex * pageSize, buffers);
+        } finally {
+          files.release(fileEntry);
+        }
 
-      final OClosableEntry<Long, OFileClassic> fileEntry = files.acquire(firstFileId);
-      try {
-        final OFileClassic file = fileEntry.get();
-        file.write(firstPageIndex * pageSize, buffers);
-      } finally {
-        files.release(fileEntry);
-      }
-
-      if (fsyncFiles) {
-        fsyncFiles();
+        if (fsyncFiles) {
+          fsyncFiles();
+        }
       }
     }
 

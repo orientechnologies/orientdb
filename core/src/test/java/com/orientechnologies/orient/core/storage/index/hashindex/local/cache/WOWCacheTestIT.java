@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogNoOP;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
@@ -119,8 +120,8 @@ public class WOWCacheTestIT {
 
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, null, null, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
-    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 10, 100, storagePath, storageName, OStringSerializer.INSTANCE,
-        files, 1, OChecksumMode.StoreAndVerify, null, null, false, true, 10);
+    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, new DoubleWriteLogNoOP(), 10, 10, 100, storagePath, storageName,
+        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, null, null, false, true, 10);
 
     wowCache.loadRegisteredFiles();
   }
@@ -186,8 +187,8 @@ public class WOWCacheTestIT {
 
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, aesKey, iv, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
-    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 10, 100, storagePath, storageName, OStringSerializer.INSTANCE,
-        files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false, true, 10);
+    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, new DoubleWriteLogNoOP(), 10, 10, 100, storagePath, storageName,
+        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false, true, 10);
 
     wowCache.loadRegisteredFiles();
 
@@ -355,8 +356,8 @@ public class WOWCacheTestIT {
 
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, aesKey, iv, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
-    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 10, 100, storagePath, storageName, OStringSerializer.INSTANCE,
-        files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false, true, 10);
+    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, new DoubleWriteLogNoOP(), 10, 10, 100, storagePath, storageName,
+        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false, true, 10);
 
     wowCache.loadRegisteredFiles();
 
@@ -745,9 +746,8 @@ public class WOWCacheTestIT {
     updatedIv[updatedIv.length - 1] = iv[iv.length - 1];
 
     cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(updatedIv));
-    System.arraycopy(
-        cipher.doFinal(content, OWOWCache.CHECKSUM_OFFSET, content.length - OWOWCache.CHECKSUM_OFFSET), 0,
-        content, OWOWCache.CHECKSUM_OFFSET, content.length - OWOWCache.CHECKSUM_OFFSET);
+    System.arraycopy(cipher.doFinal(content, OWOWCache.CHECKSUM_OFFSET, content.length - OWOWCache.CHECKSUM_OFFSET), 0, content,
+        OWOWCache.CHECKSUM_OFFSET, content.length - OWOWCache.CHECKSUM_OFFSET);
 
     Assert.assertArrayEquals(Arrays.copyOfRange(content, ODurablePage.NEXT_FREE_POSITION, 8 + ODurablePage.NEXT_FREE_POSITION),
         value);
