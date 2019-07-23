@@ -488,15 +488,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    * Loads files already registered in storage. Has to be called before usage of this cache
    */
   public void loadRegisteredFiles() throws IOException, InterruptedException {
-    synchronized (doubleWriteLock) {
-      filesLock.acquireWriteLock();
-      try {
-        initNameIdMapping();
+    filesLock.acquireWriteLock();
+    try {
+      initNameIdMapping();
 
-        doubleWriteLog.open(storageName, storagePath);
-      } finally {
-        filesLock.releaseWriteLock();
-      }
+      doubleWriteLog.open(storageName, storagePath);
+    } finally {
+      filesLock.releaseWriteLock();
     }
   }
 
@@ -1445,61 +1443,59 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     flush();
     stopFlush();
 
-    synchronized (doubleWriteLock) {
-      filesLock.acquireWriteLock();
-      try {
-        final Collection<Integer> fileIds = nameIdMap.values();
+    filesLock.acquireWriteLock();
+    try {
+      final Collection<Integer> fileIds = nameIdMap.values();
 
-        final List<Long> closedIds = new ArrayList<>(1_000);
-        final Map<Integer, String> idFileNameMap = new HashMap<>(1_000);
+      final List<Long> closedIds = new ArrayList<>(1_000);
+      final Map<Integer, String> idFileNameMap = new HashMap<>(1_000);
 
-        for (final Integer intId : fileIds) {
-          if (intId >= 0) {
-            final long extId = composeFileId(id, intId);
-            final OFileClassic fileClassic = files.remove(extId);
+      for (final Integer intId : fileIds) {
+        if (intId >= 0) {
+          final long extId = composeFileId(id, intId);
+          final OFileClassic fileClassic = files.remove(extId);
 
-            idFileNameMap.put(intId, fileClassic.getName());
-            fileClassic.close();
-            closedIds.add(extId);
-          }
+          idFileNameMap.put(intId, fileClassic.getName());
+          fileClassic.close();
+          closedIds.add(extId);
         }
-
-        try (final FileChannel nameIdMapHolder = FileChannel
-            .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-          nameIdMapHolder.truncate(0);
-
-          for (final Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
-            final String fileName;
-
-            if (entry.getValue() >= 0) {
-              fileName = idFileNameMap.get(entry.getValue());
-            } else {
-              fileName = entry.getKey();
-            }
-
-            writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue(), fileName), false);
-          }
-
-          nameIdMapHolder.force(true);
-        }
-
-        doubleWriteLog.truncate();
-
-        nameIdMap.clear();
-        idNameMap.clear();
-
-        final long[] ids = new long[closedIds.size()];
-        int n = 0;
-
-        for (final long id : closedIds) {
-          ids[n] = id;
-          n++;
-        }
-
-        return ids;
-      } finally {
-        filesLock.releaseWriteLock();
       }
+
+      try (final FileChannel nameIdMapHolder = FileChannel
+          .open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+        nameIdMapHolder.truncate(0);
+
+        for (final Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
+          final String fileName;
+
+          if (entry.getValue() >= 0) {
+            fileName = idFileNameMap.get(entry.getValue());
+          } else {
+            fileName = entry.getKey();
+          }
+
+          writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue(), fileName), false);
+        }
+
+        nameIdMapHolder.force(true);
+      }
+
+      doubleWriteLog.truncate();
+
+      nameIdMap.clear();
+      idNameMap.clear();
+
+      final long[] ids = new long[closedIds.size()];
+      int n = 0;
+
+      for (final long id : closedIds) {
+        ids[n] = id;
+        n++;
+      }
+
+      return ids;
+    } finally {
+      filesLock.releaseWriteLock();
     }
   }
 
@@ -1701,9 +1697,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       n++;
     }
 
-    synchronized (doubleWriteLock) {
-      doubleWriteLog.truncate();
-    }
+    doubleWriteLog.truncate();
 
     return fIds;
   }
