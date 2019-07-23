@@ -185,4 +185,11 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       }
     }).sum();
   }
+
+  @Override
+  public ByteBuffer loadPage(long fileId, int pageIndex) throws IOException {
+    synchronized (mutex) {
+      return null;
+    }
+  }
 }

@@ -26,4 +26,6 @@ public interface DoubleWriteLog {
   void truncate() throws IOException;
 
   void open(String storageName, Path storagePath) throws IOException;
+
+  ByteBuffer loadPage(final long fileId, final int pageIndex) throws IOException;
 }
