@@ -95,6 +95,9 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
         output.append(ODistributedOutput.formatLatency(dManager, dManager.getClusterConfiguration()));
       if (parsedStatement.messages)
         output.append(ODistributedOutput.formatMessages(dManager, dManager.getClusterConfiguration()));
+      if (parsedStatement.locks) {
+        output.append(ODistributedOutput.formatNewRecordLocks(dManager, databaseName));
+      }
       return output.toString();
     }
 
@@ -103,6 +106,10 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
       output.field("servers", dManager.getClusterConfiguration(), OType.EMBEDDED);
     if (parsedStatement.db)
       output.field("database", cfg.getDocument(), OType.EMBEDDED);
+
+    if (parsedStatement.locks) {
+      output.field("locks", ODistributedOutput.getRequestsStatus(dManager, databaseName));
+    }
 
     return output;
   }

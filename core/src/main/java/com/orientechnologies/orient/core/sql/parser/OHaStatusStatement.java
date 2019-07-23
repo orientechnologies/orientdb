@@ -20,6 +20,7 @@ public class OHaStatusStatement extends OStatement {
   public boolean latency    = false;
   public boolean messages   = false;
   public boolean outputText = false;
+  public boolean locks      = false;
 
   public OHaStatusStatement(int id) {
     super(id);
@@ -50,6 +51,9 @@ public class OHaStatusStatement extends OStatement {
     }
     if (messages) {
       builder.append(" -messages");
+    }
+    if (locks) {
+      builder.append(" -locks");
     }
     if (outputText) {
       builder.append(" -output=text");

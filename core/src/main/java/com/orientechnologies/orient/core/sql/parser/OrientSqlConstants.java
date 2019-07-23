@@ -807,6 +807,7 @@ public interface OrientSqlConstants {
     "\"-db\"",
     "\"-latency\"",
     "\"-messages\"",
+    "\"-locks\"",
     "\"-all\"",
     "\"-output=text\"",
     "\"-force\"",
