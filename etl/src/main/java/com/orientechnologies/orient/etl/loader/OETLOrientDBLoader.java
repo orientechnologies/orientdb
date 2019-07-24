@@ -119,8 +119,10 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
 
       if (clusterName != null) {
         db.save(doc, clusterName);
-      } else {
+      } else if(doc.getClassName() != null){
         db.save(doc);
+      } else {
+        OETLContextWrapper.getInstance().getMessageHandler().debug(this, "The ETL loader is not explicitly saving the record %s - no class or cluster set", doc.toString());
       }
 
     } else {
