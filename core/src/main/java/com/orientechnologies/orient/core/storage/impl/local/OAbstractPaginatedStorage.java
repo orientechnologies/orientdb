@@ -437,7 +437,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       indexEngineNameMap.put(engineData.getName(), engine);
-      while (engineData.getIndexId() <= indexEngines.size()) {
+      while (engineData.getIndexId() >= indexEngines.size()) {
         indexEngines.add(null);
       }
 
