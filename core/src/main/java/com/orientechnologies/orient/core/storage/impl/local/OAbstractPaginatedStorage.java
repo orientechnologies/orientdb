@@ -137,6 +137,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected static final OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
 
+  public static final int STORAGE_CONFIGURATION_INDEX_ID = -1;
+
   static {
     fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
     fuzzyCheckpointExecutor.setMaximumPoolSize(1);
@@ -2524,7 +2526,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       if (transaction.get() != null) {
-        return doRemoveKeyFromIndex(indexId, key);
+        return removeKeyFromIndexInternal(indexId, key);
       }
 
       checkOpenness();
@@ -2535,7 +2537,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-        return doRemoveKeyFromIndex(indexId, key);
+        return removeKeyFromIndexInternal(indexId, key);
       } finally {
         stateLock.releaseReadLock();
       }
@@ -2550,15 +2552,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private boolean doRemoveKeyFromIndex(final int indexId, final Object key) throws OInvalidIndexEngineIdException {
+  public boolean removeKeyFromIndexInternal(final int indexId, final Object key) throws OInvalidIndexEngineIdException {
     try {
       checkIndexId(indexId);
 
       makeStorageDirty();
       final OBaseIndexEngine engine = indexEngines.get(indexId);
-      assert indexId == engine.getId();
-
-      return engine.remove(key);
+      if (engine.getEngineAPIVersion() == OIndexEngine.VERSION) {
+        return ((OIndexEngine) engine).remove(key);
+      } else {
+        final OV1IndexEngine v1IndexEngine = (OV1IndexEngine) engine;
+        if (!v1IndexEngine.isMultiValue()) {
+          return ((OSingleValueIndexEngine) engine).remove(key);
+        } else {
+          throw new OStorageException("To remove entry from multi-value index not only key but value also should be provided");
+        }
+      }
     } catch (final IOException e) {
       throw OException.wrapException(new OStorageException("Error during removal of entry with key " + key + " from index "), e);
     }
@@ -2790,7 +2799,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       if (transaction.get() != null) {
-        doPutRidIndexEntry(indexId, key, value);
+        putRidIndexEntryInternal(indexId, key, value);
         return;
       }
 
@@ -2802,7 +2811,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-        doPutRidIndexEntry(indexId, key, value);
+        putRidIndexEntryInternal(indexId, key, value);
       } finally {
         stateLock.releaseReadLock();
       }
@@ -2814,6 +2823,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  public void putRidIndexEntryInternal(final int indexId, final Object key, final ORID value)
+      throws OInvalidIndexEngineIdException {
+    try {
+      checkIndexId(indexId);
+
+      final OBaseIndexEngine engine = indexEngines.get(indexId);
+      assert engine.getId() == indexId;
+
+      makeStorageDirty();
+
+      ((OV1IndexEngine) engine).put(key, value);
+    } catch (final IOException e) {
+      throw OException.wrapException(new OStorageException("Cannot put key " + key + " value " + value + " entry to the index"), e);
     }
   }
 

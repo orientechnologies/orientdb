@@ -24,6 +24,8 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValuePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValueRemoveCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineCreateCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineDeleteCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.*;
@@ -152,6 +154,12 @@ public final class OWALRecordsFactory {
       break;
     case INDEX_ENGINE_DELETE_CO:
       walRecord = new OIndexEngineDeleteCO();
+      break;
+    case CELL_BTREE_SINGLE_VALUE_PUT_CO:
+      walRecord = new OCellBTreeSingleValuePutCO();
+      break;
+    case CELL_BTREE_SINGLE_VALUE_REMOVE_CO:
+      walRecord = new OCellBTreeSingleValueRemoveCO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

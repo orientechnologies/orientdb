@@ -35,8 +35,6 @@ public interface OBaseIndexEngine {
 
   Object get(Object key);
 
-  boolean remove(Object key) throws IOException;
-
   Object getFirstKey();
 
   Object getLastKey();

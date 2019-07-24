@@ -32,9 +32,9 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
     this.id = id;
 
     if (version < 3) {
-      this.sbTree = new OCellBTreeSingleValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      this.sbTree = new OCellBTreeSingleValueV1<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 3) {
-      this.sbTree = new OCellBTreeSingleValueV3<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      this.sbTree = new OCellBTreeSingleValueV3<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }

@@ -42,6 +42,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValuePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValueRemoveCO;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 
 import java.io.IOException;
@@ -86,9 +88,12 @@ public final class OCellBTreeSingleValueV3<K> extends ODurableComponent implemen
   private       OBinarySerializer<K> keySerializer;
   private       OType[]              keyTypes;
 
-  public OCellBTreeSingleValueV3(final String name, final String dataFileExtension, final String nullFileExtension,
+  private final int indexId;
+
+  public OCellBTreeSingleValueV3(final String name, int indexId, final String dataFileExtension, final String nullFileExtension,
       final OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
+    this.indexId = indexId;
     acquireExclusiveLock();
     try {
       this.nullFileExtension = nullFileExtension;
@@ -308,14 +313,18 @@ public final class OCellBTreeSingleValueV3<K> extends ODurableComponent implemen
             updateSize(sizeDiff, atomicOperation);
           }
 
+          atomicOperation.addComponentOperation(
+              new OCellBTreeSingleValuePutCO(serializedKey, value, oldValue, keySerializer.getId(), indexId, null));
+
         } else {
           final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
 
           int sizeDiff = 0;
 
+          final ORID oldValue;
           try {
             final ONullBucket nullBucket = new ONullBucket(cacheEntry, false);
-            final ORID oldValue = nullBucket.getValue();
+            oldValue = nullBucket.getValue();
 
             if (validator != null) {
               final Object result = validator.validate(null, oldValue, value);
@@ -336,6 +345,13 @@ public final class OCellBTreeSingleValueV3<K> extends ODurableComponent implemen
 
           sizeDiff++;
           updateSize(sizeDiff, atomicOperation);
+
+          final byte[] serializedValue = new byte[OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE];
+          OShortSerializer.INSTANCE.serializeNative((short) value.getClusterId(), serializedValue, 0);
+          OLongSerializer.INSTANCE.serializeNative(value.getClusterPosition(), serializedValue, OShortSerializer.SHORT_SIZE);
+
+          atomicOperation.addComponentOperation(
+              new OCellBTreeSingleValuePutCO(null, value, oldValue, keySerializer.getId(), indexId, nullFileExtension));
         }
         return true;
       } finally {
@@ -507,12 +523,23 @@ public final class OCellBTreeSingleValueV3<K> extends ODurableComponent implemen
           }
 
           removedValue = removeKey(atomicOperation, bucketSearchResult);
+
+          assert removedValue != null;
+
+          final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
+          atomicOperation.addComponentOperation(
+              new OCellBTreeSingleValueRemoveCO(keySerializer.getId(), indexId, null, serializedKey, removedValue));
         } else {
           if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
             return null;
           }
 
           removedValue = removeNullBucket(atomicOperation);
+
+          if (removedValue != null) {
+            atomicOperation
+                .addComponentOperation(new OCellBTreeSingleValueRemoveCO(keySerializer.getId(), indexId, null, null, removedValue));
+          }
         }
         return removedValue;
       } finally {

@@ -103,7 +103,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     cluster = OPaginatedClusterFactory
         .createCluster(COMPONENT_NAME, OPaginatedCluster.getLatestBinaryVersion(), storage, DATA_FILE_EXTENSION,
             MAP_FILE_EXTENSION);
-    btree = new OCellBTreeSingleValueV1<>(COMPONENT_NAME, TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
+    btree = new OCellBTreeSingleValueV1<>(COMPONENT_NAME, OAbstractPaginatedStorage.STORAGE_CONFIGURATION_INDEX_ID,
+        TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
 
     this.storage = storage;

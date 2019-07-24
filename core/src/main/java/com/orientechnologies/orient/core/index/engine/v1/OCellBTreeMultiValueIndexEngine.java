@@ -107,15 +107,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public boolean remove(Object key) {
-    try {
-      return sbTree.remove(key);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during removal of key " + key + " from index " + name), e);
-    }
-  }
-
-  @Override
   public boolean remove(Object key, ORID value) {
     try {
       return sbTree.remove(key, value);
