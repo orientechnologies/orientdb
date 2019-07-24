@@ -136,6 +136,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public Set<ORecordId> cancel(ODistributedServerManager current, ODatabaseDocumentInternal database) {
+    destroy();
     return null;
   }
 

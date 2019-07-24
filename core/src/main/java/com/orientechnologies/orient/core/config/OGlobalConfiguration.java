@@ -847,7 +847,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
    */
   DISTRIBUTED_TX_EXPIRE_TIMEOUT("distributed.txAliveTimeout",
       "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback pending transactions after a while",
-      Long.class, 30000l, true),
+      Long.class, 1800000l, true),
 
   /**
    * @Since 2.2.6
