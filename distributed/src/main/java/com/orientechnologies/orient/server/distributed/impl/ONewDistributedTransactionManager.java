@@ -85,6 +85,10 @@ public class ONewDistributedTransactionManager {
       } catch (OConcurrentCreateException | ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
         // Nothing just retry
         if (count > nretry) {
+          ODistributedTxContext context = localDistributedDatabase.getTxContext(requestId);
+          if (context != null) {
+            context.destroy();
+          }
           throw ex;
         }
         try {
@@ -93,6 +97,12 @@ public class ONewDistributedTransactionManager {
           OException.wrapException(new OInterruptedException(e.getMessage()), e);
         }
 
+      } catch (RuntimeException | Error ex) {
+        ODistributedTxContext context = localDistributedDatabase.getTxContext(requestId);
+        if (context != null) {
+          context.destroy();
+        }
+        throw ex;
       } finally {
         distributedDatabase.endOperation();
       }
@@ -294,19 +304,20 @@ public class ONewDistributedTransactionManager {
           break;
         case OTxConcurrentModification.ID:
           ORecordId recordId = ((OTxConcurrentModification) result).getRecordId();
-          messages.add(String
-              .format("concurrent modification record (node "+responseManager.getNodeNameFromPayload(result)+"): %s database version: %d transaction version: %d", recordId.toString(),
-                  ((OTxConcurrentModification) result).getVersion(), iTx.getRecordEntry(recordId).getRecord().getVersion()));
+          messages.add(String.format("concurrent modification record (node " + responseManager.getNodeNameFromPayload(result)
+                  + "): %s database version: %d transaction version: %d", recordId.toString(),
+              ((OTxConcurrentModification) result).getVersion(), iTx.getRecordEntry(recordId).getRecord().getVersion()));
           break;
         case OTxException.ID:
           exceptions.add(((OTxException) result).getException());
           OLogManager.instance().debug(this, "distributed exception", ((OTxException) result).getException());
-          messages.add(String.format("exception (node "+responseManager.getNodeNameFromPayload(result)+"): '%s'", ((OTxException) result).getException().getMessage()));
+          messages.add(String.format("exception (node " + responseManager.getNodeNameFromPayload(result) + "): '%s'",
+              ((OTxException) result).getException().getMessage()));
           break;
         case OTxUniqueIndex.ID:
-          messages.add(String
-              .format("unique index violation on index (node "+responseManager.getNodeNameFromPayload(result)+"):'$s' with key:'%s' and rid:'%s'", ((OTxUniqueIndex) result).getIndex(),
-                  ((OTxUniqueIndex) result).getKey(), ((OTxUniqueIndex) result).getRecordId()));
+          messages.add(String.format("unique index violation on index (node " + responseManager.getNodeNameFromPayload(result)
+                  + "):'$s' with key:'%s' and rid:'%s'", ((OTxUniqueIndex) result).getIndex(), ((OTxUniqueIndex) result).getKey(),
+              ((OTxUniqueIndex) result).getRecordId()));
           break;
 
         }
