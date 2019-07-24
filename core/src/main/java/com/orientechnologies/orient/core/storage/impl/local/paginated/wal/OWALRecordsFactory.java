@@ -24,6 +24,8 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineCreateCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineDeleteCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.*;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
@@ -144,6 +146,12 @@ public final class OWALRecordsFactory {
       break;
     case CLUSTER_UPDATE_RECORD_CO:
       walRecord = new OPaginatedClusterUpdateRecordCO();
+      break;
+    case INDEX_ENGINE_CREATE_CO:
+      walRecord = new OIndexEngineCreateCO();
+      break;
+    case INDEX_ENGINE_DELETE_CO:
+      walRecord = new OIndexEngineDeleteCO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -53,8 +52,10 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   private final OSBTree<Object, Object> sbTree;
   private final int                     version;
   private final String                  name;
+  private final int                     id;
 
-  public OSBTreeIndexEngine(String name, OAbstractPaginatedStorage storage, int version) {
+  public OSBTreeIndexEngine(final int id, String name, OAbstractPaginatedStorage storage, int version) {
+    this.id = id;
     this.name = name;
     this.version = version;
 
@@ -65,6 +66,11 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     } else {
       throw new IllegalStateException("Invalid version of index, version = " + version);
     }
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
@@ -82,8 +88,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
     try {
       //noinspection unchecked
       sbTree.create(keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport, encryption);

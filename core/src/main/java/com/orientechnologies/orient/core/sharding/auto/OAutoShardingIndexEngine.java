@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sharding.auto;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.encryption.OEncryption;
@@ -39,7 +40,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -61,11 +61,18 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   private final String                           name;
   private       int                              partitionSize;
   private final AtomicLong                       bonsayFileId = new AtomicLong(0);
+  private final int                              id;
 
-  OAutoShardingIndexEngine(final String iName, final OAbstractPaginatedStorage iStorage, final int iVersion) {
+  OAutoShardingIndexEngine(final String iName, int id, final OAbstractPaginatedStorage iStorage, final int iVersion) {
     this.name = iName;
+    this.id = id;
     this.storage = iStorage;
     this.version = iVersion;
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
@@ -79,8 +86,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   @Override
   public void create(final OBinarySerializer valueSerializer, final boolean isAutomatic, final OType[] keyTypes,
-      final boolean nullPointerSupport, final OBinarySerializer keySerializer, final int keySize, final Set<String> clustersToIndex,
-      final Map<String, String> engineProperties, final ODocument metadata, OEncryption encryption) {
+      final boolean nullPointerSupport, final OBinarySerializer keySerializer, final int keySize, final Map<String, String> engineProperties,
+      OEncryption encryption) {
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
 
@@ -94,9 +101,14 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
     }
 
-    this.partitionSize = clustersToIndex.size();
-    if (metadata != null && metadata.containsField("partitions"))
-      this.partitionSize = metadata.field("partitions");
+    final String partitionsProperty = engineProperties.get("partitions");
+    if (partitionsProperty != null) {
+      try {
+        this.partitionSize = Integer.valueOf(partitionsProperty);
+      } catch (NumberFormatException e) {
+        OLogManager.instance().error(this, "Invalid value of 'partitions' property : `" + partitionsProperty + "`", e);
+      }
+    }
 
     engineProperties.put("partitions", "" + partitionSize);
 

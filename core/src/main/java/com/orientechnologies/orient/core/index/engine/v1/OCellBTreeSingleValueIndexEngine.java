@@ -18,17 +18,19 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.OCe
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
   private static final String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OCellBTreeSingleValue<Object> sbTree;
-  private final String                          name;
+  private final String                        name;
+  private final int                           id;
 
-  public OCellBTreeSingleValueIndexEngine(String name, OAbstractPaginatedStorage storage, int version) {
+  public OCellBTreeSingleValueIndexEngine(int id, String name, OAbstractPaginatedStorage storage, int version) {
     this.name = name;
+    this.id = id;
+
     if (version < 3) {
       this.sbTree = new OCellBTreeSingleValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 3) {
@@ -36,6 +38,11 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
@@ -53,8 +60,7 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
     try {
       //noinspection unchecked
       sbTree.create(keySerializer, keyTypes, keySize, encryption);
@@ -253,7 +259,8 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
     private Iterator<ORID> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
     private Object         currentKey      = null;
 
-    private OSBTreeIndexCursor(OCellBTreeSingleValue.OCellBTreeCursor<Object, ORID> treeCursor, ValuesTransformer valuesTransformer) {
+    private OSBTreeIndexCursor(OCellBTreeSingleValue.OCellBTreeCursor<Object, ORID> treeCursor,
+        ValuesTransformer valuesTransformer) {
       this.treeCursor = treeCursor;
       this.valuesTransformer = valuesTransformer;
     }

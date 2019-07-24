@@ -23,12 +23,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
@@ -174,14 +169,14 @@ public final class OIndexes {
             .toString(getIndexTypes()));
   }
 
-  public static OBaseIndexEngine createIndexEngine(final String name, final String algorithm, final String type,
+  public static OBaseIndexEngine createIndexEngine(int indexId, final String name, final String algorithm, final String type,
       final Boolean durableInNonTxMode, final OStorage storage, final int version, int apiVersion, boolean multivalue,
-      final Map<String, String> indexProperties, ODocument metadata) {
+      final Map<String, String> indexProperties) {
 
     final OIndexFactory factory = findFactoryByAlgorithmAndType(algorithm, type);
 
     return factory
-        .createIndexEngine(algorithm, name, durableInNonTxMode, storage, version, apiVersion, multivalue, indexProperties);
+        .createIndexEngine(indexId, algorithm, name, durableInNonTxMode, storage, version, apiVersion, multivalue, indexProperties);
   }
 
   public static String chooseDefaultIndexAlgorithm(String type) {

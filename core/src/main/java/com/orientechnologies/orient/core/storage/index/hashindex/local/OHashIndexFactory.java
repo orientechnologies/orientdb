@@ -20,14 +20,7 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexDictionary;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexFullText;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -119,8 +112,8 @@ public final class OHashIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public final OBaseIndexEngine createIndexEngine(final String algorithm, final String name, final Boolean durableInNonTxMode,
-      final OStorage storage, final int version, final int apiVersion, final boolean multiValue,
+  public final OBaseIndexEngine createIndexEngine(final int indexId, final String algorithm, final String name,
+      final Boolean durableInNonTxMode, final OStorage storage, final int version, final int apiVersion, final boolean multiValue,
       final Map<String, String> engineProperties) {
     final OIndexEngine indexEngine;
 
@@ -128,14 +121,14 @@ public final class OHashIndexFactory implements OIndexFactory {
     switch (storageType) {
     case "memory":
     case "plocal":
-      indexEngine = new OHashTableIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
+      indexEngine = new OHashTableIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage, version);
       break;
     case "distributed":
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(name, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
+      indexEngine = new OHashTableIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
       break;
     case "remote":
-      indexEngine = new ORemoteIndexEngine(name);
+      indexEngine = new ORemoteIndexEngine(indexId, name);
       break;
     default:
       throw new OIndexException("Unsupported storage type: " + storageType);

@@ -98,8 +98,11 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   private Lock openCloseLock;
 
-  public OLuceneIndexEngineAbstract(OStorage storage, String name) {
+  private final int id;
+
+  public OLuceneIndexEngineAbstract(int id, OStorage storage, String name) {
     super(true, 0, true);
+    this.id = id;
 
     this.storage = storage;
     this.name = name;
@@ -109,6 +112,11 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     closed = new AtomicBoolean(true);
 
     openCloseLock = new ReentrantLock();
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   protected void updateLastAccess() {
@@ -310,8 +318,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
   }
 
   @Override

@@ -33,8 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Default OrientDB index factory for indexes based on SBTree.<br>
- * Supports index types:
+ * Default OrientDB index factory for indexes based on SBTree.<br> Supports index types:
  * <ul>
  * <li>UNIQUE</li>
  * <li>NOTUNIQUE</li>
@@ -146,8 +145,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OBaseIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage,
-      int version, int apiVersion, @SuppressWarnings("SpellCheckingInspection") boolean multiValue,
+  public OBaseIndexEngine createIndexEngine(int indexId, String algorithm, String name, Boolean durableInNonTxMode,
+      OStorage storage, int version, int apiVersion, @SuppressWarnings("SpellCheckingInspection") boolean multiValue,
       Map<String, String> engineProperties) {
 
     if (algorithm == null) {
@@ -166,13 +165,13 @@ public class ODefaultIndexFactory implements OIndexFactory {
     case "plocal":
       switch (algorithm) {
       case SBTREE_ALGORITHM:
-        indexEngine = new OSBTreeIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
+        indexEngine = new OSBTreeIndexEngine(indexId, name, (OAbstractPaginatedStorage) storage, version);
         break;
       case CELL_BTREE_ALGORITHM:
         if (multiValue) {
-          indexEngine = new OCellBTreeMultiValueIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
+          indexEngine = new OCellBTreeMultiValueIndexEngine(indexId, name, (OAbstractPaginatedStorage) storage, version);
         } else {
-          indexEngine = new OCellBTreeSingleValueIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
+          indexEngine = new OCellBTreeSingleValueIndexEngine(indexId, name, (OAbstractPaginatedStorage) storage, version);
         }
         break;
       default:
@@ -180,7 +179,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
       }
       break;
     case "remote":
-      indexEngine = new ORemoteIndexEngine(name);
+      indexEngine = new ORemoteIndexEngine(indexId, name);
       break;
     default:
       throw new OIndexException("Unsupported storage type: " + storageType);

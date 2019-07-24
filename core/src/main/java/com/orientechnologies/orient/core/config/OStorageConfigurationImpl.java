@@ -593,7 +593,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
             mulitvalue = false;
           }
 
-          final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, indexType, durableInNonTxMode, version,
+          final IndexEngineData indexEngineData = new IndexEngineData(Integer.MIN_VALUE, name, algorithm, indexType, durableInNonTxMode, version,
               apiVersion, mulitvalue, valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize,
               encryption, encryptionOptions, engineProperties);
 
@@ -890,7 +890,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   @Override
-  public IndexEngineData getIndexEngine(String name) {
+  public IndexEngineData getIndexEngine(String name, int defaultIndexId) {
     lock.acquireReadLock();
     try {
       return indexEngines.get(name);

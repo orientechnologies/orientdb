@@ -31,11 +31,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -65,8 +61,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   private OLuceneQueryBuilder    queryBuilder;
   private final AtomicLong bonsayFileId = new AtomicLong(0);
 
-  public OLuceneFullTextIndexEngine(OStorage storage, String idxName) {
-    super(storage, idxName);
+  public OLuceneFullTextIndexEngine(OStorage storage, String idxName, int id) {
+    super(id, storage, idxName);
     builder = new OLuceneDocumentBuilder();
 
   }

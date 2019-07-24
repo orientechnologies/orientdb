@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -63,7 +62,10 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   private final String name;
 
-  public OHashTableIndexEngine(String name, OAbstractPaginatedStorage storage, int version) {
+  private final int id;
+
+  public OHashTableIndexEngine(String name, int id, OAbstractPaginatedStorage storage, int version) {
+    this.id = id;
     this.version = version;
     if (version < 2) {
       throw new IllegalStateException("Unsupported version of hash index");
@@ -81,6 +83,11 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public int getId() {
+    return id;
+  }
+
+  @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
   }
 
@@ -91,8 +98,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) throws IOException {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) throws IOException {
     final OHashFunction<Object> hashFunction;
 
     if (encryption != null) {

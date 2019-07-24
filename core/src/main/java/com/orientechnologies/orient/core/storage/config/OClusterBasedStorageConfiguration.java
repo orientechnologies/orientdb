@@ -1202,7 +1202,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
         final String name = entry.getKey().substring(ENGINE_PREFIX_PROPERTY.length());
         final ORawBuffer buffer = cluster.readRecord(entry.getValue().getClusterPosition(), false);
-        final IndexEngineData engine = deserializeIndexEngineProperty(name, buffer.buffer);
+        final IndexEngineData engine = deserializeIndexEngineProperty(name, buffer.buffer, Integer.MIN_VALUE);
         result.add(engine);
 
         entry = cursor.next(-1);
@@ -1215,7 +1215,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   }
 
   @Override
-  public IndexEngineData getIndexEngine(final String name) {
+  public IndexEngineData getIndexEngine(final String name, int defaultIndexId) {
     lock.acquireReadLock();
     try {
       final byte[] property = readProperty(ENGINE_PREFIX_PROPERTY + name);
@@ -1223,7 +1223,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         return null;
       }
 
-      return deserializeIndexEngineProperty(name, property);
+      return deserializeIndexEngineProperty(name, property, defaultIndexId);
     } finally {
       lock.releaseReadLock();
     }
@@ -1369,6 +1369,9 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       pos++;
 
       OIntegerSerializer.INSTANCE.serializeNative(indexEngineData.getKeySize(), numericProperties, pos);
+      pos += OIntegerSerializer.INT_SIZE;
+
+      OIntegerSerializer.INSTANCE.serializeNative(indexEngineData.getIndexId(), numericProperties, pos);
     }
 
     final byte[] algorithm = serializeStringValue(indexEngineData.getAlgorithm());
@@ -1417,7 +1420,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     return mergeBinaryEntries(totalSize, entries);
   }
 
-  private IndexEngineData deserializeIndexEngineProperty(final String name, final byte[] property) {
+  private IndexEngineData deserializeIndexEngineProperty(final String name, final byte[] property, final int defaultIndexId) {
     int pos = 0;
 
     final int version = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
@@ -1443,6 +1446,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
     final int keySize = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
     pos += OIntegerSerializer.INT_SIZE;
+
+    final int indexId;
+    if (getVersion() < 23) {
+      indexId = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
+      pos += OIntegerSerializer.INT_SIZE;
+    } else {
+      indexId = defaultIndexId;
+    }
 
     final String algorithm = deserializeStringValue(property, pos);
     pos += getSerializedStringSize(property, pos);
@@ -1478,7 +1489,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       engineProperties.put(key, value);
     }
 
-    return new IndexEngineData(name, algorithm, indexType, true, version, apiVersion, isMultiValue, valueSerializerId,
+    return new IndexEngineData(indexId, name, algorithm, indexType, true, version, apiVersion, isMultiValue, valueSerializerId,
         keySerializerId, isAutomatic, keyTypes, isNullValueSupport, keySize, encryption,
         configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY), engineProperties);
   }
@@ -1794,9 +1805,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     setConflictStrategy(storageConfiguration.getConflictStrategy());
     setValidation(storageConfiguration.isValidationEnabled());
 
+    int counter = 0;
     final Set<String> indexEngines = storageConfiguration.indexEngines();
+
     for (final String engine : indexEngines) {
-      addIndexEngine(engine, storageConfiguration.getIndexEngine(engine));
+      addIndexEngine(engine, storageConfiguration.getIndexEngine(engine, counter));
+      counter++;
     }
 
     setRecordSerializer(storageConfiguration.getRecordSerializer());

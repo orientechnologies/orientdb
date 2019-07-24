@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -582,7 +581,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         } else {
           OLogManager.instance()
               .info(this, "Index '%s' is a non-durable automatic index and must be rebuilt", indexMetadata.getName());
-          rebuildNonDurableAutomaticIndex(indexDocument, index, indexMetadata, indexDefinition, db);
+          rebuildNonDurableAutomaticIndex(indexDocument, index, indexMetadata, indexDefinition);
         }
       } else {
         if (durable) {
@@ -600,28 +599,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     }
 
     private void rebuildNonDurableAutomaticIndex(ODocument indexDocument, OIndexInternal<?> index, OIndexMetadata indexMetadata,
-        OIndexDefinition indexDefinition, ODatabaseDocumentEmbedded database) {
-      try {
-        index.loadFromConfiguration(indexDocument);
-        index.delete();
-      } catch (Exception e) {
-        OLogManager.instance()
-            .error(this, "Error on removing index '%s' on rebuilding. Trying to remove index files.", e, index.getName());
-
-        // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
-        for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
-          try {
-            final OIndexFactory indexFactory = it.next();
-            final OBaseIndexEngine engine = indexFactory
-                .createIndexEngine(index.getAlgorithm(), index.getName(), false, storage, 0, 1,
-                    indexDefinition.getTypes().length > 1, null);
-
-            engine.deleteWithoutLoad(index.getName());
-          } catch (Exception e2) {
-            OLogManager.instance().error(this, "Error during deletion of index engine %s", e2, index.getName());
-          }
-        }
-      }
+        OIndexDefinition indexDefinition) {
+      index.loadFromConfiguration(indexDocument);
+      index.delete();
 
       final String indexName = indexMetadata.getName();
       final Set<String> clusters = indexMetadata.getClustersToIndex();

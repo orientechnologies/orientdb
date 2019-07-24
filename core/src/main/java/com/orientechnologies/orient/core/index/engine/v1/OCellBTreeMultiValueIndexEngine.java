@@ -18,10 +18,9 @@ import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v3.OCel
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine {
-  private static final int    BINARY_VERSION             = 3;
+  private static final int BINARY_VERSION = 3;
 
   public static final  String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
@@ -29,8 +28,10 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
   private final OCellBTreeMultiValue<Object> sbTree;
   private final String                       name;
+  private final int                          id;
 
-  public OCellBTreeMultiValueIndexEngine(String name, OAbstractPaginatedStorage storage, final int version) {
+  public OCellBTreeMultiValueIndexEngine(int id, String name, OAbstractPaginatedStorage storage, final int version) {
+    this.id = id;
     this.name = name;
 
     if (version == 1) {
@@ -44,6 +45,11 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
@@ -61,8 +67,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
     try {
       //noinspection unchecked
       sbTree.create(keySerializer, keyTypes, keySize, encryption);
