@@ -35,7 +35,7 @@ public class OCellBTreeMultiValueV3TestIT {
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
-    multiValueTree = new OCellBTreeMultiValueV3<>("multiBTree", ".sbt", ".nbt", ".mdt",
+    multiValueTree = new OCellBTreeMultiValueV3<>(42, "multiBTree", ".sbt", ".nbt", ".mdt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }

@@ -41,6 +41,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBTreeMultiValuePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBtreeMultiValueRemoveEntryCO;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 
@@ -48,25 +50,21 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * This is implementation which is based on B+-tree implementation threaded tree.
- * The main differences are:
+ * This is implementation which is based on B+-tree implementation threaded tree. The main differences are:
  * <ol>
  * <li>Buckets are not compacted/removed if they are empty after deletion of item. They reused later when new items are added.</li>
  * <li>All non-leaf buckets have links to neighbor buckets which contain keys which are less/more than keys contained in current
- * bucket</li>
- * <ol/>
- * There is support of null values for keys, but values itself cannot be null. Null keys support is switched off by default if null
- * keys are supported value which is related to null key will be stored in separate file which has only one page.
+ * bucket</li> <ol/> There is support of null values for keys, but values itself cannot be null. Null keys support is switched off
+ * by default if null keys are supported value which is related to null key will be stored in separate file which has only one page.
  * Buckets/pages for usual (non-null) key-value entries can be considered as sorted array. The first bytes of page contains such
  * auxiliary information as size of entries contained in bucket, links to neighbors which contain entries with keys less/more than
- * keys in current bucket.
- * The next bytes contain sorted array of entries. Array itself is split on two parts. First part is growing from start to end, and
- * second part is growing from end to start.
- * First part is array of offsets to real key-value entries which are stored in second part of array which grows from end to start.
- * This array of offsets is sorted by accessing order according to key value. So we can use binary search to find requested key.
- * When new key-value pair is added we append binary presentation of this pair to the second part of array which grows from end of
- * page to start, remember value of offset for this pair, and find proper position of this offset inside of first part of array.
- * Such approach allows to minimize amount of memory involved in performing of operations and as result speed up data processing.
+ * keys in current bucket. The next bytes contain sorted array of entries. Array itself is split on two parts. First part is growing
+ * from start to end, and second part is growing from end to start. First part is array of offsets to real key-value entries which
+ * are stored in second part of array which grows from end to start. This array of offsets is sorted by accessing order according to
+ * key value. So we can use binary search to find requested key. When new key-value pair is added we append binary presentation of
+ * this pair to the second part of array which grows from end of page to start, remember value of offset for this pair, and find
+ * proper position of this offset inside of first part of array. Such approach allows to minimize amount of memory involved in
+ * performing of operations and as result speed up data processing.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
@@ -96,10 +94,12 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
 
   private       OSBTreeV2<OMultiValueEntry, Byte> multiContainer;
   private final OModifiableLong                   mIdCounter = new OModifiableLong();
+  private final int                               indexId;
 
-  public OCellBTreeMultiValueV2(final String name, final String dataFileExtension, final String nullFileExtension,
+  public OCellBTreeMultiValueV2(final String name, int indexId, final String dataFileExtension, final String nullFileExtension,
       final String containerExtension, final OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
+    this.indexId = indexId;
     acquireExclusiveLock();
     try {
       this.nullFileExtension = nullFileExtension;
@@ -337,6 +337,10 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
           releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
           updateSize(1, atomicOperation);
+
+          atomicOperation.addComponentOperation(
+              new OCellBTreeMultiValuePutCO((encryption != null ? encryption.name() : null), keySerializer.getId(), indexId,
+                  keyToInsert, value));
         } else {
           final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
 
@@ -348,6 +352,10 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
           }
 
           updateSize(1, atomicOperation);
+
+          atomicOperation.addComponentOperation(
+              new OCellBTreeMultiValuePutCO((encryption != null ? encryption.name() : null), keySerializer.getId(), indexId, null,
+                  value));
         }
       } finally {
         releaseExclusiveLock();
@@ -504,8 +512,7 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
       this.keySerializer = keySerializer;
 
       multiContainer = new OSBTreeV2<>(getName(), containerExtension, null, storage);
-      multiContainer.load(getName(), MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null,
-          1, false, null);
+      multiContainer.load(getName(), MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
 
       final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
       try {
@@ -761,6 +768,10 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
 
           if (removed) {
             updateSize(-1, atomicOperation);
+
+            final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
+            atomicOperation.addComponentOperation(new OCellBtreeMultiValueRemoveEntryCO(indexId, keySerializer.getId(),
+                (encryption != null ? encryption.name() : null), serializeKey(serializedKey), value));
           }
         } else {
           final OCacheEntry nullBucketCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
@@ -773,6 +784,9 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
 
           if (removed) {
             updateSize(-1, atomicOperation);
+
+            atomicOperation.addComponentOperation(new OCellBtreeMultiValueRemoveEntryCO(indexId, keySerializer.getId(),
+                (encryption != null ? encryption.name() : null), null, value));
           }
         }
       } finally {
@@ -1648,13 +1662,14 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
   }
 
   /**
-   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether
-   * lowest or highest partially matched key should be used.
+   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
+   * or highest partially matched key should be used.
    */
-  private enum PartialSearchMode {/**
-   * Any partially matched key will be used as search result.
-   */
-  NONE,
+  private enum PartialSearchMode {
+    /**
+     * Any partially matched key will be used as search result.
+     */
+    NONE,
     /**
      * The biggest partially matched key will be used as search result.
      */
@@ -1663,7 +1678,8 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
     /**
      * The smallest partially matched key will be used as search result.
      */
-    LOWEST_BOUNDARY}
+    LOWEST_BOUNDARY
+  }
 
   private static final class BucketSearchResult {
     private final int  itemIndex;

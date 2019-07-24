@@ -28,8 +28,6 @@ public interface OCellBTreeMultiValue<K> {
 
   long size();
 
-  boolean remove(K key) throws IOException;
-
   boolean remove(K key, ORID value) throws IOException;
 
   OCellBTreeCursor<K, ORID> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);

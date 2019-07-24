@@ -2,11 +2,7 @@ package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -18,14 +14,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class OCellBTreeMultiValueV2TestIT {
   private OCellBTreeMultiValueV2<String> multiValueTree;
@@ -46,7 +35,7 @@ public class OCellBTreeMultiValueV2TestIT {
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
-    multiValueTree = new OCellBTreeMultiValueV2<>("multiBTree", ".sbt", ".nbt", ".mdt",
+    multiValueTree = new OCellBTreeMultiValueV2<>("multiBTree", 42, ".sbt", ".nbt", ".mdt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }

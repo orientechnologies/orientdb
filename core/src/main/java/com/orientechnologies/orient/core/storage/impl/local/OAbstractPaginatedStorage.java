@@ -2867,7 +2867,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       if (transaction.get() != null) {
-        return doRemoveRidIndexEntry(indexId, key, value);
+        return removeRidIndexEntryInternal(indexId, key, value);
       }
 
       checkOpenness();
@@ -2878,7 +2878,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-        return doRemoveRidIndexEntry(indexId, key, value);
+        return removeRidIndexEntryInternal(indexId, key, value);
       } finally {
         stateLock.releaseReadLock();
       }
@@ -2890,6 +2890,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  public boolean removeRidIndexEntryInternal(final int indexId, final Object key, final ORID value)
+      throws OInvalidIndexEngineIdException {
+    try {
+      checkIndexId(indexId);
+
+      final OBaseIndexEngine engine = indexEngines.get(indexId);
+      assert engine.getId() == indexId;
+
+      makeStorageDirty();
+
+      return ((OMultiValueIndexEngine) engine).remove(key, value);
+    } catch (final IOException e) {
+      throw OException.wrapException(new OStorageException("Cannot put key " + key + " value " + value + " entry to the index"), e);
     }
   }
 

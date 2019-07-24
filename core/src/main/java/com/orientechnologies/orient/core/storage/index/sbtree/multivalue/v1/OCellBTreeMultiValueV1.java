@@ -39,38 +39,29 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBTreeMultiValuePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBtreeMultiValueRemoveEntryCO;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * This is implementation which is based on B+-tree implementation threaded tree.
- * The main differences are:
+ * This is implementation which is based on B+-tree implementation threaded tree. The main differences are:
  * <ol>
  * <li>Buckets are not compacted/removed if they are empty after deletion of item. They reused later when new items are added.</li>
  * <li>All non-leaf buckets have links to neighbor buckets which contain keys which are less/more than keys contained in current
- * bucket</li>
- * <ol/>
- * There is support of null values for keys, but values itself cannot be null. Null keys support is switched off by default if null
- * keys are supported value which is related to null key will be stored in separate file which has only one page.
+ * bucket</li> <ol/> There is support of null values for keys, but values itself cannot be null. Null keys support is switched off
+ * by default if null keys are supported value which is related to null key will be stored in separate file which has only one page.
  * Buckets/pages for usual (non-null) key-value entries can be considered as sorted array. The first bytes of page contains such
  * auxiliary information as size of entries contained in bucket, links to neighbors which contain entries with keys less/more than
- * keys in current bucket.
- * The next bytes contain sorted array of entries. Array itself is split on two parts. First part is growing from start to end, and
- * second part is growing from end to start.
- * First part is array of offsets to real key-value entries which are stored in second part of array which grows from end to start.
- * This array of offsets is sorted by accessing order according to key value. So we can use binary search to find requested key.
- * When new key-value pair is added we append binary presentation of this pair to the second part of array which grows from end of
- * page to start, remember value of offset for this pair, and find proper position of this offset inside of first part of array.
- * Such approach allows to minimize amount of memory involved in performing of operations and as result speed up data processing.
+ * keys in current bucket. The next bytes contain sorted array of entries. Array itself is split on two parts. First part is growing
+ * from start to end, and second part is growing from end to start. First part is array of offsets to real key-value entries which
+ * are stored in second part of array which grows from end to start. This array of offsets is sorted by accessing order according to
+ * key value. So we can use binary search to find requested key. When new key-value pair is added we append binary presentation of
+ * this pair to the second part of array which grows from end of page to start, remember value of offset for this pair, and find
+ * proper position of this offset inside of first part of array. Such approach allows to minimize amount of memory involved in
+ * performing of operations and as result speed up data processing.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
@@ -91,14 +82,16 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
   private long fileId;
   private long nullBucketFileId;
 
-  private int                  keySize;
-  private OBinarySerializer<K> keySerializer;
-  private OType[]              keyTypes;
-  private OEncryption          encryption;
+  private       int                  keySize;
+  private       OBinarySerializer<K> keySerializer;
+  private       OType[]              keyTypes;
+  private       OEncryption          encryption;
+  private final int                  indexId;
 
-  public OCellBTreeMultiValueV1(final String name, final String dataFileExtension, final String nullFileExtension,
+  public OCellBTreeMultiValueV1(final String name, int indexId, final String dataFileExtension, final String nullFileExtension,
       final OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
+    this.indexId = indexId;
     acquireExclusiveLock();
     try {
       this.nullFileExtension = nullFileExtension;
@@ -356,6 +349,10 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
           releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
           updateSize(1, atomicOperation);
+
+          atomicOperation.addComponentOperation(
+              new OCellBTreeMultiValuePutCO((encryption != null ? encryption.name() : null), keySerializer.getId(), indexId,
+                  keyToInsert, value));
         } else {
           final int freeListHeader;
 
@@ -432,6 +429,10 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
           }
 
           updateSize(1, atomicOperation);
+
+          atomicOperation.addComponentOperation(
+              new OCellBTreeMultiValuePutCO((encryption != null ? encryption.name() : null), keySerializer.getId(), indexId, null,
+                  value));
         }
       } finally {
         releaseExclusiveLock();
@@ -625,155 +626,6 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
   }
 
   @Override
-  public boolean remove(K key) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
-      acquireExclusiveLock();
-      try {
-        if (key != null) {
-          key = keySerializer.preprocess(key, (Object[]) keyTypes);
-
-          final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
-          if (bucketSearchResult.itemIndex < 0) {
-            return false;
-          }
-
-          final long pageIndex = bucketSearchResult.pageIndex;
-          final int itemIndex = bucketSearchResult.itemIndex;
-
-          long leftSibling = -1;
-          long rightSibling = -1;
-
-          int removed;
-          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
-          try {
-            final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
-            removed = bucket.remove(itemIndex);
-
-            if (itemIndex == 0) {
-              leftSibling = bucket.getLeftSibling();
-            }
-
-            if (itemIndex == bucket.size() - 1) {
-              rightSibling = bucket.getRightSibling();
-            }
-          } finally {
-            releasePageFromWrite(atomicOperation, cacheEntry);
-          }
-
-          while (leftSibling >= 0) {
-            cacheEntry = loadPageForWrite(atomicOperation, fileId, leftSibling, false, true);
-            try {
-              final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
-              final int size = bucket.size();
-
-              if (size > 0) {
-                if (bucket.getKey(size - 1).equals(key)) {
-                  removed += bucket.remove(size - 1);
-
-                  if (size <= 1) {
-                    leftSibling = bucket.getLeftSibling();
-                  } else {
-                    leftSibling = -1;
-                  }
-                } else {
-                  leftSibling = -1;
-                }
-              } else {
-                leftSibling = bucket.getLeftSibling();
-              }
-            } finally {
-              releasePageFromWrite(atomicOperation, cacheEntry);
-            }
-          }
-
-          while (rightSibling >= 0) {
-            cacheEntry = loadPageForWrite(atomicOperation, fileId, rightSibling, false, true);
-            try {
-              final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
-              final int size = bucket.size();
-
-              if (size > 0) {
-                if (bucket.getKey(0).equals(key)) {
-                  removed += bucket.remove(0);
-
-                  if (size <= 1) {
-                    rightSibling = bucket.getRightSibling();
-                  } else {
-                    rightSibling = -1;
-                  }
-                } else {
-                  rightSibling = -1;
-                }
-              } else {
-                rightSibling = bucket.getRightSibling();
-              }
-            } finally {
-              releasePageFromWrite(atomicOperation, cacheEntry);
-            }
-          }
-
-          if (removed > 0) {
-            updateSize(-removed, atomicOperation);
-          }
-
-          return removed > 0;
-        } else {
-          final int firstPage;
-
-          {
-            final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
-            try {
-              final ONullEntryPoint entryPoint = new ONullEntryPoint(entryPointCacheEntry);
-              firstPage = entryPoint.getFirstPage();
-            } finally {
-              releasePageFromRead(atomicOperation, entryPointCacheEntry);
-            }
-          }
-
-          int removed = 0;
-          int currentPage = firstPage;
-          while (currentPage >= 0) {
-            final OCacheEntry nullCacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, currentPage, false);
-            try {
-              final ONullBucket nullBucket = new ONullBucket(nullCacheEntry, false);
-              removed += nullBucket.getSize();
-              currentPage = nullBucket.getNext();
-            } finally {
-              releasePageFromRead(atomicOperation, nullCacheEntry);
-            }
-          }
-
-          {
-            final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
-            try {
-              final ONullEntryPoint entryPoint = new ONullEntryPoint(entryPointCacheEntry);
-              entryPoint.setSize(0);
-              entryPoint.setFirsPage(-1);
-              entryPoint.setLastPage(-1);
-              entryPoint.setFreeListHeader(-1);
-            } finally {
-              releasePageFromWrite(atomicOperation, entryPointCacheEntry);
-            }
-          }
-
-          updateSize(-removed, atomicOperation);
-
-          return removed > 0;
-        }
-      } finally {
-        releaseExclusiveLock();
-      }
-    } catch (final RuntimeException | IOException e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-  }
-
-  @Override
   public boolean remove(K key, final ORID value) throws IOException {
     boolean rollback = false;
     final OAtomicOperation atomicOperation = startAtomicOperation(true);
@@ -869,6 +721,10 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
 
           if (removed) {
             updateSize(-1, atomicOperation);
+
+            final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
+            atomicOperation.addComponentOperation(new OCellBtreeMultiValueRemoveEntryCO(indexId, keySerializer.getId(),
+                (encryption != null ? encryption.name() : null), serializeKey(serializedKey), value));
           }
         } else {
           final int firstPage;
@@ -942,6 +798,9 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
 
           if (removed) {
             updateSize(-1, atomicOperation);
+
+            atomicOperation.addComponentOperation(new OCellBtreeMultiValueRemoveEntryCO(indexId, keySerializer.getId(),
+                (encryption != null ? encryption.name() : null), null, value));
           }
         }
       } finally {
@@ -1838,13 +1697,14 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
   }
 
   /**
-   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether
-   * lowest or highest partially matched key should be used.
+   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
+   * or highest partially matched key should be used.
    */
-  private enum PartialSearchMode {/**
-   * Any partially matched key will be used as search result.
-   */
-  NONE,
+  private enum PartialSearchMode {
+    /**
+     * Any partially matched key will be used as search result.
+     */
+    NONE,
     /**
      * The biggest partially matched key will be used as search result.
      */
@@ -1853,7 +1713,8 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
     /**
      * The smallest partially matched key will be used as search result.
      */
-    LOWEST_BOUNDARY}
+    LOWEST_BOUNDARY
+  }
 
   private static final class BucketSearchResult {
     private final int  itemIndex;
