@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import java.io.IOException;
 
 /**
- * 
  * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
  * <ol>
  * <li>First byte is flag which indicates presence of value in bucket</li>
@@ -34,7 +33,7 @@ import java.io.IOException;
  * passed be user.</li>
  * <li>The rest is serialized value whether link or passed in value.</li>
  * </ol>
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
  */
@@ -75,6 +74,16 @@ public class ONullBucket<V> extends ODurablePage {
       return new OSBTreeValue<V>(true, getLongValue(NEXT_FREE_POSITION + 2), null);
 
     return new OSBTreeValue<V>(false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
+  }
+
+  public byte[] getRawValue() {
+    if (getByteValue(NEXT_FREE_POSITION) == 0)
+      return null;
+
+    final boolean isLink = getByteValue(NEXT_FREE_POSITION + 1) == 0;
+    assert !isLink;
+
+    return getBinaryValue(NEXT_FREE_POSITION + 2, getObjectSizeInDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
   }
 
   public void removeValue() {

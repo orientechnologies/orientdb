@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cel
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineCreateCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineDeleteCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtree.OSBTreePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtree.OSBTreeRemoveCO;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
@@ -168,6 +170,12 @@ public final class OWALRecordsFactory {
       break;
     case CELL_BTREE_MULTI_VALUE_REMOVE_ENTRY_CO:
       walRecord = new OCellBtreeMultiValueRemoveEntryCO();
+      break;
+    case SBTREE_PUT_CO:
+      walRecord = new OSBTreePutCO();
+      break;
+    case SBTREE_REMOVE_CO:
+      walRecord = new OSBTreeRemoveCO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

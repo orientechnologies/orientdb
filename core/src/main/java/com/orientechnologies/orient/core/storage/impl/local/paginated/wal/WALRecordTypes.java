@@ -30,4 +30,7 @@ public final class WALRecordTypes {
 
   public static final byte CELL_BTREE_MULTI_VALUE_PUT_CO          = 25;
   public static final byte CELL_BTREE_MULTI_VALUE_REMOVE_ENTRY_CO = 26;
+
+  public static final byte SBTREE_PUT_CO = 27;
+  public static final byte SBTREE_REMOVE_CO = 28;
 }

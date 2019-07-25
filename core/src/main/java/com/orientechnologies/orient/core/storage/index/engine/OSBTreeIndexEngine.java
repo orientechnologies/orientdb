@@ -60,9 +60,9 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     this.version = version;
 
     if (version == 1) {
-      sbTree = new OSBTreeV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      sbTree = new OSBTreeV1<>(id, name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 2) {
-      sbTree = new OSBTreeV2<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      sbTree = new OSBTreeV2<>(id, name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid version of index, version = " + version);
     }

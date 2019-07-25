@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBTreeMultiValuePutCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBtreeMultiValueRemoveEntryCO;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 
 import java.io.IOException;
@@ -90,7 +90,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
   private OBinarySerializer<K> keySerializer;
   private OType[]              keyTypes;
 
-  private       OSBTreeV1<OMultiValueEntry, Byte> multiContainer;
+  private       OSBTreeV2<OMultiValueEntry, Byte> multiContainer;
   private final OModifiableLong                   mIdCounter = new OModifiableLong();
 
   private final int indexId;
@@ -155,7 +155,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
           releasePageFromWrite(atomicOperation, nullBucketEntry);
         }
 
-        multiContainer = new OSBTreeV1<>(getName(), containerExtension, null, storage);
+        multiContainer = new OSBTreeV2<>(-1, getName(), containerExtension, null, storage);
         multiContainer.create(MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
       } finally {
         releaseExclusiveLock();
@@ -509,7 +509,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
       this.keyTypes = keyTypes;
       this.keySerializer = keySerializer;
 
-      multiContainer = new OSBTreeV1<>(getName(), containerExtension, null, storage);
+      multiContainer = new OSBTreeV2<>(-1, getName(), containerExtension, null, storage);
       multiContainer.load(getName(), MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
 
       final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
