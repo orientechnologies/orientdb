@@ -119,11 +119,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) throws IOException {
-    hashTable.deleteWithoutLoad(indexName);
-  }
-
-  @Override
   public String getIndexNameByKey(final Object key) {
     return name;
   }

@@ -485,20 +485,6 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     return OLuceneIndexType.createQueryId(value);
   }
 
-  @Override
-  public void deleteWithoutLoad(String indexName) {
-    try {
-      OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
-
-      directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
-
-      internalDelete();
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error during deletion of Lucene index " + name), e);
-    }
-
-  }
-
   private void internalDelete() throws IOException {
     if (indexWriter != null && indexWriter.isOpen()) {
       close();

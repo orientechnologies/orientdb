@@ -518,41 +518,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     }
   }
 
-  @Override
-  public void deleteWithoutLoad(final String name) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
-      acquireExclusiveLock();
-      try {
-        if (isFileExists(atomicOperation, name + metadataConfigurationFileExtension)) {
-          fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
-          deleteFile(atomicOperation, fileStateId);
-        }
-
-        directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
-        directory.deleteWithoutOpen(atomicOperation);
-
-        if (isFileExists(atomicOperation, name + nullBucketFileExtension)) {
-          final long nullBucketId = openFile(atomicOperation, name + nullBucketFileExtension);
-          deleteFile(atomicOperation, nullBucketId);
-        }
-
-        if (isFileExists(atomicOperation, getFullName())) {
-          final long fileId = openFile(atomicOperation, getFullName());
-          deleteFile(atomicOperation, fileId);
-        }
-      } finally {
-        releaseExclusiveLock();
-      }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-  }
-
   private Entry<K, V>[] convertBucketToEntries(final OHashIndexBucket<K, V> bucket, final int startIndex, final int endIndex) {
     @SuppressWarnings("unchecked")
     final Entry<K, V>[] entries = new Entry[endIndex - startIndex];
