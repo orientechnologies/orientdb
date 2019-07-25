@@ -125,6 +125,19 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void delete() throws IOException {
+    final OHashTable.Entry<Object, Object> firstEntry = hashTable.firstEntry();
+
+    if (firstEntry != null) {
+      OHashTable.Entry<Object, Object>[] entries = hashTable.ceilingEntries(firstEntry.key);
+      while (entries.length > 0) {
+        for (final OHashTable.Entry<Object, Object> entry : entries) {
+          hashTable.remove(entry.key);
+        }
+
+        entries = hashTable.higherEntries(entries[entries.length - 1].key);
+      }
+    }
+
     hashTable.delete();
   }
 

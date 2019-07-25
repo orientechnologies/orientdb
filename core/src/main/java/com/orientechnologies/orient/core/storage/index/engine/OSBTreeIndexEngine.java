@@ -100,6 +100,14 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   @Override
   public void delete() {
     try {
+      final OSBTree.OSBTreeKeyCursor<Object> keyCursor = sbTree.keyCursor();
+      Object key = keyCursor.next(-1);
+
+      while (key != null) {
+        sbTree.remove(key);
+        key = keyCursor.next(-1);
+      }
+
       sbTree.delete();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
