@@ -27,7 +27,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
-import com.orientechnologies.orient.core.exception.ONonEmptyComponentCanNotBeRemovedException;
+import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
@@ -458,7 +458,7 @@ public final class OCellBTreeMultiValueV3<K> extends ODurableComponent implement
       try {
         final long size = size();
         if (size > 0) {
-          throw new ONonEmptyComponentCanNotBeRemovedException(
+          throw new NotEmptyComponentCanNotBeRemovedException(
               getName() + " : Not empty index can not be deleted. Index has " + size + " records");
         }
         deleteFile(atomicOperation, fileId);

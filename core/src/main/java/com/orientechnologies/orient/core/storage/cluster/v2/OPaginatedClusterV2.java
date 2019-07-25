@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.exception.ONonEmptyComponentCanNotBeRemovedException;
+import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -283,7 +283,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       try {
         final long entries = getEntries();
         if (entries > 0) {
-          throw new ONonEmptyComponentCanNotBeRemovedException(
+          throw new NotEmptyComponentCanNotBeRemovedException(
               getName() + " : Not empty cluster can not be deleted. Cluster has " + entries + " records");
         }
 
