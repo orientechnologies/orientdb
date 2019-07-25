@@ -138,7 +138,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       }
     }
 
-    hashTable.remove(null);
+    if (hashTable.isNullKeyIsSupported()) {
+      hashTable.remove(null);
+    }
 
     hashTable.delete();
   }
