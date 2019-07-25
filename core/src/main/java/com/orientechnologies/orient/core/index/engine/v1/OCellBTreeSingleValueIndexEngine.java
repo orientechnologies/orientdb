@@ -79,15 +79,6 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) {
-    try {
-      sbTree.deleteWithoutLoad();
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
-    }
-  }
-
-  @Override
   public void load(String indexName, final int keySize, final OType[] keyTypes, final OBinarySerializer keySerializer,
       final OEncryption encryption) {
     //noinspection unchecked

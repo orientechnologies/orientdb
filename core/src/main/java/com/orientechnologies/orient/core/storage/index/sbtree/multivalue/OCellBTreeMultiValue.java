@@ -22,8 +22,6 @@ public interface OCellBTreeMultiValue<K> {
 
   void delete() throws IOException;
 
-  void deleteWithoutLoad() throws IOException;
-
   void load(String name, int keySize, OType[] keyTypes, OBinarySerializer<K> keySerializer, OEncryption encryption);
 
   long size();

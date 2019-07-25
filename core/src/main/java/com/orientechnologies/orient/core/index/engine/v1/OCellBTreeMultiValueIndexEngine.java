@@ -86,15 +86,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) {
-    try {
-      sbTree.deleteWithoutLoad();
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
-    }
-  }
-
-  @Override
   public void load(final String name, final int keySize, final OType[] keyTypes, final OBinarySerializer keySerializer,
       final OEncryption encryption) {
     //noinspection unchecked

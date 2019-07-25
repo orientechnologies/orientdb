@@ -166,17 +166,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void deleteWithoutLoad(final String indexName) {
-    try {
-      if (partitions != null)
-        for (OHashTable<Object, Object> p : partitions)
-          p.deleteWithoutLoad(indexName);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during deletion of index with name " + name), e);
-    }
-  }
-
-  @Override
   public void delete() {
     try {
       if (partitions != null)

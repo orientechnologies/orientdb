@@ -63,8 +63,6 @@ public interface OHashTable<K, V> {
   void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption, OHashFunction<K> keyHashFunction,
       final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer);
 
-  void deleteWithoutLoad(String name) throws IOException;
-
   Entry<K, V>[] ceilingEntries(K key);
 
   Entry<K, V> firstEntry();

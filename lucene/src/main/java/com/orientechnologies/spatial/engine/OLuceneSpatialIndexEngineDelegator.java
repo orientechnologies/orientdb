@@ -99,12 +99,6 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) {
-    if (delegate != null)
-      delegate.deleteWithoutLoad(indexName);
-  }
-
-  @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
     if (delegate != null)
