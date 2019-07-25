@@ -26,6 +26,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.exception.ONonEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
@@ -537,6 +538,11 @@ public class OSBTreeV1<K, V> extends ODurableComponent
     try {
       acquireExclusiveLock();
       try {
+        final long size = size();
+        if (size > 0) {
+          throw new ONonEmptyComponentCanNotBeRemovedException(
+              getName() + " : Not empty index can not be deleted. Index has " + size + " records");
+        }
         deleteFile(atomicOperation, fileId);
 
         if (nullPointerSupport) {
