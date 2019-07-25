@@ -16,6 +16,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTablePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTableRemoveCO;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 
@@ -105,10 +107,13 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
 
   private OEncryption encryption;
 
-  public OLocalHashTableV2(final String name, final String metadataConfigurationFileExtension, final String treeStateFileExtension,
-      final String bucketFileExtension, final String nullBucketFileExtension,
+  private final int indexId;
+
+  public OLocalHashTableV2(int indexId, final String name, final String metadataConfigurationFileExtension,
+      final String treeStateFileExtension, final String bucketFileExtension, final String nullBucketFileExtension,
       final OAbstractPaginatedStorage abstractPaginatedStorage) {
     super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);
+    this.indexId = indexId;
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -309,6 +314,14 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
             }
 
             changeSize(sizeDiff, atomicOperation);
+
+          }
+
+          if (removed != null) {
+            atomicOperation.addComponentOperation(
+                new OLocalHashTableRemoveCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
+                    keySerializer.serializeNativeAsWhole(key), valueSerializer.serializeNativeAsWhole(removed),
+                    valueSerializer.getId()));
           }
 
           return removed;
@@ -337,6 +350,12 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
           }
 
           changeSize(sizeDiff, atomicOperation);
+
+          if (removed != null) {
+            atomicOperation.addComponentOperation(
+                new OLocalHashTableRemoveCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), null,
+                    valueSerializer.serializeNativeAsWhole(removed), valueSerializer.getId()));
+          }
 
           return removed;
         }
@@ -1211,10 +1230,11 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
         isNew = false;
       }
 
+      final V oldValue;
       try {
         final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, isNew);
 
-        final V oldValue = nullBucket.getValue();
+        oldValue = nullBucket.getValue();
 
         if (validator != null) {
           final Object result = validator.validate(null, oldValue, value);
@@ -1236,6 +1256,12 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
       }
 
       changeSize(sizeDiff, atomicOperation);
+
+      atomicOperation.addComponentOperation(
+          new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), null,
+              valueSerializer.getId(), valueSerializer.serializeNativeAsWhole(value),
+              oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
+
       return true;
     } else {
       final long hashCode = keyHashFunction.hashCode(key);
@@ -1255,8 +1281,8 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
             encryption);
         final int index = bucket.getIndex(hashCode, key);
 
+        final V oldValue = index > -1 ? bucket.getValue(index) : null;
         if (validator != null) {
-          final V oldValue = index > -1 ? bucket.getValue(index) : null;
           final Object result = validator.validate(key, oldValue, value);
           if (result == OBaseIndexEngine.Validator.IGNORE) {
             return false;
@@ -1268,12 +1294,19 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
         if (index > -1) {
           final int updateResult = bucket.updateEntry(index, value);
           if (updateResult == 0) {
-            changeSize(sizeDiff, atomicOperation);
+            //we already keep entry with given key-value.
             return true;
           }
 
           if (updateResult == 1) {
             changeSize(sizeDiff, atomicOperation);
+
+            atomicOperation.addComponentOperation(
+                new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
+                    keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes), valueSerializer.getId(),
+                    valueSerializer.serializeNativeAsWhole(value),
+                    oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
+
             return true;
           }
 
@@ -1287,6 +1320,12 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
           sizeDiff++;
 
           changeSize(sizeDiff, atomicOperation);
+
+          atomicOperation.addComponentOperation(
+              new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
+                  keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes), valueSerializer.getId(),
+                  valueSerializer.serializeNativeAsWhole(value),
+                  oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
           return true;
         }
 
