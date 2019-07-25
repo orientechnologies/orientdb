@@ -108,6 +108,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
         key = keyCursor.next(-1);
       }
 
+      sbTree.remove(null);
+
       sbTree.delete();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);

@@ -183,6 +183,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
             }
           }
 
+          p.remove(null);
+
           p.delete();
         }
 

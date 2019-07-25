@@ -91,6 +91,11 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
         entry = cursor.next(-1);
       }
 
+      final List<ORID> rids = sbTree.get(null);
+      for (final ORID rid : rids) {
+        sbTree.remove(null, rid);
+      }
+
       sbTree.delete();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
