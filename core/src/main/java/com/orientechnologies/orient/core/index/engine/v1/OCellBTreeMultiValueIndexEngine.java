@@ -79,6 +79,18 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   @Override
   public void delete() {
     try {
+      final Object firstKey = sbTree.firstKey();
+      final Object lastKey = sbTree.lastKey();
+
+      final OCellBTreeMultiValue.OCellBTreeCursor<Object, ORID> cursor = sbTree
+          .iterateEntriesBetween(firstKey, true, lastKey, true, true);
+
+      Map.Entry<Object, ORID> entry = cursor.next(-1);
+      while (entry != null) {
+        sbTree.remove(entry.getKey(), entry.getValue());
+        entry = cursor.next(-1);
+      }
+
       sbTree.delete();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);

@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
@@ -251,10 +250,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
         notifyInvolvedClasses(database, clusterIdsToIndex);
       }
-    } catch (OException e) {
-      indexes.put(iIndexName, idx);
-      reload();
-      throw e;
     } finally {
       releaseExclusiveLock();
     }
