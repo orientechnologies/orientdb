@@ -183,7 +183,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
             }
           }
 
-          p.remove(null);
+          if (p.isNullKeyIsSupported()) {
+            p.remove(null);
+          }
 
           p.delete();
         }

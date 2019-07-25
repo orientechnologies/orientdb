@@ -108,7 +108,9 @@ public class OSBTreeIndexEngine implements OIndexEngine {
         key = keyCursor.next(-1);
       }
 
-      sbTree.remove(null);
+      if (sbTree.isNullPointerSupport()) {
+        sbTree.remove(null);
+      }
 
       sbTree.delete();
     } catch (IOException e) {
