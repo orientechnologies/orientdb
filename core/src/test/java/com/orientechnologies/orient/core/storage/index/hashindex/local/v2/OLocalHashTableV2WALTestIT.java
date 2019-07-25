@@ -99,7 +99,7 @@ public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
   private void createActualHashTable() throws IOException {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<>(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTableV2<>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTableV2<>(42, "actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
@@ -221,8 +221,8 @@ public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
         .getReadCache();
 
     OCASDiskWriteAheadLog log = new OCASDiskWriteAheadLog(ACTUAL_DB_NAME, Paths.get(actualStorageDir), Paths.get(actualStorageDir),
-        10_000, 128, null, null, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false, true, false,
-        0);
+        10_000, 128, null, null, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false,
+        true, false, 0);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<>();

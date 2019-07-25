@@ -34,7 +34,7 @@ public class OLocalHashTableV2TestIT extends OLocalHashTableV2Base {
 
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTableV2<>("localHashTableTest", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTableV2<>(42, "localHashTableTest", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 
     localHashTable

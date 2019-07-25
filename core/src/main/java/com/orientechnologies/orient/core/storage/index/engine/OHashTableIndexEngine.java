@@ -70,10 +70,10 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     if (version < 2) {
       throw new IllegalStateException("Unsupported version of hash index");
     } else if (version == 2) {
-      hashTable = new OLocalHashTableV2<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTableV2<>(id, name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 3) {
-      hashTable = new OLocalHashTableV3<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTableV3<>(id, name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid value of the index version , version = " + version);
@@ -98,7 +98,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) throws IOException {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption)
+      throws IOException {
     final OHashFunction<Object> hashFunction;
 
     if (encryption != null) {
