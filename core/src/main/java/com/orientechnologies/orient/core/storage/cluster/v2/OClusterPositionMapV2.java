@@ -346,7 +346,7 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
           if (bucket.exists(i + index)) {
             final OClusterPositionMapBucket.PositionEntry val = bucket.get(i + index);
             assert val != null;
-            result[entriesCount] = new OClusterPositionEntry(startIndex + i, val.getPageIndex(), val.getRecordPosition());
+            result[entriesCount] = new OClusterPositionEntry(index + i, val.getPageIndex(), val.getRecordPosition());
             entriesCount++;
           }
         }
