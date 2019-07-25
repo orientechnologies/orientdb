@@ -172,13 +172,15 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
         for (OHashTable<Object, Object> p : partitions) {
           final OHashTable.Entry<Object, Object> firstEntry = p.firstEntry();
 
-          OHashTable.Entry<Object, Object>[] entries = p.ceilingEntries(firstEntry.key);
-          while (entries.length > 0) {
-            for (final OHashTable.Entry<Object, Object> entry : entries) {
-              p.remove(entry.key);
-            }
+          if (firstEntry != null) {
+            OHashTable.Entry<Object, Object>[] entries = p.ceilingEntries(firstEntry.key);
+            while (entries.length > 0) {
+              for (final OHashTable.Entry<Object, Object> entry : entries) {
+                p.remove(entry.key);
+              }
 
-            entries = p.higherEntries(entries[entries.length - 1].key);
+              entries = p.higherEntries(entries[entries.length - 1].key);
+            }
           }
 
           p.delete();
