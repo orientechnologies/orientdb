@@ -445,7 +445,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       stream.write(binaryFileId, 0, binaryFileId.length);
 
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, 1, true);
+        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, true);
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn = ODurablePage
@@ -666,7 +666,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             doEncryptionDecryption(Cipher.DECRYPT_MODE, aesKey, expectedFileId, pageIndex, data, encryptionIv);
           }
 
-          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, true, null);
+          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, true, null);
 
           if (cacheEntry == null) {
             do {
@@ -674,8 +674,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                 readCache.releaseFromWrite(cacheEntry, writeCache);
 
               cacheEntry = readCache.allocateNewPage(fileId, writeCache, null);
-            }
-            while (cacheEntry.getPageIndex() != pageIndex);
+            } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
           try {
