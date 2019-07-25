@@ -104,11 +104,11 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
     throw new OConfigurationException("Unsupported type : " + algorithm);
   }
 
-  public OBaseIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage,
+  public OBaseIndexEngine createIndexEngine(final int indexId, String algorithm, String name, Boolean durableInNonTxMode, OStorage storage,
       int version, int apiVersion, boolean multivalue, Map<String, String> engineProperties) {
 
     if (LUCENE_CROSS_CLASS.equalsIgnoreCase(algorithm)) {
-      return new OLuceneCrossClassIndexEngine(storage, name);
+      return new OLuceneCrossClassIndexEngine(indexId, storage, name);
     }
     throw new OConfigurationException("Unsupported type : " + algorithm);
 
