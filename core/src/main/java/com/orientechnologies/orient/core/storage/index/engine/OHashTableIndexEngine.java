@@ -138,6 +138,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       }
     }
 
+    hashTable.remove(null);
+
     hashTable.delete();
   }
 
