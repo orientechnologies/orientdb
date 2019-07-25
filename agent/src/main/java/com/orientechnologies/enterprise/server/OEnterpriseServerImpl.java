@@ -368,31 +368,32 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   @Override
   public Optional<QueryInfo> getQueryInfo(OResultSet resultSet) {
 
-    QueryInfo info = null;
+    Optional<QueryInfo> info = Optional.empty();
 
     if (resultSet instanceof OLocalResultSetLifecycleDecorator) {
       OResultSet oResultSet = ((OLocalResultSetLifecycleDecorator) resultSet).getInternal();
       if (oResultSet instanceof OLocalResultSet) {
         OLocalResultSet oLocalResultSet = (OLocalResultSet) oResultSet;
         Optional<OExecutionPlan> plan = oLocalResultSet.getExecutionPlan();
-        String query = plan.map((p -> {
+        info = plan.map((p -> {
           String q = "";
           if (p instanceof OInternalExecutionPlan) {
             String stm = ((OInternalExecutionPlan) p).getStatement();
             if (stm != null) {
               q = stm;
             }
+          } else {
+            q = p.toString();
           }
-          return q;
-        })).orElse("");
-        info = new QueryInfo(query, "sql", oLocalResultSet.getStartTime(), oLocalResultSet.getTotalExecutionTime());
+          return new QueryInfo(q, "sql", oLocalResultSet.getStartTime(), oLocalResultSet.getTotalExecutionTime());
+        }));
       } else if (oResultSet instanceof OQueryMetrics) {
         OQueryMetrics oQueryMetrics = (OQueryMetrics) oResultSet;
-        info = new QueryInfo(oQueryMetrics.getStatement(), oQueryMetrics.getLanguage(), oQueryMetrics.getStartTime(),
-            oQueryMetrics.getElapsedTimeMillis());
+        info = Optional.of(new QueryInfo(oQueryMetrics.getStatement(), oQueryMetrics.getLanguage(), oQueryMetrics.getStartTime(),
+            oQueryMetrics.getElapsedTimeMillis()));
       }
     }
 
-    return Optional.ofNullable(info);
+    return info;
   }
 }
