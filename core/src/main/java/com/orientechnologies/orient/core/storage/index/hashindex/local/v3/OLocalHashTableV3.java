@@ -6,6 +6,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OLocalHashTableV3Exception;
+import com.orientechnologies.orient.core.exception.ONonEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
@@ -1069,6 +1070,12 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireExclusiveLock();
       try {
+        final long size = size();
+        if (size > 0) {
+          throw new ONonEmptyComponentCanNotBeRemovedException(
+              getName() + " : Not empty index can not be deleted. Index has " + size + " records");
+        }
+
         directory.delete(atomicOperation);
         deleteFile(atomicOperation, fileStateId);
         deleteFile(atomicOperation, fileId);
