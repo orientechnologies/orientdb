@@ -34,15 +34,15 @@ import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeList
  * hand when the map is changed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 @SuppressWarnings("serial")
-public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
-  protected final ORecord                            sourceRecord;
-  private STATUS                                     status          = STATUS.NOT_LOADED;
-  private List<OMultiValueChangeListener<Object, T>> changeListeners = null;
-  protected Class<?>                                 genericClass;
-  private final boolean                              embeddedCollection;
+public class OTrackedMap<T> extends LinkedHashMap<Object, T>
+    implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
+  protected final ORecord                                    sourceRecord;
+  private         STATUS                                     status          = STATUS.NOT_LOADED;
+  private         List<OMultiValueChangeListener<Object, T>> changeListeners = null;
+  protected       Class<?>                                   genericClass;
+  private final   boolean                                    embeddedCollection;
 
   public OTrackedMap(final ORecord iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
@@ -78,8 +78,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     addOwnerToEmbeddedDoc(value);
 
     if (containsKey)
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, key, value,
-          oldValue));
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, key, value, oldValue));
     else
       fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
     addNested(value);
@@ -114,39 +114,32 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
       removeNested(oldValue);
     }
 
-
-
     return oldValue;
   }
 
   @Override
   public void clear() {
-    final Map<Object, T> origValues;
-    if (changeListeners == null)
-      origValues = null;
-    else
-      origValues = new HashMap<Object, T>(this);
-
-    if (origValues == null) {
-      for (T value : super.values())
+    if (changeListeners == null || changeListeners.isEmpty()) {
+      for (T value : super.values()) {
         if (value instanceof ODocument) {
           ODocumentInternal.removeOwner((ODocument) value, this);
         }
-    }
-
-    super.clear();
-
-    if (origValues != null) {
+      }
+      super.clear();
+      setDirty();
+    } else {
+      final Map<Object, T> origValues = new HashMap<Object, T>(this);
+      super.clear();
       for (Map.Entry<Object, T> entry : origValues.entrySet()) {
         if (entry.getValue() instanceof ODocument) {
           ODocumentInternal.removeOwner((ODocument) entry.getValue(), this);
         }
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(),
-            null, entry.getValue()));
+        fireCollectionChangedEvent(
+            new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(), null,
+                entry.getValue()));
         removeNested(entry.getValue());
       }
-    } else
-      setDirty();
+    }
   }
 
   private void removeNested(Object element) {
@@ -164,8 +157,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
+        .isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return this;
   }
@@ -198,8 +191,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   public Map<Object, T> returnOriginalState(final List<OMultiValueChangeEvent<Object, T>> multiValueChangeEvents) {
     final Map<Object, T> reverted = new HashMap<Object, T>(this);
 
-    final ListIterator<OMultiValueChangeEvent<Object, T>> listIterator = multiValueChangeEvents.listIterator(multiValueChangeEvents
-        .size());
+    final ListIterator<OMultiValueChangeEvent<Object, T>> listIterator = multiValueChangeEvents
+        .listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<Object, T> event = listIterator.previous();

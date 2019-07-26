@@ -118,22 +118,16 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   @Override
   public void clear() {
-    final Set<T> origValues;
-    if (changeListeners == null)
-      origValues = null;
-    else
-      origValues = new HashSet<T>(this);
-
-    if (origValues == null) {
+    if (changeListeners == null || changeListeners.isEmpty()) {
       for (final T item : this) {
         if (item instanceof ODocument)
           ODocumentInternal.removeOwner((ODocument) item, this);
       }
-    }
-
-    super.clear();
-
-    if (origValues != null) {
+      super.clear();
+      setDirty();
+    } else {
+      final Set<T> origValues = new HashSet<T>(this);
+      super.clear();
       for (final T item : origValues) {
         if (item instanceof ODocument)
           ODocumentInternal.removeOwner((ODocument) item, this);
@@ -141,9 +135,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
         fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
         removeNested(item);
       }
-
-    } else
-      setDirty();
+    }
   }
 
   private void removeNested(Object element) {

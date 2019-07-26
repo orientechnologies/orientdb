@@ -32,17 +32,16 @@ import java.util.*;
 /**
  * Implementation of ArrayList bound to a source ORecord object to keep track of changes for literal types. This avoid to call the
  * makeDirty() by hand when the list is changed.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
-  protected final ORecord                               sourceRecord;
-  private STATUS                                        status          = STATUS.NOT_LOADED;
-  protected List<OMultiValueChangeListener<Integer, T>> changeListeners = null;
-  protected Class<?>                                    genericClass;
-  private final boolean                                 embeddedCollection;
+  protected final ORecord                                     sourceRecord;
+  private         STATUS                                      status          = STATUS.NOT_LOADED;
+  protected       List<OMultiValueChangeListener<Integer, T>> changeListeners = null;
+  protected       Class<?>                                    genericClass;
+  private final   boolean                                     embeddedCollection;
 
   public OTrackedList(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
     this(iRecord);
@@ -68,8 +67,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     if (result) {
       addOwnerToEmbeddedDoc(element);
 
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, super.size() - 1,
-          element));
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, super.size() - 1, element));
     }
 
     addNested(element);
@@ -103,8 +102,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
       addOwnerToEmbeddedDoc(element);
 
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, element,
-          oldValue));
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, element, oldValue));
     }
 
     addNested(element);
@@ -134,8 +133,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       ODocumentInternal.removeOwner((ODocument) oldValue, this);
     }
 
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null,
-        oldValue));
+    fireCollectionChangedEvent(
+        new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null, oldValue));
     removeNested(oldValue);
 
     return oldValue;
@@ -168,34 +167,29 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @Override
   public void clear() {
-    final List<T> origValues;
-
-    if (changeListeners != null && changeListeners.isEmpty())
-      origValues = null;
-    else
-      origValues = new ArrayList<T>(this);
-
-    if (origValues == null) {
+    if (changeListeners != null && changeListeners.isEmpty()) {
       for (final T item : this) {
         if (item instanceof ODocument)
           ODocumentInternal.removeOwner((ODocument) item, this);
       }
+      super.clear();
+      setDirty();
+    } else {
+      final List<T>  origValues = new ArrayList<T>(this);
+      super.clear();
+      if (origValues != null)
+        for (int i = origValues.size() - 1; i >= 0; i--) {
+          final T origValue = origValues.get(i);
+
+          if (origValue instanceof ODocument)
+            ODocumentInternal.removeOwner((ODocument) origValue, this);
+
+          fireCollectionChangedEvent(
+              new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null, origValue));
+          removeNested(origValue);
+        }
     }
 
-    super.clear();
-    if (origValues != null)
-      for (int i = origValues.size() - 1; i >= 0; i--) {
-        final T origValue = origValues.get(i);
-
-        if (origValue instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) origValue, this);
-
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null,
-            origValue));
-        removeNested(origValue);
-      }
-    else
-      setDirty();
   }
 
   public void reset() {
@@ -204,8 +198,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @SuppressWarnings("unchecked")
   public <RET> RET setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
+        .isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return (RET) this;
   }
@@ -287,7 +281,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     super.set((Integer) event.getKey(), (T) newValue);
     addNested((T) newValue);
   }
-
 
   private OSimpleMultiValueChangeListener<Integer, T> changeListener;
 
