@@ -5255,3 +5255,23 @@ OWhileBlock WhileBlock():
     <RBRACE>
     { return jjtThis; }
 }
+
+
+OSecurityResourceSegment SecurityResourceSegment():
+{}
+{
+    (
+        (
+            <STAR> { jjtThis.star = true; }
+            |
+            jjtThis.identifier = Identifier()
+            |
+            <CLUSTER> { jjtThis.cluster = true; }
+        )
+        [
+          <DOT>
+          jjtThis.next = SecurityResourceSegment()
+        ]
+    )
+    { return jjtThis; }
+}

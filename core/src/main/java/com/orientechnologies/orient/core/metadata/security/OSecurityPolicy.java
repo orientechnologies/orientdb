@@ -5,6 +5,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 
 public class OSecurityPolicy {
+
+
+  public enum Scope {CREATE, READ, BEFORE_UPDATE, AFTER_UPDATE, DELETE, EXECUTE}
+
   private OElement element;
 
   public OSecurityPolicy(OElement element) {
@@ -90,6 +94,19 @@ public class OSecurityPolicy {
     validatePredicate(rule);
     element.setProperty("execute", rule);
   }
+
+  public String get(Scope scope) {
+    switch (scope) {
+    case CREATE: return getCreateRule();
+    case READ: return getCreateRule();
+    case BEFORE_UPDATE: return getCreateRule();
+    case AFTER_UPDATE: return getCreateRule();
+    case DELETE: return getCreateRule();
+    case EXECUTE: return getCreateRule();
+    default: throw new IllegalArgumentException();
+    }
+  }
+
 
   protected void validatePredicate(String predicate) throws IllegalArgumentException {
     if (predicate == null || predicate.trim().length() == 0) {

@@ -197,6 +197,7 @@ public interface OrientSqlTreeConstants
   public int JJTHASETSTATEMENT = 191;
   public int JJTFOREACHBLOCK = 192;
   public int JJTWHILEBLOCK = 193;
+  public int JJTSECURITYRESOURCESEGMENT = 194;
 
 
   public String[] jjtNodeName = {
@@ -394,6 +395,7 @@ public interface OrientSqlTreeConstants
     "HaSetStatement",
     "ForEachBlock",
     "WhileBlock",
+    "SecurityResourceSegment",
   };
 }
-/* JavaCC - OriginalChecksum=218d1315e0d6ce9deb236fb8679291d8 (do not edit this line) */
+/* JavaCC - OriginalChecksum=bdb69435e09398a58ea9ba8f8694d8a0 (do not edit this line) */

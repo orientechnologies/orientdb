@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.OSecurityResource;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -93,6 +94,18 @@ public class OSQLEngine {
       throw new OCommandSQLParsingException(e, "");
     }
   }
+
+  public static OSecurityResourceSegment parseSecurityResource(String exp){
+    final InputStream is = new ByteArrayInputStream(exp.getBytes());
+    try {
+      final OrientSql osql = new OrientSql(is);
+      OSecurityResourceSegment result = osql.SecurityResourceSegment();
+      return result;
+    } catch (ParseException e) {
+      throw new OCommandSQLParsingException(e, "");
+    }
+  }
+
   /**
    * internal use only, to sort operators.
    */

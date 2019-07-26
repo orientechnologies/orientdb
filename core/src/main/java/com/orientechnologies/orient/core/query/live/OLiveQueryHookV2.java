@@ -220,7 +220,7 @@ public class OLiveQueryHookV2 {
     return null;
   }
 
-  private static OResultInternal calculateBefore(ODocument iDocument) {
+  public static OResultInternal calculateBefore(ODocument iDocument) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
       result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
