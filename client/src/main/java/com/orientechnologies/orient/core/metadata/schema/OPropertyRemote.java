@@ -6,15 +6,11 @@ import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.ArrayList;
 
@@ -289,12 +285,13 @@ public class OPropertyRemote extends OPropertyImpl {
 
   @Override
   public OPropertyImpl dropIndexes() {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
     final ArrayList<OIndex<?>> relatedIndexes = new ArrayList<OIndex<?>>();
-    for (final OIndex<?> index : indexManager.getClassIndexes(owner.getName())) {
+    for (final OIndex<?> index : indexManager.getClassIndexes(database, owner.getName())) {
       final OIndexDefinition definition = index.getDefinition();
 
       if (OCollections.indexOf(definition.getFields(), globalRef.getName(), new OCaseInsentiveComparator()) > -1) {
@@ -308,7 +305,7 @@ public class OPropertyRemote extends OPropertyImpl {
     }
 
     for (final OIndex<?> index : relatedIndexes)
-      getDatabase().getMetadata().getIndexManager().dropIndex(index.getName());
+      database.getMetadata().getIndexManagerInternal().dropIndex(database, index.getName());
 
     return this;
   }

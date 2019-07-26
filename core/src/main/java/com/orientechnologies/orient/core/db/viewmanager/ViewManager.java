@@ -178,7 +178,7 @@ public class ViewManager {
       viewIndexVisitors.remove(index);
       indexesToDrop.remove(index);
       oldIndexesPerViews.remove(index);
-      db.getMetadata().getIndexManager().dropIndex(index);
+      db.getMetadata().getIndexManagerInternal().dropIndex(db, index);
     }
   }
 

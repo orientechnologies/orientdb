@@ -567,7 +567,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Deprecated
   public ODictionary<ORecord> getDictionary() {
     checkOpenness();
-    return metadata.getIndexManager().getDictionary();
+    return metadata.getIndexManagerInternal().getDictionary(this);
   }
 
   /**
@@ -1838,7 +1838,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
     }
 
-    if(!getSerializer().equals(ORecordInternal.getRecordSerializer(doc))){
+    if (!getSerializer().equals(ORecordInternal.getRecordSerializer(doc))) {
       ORecordInternal.setRecordSerializer(doc, getSerializer());
     }
     doc = (ODocument) currentTx

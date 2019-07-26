@@ -17,8 +17,10 @@
 package com.orientechnologies.orient.object.metadata;
 
 import com.orientechnologies.orient.core.cache.OCommandCache;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
@@ -35,11 +37,13 @@ import java.io.IOException;
  */
 public class OMetadataObject implements OMetadataInternal {
 
-  protected OMetadataInternal  underlying;
-  protected OSchemaProxyObject schema;
+  protected OMetadataInternal         underlying;
+  protected OSchemaProxyObject        schema;
+  private   ODatabaseDocumentInternal database;
 
-  public OMetadataObject(OMetadataInternal iUnderlying) {
+  public OMetadataObject(OMetadataInternal iUnderlying, ODatabaseDocumentInternal database) {
     underlying = iUnderlying;
+    this.database = database;
   }
 
   public OMetadataObject(OMetadataInternal iUnderlying, OSchemaProxyObject iSchema) {
@@ -97,7 +101,7 @@ public class OMetadataObject implements OMetadataInternal {
   @Deprecated
   @Override
   public OIndexManager getIndexManager() {
-    return underlying.getIndexManager();
+    return new OIndexManagerProxy(underlying.getIndexManagerInternal(), database);
   }
 
   @Override
