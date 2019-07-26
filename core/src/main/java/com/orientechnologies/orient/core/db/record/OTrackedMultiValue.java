@@ -20,9 +20,7 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -62,7 +60,7 @@ public interface OTrackedMultiValue<K, V> {
 
   void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue);
 
-  void enableTracking(ODocument parent, ODocumentEntry entry);
+  void enableTracking(ODocument parent);
 
   void disableTracking(ODocument document);
 

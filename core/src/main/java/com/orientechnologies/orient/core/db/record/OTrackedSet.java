@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.db.record;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
 
@@ -236,9 +235,9 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   private OSimpleMultiValueChangeListener<T, T> changeListener;
 
-  public void enableTracking(ODocument parent, ODocumentEntry entry) {
+  public void enableTracking(ODocument parent) {
     if (changeListener == null) {
-      final OSimpleMultiValueChangeListener<T, T> listener = new OSimpleMultiValueChangeListener<>(parent, entry);
+      final OSimpleMultiValueChangeListener<T, T> listener = new OSimpleMultiValueChangeListener<>(parent);
       this.addChangeListener(listener);
       changeListener = listener;
     }

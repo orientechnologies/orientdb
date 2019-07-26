@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -196,7 +195,7 @@ public class ODocumentEntry {
   }
 
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (value instanceof OTrackedMultiValue) {
+    if (!isChanged() && value instanceof OTrackedMultiValue) {
       return ((OTrackedMultiValue) value).getTimeLine();
     } else {
       return null;
@@ -223,7 +222,7 @@ public class ODocumentEntry {
   public boolean enableTracking(ODocument document) {
     if (!(value instanceof OTrackedMultiValue))
       return false;
-    ((OTrackedMultiValue) value).enableTracking(document, this);
+    ((OTrackedMultiValue) value).enableTracking(document);
     return true;
   }
 

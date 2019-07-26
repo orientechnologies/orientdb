@@ -24,20 +24,15 @@ import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
-import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -543,8 +538,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
 
   //  @Override
-  public void enableTracking(ODocument parent, ODocumentEntry entry) {
-    delegate.enableTracking(parent,entry);
+  public void enableTracking(ODocument parent) {
+    delegate.enableTracking(parent);
   }
 
   public void disableTracking(ODocument document) {

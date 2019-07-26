@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 
 import java.lang.ref.WeakReference;
@@ -38,32 +39,26 @@ public final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueC
   /**
    *
    */
-  private final WeakReference<ODocument>                  document;
-  private final ODocumentEntry                            entry;
+  private final WeakReference<ORecordElement>             element;
   public        OMultiValueChangeTimeLine<Object, Object> timeLine;
 
-  public OSimpleMultiValueChangeListener(ODocument document, final ODocumentEntry entry) {
-    this.document = new WeakReference<ODocument>(document);
-    this.entry = entry;
+  public OSimpleMultiValueChangeListener(ODocument element) {
+    this.element = new WeakReference<ORecordElement>(element);
   }
 
   public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
-    ODocument document = this.document.get();
+    ORecordElement document = this.element.get();
     if (document == null)
       //doc not alive anymore, do nothing.
       return;
-    if (document.getInternalStatus() != STATUS.UNMARSHALLING) {
-      if (event.isChangesOwnerContent())
-        document.setDirty();
-      else
-        document.setDirtyNoChanged();
-    }
 
-    if (!(document.trackingChanges && document.getIdentity().isValid()) || document.getInternalStatus() == STATUS.UNMARSHALLING)
+    if (document.getInternalStatus() == STATUS.UNMARSHALLING)
       return;
 
-    if (entry == null || entry.isChanged())
-      return;
+    if (event.isChangesOwnerContent())
+      document.setDirty();
+    else
+      document.setDirtyNoChanged();
 
     if (timeLine == null) {
       timeLine = new OMultiValueChangeTimeLine<Object, Object>();
