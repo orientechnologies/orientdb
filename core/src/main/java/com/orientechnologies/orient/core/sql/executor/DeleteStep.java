@@ -33,7 +33,7 @@ public class DeleteStep extends AbstractExecutionStep {
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           boolean newTx = false;
-          if(result.isEdge() && !ctx.getDatabase().getTransaction().isActive()){
+          if((result.isEdge() || result.isVertex()) && !ctx.getDatabase().getTransaction().isActive()){
             newTx = true;
             ctx.getDatabase().begin();
           }
