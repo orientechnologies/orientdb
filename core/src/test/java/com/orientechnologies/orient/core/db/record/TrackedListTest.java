@@ -33,6 +33,7 @@ public class TrackedListTest {
         Assert.assertEquals(event.getValue(), "value1");
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -60,6 +61,7 @@ public class TrackedListTest {
         Assert.assertEquals(event.getKey().intValue(), 2);
         Assert.assertEquals(event.getValue(), "value3");
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -75,6 +77,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     trackedList.add("value1");
     Assert.assertTrue(doc.isDirty());
   }
@@ -130,6 +133,7 @@ public class TrackedListTest {
           firedEvents.remove(0);
         else
           Assert.fail();
+        doc.setDirty();
       }
     });
 
@@ -146,6 +150,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     final List<String> valuesToAdd = new ArrayList<String>();
     valuesToAdd.add("value1");
     valuesToAdd.add("value3");
@@ -175,6 +180,7 @@ public class TrackedListTest {
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -207,6 +213,7 @@ public class TrackedListTest {
         Assert.assertEquals(event.getValue(), "value3");
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -222,6 +229,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("aa", trackedList);
     trackedList.add("value1");
     trackedList.add("value2");
 
@@ -251,6 +259,7 @@ public class TrackedListTest {
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -283,6 +292,7 @@ public class TrackedListTest {
         Assert.assertEquals(event.getValue(), "value4");
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -298,6 +308,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     trackedList.add("value1");
     trackedList.add("value2");
     trackedList.add("value3");
@@ -329,6 +340,7 @@ public class TrackedListTest {
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -361,6 +373,7 @@ public class TrackedListTest {
         Assert.assertNull(event.getValue());
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -376,6 +389,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     trackedList.add("value1");
     trackedList.add("value2");
     trackedList.add("value3");
@@ -408,6 +422,7 @@ public class TrackedListTest {
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -435,6 +450,7 @@ public class TrackedListTest {
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -467,6 +483,7 @@ public class TrackedListTest {
         Assert.assertNull(event.getValue());
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -482,6 +499,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     trackedList.add("value1");
     trackedList.add("value2");
     trackedList.add("value3");
@@ -514,6 +532,7 @@ public class TrackedListTest {
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -547,6 +566,7 @@ public class TrackedListTest {
           firedEvents.remove(0);
         else
           Assert.fail();
+        doc.setDirty();
       }
     });
 
@@ -562,6 +582,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     trackedList.add("value1");
     trackedList.add("value2");
     trackedList.add("value3");
@@ -594,6 +615,7 @@ public class TrackedListTest {
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -619,6 +641,7 @@ public class TrackedListTest {
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
         firedEvents.add(event);
+        doc.setDirty();
       }
     });
 
@@ -657,6 +680,7 @@ public class TrackedListTest {
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
         firedEvents.add(event);
+        doc.setDirty();
       }
     });
 

@@ -225,7 +225,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     if (status == STATUS.UNMARSHALLING)
       return;
 
-    setDirty();
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
         if (changeListener != null)

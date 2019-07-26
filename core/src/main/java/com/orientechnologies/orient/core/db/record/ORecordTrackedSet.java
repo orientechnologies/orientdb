@@ -196,7 +196,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
     if (getOwner().getInternalStatus() == STATUS.UNMARSHALLING)
       return;
 
-    setDirty();
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
         if (changeListener != null)

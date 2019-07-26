@@ -258,7 +258,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, T> event) {
     if (status == STATUS.UNMARSHALLING)
       return;
-    setDirty();
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<Integer, T> changeListener : changeListeners) {
         if (changeListener != null)

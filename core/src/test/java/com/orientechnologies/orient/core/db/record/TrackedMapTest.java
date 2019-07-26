@@ -33,6 +33,7 @@ public class TrackedMapTest {
         Assert.assertEquals(event.getValue(), "value1");
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -65,6 +66,7 @@ public class TrackedMapTest {
         Assert.assertEquals(event.getValue(), "value2");
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -92,6 +94,7 @@ public class TrackedMapTest {
     map.addChangeListener(new OMultiValueChangeListener<Object, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -119,6 +122,7 @@ public class TrackedMapTest {
     map.addChangeListener(new OMultiValueChangeListener<Object, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -143,6 +147,7 @@ public class TrackedMapTest {
     map.addChangeListener(new OMultiValueChangeListener<Object, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -173,6 +178,7 @@ public class TrackedMapTest {
         Assert.assertEquals(event.getValue(), null);
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -198,6 +204,7 @@ public class TrackedMapTest {
     map.addChangeListener(new OMultiValueChangeListener<Object, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -224,6 +231,7 @@ public class TrackedMapTest {
     map.addChangeListener(new OMultiValueChangeListener<Object, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -259,6 +267,7 @@ public class TrackedMapTest {
           Assert.fail();
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -288,6 +297,7 @@ public class TrackedMapTest {
     trackedMap.addChangeListener(new OMultiValueChangeListener<Object, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -335,6 +345,7 @@ public class TrackedMapTest {
     trackedMap.addChangeListener(new OMultiValueChangeListener<Object, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
         firedEvents.add(event);
+        doc.setDirty();
       }
     });
 
@@ -372,6 +383,7 @@ public class TrackedMapTest {
     trackedMap.addChangeListener(new OMultiValueChangeListener<Object, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
         firedEvents.add(event);
+        doc.setDirty();
       }
     });
 

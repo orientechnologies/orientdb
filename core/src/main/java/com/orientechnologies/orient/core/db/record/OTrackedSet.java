@@ -216,7 +216,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     if (status == STATUS.UNMARSHALLING)
       return;
 
-    setDirty();
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<T, T> changeListener : changeListeners) {
         if (changeListener != null)

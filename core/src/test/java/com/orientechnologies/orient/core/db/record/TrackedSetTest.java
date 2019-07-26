@@ -35,6 +35,7 @@ public class TrackedSetTest {
         Assert.assertEquals(event.getValue(), "value1");
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -50,6 +51,7 @@ public class TrackedSetTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedSet<String> trackedSet = new OTrackedSet<String>(doc);
+    doc.setProperty("tracked", trackedSet);
     trackedSet.add("value1");
     Assert.assertTrue(doc.isDirty());
   }
@@ -68,6 +70,7 @@ public class TrackedSetTest {
     trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -95,6 +98,7 @@ public class TrackedSetTest {
     trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -127,6 +131,7 @@ public class TrackedSetTest {
         Assert.assertNull(event.getValue());
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -142,6 +147,7 @@ public class TrackedSetTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedSet<String> trackedSet = new OTrackedSet<String>(doc);
+    doc.setProperty("tracked", trackedSet);
     trackedSet.add("value1");
     trackedSet.add("value2");
     trackedSet.add("value3");
@@ -173,6 +179,7 @@ public class TrackedSetTest {
     trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -200,6 +207,7 @@ public class TrackedSetTest {
     trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -238,6 +246,7 @@ public class TrackedSetTest {
           Assert.fail();
 
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -267,6 +276,7 @@ public class TrackedSetTest {
     trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
         changed.value = true;
+        doc.setDirty();
       }
     });
 
@@ -312,6 +322,7 @@ public class TrackedSetTest {
     trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
         firedEvents.add(event);
+        doc.setDirty();
       }
     });
 
@@ -326,7 +337,6 @@ public class TrackedSetTest {
 
     Assert.assertEquals(original, trackedSet.returnOriginalState(firedEvents));
   }
-
 
   /**
    * Test that {@link OTrackedSet} is serialised correctly.
