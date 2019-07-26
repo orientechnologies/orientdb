@@ -1864,7 +1864,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       txBegun.incrementAndGet();
 
       final ODatabaseDocumentInternal database = transaction.getDatabase();
-      final OIndexManager indexManager = database.getMetadata().getIndexManager();
+      final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
       final TreeMap<String, OTransactionIndexChanges> indexOperations = getSortedIndexOperations(transaction);
 
       database.getMetadata().makeThreadLocalSchemaSnapshot();
@@ -1987,7 +1987,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               }
             }
 
-            lockRidBags(clustersToLock, indexOperations, indexManager);
+            lockRidBags(clustersToLock, indexOperations, indexManager, database);
 
             checkReadOnlyConditions();
 
@@ -5958,7 +5958,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void lockRidBags(final TreeMap<Integer, OCluster> clusters, final TreeMap<String, OTransactionIndexChanges> indexes,
-      final OIndexManager manager) {
+      final OIndexManagerAbstract manager, ODatabaseDocumentInternal db) {
     final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
     for (final Integer clusterId : clusters.keySet()) {
@@ -5968,7 +5968,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     for (final Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
       final String indexName = entry.getKey();
-      final OIndexInternal<?> index = entry.getValue().resolveAssociatedIndex(indexName, manager);
+      final OIndexInternal<?> index = entry.getValue().resolveAssociatedIndex(indexName, manager, db);
 
       if (!index.isUnique()) {
         atomicOperationsManager

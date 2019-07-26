@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class ORebuildIndexStatement extends OSimpleExecStatement {
 
-  protected boolean all = false;
+  protected boolean    all = false;
   protected OIndexName name;
 
   public ORebuildIndexStatement(int id) {
@@ -25,21 +25,22 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "rebuild index");
 
-    final ODatabaseDocument database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     if (all) {
       long totalIndexed = 0;
-      for (OIndex<?> idx : database.getMetadata().getIndexManager().getIndexes()) {
+      for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes()) {
         if (idx.isAutomatic())
           totalIndexed += idx.rebuild();
       }
 
       result.setProperty("totalIndexed", totalIndexed);
     } else {
-      final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(name.getValue());
+      final OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database, name.getValue());
       if (idx == null)
         throw new OCommandExecutionException("Index '" + name + "' not found");
 
@@ -57,7 +58,8 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
 
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("REBUILD INDEX ");
     if (all) {
       builder.append("*");
@@ -66,14 +68,16 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
     }
   }
 
-  @Override public ORebuildIndexStatement copy() {
+  @Override
+  public ORebuildIndexStatement copy() {
     ORebuildIndexStatement result = new ORebuildIndexStatement(-1);
     result.all = all;
     result.name = name == null ? null : name.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -89,7 +93,8 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = (all ? 1 : 0);
     result = 31 * result + (name != null ? name.hashCode() : 0);
     return result;

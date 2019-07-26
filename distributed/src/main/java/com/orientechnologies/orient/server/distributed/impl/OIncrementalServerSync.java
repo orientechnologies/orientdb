@@ -39,7 +39,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 
 import java.io.DataInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -202,7 +201,7 @@ public class OIncrementalServerSync {
                         if (duplicatedRecord == null) {
                           // RECORD REMOVED: THE INDEX IS DIRTY, FIX THE DIRTY INDEX
                           final ODocument doc = (ODocument) newRecord;
-                          final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(e.getIndexName());
+                          final OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, e.getIndexName());
                           final List<String> fields = index.getDefinition().getFields();
                           final List<Object> values = new ArrayList<Object>(fields.size());
                           for (String f : fields) {

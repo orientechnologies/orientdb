@@ -214,7 +214,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
                 + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
       }
 
-      final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 

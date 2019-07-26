@@ -103,7 +103,7 @@ public class ViewManager {
         if (closed)
           return;
         lastTask = orientDB.executeNoAuthorization(dbName, (db) -> {
-          ViewManager.this.updateViews(db);
+          ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
           return null;
         });
       }
@@ -111,7 +111,7 @@ public class ViewManager {
     this.orientDB.scheduleOnce(timerTask, 1000);
   }
 
-  private void updateViews(ODatabaseSession db) {
+  private void updateViews(ODatabaseDocumentInternal db) {
     try {
       cleanUnusedViewClusters(db);
       cleanUnusedViewIndexes(db);
@@ -166,7 +166,7 @@ public class ViewManager {
     }
   }
 
-  public synchronized void cleanUnusedViewIndexes(ODatabaseDocument db) {
+  public synchronized void cleanUnusedViewIndexes(ODatabaseDocumentInternal db) {
     List<String> toRemove = new ArrayList<>();
     for (String index : indexesToDrop) {
       AtomicInteger visitors = viewIndexVisitors.get(index);
@@ -269,7 +269,7 @@ public class ViewManager {
     return lastUpdate + (updateInterval * 1000) < System.currentTimeMillis();
   }
 
-  public synchronized void updateView(OView view, ODatabaseDocument db) {
+  public synchronized void updateView(OView view, ODatabaseDocumentInternal db) {
     lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
 
     int cluster = db.addCluster(getNextClusterNameFor(view, db));
@@ -353,16 +353,16 @@ public class ViewManager {
     return idx.getDefinition().createValue(vals);
   }
 
-  private List<OIndex> createNewIndexesForView(OView view, int cluster, ODatabaseDocument db) {
+  private List<OIndex> createNewIndexesForView(OView view, int cluster, ODatabaseDocumentInternal db) {
     try {
       List<OIndex> result = new ArrayList<>();
-      OIndexManager idxMgr = db.getMetadata().getIndexManager();
+      OIndexManagerAbstract idxMgr = db.getMetadata().getIndexManagerInternal();
       for (OViewConfig.OViewIndexConfig cfg : view.getRequiredIndexesInfo()) {
         OIndexDefinition definition = createIndexDefinition(view.getName(), cfg.getProperties());
         String indexName = view.getName() + "_" + UUID.randomUUID().toString().replaceAll("-", "_");
         String type = cfg.getType();
         String engine = cfg.getEngine();
-        OIndex<?> idx = idxMgr.createIndex(indexName, type, definition, new int[] { cluster }, null, null, engine);
+        OIndex<?> idx = idxMgr.createIndex(db, indexName, type, definition, new int[] { cluster }, null, null, engine);
         result.add(idx);
       }
       return result;
@@ -419,7 +419,7 @@ public class ViewManager {
       }
       try {
         OView view = databaseSession.getMetadata().getSchema().getView(name);
-        updateView(view, databaseSession);
+        updateView(view, (ODatabaseDocumentInternal) databaseSession);
         if (listener != null) {
           listener.afterCreate(databaseSession, name);
         }

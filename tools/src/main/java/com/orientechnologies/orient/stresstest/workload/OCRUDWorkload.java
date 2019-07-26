@@ -23,7 +23,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
@@ -60,11 +60,11 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   private OWorkLoadResult updatesResult = new OWorkLoadResult();
   private OWorkLoadResult deletesResult = new OWorkLoadResult();
   private OWorkLoadResult scansResult   = new OWorkLoadResult();
-  private int creates;
-  private int reads;
-  private int updates;
-  private int deletes;
-  private int scans;
+  private int             creates;
+  private int             reads;
+  private int             updates;
+  private int             deletes;
+  private int             scans;
 
   public OCRUDWorkload() {
     connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
@@ -311,7 +311,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
   @Override
   public void check(final ODatabaseIdentifier databaseIdentifier) {
-    final ODatabaseDocument db = (ODatabaseDocument) getDocumentDatabase(databaseIdentifier,
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) getDocumentDatabase(databaseIdentifier,
         OStorageRemote.CONNECTION_STRATEGY.STICKY);
     final ODatabaseTool repair = new ODatabaseRepair().setDatabase(db);
     repair.run();

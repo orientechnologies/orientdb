@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
@@ -313,9 +312,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     // the OTransactionIndexChanges.changesPerKey in a consistent state.
 
     final List<KeyChangesUpdateRecord> keyRecordsToReinsert = new ArrayList<KeyChangesUpdateRecord>();
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     for (Entry<String, OTransactionIndexChanges> entry : indexEntries.entrySet()) {
-      final OIndex<?> index = indexManager.getIndex(entry.getKey());
+      final OIndex<?> index = indexManager.getIndex(database, entry.getKey());
       if (index == null)
         throw new OTransactionException("Cannot find index '" + entry.getValue() + "' while committing transaction");
 

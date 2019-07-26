@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -28,7 +29,6 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 
@@ -117,7 +117,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
       if (OMultiValue.isMultiValue(joinCurrentValue)) {
         // RESOLVE SINGLE JOINS
         for (Object ob : OMultiValue.getMultiValueIterable(joinCurrentValue)) {
-          final Object r = lookup(db, ob, true);
+          final Object r = lookup((ODatabaseDocumentInternal) db, ob, true);
           if (createEdge(db, vertex, ob, r) == null) {
             if (unresolvedLinkAction == ACTION.SKIP)
               // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
@@ -125,7 +125,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
           }
         }
       } else {
-        final Object result = lookup(db, joinCurrentValue, true);
+        final Object result = lookup((ODatabaseDocumentInternal) db, joinCurrentValue, true);
         if (createEdge(db, vertex, joinCurrentValue, result) == null) {
           if (unresolvedLinkAction == ACTION.SKIP)
             // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED

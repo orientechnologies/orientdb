@@ -430,8 +430,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       return (Index<T>) index;
     }
 
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
-    final OIndex idx = indexManager.getIndex(indexName);
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
+    final OIndex idx = indexManager.getIndex(database, indexName);
     if (idx == null || !hasIndexClass(idx))
       return null;
 
@@ -464,8 +465,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     executeOutsideTx(g -> {
       try {
-        final OIndexManager indexManager = getRawGraph().getMetadata().getIndexManager();
-        final OIndex index = indexManager.getIndex(indexName);
+        final ODatabaseDocumentInternal db = getRawGraph();
+        final OIndexManagerAbstract indexManager = db.getMetadata().getIndexManagerInternal();
+        final OIndex index = indexManager.getIndex(db, indexName);
         if (index != null) {
           ODocument metadata = index.getConfiguration().field("metadata");
 
@@ -474,9 +476,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
             recordMapIndexName = metadata.field(OrientIndexManual.CONFIG_RECORD_MAP_NAME);
           }
 
-          indexManager.dropIndex(indexName);
+          indexManager.dropIndex(db, indexName);
           if (recordMapIndexName != null)
-            getRawGraph().getMetadata().getIndexManager().dropIndex(recordMapIndexName);
+            db.getMetadata().getIndexManagerInternal().dropIndex(db, recordMapIndexName);
 
           saveIndexConfiguration();
           return null;
@@ -867,7 +869,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     else
       indexName = OrientVertexType.CLASS_NAME + "." + iKey;
 
-    final OIndex<?> idx = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (idx != null) {
       iValue = convertKey(idx, iValue);
 
@@ -1017,7 +1020,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       key = iKey;
     }
 
-    final OIndex<?> idx = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (idx != null) {
       iValue = convertKey(idx, iValue);
 
@@ -1597,13 +1601,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (elementClass == null)
       throw ExceptionFactory.classForElementCannotBeNull();
 
-    executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
-      @Override
-      public OClass call(final OrientBaseGraph g) {
-        final String className = getClassName(elementClass);
-        getRawGraph().getMetadata().getIndexManager().dropIndex(className + "." + key);
-        return null;
-      }
+    executeOutsideTx((OCallable<OClass, OrientBaseGraph>) g -> {
+      final String className = getClassName(elementClass);
+      final ODatabaseDocumentInternal db = getRawGraph();
+      db.getMetadata().getIndexManagerInternal().dropIndex(db, className + "." + key);
+      return null;
     }, "drop key index '", elementClass.getSimpleName(), ".", key, "'");
 
   }
@@ -1660,7 +1662,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         if (className == null)
           className = ancestorClassName;
 
-        final ODatabaseDocument db = getRawGraph();
+        final ODatabaseDocumentInternal db = getRawGraph();
         final OSchema schema = db.getMetadata().getSchema();
 
         final OClass cls = schema.getOrCreateClass(className, schema.getClass(ancestorClassName));
@@ -1671,8 +1673,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         OPropertyIndexDefinition indexDefinition = new OPropertyIndexDefinition(className, key, keyType);
         if (collate != null)
           indexDefinition.setCollate(collate);
-        db.getMetadata().getIndexManager()
-            .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
+        db.getMetadata().getIndexManagerInternal()
+            .createIndex(db, className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
         return null;
 
       }
@@ -1707,11 +1709,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (elementClass == null)
       throw ExceptionFactory.classForElementCannotBeNull();
 
-    final OSchema schema = getRawGraph().getMetadata().getImmutableSchemaSnapshot();
+    final ODatabaseDocumentInternal db = getRawGraph();
+    final OSchema schema = db.getMetadata().getImmutableSchemaSnapshot();
     final String elementOClassName = getClassName(elementClass);
 
     Set<String> result = new HashSet<String>();
-    final Collection<? extends OIndex<?>> indexes = getRawGraph().getMetadata().getIndexManager().getIndexes();
+    final Collection<? extends OIndex<?>> indexes = db.getMetadata().getIndexManagerInternal().getIndexes();
     for (OIndex<?> index : indexes) {
       String indexName = index.getName();
       int point = indexName.indexOf(".");
@@ -1844,7 +1847,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   protected void saveIndexConfiguration() {
-    getRawGraph().getMetadata().getIndexManager().getConfiguration().save();
+    getRawGraph().getMetadata().getIndexManagerInternal().getConfiguration().save();
   }
 
   protected <T> String getClassName(final Class<T> elementClass) {
@@ -1998,7 +2001,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
   private List<Index<? extends Element>> loadManualIndexes() {
     final List<Index<? extends Element>> result = new ArrayList<Index<? extends Element>>();
-    for (OIndex<?> idx : getDatabase().getMetadata().getIndexManager().getIndexes()) {
+    for (OIndex<?> idx : getDatabase().getMetadata().getIndexManagerInternal().getIndexes()) {
       if (hasIndexClass(idx)) {
         // LOAD THE INDEXES
         result.add(new OrientIndexManual<>(this, idx));

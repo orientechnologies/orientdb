@@ -549,7 +549,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         }
       }
 
-      db.getMetadata().getIndexManager().save();
+      db.getMetadata().getIndexManagerInternal().save();
 
       rebuildCompleted = true;
 

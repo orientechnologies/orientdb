@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -49,31 +50,31 @@ import static com.orientechnologies.orient.etl.loader.OETLOrientDBLoader.DB_TYPE
  */
 public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader {
 
-  private static String NOT_DEF = "not_defined";
-  public  ODatabasePool   pool;
-  public  OrientDB        orient;
-  private String          clusterName;
-  private String          className;
-  private List<ODocument> classes;
-  private List<ODocument> indexes;
-  private OClass          schemaClass;
-  private String          dbURL;
-  private String     dbUser                     = "admin";
-  private String     dbPassword                 = "admin";
-  private String     serverUser                 = NOT_DEF;
-  private String     serverPassword             = NOT_DEF;
-  private boolean    dbAutoCreate               = true;
-  private boolean    dbAutoDropIfExists         = false;
-  private boolean    dbAutoCreateProperties     = false;
-  private boolean    useLightweightEdges        = false;
-  private boolean    standardElementConstraints = true;
-  private boolean    tx                         = false;
-  private int        batchCommitSize            = 0;
-  private AtomicLong batchCounter               = new AtomicLong(0);
-  private DB_TYPE    dbType                     = DOCUMENT;
-  private boolean    wal                        = true;
-  private boolean    txUseLog                   = false;
-  private boolean    skipDuplicates             = false;
+  private static String          NOT_DEF                    = "not_defined";
+  public         ODatabasePool   pool;
+  public         OrientDB        orient;
+  private        String          clusterName;
+  private        String          className;
+  private        List<ODocument> classes;
+  private        List<ODocument> indexes;
+  private        OClass          schemaClass;
+  private        String          dbURL;
+  private        String          dbUser                     = "admin";
+  private        String          dbPassword                 = "admin";
+  private        String          serverUser                 = NOT_DEF;
+  private        String          serverPassword             = NOT_DEF;
+  private        boolean         dbAutoCreate               = true;
+  private        boolean         dbAutoDropIfExists         = false;
+  private        boolean         dbAutoCreateProperties     = false;
+  private        boolean         useLightweightEdges        = false;
+  private        boolean         standardElementConstraints = true;
+  private        boolean         tx                         = false;
+  private        int             batchCommitSize            = 0;
+  private        AtomicLong      batchCounter               = new AtomicLong(0);
+  private        DB_TYPE         dbType                     = DOCUMENT;
+  private        boolean         wal                        = true;
+  private        boolean         txUseLog                   = false;
+  private        boolean         skipDuplicates             = false;
 
   public OETLOrientDBLoader() {
   }
@@ -119,10 +120,11 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
 
       if (clusterName != null) {
         db.save(doc, clusterName);
-      } else if(doc.getClassName() != null){
+      } else if (doc.getClassName() != null) {
         db.save(doc);
       } else {
-        OETLContextWrapper.getInstance().getMessageHandler().debug(this, "The ETL loader is not explicitly saving the record %s - no class or cluster set", doc.toString());
+        OETLContextWrapper.getInstance().getMessageHandler()
+            .debug(this, "The ETL loader is not explicitly saving the record %s - no class or cluster set", doc.toString());
       }
 
     } else {
@@ -410,7 +412,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
   public synchronized void beginLoader(OETLPipeline pipeline) {
     ODatabaseDocument db = pool.acquire();
     db.activateOnCurrentThread();
-    createSchema(db);
+    createSchema((ODatabaseDocumentInternal) db);
     db.close();
     pipeline.setPool(pool);
   }
@@ -468,7 +470,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
 
   }
 
-  private void createSchema(ODatabaseDocument db) {
+  private void createSchema(ODatabaseDocumentInternal db) {
 
     if (classes != null) {
       for (ODocument cls : classes) {
@@ -494,7 +496,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
 
         String idxName = (String) resolve(idx.field("name"));
         if (idxName != null) {
-          index = db.getMetadata().getIndexManager().getIndex(idxName);
+          index = db.getMetadata().getIndexManagerInternal().getIndex(db, idxName);
           if (index != null)
             // ALREADY EXISTS
             continue;
@@ -548,7 +550,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
           }
         }
 
-        index = db.getMetadata().getIndexManager().getIndex(idxName);
+        index = db.getMetadata().getIndexManagerInternal().getIndex(db, idxName);
         if (index != null)
           // ALREADY EXISTS
           continue;

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.util.OPatternConst;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -46,7 +47,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
   private static final String[] NAMES = { "POST|studio/*" };
 
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    ODatabaseDocument db = null;
+    ODatabaseDocumentInternal db = null;
 
     try {
       final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: studio/<database>/<context>");
@@ -286,7 +287,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       iResponse.send(500, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
   }
 
-  private void executeClassIndexes(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db,
+  private void executeClassIndexes(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentInternal db,
       final String operation, final String rid, final String className, final Map<String, String> fields) throws IOException {
     // GET THE TARGET CLASS
     final OClass cls = db.getMetadata().getSchema().getClass(rid);
@@ -323,7 +324,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
           return;
         }
 
-        db.getMetadata().getIndexManager().dropIndex(index.getName());
+        db.getMetadata().getIndexManagerInternal().dropIndex(db, index.getName());
 
         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
             "Index " + className + " deleted successfully.", null);

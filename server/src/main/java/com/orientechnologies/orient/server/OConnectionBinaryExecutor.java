@@ -420,7 +420,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().getIndexMgrRecordId())) {
       // FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
-      database.getMetadata().getIndexManager().reload();
+      database.getMetadata().getIndexManagerInternal().reload();
     }
     final int newVersion = currentRecord.getVersion();
 

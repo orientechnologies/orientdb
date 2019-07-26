@@ -3,10 +3,10 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -30,11 +30,11 @@ public class ODropIndexStatement extends ODDLStatement {
   @Override
   public OResultSet executeDDL(OCommandContext ctx) {
     OInternalResultSet rs = new OInternalResultSet();
-    ODatabase db = ctx.getDatabase();
-    OIndexManager idxMgr = db.getMetadata().getIndexManager();
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+    OIndexManagerAbstract idxMgr = db.getMetadata().getIndexManagerInternal();
     if (all) {
       for (OIndex<?> idx : idxMgr.getIndexes()) {
-        db.getMetadata().getIndexManager().dropIndex(idx.getName());
+        db.getMetadata().getIndexManagerInternal().dropIndex(db, idx.getName());
         OResultInternal result = new OResultInternal();
         result.setProperty("operation", "drop index");
         result.setProperty("clusterName", idx.getName());
@@ -45,7 +45,7 @@ public class ODropIndexStatement extends ODDLStatement {
       if (!idxMgr.existsIndex(name.getValue()) && !ifExists) {
         throw new OCommandExecutionException("Index not found: " + name.getValue());
       }
-      idxMgr.dropIndex(name.getValue());
+      idxMgr.dropIndex(db, name.getValue());
       OResultInternal result = new OResultInternal();
       result.setProperty("operation", "drop index");
       result.setProperty("indexName", name.getValue());

@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -258,7 +258,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
         // exportSecurityInfo(db, json);
       }
-      final OIndexManager idxManager = db.getMetadata().getIndexManager();
+      final OIndexManagerAbstract idxManager = db.getMetadata().getIndexManagerInternal();
       json.beginCollection("indexes");
       for (OIndex<?> index : idxManager.getIndexes()) {
         json.beginObject();

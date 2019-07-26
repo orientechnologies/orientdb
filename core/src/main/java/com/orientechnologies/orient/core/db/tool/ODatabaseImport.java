@@ -155,10 +155,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       if (!merge) {
         removeDefaultNonSecurityClasses();
-        database.getMetadata().getIndexManager().reload();
+        database.getMetadata().getIndexManagerInternal().reload();
       }
 
-      for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes()) {
+      for (OIndex<?> index : database.getMetadata().getIndexManagerInternal().getIndexes()) {
         if (index.isAutomatic())
           indexesToRebuild.add(index.getName());
       }
@@ -262,14 +262,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   public void rebuildIndexes() {
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
-    OIndexManager indexManager = database.getMetadata().getIndexManager();
+    OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
     listener.onMessage("\nRebuild of stale indexes...");
     for (String indexName : indexesToRebuild) {
 
-      if (indexManager.getIndex(indexName) == null) {
+      if (indexManager.getIndex(database, indexName) == null) {
         listener.onMessage("\nIndex " + indexName + " is skipped because it is absent in imported DB.");
         continue;
       }
@@ -437,9 +437,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
     }
 
-    final OIndexManager indexManager = database.getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     for (String indexName : indexes) {
-      indexManager.dropIndex(indexName);
+      indexManager.dropIndex(database, indexName);
     }
 
     int removedClasses = 0;
@@ -480,7 +480,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     ODocument doc = new ODocument();
 
-    OIndexManager indexManager = database.getMetadata().getIndexManager();
+    OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     // FORCE RELOADING
     indexManager.reload();
 
@@ -496,7 +496,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       listener.onMessage("\n- Index '" + indexName + "'...");
 
-      final OIndex<?> index = database.getMetadata().getIndexManager().getIndex(indexName);
+      final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
 
       long tot = 0;
 
@@ -988,7 +988,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nRebuilding indexes of truncated clusters ...");
 
     for (final String indexName : indexesToRebuild)
-      database.getMetadata().getIndexManager().getIndex(indexName).rebuild(new OProgressListener() {
+      database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).rebuild(new OProgressListener() {
         private long last = 0;
 
         @Override
@@ -1018,7 +1018,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     if (recreateManualIndex) {
       database.addCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
-      database.getMetadata().getIndexManager().create();
+      database.getMetadata().getIndexManagerInternal().create();
 
       listener.onMessage("\nManual index cluster was recreated.");
     }
@@ -1247,7 +1247,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private void importIndexes() throws IOException, ParseException {
     listener.onMessage("\n\nImporting indexes ...");
 
-    OIndexManager indexManager = database.getMetadata().getIndexManager();
+    OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
@@ -1308,7 +1308,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (!indexName.equalsIgnoreCase(EXPORT_IMPORT_INDEX_NAME)) {
         listener.onMessage("\n- Index '" + indexName + "'...");
 
-        indexManager.dropIndex(indexName);
+        indexManager.dropIndex(database, indexName);
         indexesToRebuild.remove(indexName);
         List<Integer> clusterIds = new ArrayList<>();
 
@@ -1335,7 +1335,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         boolean oldValue = OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();
         OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(indexDefinition.isNullValuesIgnored());
         final OIndex index = indexManager
-            .createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata, indexAlgorithm);
+            .createIndex(database, indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata, indexAlgorithm);
         OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(oldValue);
         if (blueprintsIndexClass != null) {
           ODocument configuration = index.getConfiguration();

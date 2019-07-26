@@ -561,8 +561,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
       // REMOVE THE INDEX ALSO FROM CLASS MAP
       if (getDatabase().getMetadata() != null)
-        //noinspection deprecation
-        getDatabase().getMetadata().getIndexManager().removeClassPropertyIndex(this);
+        getDatabase().getMetadata().getIndexManagerInternal().removeClassPropertyIndex(this);
 
       removeValuesContainer();
       return this;

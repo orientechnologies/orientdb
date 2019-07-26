@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -320,9 +320,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     boolean ok = true;
 
-    final OIndexManager indexManagerOne = makeDbCall(databaseOne, database -> database.getMetadata().getIndexManager());
+    final OIndexManagerAbstract indexManagerOne = makeDbCall(databaseOne,
+        database -> database.getMetadata().getIndexManagerInternal());
 
-    final OIndexManager indexManagerTwo = makeDbCall(databaseTwo, database -> database.getMetadata().getIndexManager());
+    final OIndexManagerAbstract indexManagerTwo = makeDbCall(databaseTwo,
+        database -> database.getMetadata().getIndexManagerInternal());
 
     final Collection<? extends OIndex<?>> indexesOne = makeDbCall(databaseOne,
         (ODbRelatedCall<Collection<? extends OIndex<?>>>) database -> indexManagerOne.getIndexes());
@@ -331,7 +333,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     int indexesSizeTwo = makeDbCall(databaseTwo, database -> indexManagerTwo.getIndexes().size());
 
-    if (makeDbCall(databaseTwo, database -> indexManagerTwo.getIndex(ODatabaseImport.EXPORT_IMPORT_INDEX_NAME) != null)) {
+    if (makeDbCall(databaseTwo, database -> indexManagerTwo.getIndex(database, ODatabaseImport.EXPORT_IMPORT_INDEX_NAME) != null)) {
       indexesSizeTwo--;
     }
 
@@ -356,7 +358,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
 
       final OIndex<?> indexTwo = makeDbCall(databaseTwo,
-          (ODbRelatedCall<OIndex<?>>) database -> indexManagerTwo.getIndex(indexOne.getName()));
+          (ODbRelatedCall<OIndex<?>>) database -> indexManagerTwo.getIndex(database, indexOne.getName()));
 
       if (indexTwo == null) {
         ok = false;

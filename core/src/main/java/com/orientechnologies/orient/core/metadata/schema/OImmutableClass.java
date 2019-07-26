@@ -24,8 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -159,8 +158,8 @@ public class OImmutableClass implements OClass {
       getRawIndexes(indexes);
 
       final ODatabaseDocumentInternal db = getDatabase();
-      if (db != null && db.getMetadata() != null && db.getMetadata().getIndexManager() != null) {
-        this.autoShardingIndex = db.getMetadata().getIndexManager().getClassAutoShardingIndex(name);
+      if (db != null && db.getMetadata() != null && db.getMetadata().getIndexManagerInternal() != null) {
+        this.autoShardingIndex = db.getMetadata().getIndexManagerInternal().getClassAutoShardingIndex(db, name);
       } else {
         this.autoShardingIndex = null;
       }
@@ -631,8 +630,9 @@ public class OImmutableClass implements OClass {
 
   @Override
   public Set<OIndex<?>> getClassInvolvedIndexes(Collection<String> fields) {
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
-    return indexManager.getClassInvolvedIndexes(name, fields);
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
+    return indexManager.getClassInvolvedIndexes(database, name, fields);
   }
 
   @Override
@@ -642,7 +642,8 @@ public class OImmutableClass implements OClass {
 
   @Override
   public boolean areIndexed(Collection<String> fields) {
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     final boolean currentClassResult = indexManager.areIndexed(name, fields);
 
     initSuperClasses();
@@ -664,21 +665,24 @@ public class OImmutableClass implements OClass {
 
   @Override
   public OIndex<?> getClassIndex(String iName) {
-    return getDatabase().getMetadata().getIndexManager().getClassIndex(this.name, iName);
+    final ODatabaseDocumentInternal database = getDatabase();
+    return database.getMetadata().getIndexManagerInternal().getClassIndex(database, this.name, iName);
   }
 
   @Override
   public Set<OIndex<?>> getClassIndexes() {
-    return getDatabase().getMetadata().getIndexManager().getClassIndexes(name);
+    final ODatabaseDocumentInternal database = getDatabase();
+    return database.getMetadata().getIndexManagerInternal().getClassIndexes(database, name);
   }
 
   @Override
   public void getClassIndexes(final Collection<OIndex<?>> indexes) {
-    getDatabase().getMetadata().getIndexManager().getClassIndexes(name, indexes);
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.getMetadata().getIndexManagerInternal().getClassIndexes(database, name, indexes);
   }
 
   public void getRawClassIndexes(final Collection<OIndex<?>> indexes) {
-    ((OIndexManagerProxy) getDatabase().getMetadata().getIndexManager()).getClassRawIndexes(name, indexes);
+    getDatabase().getMetadata().getIndexManagerInternal().getClassRawIndexes(name, indexes);
   }
 
   @Override

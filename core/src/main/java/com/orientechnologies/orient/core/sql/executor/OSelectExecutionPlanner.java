@@ -333,7 +333,7 @@ public class OSelectExecutionPlanner {
     }
 
     Set<String> result = new HashSet<>();
-    ODatabase db = ctx.getDatabase();
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     OFromItem item = info.target.getItem();
     if (item.getRids() != null && item.getRids().size() > 0) {
       if (item.getRids().size() == 1) {
@@ -378,7 +378,7 @@ public class OSelectExecutionPlanner {
       return result;
     } else if (item.getIndex() != null) {
       String indexName = item.getIndex().getIndexName();
-      OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(indexName);
+      OIndex<?> idx = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
       if (idx == null) {
         throw new OCommandExecutionException("Index " + indexName + " does not exist");
       }
@@ -1299,14 +1299,15 @@ public class OSelectExecutionPlanner {
               + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
     }
     String indexName = indexIdentifier.getIndexName();
-    OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (index == null) {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
 
     int[] filterClusterIds = null;
     if (filterClusters != null) {
-      filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i).toArray();
+      filterClusterIds = filterClusters.stream().map(database::getClusterIdByName).mapToInt(i -> i).toArray();
     }
 
     switch (indexIdentifier.getType()) {

@@ -1636,12 +1636,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       int totalIndexes = 0;
       long totalRecords = 0;
 
-      final List<OIndex<?>> indexes = new ArrayList<OIndex<?>>(currentDatabase.getMetadata().getIndexManager().getIndexes());
-      Collections.sort(indexes, new Comparator<OIndex<?>>() {
-        public int compare(OIndex<?> o1, OIndex<?> o2) {
-          return o1.getName().compareToIgnoreCase(o2.getName());
-        }
-      });
+      final List<OIndex<?>> indexes = new ArrayList<OIndex<?>>(
+          currentDatabase.getMetadata().getIndexManagerInternal().getIndexes());
+      Collections.sort(indexes, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
       long totalIndexedRecords = 0;
 

@@ -4,10 +4,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -171,8 +170,8 @@ public class OPropertyEmbedded extends OPropertyImpl {
         if (!indexesToRecreate.isEmpty()) {
           OLogManager.instance().info(this, "Collate value was changed, following indexes will be rebuilt %s", indexesToRecreate);
 
-          final ODatabaseDocument database = getDatabase();
-          final OIndexManager indexManager = database.getMetadata().getIndexManager();
+          final ODatabaseDocumentInternal database = getDatabase();
+          final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
           for (OIndex<?> indexToRecreate : indexesToRecreate) {
             final OIndexMetadata indexMetadata = indexToRecreate.getInternal().loadMetadata(indexToRecreate.getConfiguration());
@@ -181,7 +180,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
             final List<String> fields = indexMetadata.getIndexDefinition().getFields();
             final String[] fieldsToIndex = fields.toArray(new String[fields.size()]);
 
-            indexManager.dropIndex(indexMetadata.getName());
+            indexManager.dropIndex(database, indexMetadata.getName());
             owner.createIndex(indexMetadata.getName(), indexMetadata.getType(), null, metadata, indexMetadata.getAlgorithm(),
                 fieldsToIndex);
           }

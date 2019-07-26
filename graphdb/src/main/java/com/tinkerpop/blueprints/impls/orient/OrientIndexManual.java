@@ -20,6 +20,7 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -171,12 +172,10 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     if (iKeyType == null)
       iKeyType = OType.STRING;
 
-    final OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
-
-    this.recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(),
-        (OIndex<OIdentifiable>) graph.getRawGraph().getMetadata().getIndexManager()
-            .createIndex("__@recordmap@___" + indexName, OClass.INDEX_TYPE.DICTIONARY.toString(),
-                new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
+    final ODatabaseDocumentInternal db = graph.getRawGraph();
+    this.recordKeyValueIndex = new OIndexTxAwareOneValue(db, (OIndex<OIdentifiable>) db.getMetadata().getIndexManagerInternal()
+        .createIndex(db, "__@recordmap@___" + indexName, OClass.INDEX_TYPE.DICTIONARY.toString(),
+            new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
 
     final String className;
     if (Vertex.class.isAssignableFrom(indexClass))
@@ -190,12 +189,10 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     metadata.field(CONFIG_CLASSNAME, className);
     metadata.field(CONFIG_RECORD_MAP_NAME, recordKeyValueIndex.getName());
 
-    final OIndexFactory nuFactory = OIndexes.getFactory(OClass.INDEX_TYPE.NOTUNIQUE.toString(), null);
     // CREATE THE MAP
-    this.underlying = new OIndexTxAwareMultiValue(graph.getRawGraph(),
-        (OIndex<Collection<OIdentifiable>>) graph.getRawGraph().getMetadata().getIndexManager()
-            .createIndex(indexName, OClass.INDEX_TYPE.NOTUNIQUE.toString(), new OSimpleKeyIndexDefinition(iKeyType), null, null,
-                metadata));
+    this.underlying = new OIndexTxAwareMultiValue(db, (OIndex<Collection<OIdentifiable>>) db.getMetadata().getIndexManagerInternal()
+        .createIndex(db, indexName, OClass.INDEX_TYPE.NOTUNIQUE.toString(), new OSimpleKeyIndexDefinition(iKeyType), null, null,
+            metadata));
 
   }
 
@@ -216,17 +213,20 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
             + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them", e);
       }
 
+    final ODatabaseDocumentInternal database = graph.getRawGraph();
     if (recordKeyValueMap == null)
       recordKeyValueIndex = buildKeyValueIndex(metadata);
-    else
-      recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(),
-          (OIndex<OIdentifiable>) graph.getRawGraph().getMetadata().getIndexManager().getIndex(recordKeyValueMap));
+    else {
+      recordKeyValueIndex = new OIndexTxAwareOneValue(database,
+          (OIndex<OIdentifiable>) database.getMetadata().getIndexManagerInternal().getIndex(database, recordKeyValueMap));
+    }
   }
 
   private OIndex<?> buildKeyValueIndex(final ODocument metadata) {
+    final ODatabaseDocumentInternal database = graph.getRawGraph();
     final OIndex<?> recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(),
-        (OIndex<OIdentifiable>) graph.getRawGraph().getMetadata().getIndexManager()
-            .createIndex("__@recordmap@___" + underlying.getName(), OClass.INDEX_TYPE.DICTIONARY.toString(),
+        (OIndex<OIdentifiable>) database.getMetadata().getIndexManagerInternal()
+            .createIndex(database, "__@recordmap@___" + underlying.getName(), OClass.INDEX_TYPE.DICTIONARY.toString(),
                 new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
 
     final List<ODocument> entries = graph.getRawGraph()

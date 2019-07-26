@@ -1233,16 +1233,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             if (!restrictedClasses) {
               long count = 0;
 
+              final ODatabaseDocumentInternal database = getDatabase();
               if (parsedTarget.getTargetClasses() != null) {
                 final String className = parsedTarget.getTargetClasses().keySet().iterator().next();
-                final OClass cls = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
+                final OClass cls = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
                 count = cls.count();
               } else if (parsedTarget.getTargetClusters() != null) {
                 for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-                  count += getDatabase().countClusterElements(cluster);
+                  count += database.countClusterElements(cluster);
                 }
               } else if (parsedTarget.getTargetIndex() != null) {
-                count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
+                count += database.getMetadata().getIndexManagerInternal().getIndex(database, parsedTarget.getTargetIndex())
+                    .getSize();
               } else {
                 final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
                 if (recs != null) {
@@ -2614,8 +2616,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
     }
 
-    final OIndex<Object> index = (OIndex<Object>) getDatabase().getMetadata().getIndexManager()
-        .getIndex(parsedTarget.getTargetIndex());
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndex<Object> index = (OIndex<Object>) database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, parsedTarget.getTargetIndex());
 
     if (index == null) {
       throw new OCommandExecutionException("Target index '" + parsedTarget.getTargetIndex() + "' not found");

@@ -21,14 +21,11 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.*;
@@ -38,7 +35,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.text.ParseException;
 import java.util.*;
@@ -185,14 +181,15 @@ public abstract class OPropertyImpl implements OProperty {
    */
   @Deprecated
   public OPropertyImpl dropIndexes() {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
     acquireSchemaReadLock();
     try {
-      final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+      final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
       final ArrayList<OIndex<?>> relatedIndexes = new ArrayList<OIndex<?>>();
-      for (final OIndex<?> index : indexManager.getClassIndexes(owner.getName())) {
+      for (final OIndex<?> index : indexManager.getClassIndexes(database, owner.getName())) {
         final OIndexDefinition definition = index.getDefinition();
 
         if (OCollections.indexOf(definition.getFields(), globalRef.getName(), new OCaseInsentiveComparator()) > -1) {
@@ -206,7 +203,7 @@ public abstract class OPropertyImpl implements OProperty {
       }
 
       for (final OIndex<?> index : relatedIndexes)
-        getDatabase().getMetadata().getIndexManager().dropIndex(index.getName());
+        database.getMetadata().getIndexManagerInternal().dropIndex(database, index.getName());
 
       return this;
     } finally {

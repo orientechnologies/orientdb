@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -59,7 +60,8 @@ public class ODeleteExecutionPlanner {
       return false;
     }
     String indexName = indexIdentifier.getIndexName();
-    OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (index == null) {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }

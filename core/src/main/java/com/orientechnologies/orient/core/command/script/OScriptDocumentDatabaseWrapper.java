@@ -113,8 +113,8 @@ public class OScriptDocumentDatabaseWrapper {
     }
   }
 
-  public OIndex<?> getIndex(final String iName) {
-    return database.getMetadata().getIndexManager().getIndex(iName);
+  public OIndex<?> getIndex(final String name) {
+    return database.getMetadata().getIndexManagerInternal().getIndex(database, name);
   }
 
   public boolean exists() {

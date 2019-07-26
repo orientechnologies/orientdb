@@ -1122,8 +1122,8 @@ public abstract class OClassImpl implements OClass {
     final OIndexDefinition indexDefinition = OIndexDefinitionFactory
         .createIndexDefinition(this, Arrays.asList(fields), extractFieldTypes(fields), null, type, algorithm);
 
-    return getDatabase().getMetadata().getIndexManager()
-        .createIndex(name, type, indexDefinition, localPolymorphicClusterIds, progressListener, metadata, algorithm);
+    return getDatabase().getMetadata().getIndexManagerInternal()
+        .createIndex(getDatabase(), name, type, indexDefinition, localPolymorphicClusterIds, progressListener, metadata, algorithm);
   }
 
   public boolean areIndexed(final String... fields) {
@@ -1131,7 +1131,7 @@ public abstract class OClassImpl implements OClass {
   }
 
   public boolean areIndexed(final Collection<String> fields) {
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = getDatabase().getMetadata().getIndexManagerInternal();
 
     acquireSchemaReadLock();
     try {
@@ -1170,11 +1170,12 @@ public abstract class OClassImpl implements OClass {
 
   public Set<OIndex<?>> getClassInvolvedIndexes(final Collection<String> fields) {
 
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
     acquireSchemaReadLock();
     try {
-      return indexManager.getClassInvolvedIndexes(name, fields);
+      return indexManager.getClassInvolvedIndexes(database, name, fields);
     } finally {
       releaseSchemaReadLock();
     }
@@ -1187,7 +1188,8 @@ public abstract class OClassImpl implements OClass {
   public OIndex<?> getClassIndex(final String name) {
     acquireSchemaReadLock();
     try {
-      return getDatabase().getMetadata().getIndexManager().getClassIndex(this.name, name);
+      final ODatabaseDocumentInternal database = getDatabase();
+      return database.getMetadata().getIndexManagerInternal().getClassIndex(database, this.name, name);
     } finally {
       releaseSchemaReadLock();
     }
@@ -1196,11 +1198,12 @@ public abstract class OClassImpl implements OClass {
   public Set<OIndex<?>> getClassIndexes() {
     acquireSchemaReadLock();
     try {
-      final OIndexManager idxManager = getDatabase().getMetadata().getIndexManager();
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
       if (idxManager == null)
-        return new HashSet<OIndex<?>>();
+        return new HashSet<>();
 
-      return idxManager.getClassIndexes(name);
+      return idxManager.getClassIndexes(database, name);
     } finally {
       releaseSchemaReadLock();
     }
@@ -1210,11 +1213,12 @@ public abstract class OClassImpl implements OClass {
   public void getClassIndexes(final Collection<OIndex<?>> indexes) {
     acquireSchemaReadLock();
     try {
-      final OIndexManager idxManager = getDatabase().getMetadata().getIndexManager();
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
       if (idxManager == null)
         return;
 
-      idxManager.getClassIndexes(name, indexes);
+      idxManager.getClassIndexes(database, name, indexes);
     } finally {
       releaseSchemaReadLock();
     }
@@ -1223,7 +1227,7 @@ public abstract class OClassImpl implements OClass {
   @Override
   public OIndex<?> getAutoShardingIndex() {
     final ODatabaseDocumentInternal db = getDatabase();
-    return db != null ? db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) : null;
+    return db != null ? db.getMetadata().getIndexManagerInternal().getClassAutoShardingIndex(db, name) : null;
   }
 
   @Override
@@ -1482,7 +1486,7 @@ public abstract class OClassImpl implements OClass {
       for (OIndex<?> index : getIndexes())
         indexesToAdd.add(index.getName());
 
-      final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+      final OIndexManagerAbstract indexManager = getDatabase().getMetadata().getIndexManagerInternal();
       for (String indexName : indexesToAdd)
         indexManager.addClusterToIndex(clusterName, indexName);
     }
@@ -1583,7 +1587,7 @@ public abstract class OClassImpl implements OClass {
       for (final OIndex<?> index : getIndexes())
         indexesToRemove.add(index.getName());
 
-      final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+      final OIndexManagerAbstract indexManager = getDatabase().getMetadata().getIndexManagerInternal();
       for (final String indexName : indexesToRemove)
         indexManager.removeClusterFromIndex(clusterName, indexName);
     }

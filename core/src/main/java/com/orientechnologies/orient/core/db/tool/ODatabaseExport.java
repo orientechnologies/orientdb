@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -385,7 +385,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nExporting index info...");
     writer.beginCollection(1, true, "indexes");
 
-    final OIndexManager indexManager = database.getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
     final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes();
@@ -444,7 +444,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   private void exportManualIndexes() throws IOException {
     listener.onMessage("\nExporting manual indexes content...");
 
-    final OIndexManager indexManager = database.getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
     final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes();

@@ -205,7 +205,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   public void init(OTransactionInternal operations) {
     for (Map.Entry<String, OTransactionIndexChanges> indexOp : operations.getIndexOperations().entrySet()) {
-      if (indexOp.getValue().resolveAssociatedIndex(indexOp.getKey(), operations.getDatabase().getMetadata().getIndexManager())
+      final ODatabaseDocumentInternal database = operations.getDatabase();
+      if (indexOp.getValue().resolveAssociatedIndex(indexOp.getKey(), database.getMetadata().getIndexManagerInternal(), database)
           .isUnique()) {
         quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
         break;

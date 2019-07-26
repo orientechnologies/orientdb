@@ -32,10 +32,11 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
@@ -209,9 +210,10 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     // the OTransactionIndexChanges.changesPerKey in a consistent state.
 
     final List<KeyChangesUpdateRecord> keyRecordsToReinsert = new ArrayList<>();
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     for (Map.Entry<String, OTransactionIndexChanges> entry : indexOperations.entrySet()) {
-      final OIndex<?> index = indexManager.getIndex(entry.getKey());
+      final OIndex<?> index = indexManager.getIndex(database, entry.getKey());
       if (index == null)
         throw new OTransactionException("Cannot find index '" + entry.getValue() + "' while committing transaction");
 
