@@ -508,6 +508,7 @@ public class SBTreeV1TestIT {
       identifiable = nullSBTree.get(null);
       Assert.assertNull(identifiable);
     } finally {
+      sbTree.remove(null);
       nullSBTree.delete();
     }
   }
