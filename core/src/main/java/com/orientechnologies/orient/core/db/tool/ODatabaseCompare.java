@@ -327,11 +327,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         database -> database.getMetadata().getIndexManagerInternal());
 
     final Collection<? extends OIndex<?>> indexesOne = makeDbCall(databaseOne,
-        (ODbRelatedCall<Collection<? extends OIndex<?>>>) database -> indexManagerOne.getIndexes());
+        (ODbRelatedCall<Collection<? extends OIndex<?>>>) database -> indexManagerOne.getIndexes(database));
 
     int indexesSizeOne = makeDbCall(databaseTwo, database -> indexesOne.size());
 
-    int indexesSizeTwo = makeDbCall(databaseTwo, database -> indexManagerTwo.getIndexes().size());
+    int indexesSizeTwo = makeDbCall(databaseTwo, database -> indexManagerTwo.getIndexes(database).size());
 
     if (makeDbCall(databaseTwo, database -> indexManagerTwo.getIndex(database, ODatabaseImport.EXPORT_IMPORT_INDEX_NAME) != null)) {
       indexesSizeTwo--;

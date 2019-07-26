@@ -158,7 +158,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         database.getMetadata().getIndexManagerInternal().reload();
       }
 
-      for (OIndex<?> index : database.getMetadata().getIndexManagerInternal().getIndexes()) {
+      for (OIndex<?> index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (index.isAutomatic())
           indexesToRebuild.add(index.getName());
       }

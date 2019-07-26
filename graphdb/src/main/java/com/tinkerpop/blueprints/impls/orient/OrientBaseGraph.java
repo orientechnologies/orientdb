@@ -1714,7 +1714,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     final String elementOClassName = getClassName(elementClass);
 
     Set<String> result = new HashSet<String>();
-    final Collection<? extends OIndex<?>> indexes = db.getMetadata().getIndexManagerInternal().getIndexes();
+    final Collection<? extends OIndex<?>> indexes = db.getMetadata().getIndexManagerInternal().getIndexes(db);
     for (OIndex<?> index : indexes) {
       String indexName = index.getName();
       int point = indexName.indexOf(".");
@@ -2001,14 +2001,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
   private List<Index<? extends Element>> loadManualIndexes() {
     final List<Index<? extends Element>> result = new ArrayList<Index<? extends Element>>();
-    for (OIndex<?> idx : getDatabase().getMetadata().getIndexManagerInternal().getIndexes()) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
       if (hasIndexClass(idx)) {
         // LOAD THE INDEXES
         result.add(new OrientIndexManual<>(this, idx));
       }
     }
 
-    for (OClass cls : getDatabase().getMetadata().getSchema().getClasses()) {
+    for (OClass cls : database.getMetadata().getSchema().getClasses()) {
       if (OrientIndexAuto.isIndexClass(cls.getName())) {
         result.add(OrientIndexAuto.load(this, OrientIndexAuto.extractIndexName(cls.getName()), null));
       }

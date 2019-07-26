@@ -191,10 +191,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return result;
   }
 
-  public Collection<? extends OIndex<?>> getIndexes() {
-    throw new UnsupportedOperationException();
-  }
-
   public OIndex<?> getRawIndex(final String iName) {
     final OIndex<?> index = indexes.get(iName);
     if (index == null)

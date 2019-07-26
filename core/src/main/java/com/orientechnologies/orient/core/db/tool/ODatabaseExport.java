@@ -388,7 +388,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
-    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes();
+    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes(database);
 
     for (OIndex<?> index : indexes) {
       final String clsName = index.getDefinition() != null ? index.getDefinition().getClassName() : null;
@@ -447,7 +447,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
-    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes();
+    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes(database);
 
     ODocument exportEntry = new ODocument();
 

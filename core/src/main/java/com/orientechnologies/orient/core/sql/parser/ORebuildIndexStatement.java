@@ -33,7 +33,7 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
     final ODatabaseDocumentInternal database = getDatabase();
     if (all) {
       long totalIndexed = 0;
-      for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes()) {
+      for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (idx.isAutomatic())
           totalIndexed += idx.rebuild();
       }

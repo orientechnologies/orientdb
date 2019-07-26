@@ -131,7 +131,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
-    metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
+    metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata(), underlying);
     this.registerFieldMappingStrategy();
     return (THISDB) this;
   }
@@ -141,7 +141,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     super.open(iToken);
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
-    metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
+    metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata(), underlying);
     this.registerFieldMappingStrategy();
     return (THISDB) this;
   }
@@ -158,7 +158,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   public OMetadataObject getMetadata() {
     checkOpenness();
     if (metadata == null)
-      metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
+      metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata(), underlying);
     return metadata;
   }
 

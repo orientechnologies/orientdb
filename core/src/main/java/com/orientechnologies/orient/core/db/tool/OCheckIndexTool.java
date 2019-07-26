@@ -61,7 +61,7 @@ public class OCheckIndexTool extends ODatabaseTool {
 
   @Override
   public void run() {
-    for (OIndex index : database.getMetadata().getIndexManagerInternal().getIndexes()) {
+    for (OIndex index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
       if (!canCheck(index)) {
         continue;
       }

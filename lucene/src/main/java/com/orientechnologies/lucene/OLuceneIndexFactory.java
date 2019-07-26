@@ -140,7 +140,9 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
       OLogManager.instance().debug(this, "Dropping Lucene indexes...");
 
-      ((ODatabaseDocumentInternal)db).getMetadata().getIndexManagerInternal().getIndexes().stream().filter(idx -> idx.getInternal() instanceof OLuceneFullTextIndex)
+      final ODatabaseDocumentInternal internal = (ODatabaseDocumentInternal) db;
+      internal.getMetadata().getIndexManagerInternal().getIndexes(internal).stream()
+          .filter(idx -> idx.getInternal() instanceof OLuceneFullTextIndex)
           .peek(idx -> OLogManager.instance().debug(this, "deleting index " + idx.getName())).forEach(idx -> idx.delete());
 
     } catch (Exception e) {

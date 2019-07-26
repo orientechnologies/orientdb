@@ -86,7 +86,7 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
     final ODatabaseDocumentInternal database = getDatabase();
     if (name.equals("*")) {
       long totalIndexed = 0;
-      for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes()) {
+      for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (idx.isAutomatic())
           totalIndexed += idx.rebuild();
       }

@@ -260,7 +260,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       }
       final OIndexManagerAbstract idxManager = db.getMetadata().getIndexManagerInternal();
       json.beginCollection("indexes");
-      for (OIndex<?> index : idxManager.getIndexes()) {
+      for (OIndex<?> index : idxManager.getIndexes(db)) {
         json.beginObject();
         try {
           json.writeAttribute("name", index.getName());
