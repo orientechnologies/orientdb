@@ -16,10 +16,10 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -69,13 +69,13 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
         .modify();
     ODocument cfg = databaseConfiguration.getDocument();
 
-    ODatabaseDocument graphNoTx = null;
+    ODatabaseDocumentInternal graphNoTx = null;
     try {
       OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
       if (!orientDB.exists(getDatabaseName())) {
         orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
       }
-      graphNoTx = orientDB.open(getDatabaseName(), "admin", "admin");
+      graphNoTx = (ODatabaseDocumentInternal) orientDB.open(getDatabaseName(), "admin", "admin");
 
       graphNoTx.command(" create class Client extends V clusters 1");
       OSchema schema = graphNoTx.getMetadata().getSchema();
@@ -95,7 +95,7 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
       final OProperty prop = clientType.createProperty("name", OType.STRING);
       prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-      assertTrue(graphNoTx.getMetadata().getIndexManager().existsIndex("Client.name"));
+      assertTrue(graphNoTx.getMetadata().getIndexManagerInternal().existsIndex("Client.name"));
 
       Thread.sleep(500);
 
@@ -123,7 +123,7 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
       try {
         System.out.print("Checking that records on server3 are not available in the cluster...");
         System.out.print("Checking that records on server3 are not available in the cluster...");
-        graphNoTx = orientDB.open(getDatabaseName(), "admin", "admin");
+        graphNoTx = (ODatabaseDocumentInternal) orientDB.open(getDatabaseName(), "admin", "admin");
 
         graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
@@ -159,7 +159,7 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
         if (!orientDB1.exists(getDatabaseName())) {
           orientDB1.create(getDatabaseName(), ODatabaseType.PLOCAL);
         }
-        graphNoTx = orientDB1.open(getDatabaseName(), "admin", "admin");
+        graphNoTx = (ODatabaseDocumentInternal) orientDB1.open(getDatabaseName(), "admin", "admin");
         graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
         Iterable<OElement> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();

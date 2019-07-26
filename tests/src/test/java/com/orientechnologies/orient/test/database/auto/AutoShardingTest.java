@@ -131,7 +131,7 @@ public class AutoShardingTest extends DocumentDBBaseTest {
 
   public void testDrop() {
     Assert.assertTrue(cls.getClusterSelection() instanceof OAutoShardingClusterSelectionStrategy);
-    database.getMetadata().getIndexManager().dropIndex(idx.getName());
+    database.getMetadata().getIndexManagerInternal().dropIndex(database, idx.getName());
     cls = database.getMetadata().getSchema().getClass("AutoShardingTest");
     Assert.assertFalse(cls.getClusterSelection() instanceof OAutoShardingClusterSelectionStrategy);
   }

@@ -2,13 +2,10 @@ package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -108,9 +105,9 @@ public class OStorageEncryptionTestIT {
     try (final OrientDB orientDB = new OrientDB(
         "embedded:" + buildDirectory + File.separator + OStorageEncryptionTestIT.class.getSimpleName(), orientDBConfig)) {
       try (final ODatabaseSession session = orientDB.open("encryption", "admin", "admin")) {
-        final OIndexManager indexManager = session.getMetadata().getIndexManager();
-        final OIndex treeIndex = indexManager.getIndex("EncryptedTree");
-        final OIndex hashIndex = indexManager.getIndex("EncryptedHash");
+        final OIndexManagerAbstract indexManager = ((ODatabaseDocumentInternal) session).getMetadata().getIndexManagerInternal();
+        final OIndex treeIndex = indexManager.getIndex((ODatabaseDocumentInternal) session, "EncryptedTree");
+        final OIndex hashIndex = indexManager.getIndex((ODatabaseDocumentInternal) session, "EncryptedHash");
 
         for (final ODocument document : session.browseClass("EncryptedData")) {
           final int id = document.getProperty("id");

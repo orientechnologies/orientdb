@@ -177,7 +177,7 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
   }
 
   protected OIndex<?> getIndex() {
-    return database.getMetadata().getIndexManager().getIndex(INDEX_NAME);
+    return database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
   }
 
   @AfterClass

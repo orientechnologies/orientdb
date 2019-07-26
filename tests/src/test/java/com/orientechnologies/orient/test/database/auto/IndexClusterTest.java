@@ -1,18 +1,16 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import static org.testng.Assert.assertEquals;
-
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
 
 @Test(groups = { "index" })
 public class IndexClusterTest extends DocumentDBBaseTest {
@@ -34,12 +32,12 @@ public class IndexClusterTest extends DocumentDBBaseTest {
     oclass.createProperty("value", OType.INTEGER);
     oclass.createIndex(className + "index1", OClass.INDEX_TYPE.NOTUNIQUE, "key");
 
-    database.newInstance(className).field("key", "a").field("value", 1).save();
+    database.<ODocument>newInstance(className).field("key", "a").field("value", 1).save();
 
     int clId = database.addCluster(className + "secondCluster");
     oclass.addClusterId(clId);
 
-    database.newInstance(className).field("key", "a").field("value", 2).save(className + "secondCluster");
+    database.<ODocument>newInstance(className).field("key", "a").field("value", 2).save(className + "secondCluster");
 
     // when
     database.command(new OCommandSQL("rebuild index " + className + "index1")).execute();

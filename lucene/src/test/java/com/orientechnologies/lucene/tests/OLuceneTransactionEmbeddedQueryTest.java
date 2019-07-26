@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
@@ -75,7 +75,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
     ODocument doc = new ODocument("c1");
     doc.field("p1", new String[] { "abc" });
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
     db.save(doc);
 
@@ -125,7 +125,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
   @Ignore
   public void txUpdateTest() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
     Assert.assertEquals(index.getSize(), 0);
 
@@ -180,7 +180,6 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-
     Assert.assertEquals(index.getSize(), 2);
 
   }
@@ -188,7 +187,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
     Assert.assertEquals(index.getSize(), 0);
 

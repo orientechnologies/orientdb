@@ -1,17 +1,14 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
@@ -56,13 +53,14 @@ public class LuceneTransactionGeoQueryTest {
 
       db.command(new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE")).execute();
 
-      OIndex idx = db.getMetadata().getIndexManager().getIndex("City.location");
+      OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
       ODocument rome = newCity("Rome", 12.5, 41.9);
       ODocument london = newCity("London", -0.1275, 51.507222);
 
       db.begin();
 
-      db.command(new OCommandSQL("insert into City set name = 'TestInsert' , location = ST_GeomFromText('" + PWKT + "')")).execute();
+      db.command(new OCommandSQL("insert into City set name = 'TestInsert' , location = ST_GeomFromText('" + PWKT + "')"))
+          .execute();
       db.save(rome);
       db.save(london);
       String query = "select * from City where location && 'LINESTRING(-160.06393432617188 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594 21.787556698550834)' ";
@@ -97,7 +95,7 @@ public class LuceneTransactionGeoQueryTest {
 
       db.command(new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE")).execute();
 
-      OIndex idx = db.getMetadata().getIndexManager().getIndex("City.location");
+      OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
       ODocument rome = newCity("Rome", 12.5, 41.9);
 
       db.begin();

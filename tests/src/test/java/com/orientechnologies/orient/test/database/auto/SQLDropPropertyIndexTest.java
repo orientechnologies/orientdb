@@ -62,14 +62,14 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
     database.command(
         new OCommandSQL("CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2, prop1) UNIQUE"))
         .execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     OIndex<?> index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
     Assert.assertNotNull(index);
 
     database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndexTestClass.prop1 FORCE")).execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
@@ -82,14 +82,14 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
     database.command(
         new OCommandSQL("CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2, prop1) UNIQUE"))
         .execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     OIndex<?> index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
     Assert.assertNotNull(index);
 
     database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclasS.prop1 FORCE")).execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
@@ -102,7 +102,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
     database.command(
         new OCommandSQL("CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1, prop2) UNIQUE"))
         .execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     OIndex<?> index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
@@ -112,12 +112,11 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndexTestClass.prop1")).execute();
       Assert.fail();
     } catch (OCommandExecutionException e) {
-      Assert.assertTrue(e.getMessage().contains(
-          "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
-              + "). Please drop these indexes before removing property or use FORCE parameter."));
+      Assert.assertTrue(e.getMessage().contains("Property used in indexes (" + "DropPropertyIndexCompositeIndex"
+          + "). Please drop these indexes before removing property or use FORCE parameter."));
     }
 
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
@@ -142,12 +141,11 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclass.prop1")).execute();
       Assert.fail();
     } catch (OCommandExecutionException e) {
-      Assert.assertTrue(e.getMessage().contains(
-          "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
-              + "). Please drop these indexes before removing property or use FORCE parameter."));
+      Assert.assertTrue(e.getMessage().contains("Property used in indexes (" + "DropPropertyIndexCompositeIndex"
+          + "). Please drop these indexes before removing property or use FORCE parameter."));
     }
 
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
     final OIndex<?> index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
 

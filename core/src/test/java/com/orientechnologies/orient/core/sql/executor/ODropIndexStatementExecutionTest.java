@@ -1,10 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.AfterClass;
@@ -16,7 +15,7 @@ import org.junit.Test;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class ODropIndexStatementExecutionTest {
-  static ODatabaseDocument db;
+  static ODatabaseDocumentInternal db;
 
   @BeforeClass
   public static void beforeClass() {
@@ -35,7 +34,7 @@ public class ODropIndexStatementExecutionTest {
         .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 
-    Assert.assertNotNull(((OIndexManager) db.getMetadata().getIndexManager().reload()).getIndex(indexName));
+    Assert.assertNotNull((db.getMetadata().getIndexManagerInternal().reload()).getIndex(db, indexName));
 
     OResultSet result = db.command("drop index " + indexName);
     Assert.assertTrue(result.hasNext());
@@ -44,7 +43,7 @@ public class ODropIndexStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
 
-    Assert.assertNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
+    Assert.assertNull(db.getMetadata().getIndexManagerInternal().reload().getIndex(db, indexName));
   }
 
   @Test
@@ -53,7 +52,7 @@ public class ODropIndexStatementExecutionTest {
         .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 
-    Assert.assertNotNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
+    Assert.assertNotNull(db.getMetadata().getIndexManagerInternal().reload().getIndex(db, indexName));
 
     OResultSet result = db.command("drop index *");
     Assert.assertTrue(result.hasNext());
@@ -61,15 +60,15 @@ public class ODropIndexStatementExecutionTest {
     Assert.assertEquals("drop index", next.getProperty("operation"));
     result.close();
 
-    Assert.assertNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
-    Assert.assertTrue(db.getMetadata().getIndexManager().getIndexes().isEmpty());
+    Assert.assertNull(db.getMetadata().getIndexManagerInternal().reload().getIndex(db, indexName));
+    Assert.assertTrue(db.getMetadata().getIndexManagerInternal().getIndexes(db).isEmpty());
   }
 
   @Test
   public void testWrongName() {
 
     String indexName = "nonexistingindex";
-    Assert.assertNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
+    Assert.assertNull(db.getMetadata().getIndexManagerInternal().reload().getIndex(db, indexName));
 
     try {
       OResultSet result = db.command("drop index " + indexName);
@@ -84,7 +83,7 @@ public class ODropIndexStatementExecutionTest {
   public void testIfExists() {
 
     String indexName = "nonexistingindex";
-    Assert.assertNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
+    Assert.assertNull(db.getMetadata().getIndexManagerInternal().reload().getIndex(db, indexName));
 
     try {
       OResultSet result = db.command("drop index " + indexName + " if exists");

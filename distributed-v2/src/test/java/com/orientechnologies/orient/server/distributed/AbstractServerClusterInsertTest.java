@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -514,13 +515,13 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     for (ServerRun server : checkOnServers) {
       if (server.isActive()) {
-        final ODatabaseDocument database = getDatabase(server);
+        final ODatabaseDocumentInternal database = getDatabase(server);
 
         Assert.assertNotNull("server " + server + " has no index " + indexName + " defined",
-            database.getMetadata().getIndexManager().getIndex(indexName));
+            database.getMetadata().getIndexManagerInternal().getIndex(database, indexName));
 
         try {
-          final long indexSize = database.getMetadata().getIndexManager().getIndex(indexName).getSize();
+          final long indexSize = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getSize();
 
           result.put(server.serverId, indexSize);
 

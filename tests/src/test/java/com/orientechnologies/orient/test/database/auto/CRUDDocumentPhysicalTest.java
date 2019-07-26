@@ -87,7 +87,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     // DELETE ALL THE RECORDS IN THE CLUSTER
     while (database.countClusterElements("Account") > 0)
-      for (ODocument rec : database.browseCluster("Account"))
+      for (ODocument rec : database.<ODocument>browseCluster("Account"))
         if (rec != null)
           rec.delete();
 
@@ -181,7 +181,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
   public void update() {
     int i = 0;
-    for (ODocument rec : database.browseCluster("Account")) {
+    for (ODocument rec : database.<ODocument>browseCluster("Account")) {
 
       if (i % 2 == 0)
         rec.field("location", "Spain");
@@ -196,7 +196,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "update")
   public void testUpdate() {
-    for (ODocument rec : database.browseCluster("Account")) {
+    for (ODocument rec : database.<ODocument>browseCluster("Account")) {
       int price = ((Number) rec.field("price")).intValue();
       Assert.assertTrue(price - 100 >= 0);
 
@@ -329,7 +329,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testUnderscoreField")
   public void testUpdateLazyDirtyPropagation() {
-    for (ODocument rec : database.browseCluster("Profile")) {
+    for (ODocument rec : database.<ODocument>browseCluster("Profile")) {
       Assert.assertFalse(rec.isDirty());
 
       Collection<?> followers = rec.field("followers");
@@ -716,19 +716,19 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     bank.field("name", "MyBankChained");
 
     // EMBEDDED
-    ODocument embedded = database.newInstance("Account").field("name", "embedded1");
+    ODocument embedded = database.<ODocument>newInstance("Account").field("name", "embedded1");
     bank.field("embedded", embedded, OType.EMBEDDED);
 
-    ODocument[] embeddeds = new ODocument[] { database.newInstance("Account").field("name", "embedded2"),
-        database.newInstance("Account").field("name", "embedded3") };
+    ODocument[] embeddeds = new ODocument[] { database.<ODocument>newInstance("Account").field("name", "embedded2"),
+        database.<ODocument>newInstance("Account").field("name", "embedded3") };
     bank.field("embeddeds", embeddeds, OType.EMBEDDEDLIST);
 
     // LINKED
-    ODocument linked = database.newInstance("Account").field("name", "linked1");
+    ODocument linked = database.<ODocument>newInstance("Account").field("name", "linked1");
     bank.field("linked", linked);
 
-    ODocument[] linkeds = new ODocument[] { database.newInstance("Account").field("name", "linked2"),
-        database.newInstance("Account").field("name", "linked3") };
+    ODocument[] linkeds = new ODocument[] { database.<ODocument>newInstance("Account").field("name", "linked2"),
+        database.<ODocument>newInstance("Account").field("name", "linked3") };
     bank.field("linkeds", linkeds, OType.LINKLIST);
 
     bank.save();

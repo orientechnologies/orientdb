@@ -515,18 +515,17 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     for (ServerRun server : checkOnServers) {
       if (server.isActive()) {
-        final ODatabaseDocument database = getDatabase(server);
+        final ODatabaseDocumentInternal database = getDatabase(server);
 
         Assert.assertNotNull("server " + server + " has no index " + indexName + " defined",
-            database.getMetadata().getIndexManager().getIndex(indexName));
+            database.getMetadata().getIndexManagerInternal().getIndex(database, indexName));
 
         try {
-          final long indexSize = database.getMetadata().getIndexManager().getIndex(indexName).getSize();
+          final long indexSize = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getSize();
 
           result.put(server.serverId, indexSize);
 
-          final OIndex index = ((ODatabaseDocumentInternal) database).getMetadata().getIndexManagerInternal()
-              .getIndex((ODatabaseDocumentInternal) database, indexName);
+          final OIndex index = (database).getMetadata().getIndexManagerInternal().getIndex(database, indexName);
 
           Assert.assertEquals("Index count is different by index content", indexSize, index.getSize());
 

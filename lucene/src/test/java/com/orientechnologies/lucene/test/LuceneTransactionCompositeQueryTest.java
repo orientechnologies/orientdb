@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -79,7 +79,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     doc.field("name", "Test");
     doc.field("bar", "abc");
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Foo.bar");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
 
     db.save(doc);
 
@@ -114,7 +114,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
   @Test
   public void txUpdateTest() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Foo.bar");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
     OClass c1 = db.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();
@@ -177,7 +177,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Foo.bar");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
     OClass c1 = db.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();

@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -156,7 +156,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testIndexEntries() {
     List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
 
-    OIndex<?> idx = database.getMetadata().getIndexManager().getIndex("Profile.nick");
+    OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick");
 
     Assert.assertEquals(idx.getSize(), result.size());
   }
@@ -169,13 +169,16 @@ public class IndexTest extends ObjectDBBaseTest {
 
     int profileSize = result.size();
 
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("Profile.nick").getSize(), profileSize);
+    database.getMetadata().getIndexManagerInternal().reload();
+    Assert
+        .assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick").getSize(),
+            profileSize);
     for (int i = 0; i < 10; i++) {
       Profile profile = new Profile("Yay-" + i, "Jay", "Miner", null);
       database.save(profile);
       profileSize++;
-      Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("Profile.nick").get("Yay-" + i));
+      Assert.assertNotNull(
+          database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick").get("Yay-" + i));
     }
   }
 
@@ -538,7 +541,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final List<Account> result = database.command(new OSQLSynchQuery<Account>("select * from Account limit 1")).execute();
 
-    final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex("Whiz.account");
+    final OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Whiz.account");
 
     for (int i = 0; i < 5; i++) {
       final ODocument whiz = new ODocument("Whiz");
@@ -651,7 +654,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testConcurrentRemoveDelete() {
-    ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("MyFruit")) {
@@ -683,8 +686,8 @@ public class IndexTest extends ObjectDBBaseTest {
       db.commit();
 
       expectedIndexSize += chunkSize;
-      Assert.assertEquals(db.getMetadata().getIndexManager().getClassIndex("MyFruit", "MyFruit.color").getSize(), expectedIndexSize,
-          "After add");
+      Assert.assertEquals(db.getMetadata().getIndexManagerInternal().getClassIndex(db, "MyFruit", "MyFruit.color").getSize(),
+          expectedIndexSize, "After add");
 
       // do delete
       db.begin();
@@ -694,8 +697,8 @@ public class IndexTest extends ObjectDBBaseTest {
       db.commit();
 
       expectedIndexSize -= recordsToDelete.size();
-      Assert.assertEquals(db.getMetadata().getIndexManager().getClassIndex("MyFruit", "MyFruit.color").getSize(), expectedIndexSize,
-          "After delete");
+      Assert.assertEquals(db.getMetadata().getIndexManagerInternal().getClassIndex(db, "MyFruit", "MyFruit.color").getSize(),
+          expectedIndexSize, "After delete");
     }
 
     db.close();
@@ -704,7 +707,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testIndexParamsAutoConversion() {
     checkEmbeddedDB();
 
-    ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("IndexTestTerm")) {
@@ -719,7 +722,7 @@ public class IndexTest extends ObjectDBBaseTest {
     doc.field("label", "42");
     doc.save();
 
-    final ORecordId result = (ORecordId) db.getMetadata().getIndexManager().getIndex("idxTerm").get("42");
+    final ORecordId result = (ORecordId) db.getMetadata().getIndexManagerInternal().getIndex(db, "idxTerm").get("42");
     Assert.assertNotNull(result);
     Assert.assertEquals(result.getIdentity(), doc.getIdentity());
   }
@@ -727,7 +730,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testTransactionUniqueIndexTestOne() {
     checkEmbeddedDB();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
@@ -741,8 +744,7 @@ public class IndexTest extends ObjectDBBaseTest {
     docOne.field("label", "A");
     docOne.save();
 
-    final OIndex index = ((ODatabaseDocumentInternal) db).getMetadata().getIndexManagerInternal()
-        .getIndex(db, "idxTransactionUniqueIndexTest");
+    final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "idxTransactionUniqueIndexTest");
     Assert.assertEquals(index.getSize(), 1);
 
     db.begin();
@@ -942,9 +944,10 @@ public class IndexTest extends ObjectDBBaseTest {
     cls.createProperty("value", OType.INTEGER);
     cls.createIndex("IndexNotUniqueIndexKeySizeIndex", INDEX_TYPE.NOTUNIQUE, "value");
 
-    OIndexManager idxManager = database.getMetadata().getIndexManager();
+    OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
 
-    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexKeySizeIndex");
+    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager
+        .getIndex(database.getUnderlying(), "IndexNotUniqueIndexKeySizeIndex");
 
     final Set<Integer> keys = new HashSet<Integer>();
     for (int i = 1; i < 100; i++) {
@@ -965,8 +968,9 @@ public class IndexTest extends ObjectDBBaseTest {
     cls.createProperty("value", OType.INTEGER);
     cls.createIndex("IndexNotUniqueIndexSizeIndex", INDEX_TYPE.NOTUNIQUE, "value");
 
-    OIndexManager idxManager = database.getMetadata().getIndexManager();
-    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSizeIndex");
+    OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
+    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager
+        .getIndex(database.getUnderlying(), "IndexNotUniqueIndexSizeIndex");
 
     for (int i = 1; i < 100; i++) {
       final Integer key = (int) Math.log(i);
@@ -986,8 +990,8 @@ public class IndexTest extends ObjectDBBaseTest {
     Profile profile = new Profile("NonProxiedObjectToDelete", "NonProxiedObjectToDelete", "NonProxiedObjectToDelete", null);
     profile = database.save(profile);
 
-    OIndexManager idxManager = database.getMetadata().getIndexManager();
-    OIndex<?> nickIndex = idxManager.getIndex("Profile.nick");
+    OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
+    OIndex<?> nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
     Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
 
@@ -1004,8 +1008,8 @@ public class IndexTest extends ObjectDBBaseTest {
     Profile profile = new Profile("NonProxiedObjectToDelete", "NonProxiedObjectToDelete", "NonProxiedObjectToDelete", null);
     profile = database.save(profile);
 
-    OIndexManager idxManager = database.getMetadata().getIndexManager();
-    OIndex<?> nickIndex = idxManager.getIndex("Profile.nick");
+    OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
+    OIndex<?> nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
     Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
 
@@ -1461,7 +1465,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ORID rid3 = doc3.getIdentity();
     final ORID rid4 = doc4.getIdentity();
 
-    ODatabaseDocumentTx database = (ODatabaseDocumentTx) this.database.getUnderlying();
+    ODatabaseDocumentInternal database = (ODatabaseDocumentTx) this.database.getUnderlying();
 
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("TestMultikeyWithoutField");
@@ -1490,7 +1494,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     document.save();
 
-    OIndex index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndex");
     Assert.assertEquals(index.getSize(), 2);
 
     //we support first and last keys check only for embedded storage
@@ -1510,7 +1514,7 @@ public class IndexTest extends ObjectDBBaseTest {
     users.remove(rid1);
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndex");
     Assert.assertEquals(index.getSize(), 1);
     if (!(database.getStorage() instanceof OStorageProxy)) {
       Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
@@ -1526,7 +1530,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(users.isEmpty());
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndex");
 
     Assert.assertEquals(index.getSize(), 1);
     if (!(database.getStorage() instanceof OStorageProxy)) {
@@ -1541,7 +1545,7 @@ public class IndexTest extends ObjectDBBaseTest {
     users.add(rid3);
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndex");
 
     Assert.assertEquals(index.getSize(), 1);
     if (!(database.getStorage() instanceof OStorageProxy)) {
@@ -1555,7 +1559,7 @@ public class IndexTest extends ObjectDBBaseTest {
     users.add(rid4);
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndex");
     Assert.assertEquals(index.getSize(), 2);
 
     if (!(database.getStorage() instanceof OStorageProxy)) {
@@ -1569,7 +1573,7 @@ public class IndexTest extends ObjectDBBaseTest {
     document.removeField("users");
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndex");
     Assert.assertEquals(index.getSize(), 1);
 
     if (!(database.getStorage() instanceof OStorageProxy)) {
@@ -1621,7 +1625,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     document.save();
 
-    OIndex index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getSize(), 2);
 
     //we support first and last keys check only for embedded storage
@@ -1641,7 +1645,7 @@ public class IndexTest extends ObjectDBBaseTest {
     users.remove(rid1);
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getSize(), 1);
     if (!(database.getStorage() instanceof OStorageProxy)) {
       Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
@@ -1658,7 +1662,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getSize(), 0);
 
     database.close();
@@ -1669,7 +1673,7 @@ public class IndexTest extends ObjectDBBaseTest {
     users.add(rid3);
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getSize(), 1);
 
     if (!(database.getStorage() instanceof OStorageProxy)) {
@@ -1683,7 +1687,7 @@ public class IndexTest extends ObjectDBBaseTest {
     users.add(rid4);
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getSize(), 2);
 
     if (!(database.getStorage() instanceof OStorageProxy)) {
@@ -1697,7 +1701,7 @@ public class IndexTest extends ObjectDBBaseTest {
     document.removeField("users");
     document.save();
 
-    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getSize(), 0);
   }
 
@@ -1716,7 +1720,7 @@ public class IndexTest extends ObjectDBBaseTest {
     docTwo.field("field", (Integer) null);
     docTwo.save();
 
-    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountSBTreeUniqueIndex");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeUniqueIndex");
     Assert.assertEquals(index.getSize(), 2);
     Assert.assertEquals(index.getKeySize(), 2);
   }
@@ -1736,7 +1740,7 @@ public class IndexTest extends ObjectDBBaseTest {
     docTwo.field("field", (Integer) null);
     docTwo.save();
 
-    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountSBTreeNotUniqueOneIndex");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeNotUniqueOneIndex");
     Assert.assertEquals(index.getSize(), 2);
     Assert.assertEquals(index.getKeySize(), 2);
   }
@@ -1756,7 +1760,7 @@ public class IndexTest extends ObjectDBBaseTest {
     docTwo.field("field", (Integer) null);
     docTwo.save();
 
-    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountSBTreeNotUniqueTwoIndex");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeNotUniqueTwoIndex");
     Assert.assertEquals(index.getKeySize(), 1);
     Assert.assertEquals(index.getSize(), 2);
   }
@@ -1776,7 +1780,7 @@ public class IndexTest extends ObjectDBBaseTest {
     docTwo.field("field", (Integer) null);
     docTwo.save();
 
-    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountHashUniqueIndex");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashUniqueIndex");
     Assert.assertEquals(index.getSize(), 2);
     Assert.assertEquals(index.getKeySize(), 2);
   }
@@ -1796,7 +1800,7 @@ public class IndexTest extends ObjectDBBaseTest {
     docTwo.field("field", (Integer) null);
     docTwo.save();
 
-    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountHashNotUniqueOneIndex");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashNotUniqueOneIndex");
     Assert.assertEquals(index.getSize(), 2);
     Assert.assertEquals(index.getKeySize(), 2);
   }
@@ -1816,7 +1820,7 @@ public class IndexTest extends ObjectDBBaseTest {
     docTwo.field("field", (Integer) null);
     docTwo.save();
 
-    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountHashNotUniqueTwoIndex");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashNotUniqueTwoIndex");
     Assert.assertEquals(index.getKeySize(), 1);
     Assert.assertEquals(index.getSize(), 2);
   }

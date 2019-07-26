@@ -97,8 +97,10 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("delete from classIndexManagerTestSuperClass")).execute();
 
     if (!((ODatabaseDocumentInternal) database).getStorage().isRemote()) {
-      Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop1").getSize(), 0);
-      Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop2").getSize(), 0);
+      Assert.assertEquals(
+          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop1").getSize(), 0);
+      Assert.assertEquals(
+          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop2").getSize(), 0);
     }
 
     super.afterMethod();
@@ -233,7 +235,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   public void testCreateDocumentWithoutClass() {
     checkEmbeddedDB();
 
-    final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManager().getIndexes();
+    final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
     final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
 
     for (final OIndex<?> index : beforeIndexes)
@@ -247,7 +249,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     docTwo.field("prop1", "a");
     docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
-    final Collection<? extends OIndex<?>> afterIndexes = database.getMetadata().getIndexManager().getIndexes();
+    final Collection<? extends OIndex<?>> afterIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
     for (final OIndex<?> index : afterIndexes)
       Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
   }
@@ -255,7 +257,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   public void testUpdateDocumentWithoutClass() {
     checkEmbeddedDB();
 
-    final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManager().getIndexes();
+    final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
     final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
 
     for (final OIndex<?> index : beforeIndexes)
@@ -272,7 +274,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     docOne.field("prop1", "a");
     docOne.save();
 
-    final Collection<? extends OIndex<?>> afterIndexes = database.getMetadata().getIndexManager().getIndexes();
+    final Collection<? extends OIndex<?>> afterIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
     for (final OIndex<?> index : afterIndexes)
       Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
   }
@@ -906,7 +908,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     Assert.assertEquals(index.get(new OCompositeKey("test1", 1)), doc.getIdentity());
@@ -927,7 +930,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 0);
 
     doc.delete();
@@ -943,7 +947,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 0);
 
     doc.delete();
@@ -959,7 +964,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop1", "test2");
@@ -986,7 +992,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop2", Arrays.asList(1, 3));
@@ -1013,7 +1020,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     List<Integer> docList = doc.field("prop2");
@@ -1047,7 +1055,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     List<Integer> docList = doc.field("prop2");
@@ -1083,7 +1092,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop1", (Object) null);
@@ -1107,7 +1117,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop2", (Object) null);
@@ -1131,7 +1142,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop2", (Object) null);
@@ -1156,7 +1168,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     List<Integer> docList = doc.field("prop2");
@@ -1187,7 +1200,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop1", "test2");
@@ -1206,7 +1220,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop2", Arrays.asList(1, 3));
@@ -1225,7 +1240,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     List<Integer> docList = doc.field("prop2");
@@ -1249,7 +1265,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     List<Integer> docList = doc.field("prop2");
@@ -1275,7 +1292,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop2", Arrays.asList(1, 3));
@@ -1295,7 +1313,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop1", (Object) null);
@@ -1314,7 +1333,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop2", (Object) null);
@@ -1333,7 +1353,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     doc.field("prop2", (Object) null);
@@ -1353,7 +1374,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("classIndexManagerTestIndexValueAndCollection");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getSize(), 2);
 
     List<Integer> docList = doc.field("prop2");

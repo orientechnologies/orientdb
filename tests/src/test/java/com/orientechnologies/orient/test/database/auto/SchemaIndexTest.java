@@ -8,11 +8,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.util.List;
 
@@ -47,34 +43,31 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
   public void testDropClass() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX SchemaSharedIndexCompositeIndex ON SchemaIndexTest (prop1, prop2) UNIQUE"))
         .execute();
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("SchemaSharedIndexCompositeIndex"));
+    database.getMetadata().getIndexManagerInternal().reload();
+    Assert.assertNotNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "SchemaSharedIndexCompositeIndex"));
 
     database.getMetadata().getSchema().dropClass("SchemaIndexTest");
     database.getMetadata().getSchema().reload();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     Assert.assertNull(database.getMetadata().getSchema().getClass("SchemaIndexTest"));
     Assert.assertNotNull(database.getMetadata().getSchema().getClass("SchemaSharedIndexSuperTest"));
 
-    Assert.assertNull(database.getMetadata().getIndexManager().getIndex("SchemaSharedIndexCompositeIndex"));
+    Assert.assertNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "SchemaSharedIndexCompositeIndex"));
   }
 
   @Test
   public void testDropSuperClass() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX SchemaSharedIndexCompositeIndex ON SchemaIndexTest (prop1, prop2) UNIQUE"))
         .execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     try {
       database.getMetadata().getSchema().dropClass("SchemaSharedIndexSuperTest");
       Assert.fail();
     } catch (OSchemaException e) {
       Assert
-          .assertTrue(e
-              .getMessage()
-              .startsWith(
-                  "Class 'SchemaSharedIndexSuperTest' cannot be dropped because it has sub classes"));
+          .assertTrue(e.getMessage().startsWith("Class 'SchemaSharedIndexSuperTest' cannot be dropped because it has sub classes"));
     }
 
     database.getMetadata().getSchema().reload();
@@ -82,7 +75,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
     Assert.assertNotNull(database.getMetadata().getSchema().getClass("SchemaIndexTest"));
     Assert.assertNotNull(database.getMetadata().getSchema().getClass("SchemaSharedIndexSuperTest"));
 
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("SchemaSharedIndexCompositeIndex"));
+    Assert.assertNotNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "SchemaSharedIndexCompositeIndex"));
   }
 
   public void testPolymorphicIdsPropagationAfterClusterAddRemove() {
@@ -132,8 +125,8 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
     assertContains(polymorpicIdsPropagationSuperSuper.getPolymorphicClusterIds(), clusterId2);
     assertContains(polymorpicIdsPropagationSuper.getPolymorphicClusterIds(), clusterId2);
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
-        "select from polymorpicIdsPropagationSuperSuper where value = 'val12'"));
+    List<ODocument> result = database
+        .query(new OSQLSynchQuery<ODocument>("select from polymorpicIdsPropagationSuperSuper where value = 'val12'"));
 
     Assert.assertEquals(result.size(), 1);
 

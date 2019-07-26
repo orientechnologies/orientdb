@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -28,12 +25,14 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadTest {
-  protected static final String      URL     = "plocal:target/databases/graphspeedtest";
-  protected final OrientGraphFactory factory = new OrientGraphFactory(URL);
-  protected long                     foundObjects;
+  protected static final String             URL     = "plocal:target/databases/graphspeedtest";
+  protected final        OrientGraphFactory factory = new OrientGraphFactory(URL);
+  protected              long               foundObjects;
 
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
@@ -53,8 +52,8 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
     }
 
     public void cycle() {
-      graph
-          .addVertex("class:Client,cluster:client_" + currentThreadId(), "uid", "" + currentThreadId() + "_" + data.getCyclesDone());
+      graph.addVertex("class:Client,cluster:client_" + currentThreadId(), "uid",
+          "" + currentThreadId() + "_" + data.getCyclesDone());
     }
 
     @Override
@@ -114,7 +113,8 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
       System.out.println("Created " + (total - foundObjects));
       Assert.assertEquals(total - foundObjects, threadCycles);
 
-      final long indexedItems = graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.uid").getSize();
+      final long indexedItems = graph.getRawGraph().getMetadata().getIndexManagerInternal()
+          .getIndex(graph.getRawGraph(), "Client.uid").getSize();
       System.out.println("\nTotal indexed objects after the test: " + indexedItems);
 
     } finally {

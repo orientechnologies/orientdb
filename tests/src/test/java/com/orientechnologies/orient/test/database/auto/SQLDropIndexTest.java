@@ -76,14 +76,14 @@ public class SQLDropIndexTest {
   public void testOldSyntax() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX SQLDropIndexTestClass.prop1 UNIQUE")).execute();
 
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     OIndex<?> index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass")
         .getClassIndex("SQLDropIndexTestClass.prop1");
     Assert.assertNotNull(index);
 
     database.command(new OCommandSQL("DROP INDEX SQLDropIndexTestClass.prop1")).execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass").getClassIndex("SQLDropIndexTestClass.prop1");
     Assert.assertNull(index);
@@ -93,14 +93,14 @@ public class SQLDropIndexTest {
   public void testDropCompositeIndex() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX SQLDropIndexCompositeIndex ON SQLDropIndexTestClass (prop1, prop2) UNIQUE"))
         .execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     OIndex<?> index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass")
         .getClassIndex("SQLDropIndexCompositeIndex");
     Assert.assertNotNull(index);
 
     database.command(new OCommandSQL("DROP INDEX SQLDropIndexCompositeIndex")).execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
     index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass").getClassIndex("SQLDropIndexCompositeIndex");
     Assert.assertNull(index);

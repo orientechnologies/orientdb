@@ -19,12 +19,10 @@ public class OLuceneNullTest extends OLuceneBaseTest {
 
     db.command("create index Test.names on Test(names) FULLTEXT ENGINE LUCENE");
 
-
   }
 
   @Test
   public void testNullChangeToNotNullWithLists() {
-
 
     db.begin();
     ODocument doc = new ODocument("Test");
@@ -36,7 +34,7 @@ public class OLuceneNullTest extends OLuceneBaseTest {
     db.save(doc);
     db.commit();
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Test.names");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Test.names");
 
     Assert.assertEquals(1, index.getSize());
 
@@ -44,7 +42,6 @@ public class OLuceneNullTest extends OLuceneBaseTest {
 
   @Test
   public void testNotNullChangeToNullWithLists() {
-
 
     ODocument doc = new ODocument("Test");
 
@@ -60,7 +57,7 @@ public class OLuceneNullTest extends OLuceneBaseTest {
     db.save(doc);
     db.commit();
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Test.names");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Test.names");
     Assert.assertEquals(0, index.getSize());
 
   }

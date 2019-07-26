@@ -18,7 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -26,12 +26,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -57,7 +52,7 @@ public class LuceneBackupRestoreTest {
 
   private OrientDB orientDB;
 
-  private ODatabaseSession databaseDocumentTx;
+  private ODatabaseDocumentInternal databaseDocumentTx;
 
   @Before
   public void setUp() throws Exception {
@@ -77,7 +72,7 @@ public class LuceneBackupRestoreTest {
     final String dbName = getClass().getSimpleName();
 
     orientDB.create(dbName, ODatabaseType.PLOCAL);
-    databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
+    databaseDocumentTx = (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin");
 
     databaseDocumentTx.command("create class City ");
     databaseDocumentTx.command("create property City.name string");
@@ -116,7 +111,7 @@ public class LuceneBackupRestoreTest {
 
     orientDB.drop(getClass().getSimpleName());
     orientDB.create(getClass().getSimpleName(), ODatabaseType.PLOCAL);
-    databaseDocumentTx = orientDB.open(getClass().getSimpleName(), "admin", "admin");
+    databaseDocumentTx = (ODatabaseDocumentInternal) orientDB.open(getClass().getSimpleName(), "admin", "admin");
 
     FileInputStream stream = new FileInputStream(backupFile);
 
@@ -124,7 +119,7 @@ public class LuceneBackupRestoreTest {
 
     assertThat(databaseDocumentTx.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("City.name");
+    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManagerInternal().getIndex(databaseDocumentTx, "City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());

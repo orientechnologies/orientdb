@@ -18,10 +18,11 @@
 
 package com.orientechnologies.orient.etl.loader;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -61,13 +62,13 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
         + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
 
     proc.execute();
-    ODatabaseDocument db = proc.getLoader().getPool().acquire();
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) proc.getLoader().getPool().acquire();
 
-    final OIndexManager indexManager = db.getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = db.getMetadata().getIndexManagerInternal();
 
     assertThat(indexManager.existsIndex("V.surname")).isTrue();
 
-    final ODocument indexMetadata = indexManager.getIndex("V.surname").getMetadata();
+    final ODocument indexMetadata = indexManager.getIndex(db, "V.surname").getMetadata();
     assertThat(indexMetadata.containsField("ignoreNullValues")).isTrue();
     assertThat(indexMetadata.<String>field("ignoreNullValues")).isEqualTo("false");
 
@@ -76,29 +77,23 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
   @Test
   public void testCreateLuceneIndex() {
 
-    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, "
-        + "\"transformers\": [\n"
-        + "    {\n"
-        + "      \"vertex\": {\n"
-        + "        \"class\": \"Person\",\n"
-        + "        \"skipDuplicates\": true\n"
-        + "      }\n"
-        + "    }],"
-        + "loader: { orientdb: {\n"
-        + "      dbURL: 'memory:" + name.getMethodName() + "',\n" + "      dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
-        + "      dbAutoCreate: true,\n" + "      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : true,\n"
-        + "      dbType: \"graph\",\n" + "      classes: [\n" + "        {name:\"Person\", extends: \"V\" },\n" + "      ],\n"
+    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, " + "\"transformers\": [\n"
+        + "    {\n" + "      \"vertex\": {\n" + "        \"class\": \"Person\",\n" + "        \"skipDuplicates\": true\n"
+        + "      }\n" + "    }]," + "loader: { orientdb: {\n" + "      dbURL: 'memory:" + name.getMethodName() + "',\n"
+        + "      dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n" + "      dbAutoCreate: true,\n" + "      tx: false,\n"
+        + "      batchCommit: 1000,\n" + "      wal : true,\n" + "      dbType: \"graph\",\n" + "      classes: [\n"
+        + "        {name:\"Person\", extends: \"V\" },\n" + "      ],\n"
         + "      indexes: [{class:\"Person\" , fields:[\"surname:String\"], \"type\":\"FULLTEXT\",  \"algorithm\":\"LUCENE\",  \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
 
     proc.execute();
 
-    ODatabaseDocument db = proc.getLoader().getPool().acquire();
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) proc.getLoader().getPool().acquire();
 
-    final OIndexManager indexManager = db.getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = db.getMetadata().getIndexManagerInternal();
 
     assertThat(indexManager.existsIndex("Person.surname")).isTrue();
 
-    final OIndex<?> index = indexManager.getIndex("Person.surname");
+    final OIndex<?> index = indexManager.getIndex(db, "Person.surname");
     final ODocument indexMetadata = index.getMetadata();
     assertThat(index.getAlgorithm()).isEqualTo("LUCENE");
 
@@ -117,10 +112,9 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
 
     configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
         + "      dbURL: \"memory:" + name.getMethodName() + "\",\n" + "      dbUser: \"admin\",\n"
-        + "      dbPassword: \"admin\",\n"
-        + "      dbAutoCreate: true,\n" + "      cluster : \"myCluster\",\n" + "      tx: false,\n" + "      batchCommit: 1000,\n"
-        + "      wal : true,\n" + "      dbType: \"graph\",\n" + "      classes: [\n"
-        + "        {name:\"Person\", extends: \"V\" },\n" + "      ],\n"
+        + "      dbPassword: \"admin\",\n" + "      dbAutoCreate: true,\n" + "      cluster : \"myCluster\",\n"
+        + "      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : true,\n" + "      dbType: \"graph\",\n"
+        + "      classes: [\n" + "        {name:\"Person\", extends: \"V\" },\n" + "      ],\n"
         + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
     proc.execute();
 
@@ -130,8 +124,7 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
 
     OResultSet resultSet = db.query("SELECT from V");
 
-    resultSet.vertexStream()
-        .forEach(v -> assertThat((v.getIdentity()).getClusterId()).isEqualTo(idByName));
+    resultSet.vertexStream().forEach(v -> assertThat((v.getIdentity()).getClusterId()).isEqualTo(idByName));
 
     resultSet.close();
     db.close();

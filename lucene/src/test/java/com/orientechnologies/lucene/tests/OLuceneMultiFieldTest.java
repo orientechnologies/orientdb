@@ -49,7 +49,7 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
         + EnglishAnalyzer.class.getName() + "\" , " + "\"title_query\":\"" + EnglishAnalyzer.class.getName() + "\" , "
         + "\"author_index\":\"" + StandardAnalyzer.class.getName() + "\"}");
 
-    final ODocument index = db.getMetadata().getIndexManager().getIndex("Song.title_author").getMetadata();
+    final ODocument index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title_author").getMetadata();
 
     assertThat(index.<Object>field("author_index")).isEqualTo(StandardAnalyzer.class.getName());
     assertThat(index.<Object>field("title_index")).isEqualTo(EnglishAnalyzer.class.getName());

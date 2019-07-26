@@ -25,11 +25,11 @@ import org.testng.annotations.*;
 
 @Test(groups = { "index" })
 public class SQLDropClassIndexTest {
-  private static final OType  EXPECTED_PROP1_TYPE = OType.DOUBLE;
-  private static final OType  EXPECTED_PROP2_TYPE = OType.INTEGER;
+  private static final OType EXPECTED_PROP1_TYPE = OType.DOUBLE;
+  private static final OType EXPECTED_PROP2_TYPE = OType.INTEGER;
 
-  private ODatabaseDocumentTx database;
-  private final String        url;
+  private       ODatabaseDocumentTx database;
+  private final String              url;
 
   @Parameters(value = "url")
   public SQLDropClassIndexTest(@Optional final String url) {
@@ -66,19 +66,19 @@ public class SQLDropClassIndexTest {
   public void testIndexDeletion() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX SQLDropClassCompositeIndex ON SQLDropClassTestClass (prop1, prop2) UNIQUE"))
         .execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
 
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("SQLDropClassCompositeIndex"));
+    Assert.assertNotNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "SQLDropClassCompositeIndex"));
 
     database.command(new OCommandSQL("DROP CLASS SQLDropClassTestClass")).execute();
-    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManagerInternal().reload();
     database.getMetadata().getSchema().reload();
 
     Assert.assertNull(database.getMetadata().getSchema().getClass("SQLDropClassTestClass"));
-    Assert.assertNull(database.getMetadata().getIndexManager().getIndex("SQLDropClassCompositeIndex"));
+    Assert.assertNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "SQLDropClassCompositeIndex"));
     database.close();
     database.open("admin", "admin");
     Assert.assertNull(database.getMetadata().getSchema().getClass("SQLDropClassTestClass"));
-    Assert.assertNull(database.getMetadata().getIndexManager().getIndex("SQLDropClassCompositeIndex"));
+    Assert.assertNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "SQLDropClassCompositeIndex"));
   }
 }
