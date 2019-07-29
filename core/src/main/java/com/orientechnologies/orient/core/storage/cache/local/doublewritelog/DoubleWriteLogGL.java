@@ -16,6 +16,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class DoubleWriteLogGL implements DoubleWriteLog {
@@ -41,6 +43,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
   private static final LZ4Compressor LZ_4_COMPRESSOR;
 
+  private List<Long> tailSegments;
+
   static {
     final LZ4Factory factory = LZ4Factory.fastestInstance();
     LZ_4_COMPRESSOR = factory.fastCompressor();
@@ -57,6 +61,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
     synchronized (mutex) {
       this.storagePath = storagePath;
       this.storageName = storageName;
+      this.tailSegments = new ArrayList<>();
 
       final int len = storageName.length();
       final Optional<Path> latestPath = Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).min((pathOne, pathTwo) -> {
@@ -86,9 +91,13 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   }
 
   private FileChannel createLogFile() throws IOException {
-    final Path currentFilePath = storagePath.resolve(storageName + "_" + currentSegment + EXTENSION);
+    final Path currentFilePath = storagePath.resolve(createSegmentName(currentSegment));
     return FileChannel.open(currentFilePath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.SYNC,
         StandardOpenOption.CREATE_NEW);
+  }
+
+  private String createSegmentName(long id) {
+    return storageName + "_" + id + EXTENSION;
   }
 
   private static boolean fileFilter(final Path path) {
@@ -98,6 +107,15 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   @Override
   public boolean write(final ByteBuffer[] buffers, final long fileId, final int pageIndex) throws IOException {
     synchronized (mutex) {
+      if (currentFile.size() > maxLogSize) {
+        currentFile.close();
+
+        tailSegments.add(currentSegment);
+
+        this.currentSegment++;
+        this.currentFile = createLogFile();
+      }
+
       int bytesToWrite = OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE;
 
       for (ByteBuffer buffer : buffers) {
@@ -157,22 +175,18 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   @Override
   public void truncate() throws IOException {
     synchronized (mutex) {
-      currentFile.close();
-
-      Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).forEach(path -> {
+      tailSegments.stream().map(this::createSegmentName).forEach((segment) -> {
         try {
-          Files.delete(path);
+          final Path segmentPath = storagePath.resolve(segment);
+          Files.delete(segmentPath);
         } catch (IOException e) {
-          throw OException.wrapException(new OStorageException(
-              "Can not delete file " + path.toAbsolutePath().toString() + " during truncation of page log for storage "
-                  + storageName), e);
+          throw OException.wrapException(
+              new OStorageException("Can not delete segment of double write log - " + segment + " in storage " + storageName), e);
         }
       });
 
-      this.currentLogSize = 0;
-      this.currentSegment++;
-
-      this.currentFile = createLogFile();
+      this.currentLogSize = calculateLogSize();
+      tailSegments.clear();
     }
   }
 
