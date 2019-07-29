@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.storage.cache.local.doublewritelog;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.OPointer;
+
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
@@ -8,7 +12,7 @@ import java.nio.file.Path;
  */
 public class DoubleWriteLogNoOP implements DoubleWriteLog {
   @Override
-  public boolean write(ByteBuffer[] buffers, long fileId, int pageIndex) {
+  public boolean write(ByteBuffer[] buffers, int fileId, int pageIndex) {
     return false;
   }
 
@@ -18,12 +22,20 @@ public class DoubleWriteLogNoOP implements DoubleWriteLog {
   }
 
   @Override
-  public void open(String storageName, Path storagePath) {
+  public void open(String storageName, Path storagePath, int pageSize) {
 
   }
 
   @Override
-  public ByteBuffer loadPage(long fileId, int pageIndex) {
+  public OPointer loadPage(int fileId, int pageIndex, OByteBufferPool bufferPool) {
     return null;
+  }
+
+  @Override
+  public void restoreModeOn() throws IOException {
+  }
+
+  @Override
+  public void restoreModeOff() {
   }
 }

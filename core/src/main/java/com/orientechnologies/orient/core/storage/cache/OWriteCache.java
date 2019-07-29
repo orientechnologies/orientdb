@@ -89,14 +89,17 @@ public interface OWriteCache {
 
   boolean exists(long fileId);
 
+  void restoreModeOn() throws IOException;
+
+  void restoreModeOff();
+
   void store(long fileId, long pageIndex, OCachePointer dataPointer);
 
   void checkCacheOverflow() throws InterruptedException;
 
   int allocateNewPage(final long fileId) throws IOException;
 
-  OCachePointer load(long fileId, long startPageIndex, OModifiableBoolean cacheHit, boolean verifyChecksums)
-      throws IOException;
+  OCachePointer load(long fileId, long startPageIndex, OModifiableBoolean cacheHit, boolean verifyChecksums) throws IOException;
 
   void flush(long fileId);
 
@@ -155,14 +158,14 @@ public interface OWriteCache {
   /**
    * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
    * <p>
-   * Takes two ids and checks whether they are equal from point of view of write cache. In other words
-   * methods checks whether two ids in reality contain the same internal ids.
+   * Takes two ids and checks whether they are equal from point of view of write cache. In other words methods checks whether two
+   * ids in reality contain the same internal ids.
    */
   boolean fileIdsAreEqual(long firsId, long secondId);
 
   /**
-   * Finds if there was file in write cache with given id which is deleted right now.
-   * If such file exists it creates new file with the same name at it was in deleted file.
+   * Finds if there was file in write cache with given id which is deleted right now. If such file exists it creates new file with
+   * the same name at it was in deleted file.
    *
    * @param fileId If of file which should be restored
    *
@@ -192,8 +195,8 @@ public interface OWriteCache {
   Path getRootDirectory();
 
   /**
-   * Returns internal file id which is unique and always the same for given file
-   * in contrary to external id which changes over close/open cycle of cache.
+   * Returns internal file id which is unique and always the same for given file in contrary to external id which changes over
+   * close/open cycle of cache.
    *
    * @param fileId External file id.
    *
@@ -202,8 +205,8 @@ public interface OWriteCache {
   int internalFileId(long fileId);
 
   /**
-   * Converts unique internal file id to external one.
-   * External id is combination of internal id and write cache id, which changes every time when cache is closed and opened again.
+   * Converts unique internal file id to external one. External id is combination of internal id and write cache id, which changes
+   * every time when cache is closed and opened again.
    *
    * @param fileId Internal file id.
    *

@@ -484,7 +484,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     try {
       initNameIdMapping();
 
-      doubleWriteLog.open(storageName, storagePath);
+      doubleWriteLog.open(storageName, storagePath, pageSize);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -1018,6 +1018,27 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       return file.exists();
     } finally {
       filesLock.releaseReadLock();
+    }
+  }
+
+  @Override
+  public void restoreModeOn() throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      doubleWriteLog.restoreModeOn();
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+
+  }
+
+  @Override
+  public void restoreModeOff() {
+    filesLock.acquireWriteLock();
+    try {
+      doubleWriteLog.restoreModeOff();
+    } finally {
+      filesLock.releaseWriteLock();
     }
   }
 
@@ -2084,21 +2105,22 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private OCachePointer loadFileContent(final int intId, final long startPageIndex, final boolean verifyChecksums)
+  private OCachePointer loadFileContent(final int internalFileId, final long pageIndex, final boolean verifyChecksums)
       throws IOException {
-    final long fileId = composeFileId(id, intId);
+    final long fileId = composeFileId(id, internalFileId);
     try {
       final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
       try {
         final OFileClassic fileClassic = entry.get();
         if (fileClassic == null) {
-          throw new IllegalArgumentException("File with id " + intId + " not found in WOW Cache");
+          throw new IllegalArgumentException("File with id " + internalFileId + " not found in WOW Cache");
         }
 
-        final long firstPageStartPosition = startPageIndex * pageSize;
-        final long firstPageEndPosition = firstPageStartPosition + pageSize;
+        final long pagePosition = pageIndex * pageSize;
+        final long pageEndPosition = pagePosition + pageSize;
 
-        if (fileClassic.getFileSize() >= firstPageEndPosition) {
+        //if page is not stored in the file may be page is stored in double write log
+        if (fileClassic.getFileSize() >= pageEndPosition) {
           long startTs = 0;
           int pagesRead = 0;
 
@@ -2107,20 +2129,36 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           }
 
           try {
-            final OPointer pointer = bufferPool.acquireDirect(false);
-            final ByteBuffer buffer = pointer.getNativeByteBuffer();
+            OPointer pointer = bufferPool.acquireDirect(false);
+            ByteBuffer buffer = pointer.getNativeByteBuffer();
             assert buffer.position() == 0;
-            fileClassic.read(firstPageStartPosition, buffer, false);
+            fileClassic.read(pagePosition, buffer, false);
 
             if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
                 || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
-              verifyMagicAndChecksum(buffer, pointer, fileId, intId, startPageIndex, null);
+              //if page is broken inside of data file we check double write log
+              if (!verifyMagicChecksumAndDecryptPage(buffer, internalFileId, pageIndex)) {
+                final OPointer doubleWritePointer = doubleWriteLog.loadPage(internalFileId, (int) pageIndex, bufferPool);
+
+                if (doubleWritePointer == null) {
+                  assertPageIsBroken(pageIndex, fileId, pointer);
+                } else {
+                  bufferPool.release(pointer);
+
+                  buffer = doubleWritePointer.getNativeByteBuffer();
+                  pointer = doubleWritePointer;
+
+                  if (!verifyMagicChecksumAndDecryptPage(buffer, internalFileId, pageIndex)) {
+                    assertPageIsBroken(pageIndex, fileId, pointer);
+                  }
+                }
+              }
             }
 
             buffer.position(0);
 
             pagesRead = 1;
-            return new OCachePointer(pointer, bufferPool, fileId, startPageIndex);
+            return new OCachePointer(pointer, bufferPool, fileId, pageIndex);
           } finally {
             if (printCacheStatistics) {
               final long endTs = System.nanoTime();
@@ -2131,6 +2169,18 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             }
           }
         } else {
+          final OPointer pointer = doubleWriteLog.loadPage(internalFileId, (int) pageIndex, bufferPool);
+          if (pointer != null) {
+            final ByteBuffer buffer = pointer.getNativeByteBuffer();
+
+            if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
+                || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
+              if (!verifyMagicChecksumAndDecryptPage(buffer, internalFileId, pageIndex)) {
+                assertPageIsBroken(pageIndex, fileId, pointer);
+              }
+            }
+          }
+
           return null;
         }
       } finally {
@@ -2138,6 +2188,19 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
     } catch (final InterruptedException e) {
       throw OException.wrapException(new OStorageException("Data load was interrupted"), e);
+    }
+  }
+
+  private void assertPageIsBroken(long pageIndex, long fileId, OPointer pointer) {
+    final String message = "Magic number verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
+    OLogManager.instance().error(this, "%s", null, message);
+
+    if (checksumMode == OChecksumMode.StoreAndThrow) {
+      bufferPool.release(pointer);
+      throw new OStorageException(message);
+    } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
+      dumpStackTrace(message);
+      callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
     }
   }
 
@@ -2215,8 +2278,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private void verifyMagicAndChecksum(final ByteBuffer buffer, final OPointer pointer, final long fileId, int intId,
-      final long pageIndex, final OPointer[] pointersToRelease) {
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+  private boolean verifyMagicChecksumAndDecryptPage(final ByteBuffer buffer, final int intId, final long pageIndex) {
     assert buffer.order() == ByteOrder.nativeOrder();
 
     buffer.position(MAGIC_NUMBER_OFFSET);
@@ -2226,30 +2289,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         && (magicNumber & 0xFF) != MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED)) {
       if ((aesKey == null && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) || (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM
           && (magicNumber & 0xFF) != MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED)) {
-        final String message = "Magic number verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
-        OLogManager.instance().error(this, "%s", null, message);
-
-        if (checksumMode == OChecksumMode.StoreAndThrow) {
-          if (pointersToRelease == null) {
-            bufferPool.release(pointer);
-          } else {
-            for (final OPointer bufferToRelease : pointersToRelease) {
-              bufferPool.release(bufferToRelease);
-            }
-          }
-
-          throw new OStorageException(message);
-        } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
-          dumpStackTrace(message);
-          callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
-        }
+        return false;
       }
 
       if (aesKey != null && (magicNumber & 0xFF) == MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
         doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer, magicNumber >>> 8);
       }
 
-      return;
+      return true;
     }
 
     if (aesKey != null && (magicNumber & 0xFF) == MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED) {
@@ -2264,25 +2311,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     crc32.update(buffer);
     final int computedChecksum = (int) crc32.getValue();
 
-    if (computedChecksum != storedChecksum) {
-      final String message = "Checksum verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
-      OLogManager.instance().error(this, "%s", null, message);
-      if (checksumMode == OChecksumMode.StoreAndThrow) {
-        if (pointersToRelease == null) {
-          bufferPool.release(pointer);
-        } else {
-          for (final OPointer pointerToRelease : pointersToRelease) {
-            bufferPool.release(pointerToRelease);
-          }
-        }
-
-        throw new OStorageException(message);
-      } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
-        dumpStackTrace(message);
-
-        callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
-      }
-    }
+    return computedChecksum == storedChecksum;
   }
 
   private void dumpStackTrace(final String message) {
@@ -2332,7 +2361,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     buffer.position(0);
 
     final long externalId = composeFileId(id, fileId);
-    final boolean fsyncFiles = doubleWriteLog.write(new ByteBuffer[] { buffer }, externalId, (int) pageIndex);
+    final boolean fsyncFiles = doubleWriteLog.write(new ByteBuffer[] { buffer }, fileId, (int) pageIndex);
 
     final OClosableEntry<Long, OFileClassic> entry = files.acquire(externalId);
     try {
@@ -3099,7 +3128,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     final long firstFileId = firstCachePointer.getFileId();
     final long firstPageIndex = firstCachePointer.getPageIndex();
 
-    final boolean fsyncFiles = doubleWriteLog.write(buffers, firstFileId, (int) firstPageIndex);
+    final boolean fsyncFiles = doubleWriteLog.write(buffers, internalFileId(firstFileId), (int) firstPageIndex);
 
     for (ByteBuffer buffer : buffers) {
       buffer.rewind();

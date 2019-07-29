@@ -457,6 +457,14 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
+  public void restoreModeOn() {
+  }
+
+  @Override
+  public void restoreModeOff() {
+  }
+
+  @Override
   public final String fileNameById(final long fileId) {
     final int intId = extractFileId(fileId);
 
@@ -663,7 +671,8 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public final OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit, final boolean verifyChecksums) {
+  public final OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit,
+      final boolean verifyChecksums) {
     throw new UnsupportedOperationException();
   }
 

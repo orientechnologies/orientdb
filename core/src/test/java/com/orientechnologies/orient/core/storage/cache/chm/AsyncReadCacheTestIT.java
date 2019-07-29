@@ -361,6 +361,14 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
+    public void restoreModeOn() {
+    }
+
+    @Override
+    public void restoreModeOff() {
+    }
+
+    @Override
     public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     }
 
