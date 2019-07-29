@@ -660,7 +660,7 @@ public class OSBTreeV1<K, V> extends ODurableComponent
           }
 
           removedValue = removeNullBucket(atomicOperation);
-          if (indexId >= 0) {
+          if (removedValue != null && indexId >= 0) {
             final byte[] serializedValue = valueSerializer.serializeNativeAsWhole(removedValue);
             atomicOperation.addComponentOperation(
                 new OSBTreeRemoveCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), null,

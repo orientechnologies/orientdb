@@ -508,7 +508,15 @@ public class SBTreeV1TestIT {
       identifiable = nullSBTree.get(null);
       Assert.assertNull(identifiable);
     } finally {
-      sbTree.remove(null);
+      final OSBTree.OSBTreeKeyCursor<Integer> keyCursor = nullSBTree.keyCursor();
+
+      Integer key = keyCursor.next(-1);
+      while (key != null) {
+        nullSBTree.remove(key);
+        key = keyCursor.next(-1);
+      }
+
+      nullSBTree.remove(null);
       nullSBTree.delete();
     }
   }
