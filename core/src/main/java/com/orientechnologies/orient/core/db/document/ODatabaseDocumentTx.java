@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -1537,5 +1538,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public void internalClose(boolean recycle) {
     internal.internalClose(true);
+  }
+
+  @Override
+  public Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges() {
+    return internal.getCollectionsChanges();
   }
 }

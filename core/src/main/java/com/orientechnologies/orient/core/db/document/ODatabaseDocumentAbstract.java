@@ -68,6 +68,7 @@ import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterExceptio
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.*;
 
@@ -110,7 +111,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   protected OMicroTransaction microTransaction = null;
 
-  protected Map<String, OResultSet> activeQueries = new HashMap<>();
+  protected Map<String, OResultSet>             activeQueries = new HashMap<>();
+  private   Map<UUID, OBonsaiCollectionPointer> collectionsChanges;
 
   protected ODatabaseDocumentAbstract() {
     // DO NOTHING IS FOR EXTENDED OBJECTS
@@ -2095,7 +2097,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
     }
 
-    if(!getSerializer().equals(ORecordInternal.getRecordSerializer(doc))){
+    if (!getSerializer().equals(ORecordInternal.getRecordSerializer(doc))) {
       ORecordInternal.setRecordSerializer(doc, getSerializer());
     }
     doc = (ODocument) currentTx
@@ -2749,5 +2751,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (clazz != null && clazz.isVertexType())
       return true;
     return false;
+  }
+
+  public Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges() {
+    if (collectionsChanges == null) {
+      collectionsChanges = new HashMap<>();
+    }
+    return collectionsChanges;
   }
 }
