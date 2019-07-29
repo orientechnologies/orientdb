@@ -483,6 +483,9 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       "Amount of values, after which a LINKBAG implementation will use an embedded values container (disabled by default)",
       Integer.class, -1, true),
 
+  RID_BAG_SBTREEBONSAI_DELETE_DALAY("ridBag.sbtreeBonsaiDeleteDelay",
+      "How long should pass from last access before delete an already converted ridbag", Integer.class, 30000),
+
   // FILE
   @Deprecated TRACK_FILE_CLOSE("file.trackFileClose",
       "Log all the cases when files are closed. This is needed only for internal debugging purposes", Boolean.class, false),
@@ -718,9 +721,10 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       "If the total number of returned records exceeds this value, then a warning is given. (Use 0 to disable)", Long.class, 10000),
 
   QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP("query.maxHeapElementsAllowedPerOp",
-          "Maximum number of elements (records) allowed in a single query for memory-intensive operations (eg. ORDER BY in heap). " +
-                  "If exceeded, the query fails with an OCommandExecutionException. Negative number means no limit." +
-                  "This setting is intended as a safety measure against excessive resource consumption from a single query (eg. prevent OutOfMemory)", Long.class, 500_000),
+      "Maximum number of elements (records) allowed in a single query for memory-intensive operations (eg. ORDER BY in heap). "
+          + "If exceeded, the query fails with an OCommandExecutionException. Negative number means no limit."
+          + "This setting is intended as a safety measure against excessive resource consumption from a single query (eg. prevent OutOfMemory)",
+      Long.class, 500_000),
 
   QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 

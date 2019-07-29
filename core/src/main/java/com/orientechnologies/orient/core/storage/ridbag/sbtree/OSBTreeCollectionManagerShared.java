@@ -20,15 +20,18 @@
 
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OAccessToSBtreeCollectionManagerIsProhibitedException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -37,7 +40,6 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTre
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -98,11 +100,6 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   @Override
   public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer) {
     return super.loadSBTree(collectionPointer);
-  }
-
-  @Override
-  public void delete(OBonsaiCollectionPointer collectionPointer) {
-    super.delete(collectionPointer);
   }
 
   @Override
@@ -185,5 +182,29 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   @Override
   public void clearChangedIds() {
     ODatabaseRecordThreadLocal.instance().get().getCollectionsChanges().clear();
+  }
+
+  public boolean tryDelete(OBonsaiCollectionPointer collectionPointer, long delay) {
+    final CacheKey cacheKey = new CacheKey(storage, collectionPointer);
+    final Object lock = treesSubsetLock(cacheKey);
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (lock) {
+      SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
+      assert container != null;
+      if (container.usagesCounter != 0 || container.lastAccessTime > System.currentTimeMillis() - delay) {
+        return false;
+      }
+
+      treeCache.remove(cacheKey);
+    }
+    OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = this.loadSBTree(collectionPointer);
+    try {
+      treeBonsai.delete();
+    } catch (IOException e) {
+      throw OException.wrapException(new ODatabaseException("Error during ridbag deletion"), e);
+    } finally {
+      this.releaseSBTree(collectionPointer);
+    }
+    return true;
   }
 }
