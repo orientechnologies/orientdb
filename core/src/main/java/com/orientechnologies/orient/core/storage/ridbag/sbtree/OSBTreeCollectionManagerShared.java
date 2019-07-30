@@ -190,8 +190,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (lock) {
       SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
-      assert container != null;
-      if (container.usagesCounter != 0 || container.lastAccessTime > System.currentTimeMillis() - delay) {
+      if (container != null && (container.usagesCounter != 0 || container.lastAccessTime > System.currentTimeMillis() - delay)) {
         return false;
       }
 

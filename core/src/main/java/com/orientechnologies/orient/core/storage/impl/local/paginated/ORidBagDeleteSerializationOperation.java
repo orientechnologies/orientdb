@@ -51,6 +51,15 @@ public class ORidBagDeleteSerializationOperation implements ORecordSerialization
 
   @Override
   public void execute(OAbstractPaginatedStorage paginatedStorage) {
+    OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = loadTree();
+    try {
+      treeBonsai.markToDelete();
+    } catch (IOException e) {
+      throw OException.wrapException(new ODatabaseException("Error during ridbag deletion"), e);
+    } finally {
+      releaseTree();
+    }
+
     long delay = paginatedStorage.getConfiguration().getContextConfiguration().getValueAsInteger(RID_BAG_SBTREEBONSAI_DELETE_DALAY);
     long schedule = delay / 3;
     deleteTask = () -> {
