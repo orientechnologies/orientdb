@@ -87,7 +87,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
         transformer.registerResultTransformer(OrientEdge.class, new OElementTransformer());
         transformer.registerResultTransformer(OrientVertex.class, new OElementTransformer());
         transformer.registerResultTransformer(OrientElement.class, new OElementTransformer());
-        transformer.registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer());
+        transformer.registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer(transformer));
     }
 
     @Override
