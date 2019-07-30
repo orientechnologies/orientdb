@@ -197,13 +197,11 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
       treeCache.remove(cacheKey);
     }
-    OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = this.loadSBTree(collectionPointer);
+    OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = this.loadTree(collectionPointer);
     try {
       treeBonsai.delete();
     } catch (IOException e) {
       throw OException.wrapException(new ODatabaseException("Error during ridbag deletion"), e);
-    } finally {
-      this.releaseSBTree(collectionPointer);
     }
     return true;
   }
