@@ -38,4 +38,8 @@ public class DoubleWriteLogNoOP implements DoubleWriteLog {
   @Override
   public void restoreModeOff() {
   }
+
+  @Override
+  public void close() throws IOException {
+  }
 }

@@ -1440,7 +1440,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         nameIdMapHolder.force(true);
       }
 
-      doubleWriteLog.truncate();
+      doubleWriteLog.close();
 
       nameIdMap.clear();
       idNameMap.clear();
@@ -1657,7 +1657,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       n++;
     }
 
-    doubleWriteLog.truncate();
+    doubleWriteLog.close();
 
     return fIds;
   }

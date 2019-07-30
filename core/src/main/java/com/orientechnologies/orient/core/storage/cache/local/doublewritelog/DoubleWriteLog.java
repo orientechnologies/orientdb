@@ -34,4 +34,6 @@ public interface DoubleWriteLog {
   void restoreModeOn() throws IOException;
 
   void restoreModeOff();
+
+  void close() throws IOException;
 }

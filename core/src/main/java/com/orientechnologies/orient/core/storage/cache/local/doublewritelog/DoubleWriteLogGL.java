@@ -76,22 +76,15 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       this.tailSegments = new ArrayList<>();
       this.pageMap = new HashMap<>();
 
-      final int len = storageName.length();
-      final Optional<Path> latestPath = Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).min((pathOne, pathTwo) -> {
-
-        final String indexOneStr = pathOne.getFileName().toString().substring(len + 1);
-        final String indexTwoStr = pathTwo.getFileName().toString().substring(len + 1);
-
-        final long indexOne = Long.parseLong(indexOneStr);
-        final long indexTwo = Long.parseLong((indexTwoStr));
-
+      final Optional<Path> latestPath = Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).peek((path) -> {
+        tailSegments.add(extractSegmentId(path.getFileName().toString()));
+      }).min((pathOne, pathTwo) -> {
+        final long indexOne = extractSegmentId(pathOne.getFileName().toString());
+        final long indexTwo = extractSegmentId(pathTwo.getFileName().toString());
         return -Long.compare(indexOne, indexTwo);
       });
 
-      this.currentSegment = latestPath.map(path -> {
-        final String indexStr = path.getFileName().toString().substring(len + 1);
-        return Long.parseLong(indexStr) + 1;
-      }).orElse(0L);
+      this.currentSegment = latestPath.map(path -> extractSegmentId(path.getFileName().toString()) + 1).orElse(0L);
 
       this.currentFile = createLogFile();
       this.currentLogSize = calculateLogSize();
@@ -101,6 +94,15 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         blockSize = DEFAULT_BLOCK_SIZE;
       }
     }
+  }
+
+  private long extractSegmentId(final String segmentName) {
+    final int len = storageName.length();
+
+    String index = segmentName.substring(len + 1);
+    index = index.substring(0, index.length() - EXTENSION.length());
+
+    return Long.parseLong(index);
   }
 
   private FileChannel createLogFile() throws IOException {
@@ -113,7 +115,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   }
 
   private static boolean fileFilter(final Path path) {
-    return path.endsWith(EXTENSION);
+    return path.toString().endsWith(EXTENSION);
   }
 
   @Override
@@ -148,6 +150,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
           containerBuffer = buffers[0];
         }
 
+        containerBuffer.rewind();
+
         final int maxCompressedLength = LZ_4_COMPRESSOR.maxCompressedLength(buffers.length * pageSize);
         final OPointer compressedPointer = ODirectMemoryAllocator.instance().allocate(maxCompressedLength, -1);
         try {
@@ -166,13 +170,17 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
           metadataBuffer.rewind();
 
-          this.currentLogSize += OIOUtils.writeByteBuffer(metadataBuffer, currentFile, this.currentLogSize);
-          this.currentLogSize += OIOUtils.writeByteBuffer(compressedBuffer, currentFile, this.currentLogSize);
+          final long filePosition = currentFile.position();
+          long bytesWritten = OIOUtils.writeByteBuffer(metadataBuffer, currentFile, filePosition);
+          bytesWritten += OIOUtils.writeByteBuffer(compressedBuffer, currentFile, filePosition + bytesWritten);
+          bytesWritten = ((bytesWritten + blockSize - 1) / blockSize) * blockSize;
+
+          currentFile.position(bytesWritten + filePosition);
 
           currentFile.force(false);
 
           //all writes are quantified by page size, to prevent corruption of already written data at the next write
-          this.currentLogSize = ((this.currentLogSize + blockSize - 1) / blockSize) * blockSize;
+          this.currentLogSize += bytesWritten;
         } finally {
           ALLOCATOR.deallocate(compressedPointer);
         }
@@ -250,7 +258,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
             final int pages = metadataBuffer.getInt();
             final int compressedLen = metadataBuffer.getInt();
 
-            if (storedFileId == fileId && storedPageIndex >= pageIndex && pageIndex < storedPageIndex + pages) {
+            if (storedFileId == fileId && pageIndex >= storedPageIndex && pageIndex < storedPageIndex + pages) {
               if (channelSize - segmentPosition.getSecond() - METADATA_SIZE >= compressedLen) {
                 final ByteBuffer compressedBuffer = ByteBuffer.allocate(compressedLen).order(ByteOrder.nativeOrder());
                 OIOUtils.readByteBuffer(compressedBuffer, channel);
@@ -290,9 +298,13 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
       pageMap.clear();
 
-      final int len = storageName.length();
+      //sort to fetch the
+      final Path[] segments = Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).sorted((pathOne, pathTwo) -> {
+        final long indexOne = extractSegmentId(pathOne.getFileName().toString());
+        final long indexTwo = extractSegmentId((pathTwo.getFileName().toString()));
 
-      final Path[] segments = Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).toArray(Path[]::new);
+        return Long.compare(indexOne, indexTwo);
+      }).toArray(Path[]::new);
 
       segmentLoop:
       for (final Path segment : segments) {
@@ -310,10 +322,9 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
             final int pages = metadataBuffer.getInt();
             final int compressedLen = metadataBuffer.getInt();
 
-            final String indexStr = segment.getFileName().toString().substring(len + 1);
             final long segmentId;
             try {
-              segmentId = Long.parseLong(indexStr);
+              segmentId = extractSegmentId(segment.getFileName().toString());
             } catch (NumberFormatException e) {
               continue segmentLoop;
             }
@@ -322,7 +333,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
               pageMap.put(new ORawPair<>(fileId, pageIndex + i), new ORawPair<>(segmentId, position));
             }
 
-            position += METADATA_SIZE + compressedLen;
+            position += ((METADATA_SIZE + compressedLen + blockSize - -1) / blockSize) * blockSize;
             channel.position(position);
           }
         }
@@ -337,6 +348,19 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
     synchronized (mutex) {
       pageMap = new HashMap<>();
       restoreMode = false;
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    synchronized (mutex) {
+      Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).forEach(path -> {
+        try {
+          Files.delete(path);
+        } catch (IOException e) {
+          throw new OStorageException("Can not delete file " + path.toString() + " in storage " + storageName);
+        }
+      });
     }
   }
 }
