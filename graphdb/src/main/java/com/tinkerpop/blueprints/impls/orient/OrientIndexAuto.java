@@ -89,15 +89,16 @@ public class OrientIndexAuto<T extends OrientElement> implements OrientIndex<T> 
     final Class<? extends Element> loadedClass;
     if (VERTEX.equals(className)) {
       loadedClass = Vertex.class;
-    } else if (EDGE.equals(indexClassName)) {
+    } else if (EDGE.equals(className)) {
       loadedClass = Edge.class;
     } else {
       try {
         //noinspection unchecked
-        loadedClass = (Class<T>) Class.forName(indexClassName);
+        loadedClass = (Class<T>) Class.forName(className);
       } catch (ClassNotFoundException e) {
-        throw new IllegalArgumentException("Index class '" + indexClassName
-            + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them", e);
+        throw new IllegalArgumentException(
+            "Index class '" + className + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them",
+            e);
       }
     }
 
@@ -212,7 +213,7 @@ public class OrientIndexAuto<T extends OrientElement> implements OrientIndex<T> 
     final String indexClassName = generateClassName(indexName);
 
     try (final OResultSet resultSet = graph.getRawGraph()
-        .query("select count(*)as count from " + indexClassName + " where " + KEY_FIELD + " = ? and " + VALUE_FIELD + " = ? ", key,
+        .query("select count(*) as count from " + indexClassName + " where " + KEY_FIELD + " = ? and " + VALUE_FIELD + " = ? ", key,
             value.toString())) {
       if (resultSet.hasNext()) {
         return resultSet.next().getProperty("count");
@@ -228,8 +229,9 @@ public class OrientIndexAuto<T extends OrientElement> implements OrientIndex<T> 
     graph.autoStartTransaction();
 
     final String indexClassName = generateClassName(indexName);
-    graph.getRawGraph().command("delete from " + indexClassName + " where " + KEY_FIELD + " = ? and " + VALUE_FIELD + " = ? ", key,
-        value.toString()).close();
+    graph.getRawGraph().command(
+        "delete from " + indexClassName + " where " + KEY_FIELD + " = ? and " + VALUE_FIELD + " = ? and " + ELEMENT_FIELD + " = ?",
+        key, value.toString(), element.getIdentity()).close();
   }
 
   @Override
