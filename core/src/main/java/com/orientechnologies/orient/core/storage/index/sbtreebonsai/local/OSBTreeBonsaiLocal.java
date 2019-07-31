@@ -408,25 +408,27 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     boolean rollback = false;
     final OAtomicOperation atomicOperation = startAtomicOperation(true);
     try {
-      this.fileId = openFile(atomicOperation, getFullName());
+      if (isFileExists(atomicOperation, getFullName())) {
+        this.fileId = openFile(atomicOperation, getFullName());
 
-      final int treesCount;
-      final OCacheEntry sysCacheEntry = loadPageForRead(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false);
-      try {
-        final OSysBucket sysBucket = new OSysBucket(sysCacheEntry);
-        treesCount = sysBucket.getTreesCount();
-      } finally {
-        releasePageFromRead(atomicOperation, sysCacheEntry);
+        final int treesCount;
+        final OCacheEntry sysCacheEntry = loadPageForRead(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false);
+        try {
+          final OSysBucket sysBucket = new OSysBucket(sysCacheEntry);
+          treesCount = sysBucket.getTreesCount();
+        } finally {
+          releasePageFromRead(atomicOperation, sysCacheEntry);
+        }
+
+        assert treesCount >= 0;
+
+        if (treesCount > 0) {
+          throw new NotEmptyComponentCanNotBeRemovedException(
+              "Component " + getName() + "can not be removed because it still contains " + treesCount + " ridbags");
+        }
+
+        deleteFile(atomicOperation, fileId);
       }
-
-      assert treesCount >= 0;
-
-      if (treesCount > 0) {
-        throw new NotEmptyComponentCanNotBeRemovedException(
-            "Component " + getName() + "can not be removed because it still contains " + treesCount + " ridbags");
-      }
-
-      deleteFile(atomicOperation, fileId);
     } catch (Exception e) {
       rollback = true;
       throw e;
