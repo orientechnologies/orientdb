@@ -48,6 +48,7 @@ import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedCont
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -673,6 +674,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
+        } catch (RuntimeException | Error e) {
+          Orient.instance().submit(() -> {
+            getDistributedManager().installDatabase(false, getName(), true, true);
+          });
+          throw e;
         } finally {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
@@ -719,6 +725,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
           return true;
+        } catch (RuntimeException | Error e) {
+          Orient.instance().submit(() -> {
+            getDistributedManager().installDatabase(false, getName(), true, true);
+          });
+          throw e;
         } finally {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
