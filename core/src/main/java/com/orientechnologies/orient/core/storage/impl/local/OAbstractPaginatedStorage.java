@@ -104,6 +104,7 @@ import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEng
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -2289,6 +2290,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               new OIndexEngineCreateCO(engineName, algorithm, indexType, keySerializer.getId(), serializerId, isAutomatic, version,
                   apiVersion, multivalue, engineProperties, keySize, keyTypes, nullValuesSupport, indexEngines.size() - 1));
 
+          if (multivalue && (engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)) {
+            final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree = new OSBTreeBonsaiLocal<>(engineName,
+                OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
+            tree.createComponent();
+          }
+
           return generateIndexId(indexEngines.size() - 1, engine);
         } catch (Exception e) {
           rollback = true;
@@ -2431,7 +2438,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         boolean rollback = false;
         final OAtomicOperation atomicOperation = atomicOperationsManager.startAtomicOperation((String) null, true);
         try {
-          final String engineName = deleteIndexEngineInternal(indexId);
+          final OBaseIndexEngine engine = deleteIndexEngineInternal(indexId);
+          final String engineName = engine.getName();
+
           final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(engineName, indexId);
           atomicOperation.addComponentOperation(
               new OIndexEngineDeleteCO(indexId, engineName, engineData.getAlgorithm(), engineData.getIndexType(),
@@ -2440,6 +2449,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   engineData.getKeySize(), engineData.getKeyTypes(), engineData.isNullValuesSupport()));
 
           ((OClusterBasedStorageConfiguration) configuration).deleteIndexEngine(engineName);
+
+          if (engineData.isMultivalue() && (engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)) {
+            final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree = new OSBTreeBonsaiLocal<>(engineName,
+                OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
+            tree.deleteComponent();
+          }
         } catch (Exception e) {
           rollback = true;
           throw e;
@@ -2463,7 +2478,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public String deleteIndexEngineInternal(final int indexId) throws IOException {
+  public OBaseIndexEngine deleteIndexEngineInternal(final int indexId) throws IOException {
     final OBaseIndexEngine engine = indexEngines.get(indexId);
     assert indexId == engine.getId();
 
@@ -2474,7 +2489,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final String engineName = engine.getName();
     indexEngineNameMap.remove(engineName);
 
-    return engineName;
+    return engine;
   }
 
   private void checkIndexId(final int indexId) throws OInvalidIndexEngineIdException {

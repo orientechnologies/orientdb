@@ -81,22 +81,17 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     boolean rollback = false;
     final OAtomicOperation atomicOperation = startAtomicOperation(false);
     try {
-      final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(-1L);
-      try {
-        if (isFileExists(atomicOperation, getFullName())) {
-          throw new OStorageException("Ridbag component with name " + getFullName() + " already exists");
-        } else {
-          this.fileId = addFile(atomicOperation, getFullName());
-        }
-
-        initSysBucket(atomicOperation);
-
-        atomicOperation.addComponentOperation(new OSBTreeBonsaiCreateComponentCO(getName(), fileId));
-
-        return fileId;
-      } finally {
-        lock.unlock();
+      if (isFileExists(atomicOperation, getFullName())) {
+        throw new OStorageException("Ridbag component with name " + getFullName() + " already exists");
+      } else {
+        this.fileId = addFile(atomicOperation, getFullName());
       }
+
+      initSysBucket(atomicOperation);
+
+      atomicOperation.addComponentOperation(new OSBTreeBonsaiCreateComponentCO(getName(), fileId));
+
+      return fileId;
     } catch (final Exception e) {
       rollback = true;
       throw e;
