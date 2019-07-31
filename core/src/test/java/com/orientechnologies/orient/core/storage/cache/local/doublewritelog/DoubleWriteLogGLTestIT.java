@@ -37,43 +37,46 @@ public class DoubleWriteLogGLTestIT {
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
 
-    final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
-
-    doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
     try {
-      OPointer pointer;
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
 
-      final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-      ThreadLocalRandom random = ThreadLocalRandom.current();
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        OPointer pointer;
 
-      final byte[] data = new byte[pageSize];
-      random.nextBytes(data);
+        final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+        ThreadLocalRandom random = ThreadLocalRandom.current();
 
-      buffer.put(data);
+        final byte[] data = new byte[pageSize];
+        random.nextBytes(data);
 
-      buffer.position(0);
-      doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24);
-      doubleWriteLog.truncate();
+        buffer.put(data);
 
-      pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
-      Assert.assertNull(pointer);
+        buffer.position(0);
+        doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24);
+        doubleWriteLog.truncate();
 
-      doubleWriteLog.restoreModeOn();
+        pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
+        Assert.assertNull(pointer);
 
-      pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
-      final ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+        doubleWriteLog.restoreModeOn();
 
-      Assert.assertEquals(256, loadedBuffer.limit());
-      final byte[] loadedData = new byte[256];
-      loadedBuffer.rewind();
-      loadedBuffer.get(loadedData);
+        pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
+        final ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
 
-      Assert.assertArrayEquals(data, loadedData);
-      bufferPool.release(pointer);
+        Assert.assertEquals(256, loadedBuffer.limit());
+        final byte[] loadedData = new byte[256];
+        loadedBuffer.rewind();
+        loadedBuffer.get(loadedData);
+
+        Assert.assertArrayEquals(data, loadedData);
+        bufferPool.release(pointer);
+      } finally {
+        doubleWriteLog.close();
+      }
     } finally {
-      doubleWriteLog.close();
+      bufferPool.clear();
     }
-
   }
 
   @Test
@@ -82,44 +85,48 @@ public class DoubleWriteLogGLTestIT {
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
 
-    final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
-
-    doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
     try {
-      final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-      ThreadLocalRandom random = ThreadLocalRandom.current();
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
 
-      final byte[] data = new byte[pageSize];
-      random.nextBytes(data);
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+        ThreadLocalRandom random = ThreadLocalRandom.current();
 
-      buffer.put(data);
+        final byte[] data = new byte[pageSize];
+        random.nextBytes(data);
 
-      doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24);
+        buffer.put(data);
 
-      buffer.rewind();
-      random.nextBytes(data);
-      buffer.put(data);
+        doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24);
 
-      doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24);
-      doubleWriteLog.truncate();
+        buffer.rewind();
+        random.nextBytes(data);
+        buffer.put(data);
 
-      OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
-      Assert.assertNull(pointer);
+        doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24);
+        doubleWriteLog.truncate();
 
-      doubleWriteLog.restoreModeOn();
+        OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
+        Assert.assertNull(pointer);
 
-      pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
-      final ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+        doubleWriteLog.restoreModeOn();
 
-      Assert.assertEquals(256, loadedBuffer.limit());
-      final byte[] loadedData = new byte[256];
-      loadedBuffer.rewind();
-      loadedBuffer.get(loadedData);
+        pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
+        final ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
 
-      Assert.assertArrayEquals(data, loadedData);
-      bufferPool.release(pointer);
+        Assert.assertEquals(256, loadedBuffer.limit());
+        final byte[] loadedData = new byte[256];
+        loadedBuffer.rewind();
+        loadedBuffer.get(loadedData);
+
+        Assert.assertArrayEquals(data, loadedData);
+        bufferPool.release(pointer);
+      } finally {
+        doubleWriteLog.close();
+      }
     } finally {
-      doubleWriteLog.close();
+      bufferPool.clear();
     }
   }
 
@@ -128,58 +135,62 @@ public class DoubleWriteLogGLTestIT {
     final int pageSize = 256;
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
-    final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
-
-    doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
     try {
-      ThreadLocalRandom random = ThreadLocalRandom.current();
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
 
-      List<byte[]> datas = new ArrayList<>();
-      for (int i = 0; i < 2; i++) {
-        final byte[] data = new byte[pageSize];
-        random.nextBytes(data);
-        datas.add(data);
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+
+        List<byte[]> datas = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+          final byte[] data = new byte[pageSize];
+          random.nextBytes(data);
+          datas.add(data);
+        }
+
+        ByteBuffer[] buffers = new ByteBuffer[datas.size()];
+        for (int i = 0; i < buffers.length; i++) {
+          final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+          buffer.put(datas.get(i));
+          buffers[i] = buffer;
+        }
+
+        doubleWriteLog.write(buffers, 12, 24);
+
+        OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
+        Assert.assertNull(pointer);
+
+        pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
+        Assert.assertNull(pointer);
+
+        doubleWriteLog.restoreModeOn();
+
+        pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
+        ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+
+        Assert.assertEquals(256, loadedBuffer.limit());
+        byte[] loadedData = new byte[256];
+        loadedBuffer.rewind();
+        loadedBuffer.get(loadedData);
+
+        Assert.assertArrayEquals(datas.get(0), loadedData);
+        bufferPool.release(pointer);
+
+        pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
+        loadedBuffer = pointer.getNativeByteBuffer();
+
+        Assert.assertEquals(256, loadedBuffer.limit());
+        loadedData = new byte[256];
+        loadedBuffer.rewind();
+        loadedBuffer.get(loadedData);
+
+        Assert.assertArrayEquals(datas.get(1), loadedData);
+      } finally {
+        doubleWriteLog.close();
       }
-
-      ByteBuffer[] buffers = new ByteBuffer[datas.size()];
-      for (int i = 0; i < buffers.length; i++) {
-        final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-        buffer.put(datas.get(i));
-        buffers[i] = buffer;
-      }
-
-      doubleWriteLog.write(buffers, 12, 24);
-
-      OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
-      Assert.assertNull(pointer);
-
-      pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
-      Assert.assertNull(pointer);
-
-      doubleWriteLog.restoreModeOn();
-
-      pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
-      ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
-
-      Assert.assertEquals(256, loadedBuffer.limit());
-      byte[] loadedData = new byte[256];
-      loadedBuffer.rewind();
-      loadedBuffer.get(loadedData);
-
-      Assert.assertArrayEquals(datas.get(0), loadedData);
-      bufferPool.release(pointer);
-
-      pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
-      loadedBuffer = pointer.getNativeByteBuffer();
-
-      Assert.assertEquals(256, loadedBuffer.limit());
-      loadedData = new byte[256];
-      loadedBuffer.rewind();
-      loadedBuffer.get(loadedData);
-
-      Assert.assertArrayEquals(datas.get(1), loadedData);
     } finally {
-      doubleWriteLog.close();
+      bufferPool.clear();
     }
   }
 
@@ -188,50 +199,54 @@ public class DoubleWriteLogGLTestIT {
     final int pageSize = 256;
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
-    final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
-
-    doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
     try {
-      ThreadLocalRandom random = ThreadLocalRandom.current();
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
 
-      List<byte[]> datas = new ArrayList<>();
-      for (int i = 0; i < 10; i++) {
-        final byte[] data = new byte[pageSize];
-        random.nextBytes(data);
-        datas.add(data);
-      }
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
 
-      ByteBuffer[] buffers = new ByteBuffer[datas.size()];
-      for (int i = 0; i < buffers.length; i++) {
-        final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-        buffer.put(datas.get(i));
-        buffers[i] = buffer;
-      }
+        List<byte[]> datas = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+          final byte[] data = new byte[pageSize];
+          random.nextBytes(data);
+          datas.add(data);
+        }
 
-      doubleWriteLog.write(buffers, 12, 24);
+        ByteBuffer[] buffers = new ByteBuffer[datas.size()];
+        for (int i = 0; i < buffers.length; i++) {
+          final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+          buffer.put(datas.get(i));
+          buffers[i] = buffer;
+        }
 
-      OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
-      Assert.assertNull(pointer);
+        doubleWriteLog.write(buffers, 12, 24);
 
-      pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
-      Assert.assertNull(pointer);
+        OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
+        Assert.assertNull(pointer);
 
-      doubleWriteLog.restoreModeOn();
+        pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
+        Assert.assertNull(pointer);
 
-      for (int i = 0; i < 10; i++) {
-        pointer = doubleWriteLog.loadPage(12, 24 + i, bufferPool);
-        ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+        doubleWriteLog.restoreModeOn();
 
-        Assert.assertEquals(256, loadedBuffer.limit());
-        byte[] loadedData = new byte[256];
-        loadedBuffer.rewind();
-        loadedBuffer.get(loadedData);
+        for (int i = 0; i < 10; i++) {
+          pointer = doubleWriteLog.loadPage(12, 24 + i, bufferPool);
+          ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
 
-        Assert.assertArrayEquals(datas.get(i), loadedData);
-        bufferPool.release(pointer);
+          Assert.assertEquals(256, loadedBuffer.limit());
+          byte[] loadedData = new byte[256];
+          loadedBuffer.rewind();
+          loadedBuffer.get(loadedData);
+
+          Assert.assertArrayEquals(datas.get(i), loadedData);
+          bufferPool.release(pointer);
+        }
+      } finally {
+        doubleWriteLog.close();
       }
     } finally {
-      doubleWriteLog.close();
+      bufferPool.clear();
     }
   }
 
@@ -240,48 +255,52 @@ public class DoubleWriteLogGLTestIT {
     final int pageSize = 256;
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
-    final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
-
-    doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
     try {
-      ThreadLocalRandom random = ThreadLocalRandom.current();
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
 
-      List<byte[]> datas = new ArrayList<>();
-      for (int i = 0; i < 10; i++) {
-        final byte[] data = new byte[pageSize];
-        random.nextBytes(data);
-        datas.add(data);
-      }
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
 
-      for (int i = 0; i < datas.size(); i++) {
-        final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-        buffer.put(datas.get(i));
+        List<byte[]> datas = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+          final byte[] data = new byte[pageSize];
+          random.nextBytes(data);
+          datas.add(data);
+        }
 
-        doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24 + i);
-      }
+        for (int i = 0; i < datas.size(); i++) {
+          final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+          buffer.put(datas.get(i));
 
-      OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
-      Assert.assertNull(pointer);
+          doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24 + i);
+        }
 
-      pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
-      Assert.assertNull(pointer);
+        OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
+        Assert.assertNull(pointer);
 
-      doubleWriteLog.restoreModeOn();
+        pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
+        Assert.assertNull(pointer);
 
-      for (int i = 0; i < 10; i++) {
-        pointer = doubleWriteLog.loadPage(12, 24 + i, bufferPool);
-        ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+        doubleWriteLog.restoreModeOn();
 
-        Assert.assertEquals(256, loadedBuffer.limit());
-        byte[] loadedData = new byte[256];
-        loadedBuffer.rewind();
-        loadedBuffer.get(loadedData);
+        for (int i = 0; i < 10; i++) {
+          pointer = doubleWriteLog.loadPage(12, 24 + i, bufferPool);
+          ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
 
-        Assert.assertArrayEquals(datas.get(i), loadedData);
-        bufferPool.release(pointer);
+          Assert.assertEquals(256, loadedBuffer.limit());
+          byte[] loadedData = new byte[256];
+          loadedBuffer.rewind();
+          loadedBuffer.get(loadedData);
+
+          Assert.assertArrayEquals(datas.get(i), loadedData);
+          bufferPool.release(pointer);
+        }
+      } finally {
+        doubleWriteLog.close();
       }
     } finally {
-      doubleWriteLog.close();
+      bufferPool.clear();
     }
   }
 
@@ -290,50 +309,54 @@ public class DoubleWriteLogGLTestIT {
     final int pageSize = 256;
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
-    final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
-
-    doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
     try {
-      ThreadLocalRandom random = ThreadLocalRandom.current();
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
 
-      List<byte[]> datas = new ArrayList<>();
-      for (int i = 0; i < 100; i++) {
-        final byte[] data = new byte[pageSize];
-        random.nextBytes(data);
-        datas.add(data);
-      }
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
 
-      for (int i = 0; i < 10; i++) {
-        ByteBuffer[] buffers = new ByteBuffer[10];
-
-        for (int j = 0; j < 10; j++) {
-          final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-          buffer.put(datas.get(i * 10 + j));
-          buffers[j] = buffer;
+        List<byte[]> datas = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+          final byte[] data = new byte[pageSize];
+          random.nextBytes(data);
+          datas.add(data);
         }
 
-        doubleWriteLog.write(buffers, 12 + i, 24);
-      }
+        for (int i = 0; i < 10; i++) {
+          ByteBuffer[] buffers = new ByteBuffer[10];
 
-      doubleWriteLog.restoreModeOn();
+          for (int j = 0; j < 10; j++) {
+            final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+            buffer.put(datas.get(i * 10 + j));
+            buffers[j] = buffer;
+          }
 
-      for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-          final OPointer pointer = doubleWriteLog.loadPage(12 + i, 24 + j, bufferPool);
-
-          ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
-
-          Assert.assertEquals(256, loadedBuffer.limit());
-          byte[] loadedData = new byte[256];
-          loadedBuffer.rewind();
-          loadedBuffer.get(loadedData);
-
-          Assert.assertArrayEquals(datas.get(i * 10 + j), loadedData);
-          bufferPool.release(pointer);
+          doubleWriteLog.write(buffers, 12 + i, 24);
         }
+
+        doubleWriteLog.restoreModeOn();
+
+        for (int i = 0; i < 10; i++) {
+          for (int j = 0; j < 10; j++) {
+            final OPointer pointer = doubleWriteLog.loadPage(12 + i, 24 + j, bufferPool);
+
+            ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+
+            Assert.assertEquals(256, loadedBuffer.limit());
+            byte[] loadedData = new byte[256];
+            loadedBuffer.rewind();
+            loadedBuffer.get(loadedData);
+
+            Assert.assertArrayEquals(datas.get(i * 10 + j), loadedData);
+            bufferPool.release(pointer);
+          }
+        }
+      } finally {
+        doubleWriteLog.close();
       }
     } finally {
-      doubleWriteLog.close();
+      bufferPool.clear();
     }
   }
 
@@ -350,55 +373,59 @@ public class DoubleWriteLogGLTestIT {
       final int pageSize = 256;
 
       final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
-      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
-
-      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
       try {
-        final int pagesToWrite = random.nextInt(20_000) + 100;
-        int writtenPages = 0;
+        final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
 
-        List<byte[]> datas = new ArrayList<>();
-        for (int i = 0; i < pagesToWrite; i++) {
-          final byte[] data = new byte[pageSize];
-          random.nextBytes(data);
-          datas.add(data);
-        }
+        doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+        try {
+          final int pagesToWrite = random.nextInt(20_000) + 100;
+          int writtenPages = 0;
 
-        int pageIndex = 0;
-
-        while (writtenPages < pagesToWrite) {
-          final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
-          ByteBuffer[] buffers = new ByteBuffer[pagesForSinglePatch];
-
-          for (int j = 0; j < pagesForSinglePatch; j++) {
-            final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-            buffer.put(datas.get(pageIndex + j));
-            buffers[j] = buffer;
+          List<byte[]> datas = new ArrayList<>();
+          for (int i = 0; i < pagesToWrite; i++) {
+            final byte[] data = new byte[pageSize];
+            random.nextBytes(data);
+            datas.add(data);
           }
 
-          doubleWriteLog.write(buffers, 12, 24 + pageIndex);
-          pageIndex += pagesForSinglePatch;
-          writtenPages += pagesForSinglePatch;
+          int pageIndex = 0;
+
+          while (writtenPages < pagesToWrite) {
+            final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
+            ByteBuffer[] buffers = new ByteBuffer[pagesForSinglePatch];
+
+            for (int j = 0; j < pagesForSinglePatch; j++) {
+              final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+              buffer.put(datas.get(pageIndex + j));
+              buffers[j] = buffer;
+            }
+
+            doubleWriteLog.write(buffers, 12, 24 + pageIndex);
+            pageIndex += pagesForSinglePatch;
+            writtenPages += pagesForSinglePatch;
+          }
+
+          doubleWriteLog.restoreModeOn();
+
+          for (int i = 0; i < pagesToWrite; i++) {
+            final OPointer pointer = doubleWriteLog.loadPage(12, 24 + i, bufferPool);
+
+            ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+
+            Assert.assertEquals(256, loadedBuffer.limit());
+            byte[] loadedData = new byte[256];
+            loadedBuffer.rewind();
+            loadedBuffer.get(loadedData);
+
+            Assert.assertArrayEquals(datas.get(i), loadedData);
+            bufferPool.release(pointer);
+          }
+
+        } finally {
+          doubleWriteLog.close();
         }
-
-        doubleWriteLog.restoreModeOn();
-
-        for (int i = 0; i < pagesToWrite; i++) {
-          final OPointer pointer = doubleWriteLog.loadPage(12, 24 + i, bufferPool);
-
-          ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
-
-          Assert.assertEquals(256, loadedBuffer.limit());
-          byte[] loadedData = new byte[256];
-          loadedBuffer.rewind();
-          loadedBuffer.get(loadedData);
-
-          Assert.assertArrayEquals(datas.get(i), loadedData);
-          bufferPool.release(pointer);
-        }
-
       } finally {
-        doubleWriteLog.close();
+        bufferPool.clear();
       }
     }
   }
