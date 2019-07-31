@@ -52,12 +52,12 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       + "that following setting in your server configuration " + OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
       .getKey() + " is set to " + Integer.MAX_VALUE;
 
-  private final OAbstractPaginatedStorage storage;
+  private final    OAbstractPaginatedStorage                        storage;
   private volatile ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new CollectionPointerChangesThreadLocal();
 
   /**
-   * If this flag is set to {@code true} then all access to the manager will be prohibited and exception
-   * {@link OAccessToSBtreeCollectionManagerIsProhibitedException} will be thrown.
+   * If this flag is set to {@code true} then all access to the manager will be prohibited and exception {@link
+   * OAccessToSBtreeCollectionManagerIsProhibitedException} will be thrown.
    */
   private volatile boolean prohibitAccess = false;
 
@@ -116,6 +116,16 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   @Override
   public void delete(OBonsaiCollectionPointer collectionPointer) {
     super.delete(collectionPointer);
+  }
+
+  public void deleteComponent(final int clusterId) throws IOException {
+    checkAccess();
+
+    clearClusterCache(clusterId);
+
+    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId,
+        DEFAULT_EXTENSION, storage);
+    tree.deleteComponent();
   }
 
   /**
