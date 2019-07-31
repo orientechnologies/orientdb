@@ -1347,7 +1347,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     int totalSize = 0;
     final List<byte[]> entries = new ArrayList<>(16);
 
-    final byte[] numericProperties = new byte[3 * OIntegerSerializer.INT_SIZE + 5 * OByteSerializer.BYTE_SIZE];
+    final byte[] numericProperties = new byte[4 * OIntegerSerializer.INT_SIZE + 5 * OByteSerializer.BYTE_SIZE];
     totalSize += numericProperties.length;
     entries.add(numericProperties);
 
@@ -1449,7 +1449,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     pos += OIntegerSerializer.INT_SIZE;
 
     final int indexId;
-    if (getVersion() < 23) {
+    if (getVersion() >= 23) {
       indexId = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
       pos += OIntegerSerializer.INT_SIZE;
     } else {
