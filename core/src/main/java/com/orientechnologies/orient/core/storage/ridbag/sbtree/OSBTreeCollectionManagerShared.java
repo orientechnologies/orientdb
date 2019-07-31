@@ -152,7 +152,20 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     return tree.getCollectionPointer();
   }
 
-  public void deleteComponent(final long fileId) throws IOException {
+  public void deleteComponentByClusterId(final int clusterId) throws IOException {
+    checkAccess();
+
+    final String fileName = FILE_NAME_PREFIX + clusterId;
+    final String fullFileName = fileName + DEFAULT_EXTENSION;
+    final long fileId = storage.getWriteCache().fileIdByName(fullFileName);
+
+    clearClusterCache(fileId, fileName);
+
+    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
+    tree.deleteComponent();
+  }
+
+  public void deleteComponentByFileId(final long fileId) throws IOException {
     checkAccess();
 
     final String fullFileName = storage.getWriteCache().fileNameById(fileId);

@@ -791,7 +791,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         ((OClusterBasedStorageConfiguration) configuration).dropCluster(clusterId);
 
-        sbTreeCollectionManager.deleteComponent(clusterId);
+        sbTreeCollectionManager.deleteComponentByClusterId(clusterId);
 
         return true;
       } catch (final Exception e) {
@@ -5003,7 +5003,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void deleteRidBagComponentInternal(final long fileId) throws IOException {
-    sbTreeCollectionManager.deleteComponent(fileId);
+    sbTreeCollectionManager.deleteComponentByFileId(fileId);
   }
 
   @Override

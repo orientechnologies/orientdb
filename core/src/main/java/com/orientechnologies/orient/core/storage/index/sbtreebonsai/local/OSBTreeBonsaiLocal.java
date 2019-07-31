@@ -61,9 +61,8 @@ import java.util.concurrent.locks.Lock;
 public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTreeBonsai<K, V> {
   private static final OLockManager<Long> FILE_LOCK_MANAGER = new OPartitionedLockManager<>();
 
-  private static final int                  PAGE_SIZE             =
-      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-  private static final OBonsaiBucketPointer SYS_BUCKET            = new OBonsaiBucketPointer(0, 0);
+  private static final int                  PAGE_SIZE  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final OBonsaiBucketPointer SYS_BUCKET = new OBonsaiBucketPointer(0, 0);
 
   private OBonsaiBucketPointer rootBucketPointer;
 
@@ -501,7 +500,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
         if (treesCount > 0) {
           throw new NotEmptyComponentCanNotBeRemovedException(
-              "Component " + getName() + "can not be removed because it still contains " + treesCount + " ridbags");
+              "Component " + getName() + " can not be removed because it still contains " + treesCount + " ridbags");
         }
 
         deleteFile(atomicOperation, fileId);
@@ -1260,8 +1259,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       if (sysBucket.isNotInitialized()) {
         sysBucket.init();
       }
-
-      sysBucket.incrementTreesCount();
     } finally {
       releasePageFromWrite(atomicOperation, sysCacheEntry);
     }
