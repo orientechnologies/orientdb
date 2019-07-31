@@ -36,4 +36,9 @@ public final class WALRecordTypes {
 
   public static final byte LOCAL_HASHTABLE_PUT_CO    = 29;
   public static final byte LOCAL_HASHTABLE_REMOVE_CO = 30;
+
+  public static final byte SBTREE_BONSAI_CREATE_COMPONENT_CO = 31;
+  public static final byte SBTREE_BONSAI_CREATE_CO           = 32;
+  public static final byte SBTREE_BONSAI_DELETE_COMPONENT_CO = 33;
+  public static final byte SBTREE_BONSAI_DELETE_CO           = 34;
 }

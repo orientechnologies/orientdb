@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.OComponentOperationRecord;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
 import java.io.IOException;
 import java.util.*;
@@ -54,6 +55,12 @@ public final class OAtomicOperation {
   private final OWriteCache writeCache;
 
   private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<>();
+
+  /**
+   * Pointers to ridbags deleted during current transaction. We can not reuse pointers if we delete ridbag and then  create new one
+   * inside of the same transaction.
+   */
+  private final Set<OBonsaiBucketPointer> deletedBonsaiPointers = new HashSet<>();
 
   public OAtomicOperation(final OLogSequenceNumber startLSN, final OOperationUnitId operationUnitId, final OReadCache readCache,
       final OWriteCache writeCache, final int storageId) {
@@ -192,6 +199,14 @@ public final class OAtomicOperation {
    */
   private Map<String, OAtomicOperationMetadata<?>> getMetadata() {
     return Collections.unmodifiableMap(metadata);
+  }
+
+  public void addDeletedRidBag(OBonsaiBucketPointer rootPointer) {
+    deletedBonsaiPointers.add(rootPointer);
+  }
+
+  public Set<OBonsaiBucketPointer> getDeletedBonsaiPointers() {
+    return deletedBonsaiPointers;
   }
 
   public OCacheEntry addPage(long fileId) {

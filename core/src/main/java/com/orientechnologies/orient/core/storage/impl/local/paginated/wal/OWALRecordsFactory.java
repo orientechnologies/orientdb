@@ -35,6 +35,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.loc
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtree.OSBTreePutCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtree.OSBTreeRemoveCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
@@ -184,6 +187,18 @@ public final class OWALRecordsFactory {
       break;
     case LOCAL_HASHTABLE_REMOVE_CO:
       walRecord = new OLocalHashTableRemoveCO();
+      break;
+    case SBTREE_BONSAI_CREATE_COMPONENT_CO:
+      walRecord = new OSBTreeBonsaiCreateComponentCO();
+      break;
+    case SBTREE_BONSAI_CREATE_CO:
+      walRecord =  new OSBTreeBonsaiCreateCO();
+      break;
+    case SBTREE_BONSAI_DELETE_COMPONENT_CO:
+      walRecord = new com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbteebonsai.OSBTreeBonsaiDeleteComponentCO();
+      break;
+    case SBTREE_BONSAI_DELETE_CO:
+      walRecord = new OSBTreeBonsaiDeleteCO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))
