@@ -27,7 +27,7 @@ public class OSqlUpdateContentValidationTest {
     } catch (OValidationException val) {
       
     }
-
+    db.close();
   }
 
 }
