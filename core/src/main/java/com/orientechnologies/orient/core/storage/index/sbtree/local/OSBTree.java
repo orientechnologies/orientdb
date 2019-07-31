@@ -28,8 +28,6 @@ public interface OSBTree<K, V> {
 
   void close();
 
-  void clear() throws IOException;
-
   void delete() throws IOException;
 
   void load(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, int keySize,

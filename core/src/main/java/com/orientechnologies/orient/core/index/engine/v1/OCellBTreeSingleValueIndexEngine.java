@@ -72,19 +72,23 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   @Override
   public void delete() {
     try {
-      final OCellBTreeSingleValue.OCellBTreeKeyCursor keyCursor = sbTree.keyCursor();
-      Object key = keyCursor.next(-1);
-      while (key != null) {
-        sbTree.remove(key);
-        key = keyCursor.next(-1);
-      }
-
-      sbTree.remove(null);
+      doClearTree();
 
       sbTree.delete();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
     }
+  }
+
+  private void doClearTree() throws IOException {
+    final OCellBTreeSingleValue.OCellBTreeKeyCursor keyCursor = sbTree.keyCursor();
+    Object key = keyCursor.next(-1);
+    while (key != null) {
+      sbTree.remove(key);
+      key = keyCursor.next(-1);
+    }
+
+    sbTree.remove(null);
   }
 
   @Override
@@ -111,7 +115,7 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   @Override
   public void clear() {
     try {
-      sbTree.clear();
+      doClearTree();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during clear of index " + name), e);
     }

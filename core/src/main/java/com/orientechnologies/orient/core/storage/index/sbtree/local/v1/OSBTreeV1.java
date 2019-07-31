@@ -496,42 +496,6 @@ public class OSBTreeV1<K, V> extends ODurableComponent
   }
 
   @Override
-  public void clear() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
-      acquireExclusiveLock();
-      try {
-        truncateFile(atomicOperation, fileId);
-
-        if (nullPointerSupport) {
-          truncateFile(atomicOperation, nullBucketFileId);
-        }
-
-        OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false, true);
-        if (cacheEntry == null) {
-          cacheEntry = addPage(atomicOperation, fileId);
-        }
-
-        try {
-          final OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<>(cacheEntry, true, keySerializer, keyTypes, valueSerializer,
-              encryption);
-          rootBucket.setTreeSize(0);
-        } finally {
-          releasePageFromWrite(atomicOperation, cacheEntry);
-        }
-      } finally {
-        releaseExclusiveLock();
-      }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-  }
-
-  @Override
   public void delete() throws IOException {
     boolean rollback = false;
     final OAtomicOperation atomicOperation = startAtomicOperation(false);

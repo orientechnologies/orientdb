@@ -45,11 +45,20 @@ public class SBTreeV1CompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
-
   @After
   public void afterClass() throws Exception {
-    localSBTree.clear();
-    localSBTree.clear();
+    final OSBTree.OSBTreeKeyCursor<OCompositeKey> keyCursor = localSBTree.keyCursor();
+    OCompositeKey key = keyCursor.next(-1);
+
+    while (key != null) {
+      localSBTree.remove(key);
+      key = keyCursor.next(-1);
+    }
+
+    if (localSBTree.isNullPointerSupport()) {
+      localSBTree.remove(null);
+    }
+
     localSBTree.delete();
 
   }

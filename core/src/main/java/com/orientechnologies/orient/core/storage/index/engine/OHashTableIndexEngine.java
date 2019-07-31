@@ -125,6 +125,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void delete() throws IOException {
+    doClearTable();
+
+    hashTable.delete();
+  }
+
+  private void doClearTable() throws IOException {
     final OHashTable.Entry<Object, Object> firstEntry = hashTable.firstEntry();
 
     if (firstEntry != null) {
@@ -141,8 +147,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     if (hashTable.isNullKeyIsSupported()) {
       hashTable.remove(null);
     }
-
-    hashTable.delete();
   }
 
   @Override
@@ -174,7 +178,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void clear() throws IOException {
-    hashTable.clear();
+    doClearTable();
   }
 
   @Override

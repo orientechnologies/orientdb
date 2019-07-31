@@ -409,48 +409,6 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
     }
   }
 
-  public void clear() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
-      acquireExclusiveLock();
-      try {
-        final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
-        try {
-          final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
-          entryPoint.init();
-        } finally {
-          releasePageFromWrite(atomicOperation, entryPointCacheEntry);
-        }
-
-        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false, true);
-        try {
-          @SuppressWarnings("unused")
-          final Bucket<K> rootBucket = new Bucket<>(cacheEntry, true, keySerializer, encryption, multiContainer);
-        } finally {
-          releasePageFromWrite(atomicOperation, cacheEntry);
-        }
-
-        final OCacheEntry nullBucketCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
-        try {
-          final ONullBucket nullBucket = new ONullBucket(nullBucketCacheEntry, multiContainer);
-          nullBucket.clear();
-        } finally {
-          releasePageFromWrite(atomicOperation, nullBucketCacheEntry);
-        }
-
-        multiContainer.clear();
-      } finally {
-        releaseExclusiveLock();
-      }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-  }
-
   public void delete() throws IOException {
     boolean rollback = false;
     final OAtomicOperation atomicOperation = startAtomicOperation(false);

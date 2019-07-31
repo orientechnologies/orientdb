@@ -21,8 +21,6 @@ public interface OCellBTreeSingleValue<K> {
 
   void close();
 
-  void clear() throws IOException;
-
   void delete() throws IOException;
 
   void load(String name, int keySize, OType[] keyTypes, OBinarySerializer<K> keySerializer, OEncryption encryption);

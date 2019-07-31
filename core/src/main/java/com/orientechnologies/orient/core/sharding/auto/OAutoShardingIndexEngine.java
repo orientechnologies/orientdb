@@ -168,30 +168,37 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   @Override
   public void delete() {
     try {
-      if (partitions != null)
+      if (partitions != null) {
+        doClearPartitions();
+
         for (OHashTable<Object, Object> p : partitions) {
-          final OHashTable.Entry<Object, Object> firstEntry = p.firstEntry();
-
-          if (firstEntry != null) {
-            OHashTable.Entry<Object, Object>[] entries = p.ceilingEntries(firstEntry.key);
-            while (entries.length > 0) {
-              for (final OHashTable.Entry<Object, Object> entry : entries) {
-                p.remove(entry.key);
-              }
-
-              entries = p.higherEntries(entries[entries.length - 1].key);
-            }
-          }
-
-          if (p.isNullKeyIsSupported()) {
-            p.remove(null);
-          }
-
           p.delete();
         }
+      }
 
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index with name " + name), e);
+    }
+  }
+
+  private void doClearPartitions() throws IOException {
+    for (OHashTable<Object, Object> p : partitions) {
+      final OHashTable.Entry<Object, Object> firstEntry = p.firstEntry();
+
+      if (firstEntry != null) {
+        OHashTable.Entry<Object, Object>[] entries = p.ceilingEntries(firstEntry.key);
+        while (entries.length > 0) {
+          for (final OHashTable.Entry<Object, Object> entry : entries) {
+            p.remove(entry.key);
+          }
+
+          entries = p.higherEntries(entries[entries.length - 1].key);
+        }
+      }
+
+      if (p.isNullKeyIsSupported()) {
+        p.remove(null);
+      }
     }
   }
 
@@ -228,9 +235,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   @Override
   public void clear() {
     try {
-      if (partitions != null)
-        for (OHashTable<Object, Object> p : partitions)
-          p.clear();
+      if (partitions != null) {
+        doClearPartitions();
+      }
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during clear of index with name " + name), e);
     }

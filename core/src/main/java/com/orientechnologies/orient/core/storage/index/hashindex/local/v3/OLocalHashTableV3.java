@@ -5,8 +5,8 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
-import com.orientechnologies.orient.core.exception.OLocalHashTableV3Exception;
 import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
+import com.orientechnologies.orient.core.exception.OLocalHashTableV3Exception;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
@@ -374,29 +374,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       } finally {
         releasePageFromWrite(atomicOperation, hashStateEntry);
       }
-    }
-  }
-
-  @Override
-  public void clear() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
-      acquireExclusiveLock();
-      try {
-        if (nullKeyIsSupported) {
-          truncateFile(atomicOperation, nullBucketFileId);
-        }
-
-        initHashTreeState(atomicOperation);
-      } finally {
-        releaseExclusiveLock();
-      }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
     }
   }
 

@@ -54,8 +54,6 @@ public interface OHashTable<K, V> {
 
   V remove(K key) throws IOException;
 
-  void clear() throws IOException;
-
   Entry<K, V>[] higherEntries(K key);
 
   Entry<K, V>[] higherEntries(K key, int limit);
