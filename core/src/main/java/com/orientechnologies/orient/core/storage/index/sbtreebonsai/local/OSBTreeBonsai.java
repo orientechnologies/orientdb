@@ -122,4 +122,6 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
   OBinarySerializer<K> getKeySerializer();
 
   OBinarySerializer<V> getValueSerializer();
+
+  void markToDelete() throws IOException;
 }

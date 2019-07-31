@@ -46,6 +46,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
    */
   private static final byte    LEAF                     = 0x1;
   private static final byte    DELETED                  = 0x2;
+  private static final byte    TO_DELETE                = 0x4;
   private static final int     MAX_ENTREE_SIZE          = 24576000;
   private static final int     FREE_POINTER_OFFSET      = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int     SIZE_OFFSET              = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -472,6 +473,19 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
   public boolean isDeleted() {
     return (getByteValue(offset + FLAGS_OFFSET) & DELETED) == DELETED;
+  }
+
+  public void setToDelete(boolean toDelete) {
+    byte value = getByteValue(offset + FLAGS_OFFSET);
+    if (toDelete)
+      setByteValue(offset + FLAGS_OFFSET, (byte) (value | TO_DELETE));
+    else
+      //REMOVE THE FLAG the &(and) ~(not) is the opreation to remove flags in bits
+      setByteValue(offset + FLAGS_OFFSET, (byte) (value & (~TO_DELETE)));
+  }
+
+  public boolean isToDelete() {
+    return (getByteValue(offset + FLAGS_OFFSET) & TO_DELETE) == TO_DELETE;
   }
 
   public OBonsaiBucketPointer getLeftSibling() {
