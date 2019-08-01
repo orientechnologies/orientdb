@@ -78,6 +78,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexEngine;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
@@ -2290,7 +2291,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               new OIndexEngineCreateCO(engineName, algorithm, indexType, keySerializer.getId(), serializerId, isAutomatic, version,
                   apiVersion, multivalue, engineProperties, keySize, keyTypes, nullValuesSupport, indexEngines.size() - 1));
 
-          if (multivalue && (engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)) {
+          if (multivalue && (engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)
+              || engine instanceof OAutoShardingIndexEngine) {
             final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree = new OSBTreeBonsaiLocal<>(engineName,
                 OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
             tree.createComponent();
@@ -2450,7 +2452,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           ((OClusterBasedStorageConfiguration) configuration).deleteIndexEngine(engineName);
 
-          if (engineData.isMultivalue() && (engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)) {
+          if (engineData.isMultivalue() && (engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine
+              || engine instanceof OAutoShardingIndexEngine)) {
             final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree = new OSBTreeBonsaiLocal<>(engineName,
                 OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
             tree.deleteComponent();

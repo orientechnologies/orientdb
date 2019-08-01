@@ -554,12 +554,21 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       while (true)
         try {
-          final OIndexCursor indexCursor = cursor();
+          final OIndexKeyCursor indexCursor = keyCursor();
 
-          Map.Entry<Object, OIdentifiable> entry = indexCursor.nextEntry();
-          while (entry != null) {
-            remove(entry.getKey(), entry.getValue());
-            entry = indexCursor.nextEntry();
+          Object key = indexCursor.next(-1);
+          while (key != null) {
+            Object entry = get(key);
+            if (entry instanceof Collection) {
+              //noinspection unchecked
+              for (final OIdentifiable entryItem : (Collection<OIdentifiable>) entry) {
+                remove(key, entryItem);
+              }
+            } else {
+              remove(key, (OIdentifiable) entry);
+            }
+
+            key = indexCursor.next(-1);
           }
 
           storage.deleteIndexEngine(indexId);
