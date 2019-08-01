@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 
 import java.util.ArrayList;
@@ -350,7 +351,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
         // CHECK IF IT'S A STOP WORD
         if (!stopWords.contains(word))
-          // ADD THE WORD TO THE RESULT SET
+        // ADD THE WORD TO THE RESULT SET
         {
           result.add(word);
         }
@@ -383,6 +384,11 @@ public class OIndexFullText extends OIndexMultiValues {
         removed.setValue(true);
 
         if (recs.isEmpty()) {
+          if (recs instanceof OMixedIndexRIDContainer) {
+            ((OMixedIndexRIDContainer) recs).delete();
+          } else if (recs instanceof OIndexRIDContainerSBTree) {
+            ((OIndexRIDContainerSBTree) recs).delete();
+          }
           //noinspection unchecked
           return OIndexUpdateAction.remove();
         } else {

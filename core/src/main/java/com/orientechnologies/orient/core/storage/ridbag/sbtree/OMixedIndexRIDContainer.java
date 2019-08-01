@@ -12,12 +12,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
@@ -321,6 +316,17 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     if (tree != null) {
       tree.delete();
       tree = null;
+    }
+  }
+
+  public void delete() {
+    if (tree != null) {
+      tree.delete();
+      tree = null;
+    } else if (fileId > 0) {
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+      tree.delete();
     }
   }
 

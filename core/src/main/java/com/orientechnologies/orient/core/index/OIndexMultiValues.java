@@ -33,16 +33,10 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedI
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -515,6 +509,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>>
         removed.setValue(true);
 
         if (values.isEmpty()) {
+          //remove tree ridbag too
+          if (values instanceof OMixedIndexRIDContainer) {
+            ((OMixedIndexRIDContainer) values).delete();
+          } else if (values instanceof OIndexRIDContainerSBTree) {
+            ((OIndexRIDContainerSBTree) values).delete();
+          }
+
           //noinspection unchecked
           return OIndexUpdateAction.remove();
         } else {

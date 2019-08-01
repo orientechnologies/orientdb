@@ -519,6 +519,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   /**
    * {@inheritDoc}
+   *
    * @deprecated Manual indexes are deprecated and will be removed
    */
   @Override
@@ -553,6 +554,14 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       while (true)
         try {
+          final OIndexCursor indexCursor = cursor();
+
+          Map.Entry<Object, OIdentifiable> entry = indexCursor.nextEntry();
+          while (entry != null) {
+            remove(entry.getKey(), entry.getValue());
+            entry = indexCursor.nextEntry();
+          }
+
           storage.deleteIndexEngine(indexId);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
