@@ -30,16 +30,17 @@ import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeList
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
  * the set is changed.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
-public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> implements Set<OIdentifiable>,
-    OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordElement {
-  protected final ORecord                                               sourceRecord;
-  protected Map<OIdentifiable, Object>                                  map             = new HashMap<OIdentifiable, Object>();
-  private STATUS                                                        status          = STATUS.NOT_LOADED;
-  protected static final Object                                         ENTRY_REMOVAL   = new Object();
+public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
+    implements Set<OIdentifiable>, OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordElement {
+  protected final        ORecord                    sourceRecord;
+  protected              Map<OIdentifiable, Object> map           = new HashMap<OIdentifiable, Object>();
+  private                STATUS                     status        = STATUS.NOT_LOADED;
+  protected static final Object                     ENTRY_REMOVAL = new Object();
+  private                boolean                    dirty         = false;
+
   private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
 
   public ORecordTrackedSet(final ORecord iSourceRecord) {
@@ -61,14 +62,14 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 
     map.put(e, ENTRY_REMOVAL);
     setDirty();
-    
+
     ORecordInternal.track(sourceRecord, e);
-    
+
     if (e instanceof ODocument)
       ODocumentInternal.addOwner((ODocument) e, this);
 
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
-        e));
+    fireCollectionChangedEvent(
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
     return true;
   }
 
@@ -84,8 +85,9 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
         ODocumentInternal.removeOwner((ODocument) o, this);
 
       setDirty();
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o, null, (OIdentifiable) o));
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o,
+              null, (OIdentifiable) o));
       return true;
     }
     return false;
@@ -138,9 +140,11 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 
   @SuppressWarnings("unchecked")
   public ORecordTrackedSet setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
+        .isContentChanged(sourceRecord))) {
       sourceRecord.setDirty();
+      this.dirty = true;
+    }
     return this;
   }
 
@@ -208,7 +212,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
     return OIdentifiable.class;
   }
 
-
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //not needed do nothing
@@ -229,6 +232,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
       final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
+      this.dirty = false;
       removeRecordChangeListener(changeListener);
     }
   }

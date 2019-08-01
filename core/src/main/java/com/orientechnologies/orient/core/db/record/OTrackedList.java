@@ -37,10 +37,11 @@ import java.util.*;
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
   protected final ORecord                                     sourceRecord;
-  private         STATUS                                      status          = STATUS.NOT_LOADED;
+  protected       STATUS                                      status          = STATUS.NOT_LOADED;
   protected       List<OMultiValueChangeListener<Integer, T>> changeListeners = null;
   protected       Class<?>                                    genericClass;
   private final   boolean                                     embeddedCollection;
+  private         boolean                                     dirty           = false;
 
   public OTrackedList(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
     this(iRecord);
@@ -174,7 +175,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       super.clear();
       setDirty();
     } else {
-      final List<T>  origValues = new ArrayList<T>(this);
+      final List<T> origValues = new ArrayList<T>(this);
       super.clear();
       if (origValues != null)
         for (int i = origValues.size() - 1; i >= 0; i--) {
@@ -198,8 +199,10 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   @SuppressWarnings("unchecked")
   public <RET> RET setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
-        .isContentChanged(sourceRecord)))
+        .isContentChanged(sourceRecord))) {
       sourceRecord.setDirty();
+      this.dirty = true;
+    }
     return (RET) this;
   }
 
@@ -296,6 +299,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       final OMultiValueChangeListener<Integer, T> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
+      this.dirty = false;
       removeRecordChangeListener(changeListener);
     }
   }

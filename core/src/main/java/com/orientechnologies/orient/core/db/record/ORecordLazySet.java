@@ -42,7 +42,7 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORecordLazySet extends ORecordTrackedSet
-    implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement, OIdentityChangeListener {
+    implements Set<OIdentifiable>, ORecordLazyMultiValue, OIdentityChangeListener {
   protected boolean autoConvertToRecord = true;
 
   public ORecordLazySet(final ODocument iSourceRecord) {

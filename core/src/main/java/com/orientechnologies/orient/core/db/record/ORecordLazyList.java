@@ -50,7 +50,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   protected final byte                recordType;
   protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType = MULTIVALUE_CONTENT_TYPE.EMPTY;
   protected boolean autoConvertToRecord = true;
-  protected boolean marshalling         = false;
   protected boolean ridOnly             = false;
 
   public ORecordLazyList() {
@@ -256,20 +255,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     return super.size();
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  public <RET> RET setDirty() {
-    if (!marshalling)
-      return (RET) super.setDirty();
-    return (RET) this;
-  }
-
-  @Override
-  public void setDirtyNoChanged() {
-    if (!marshalling)
-      super.setDirtyNoChanged();
-  }
-
   @Override
   public Object[] toArray() {
     convertLinks2Records();
@@ -359,12 +344,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     return convertRecords2Links();
   }
 
-  @Override
-  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, OIdentifiable> event) {
-    if (!marshalling)
-      super.fireCollectionChangedEvent(event);
-  }
-
   /**
    * Convert the item requested from link to record.
    *
@@ -384,7 +363,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     if (o != null && o instanceof ORecordId) {
       final ORecordId rid = (ORecordId) o;
 
-      marshalling = true;
+      status = STATUS.UNMARSHALLING;
       try {
         ORecord record = rid.getRecord();
         if (record != null) {
@@ -396,7 +375,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
       } catch (ORecordNotFoundException ignore) {
         // IGNORE THIS
       } finally {
-        marshalling = false;
+        status = STATUS.LOADED;
       }
     }
   }
@@ -417,7 +396,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
     if (o != null && o instanceof OIdentifiable && ((OIdentifiable) o).getIdentity().isPersistent()) {
       if (o instanceof ORecord && !((ORecord) o).isDirty()) {
-        marshalling = true;
+        status = STATUS.UNMARSHALLING;
         try {
           super.set(iIndex, ((ORecord) o).getIdentity());
           // CONVERTED
@@ -425,7 +404,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
         } catch (ORecordNotFoundException ignore) {
           // IGNORE THIS
         } finally {
-          marshalling = false;
+          status = STATUS.LOADED;
         }
       } else if (o instanceof ORID)
         // ALREADY CONVERTED

@@ -40,6 +40,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   private final   boolean                               embeddedCollection;
   protected       Class<?>                              genericClass;
   private         STATUS                                status = STATUS.NOT_LOADED;
+  private         boolean                               dirty  = false;
   private         List<OMultiValueChangeListener<T, T>> changeListeners;
 
   public OTrackedSet(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
@@ -146,8 +147,10 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
-        .isContentChanged(sourceRecord)))
+        .isContentChanged(sourceRecord))) {
       sourceRecord.setDirty();
+      this.dirty = true;
+    }
     return this;
   }
 
@@ -248,6 +251,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       final OMultiValueChangeListener<T, T> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
+      this.dirty = false;
       removeRecordChangeListener(changeListener);
     }
   }

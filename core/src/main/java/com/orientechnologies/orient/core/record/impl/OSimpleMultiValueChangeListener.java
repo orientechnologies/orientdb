@@ -42,7 +42,7 @@ public final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueC
   private final WeakReference<ORecordElement>             element;
   public        OMultiValueChangeTimeLine<Object, Object> timeLine;
 
-  public OSimpleMultiValueChangeListener(ODocument element) {
+  public OSimpleMultiValueChangeListener(ORecordElement element) {
     this.element = new WeakReference<ORecordElement>(element);
   }
 

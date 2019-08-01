@@ -38,10 +38,11 @@ import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeList
 public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
   protected final ORecord                                    sourceRecord;
-  private         STATUS                                     status          = STATUS.NOT_LOADED;
+  protected       STATUS                                     status          = STATUS.NOT_LOADED;
   private         List<OMultiValueChangeListener<Object, T>> changeListeners = null;
   protected       Class<?>                                   genericClass;
   private final   boolean                                    embeddedCollection;
+  private         boolean                                    dirty           = false;
 
   public OTrackedMap(final ORecord iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
@@ -157,8 +158,10 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
-        .isContentChanged(sourceRecord)))
+        .isContentChanged(sourceRecord))) {
       sourceRecord.setDirty();
+      this.dirty = true;
+    }
     return this;
   }
 
@@ -254,6 +257,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
       final OMultiValueChangeListener<Object, T> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
+      this.dirty = false;
       removeRecordChangeListener(changeListener);
     }
   }
