@@ -4969,7 +4969,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       ((OClusterBasedStorageConfiguration) configuration).updateCluster(cluster.generateClusterConfig());
 
-      sbTreeCollectionManager.createComponent(createdClusterId);
+      sbTreeCollectionManager.createComponentIfPossible(createdClusterId);
     }
 
     return createdClusterId;

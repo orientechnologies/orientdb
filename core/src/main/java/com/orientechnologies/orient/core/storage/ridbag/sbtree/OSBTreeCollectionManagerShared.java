@@ -108,12 +108,13 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     super.delete(collectionPointer);
   }
 
-  public void createComponent(final int clusterId) throws IOException {
-    checkAccess();
-
-    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId,
-        DEFAULT_EXTENSION, storage);
-    tree.createComponent();
+  public void createComponentIfPossible(final int clusterId) throws IOException {
+    //ignore creation of ridbags in distributed storage
+    if (!prohibitAccess) {
+      final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId,
+          DEFAULT_EXTENSION, storage);
+      tree.createComponent();
+    }
   }
 
   public long createComponent(final String fileName) throws IOException {
