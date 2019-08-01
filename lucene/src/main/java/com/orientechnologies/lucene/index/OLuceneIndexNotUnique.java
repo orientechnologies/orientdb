@@ -27,11 +27,7 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
@@ -161,6 +157,27 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         doReloadIndexEngine();
       }
 
+  }
+
+  public OLuceneIndexNotUnique delete() {
+    acquireExclusiveLock();
+
+    try {
+      while (true)
+        try {
+          storage.deleteIndexEngine(indexId);
+          break;
+        } catch (OInvalidIndexEngineIdException ignore) {
+          doReloadIndexEngine();
+        }
+
+      // REMOVE THE INDEX ALSO FROM CLASS MAP
+      if (getDatabase().getMetadata() != null)
+        getDatabase().getMetadata().getIndexManagerInternal().removeClassPropertyIndex(this);
+      return this;
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   protected Object decodeKey(Object key) {
