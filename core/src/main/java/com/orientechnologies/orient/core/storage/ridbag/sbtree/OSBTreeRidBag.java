@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -1052,7 +1051,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   private OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener;
 
-  public void enableTracking(ODocument parent) {
+  public void enableTracking(ORecordElement parent) {
     if (changeListener == null) {
       final OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> listener = new OSimpleMultiValueChangeListener<>(parent);
       this.addChangeListener(listener);
@@ -1060,7 +1059,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  public void disableTracking(ODocument document) {
+  public void disableTracking(ORecordElement document) {
     if (changeListener != null) {
       final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener = this.changeListener;
       this.changeListener.timeLine = null;

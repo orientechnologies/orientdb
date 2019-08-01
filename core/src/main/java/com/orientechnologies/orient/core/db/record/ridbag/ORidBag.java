@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -538,11 +537,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
 
   //  @Override
-  public void enableTracking(ODocument parent) {
+  public void enableTracking(ORecordElement parent) {
     delegate.enableTracking(parent);
   }
 
-  public void disableTracking(ODocument document) {
+  public void disableTracking(ORecordElement document) {
     delegate.disableTracking(document);
   }
 

@@ -219,21 +219,51 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
 
   private OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener;
 
-  public void enableTracking(ODocument parent) {
+  public void enableTracking(ORecordElement parent) {
     if (changeListener == null) {
       final OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> listener = new OSimpleMultiValueChangeListener<>(parent);
       this.addChangeListener(listener);
       changeListener = listener;
+      if (this instanceof ORecordLazyMultiValue) {
+        Iterator<OIdentifiable> iterator = ((ORecordLazyMultiValue) this).rawIterator();
+        while (iterator.hasNext()) {
+          OIdentifiable x = iterator.next();
+          if (x instanceof OTrackedMultiValue) {
+            ((OTrackedMultiValue) x).enableTracking(this);
+          }
+        }
+      } else {
+        for (OIdentifiable x : this) {
+          if (x instanceof OTrackedMultiValue) {
+            ((OTrackedMultiValue) x).enableTracking(this);
+          }
+        }
+      }
     }
   }
 
-  public void disableTracking(ODocument document) {
+  public void disableTracking(ORecordElement document) {
     if (changeListener != null) {
       final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
       this.dirty = false;
       removeRecordChangeListener(changeListener);
+      if (this instanceof ORecordLazyMultiValue) {
+        Iterator<OIdentifiable> iterator = ((ORecordLazyMultiValue) this).rawIterator();
+        while (iterator.hasNext()) {
+          OIdentifiable x = iterator.next();
+          if (x instanceof OTrackedMultiValue) {
+            ((OTrackedMultiValue) x).disableTracking(this);
+          }
+        }
+      } else {
+        for (OIdentifiable x : this) {
+          if (x instanceof OTrackedMultiValue) {
+            ((OTrackedMultiValue) x).disableTracking(this);
+          }
+        }
+      }
     }
   }
 
