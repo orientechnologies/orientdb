@@ -673,6 +673,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
+        } catch (RuntimeException | Error e) {
+          Orient.instance().submit(() -> {
+            getDistributedManager().installDatabase(false, getName(), true, true);
+          });
+          throw e;
         } finally {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
@@ -719,6 +724,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
           return true;
+        } catch (RuntimeException | Error e) {
+          Orient.instance().submit(() -> {
+            getDistributedManager().installDatabase(false, getName(), true, true);
+          });
+          throw e;
         } finally {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);

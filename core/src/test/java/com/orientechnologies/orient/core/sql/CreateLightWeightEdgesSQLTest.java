@@ -33,6 +33,7 @@ public class CreateLightWeightEdgesSQLTest {
     try (OResultSet res = session.query("select expand(out()) from v where name='a' ")) {
       assertEquals(res.stream().count(), 1);
     }
+    session.close();
   }
 
   @Test
@@ -66,6 +67,7 @@ public class CreateLightWeightEdgesSQLTest {
             }
           }
         } finally {
+          session1.close();
           latch.countDown();
         }
 
@@ -83,6 +85,7 @@ public class CreateLightWeightEdgesSQLTest {
       assertEquals(s1, s2);
 
     } finally {
+      session.close();
       pool.close();
     }
 

@@ -26,6 +26,7 @@ public class OSQLFunctionIndexKeySizeTest {
       Assert.assertEquals((Object)2L, item.getProperty("foo"));
       Assert.assertFalse(rs.hasNext());
     }
+    db.close();
   }
 
 }

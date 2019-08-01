@@ -84,13 +84,13 @@ public abstract class OSBTreeCollectionManagerAbstract
     GLOBAL_LOCKS = locks;
   }
 
-  private final int                                                      evictionThreshold;
-  private final int                                                      cacheMaxSize;
-  private final int                                                      shift;
-  private final int                                                      mask;
-  private final Object[]                                                 locks;
-  private final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
-  private final OStorage                                                 storage;
+  private final   int                                                      evictionThreshold;
+  private final   int                                                      cacheMaxSize;
+  private final   int                                                      shift;
+  private final   int                                                      mask;
+  private final   Object[]                                                 locks;
+  protected final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
+  private final   OStorage                                                 storage;
 
   public OSBTreeCollectionManagerAbstract(OStorage storage) {
     this(GLOBAL_TREE_CACHE, storage, GLOBAL_EVICTION_THRESHOLD, GLOBAL_CACHE_MAX_SIZE, GLOBAL_LOCKS);
@@ -171,6 +171,7 @@ public abstract class OSBTreeCollectionManagerAbstract
       SBTreeBonsaiContainer container = treeCache.get(cacheKey);
       if (container != null) {
         container.usagesCounter++;
+        container.lastAccessTime = System.currentTimeMillis();
         tree = container.tree;
       } else {
         tree = loadTree(collectionPointer);
@@ -179,6 +180,7 @@ public abstract class OSBTreeCollectionManagerAbstract
 
           container = new SBTreeBonsaiContainer(tree);
           container.usagesCounter++;
+          container.lastAccessTime = System.currentTimeMillis();
 
           treeCache.put(cacheKey, container);
         }
@@ -201,6 +203,7 @@ public abstract class OSBTreeCollectionManagerAbstract
       assert container != null;
       container.usagesCounter--;
       assert container.usagesCounter >= 0;
+      container.lastAccessTime = System.currentTimeMillis();
     }
 
     evict();
@@ -274,23 +277,24 @@ public abstract class OSBTreeCollectionManagerAbstract
     return treeCache.size();
   }
 
-  private Object treesSubsetLock(CacheKey cacheKey) {
+  protected Object treesSubsetLock(CacheKey cacheKey) {
     final int hashCode = cacheKey.hashCode();
     final int index = (hashCode >>> shift) & mask;
 
     return locks[index];
   }
 
-  private static final class SBTreeBonsaiContainer {
-    private final OSBTreeBonsai<OIdentifiable, Integer> tree;
-    private       int                                   usagesCounter = 0;
+  protected static final class SBTreeBonsaiContainer {
+    private final      OSBTreeBonsai<OIdentifiable, Integer> tree;
+    protected volatile int                                   usagesCounter  = 0;
+    protected volatile long                                  lastAccessTime = 0;
 
     private SBTreeBonsaiContainer(OSBTreeBonsai<OIdentifiable, Integer> tree) {
       this.tree = tree;
     }
   }
 
-  private static final class CacheKey {
+  protected static final class CacheKey {
     private final OStorage                 storage;
     private final OBonsaiCollectionPointer pointer;
 

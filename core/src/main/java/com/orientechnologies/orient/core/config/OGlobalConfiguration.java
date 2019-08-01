@@ -482,6 +482,9 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       "Amount of values, after which a LINKBAG implementation will use an embedded values container (disabled by default)",
       Integer.class, -1, true),
 
+  RID_BAG_SBTREEBONSAI_DELETE_DALAY("ridBag.sbtreeBonsaiDeleteDelay",
+      "How long should pass from last access before delete an already converted ridbag", Integer.class, 30000),
+
   // FILE
   @Deprecated TRACK_FILE_CLOSE("file.trackFileClose",
       "Log all the cases when files are closed. This is needed only for internal debugging purposes", Boolean.class, false),
