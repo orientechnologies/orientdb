@@ -1387,4 +1387,31 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
 
   }
+
+  @Override
+  public void markToDelete() throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(true);
+    try {
+      final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
+      try {
+        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false, true);
+        try {
+          OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<>(cacheEntry, rootBucketPointer.getPageOffset(),
+              keySerializer, valueSerializer, this);
+          rootBucket.setToDelete(true);
+        } finally {
+          releasePageFromWrite(atomicOperation, cacheEntry);
+        }
+      } finally {
+        lock.unlock();
+      }
+    } catch (final Exception e) {
+      rollback = true;
+      throw e;
+    } finally {
+      endAtomicOperation(rollback);
+    }
+
+  }
 }

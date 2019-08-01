@@ -220,6 +220,11 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
     return valueSerializer;
   }
 
+  @Override
+  public void markToDelete() {
+    throw  new UnsupportedOperationException();
+  }
+
   public static class TreeEntry<EK, EV> implements Map.Entry<EK, EV> {
     private final EK key;
     private final EV value;
