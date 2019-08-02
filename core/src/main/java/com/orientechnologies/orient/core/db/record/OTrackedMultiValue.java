@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -65,4 +70,27 @@ public interface OTrackedMultiValue<K, V> {
   boolean isModified();
 
   OMultiValueChangeTimeLine<Object, Object> getTimeLine();
+
+  static <X> void nestedEnabled(Iterator<X> iterator, ORecordElement parent) {
+    while (iterator.hasNext()) {
+      X x = iterator.next();
+      if (x instanceof OTrackedMultiValue) {
+        ((OTrackedMultiValue) x).enableTracking(parent);
+      }
+    }
+  }
+
+  static <X> void nestedDisable(Iterator<X> iterator, ORecordElement parent) {
+    while (iterator.hasNext()) {
+      X x = iterator.next();
+      if (x instanceof OTrackedMultiValue) {
+        ((OTrackedMultiValue) x).disableTracking(parent);
+      } else if (x instanceof ODocument) {
+        if (((ODocument) x).isEmbedded()) {
+          ODocumentInternal.clearTrackData((ODocument) x);
+          ORecordInternal.unsetDirty((ODocument) x);
+        }
+      }
+    }
+  }
 }

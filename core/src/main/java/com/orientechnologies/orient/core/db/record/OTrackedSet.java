@@ -149,8 +149,8 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
         .isContentChanged(sourceRecord))) {
       sourceRecord.setDirty();
-      this.dirty = true;
     }
+    this.dirty = true;
     return this;
   }
 
@@ -240,23 +240,13 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   public void enableTracking(ORecordElement parent) {
     if (changeListener == null) {
-      final OSimpleMultiValueChangeListener<T, T> listener = new OSimpleMultiValueChangeListener<>(parent);
+      final OSimpleMultiValueChangeListener<T, T> listener = new OSimpleMultiValueChangeListener<>(this);
       this.addChangeListener(listener);
       changeListener = listener;
       if (this instanceof ORecordLazyMultiValue) {
-        Iterator<OIdentifiable> iterator = ((ORecordLazyMultiValue) this).rawIterator();
-        while (iterator.hasNext()) {
-          OIdentifiable x = iterator.next();
-          if (x instanceof OTrackedMultiValue) {
-            ((OTrackedMultiValue) x).enableTracking(this);
-          }
-        }
+        OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
-        for (T x : this) {
-          if (x instanceof OTrackedMultiValue) {
-            ((OTrackedMultiValue) x).enableTracking(this);
-          }
-        }
+        OTrackedMultiValue.nestedEnabled(this.iterator(), this);
       }
     }
   }
@@ -269,31 +259,16 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       this.dirty = false;
       removeRecordChangeListener(changeListener);
       if (this instanceof ORecordLazyMultiValue) {
-        Iterator<OIdentifiable> iterator = ((ORecordLazyMultiValue) this).rawIterator();
-        while (iterator.hasNext()) {
-          OIdentifiable x = iterator.next();
-          if (x instanceof OTrackedMultiValue) {
-            ((OTrackedMultiValue) x).disableTracking(this);
-          }
-        }
+        OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
-
-        for (T x : this) {
-          if (x instanceof OTrackedMultiValue) {
-            ((OTrackedMultiValue) x).disableTracking(this);
-          }
-        }
+        OTrackedMultiValue.nestedDisable(this.iterator(), this);
       }
     }
   }
 
   @Override
   public boolean isModified() {
-    if (changeListener == null) {
-      return false;
-    } else {
-      return changeListener.timeLine != null;
-    }
+    return dirty;
   }
 
   @Override
