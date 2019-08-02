@@ -8,30 +8,18 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.08.13
  */
 public class OSBTreeBonsaiLocalTestIT {
-  private static final int KEYS_COUNT = 500000;
-  protected static OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
-  protected static ODatabaseDocumentTx                        databaseDocumentTx;
+  private static final int                                        KEYS_COUNT = 500000;
+  protected static     OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
+  protected static     ODatabaseDocumentTx                        databaseDocumentTx;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -49,6 +37,8 @@ public class OSBTreeBonsaiLocalTestIT {
 
     sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTreeBonsaiLocalTest", ".irs",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    sbTree.createComponent();
+
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
@@ -56,6 +46,7 @@ public class OSBTreeBonsaiLocalTestIT {
   public static void afterClass() throws Exception {
     sbTree.clear();
     sbTree.delete();
+    sbTree.deleteComponent();
     databaseDocumentTx.drop();
   }
 
