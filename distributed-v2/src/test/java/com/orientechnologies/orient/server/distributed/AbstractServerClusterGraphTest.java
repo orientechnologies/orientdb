@@ -89,8 +89,6 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
               final OVertex root = rootDoc.asVertex().get();
               graph.save(root.addEdge(person));
 
-              // checkIndex(database, (String) person.field("name"), person.getIdentity());
-
               if (i % 10 == 0 || i == count) {
                 graph.commit();
                 graph.begin();

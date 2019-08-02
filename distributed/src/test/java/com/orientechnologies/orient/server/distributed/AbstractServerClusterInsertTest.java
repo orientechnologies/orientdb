@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
@@ -72,7 +71,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       String name = Integer.toString(threadId);
 
       for (int i = 0; i < count; i++) {
-        final ODatabaseDocument database = getDatabase(serverRun);
+        final ODatabaseDocumentInternal database = getDatabase(serverRun);
 
         try {
           final int id = baseCount + i;
@@ -189,15 +188,20 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
-    protected void checkIndex(ODatabaseDocument database, final String key, final ORID rid) {
+    protected void checkIndex(ODatabaseDocumentInternal database, final String key, final ORID rid) {
       checkClusterStrategy(database);
 
-      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:" + indexName + " where key = ?"))
-          .execute(key);
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.size(), 1);
-      Assert.assertNotNull(result.get(0).getRecord());
-      Assert.assertEquals(((ODocument) result.get(0)).field("rid"), rid);
+      final OIndex index = database.getSharedContext().getIndexManager().getIndex(database, indexName);
+      final Object value = index.get(key);
+      Assert.assertNotNull(value);
+
+      if (value instanceof Collection) {
+        final Collection result = (Collection) value;
+        Assert.assertEquals(1, result.size());
+        Assert.assertTrue(result.contains(rid));
+      } else {
+        Assert.assertEquals(rid, value);
+      }
     }
 
     protected ODocument loadRecord(ODatabaseDocument database, int i) {
@@ -432,7 +436,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 //    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
 //    try {
 //      Object result = database.command(new OCommandSQL("drop index Person.name")).execute();
-//      System.out.println("dropIndexNode1: Node1 drop index: " + result);
+//      System.out.println("dropIndexNode1: Node1 drop index " + result);
 //    } finally {
 //      database.close();
 //    }
@@ -457,7 +461,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 //    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
 //    try {
 //      Object result = database.command(new OCommandSQL("create index Person.name on Person (name) unique")).execute();
-//      System.out.println("recreateIndexNode2: Node2 created index: " + result);
+//      System.out.println("recreateIndexNode2: Node2 created index " + result);
 //      Assert.assertEquals(expected, ((Number) result).intValue());
 //    } catch (ODistributedOperationException t) {
 //
@@ -561,7 +565,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
   }
 
-  private void printMissingIndexEntries(final ServerRun server, final ODatabaseDocument database) {
+  private void printMissingIndexEntries(final ServerRun server, final ODatabaseDocumentInternal database) {
     List<ODocument> qResult;// ERROR: CHECK WHAT'S MISSING
     int missingKeys = 0;
     for (int s = 0; s < executeTestsOnServers.size(); ++s) {
@@ -573,10 +577,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         for (int i = 0; i < count; ++i) {
           final String key = "Billy" + srvId + "-" + threadId + "-" + i;
 
-          qResult = database
-              .query(new OSQLSynchQuery<OIdentifiable>("select from index:" + indexName + " where key='" + key + "'"));
+          final OIndex index = database.getSharedContext().getIndexManager().getIndex(database, indexName);
 
-          if (qResult.isEmpty()) {
+          if (index.get(key) == null) {
             missingKeys++;
             System.out.println("Missing key: " + key + " on server: " + server);
           }

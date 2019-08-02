@@ -238,8 +238,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
-  @Deprecated
-  USE_CHM_CACHE("storage.useCHMCache",
+  @Deprecated USE_CHM_CACHE("storage.useCHMCache",
       "Whether to use new disk cache implementation based on CHM or old one based on cuncurrent queues", Boolean.class, true),
 
   WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Indicates whether a force sync should be performed during WAL page flush",
@@ -428,7 +427,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   INDEX_ALLOW_MANUAL_INDEXES("index.allowManualIndexes", "Switch which allows usage of manual indexes inside OrientDB. "
       + "It is not recommended to switch it on, because manual indexes are deprecated, not supported and will be removed in next versions",
-      Boolean.class, true),
+      Boolean.class, false),
 
   /**
    * @see OIndexDefinition#isNullValuesIgnored()

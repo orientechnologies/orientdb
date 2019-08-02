@@ -220,7 +220,7 @@ public abstract class AbstractServerClusterTest {
     return getDatabase(0);
   }
 
-  protected ODatabaseDocument getDatabase(final int serverNum) {
+  protected ODatabaseDocumentInternal getDatabase(final int serverNum) {
     if (serverInstance.size() > serverNum)
       return getDatabase(serverInstance.get(serverNum));
 

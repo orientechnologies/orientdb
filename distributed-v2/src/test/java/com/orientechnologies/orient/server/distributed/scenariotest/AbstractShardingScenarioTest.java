@@ -22,15 +22,12 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ServerRun;
@@ -179,39 +176,6 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       }
       serverId++;
     }
-
-    // checking indexes
-    // serverId = 0;
-    // for (ServerRun server : serverInstance) {
-    // if (server.isActive()) {
-    // graphFactory = new OrientGraphFactory("plocal:target/server" + serverId + "/databases/" + getDatabaseName());
-    // graph = graphFactory.getNoTx();
-    // try {
-    // final long indexSize = graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.name").getSize();
-    //
-    // if (indexSize != count) {
-    // // ERROR: DUMP ALL THE RECORDS
-    // List<ODocument> result = graph.command(new OCommandSQL("select from index:Client.name")).execute();
-    // int i = 0;
-    // for (ODocument d : result) {
-    // System.out.println((i++) + ": " + ((OIdentifiable) d.field("rid")).getRecord());
-    // }
-    // }
-    //
-    // junit.framework.Assert.assertEquals(count, indexSize);
-    //
-    // System.out.println("From metadata: indexes " + indexSize + " items");
-    //
-    // List<ODocument> result = graph.command(new OCommandSQL("select count(*) from index:Client.name")).execute();
-    // junit.framework.Assert.assertEquals(count, ((Long) result.get(0).field("count")).longValue());
-    //
-    // System.out.println("From sql: indexes " + indexSize + " items");
-    // } finally {
-    // graph.getRawGraph().close();
-    // }
-    // }
-    // serverId++;
-    // }
   }
 
   // checks the consistency in the cluster after the writes in a no-replica sharding scenario
@@ -377,7 +341,6 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
                 updateVertex(graph, id);
                 checkVertex(graph, id);
-                // checkIndex(graph, (String) client.getProperty("name"), client.getIdentity());
 
                 if ((i + 1) % 100 == 0)
                   System.out
@@ -448,16 +411,6 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     protected void checkVertex(ODatabaseDocument graph, int i) {
       OVertex vertex = loadVertex(graph, this.shardName, this.serverId, this.threadId, i);
       assertEquals(vertex.getProperty("updated"), Boolean.TRUE);
-    }
-
-    protected void checkIndex(ODatabaseDocument graph, final String key, final ORID rid) {
-
-      List<ODocument> result = graph.query(new OSQLSynchQuery<OIdentifiable>("select from `index:Client.name` where key = ?"));
-
-      assertNotNull(result);
-      assertEquals(result.size(), 1);
-      assertNotNull(result.get(0).getRecord());
-      assertEquals((result.get(0)).field("rid"), rid);
     }
 
     protected void updateVertex(ODatabaseDocument graph, OVertex vertex) {

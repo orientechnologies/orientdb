@@ -22,15 +22,12 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ServerRun;
@@ -415,16 +412,6 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     protected void checkVertex(ODatabaseDocument graph, int i) {
       OVertex vertex = loadVertex(graph, this.shardName, this.serverId, this.threadId, i);
       assertEquals(vertex.getProperty("updated"), Boolean.TRUE);
-    }
-
-    protected void checkIndex(ODatabaseDocument graph, final String key, final ORID rid) {
-
-      List<ODocument> result = graph.query(new OSQLSynchQuery<OIdentifiable>("select from `index:Client.name` where key = ?"));
-
-      assertNotNull(result);
-      assertEquals(result.size(), 1);
-      assertNotNull(result.get(0).getRecord());
-      assertEquals((result.get(0)).field("rid"), rid);
     }
 
     protected void updateVertex(ODatabaseDocument graph, OVertex vertex) {
