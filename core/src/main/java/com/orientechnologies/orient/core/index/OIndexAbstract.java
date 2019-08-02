@@ -529,12 +529,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       while (true)
         try {
-          if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean() && (indexDefinition == null
-              || indexDefinition.getClassName() == null || indexDefinition.getFields() == null || indexDefinition.getFields()
-              .isEmpty())) {
-            throw new OManualIndexesAreProhibited(
-                "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
-                    + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
+          final boolean manualIndexesAreUsed =
+              indexDefinition == null || indexDefinition.getClassName() == null || indexDefinition.getFields() == null
+                  || indexDefinition.getFields().isEmpty();
+          if (manualIndexesAreUsed) {
+            OIndexAbstract.manualIndexesWarning();
           }
 
           storage.clearIndex(indexId);
@@ -1076,6 +1075,21 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       document.field(ALGORITHM, algorithm);
       document.field(VALUE_CONTAINER_ALGORITHM, valueContainerAlgorithm);
 
+    }
+  }
+
+  public static void manualIndexesWarning() {
+    if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
+      throw new OManualIndexesAreProhibited(
+          "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
+              + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
+    }
+
+    if (OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES_WARNING.getValueAsBoolean()) {
+      OLogManager.instance().warn(OIndexAbstract.class, "Seems you use manual indexes. "
+          + "Manual indexes are deprecated , not supported any more and will be removed in next versions if you do not want "
+          + "to see warning, please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES_WARNING.getKey()
+          + "` to `false`");
     }
   }
 }

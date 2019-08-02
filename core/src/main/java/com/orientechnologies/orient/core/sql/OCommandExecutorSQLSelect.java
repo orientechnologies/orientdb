@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
@@ -2610,11 +2609,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private void searchInIndex() {
-    if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
-      throw new OManualIndexesAreProhibited(
-          "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
-              + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
-    }
+    OIndexAbstract.manualIndexesWarning();
 
     final ODatabaseDocumentInternal database = getDatabase();
     final OIndex<Object> index = (OIndex<Object>) database.getMetadata().getIndexManagerInternal()

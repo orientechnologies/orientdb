@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.List;
@@ -69,11 +68,8 @@ public class ODeleteExecutionPlanner {
 
     switch (indexIdentifier.getType()) {
     case INDEX:
-      if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
-        throw new OManualIndexesAreProhibited(
-            "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
-                + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
-      }
+      OIndexAbstract.manualIndexesWarning();
+
       OBooleanExpression keyCondition = null;
       OBooleanExpression ridCondition = null;
       if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {

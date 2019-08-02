@@ -3,16 +3,15 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.*;
@@ -1293,11 +1292,8 @@ public class OSelectExecutionPlanner {
   private void handleIndexAsTarget(OSelectExecutionPlan result, QueryPlanningInfo info, OIndexIdentifier indexIdentifier,
       Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
 
-    if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
-      throw new OManualIndexesAreProhibited(
-          "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
-              + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
-    }
+
+    OIndexAbstract.manualIndexesWarning();
     String indexName = indexIdentifier.getIndexName();
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);

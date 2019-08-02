@@ -25,15 +25,14 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -208,11 +207,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
       if (newRecords == null)
         throw new OCommandExecutionException("No key/value found");
 
-      if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
-        throw new OManualIndexesAreProhibited(
-            "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
-                + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
-      }
+      OIndexAbstract.manualIndexesWarning();
 
       final ODatabaseDocumentInternal database = getDatabase();
       final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);

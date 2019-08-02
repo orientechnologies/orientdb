@@ -429,6 +429,11 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       + "It is not recommended to switch it on, because manual indexes are deprecated, not supported and will be removed in next versions",
       Boolean.class, false),
 
+  INDEX_ALLOW_MANUAL_INDEXES_WARNING("index.allowManualIndexesWarning",
+      "Switch which triggers printing of waring message any time when "
+          + "manual indexes are used. It is not recommended to switch it off, because manual indexes are deprecated, "
+          + "not supported and will be removed in next versions", Boolean.class, true),
+
   /**
    * @see OIndexDefinition#isNullValuesIgnored()
    * @since 2.2
