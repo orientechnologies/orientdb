@@ -61,6 +61,7 @@
             -Dhazelcast.wait.seconds.before.join=3
             -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
+            -Dindex.allowManualIndexes=false
         </argLine>
         <exclude.test.distributed>NONE</exclude.test.distributed>
         <project.rootdir>${project.basedir}/../</project.rootdir>

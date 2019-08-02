@@ -165,6 +165,7 @@
             -Ddb.makeFullCheckpointOnSchemaChange=false
             -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
+            -Dindex.allowManualIndexes=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
