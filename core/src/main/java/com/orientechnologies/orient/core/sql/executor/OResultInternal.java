@@ -46,25 +46,25 @@ public class OResultInternal implements OResult {
   }
 
   private void checkType(Object value) {
-    if(value == null){
+    if (value == null) {
       return;
     }
-    if(OType.isSimpleType(value) || value instanceof Character){
+    if (OType.isSimpleType(value) || value instanceof Character) {
       return;
     }
-    if(value instanceof OIdentifiable){
+    if (value instanceof OIdentifiable) {
       return;
     }
-    if(value instanceof OResult){
+    if (value instanceof OResult) {
       return;
     }
-    if(value instanceof Collection || value instanceof Map){
+    if (value instanceof Collection || value instanceof Map) {
       return;
     }
-    if(value instanceof OSerializableStream || value instanceof Serializable){
+    if (value instanceof OSerializableStream || value instanceof Serializable) {
       return;
     }
-    throw new IllegalArgumentException("Invalid property value for OResult: "+value+" - "+value.getClass().getName());
+    throw new IllegalArgumentException("Invalid property value for OResult: " + value + " - " + value.getClass().getName());
   }
 
   public void setTemporaryProperty(String name, Object value) {
@@ -213,63 +213,15 @@ public class OResultInternal implements OResult {
   }
 
   private boolean isEmbeddedSet(Object input) {
-    if (input instanceof Set) {
-      for (Object o : (Set) input) {
-        if (o instanceof OElement && !((OElement) o).getIdentity().isPersistent()) {
-          return true;
-        }
-        if (isEmbeddedList(o)) {
-          return true;
-        }
-        if (isEmbeddedSet(o)) {
-          return true;
-        }
-        if (isEmbeddedMap(o)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return OType.getTypeByValue(input) == OType.EMBEDDEDSET && input instanceof Set;
   }
 
   private boolean isEmbeddedMap(Object input) {
-    if (input instanceof Map) {
-      for (Object o : ((Map) input).values()) {
-        if (o instanceof OElement && !((OElement) o).getIdentity().isPersistent()) {
-          return true;
-        }
-        if (isEmbeddedList(o)) {
-          return true;
-        }
-        if (isEmbeddedSet(o)) {
-          return true;
-        }
-        if (isEmbeddedMap(o)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return OType.getTypeByValue(input) == OType.EMBEDDEDMAP && input instanceof Map;
   }
 
   private boolean isEmbeddedList(Object input) {
-    if (input instanceof List) {
-      for (Object o : (List) input) {
-        if (o instanceof OElement && !((OElement) o).getIdentity().isPersistent()) {
-          return true;
-        }
-        if (isEmbeddedList(o)) {
-          return true;
-        }
-        if (isEmbeddedSet(o)) {
-          return true;
-        }
-        if (isEmbeddedMap(o)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return OType.getTypeByValue(input) == OType.EMBEDDEDLIST && input instanceof List;
   }
 
   public Set<String> getPropertyNames() {
