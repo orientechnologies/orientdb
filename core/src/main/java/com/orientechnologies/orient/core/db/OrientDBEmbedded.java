@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -98,8 +99,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
       doubleWriteLogMaxSegSize = -1;
     } else {
       try {
-        maxWALSegmentSize = calculateInitialMaxWALSegSize(configurations);
         doubleWriteLogMaxSegSize = calculateDoubleWriteLogMaxSegSize(Paths.get(basePath));
+        maxWALSegmentSize = calculateInitialMaxWALSegSize(configurations);
 
         if (maxWALSegmentSize <= 0) {
           throw new ODatabaseException("Invalid configuration settings. Can not set maximum size of WAL segment");
@@ -169,7 +170,26 @@ public class OrientDBEmbedded implements OrientDBInternal {
     final FileStore fileStore = Files.getFileStore(Paths.get(walPath));
     final long freeSpace = fileStore.getUsableSpace();
 
-    final long filesSize = Files.walk(Paths.get(walPath)).mapToLong(p -> p.toFile().isFile() ? p.toFile().length() : 0).sum();
+    long filesSize;
+    try {
+      filesSize = Files.walk(Paths.get(walPath)).mapToLong(p -> {
+        try {
+          if (Files.isRegularFile(p)) {
+            return Files.size(p);
+          }
+
+          return 0;
+        } catch (IOException | UncheckedIOException e) {
+          OLogManager.instance().error(this, "Error during calculation of free space for database", e);
+          return 0;
+        }
+      }).sum();
+    } catch (IOException | UncheckedIOException e) {
+      OLogManager.instance().error(this, "Error during calculation of free space for database", e);
+
+      filesSize = 0;
+    }
+
     long maxSegSize;
 
     if (configurations != null) {
@@ -232,7 +252,27 @@ public class OrientDBEmbedded implements OrientDBInternal {
     final FileStore fileStore = Files.getFileStore(storagePath);
     final long freeSpace = fileStore.getUsableSpace();
 
-    final long filesSize = Files.walk(storagePath).mapToLong(p -> p.toFile().isFile() ? p.toFile().length() : 0).sum();
+    long filesSize;
+    try {
+      filesSize = Files.walk(storagePath).mapToLong(p -> {
+        try {
+          if (Files.isRegularFile(p)) {
+            return Files.size(p);
+          }
+
+          return 0;
+        } catch (IOException | UncheckedIOException e) {
+          OLogManager.instance().error(this, "Error during calculation of free space for database", e);
+
+          return 0;
+        }
+      }).sum();
+    } catch (IOException | UncheckedIOException e) {
+      OLogManager.instance().error(this, "Error during calculation of free space for database", e);
+
+      filesSize = 0;
+    }
+
     long maxSegSize;
 
     if (configurations != null) {

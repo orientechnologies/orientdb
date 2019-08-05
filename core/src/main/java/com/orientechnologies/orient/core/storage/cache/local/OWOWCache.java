@@ -2396,9 +2396,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private void fsyncFiles() throws InterruptedException, IOException {
-    filesLock.acquireReadLock();
-    try {
-      for (int intFileId : idNameMap.keySet()) {
+    for (int intFileId : idNameMap.keySet()) {
+      if (intFileId >= 0) {
         final long extFileId = externalFileId(intFileId);
 
         final OClosableEntry<Long, OFileClassic> fileEntry = files.acquire(extFileId);
@@ -2409,8 +2408,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           files.release(fileEntry);
         }
       }
-    } finally {
-      filesLock.releaseReadLock();
     }
 
     doubleWriteLog.truncate();
