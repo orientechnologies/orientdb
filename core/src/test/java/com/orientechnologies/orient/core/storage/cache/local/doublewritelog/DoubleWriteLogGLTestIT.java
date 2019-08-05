@@ -8,13 +8,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class DoubleWriteLogGLTestIT {
@@ -71,6 +71,9 @@ public class DoubleWriteLogGLTestIT {
 
         Assert.assertArrayEquals(data, loadedData);
         bufferPool.release(pointer);
+
+        pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
+        Assert.assertNull(pointer);
       } finally {
         doubleWriteLog.close();
       }
@@ -122,6 +125,9 @@ public class DoubleWriteLogGLTestIT {
 
         Assert.assertArrayEquals(data, loadedData);
         bufferPool.release(pointer);
+
+        pointer = doubleWriteLog.loadPage(12, 25, bufferPool);
+        Assert.assertNull(pointer);
       } finally {
         doubleWriteLog.close();
       }
@@ -379,7 +385,6 @@ public class DoubleWriteLogGLTestIT {
         doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
         try {
           final int pagesToWrite = random.nextInt(20_000) + 100;
-          int writtenPages = 0;
 
           List<byte[]> datas = new ArrayList<>();
           for (int i = 0; i < pagesToWrite; i++) {
@@ -389,6 +394,7 @@ public class DoubleWriteLogGLTestIT {
           }
 
           int pageIndex = 0;
+          int writtenPages = 0;
 
           while (writtenPages < pagesToWrite) {
             final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
@@ -430,4 +436,451 @@ public class DoubleWriteLogGLTestIT {
     }
   }
 
+  @Test
+  public void testRandomWriteTwo() throws Exception {
+    final long seed = System.nanoTime();
+    System.out.println("testRandomWriteTwo : seed " + seed);
+
+    final Random random = new Random(seed);
+    final int pageSize = 256;
+
+    for (int n = 0; n < 10; n++) {
+      System.out.println("Iteration - " + n);
+
+      final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
+      try {
+        final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
+        doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+        try {
+          final Map<Integer, ByteBuffer> pageMap = new HashMap<>();
+          final int pages = random.nextInt(900) + 100;
+
+          System.out.println("testRandomWriteTwo : pages " + pages);
+
+          for (int k = 0; k < 100; k++) {
+            final int pagesToWrite = random.nextInt(pages - 1) + 1;
+
+            List<byte[]> datas = new ArrayList<>();
+            for (int i = 0; i < pagesToWrite; i++) {
+              final byte[] data = new byte[pageSize];
+              random.nextBytes(data);
+              datas.add(data);
+            }
+
+            final int startPageIndex = random.nextInt(pages);
+            int pageIndex = 0;
+            int writtenPages = 0;
+
+            while (writtenPages < pagesToWrite) {
+              final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
+              ByteBuffer[] buffers = new ByteBuffer[pagesForSinglePatch];
+
+              for (int j = 0; j < pagesForSinglePatch; j++) {
+                final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+                buffer.put(datas.get(pageIndex + j));
+                buffers[j] = buffer;
+              }
+
+              doubleWriteLog.write(buffers, 12, startPageIndex + pageIndex);
+              for (int j = 0; j < buffers.length; j++) {
+                pageMap.put(startPageIndex + pageIndex + j, buffers[j]);
+              }
+
+              pageIndex += pagesForSinglePatch;
+              writtenPages += pagesForSinglePatch;
+            }
+          }
+
+          doubleWriteLog.restoreModeOn();
+
+          for (final int pageIndex : pageMap.keySet()) {
+            final OPointer pointer = doubleWriteLog.loadPage(12, pageIndex, bufferPool);
+
+            final ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+
+            Assert.assertEquals(pageSize, loadedBuffer.limit());
+            final byte[] loadedData = new byte[pageSize];
+
+            loadedBuffer.rewind();
+            loadedBuffer.get(loadedData);
+
+            final byte[] data = new byte[pageSize];
+            final ByteBuffer buffer = pageMap.get(pageIndex);
+
+            buffer.rewind();
+            buffer.get(data);
+
+            Assert.assertArrayEquals(data, loadedData);
+            bufferPool.release(pointer);
+          }
+
+        } finally {
+          doubleWriteLog.close();
+        }
+      } finally {
+        bufferPool.clear();
+      }
+    }
+  }
+
+  @Test
+  public void testRandomCrashOne() throws Exception {
+    final long seed = System.nanoTime();
+    System.out.println("testRandomCrashOne : seed " + seed);
+
+    Random random = new Random(seed);
+
+    for (int n = 0; n < 10; n++) {
+      System.out.println("Iteration - " + n);
+
+      final int pageSize = 256;
+
+      final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
+      try {
+        final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
+
+        doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+        try {
+          final int pagesToWrite = random.nextInt(20_000) + 100;
+
+          List<byte[]> datas = new ArrayList<>();
+          for (int i = 0; i < pagesToWrite; i++) {
+            final byte[] data = new byte[pageSize];
+            random.nextBytes(data);
+            datas.add(data);
+          }
+
+          int pageIndex = 0;
+          int writtenPages = 0;
+
+          while (writtenPages < pagesToWrite) {
+            final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
+            ByteBuffer[] buffers = new ByteBuffer[pagesForSinglePatch];
+
+            for (int j = 0; j < pagesForSinglePatch; j++) {
+              final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+              buffer.put(datas.get(pageIndex + j));
+              buffers[j] = buffer;
+            }
+
+            doubleWriteLog.write(buffers, 12, 24 + pageIndex);
+            pageIndex += pagesForSinglePatch;
+            writtenPages += pagesForSinglePatch;
+          }
+
+          final DoubleWriteLogGL doubleWriteLogRestore = new DoubleWriteLogGL(2 * 4 * 1024);
+          doubleWriteLogRestore.open("test", Paths.get(buildDirectory), pageSize);
+
+          doubleWriteLogRestore.restoreModeOn();
+
+          for (int i = 0; i < pagesToWrite; i++) {
+            final OPointer pointer = doubleWriteLogRestore.loadPage(12, 24 + i, bufferPool);
+
+            ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+
+            Assert.assertEquals(256, loadedBuffer.limit());
+            byte[] loadedData = new byte[256];
+            loadedBuffer.rewind();
+            loadedBuffer.get(loadedData);
+
+            Assert.assertArrayEquals(datas.get(i), loadedData);
+            bufferPool.release(pointer);
+          }
+
+          doubleWriteLogRestore.close();
+        } finally {
+          doubleWriteLog.close();
+        }
+      } finally {
+        bufferPool.clear();
+      }
+    }
+  }
+
+  @Test
+  public void testRandomWriteCrashTwo() throws Exception {
+    final long seed = System.nanoTime();
+    System.out.println("testRandomCrashTwo : seed " + seed);
+
+    final Random random = new Random(seed);
+    final int pageSize = 256;
+
+    for (int n = 0; n < 10; n++) {
+      System.out.println("Iteration - " + n);
+
+      final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
+      try {
+        final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(2 * 4 * 1024);
+        doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+        try {
+          final Map<Integer, ByteBuffer> pageMap = new HashMap<>();
+          final int pages = random.nextInt(900) + 100;
+
+          System.out.println("testRandomCrashTwo : pages " + pages);
+
+          for (int k = 0; k < 100; k++) {
+            final int pagesToWrite = random.nextInt(pages - 1) + 1;
+
+            List<byte[]> datas = new ArrayList<>();
+            for (int i = 0; i < pagesToWrite; i++) {
+              final byte[] data = new byte[pageSize];
+              random.nextBytes(data);
+              datas.add(data);
+            }
+
+            final int startPageIndex = random.nextInt(pages);
+            int pageIndex = 0;
+            int writtenPages = 0;
+
+            while (writtenPages < pagesToWrite) {
+              final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
+              ByteBuffer[] buffers = new ByteBuffer[pagesForSinglePatch];
+
+              for (int j = 0; j < pagesForSinglePatch; j++) {
+                final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+                buffer.put(datas.get(pageIndex + j));
+                buffers[j] = buffer;
+              }
+
+              doubleWriteLog.write(buffers, 12, startPageIndex + pageIndex);
+              for (int j = 0; j < buffers.length; j++) {
+                pageMap.put(startPageIndex + pageIndex + j, buffers[j]);
+              }
+
+              pageIndex += pagesForSinglePatch;
+              writtenPages += pagesForSinglePatch;
+            }
+          }
+
+          final DoubleWriteLogGL doubleWriteLogRestore = new DoubleWriteLogGL(2 * 4 * 1024);
+          doubleWriteLogRestore.open("test", Paths.get(buildDirectory), pageSize);
+
+          doubleWriteLogRestore.restoreModeOn();
+
+          for (final int pageIndex : pageMap.keySet()) {
+            final OPointer pointer = doubleWriteLogRestore.loadPage(12, pageIndex, bufferPool);
+
+            final ByteBuffer loadedBuffer = pointer.getNativeByteBuffer();
+
+            Assert.assertEquals(pageSize, loadedBuffer.limit());
+            final byte[] loadedData = new byte[pageSize];
+
+            loadedBuffer.rewind();
+            loadedBuffer.get(loadedData);
+
+            final byte[] data = new byte[pageSize];
+            final ByteBuffer buffer = pageMap.get(pageIndex);
+
+            buffer.rewind();
+            buffer.get(data);
+
+            Assert.assertArrayEquals(data, loadedData);
+            bufferPool.release(pointer);
+          }
+
+          doubleWriteLogRestore.close();
+        } finally {
+          doubleWriteLog.close();
+        }
+      } finally {
+        bufferPool.clear();
+      }
+    }
+  }
+
+  @Test
+  public void testTruncate() throws IOException {
+    final int pageSize = 256;
+    final int maxLogSize = 4 * 1024; //single block for each segment
+
+    final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
+    try {
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(maxLogSize);
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        List<Path> paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+        Assert.assertEquals(1, paths.size());
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+
+        for (int i = 0; i < 4; i++) {
+          final boolean overflow = doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+          Assert.assertTrue(overflow && i > 0 || i == 0 && !overflow);
+        }
+
+        paths = Arrays.asList(
+            Files.list(Paths.get(buildDirectory)).sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                .toArray(Path[]::new));
+        Assert.assertEquals(4, paths.size());
+
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(1).getFileName().toString());
+        Assert.assertEquals("test_2" + DoubleWriteLogGL.EXTENSION, paths.get(2).getFileName().toString());
+        Assert.assertEquals("test_3" + DoubleWriteLogGL.EXTENSION, paths.get(3).getFileName().toString());
+
+        doubleWriteLog.restoreModeOn();
+        doubleWriteLog.truncate();
+
+        paths = Arrays.asList(
+            Files.list(Paths.get(buildDirectory)).sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                .toArray(Path[]::new));
+        Assert.assertEquals(4, paths.size());
+
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(1).getFileName().toString());
+        Assert.assertEquals("test_2" + DoubleWriteLogGL.EXTENSION, paths.get(2).getFileName().toString());
+        Assert.assertEquals("test_3" + DoubleWriteLogGL.EXTENSION, paths.get(3).getFileName().toString());
+
+        doubleWriteLog.restoreModeOff();
+
+        doubleWriteLog.truncate();
+
+        paths = Arrays.asList(
+            Files.list(Paths.get(buildDirectory)).sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                .toArray(Path[]::new));
+        Assert.assertEquals(1, paths.size());
+
+        Assert.assertEquals("test_3" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+      } finally {
+        doubleWriteLog.close();
+      }
+    } finally {
+      bufferPool.clear();
+    }
+  }
+
+  @Test
+  public void testClose() throws IOException {
+    final int pageSize = 256;
+    final int maxLogSize = 4 * 1024; //single block for each segment
+
+    final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
+    try {
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(maxLogSize);
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        List<Path> paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+        Assert.assertEquals(1, paths.size());
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+
+        for (int i = 0; i < 4; i++) {
+          doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+        }
+
+        paths = Arrays.asList(
+            Files.list(Paths.get(buildDirectory)).sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                .toArray(Path[]::new));
+        Assert.assertEquals(4, paths.size());
+
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(1).getFileName().toString());
+        Assert.assertEquals("test_2" + DoubleWriteLogGL.EXTENSION, paths.get(2).getFileName().toString());
+        Assert.assertEquals("test_3" + DoubleWriteLogGL.EXTENSION, paths.get(3).getFileName().toString());
+
+      } finally {
+        doubleWriteLog.close();
+      }
+    } finally {
+      bufferPool.clear();
+    }
+
+    final List<Path> paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+    Assert.assertTrue(paths.isEmpty());
+  }
+
+  @Test
+  public void testInitAfterCrash() throws Exception {
+    final int pageSize = 256;
+    final int maxLogSize = 4 * 1024; //single block for each segment
+
+    final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
+    try {
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(maxLogSize);
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        for (int i = 0; i < 4; i++) {
+          doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+        }
+
+        List<Path> paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+        Assert.assertEquals(4, paths.size());
+
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(1).getFileName().toString());
+        Assert.assertEquals("test_2" + DoubleWriteLogGL.EXTENSION, paths.get(2).getFileName().toString());
+        Assert.assertEquals("test_3" + DoubleWriteLogGL.EXTENSION, paths.get(3).getFileName().toString());
+
+        final DoubleWriteLogGL doubleWriteLogRestore = new DoubleWriteLogGL(maxLogSize);
+        doubleWriteLogRestore.open("test", Paths.get(buildDirectory), pageSize);
+
+        paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+        Assert.assertEquals(5, paths.size());
+
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(1).getFileName().toString());
+        Assert.assertEquals("test_2" + DoubleWriteLogGL.EXTENSION, paths.get(2).getFileName().toString());
+        Assert.assertEquals("test_3" + DoubleWriteLogGL.EXTENSION, paths.get(3).getFileName().toString());
+        Assert.assertEquals("test_4" + DoubleWriteLogGL.EXTENSION, paths.get(4).getFileName().toString());
+
+        doubleWriteLogRestore.close();
+      } finally {
+        doubleWriteLog.close();
+      }
+    } finally {
+      bufferPool.clear();
+    }
+  }
+
+  @Test
+  public void testCreationNewSegment() throws Exception {
+    final int pageSize = 256;
+    final int maxLogSize = 4 * 1024; //single block for each segment
+
+    final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
+    try {
+      final DoubleWriteLogGL doubleWriteLog = new DoubleWriteLogGL(maxLogSize);
+      doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
+      try {
+        List<Path> paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+        Assert.assertEquals(1, paths.size());
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+
+        doubleWriteLog.startCheckpoint();
+
+        for (int i = 0; i < 4; i++) {
+          final boolean overflow = doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+          Assert.assertFalse(overflow);
+        }
+
+        paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+
+        Assert.assertEquals(1, paths.size());
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+
+        doubleWriteLog.endCheckpoint();
+
+        paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+
+        Assert.assertEquals(1, paths.size());
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+
+        for (int i = 0; i < 4; i++) {
+          final boolean overflow = doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+          Assert.assertTrue(overflow);
+        }
+
+        paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+
+        Assert.assertEquals(5, paths.size());
+        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(1).getFileName().toString());
+        Assert.assertEquals("test_2" + DoubleWriteLogGL.EXTENSION, paths.get(2).getFileName().toString());
+        Assert.assertEquals("test_3" + DoubleWriteLogGL.EXTENSION, paths.get(3).getFileName().toString());
+        Assert.assertEquals("test_4" + DoubleWriteLogGL.EXTENSION, paths.get(4).getFileName().toString());
+      } finally {
+        doubleWriteLog.close();
+      }
+    } finally {
+      bufferPool.clear();
+    }
+  }
 }

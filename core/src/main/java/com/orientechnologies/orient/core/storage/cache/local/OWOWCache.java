@@ -931,37 +931,42 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     if (writeAheadLog != null) {
       filesLock.acquireReadLock();
       try {
-        final OLogSequenceNumber startLSN = writeAheadLog.begin(segmentId);
-        if (startLSN == null) {
-          return;
-        }
-
-        writeAheadLog.logFuzzyCheckPointStart(startLSN);
-
-        for (final Integer intId : nameIdMap.values()) {
-          if (intId < 0) {
-            continue;
+        doubleWriteLog.startCheckpoint();
+        try {
+          final OLogSequenceNumber startLSN = writeAheadLog.begin(segmentId);
+          if (startLSN == null) {
+            return;
           }
 
-          if (callFsync) {
-            final long fileId = composeFileId(id, intId);
-            final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
-            try {
-              final OFileClassic fileClassic = entry.get();
-              fileClassic.synch();
-            } finally {
-              files.release(entry);
+          writeAheadLog.logFuzzyCheckPointStart(startLSN);
+
+          for (final Integer intId : nameIdMap.values()) {
+            if (intId < 0) {
+              continue;
             }
+
+            if (callFsync) {
+              final long fileId = composeFileId(id, intId);
+              final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+              try {
+                final OFileClassic fileClassic = entry.get();
+                fileClassic.synch();
+              } finally {
+                files.release(entry);
+              }
+            }
+
           }
 
+          writeAheadLog.logFuzzyCheckPointEnd();
+          writeAheadLog.flush();
+
+          writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
+
+          doubleWriteLog.truncate();
+        } finally {
+          doubleWriteLog.endCheckpoint();
         }
-
-        writeAheadLog.logFuzzyCheckPointEnd();
-        writeAheadLog.flush();
-
-        writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
-
-        doubleWriteLog.truncate();
       } catch (final InterruptedException e) {
         throw OException.wrapException(new OStorageException("Fuzzy checkpoint was interrupted"), e);
       } finally {

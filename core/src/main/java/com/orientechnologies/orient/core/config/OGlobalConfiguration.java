@@ -216,6 +216,21 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   STORAGE_CALL_FSYNC("storage.callFsync", "Call fsync during fuzzy checkpoints or WAL writes, true by default", Boolean.class,
       true),
 
+  STORAGE_USE_DOUBLE_WRITE_LOG("storage.useDoubleWriteLog", "Allows usage of double write log in storage. "
+      + "This log prevents pages to be teared apart so it is not recommended to switch it off.", Boolean.class, true),
+
+  STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE("storage.doubleWriteLog.maxSegSize",
+      "Maximum size of double write log segment in megabytes, -1 means that size will be calculated automatically", Integer.class,
+      -1),
+
+  STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT("storage.doubleWriteLog.maxSegSizePercent",
+      "Maximum size of segment of double write log in percents, should be set to value bigger than 0", Integer.class, 1),
+
+  STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE("storage.doubleWriteLog.minSegSize",
+      "Minimum size of segment of double write log in megabytes, should be set to value bigger than 0. "
+          + "If both set maximum and minimum size of segments. Minimum size always will have priority over maximum size.",
+      Integer.class, 256),
+
   STORAGE_CLUSTER_VERSION("storage.cluster.version", "Binary version of cluster which will be used inside of storage",
       Integer.class, OPaginatedCluster.getLatestBinaryVersion()),
 

@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 /**
- * No OP page log which is used as a stub till implementation of double write pattern will be finished.
+ * Stub for double write log
  */
 public class DoubleWriteLogNoOP implements DoubleWriteLog {
   @Override
@@ -41,5 +41,13 @@ public class DoubleWriteLogNoOP implements DoubleWriteLog {
 
   @Override
   public void close() throws IOException {
+  }
+
+  @Override
+  public void startCheckpoint() {
+  }
+
+  @Override
+  public void endCheckpoint() {
   }
 }

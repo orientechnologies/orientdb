@@ -5608,95 +5608,100 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @SuppressWarnings("WeakerAccess")
   protected final OLogSequenceNumber restoreFrom(final OLogSequenceNumber lsn, final OWriteAheadLog writeAheadLog)
       throws IOException {
-    OLogSequenceNumber logSequenceNumber = null;
-    final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
-
-    long recordsProcessed = 0;
-
-    final int reportBatchSize = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
-    final Map<OOperationUnitId, List<OWALRecord>> operationUnits = new HashMap<>(1024);
-
-    long lastReportTime = 0;
-
+    writeCache.restoreModeOn();
     try {
-      List<OWriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
-      while (!records.isEmpty()) {
-        for (final OWriteableWALRecord walRecord : records) {
-          logSequenceNumber = walRecord.getLsn();
+      OLogSequenceNumber logSequenceNumber = null;
+      final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
 
-          if (walRecord instanceof OAtomicUnitEndRecord) {
-            final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
-            final List<OWALRecord> atomicUnit = operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
+      long recordsProcessed = 0;
 
-            // in case of data restore from fuzzy checkpoint part of operations may be already flushed to the disk
-            if (atomicUnit != null) {
-              atomicUnit.add(walRecord);
-              restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
-            }
+      final int reportBatchSize = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
+      final Map<OOperationUnitId, List<OWALRecord>> operationUnits = new HashMap<>(1024);
 
-          } else if (walRecord instanceof OAtomicUnitStartRecord) {
-            final List<OWALRecord> operationList = new ArrayList<>(1024);
+      long lastReportTime = 0;
 
-            assert !operationUnits.containsKey(((OAtomicUnitStartRecord) walRecord).getOperationUnitId());
+      try {
+        List<OWriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
+        while (!records.isEmpty()) {
+          for (final OWriteableWALRecord walRecord : records) {
+            logSequenceNumber = walRecord.getLsn();
 
-            operationUnits.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
-            operationList.add(walRecord);
-          } else if (walRecord instanceof OOperationUnitRecord) {
-            final OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
+            if (walRecord instanceof OAtomicUnitEndRecord) {
+              final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+              final List<OWALRecord> atomicUnit = operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
 
-            List<OWALRecord> operationList = operationUnits.get(operationUnitRecord.getOperationUnitId());
-
-            if (operationList == null || operationList.isEmpty()) {
-              OLogManager.instance().errorNoDb(this, "'Start transaction' record is absent for atomic operation", null);
-
-              if (operationList == null) {
-                operationList = new ArrayList<>(1024);
-                operationUnits.put(operationUnitRecord.getOperationUnitId(), operationList);
+              // in case of data restore from fuzzy checkpoint part of operations may be already flushed to the disk
+              if (atomicUnit != null) {
+                atomicUnit.add(walRecord);
+                restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
               }
+
+            } else if (walRecord instanceof OAtomicUnitStartRecord) {
+              final List<OWALRecord> operationList = new ArrayList<>(1024);
+
+              assert !operationUnits.containsKey(((OAtomicUnitStartRecord) walRecord).getOperationUnitId());
+
+              operationUnits.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
+              operationList.add(walRecord);
+            } else if (walRecord instanceof OOperationUnitRecord) {
+              final OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
+
+              List<OWALRecord> operationList = operationUnits.get(operationUnitRecord.getOperationUnitId());
+
+              if (operationList == null || operationList.isEmpty()) {
+                OLogManager.instance().errorNoDb(this, "'Start transaction' record is absent for atomic operation", null);
+
+                if (operationList == null) {
+                  operationList = new ArrayList<>(1024);
+                  operationUnits.put(operationUnitRecord.getOperationUnitId(), operationList);
+                }
+              }
+
+              operationList.add(operationUnitRecord);
+            } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
+              if (!wereNonTxOperationsPerformedInPreviousOpen) {
+                OLogManager.instance()
+                    .warnNoDb(this, "Non tx operation was used during data modification we will need index rebuild.");
+                wereNonTxOperationsPerformedInPreviousOpen = true;
+              }
+            } else {
+              OLogManager.instance().warnNoDb(this, "Record %s will be skipped during data restore", walRecord);
             }
 
-            operationList.add(operationUnitRecord);
-          } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
-            if (!wereNonTxOperationsPerformedInPreviousOpen) {
+            recordsProcessed++;
+
+            final long currentTime = System.currentTimeMillis();
+            if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0
+                || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
               OLogManager.instance()
-                  .warnNoDb(this, "Non tx operation was used during data modification we will need index rebuild.");
-              wereNonTxOperationsPerformedInPreviousOpen = true;
+                  .infoNoDb(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed, lsn,
+                      writeAheadLog.end());
+              lastReportTime = currentTime;
             }
-          } else {
-            OLogManager.instance().warnNoDb(this, "Record %s will be skipped during data restore", walRecord);
           }
 
-          recordsProcessed++;
-
-          final long currentTime = System.currentTimeMillis();
-          if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0
-              || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
-            OLogManager.instance()
-                .infoNoDb(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed, lsn,
-                    writeAheadLog.end());
-            lastReportTime = currentTime;
-          }
+          records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
         }
-
-        records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
+      } catch (final OWALPageBrokenException e) {
+        OLogManager.instance()
+            .errorNoDb(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.",
+                e);
+      } catch (final RuntimeException e) {
+        OLogManager.instance().errorNoDb(this,
+            "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up."
+                + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.",
+            e);
+        backUpWAL(e);
       }
-    } catch (final OWALPageBrokenException e) {
-      OLogManager.instance()
-          .errorNoDb(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.",
-              e);
-    } catch (final RuntimeException e) {
-      OLogManager.instance().errorNoDb(this,
-          "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up."
-              + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.",
-          e);
-      backUpWAL(e);
-    }
 
-    if (atLeastOnePageUpdate.getValue()) {
-      return logSequenceNumber;
-    }
+      if (atLeastOnePageUpdate.getValue()) {
+        return logSequenceNumber;
+      }
 
-    return null;
+      return null;
+    } finally {
+      writeCache.restoreModeOff();
+    }
   }
 
   private void backUpWAL(final Exception e) {

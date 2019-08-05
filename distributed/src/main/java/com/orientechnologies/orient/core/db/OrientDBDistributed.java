@@ -97,7 +97,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
           storages.remove(dbName);
         }
-        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize);
+        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize,
+            doubleWriteLogMaxSegSize);
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {

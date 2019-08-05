@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -14,7 +15,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
-import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.distributed.impl.ONodeInternalConfiguration;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
@@ -150,7 +150,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
           storages.remove(dbName);
         }
-        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize);
+        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize,
+            doubleWriteLogMaxSegSize);
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {

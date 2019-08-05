@@ -11,7 +11,8 @@ import java.nio.file.Path;
  * Interface for the log which keeps data of pages before they will be finally fsync-ed to the data files. This log is used to
  * implement double write pattern.
  * <p>
- * At the first step we perform fsync of the data to the log using single sequential write calling {@link #write(ByteBuffer[], int, int)} method.
+ * At the first step we perform fsync of the data to the log using single sequential write calling {@link #write(ByteBuffer[], int,
+ * int)} method.
  * <p>
  * As the second step we write pages to the data files.
  * <p>
@@ -36,4 +37,8 @@ public interface DoubleWriteLog {
   void restoreModeOff();
 
   void close() throws IOException;
+
+  void startCheckpoint();
+
+  void endCheckpoint();
 }

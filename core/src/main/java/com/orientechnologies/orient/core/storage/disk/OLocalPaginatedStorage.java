@@ -39,6 +39,8 @@ import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueInd
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLog;
+import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogGL;
 import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogNoOP;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
@@ -88,7 +90,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       OSBTreeCollectionManagerShared.DEFAULT_EXTENSION, OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION, OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
       OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION, OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION,
-      OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION, OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION };
+      OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION, OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION,
+      DoubleWriteLogGL.EXTENSION };
 
   private static final int ONE_KB = 1024;
 
@@ -112,17 +115,20 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private Future<?> fuzzyCheckpointTask;
 
   private final long walMaxSegSize;
+  private final long doubleWriteLogMaxSegSize;
 
   private final AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
   protected volatile byte[] iv;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id,
-      final OReadCache readCache, final OClosableLinkedContainer<Long, OFileClassic> files, final long walMaxSegSize) {
+      final OReadCache readCache, final OClosableLinkedContainer<Long, OFileClassic> files, final long walMaxSegSize,
+      long doubleWriteLogMaxSegSize) {
     super(name, filePath, mode, id);
 
     this.walMaxSegSize = walMaxSegSize;
     this.files = files;
+    this.doubleWriteLogMaxSegSize = doubleWriteLogMaxSegSize;
     this.readCache = readCache;
 
     final String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
@@ -652,8 +658,15 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final boolean printCacheStatistics = contextConfiguration
         .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS);
     final int statisticsPrintInterval = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL);
+    final DoubleWriteLog doubleWriteLog;
 
-    final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog, new DoubleWriteLogNoOP(),
+    if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_USE_DOUBLE_WRITE_LOG)) {
+      doubleWriteLog = new DoubleWriteLogGL(doubleWriteLogMaxSegSize);
+    } else {
+      doubleWriteLog = new DoubleWriteLogNoOP();
+    }
+
+    final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog, doubleWriteLog,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize, storagePath, getName(),
         OStringSerializer.INSTANCE, files, getId(),

@@ -52,6 +52,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
   private boolean restoreMode;
 
+  private int checkpointCounter;
+
   private Map<ORawPair<Integer, Integer>, ORawPair<Long, Long>> pageMap;
 
   static {
@@ -121,7 +123,9 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   @Override
   public boolean write(final ByteBuffer[] buffers, final int fileId, final int pageIndex) throws IOException {
     synchronized (mutex) {
-      if (currentFile.size() > maxLogSize) {
+      assert checkpointCounter >= 0;
+
+      if (checkpointCounter == 0 && currentFile.position() >= maxLogSize) {
         currentFile.close();
 
         tailSegments.add(currentSegment);
@@ -191,7 +195,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       }
 
       //we can not truncate log in restore mode because we remove all restore information
-      return !restoreMode && this.currentLogSize >= maxLogSize;
+      return !restoreMode && this.currentLogSize >= maxLogSize && !tailSegments.isEmpty();
     }
   }
 
@@ -361,6 +365,20 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
           throw new OStorageException("Can not delete file " + path.toString() + " in storage " + storageName);
         }
       });
+    }
+  }
+
+  @Override
+  public void startCheckpoint() {
+    synchronized (mutex) {
+      checkpointCounter++;
+    }
+  }
+
+  @Override
+  public void endCheckpoint() {
+    synchronized (mutex) {
+      checkpointCounter--;
     }
   }
 }
