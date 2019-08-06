@@ -149,7 +149,7 @@ public class ORecordLazySet extends ORecordTrackedSet
     final Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
     while (all.hasNext()) {
       Entry<OIdentifiable, Object> entry = all.next();
-      if (entry.getValue() == ENTRY_REMOVAL) {
+      if (!(entry.getValue() instanceof  ORecord)) {
         try {
           ORecord record = entry.getKey().getRecord();
           if (record != null) {

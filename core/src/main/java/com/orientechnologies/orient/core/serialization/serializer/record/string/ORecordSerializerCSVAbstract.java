@@ -231,9 +231,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
     // EMBEDDED LITERALS
 
-    if (map instanceof ORecordElement)
-      ((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
-
     for (String item : items) {
       if (item != null && !item.isEmpty()) {
         final List<String> entries = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR, true, false);
@@ -251,7 +248,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
                     || iSourceDocument.fieldType(iName) != OType.EMBEDDEDMAP) && isConvertToLinkedMap(map, linkedType)) {
                   // CONVERT IT TO A LAZY MAP
                   map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
-                  ((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
                 } else if (map instanceof ORecordLazyMap && linkedType != OType.LINK) {
                   map = new OTrackedMap<Object>(iSourceDocument, map, null);
                 }
@@ -282,9 +278,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
       }
     }
-
-    if (map instanceof ORecordElement)
-      ((ORecordElement) map).setInternalStatus(STATUS.LOADED);
 
     return map;
   }
@@ -580,9 +573,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
     OType linkedType;
 
-    if (coll instanceof ORecordElement)
-      ((ORecordElement) coll).setInternalStatus(STATUS.UNMARSHALLING);
-
     final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true, false);
     for (String item : items) {
       Object objectToAdd = null;
@@ -633,9 +623,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
       ((Collection<Object>) coll).add(objectToAdd);
     }
-
-    if (coll instanceof ORecordElement)
-      ((ORecordElement) coll).setInternalStatus(STATUS.LOADED);
 
     return coll;
   }

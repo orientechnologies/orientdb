@@ -133,7 +133,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   public OLazyIterator<OIdentifiable> iterator() {
     lazyLoad(false);
     return new OLazyRecordIterator(sourceRecord, new OLazyIteratorListWrapper<OIdentifiable>(super.listIterator()),
-        autoConvertToRecord && getOwner().getInternalStatus() != STATUS.MARSHALLING);
+        autoConvertToRecord);
   }
 
   @Override

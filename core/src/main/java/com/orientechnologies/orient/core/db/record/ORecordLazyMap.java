@@ -127,8 +127,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
   }
 
   public void convertLinks2Records() {
-    if (multiValueStatus == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord
-        || getOwner().getInternalStatus() == STATUS.MARSHALLING)
+    if (multiValueStatus == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord)
       // PRECONDITIONS
       return;
     for (Object k : keySet())

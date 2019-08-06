@@ -35,11 +35,11 @@ import java.util.*;
  */
 
 public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
-  private static final long serialVersionUID = -885861736290603016L;
-  private final List<OIndexDefinition> indexDefinitions;
-  private       String                 className;
-  private int               multiValueDefinitionIndex = -1;
-  private OCompositeCollate collate                   = new OCompositeCollate(this);
+  private static final long                   serialVersionUID          = -885861736290603016L;
+  private final        List<OIndexDefinition> indexDefinitions;
+  private              String                 className;
+  private              int                    multiValueDefinitionIndex = -1;
+  private              OCompositeCollate      collate                   = new OCompositeCollate(this);
 
   public OCompositeIndexDefinition() {
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
@@ -379,13 +379,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
    */
   @Override
   public ODocument toStream() {
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-      serializeToStream();
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
-
+    serializeToStream();
     return document;
   }
 

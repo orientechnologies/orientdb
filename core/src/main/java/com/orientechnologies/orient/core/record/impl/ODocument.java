@@ -812,7 +812,7 @@ public class ODocument extends ORecordAbstract
         for (OMultiValueChangeEvent object : event) {
           if (object.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD
               || object.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE && object.getValue() != null)
-            validateLink(property, object.getValue(), OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+            validateLink(property, object.getValue(), true);
         }
       } else {
         boolean autoconvert = false;
@@ -821,7 +821,7 @@ public class ODocument extends ORecordAbstract
           ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
         }
         for (Object object : values) {
-          validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+          validateLink(property, object, true);
         }
         if (values instanceof ORecordLazyMultiValue)
           ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);

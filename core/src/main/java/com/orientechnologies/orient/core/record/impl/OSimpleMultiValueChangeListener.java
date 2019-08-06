@@ -52,9 +52,6 @@ public final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueC
       //doc not alive anymore, do nothing.
       return;
 
-    if (document.getInternalStatus() == STATUS.UNMARSHALLING)
-      return;
-
     if (event.isChangesOwnerContent())
       document.setDirty();
     else

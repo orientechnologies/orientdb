@@ -676,38 +676,31 @@ public abstract class OPropertyImpl implements OProperty {
   }
 
   public ODocument toStream() {
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    document.field("name", getName());
+    document.field("type", getType().id);
+    document.field("globalId", globalRef.getId());
+    document.field("mandatory", mandatory);
+    document.field("readonly", readonly);
+    document.field("notNull", notNull);
+    document.field("defaultValue", defaultValue);
 
-    try {
-      document.field("name", getName());
-      document.field("type", getType().id);
-      document.field("globalId", globalRef.getId());
-      document.field("mandatory", mandatory);
-      document.field("readonly", readonly);
-      document.field("notNull", notNull);
-      document.field("defaultValue", defaultValue);
-
-      document.field("min", min);
-      document.field("max", max);
-      if (regexp != null) {
-        document.field("regexp", regexp);
-      } else {
-        document.removeField("regexp");
-      }
-      if (linkedType != null)
-        document.field("linkedType", linkedType.id);
-      if (linkedClass != null || linkedClassName != null)
-        document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
-
-      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-      if (collate != null) {
-        document.field("collate", collate.getName());
-      }
-      document.field("description", description);
-
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+    document.field("min", min);
+    document.field("max", max);
+    if (regexp != null) {
+      document.field("regexp", regexp);
+    } else {
+      document.removeField("regexp");
     }
+    if (linkedType != null)
+      document.field("linkedType", linkedType.id);
+    if (linkedClass != null || linkedClassName != null)
+      document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
+
+    document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
+    if (collate != null) {
+      document.field("collate", collate.getName());
+    }
+    document.field("description", description);
     return document;
   }
 
@@ -773,38 +766,33 @@ public abstract class OPropertyImpl implements OProperty {
 
   public ODocument toNetworkStream() {
     ODocument document = new ODocument();
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    document.setTrackingChanges(false);
+    document.field("name", getName());
+    document.field("type", getType().id);
+    document.field("globalId", globalRef.getId());
+    document.field("mandatory", mandatory);
+    document.field("readonly", readonly);
+    document.field("notNull", notNull);
+    document.field("defaultValue", defaultValue);
 
-    try {
-      document.field("name", getName());
-      document.field("type", getType().id);
-      document.field("globalId", globalRef.getId());
-      document.field("mandatory", mandatory);
-      document.field("readonly", readonly);
-      document.field("notNull", notNull);
-      document.field("defaultValue", defaultValue);
-
-      document.field("min", min);
-      document.field("max", max);
-      if (regexp != null) {
-        document.field("regexp", regexp);
-      } else {
-        document.removeField("regexp");
-      }
-      if (linkedType != null)
-        document.field("linkedType", linkedType.id);
-      if (linkedClass != null || linkedClassName != null)
-        document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
-
-      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-      if (collate != null) {
-        document.field("collate", collate.getName());
-      }
-      document.field("description", description);
-
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+    document.field("min", min);
+    document.field("max", max);
+    if (regexp != null) {
+      document.field("regexp", regexp);
+    } else {
+      document.removeField("regexp");
     }
+    if (linkedType != null)
+      document.field("linkedType", linkedType.id);
+    if (linkedClass != null || linkedClassName != null)
+      document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
+
+    document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
+    if (collate != null) {
+      document.field("collate", collate.getName());
+    }
+    document.field("description", description);
+
     return document;
   }
 

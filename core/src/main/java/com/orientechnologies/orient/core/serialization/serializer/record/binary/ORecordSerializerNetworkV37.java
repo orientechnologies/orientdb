@@ -268,16 +268,16 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
       break;
     case EMBEDDEDSET:
-      value = readEmbeddedCollection(bytes, new OTrackedSet<Object>(document), document);
+      value = readEmbeddedSet(bytes, document);
       break;
     case EMBEDDEDLIST:
-      value = readEmbeddedCollection(bytes, new OTrackedList<Object>(document), document);
+      value = readEmbeddedList(bytes, document);
       break;
     case LINKSET:
-      value = readLinkCollection(bytes, new ORecordLazySet(document));
+      value = readLinkSet(bytes, document);
       break;
     case LINKLIST:
-      value = readLinkCollection(bytes, new ORecordLazyList(document));
+      value = readLinkList(bytes, document);
       break;
     case BINARY:
       value = readBinary(bytes);
@@ -422,17 +422,15 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   private Map<Object, OIdentifiable> readLinkMap(final BytesContainer bytes, final ODocument document) {
     int size = OVarIntSerializer.readAsInteger(bytes);
     ORecordLazyMap result = new ORecordLazyMap(document);
-    result.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
     while ((size--) > 0) {
       OType keyType = readOType(bytes);
       Object key = deserializeValue(bytes, keyType, document);
       OIdentifiable value = readOptimizedLink(bytes);
       if (value.equals(NULL_RECORD_ID))
-        result.put(key, null);
+        result.putInternal(key, null);
       else
-        result.put(key, value);
+        result.putInternal(key, value);
     }
-    result.setInternalStatus(ORecordElement.STATUS.LOADED);
 
     return result;
   }
@@ -440,7 +438,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   private Object readEmbeddedMap(final BytesContainer bytes, final ODocument document) {
     int size = OVarIntSerializer.readAsInteger(bytes);
     final OTrackedMap result = new OTrackedMap<Object>(document);
-    result.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
     while ((size--) > 0) {
       String key = readString(bytes);
       OType valType = readOType(bytes);
@@ -448,23 +445,34 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       if (valType != null) {
         value = deserializeValue(bytes, valType, document);
       }
-      result.put(key, value);
+      result.putInternal(key, value);
     }
-    result.setInternalStatus(ORecordElement.STATUS.LOADED);
     return result;
   }
 
-  private Collection<OIdentifiable> readLinkCollection(BytesContainer bytes, Collection<OIdentifiable> found) {
-    ((ORecordElement) found).setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+  private Collection<OIdentifiable> readLinkList(BytesContainer bytes, ODocument document) {
+    ORecordLazyList found = new ORecordLazyList(document);
     final int items = OVarIntSerializer.readAsInteger(bytes);
     for (int i = 0; i < items; i++) {
       OIdentifiable id = readOptimizedLink(bytes);
       if (id.equals(NULL_RECORD_ID))
-        found.add(null);
+        found.addInternal(null);
       else
-        found.add(id);
+        found.addInternal(id);
     }
-    ((ORecordElement) found).setInternalStatus(ORecordElement.STATUS.LOADED);
+    return found;
+  }
+
+  private Collection<OIdentifiable> readLinkSet(BytesContainer bytes, ODocument document) {
+    ORecordLazySet found = new ORecordLazySet(document);
+    final int items = OVarIntSerializer.readAsInteger(bytes);
+    for (int i = 0; i < items; i++) {
+      OIdentifiable id = readOptimizedLink(bytes);
+      if (id.equals(NULL_RECORD_ID))
+        found.addInternal(null);
+      else
+        found.addInternal(id);
+    }
     return found;
   }
 
@@ -478,18 +486,29 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     return id;
   }
 
-  private Collection<?> readEmbeddedCollection(final BytesContainer bytes, final Collection<Object> found,
-      final ODocument document) {
-    ((ORecordElement) found).setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+  private Collection<?> readEmbeddedList(final BytesContainer bytes, final ODocument document) {
+    OTrackedList<Object> found = new OTrackedList<>(document);
     final int items = OVarIntSerializer.readAsInteger(bytes);
     for (int i = 0; i < items; i++) {
       OType itemType = readOType(bytes);
       if (itemType == null)
-        found.add(null);
+        found.addInternal(null);
       else
-        found.add(deserializeValue(bytes, itemType, document));
+        found.addInternal(deserializeValue(bytes, itemType, document));
     }
-    ((ORecordElement) found).setInternalStatus(ORecordElement.STATUS.LOADED);
+    return found;
+  }
+
+  private Collection<?> readEmbeddedSet(final BytesContainer bytes, final ODocument document) {
+    OTrackedSet<Object> found = new OTrackedSet<>(document);
+    final int items = OVarIntSerializer.readAsInteger(bytes);
+    for (int i = 0; i < items; i++) {
+      OType itemType = readOType(bytes);
+      if (itemType == null)
+        found.addInternal(null);
+      else
+        found.addInternal(deserializeValue(bytes, itemType, document));
+    }
     return found;
   }
 

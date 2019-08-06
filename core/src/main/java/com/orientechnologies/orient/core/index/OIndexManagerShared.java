@@ -261,19 +261,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   public ODocument toStream() {
     internalAcquireExclusiveLock();
     try {
-      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+      final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
 
-      try {
-        final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
-
-        for (final OIndex<?> i : this.indexes.values()) {
-          indexes.add(((OIndexInternal<?>) i).updateConfiguration());
-        }
-        document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
-
-      } finally {
-        document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      for (final OIndex<?> i : this.indexes.values()) {
+        indexes.add(((OIndexInternal<?>) i).updateConfiguration());
       }
+      document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
       document.setDirty();
 
       return document;
@@ -465,20 +458,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     ODocument document = new ODocument();
     internalAcquireExclusiveLock();
     try {
-      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+      document.setTrackingChanges(false);
+      final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
 
-      try {
-        final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
-
-        for (final OIndex<?> i : this.indexes.values()) {
-          indexes.add(((OIndexInternal<?>) i).updateConfiguration().copy());
-        }
-        document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
-
-      } finally {
-        document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      for (final OIndex<?> i : this.indexes.values()) {
+        indexes.add(((OIndexInternal<?>) i).updateConfiguration().copy());
       }
-      document.setDirty();
+      document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
 
       return document;
     } finally {

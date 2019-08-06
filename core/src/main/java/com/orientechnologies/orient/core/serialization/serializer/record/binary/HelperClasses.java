@@ -345,23 +345,15 @@ public class HelperClasses {
     ORecordLazyMap result = null;
     if (!justRunThrough)
       result = new ORecordLazyMap(document);
-
-    result.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-
-      while ((size--) > 0) {
-        final String key = readString(bytes);
-        final ORecordId value = readOptimizedLink(bytes, justRunThrough);
-        if (value.equals(NULL_RECORD_ID))
-          result.put(key, null);
-        else
-          result.put(key, value);
-      }
-      return result;
-
-    } finally {
-      result.setInternalStatus(ORecordElement.STATUS.LOADED);
+    while ((size--) > 0) {
+      final String key = readString(bytes);
+      final ORecordId value = readOptimizedLink(bytes, justRunThrough);
+      if (value.equals(NULL_RECORD_ID))
+        result.putInternal(key, null);
+      else
+        result.putInternal(key, value);
     }
+    return result;
   }
 
   public static void writeByte(BytesContainer bytes, byte val) {

@@ -83,11 +83,41 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     };
   }
 
+  @Override
+  public boolean addAll(Collection<? extends T> c) {
+    boolean convert = false;
+    if (c instanceof OAutoConvertToRecord) {
+      convert = ((OAutoConvertToRecord) c).isAutoConvertToRecord();
+      ((OAutoConvertToRecord) c).setAutoConvertToRecord(false);
+    }
+    boolean modified = false;
+    for (T o : c) {
+      if (add(o))
+        modified = true;
+    }
+
+    if (c instanceof OAutoConvertToRecord) {
+      ((OAutoConvertToRecord) c).setAutoConvertToRecord(convert);
+    }
+    return modified;
+  }
+
   public boolean add(final T e) {
     if (super.add(e)) {
       addOwnerToEmbeddedDoc(e);
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
+      addNested(e);
+      return true;
+    }
+
+    return false;
+  }
+
+  public boolean addInternal(final T e) {
+    if (super.add(e)) {
+      addOwnerToEmbeddedDoc(e);
+
       addNested(e);
       return true;
     }

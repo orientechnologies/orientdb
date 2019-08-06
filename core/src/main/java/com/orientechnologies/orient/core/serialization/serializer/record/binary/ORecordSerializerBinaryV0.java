@@ -724,57 +724,43 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     ORecordLazyMap result = null;
     if (!justRunThrough)
       result = new ORecordLazyMap(document);
-
-    result.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-
-      while ((size--) > 0) {
-        final OType keyType = readOType(bytes, justRunThrough);
-        final Object key = deserializeValue(bytes, keyType, document, true, -1, justRunThrough, schema);
-        final ORecordId value = readOptimizedLink(bytes, justRunThrough);
-        if (value.equals(NULL_RECORD_ID))
-          result.put(key, null);
-        else
-          result.put(key, value);
-      }
-      return result;
-
-    } finally {
-      result.setInternalStatus(ORecordElement.STATUS.LOADED);
+    while ((size--) > 0) {
+      final OType keyType = readOType(bytes, justRunThrough);
+      final Object key = deserializeValue(bytes, keyType, document, true, -1, justRunThrough, schema);
+      final ORecordId value = readOptimizedLink(bytes, justRunThrough);
+      if (value.equals(NULL_RECORD_ID))
+        result.putInternal(key, null);
+      else
+        result.putInternal(key, value);
     }
+    return result;
+
   }
 
   protected Object readEmbeddedMap(final BytesContainer bytes, final ODocument document) {
     int size = OVarIntSerializer.readAsInteger(bytes);
     final OTrackedMap<Object> result = new OTrackedMap<>(document);
 
-    result.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-
-      int last = 0;
-      while ((size--) > 0) {
-        OType keyType = readOType(bytes, false);
-        Object key = deserializeValue(bytes, keyType, document);
-        final int valuePos = readInteger(bytes);
-        final OType type = readOType(bytes, false);
-        if (valuePos != 0) {
-          int headerCursor = bytes.offset;
-          bytes.offset = valuePos;
-          Object value = deserializeValue(bytes, type, document);
-          if (bytes.offset > last)
-            last = bytes.offset;
-          bytes.offset = headerCursor;
-          result.put(key, value);
-        } else
-          result.put(key, null);
-      }
-      if (last > bytes.offset)
-        bytes.offset = last;
-      return result;
-
-    } finally {
-      result.setInternalStatus(ORecordElement.STATUS.LOADED);
+    int last = 0;
+    while ((size--) > 0) {
+      OType keyType = readOType(bytes, false);
+      Object key = deserializeValue(bytes, keyType, document);
+      final int valuePos = readInteger(bytes);
+      final OType type = readOType(bytes, false);
+      if (valuePos != 0) {
+        int headerCursor = bytes.offset;
+        bytes.offset = valuePos;
+        Object value = deserializeValue(bytes, type, document);
+        if (bytes.offset > last)
+          last = bytes.offset;
+        bytes.offset = headerCursor;
+        result.putInternal(key, value);
+      } else
+        result.putInternal(key, null);
     }
+    if (last > bytes.offset)
+      bytes.offset = last;
+    return result;
   }
 
   protected Collection<?> readEmbeddedSet(final BytesContainer bytes, final ODocument ownerDocument) {
@@ -784,22 +770,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     if (type == OType.ANY) {
       final OTrackedSet found = new OTrackedSet<>(ownerDocument);
-
-      found.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-      try {
-
-        for (int i = 0; i < items; i++) {
-          OType itemType = readOType(bytes, false);
-          if (itemType == OType.ANY)
-            found.add(null);
-          else
-            found.add(deserializeValue(bytes, itemType, ownerDocument));
-        }
-        return found;
-
-      } finally {
-        found.setInternalStatus(ORecordElement.STATUS.LOADED);
+      for (int i = 0; i < items; i++) {
+        OType itemType = readOType(bytes, false);
+        if (itemType == OType.ANY)
+          found.addInternal(null);
+        else
+          found.addInternal(deserializeValue(bytes, itemType, ownerDocument));
       }
+      return found;
     }
     // TODO: manage case where type is known
     return null;
@@ -812,22 +790,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     if (type == OType.ANY) {
       final OTrackedList found = new OTrackedList<>(ownerDocument);
-
-      found.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-      try {
-
-        for (int i = 0; i < items; i++) {
-          OType itemType = readOType(bytes, false);
-          if (itemType == OType.ANY)
-            found.add(null);
-          else
-            found.add(deserializeValue(bytes, itemType, ownerDocument));
-        }
-        return found;
-
-      } finally {
-        found.setInternalStatus(ORecordElement.STATUS.LOADED);
+      for (int i = 0; i < items; i++) {
+        OType itemType = readOType(bytes, false);
+        if (itemType == OType.ANY)
+          found.addInternal(null);
+        else
+          found.addInternal(deserializeValue(bytes, itemType, ownerDocument));
       }
+      return found;
+
     }
     // TODO: manage case where type is known
     return null;

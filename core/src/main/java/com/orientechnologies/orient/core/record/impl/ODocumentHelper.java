@@ -143,10 +143,8 @@ public class ODocumentHelper {
 
         if (iValue instanceof Collection<?>) {
           ((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
-          return (RET) newValue;
         } else if (iValue instanceof Map) {
           ((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
-          return (RET) newValue;
         } else if (iValue instanceof String) {
           final String stringValue = (String) iValue;
 
@@ -156,14 +154,16 @@ public class ODocumentHelper {
               ((Collection<Object>) newValue).add(s);
             }
           }
-          return (RET) newValue;
         } else if (OMultiValue.isMultiValue(iValue)) {
           // GENERIC MULTI VALUE
           for (Object s : OMultiValue.getMultiValueIterable(iValue, false)) {
             ((Collection<Object>) newValue).add(s);
           }
-          return (RET) newValue;
         }
+        if (type.isLink()){
+          ((ORecordLazyMultiValue)newValue).convertLinks2Records();
+        }
+        return (RET) newValue;
       } else {
         return (RET) iValue;
       }
@@ -179,10 +179,8 @@ public class ODocumentHelper {
 
         if (iValue instanceof Collection) {
           ((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
-          return (RET) newValue;
         } else if (iValue instanceof Map) {
           ((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
-          return (RET) newValue;
         } else if (iValue instanceof String) {
           final String stringValue = (String) iValue;
 
@@ -192,14 +190,16 @@ public class ODocumentHelper {
               ((Collection<Object>) newValue).add(s);
             }
           }
-          return (RET) newValue;
         } else if (OMultiValue.isMultiValue(iValue)) {
           // GENERIC MULTI VALUE
           for (Object s : OMultiValue.getMultiValueIterable(iValue)) {
             ((Collection<Object>) newValue).add(s);
           }
-          return (RET) newValue;
         }
+        if (type.isLink()){
+          ((ORecordLazyMultiValue)newValue).convertLinks2Records();
+        }
+        return (RET) newValue;
       } else {
         return (RET) iValue;
       }

@@ -160,43 +160,28 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
 
     final OTrackedSet found = new OTrackedSet<>(ownerDocument);
 
-    found.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-
-      for (int i = 0; i < items; i++) {
-        OTypeInterface itemType = HelperClasses.readDeltaDocumentType(bytes);
-        if (itemType == OType.ANY)
-          found.add(null);
-        else
-          found.add(deserializeValue(bytes, itemType, ownerDocument));
-      }
-      return found;
-
-    } finally {
-      found.setInternalStatus(ORecordElement.STATUS.LOADED);
+    for (int i = 0; i < items; i++) {
+      OTypeInterface itemType = HelperClasses.readDeltaDocumentType(bytes);
+      if (itemType == OType.ANY)
+        found.addInternal(null);
+      else
+        found.addInternal(deserializeValue(bytes, itemType, ownerDocument));
     }
+    return found;
   }
 
   private OTrackedList deserializeEmbeddedList(final BytesContainer bytes, final ODocument ownerDocument) {
     final int items = OVarIntSerializer.readAsInteger(bytes);
 
     final OTrackedList found = new OTrackedList<>(ownerDocument);
+    for (int i = 0; i < items; i++) {
+      OTypeInterface itemType = HelperClasses.readDeltaDocumentType(bytes);
+      if (itemType == OType.ANY)
+        found.addInternal(null);
+      else
+        found.addInternal(deserializeValue(bytes, itemType, ownerDocument));
+    } return found;
 
-    found.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-
-      for (int i = 0; i < items; i++) {
-        OTypeInterface itemType = HelperClasses.readDeltaDocumentType(bytes);
-        if (itemType == OType.ANY)
-          found.add(null);
-        else
-          found.add(deserializeValue(bytes, itemType, ownerDocument));
-      }
-      return found;
-
-    } finally {
-      found.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
   }
 
   private void serializeValue(final BytesContainer bytes, Object value, OTypeInterface type) {

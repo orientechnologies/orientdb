@@ -75,11 +75,32 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     return result;
   }
 
+  public boolean addInternal(T element) {
+    final boolean result = super.add(element);
+
+    if (result) {
+      addOwnerToEmbeddedDoc(element);
+    }
+
+    addNested(element);
+    return result;
+  }
+
   @Override
   public boolean addAll(final Collection<? extends T> c) {
+    boolean convert = false;
+    if (c instanceof OAutoConvertToRecord) {
+      convert = ((OAutoConvertToRecord) c).isAutoConvertToRecord();
+      ((OAutoConvertToRecord) c).setAutoConvertToRecord(false);
+    }
     for (T o : c) {
       add(o);
     }
+
+    if (c instanceof OAutoConvertToRecord) {
+      ((OAutoConvertToRecord) c).setAutoConvertToRecord(convert);
+    }
+
     return true;
   }
 

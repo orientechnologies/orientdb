@@ -61,6 +61,25 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     return sourceRecord;
   }
 
+  public T putInternal(final Object key, final T value) {
+    if (key == null)
+      throw new IllegalArgumentException("null key not supported by embedded map");
+    boolean containsKey = containsKey(key);
+
+    T oldValue = super.put(key, value);
+
+    if (containsKey && oldValue == value)
+      return oldValue;
+
+    if (oldValue instanceof ODocument)
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+
+    addOwnerToEmbeddedDoc(value);
+
+    addNested(value);
+    return oldValue;
+  }
+
   @Override
   public T put(final Object key, final T value) {
     if (key == null)
@@ -150,8 +169,17 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
   @Override
   public void putAll(Map<?, ? extends T> m) {
+    boolean convert = false;
+    if (m instanceof OAutoConvertToRecord) {
+      convert = ((OAutoConvertToRecord) m).isAutoConvertToRecord();
+      ((OAutoConvertToRecord) m).setAutoConvertToRecord(false);
+    }
     for (Map.Entry<?, ? extends T> entry : m.entrySet()) {
       put(entry.getKey(), entry.getValue());
+    }
+
+    if (m instanceof OAutoConvertToRecord) {
+      ((OAutoConvertToRecord) m).setAutoConvertToRecord(convert);
     }
   }
 

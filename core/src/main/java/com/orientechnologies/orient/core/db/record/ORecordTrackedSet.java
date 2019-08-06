@@ -62,14 +62,30 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
 
     map.put(e, ENTRY_REMOVAL);
     setDirty();
-
-    ORecordInternal.track(sourceRecord, e);
+    if (sourceRecord != null && e != null) {
+      ORecordInternal.track(sourceRecord, e);
+    }
 
     if (e instanceof ODocument)
       ODocumentInternal.addOwner((ODocument) e, this);
 
     fireCollectionChangedEvent(
         new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
+    return true;
+  }
+
+  public boolean addInternal(final OIdentifiable e) {
+    if (map.containsKey(e))
+      return false;
+
+    map.put(e, ENTRY_REMOVAL);
+    setDirty();
+    if (sourceRecord != null && e != null) {
+      ORecordInternal.track(sourceRecord, e);
+    }
+
+    if (e instanceof ODocument)
+      ODocumentInternal.addOwner((ODocument) e, this);
     return true;
   }
 
@@ -114,10 +130,18 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
   public boolean addAll(final Collection<? extends OIdentifiable> c) {
     if (c == null || c.size() == 0)
       return false;
-
-    for (OIdentifiable o : c)
+    boolean convert = false;
+    if (c instanceof OAutoConvertToRecord) {
+      convert = ((OAutoConvertToRecord) c).isAutoConvertToRecord();
+      ((OAutoConvertToRecord) c).setAutoConvertToRecord(false);
+    }
+    for (OIdentifiable o : c) {
       add(o);
+    }
 
+    if (c instanceof OAutoConvertToRecord) {
+      ((OAutoConvertToRecord) c).setAutoConvertToRecord(convert);
+    }
     setDirty();
     return true;
   }
@@ -196,9 +220,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
   }
 
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    if (getOwner().getInternalStatus() == STATUS.UNMARSHALLING)
-      return;
-
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
         if (changeListener != null)

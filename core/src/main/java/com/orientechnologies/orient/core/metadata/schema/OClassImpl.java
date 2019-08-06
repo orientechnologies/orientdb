@@ -546,44 +546,37 @@ public abstract class OClassImpl implements OClass {
   protected abstract OPropertyImpl createPropertyInstance(ODocument p);
 
   public ODocument toStream() {
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    document.field("name", name);
+    document.field("shortName", shortName);
+    document.field("description", description);
+    document.field("defaultClusterId", defaultClusterId);
+    document.field("clusterIds", clusterIds);
+    document.field("clusterSelection", clusterSelection.getName());
+    document.field("overSize", overSize);
+    document.field("strictMode", strictMode);
+    document.field("abstract", abstractClass);
 
-    try {
-      document.field("name", name);
-      document.field("shortName", shortName);
-      document.field("description", description);
-      document.field("defaultClusterId", defaultClusterId);
-      document.field("clusterIds", clusterIds);
-      document.field("clusterSelection", clusterSelection.getName());
-      document.field("overSize", overSize);
-      document.field("strictMode", strictMode);
-      document.field("abstract", abstractClass);
-
-      final Set<ODocument> props = new LinkedHashSet<ODocument>();
-      for (final OProperty p : properties.values()) {
-        props.add(((OPropertyImpl) p).toStream());
-      }
-      document.field("properties", props, OType.EMBEDDEDSET);
-
-      if (superClasses.isEmpty()) {
-        // Single super class is deprecated!
-        document.field("superClass", null, OType.STRING);
-        document.field("superClasses", null, OType.EMBEDDEDLIST);
-      } else {
-        // Single super class is deprecated!
-        document.field("superClass", superClasses.get(0).getName(), OType.STRING);
-        List<String> superClassesNames = new ArrayList<String>();
-        for (OClassImpl superClass : superClasses) {
-          superClassesNames.add(superClass.getName());
-        }
-        document.field("superClasses", superClassesNames, OType.EMBEDDEDLIST);
-      }
-
-      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+    final Set<ODocument> props = new LinkedHashSet<ODocument>();
+    for (final OProperty p : properties.values()) {
+      props.add(((OPropertyImpl) p).toStream());
     }
+    document.field("properties", props, OType.EMBEDDEDSET);
+
+    if (superClasses.isEmpty()) {
+      // Single super class is deprecated!
+      document.field("superClass", null, OType.STRING);
+      document.field("superClasses", null, OType.EMBEDDEDLIST);
+    } else {
+      // Single super class is deprecated!
+      document.field("superClass", superClasses.get(0).getName(), OType.STRING);
+      List<String> superClassesNames = new ArrayList<String>();
+      for (OClassImpl superClass : superClasses) {
+        superClassesNames.add(superClass.getName());
+      }
+      document.field("superClasses", superClassesNames, OType.EMBEDDEDLIST);
+    }
+
+    document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
 
     return document;
   }
@@ -1668,44 +1661,38 @@ public abstract class OClassImpl implements OClass {
 
   public ODocument toNetworkStream() {
     ODocument document = new ODocument();
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    document.setTrackingChanges(false);
+    document.field("name", name);
+    document.field("shortName", shortName);
+    document.field("description", description);
+    document.field("defaultClusterId", defaultClusterId);
+    document.field("clusterIds", clusterIds);
+    document.field("clusterSelection", clusterSelection.getName());
+    document.field("overSize", overSize);
+    document.field("strictMode", strictMode);
+    document.field("abstract", abstractClass);
 
-    try {
-      document.field("name", name);
-      document.field("shortName", shortName);
-      document.field("description", description);
-      document.field("defaultClusterId", defaultClusterId);
-      document.field("clusterIds", clusterIds);
-      document.field("clusterSelection", clusterSelection.getName());
-      document.field("overSize", overSize);
-      document.field("strictMode", strictMode);
-      document.field("abstract", abstractClass);
-
-      final Set<ODocument> props = new LinkedHashSet<ODocument>();
-      for (final OProperty p : properties.values()) {
-        props.add(((OPropertyImpl) p).toNetworkStream());
-      }
-      document.field("properties", props, OType.EMBEDDEDSET);
-
-      if (superClasses.isEmpty()) {
-        // Single super class is deprecated!
-        document.field("superClass", null, OType.STRING);
-        document.field("superClasses", null, OType.EMBEDDEDLIST);
-      } else {
-        // Single super class is deprecated!
-        document.field("superClass", superClasses.get(0).getName(), OType.STRING);
-        List<String> superClassesNames = new ArrayList<String>();
-        for (OClassImpl superClass : superClasses) {
-          superClassesNames.add(superClass.getName());
-        }
-        document.field("superClasses", superClassesNames, OType.EMBEDDEDLIST);
-      }
-
-      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+    final Set<ODocument> props = new LinkedHashSet<ODocument>();
+    for (final OProperty p : properties.values()) {
+      props.add(((OPropertyImpl) p).toNetworkStream());
     }
+    document.field("properties", props, OType.EMBEDDEDSET);
+
+    if (superClasses.isEmpty()) {
+      // Single super class is deprecated!
+      document.field("superClass", null, OType.STRING);
+      document.field("superClasses", null, OType.EMBEDDEDLIST);
+    } else {
+      // Single super class is deprecated!
+      document.field("superClass", superClasses.get(0).getName(), OType.STRING);
+      List<String> superClassesNames = new ArrayList<String>();
+      for (OClassImpl superClass : superClasses) {
+        superClassesNames.add(superClass.getName());
+      }
+      document.field("superClasses", superClassesNames, OType.EMBEDDEDLIST);
+    }
+
+    document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
 
     return document;
   }
