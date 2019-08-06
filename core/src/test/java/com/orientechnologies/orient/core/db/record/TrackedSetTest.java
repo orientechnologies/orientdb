@@ -74,7 +74,7 @@ public class TrackedSetTest {
       }
     });
 
-    trackedSet.add("value1");
+    trackedSet.addInternal("value1");
 
     Assert.assertFalse(changed.value);
     Assert.assertFalse(doc.isDirty());
@@ -160,35 +160,6 @@ public class TrackedSetTest {
   }
 
   @Test
-  public void testRemoveNotificationThree() {
-    final ODocument doc = new ODocument();
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final OTrackedSet<String> trackedSet = new OTrackedSet<String>(doc);
-    trackedSet.add("value1");
-    trackedSet.add("value2");
-    trackedSet.add("value3");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    trackedSet.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
-        changed.value = true;
-        doc.setDirty();
-      }
-    });
-
-    trackedSet.remove("value2");
-    Assert.assertFalse(changed.value);
-    Assert.assertFalse(doc.isDirty());
-  }
-
-  @Test
   public void testRemoveNotificationFour() {
     final ODocument doc = new ODocument();
     ORecordInternal.unsetDirty(doc);
@@ -255,35 +226,6 @@ public class TrackedSetTest {
     Assert.assertEquals(firedEvents.size(), 0);
     Assert.assertTrue(changed.value);
     Assert.assertTrue(doc.isDirty());
-  }
-
-  @Test
-  public void testClearTwo() {
-    final ODocument doc = new ODocument();
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final OTrackedSet<String> trackedSet = new OTrackedSet<String>(doc);
-    trackedSet.add("value1");
-    trackedSet.add("value2");
-    trackedSet.add("value3");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-    trackedSet.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
-        changed.value = true;
-        doc.setDirty();
-      }
-    });
-
-    trackedSet.clear();
-
-    Assert.assertFalse(changed.value);
-    Assert.assertFalse(doc.isDirty());
   }
 
   @Test

@@ -20,10 +20,7 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 
@@ -33,7 +30,7 @@ import java.util.NavigableMap;
 import java.util.UUID;
 
 public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMultiValue,
-    OTrackedMultiValue<OIdentifiable, OIdentifiable> {
+    OTrackedMultiValue<OIdentifiable, OIdentifiable> , ORecordElement {
   void addAll(Collection<OIdentifiable> values);
 
   void add(OIdentifiable identifiable);
@@ -84,5 +81,6 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
 
   NavigableMap<OIdentifiable,Change> getChanges();
   
-  void setSize(int size);    
+  void setSize(int size);
+
 }

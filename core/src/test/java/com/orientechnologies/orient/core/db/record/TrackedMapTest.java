@@ -141,7 +141,6 @@ public class TrackedMapTest {
     ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
-    map.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
     final ORef<Boolean> changed = new ORef<Boolean>(false);
 
     map.addChangeListener(new OMultiValueChangeListener<Object, String>() {
@@ -151,7 +150,7 @@ public class TrackedMapTest {
       }
     });
 
-    map.put("key1", "value1");
+    map.putInternal("key1", "value1");
 
     Assert.assertFalse(changed.value);
     Assert.assertFalse(doc.isDirty());
@@ -215,33 +214,6 @@ public class TrackedMapTest {
   }
 
   @Test
-  public void testRemoveThree() {
-    final ODocument doc = new ODocument();
-
-    final OTrackedMap<String> map = new OTrackedMap<String>(doc);
-
-    map.put("key1", "value1");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    map.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    map.addChangeListener(new OMultiValueChangeListener<Object, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
-        changed.value = true;
-        doc.setDirty();
-      }
-    });
-
-    map.remove("key1");
-
-    Assert.assertFalse(changed.value);
-    Assert.assertFalse(doc.isDirty());
-  }
-
-  @Test
   public void testClearOne() {
     final ODocument doc = new ODocument();
 
@@ -276,35 +248,6 @@ public class TrackedMapTest {
     Assert.assertEquals(firedEvents.size(), 0);
     Assert.assertTrue(changed.value);
     Assert.assertTrue(doc.isDirty());
-  }
-
-  @Test
-  public void testClearTwo() {
-    final ODocument doc = new ODocument();
-
-    final OTrackedMap<String> trackedMap = new OTrackedMap<String>(doc);
-
-    trackedMap.put("key1", "value1");
-    trackedMap.put("key2", "value2");
-    trackedMap.put("key3", "value3");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-    trackedMap.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-
-    trackedMap.addChangeListener(new OMultiValueChangeListener<Object, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
-        changed.value = true;
-        doc.setDirty();
-      }
-    });
-
-    trackedMap.clear();
-
-    Assert.assertFalse(changed.value);
-    Assert.assertFalse(doc.isDirty());
   }
 
   @Test

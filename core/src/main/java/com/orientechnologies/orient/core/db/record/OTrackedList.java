@@ -82,7 +82,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       addOwnerToEmbeddedDoc(element);
     }
 
-    addNested(element);
     return result;
   }
 
@@ -111,6 +110,18 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     addOwnerToEmbeddedDoc(element);
     addNested(element);
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, index, element));
+  }
+
+  public T setInternal(int index, T element) {
+    final T oldValue = super.set(index, element);
+
+    if (oldValue != null && !oldValue.equals(element)) {
+      if (oldValue instanceof ODocument)
+        ODocumentInternal.removeOwner((ODocument) oldValue, this);
+
+      addOwnerToEmbeddedDoc(element);
+    }
+    return oldValue;
   }
 
   @Override
@@ -219,8 +230,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @SuppressWarnings("unchecked")
   public <RET> RET setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
-        .isContentChanged(sourceRecord))) {
+    if (sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
       sourceRecord.setDirty();
     }
     this.dirty = true;
@@ -229,7 +239,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+    if (sourceRecord != null)
       sourceRecord.setDirtyNoChanged();
   }
 
@@ -273,8 +283,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, T> event) {
-    if (status == STATUS.UNMARSHALLING)
-      return;
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<Integer, T> changeListener : changeListeners) {
         if (changeListener != null)

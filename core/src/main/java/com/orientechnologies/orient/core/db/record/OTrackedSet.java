@@ -117,11 +117,8 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   public boolean addInternal(final T e) {
     if (super.add(e)) {
       addOwnerToEmbeddedDoc(e);
-
-      addNested(e);
       return true;
     }
-
     return false;
   }
 
@@ -176,8 +173,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
-        .isContentChanged(sourceRecord))) {
+    if (sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
       sourceRecord.setDirty();
     }
     this.dirty = true;
@@ -186,7 +182,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+    if (sourceRecord != null)
       sourceRecord.setDirtyNoChanged();
   }
 
@@ -237,9 +233,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   }
 
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
-    if (status == STATUS.UNMARSHALLING)
-      return;
-
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<T, T> changeListener : changeListeners) {
         if (changeListener != null)

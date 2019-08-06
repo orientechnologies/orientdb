@@ -73,7 +73,7 @@ import java.util.*;
  * @since 1.7rc1
  */
 public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue,
-    OTrackedMultiValue<OIdentifiable, OIdentifiable>, OCollection<OIdentifiable> {
+    OTrackedMultiValue<OIdentifiable, OIdentifiable>, OCollection<OIdentifiable>, ORecordElement {
   private ORidBagDelegate delegate;
 
   private int topThreshold    = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
@@ -277,7 +277,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
           delegate.addChangeListener(listener);
 
-        owner.setDirty();
+        delegate.setDirty();
 
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
@@ -296,7 +296,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
           delegate.addChangeListener(listener);
 
-        owner.setDirty();
+        delegate.setDirty();
 
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
@@ -489,7 +489,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return delegate;
   }
 
-  @Override
   public void fireCollectionChangedEvent(OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     delegate.fireCollectionChangedEvent(event);
   }
@@ -534,8 +533,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return true;
   }
 
-
-
   //  @Override
   public void enableTracking(ORecordElement parent) {
     delegate.enableTracking(parent);
@@ -555,4 +552,18 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return delegate.getTimeLine();
   }
 
+  @Override
+  public <RET> RET setDirty() {
+    return delegate.setDirty();
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    delegate.setDirtyNoChanged();
+  }
+
+  @Override
+  public ORecordElement getOwner() {
+    return delegate.getOwner();
+  }
 }

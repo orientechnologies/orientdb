@@ -83,6 +83,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   private           List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
   private transient ORecord                                                       owner;
+  private           boolean                                                       dirty;
 
   @Override
   public void setSize(int size) {
@@ -581,7 +582,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           changes.put(identifiable, new DiffChange(-1));
           size = -1;
         } else
-          // Return immediately to prevent firing of event
+        // Return immediately to prevent firing of event
         {
           return;
         }
@@ -1053,7 +1054,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   public void enableTracking(ORecordElement parent) {
     if (changeListener == null) {
-      final OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> listener = new OSimpleMultiValueChangeListener<>(parent);
+      final OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> listener = new OSimpleMultiValueChangeListener<>(this);
       this.addChangeListener(listener);
       changeListener = listener;
     }
@@ -1064,17 +1065,14 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
+      this.dirty = false;
       removeRecordChangeListener(changeListener);
     }
   }
 
   @Override
   public boolean isModified() {
-    if (changeListener == null) {
-      return false;
-    } else {
-      return changeListener.timeLine != null;
-    }
+    return dirty;
   }
 
   @Override
@@ -1084,6 +1082,21 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     } else {
       return changeListener.timeLine;
     }
+  }
+
+  @Override
+  public <RET> RET setDirty() {
+    if (owner != null && !(owner.isDirty() && ORecordInternal.isContentChanged(owner))) {
+      owner.setDirty();
+    }
+    this.dirty = true;
+    return (RET) this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (owner != null)
+      owner.setDirtyNoChanged();
   }
 
 }

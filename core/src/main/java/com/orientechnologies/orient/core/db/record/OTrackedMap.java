@@ -76,7 +76,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
     addOwnerToEmbeddedDoc(value);
 
-    addNested(value);
     return oldValue;
   }
 
@@ -185,8 +184,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
-        .isContentChanged(sourceRecord))) {
+    if (sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
       sourceRecord.setDirty();
     }
     this.dirty = true;
@@ -195,7 +193,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+    if (sourceRecord != null)
       sourceRecord.setDirtyNoChanged();
   }
 
@@ -245,9 +243,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   }
 
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, T> event) {
-    if (status == STATUS.UNMARSHALLING)
-      return;
-
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
         if (changeListener != null)

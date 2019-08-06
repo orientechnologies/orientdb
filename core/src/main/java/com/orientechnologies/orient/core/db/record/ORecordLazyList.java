@@ -43,14 +43,13 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * to/from record/links.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings({ "serial" })
 public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMultiValue {
-  protected final byte                recordType;
-  protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType = MULTIVALUE_CONTENT_TYPE.EMPTY;
-  protected boolean autoConvertToRecord = true;
-  protected boolean ridOnly             = false;
+  protected final byte                                            recordType;
+  protected       ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType         = MULTIVALUE_CONTENT_TYPE.EMPTY;
+  protected       boolean                                         autoConvertToRecord = true;
+  protected       boolean                                         ridOnly             = false;
 
   public ORecordLazyList() {
     super(null);
@@ -335,7 +334,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     return copy;
   }
 
-
   public boolean lazyLoad(final boolean iInvalidateStream) {
     return true;
   }
@@ -363,7 +361,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     if (o != null && o instanceof ORecordId) {
       final ORecordId rid = (ORecordId) o;
 
-      status = STATUS.UNMARSHALLING;
       try {
         ORecord record = rid.getRecord();
         if (record != null) {
@@ -374,8 +371,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
       } catch (ORecordNotFoundException ignore) {
         // IGNORE THIS
-      } finally {
-        status = STATUS.LOADED;
       }
     }
   }
@@ -396,15 +391,12 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
     if (o != null && o instanceof OIdentifiable && ((OIdentifiable) o).getIdentity().isPersistent()) {
       if (o instanceof ORecord && !((ORecord) o).isDirty()) {
-        status = STATUS.UNMARSHALLING;
         try {
-          super.set(iIndex, ((ORecord) o).getIdentity());
+          super.setInternal(iIndex, ((ORecord) o).getIdentity());
           // CONVERTED
           return true;
         } catch (ORecordNotFoundException ignore) {
           // IGNORE THIS
-        } finally {
-          status = STATUS.LOADED;
         }
       } else if (o instanceof ORID)
         // ALREADY CONVERTED

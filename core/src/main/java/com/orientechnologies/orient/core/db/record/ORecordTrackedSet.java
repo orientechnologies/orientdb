@@ -164,8 +164,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
 
   @SuppressWarnings("unchecked")
   public ORecordTrackedSet setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
-        .isContentChanged(sourceRecord))) {
+    if (sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
       sourceRecord.setDirty();
     }
     this.dirty = true;
@@ -174,7 +173,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+    if (sourceRecord != null)
       sourceRecord.setDirtyNoChanged();
   }
 

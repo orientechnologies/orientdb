@@ -569,12 +569,10 @@ public class ODocument extends ORecordAbstract
     }
     entry.enableTracking(this);
 
-    if (status != STATUS.UNMARSHALLING) {
-      setDirty();
-      if (!entry.isChanged()) {
-        entry.original = oldValue;
-        entry.markChanged();
-      }
+    setDirty();
+    if (!entry.isChanged()) {
+      entry.original = oldValue;
+      entry.markChanged();
     }
   }
 
@@ -1536,12 +1534,10 @@ public class ODocument extends ORecordAbstract
     }
     entry.enableTracking(this);
 
-    if (status != STATUS.UNMARSHALLING) {
-      setDirty();
-      if (!entry.isChanged()) {
-        entry.original = oldValue;
-        entry.markChanged();
-      }
+    setDirty();
+    if (!entry.isChanged()) {
+      entry.original = oldValue;
+      entry.markChanged();
     }
 
     return this;

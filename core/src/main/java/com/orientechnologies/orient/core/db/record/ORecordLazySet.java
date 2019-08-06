@@ -113,7 +113,7 @@ public class ORecordLazySet extends ORecordTrackedSet
           map.put(iValue.getIdentity(), iValue.getRecord());
         return iValue;
       }
-    }, autoConvertToRecord && getOwner().getInternalStatus() != STATUS.MARSHALLING);
+    }, autoConvertToRecord);
   }
 
   @Override

@@ -51,6 +51,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   private transient ORecord owner;
 
   private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
+  private boolean                                                       dirty;
 
   @Override
   public void setSize(int size) {
@@ -582,7 +583,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   public void enableTracking(ORecordElement parent) {
     if (changeListener == null) {
-      final OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> listener = new OSimpleMultiValueChangeListener<>(parent);
+      final OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> listener = new OSimpleMultiValueChangeListener<>(this);
       this.addChangeListener(listener);
       changeListener = listener;
     }
@@ -593,17 +594,14 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
+      this.dirty = false;
       removeRecordChangeListener(changeListener);
     }
   }
 
   @Override
   public boolean isModified() {
-    if (changeListener == null) {
-      return false;
-    } else {
-      return changeListener.timeLine != null;
-    }
+    return dirty;
   }
 
   @Override
@@ -613,6 +611,21 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     } else {
       return changeListener.timeLine;
     }
+  }
+
+  @Override
+  public <RET> RET setDirty() {
+    if (owner != null && !(owner.isDirty() && ORecordInternal.isContentChanged(owner))) {
+      owner.setDirty();
+    }
+    this.dirty = true;
+    return (RET) this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (owner != null)
+      owner.setDirtyNoChanged();
   }
 
 }

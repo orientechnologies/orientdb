@@ -159,14 +159,8 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
     final Object value = super.get(iKey);
     if (value != null)
       if (value instanceof ORecord && !((ORecord) value).getIdentity().isNew()) {
-        status = STATUS.UNMARSHALLING;
-        try {
-          // OVERWRITE
-          super.put(iKey, ((ORecord) value).getIdentity());
-        } finally {
-          status = STATUS.LOADED;
-        }
-
+        // OVERWRITE
+        super.putInternal(iKey, ((ORecord) value).getIdentity());
         // CONVERTED
         return true;
       } else if (value instanceof ORID)
@@ -194,21 +188,16 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 
     if (value != null && value instanceof ORID) {
       final ORID rid = (ORID) value;
-      status = STATUS.UNMARSHALLING;
       try {
-        try {
-          // OVERWRITE IT
-          ORecord record = rid.getRecord();
-          if (record != null) {
-            ORecordInternal.unTrack(sourceRecord, rid);
-            ORecordInternal.track(sourceRecord, record);
-          }
-          super.put(iKey, record);
-        } catch (ORecordNotFoundException ignore) {
-          // IGNORE THIS
+        // OVERWRITE IT
+        ORecord record = rid.getRecord();
+        if (record != null) {
+          ORecordInternal.unTrack(sourceRecord, rid);
+          ORecordInternal.track(sourceRecord, record);
         }
-      } finally {
-        status = STATUS.LOADED;
+        super.putInternal(iKey, record);
+      } catch (ORecordNotFoundException ignore) {
+        // IGNORE THIS
       }
     }
   }
