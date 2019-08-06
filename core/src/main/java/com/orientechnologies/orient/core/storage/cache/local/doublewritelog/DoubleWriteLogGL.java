@@ -5,6 +5,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -29,7 +30,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   public static final String EXTENSION = ".dwl";
 
   private static final ODirectMemoryAllocator ALLOCATOR          = ODirectMemoryAllocator.instance();
-  private static final int                    DEFAULT_BLOCK_SIZE = 4 * 1024;
+  public static final  int                    DEFAULT_BLOCK_SIZE = 4 * 1024;
   private static final int                    METADATA_SIZE      = 4 * OIntegerSerializer.INT_SIZE;
 
   private Path   storagePath;
@@ -41,7 +42,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   private long        currentSegment;
 
   private       long currentLogSize;
-  private final long maxLogSize;
+  private final long maxSegSize;
 
   private int blockSize;
 
@@ -64,8 +65,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
   private final Object mutex = new Object();
 
-  public DoubleWriteLogGL(final long maxLogSize) {
-    this.maxLogSize = maxLogSize;
+  public DoubleWriteLogGL(final long maxSegSize) {
+    this.maxSegSize = maxSegSize;
   }
 
   @Override
@@ -95,6 +96,9 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       if (blockSize == -1) {
         blockSize = DEFAULT_BLOCK_SIZE;
       }
+
+      OLogManager.instance()
+          .info(this, "DWL: block size = %d bytes, maximum segment size = %d bytes", blockSize, maxSegSize);
     }
   }
 
@@ -125,7 +129,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
     synchronized (mutex) {
       assert checkpointCounter >= 0;
 
-      if (checkpointCounter == 0 && currentFile.position() >= maxLogSize) {
+      if (checkpointCounter == 0 && currentFile.position() >= maxSegSize) {
         currentFile.close();
 
         tailSegments.add(currentSegment);
@@ -195,7 +199,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       }
 
       //we can not truncate log in restore mode because we remove all restore information
-      return !restoreMode && this.currentLogSize >= maxLogSize && !tailSegments.isEmpty();
+      return !restoreMode && this.currentLogSize >= maxSegSize && !tailSegments.isEmpty();
     }
   }
 

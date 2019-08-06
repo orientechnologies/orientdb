@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.cache.local.doublewritelog;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -16,6 +17,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogGL.DEFAULT_BLOCK_SIZE;
 
 public class DoubleWriteLogGLTestIT {
   private static String buildDirectory;
@@ -691,7 +694,7 @@ public class DoubleWriteLogGLTestIT {
   @Test
   public void testTruncate() throws IOException {
     final int pageSize = 256;
-    final int maxLogSize = 4 * 1024; //single block for each segment
+    final int maxLogSize = blockSize(); //single block for each segment
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
     try {
@@ -751,7 +754,7 @@ public class DoubleWriteLogGLTestIT {
   @Test
   public void testClose() throws IOException {
     final int pageSize = 256;
-    final int maxLogSize = 4 * 1024; //single block for each segment
+    final int maxLogSize = blockSize(); //single block for each segment
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
     try {
@@ -790,7 +793,7 @@ public class DoubleWriteLogGLTestIT {
   @Test
   public void testInitAfterCrash() throws Exception {
     final int pageSize = 256;
-    final int maxLogSize = 4 * 1024; //single block for each segment
+    final int maxLogSize = blockSize(); //single block for each segment
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
     try {
@@ -833,7 +836,7 @@ public class DoubleWriteLogGLTestIT {
   @Test
   public void testCreationNewSegment() throws Exception {
     final int pageSize = 256;
-    final int maxLogSize = 4 * 1024; //single block for each segment
+    final int maxLogSize = blockSize(); //single block for each segment
 
     final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
     try {
@@ -882,5 +885,14 @@ public class DoubleWriteLogGLTestIT {
     } finally {
       bufferPool.clear();
     }
+  }
+
+  private int blockSize() {
+    int blockSize = OIOUtils.calculateBlockSize(Paths.get(buildDirectory).toAbsolutePath().toString());
+    if (blockSize == -1) {
+      blockSize = DEFAULT_BLOCK_SIZE;
+    }
+
+    return blockSize;
   }
 }
