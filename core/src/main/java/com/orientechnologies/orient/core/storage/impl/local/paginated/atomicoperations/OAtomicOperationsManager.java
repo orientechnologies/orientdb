@@ -142,7 +142,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * @return Instance of active atomic operation.
    */
   public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
-    OAtomicOperation operation = currentOperation.get();
+    OAtomicOperationBinaryTracking operation = currentOperation.get();
     if (operation != null) {
       operation.incrementCounter();
 
@@ -179,7 +179,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
+    operation = new OAtomicOperationBinaryTracking(lsn, unitId, readCache, writeCache, storage.getId());
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {
@@ -350,7 +350,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
   }
 
-  public static OAtomicOperation getCurrentOperation() {
+  public static OAtomicOperationBinaryTracking getCurrentOperation() {
     return currentOperation.get();
   }
 
@@ -362,7 +362,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * @return the LSN produced by committing the current operation or {@code null} if no commit was done.
    */
   public OLogSequenceNumber endAtomicOperation(boolean rollback) throws IOException {
-    final OAtomicOperation operation = currentOperation.get();
+    final OAtomicOperationBinaryTracking operation = currentOperation.get();
 
     if (operation == null) {
       OLogManager.instance().error(this, "There is no atomic operation active", null);
@@ -426,7 +426,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public void ensureThatComponentsUnlocked() {
-    final OAtomicOperation operation = currentOperation.get();
+    final OAtomicOperationBinaryTracking operation = currentOperation.get();
     if (operation != null) {
       final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
 
@@ -445,7 +445,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * @param operation the atomic operation to acquire the lock in.
    * @param lockName  the lock name to acquire.
    */
-  public void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String lockName) {
+  public void acquireExclusiveLockTillOperationComplete(OAtomicOperationBinaryTracking operation, String lockName) {
     if (operation.containsInLockedObjects(lockName)) {
       return;
     }
@@ -458,7 +458,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * Acquires exclusive lock in the active atomic operation running on the current thread for the {@code durableComponent}.
    */
   public void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
-    final OAtomicOperation operation = currentOperation.get();
+    final OAtomicOperationBinaryTracking operation = currentOperation.get();
     assert operation != null;
     acquireExclusiveLockTillOperationComplete(operation, durableComponent.getLockName());
   }

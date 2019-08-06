@@ -92,6 +92,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOpe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationBinaryTracking;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -6021,7 +6022,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void lockRidBags(final TreeMap<Integer, OCluster> clusters, final TreeMap<String, OTransactionIndexChanges> indexes,
       final OIndexManagerAbstract manager, ODatabaseDocumentInternal db) {
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperationBinaryTracking atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
     for (final Integer clusterId : clusters.keySet()) {
       atomicOperationsManager
