@@ -185,7 +185,16 @@ public final class OClusterPositionMapBucket extends ODurablePage {
       return;
     }
 
-    setByteValue(position, REMOVED);
+    updateStatus(index, REMOVED);
+  }
+
+  public void updateStatus(int index, byte status) {
+    int position = entryPosition(index);
+
+    final byte oldStatus = getByteValue(position);
+
+    setByteValue(position, status);
+    addPageOperation(new ClusterPositionMapBucketUpdateStatusPO(index, oldStatus, status));
   }
 
   private PositionEntry readEntry(int position) {

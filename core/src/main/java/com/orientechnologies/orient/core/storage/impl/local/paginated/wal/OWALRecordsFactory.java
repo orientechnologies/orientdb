@@ -216,6 +216,9 @@ public final class OWALRecordsFactory {
     case CLUSTER_POSITION_MAP_UPDATE_ENTRY_PO:
       walRecord = new ClusterPositionMapBucketUpdateEntryPO();
       break;
+    case CLUSTER_POSITION_MAP_UPDATE_STATUS_PO:
+      walRecord = new ClusterPositionMapBucketUpdateStatusPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
