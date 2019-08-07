@@ -1497,7 +1497,7 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
   private static UpdateBucketSearchResult addToTheRightRootBucket(final int keyIndex, final boolean splitLeaf,
       final int indexToSplit, final OCacheEntry rightBucketEntry, final ArrayList<Long> resultPath,
       final ArrayList<Integer> itemPointers) {
-    resultPath.add(rightBucketEntry.getPageIndex());
+    resultPath.add((long) rightBucketEntry.getPageIndex());
     itemPointers.add(0);
 
     if (splitLeaf) {
@@ -1516,7 +1516,7 @@ public final class OCellBTreeMultiValueV1<K> extends ODurableComponent implement
     itemPointers.add(-1);
     itemPointers.add(keyIndex);
 
-    resultPath.add(leftBucketEntry.getPageIndex());
+    resultPath.add((long) leftBucketEntry.getPageIndex());
     return new UpdateBucketSearchResult(itemPointers, resultPath, keyIndex);
   }
 

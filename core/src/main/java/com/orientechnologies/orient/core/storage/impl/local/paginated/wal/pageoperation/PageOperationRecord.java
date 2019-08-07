@@ -23,6 +23,14 @@ public abstract class PageOperationRecord extends OOperationUnitBodyRecord {
 
   public abstract void undo(OCacheEntry cacheEntry);
 
+  public void setFileId(long fileId) {
+    this.fileId = fileId;
+  }
+
+  public void setPageIndex(int pageIndex) {
+    this.pageIndex = pageIndex;
+  }
+
   public long getFileId() {
     return fileId;
   }

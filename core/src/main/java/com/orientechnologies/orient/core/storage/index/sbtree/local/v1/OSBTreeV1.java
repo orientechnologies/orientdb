@@ -1329,12 +1329,12 @@ public class OSBTreeV1<K, V> extends ODurableComponent
       return new BucketSearchResult(keyIndex, resultPath);
     }
 
-    resultPath.add(rightBucketEntry.getPageIndex());
+    resultPath.add((long) rightBucketEntry.getPageIndex());
     if (splitLeaf) {
       return new BucketSearchResult(keyIndex - indexToSplit, resultPath);
     }
 
-    resultPath.add(rightBucketEntry.getPageIndex());
+    resultPath.add((long) rightBucketEntry.getPageIndex());
     return new BucketSearchResult(keyIndex - indexToSplit - 1, resultPath);
   }
 
@@ -1390,11 +1390,11 @@ public class OSBTreeV1<K, V> extends ODurableComponent
     final ArrayList<Long> resultPath = new ArrayList<>(path.subList(0, path.size() - 1));
 
     if (comparator.compare(keyToInsert, separationKey) < 0) {
-      resultPath.add(leftBucketEntry.getPageIndex());
+      resultPath.add((long) leftBucketEntry.getPageIndex());
       return new BucketSearchResult(keyIndex, resultPath);
     }
 
-    resultPath.add(rightBucketEntry.getPageIndex());
+    resultPath.add((long) rightBucketEntry.getPageIndex());
 
     if (splitLeaf) {
       return new BucketSearchResult(keyIndex - indexToSplit, resultPath);

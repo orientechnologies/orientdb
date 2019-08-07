@@ -78,6 +78,9 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
     for (final PageOperationRecord pageOperationRecord : pageOperationRecords) {
       if (writeAheadLog != null) {
         pageOperationRecord.setOperationUnitId(operationUnitId);
+        pageOperationRecord.setFileId(cacheEntry.getFileId());
+        pageOperationRecord.setPageIndex(cacheEntry.getPageIndex());
+
         final OLogSequenceNumber lsn = writeAheadLog.log(pageOperationRecord);
         pageOperationRefs.add(lsn);
 
@@ -278,6 +281,9 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
         final List<PageOperationRecord> rollbackOperationRecords = cacheEntry.getPageOperations();
         for (final PageOperationRecord rollbackOperationRecord : rollbackOperationRecords) {
           pageOperationRecord.setOperationUnitId(operationUnitId);
+          pageOperationRecord.setFileId(cacheEntry.getFileId());
+          pageOperationRecord.setPageIndex(cacheEntry.getPageIndex());
+
           lastLSN = writeAheadLog.log(rollbackOperationRecord);
         }
       }

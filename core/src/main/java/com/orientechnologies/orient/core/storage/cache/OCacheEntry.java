@@ -40,7 +40,7 @@ public interface OCacheEntry {
 
   long getFileId();
 
-  long getPageIndex();
+  int getPageIndex();
 
   void acquireExclusiveLock();
 

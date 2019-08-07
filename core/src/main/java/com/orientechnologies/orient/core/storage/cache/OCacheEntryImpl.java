@@ -19,7 +19,7 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   private       OCachePointer dataPointer;
   private final long          fileId;
-  private final long          pageIndex;
+  private final int           pageIndex;
 
   private final AtomicInteger usagesCount = new AtomicInteger();
   private final AtomicInteger state       = new AtomicInteger();
@@ -39,7 +39,7 @@ public class OCacheEntryImpl implements OCacheEntry {
    */
   private List<PageOperationRecord> pageOperationRecords;
 
-  public OCacheEntryImpl(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
+  public OCacheEntryImpl(final long fileId, final int pageIndex, final OCachePointer dataPointer) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
 
@@ -102,7 +102,7 @@ public class OCacheEntryImpl implements OCacheEntry {
   }
 
   @Override
-  public long getPageIndex() {
+  public int getPageIndex() {
     return pageIndex;
   }
 

@@ -1079,7 +1079,7 @@ public final class OCellBTreeSingleValueV3<K> extends ODurableComponent implemen
 
     final int parentIndex = resultItemPointers.size() - 1;
     resultItemPointers.set(parentIndex, resultItemPointers.get(parentIndex) + 1);
-    resultPath.add(rightBucketEntry.getPageIndex());
+    resultPath.add((long)rightBucketEntry.getPageIndex());
 
     if (splitLeaf) {
       resultItemPointers.add(keyIndex - indexToSplit);
@@ -1171,11 +1171,11 @@ public final class OCellBTreeSingleValueV3<K> extends ODurableComponent implemen
       itemPointers.add(-1);
       itemPointers.add(keyIndex);
 
-      resultPath.add(leftBucketEntry.getPageIndex());
+      resultPath.add((long)leftBucketEntry.getPageIndex());
       return new UpdateBucketSearchResult(itemPointers, resultPath, keyIndex);
     }
 
-    resultPath.add(rightBucketEntry.getPageIndex());
+    resultPath.add((long)rightBucketEntry.getPageIndex());
     itemPointers.add(0);
 
     if (splitLeaf) {

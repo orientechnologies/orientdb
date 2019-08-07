@@ -54,7 +54,7 @@ public class OCacheEntryChanges implements OCacheEntry {
   }
 
   @Override
-  public long getPageIndex() {
+  public int getPageIndex() {
     return delegate.getPageIndex();
   }
 
