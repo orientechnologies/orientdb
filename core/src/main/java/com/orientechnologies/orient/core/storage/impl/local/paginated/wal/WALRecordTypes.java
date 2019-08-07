@@ -42,6 +42,7 @@ public final class WALRecordTypes {
   public static final byte SBTREE_BONSAI_DELETE_COMPONENT_CO = 33;
   public static final byte SBTREE_BONSAI_DELETE_CO           = 34;
 
-  public static final byte CLUSTER_POSITION_MAP_INIT_PO = 35;
-  public static final byte CLUSTER_POSITION_MAP_ADD_PO  = 36;
+  public static final byte CLUSTER_POSITION_MAP_INIT_PO     = 35;
+  public static final byte CLUSTER_POSITION_MAP_ADD_PO      = 36;
+  public static final byte CLUSTER_POSITION_MAP_ALLOCATE_PO = 37;
 }

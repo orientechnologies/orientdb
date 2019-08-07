@@ -37,8 +37,7 @@ public class ClusterPositionMapBucketAddPO extends PageOperationRecord {
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
-    final int size = bucket.getSize();
-    bucket.remove(size - 1);
+    bucket.truncateLastEntry();
   }
 
   @Override

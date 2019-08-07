@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.ClusterPositionMapBucketAddPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.ClusterPositionMapBucketAllocatePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.ClusterPositionMapBucketInitPO;
 
 import java.util.Objects;
@@ -85,7 +86,13 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
     setIntValue(SIZE_OFFSET, size + 1);
 
+    addPageOperation(new ClusterPositionMapBucketAllocatePO());
     return size;
+  }
+
+  public void truncateLastEntry() {
+    int size = getIntValue(SIZE_OFFSET);
+    setIntValue(SIZE_OFFSET, size - 1);
   }
 
   public PositionEntry get(int index) {
