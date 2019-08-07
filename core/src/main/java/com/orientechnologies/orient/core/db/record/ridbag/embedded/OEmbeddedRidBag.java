@@ -615,7 +615,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public <RET> RET setDirty() {
-    if (owner != null && !(owner.isDirty() && ORecordInternal.isContentChanged(owner))) {
+    if (owner != null && !owner.isDirty()) {
       owner.setDirty();
     }
     this.dirty = true;

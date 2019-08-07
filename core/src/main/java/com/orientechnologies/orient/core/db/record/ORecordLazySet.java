@@ -137,7 +137,6 @@ public class ORecordLazySet extends ORecordTrackedSet
       map.put(e, e);
     } else
       map.put(e, ENTRY_REMOVAL);
-    setDirty();
 
     fireCollectionChangedEvent(
         new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
@@ -209,7 +208,6 @@ public class ORecordLazySet extends ORecordTrackedSet
       if (o instanceof ORecord)
         ORecordInternal.removeIdentityChangeListener((ORecord) o, this);
 
-      setDirty();
       fireCollectionChangedEvent(
           new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o,
               null, (OIdentifiable) o));

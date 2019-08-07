@@ -1086,7 +1086,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public <RET> RET setDirty() {
-    if (owner != null && !(owner.isDirty() && ORecordInternal.isContentChanged(owner))) {
+    if (owner != null) {
       owner.setDirty();
     }
     this.dirty = true;

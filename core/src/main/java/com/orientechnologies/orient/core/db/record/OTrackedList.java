@@ -230,7 +230,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @SuppressWarnings("unchecked")
   public <RET> RET setDirty() {
-    if (sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
+    if (sourceRecord != null) {
       sourceRecord.setDirty();
     }
     this.dirty = true;

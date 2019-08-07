@@ -184,7 +184,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
-    if (sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
+    if (sourceRecord != null) {
       sourceRecord.setDirty();
     }
     this.dirty = true;

@@ -63,6 +63,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @Override
   public Iterator<T> iterator() {
     return new Iterator<T>() {
+      private T current;
       private final Iterator<T> underlying = OTrackedSet.super.iterator();
 
       @Override
@@ -72,13 +73,19 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
       @Override
       public T next() {
-        return underlying.next();
+        current = underlying.next();
+        return current;
       }
 
       @Override
       public void remove() {
         underlying.remove();
-        setDirty();
+        if (current instanceof ODocument)
+          ODocumentInternal.removeOwner((ODocument) current, OTrackedSet.this);
+
+        fireCollectionChangedEvent(
+            new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) current, null, (T) current));
+        removeNested(current);
       }
     };
   }
@@ -173,7 +180,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
-    if (sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
+    if (sourceRecord != null) {
       sourceRecord.setDirty();
     }
     this.dirty = true;

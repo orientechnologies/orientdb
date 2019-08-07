@@ -61,7 +61,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
       return false;
 
     map.put(e, ENTRY_REMOVAL);
-    setDirty();
     if (sourceRecord != null && e != null) {
       ORecordInternal.track(sourceRecord, e);
     }
@@ -100,7 +99,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
       if (o instanceof ODocument)
         ODocumentInternal.removeOwner((ODocument) o, this);
 
-      setDirty();
       fireCollectionChangedEvent(
           new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o,
               null, (OIdentifiable) o));
@@ -142,7 +140,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
     if (c instanceof OAutoConvertToRecord) {
       ((OAutoConvertToRecord) c).setAutoConvertToRecord(convert);
     }
-    setDirty();
     return true;
   }
 
@@ -151,7 +148,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
       return false;
 
     if (super.retainAll(c)) {
-      setDirty();
       return true;
     }
     return false;
@@ -164,7 +160,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
 
   @SuppressWarnings("unchecked")
   public ORecordTrackedSet setDirty() {
-    if (sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
+    if (sourceRecord != null) {
       sourceRecord.setDirty();
     }
     this.dirty = true;
