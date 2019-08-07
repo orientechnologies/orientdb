@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMapBuck
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 
-public class ClusterPositionMapBucketAllocatePO extends PageOperationRecord {
+public final class ClusterPositionMapBucketAllocatePO extends PageOperationRecord {
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);

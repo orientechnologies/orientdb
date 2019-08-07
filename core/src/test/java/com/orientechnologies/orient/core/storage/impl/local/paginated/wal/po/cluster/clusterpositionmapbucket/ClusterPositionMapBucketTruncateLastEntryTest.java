@@ -14,7 +14,7 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public class ClusterPositionMapBucketAddPOTest {
+public class ClusterPositionMapBucketTruncateLastEntryTest {
   @Test
   public void testRedo() {
     final int pageSize = 256;
@@ -29,6 +29,7 @@ public class ClusterPositionMapBucketAddPOTest {
 
       bucket.add(12, 34);
       bucket.add(34, 56);
+      bucket.add(67, 89);
 
       entry.clearPageOperations();
 
@@ -44,23 +45,26 @@ public class ClusterPositionMapBucketAddPOTest {
 
       restoredBuffer.put(originalBuffer);
 
-      bucket.add(35, 67);
+      bucket.truncateLastEntry();
+      Assert.assertEquals(2, bucket.getSize());
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof ClusterPositionMapBucketAddPO);
+      Assert.assertTrue(operations.get(0) instanceof ClusterPositionMapBucketTruncateLastEntryPO);
 
-      final ClusterPositionMapBucketAddPO pageOperation = (ClusterPositionMapBucketAddPO) operations.get(0);
-
-      pageOperation.redo(restoredCacheEntry);
+      final ClusterPositionMapBucketTruncateLastEntryPO pageOperation = (ClusterPositionMapBucketTruncateLastEntryPO) operations
+          .get(0);
 
       OClusterPositionMapBucket restoredBucket = new OClusterPositionMapBucket(restoredCacheEntry);
       Assert.assertEquals(3, restoredBucket.getSize());
 
+      pageOperation.redo(restoredCacheEntry);
+
+      Assert.assertEquals(2, restoredBucket.getSize());
+
       Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
       Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(34, 56), restoredBucket.get(1));
-      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(35, 67), restoredBucket.get(2));
 
       byteBufferPool.release(pointer);
       byteBufferPool.release(restoredPointer);
@@ -86,14 +90,17 @@ public class ClusterPositionMapBucketAddPOTest {
 
       entry.clearPageOperations();
 
-      bucket.add(35, 67);
+      bucket.truncateLastEntry();
+
+      Assert.assertEquals(1, bucket.getSize());
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof ClusterPositionMapBucketAddPO);
+      Assert.assertTrue(operations.get(0) instanceof ClusterPositionMapBucketTruncateLastEntryPO);
 
-      final ClusterPositionMapBucketAddPO pageOperation = (ClusterPositionMapBucketAddPO) operations.get(0);
+      final ClusterPositionMapBucketTruncateLastEntryPO pageOperation = (ClusterPositionMapBucketTruncateLastEntryPO) operations
+          .get(0);
 
       pageOperation.undo(entry);
 
@@ -112,7 +119,8 @@ public class ClusterPositionMapBucketAddPOTest {
   @Test
   public void testSerialization() {
     OOperationUnitId operationUnitId = OOperationUnitId.generateId();
-    ClusterPositionMapBucketAddPO operation = new ClusterPositionMapBucketAddPO(123, 45, OClusterPositionMapBucket.FILLED);
+    ClusterPositionMapBucketTruncateLastEntryPO operation = new ClusterPositionMapBucketTruncateLastEntryPO(
+        OClusterPositionMapBucket.FILLED, 123, 45);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -124,7 +132,7 @@ public class ClusterPositionMapBucketAddPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    ClusterPositionMapBucketAddPO restoredOperation = new ClusterPositionMapBucketAddPO();
+    ClusterPositionMapBucketTruncateLastEntryPO restoredOperation = new ClusterPositionMapBucketTruncateLastEntryPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());
@@ -133,6 +141,6 @@ public class ClusterPositionMapBucketAddPOTest {
 
     Assert.assertEquals(123, restoredOperation.getRecordPageIndex());
     Assert.assertEquals(45, restoredOperation.getRecordPosition());
-    Assert.assertEquals(OClusterPositionMapBucket.FILLED, restoredOperation.getStatus());
+    Assert.assertEquals(OClusterPositionMapBucket.FILLED, restoredOperation.getRecordStatus());
   }
 }

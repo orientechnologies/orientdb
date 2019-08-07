@@ -9,18 +9,22 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 
 import java.nio.ByteBuffer;
 
-public final class ClusterPositionMapBucketAddPO extends PageOperationRecord {
+public final class ClusterPositionMapBucketTruncateLastEntryPO extends PageOperationRecord {
+  private byte recordStatus;
   private int  recordPageIndex;
   private int  recordPosition;
-  private byte status;
 
-  public ClusterPositionMapBucketAddPO() {
+  public ClusterPositionMapBucketTruncateLastEntryPO() {
   }
 
-  public ClusterPositionMapBucketAddPO(int recordPageIndex, int recordPosition, byte status) {
+  public ClusterPositionMapBucketTruncateLastEntryPO(byte recordStatus, int recordPageIndex, int recordPosition) {
+    this.recordStatus = recordStatus;
     this.recordPageIndex = recordPageIndex;
     this.recordPosition = recordPosition;
-    this.status = status;
+  }
+
+  public byte getRecordStatus() {
+    return recordStatus;
   }
 
   public int getRecordPageIndex() {
@@ -31,37 +35,33 @@ public final class ClusterPositionMapBucketAddPO extends PageOperationRecord {
     return recordPosition;
   }
 
-  public byte getStatus() {
-    return status;
-  }
-
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
-    bucket.add(recordPageIndex, recordPosition, status);
-  }
-
-  @Override
-  public void undo(OCacheEntry cacheEntry) {
     final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
     bucket.truncateLastEntry();
   }
 
   @Override
+  public void undo(OCacheEntry cacheEntry) {
+    final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+    bucket.add(recordPageIndex, recordPosition, recordStatus);
+  }
+
+  @Override
   public byte getId() {
-    return WALRecordTypes.CLUSTER_POSITION_MAP_ADD_PO;
+    return WALRecordTypes.CLUSTER_POSITION_MAP_TRUNCATE_LAST_ENTRY_PO;
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 2 * OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
+    return super.serializedSize() + OByteSerializer.BYTE_SIZE + 2 * OIntegerSerializer.INT_SIZE;
   }
 
   @Override
   protected void serializeToByteBuffer(ByteBuffer buffer) {
     super.serializeToByteBuffer(buffer);
 
-    buffer.put(status);
+    buffer.put(recordStatus);
     buffer.putInt(recordPageIndex);
     buffer.putInt(recordPosition);
   }
@@ -70,7 +70,7 @@ public final class ClusterPositionMapBucketAddPO extends PageOperationRecord {
   protected void deserializeFromByteBuffer(ByteBuffer buffer) {
     super.deserializeFromByteBuffer(buffer);
 
-    status = buffer.get();
+    recordStatus = buffer.get();
     recordPageIndex = buffer.getInt();
     recordPosition = buffer.getInt();
   }

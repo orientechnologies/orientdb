@@ -26,9 +26,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.ClusterPositionMapBucketAddPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.ClusterPositionMapBucketAllocatePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.ClusterPositionMapBucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.*;
 
 import java.util.Objects;
 
@@ -61,17 +59,22 @@ public final class OClusterPositionMapBucket extends ODurablePage {
   }
 
   public int add(long pageIndex, int recordPosition) {
+    return add((int) pageIndex, recordPosition, FILLED);
+  }
+
+  public int add(int pageIndex, int recordPosition, byte status) {
     int size = getIntValue(SIZE_OFFSET);
 
     int position = entryPosition(size);
 
-    position += setByteValue(position, FILLED);
+    position += setByteValue(position, status);
     position += setLongValue(position, pageIndex);
     setIntValue(position, recordPosition);
 
     setIntValue(SIZE_OFFSET, size + 1);
 
-    addPageOperation(new ClusterPositionMapBucketAddPO((int) pageIndex, recordPosition));
+    addPageOperation(new ClusterPositionMapBucketAddPO(pageIndex, recordPosition, status));
+
     return size;
   }
 
@@ -87,12 +90,25 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     setIntValue(SIZE_OFFSET, size + 1);
 
     addPageOperation(new ClusterPositionMapBucketAllocatePO());
+
     return size;
   }
 
   public void truncateLastEntry() {
-    int size = getIntValue(SIZE_OFFSET);
+    final int size = getIntValue(SIZE_OFFSET);
+    int position = entryPosition(size - 1);
+
+    final byte status = getByteValue(position);
+    position += OByteSerializer.BYTE_SIZE;
+
+    final int pageIndex = (int) getLongValue(position);
+    position += OLongSerializer.LONG_SIZE;
+
+    final int recordPosition = getIntValue(position);
+
     setIntValue(SIZE_OFFSET, size - 1);
+
+    addPageOperation(new ClusterPositionMapBucketTruncateLastEntryPO(status, pageIndex, recordPosition));
   }
 
   public PositionEntry get(int index) {
@@ -118,14 +134,30 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     }
 
     final int position = entryPosition(index);
-    final byte flag = getByteValue(position);
+
+    byte flag = getByteValue(position);
     if (flag == ALLOCATED) {
-      setByteValue(position, FILLED);
+      flag = FILLED;
     } else if (flag != FILLED) {
       throw new OStorageException("Provided index " + index + " points to removed entry");
     }
 
-    updateEntry(position, entry);
+    updateEntry(index, (int) entry.pageIndex, entry.recordPosition, flag);
+  }
+
+  public void updateEntry(final int index, final int pageIndex, final int recordPosition, final byte status) {
+    final int position = entryPosition(index);
+
+    final byte oldStatus = getByteValue(position);
+    final int oldPageIndex = getIntValue(position + OByteSerializer.BYTE_SIZE);
+    final int oldRecordPosition = getIntValue(position + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE);
+
+    setByteValue(position, status);
+    setLongValue(position + OByteSerializer.BYTE_SIZE, pageIndex);
+    setIntValue(position + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE, recordPosition);
+
+    addPageOperation(new ClusterPositionMapBucketUpdateEntryPO(index, oldStatus, oldPageIndex, oldRecordPosition, status, pageIndex,
+        recordPosition));
   }
 
   private static int entryPosition(int index) {
@@ -154,8 +186,6 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     }
 
     setByteValue(position, REMOVED);
-
-    readEntry(position);
   }
 
   private PositionEntry readEntry(int position) {
@@ -167,15 +197,6 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     final int pagePosition = getIntValue(position);
 
     return new PositionEntry(pageIndex, pagePosition);
-  }
-
-  private void updateEntry(int position, final PositionEntry entry) {
-    position += OByteSerializer.BYTE_SIZE;
-
-    setLongValue(position, entry.pageIndex);
-    position += OLongSerializer.LONG_SIZE;
-
-    setIntValue(position, entry.recordPosition);
   }
 
   public boolean exists(final int index) {
