@@ -100,15 +100,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
           new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, key, value, oldValue));
     else
       fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
-    addNested(value);
     return oldValue;
-  }
-
-  private void addNested(T element) {
-    if (element instanceof OTrackedMultiValue) {
-      ((OTrackedMultiValue) element)
-          .addChangeListener(new ONestedValueChangeListener((ODocument) sourceRecord, this, (OTrackedMultiValue) element));
-    }
   }
 
   private void addOwnerToEmbeddedDoc(T e) {
@@ -262,7 +254,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     super.put(event.getKey(), (T) newValue);
-    addNested((T) newValue);
   }
 
   private OSimpleMultiValueChangeListener<Object, T> changeListener;

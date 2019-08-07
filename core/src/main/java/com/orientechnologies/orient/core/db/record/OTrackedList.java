@@ -71,7 +71,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
           new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, super.size() - 1, element));
     }
 
-    addNested(element);
     return result;
   }
 
@@ -108,7 +107,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     super.add(index, element);
 
     addOwnerToEmbeddedDoc(element);
-    addNested(element);
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, index, element));
   }
 
@@ -138,16 +136,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
           new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, element, oldValue));
     }
 
-    addNested(element);
-
     return oldValue;
-  }
-
-  private void addNested(T element) {
-    if (element instanceof OTrackedMultiValue) {
-      ((OTrackedMultiValue) element)
-          .addChangeListener(new ONestedValueChangeListener((ODocument) sourceRecord, this, (OTrackedMultiValue) element));
-    }
   }
 
   private void addOwnerToEmbeddedDoc(T e) {
@@ -310,7 +299,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     super.set((Integer) event.getKey(), (T) newValue);
-    addNested((T) newValue);
   }
 
   private OSimpleMultiValueChangeListener<Integer, T> changeListener;

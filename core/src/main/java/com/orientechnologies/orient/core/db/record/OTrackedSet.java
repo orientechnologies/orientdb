@@ -114,7 +114,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       addOwnerToEmbeddedDoc(e);
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
-      addNested(e);
       return true;
     }
 
@@ -127,13 +126,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       return true;
     }
     return false;
-  }
-
-  private void addNested(T element) {
-    if (element instanceof OTrackedMultiValue) {
-      ((OTrackedMultiValue) element)
-          .addChangeListener(new ONestedValueChangeListener((ODocument) sourceRecord, this, (OTrackedMultiValue) element));
-    }
   }
 
   @SuppressWarnings("unchecked")
@@ -263,7 +255,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     super.remove(event.getKey());
     super.add((T) newValue);
-    addNested((T) newValue);
   }
 
   private OSimpleMultiValueChangeListener<T, T> changeListener;
