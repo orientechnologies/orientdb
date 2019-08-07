@@ -26,7 +26,10 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.pageoperation.cluster.clusterpositionmapbucket.ClusterPositionMapBucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.ClusterPositionMapBucketAddPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.ClusterPositionMapBucketInitPO;
+
+import java.util.Objects;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -67,6 +70,7 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
     setIntValue(SIZE_OFFSET, size + 1);
 
+    addPageOperation(new ClusterPositionMapBucketAddPO((int) pageIndex, recordPosition));
     return size;
   }
 
@@ -204,5 +208,19 @@ public final class OClusterPositionMapBucket extends ODurablePage {
       return recordPosition;
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+      PositionEntry that = (PositionEntry) o;
+      return pageIndex == that.pageIndex && recordPosition == that.recordPosition;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(pageIndex, recordPosition);
+    }
   }
 }

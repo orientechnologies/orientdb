@@ -1,9 +1,9 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.pageoperation.cluster.clusterpositionmapbucket;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket;
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMapBucket;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.pageoperation.PageOperationRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 
 public final class ClusterPositionMapBucketInitPO extends PageOperationRecord {
   @Override
