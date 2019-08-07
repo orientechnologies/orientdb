@@ -39,7 +39,7 @@ import static com.orientechnologies.orient.core.storage.cluster.OClusterPage.PAG
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-public class OSBTreeBucket<K, V> extends ODurablePage {
+public final class OSBTreeBucket<K, V> extends ODurablePage {
   private static final int FREE_POINTER_OFFSET  = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET          = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int IS_LEAF_OFFSET       = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;

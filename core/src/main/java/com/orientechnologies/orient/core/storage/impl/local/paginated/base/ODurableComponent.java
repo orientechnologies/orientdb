@@ -32,8 +32,8 @@ import java.io.IOException;
 
 /**
  * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
- * crash but results of last operations in small interval before crash may be lost.
- * This class contains methods which are used to support such concepts as:
+ * crash but results of last operations in small interval before crash may be lost. This class contains methods which are used to
+ * support such concepts as:
  * <ol>
  * <li>"atomic operation" - set of operations which should be either applied together or not. It includes not only changes on
  * current data structure but on all durable data structures which are used by current one during implementation of specific
@@ -151,9 +151,9 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperation.addPage(fileId);
   }
 
-  protected void releasePageFromWrite(final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) {
+  protected void releasePageFromWrite(final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) throws IOException {
     if (atomicOperation == null) {
-      readCache.releaseFromWrite(cacheEntry, writeCache);
+      readCache.releaseFromWrite(cacheEntry, writeCache, true);
     } else {
       atomicOperation.releasePageFromWrite(cacheEntry);
     }

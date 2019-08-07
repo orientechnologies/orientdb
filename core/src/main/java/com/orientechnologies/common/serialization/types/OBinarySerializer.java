@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationBinaryTracking;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
@@ -190,7 +189,7 @@ public interface OBinarySerializer<T> {
 
   /**
    * Converts binary presentation of object to object instance taking in account changes which are done inside of atomic operation
-   * {@link OAtomicOperationBinaryTracking}.
+   * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation}.
    * Binary format of method is expected to be the same as binary format of method {@link #serializeNativeObject(Object, byte[], int, Object...)}.
    * So if we call:
    * <code>
@@ -214,7 +213,7 @@ public interface OBinarySerializer<T> {
   /**
    * Returns amount of bytes which is consumed by object which is already serialized in buffer taking in account
    * changes which are done inside of atomic operation
-   * {@link OAtomicOperationBinaryTracking}.
+   * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation}.
    * Result of call should be the same as result of call of {@link #getObjectSize(Object, Object...)} on deserialized object.
    *
    * @param buffer     Buffer which will contain serialized changes.

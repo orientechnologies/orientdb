@@ -271,7 +271,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
               if (cacheEntry == null) {
                 do {
                   if (cacheEntry != null) {
-                    expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+                    expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
                   }
 
                   cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, null);
@@ -283,7 +283,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
                 durablePage.restoreChanges(updatePageRecord.getChanges());
                 durablePage.setLsn(new OLogSequenceNumber(0, 0));
               } finally {
-                expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+                expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
               }
             }
 

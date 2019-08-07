@@ -3,7 +3,11 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.pageoperation.PageOperationRecord;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -25,11 +29,56 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   private LRUList container;
 
+  /**
+   * Protected by page lock inside disk cache
+   */
+  private boolean allocatedPage;
+
+  /**
+   * Protected by page lock inside disk cache
+   */
+  private List<PageOperationRecord> pageOperationRecords;
+
   public OCacheEntryImpl(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
 
     this.dataPointer = dataPointer;
+  }
+
+  @Override
+  public List<PageOperationRecord> getPageOperations() {
+    if (pageOperationRecords == null) {
+      return Collections.emptyList();
+    }
+
+    return pageOperationRecords;
+  }
+
+  @Override
+  public void clearPageOperations() {
+    pageOperationRecords = null;
+  }
+
+  @Override
+  public void addPageOperationRecord(PageOperationRecord pageOperationRecord) {
+    if (pageOperationRecords == null) {
+      pageOperationRecords = new ArrayList<>();
+    }
+
+    pageOperationRecords.add(pageOperationRecord);
+  }
+
+  public boolean isNewlyAllocatedPage() {
+    return allocatedPage;
+  }
+
+  public void markAllocated() {
+    allocatedPage = true;
+  }
+
+  public void clearAllocationFlag() {
+    allocatedPage = false;
   }
 
   @Override

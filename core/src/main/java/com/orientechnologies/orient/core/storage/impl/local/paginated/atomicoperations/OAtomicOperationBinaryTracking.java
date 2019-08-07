@@ -36,7 +36,7 @@ import java.util.*;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12/3/13
  */
-public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
+final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
   private final int                storageId;
   private final OLogSequenceNumber startLSN;
@@ -62,8 +62,8 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
    */
   private final Set<OBonsaiBucketPointer> deletedBonsaiPointers = new HashSet<>();
 
-  public OAtomicOperationBinaryTracking(final OLogSequenceNumber startLSN, final OOperationUnitId operationUnitId, final OReadCache readCache,
-      final OWriteCache writeCache, final int storageId) {
+  OAtomicOperationBinaryTracking(final OLogSequenceNumber startLSN, final OOperationUnitId operationUnitId,
+      final OReadCache readCache, final OWriteCache writeCache, final int storageId) {
     this.storageId = storageId;
     this.startLSN = startLSN;
     this.operationUnitId = operationUnitId;
@@ -93,8 +93,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex) {
-        final OCacheEntryChanges pageChange = changesContainer.pageChangesMap.get(pageIndex);
-        return pageChange;
+        return changesContainer.pageChangesMap.get(pageIndex);
       } else {
         return null;
       }
@@ -115,8 +114,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
             return pageChangesContainer;
           } else {
             // Need to load the page again from cache for locking reasons
-            final OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, verifyChecksum);
-            pageChangesContainer.delegate = delegate;
+            pageChangesContainer.delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, verifyChecksum);
             return pageChangesContainer;
           }
         }
@@ -129,7 +127,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
    * Stub which will be used in next version of atomic operation to log actions on the component level
    */
   @Override
-  public void addComponentOperation(final OComponentOperationRecord componentOperation) throws IOException {
+  public void addComponentOperation(final OComponentOperationRecord componentOperation) {
 
   }
 
@@ -151,8 +149,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex) {
-        final OCacheEntryChanges pageChange = changesContainer.pageChangesMap.get(pageIndex);
-        return pageChange;
+        return changesContainer.pageChangesMap.get(pageIndex);
       } else {
         return null;
       }
@@ -167,8 +164,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
             return pageChangesContainer;
           } else {
             // Need to load the page again from cache for locking reasons
-            final OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
-            pageChangesContainer.delegate = delegate;
+            pageChangesContainer.delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
             return pageChangesContainer;
           }
         }
@@ -238,8 +234,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
-    final OCacheEntry delegate = new OCacheEntryImpl(fileId, filledUpTo, new OCachePointer(null, null, fileId, filledUpTo));
-    pageChangesContainer.delegate = delegate;
+    pageChangesContainer.delegate = new OCacheEntryImpl(fileId, filledUpTo, new OCachePointer(null, null, fileId, filledUpTo));
     return pageChangesContainer;
   }
 
@@ -255,6 +250,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
   @Override
   public void releasePageFromWrite(final OCacheEntry cacheEntry) {
     final OCacheEntryChanges real = (OCacheEntryChanges) cacheEntry;
+
     if (deletedFiles.contains(cacheEntry.getFileId())) {
       throw new OStorageException("File with id " + cacheEntry.getFileId() + " is deleted.");
     }
@@ -415,7 +411,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     fileChanges.truncate = true;
   }
 
-  OLogSequenceNumber commitChanges(final OWriteAheadLog writeAheadLog) throws IOException {
+  public OLogSequenceNumber commitChanges(final OWriteAheadLog writeAheadLog) throws IOException {
     OLogSequenceNumber txEndLsn = null;
     if (writeAheadLog != null) {
       final OLogSequenceNumber startLSN = writeAheadLog.end();
@@ -488,7 +484,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
               assert filePageChanges.isNew;
               do {
                 if (cacheEntry != null) {
-                  readCache.releaseFromWrite(cacheEntry, writeCache);
+                  readCache.releaseFromWrite(cacheEntry, writeCache, true);
                 }
 
                 cacheEntry = readCache.allocateNewPage(fileId, writeCache, startLSN);
@@ -502,7 +498,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
               durablePage.restoreChanges(filePageChanges.changes);
               durablePage.setLsn(filePageChanges.getChangeLSN());
             } finally {
-              readCache.releaseFromWrite(cacheEntry, writeCache);
+              readCache.releaseFromWrite(cacheEntry, writeCache, true);
             }
           } else {
             filePageChangesIterator.remove();
@@ -536,7 +532,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
             assert filePageChanges.isNew;
             do {
               if (cacheEntry != null) {
-                readCache.releaseFromWrite(cacheEntry, writeCache);
+                readCache.releaseFromWrite(cacheEntry, writeCache, true);
               }
 
               cacheEntry = readCache.allocateNewPage(fileId, writeCache, null);
@@ -547,7 +543,7 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
             final ODurablePage durablePage = new ODurablePage(cacheEntry);
             durablePage.restoreChanges(filePageChanges.changes);
           } finally {
-            readCache.releaseFromWrite(cacheEntry, writeCache);
+            readCache.releaseFromWrite(cacheEntry, writeCache, true);
           }
         }
       }
@@ -556,11 +552,11 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     return txEndLsn;
   }
 
-  void incrementCounter() {
+  public void incrementCounter() {
     startCounter++;
   }
 
-  void decrementCounter() {
+  public void decrementCounter() {
     startCounter--;
   }
 
@@ -569,23 +565,23 @@ public final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     return startCounter;
   }
 
-  void rollback() {
+  public void rollbackInProgress() {
     rollback = true;
   }
 
-  boolean isRollback() {
+  public boolean isRollbackInProgress() {
     return rollback;
   }
 
-  void addLockedObject(final String lockedObject) {
+  public void addLockedObject(final String lockedObject) {
     lockedObjects.add(lockedObject);
   }
 
-  boolean containsInLockedObjects(final String objectToLock) {
+  public boolean containsInLockedObjects(final String objectToLock) {
     return lockedObjects.contains(objectToLock);
   }
 
-  Iterable<String> lockedObjects() {
+  public Iterable<String> lockedObjects() {
     return lockedObjects;
   }
 

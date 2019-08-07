@@ -53,7 +53,7 @@ public interface OReadCache {
 
   void releaseFromRead(OCacheEntry cacheEntry, OWriteCache writeCache);
 
-  void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache);
+  void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache, boolean changed);
 
   OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, OLogSequenceNumber startLSN) throws IOException;
 

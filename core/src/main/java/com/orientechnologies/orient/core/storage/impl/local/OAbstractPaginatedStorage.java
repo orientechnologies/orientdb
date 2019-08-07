@@ -92,7 +92,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOpe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationBinaryTracking;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -290,7 +289,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         readIv();
 
         initWalAndDiskCache(contextConfiguration);
-        atomicOperationsManager = new OAtomicOperationsManager(this);
+        atomicOperationsManager = new OAtomicOperationsManager(this,
+            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX),
+            contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_PAGE_OPERATIONS_CACHE_SIZE) * 1024 * 1024);
         transaction = new ThreadLocal<>();
 
         checkIfStorageDirty();
@@ -528,7 +529,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         initIv();
 
         initWalAndDiskCache(contextConfiguration);
-        atomicOperationsManager = new OAtomicOperationsManager(this);
+        atomicOperationsManager = new OAtomicOperationsManager(this,
+            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX),
+            contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_PAGE_OPERATIONS_CACHE_SIZE) * 1024 * 1024);
         transaction = new ThreadLocal<>();
 
         configuration = new OClusterBasedStorageConfiguration(this);
@@ -5818,7 +5821,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null) {
-              readCache.releaseFromWrite(cacheEntry, writeCache);
+              readCache.releaseFromWrite(cacheEntry, writeCache, true);
             }
 
             cacheEntry = readCache.allocateNewPage(fileId, writeCache, null);
@@ -5830,7 +5833,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           durablePage.restoreChanges(updatePageRecord.getChanges());
           durablePage.setLsn(updatePageRecord.getLsn());
         } finally {
-          readCache.releaseFromWrite(cacheEntry, writeCache);
+          readCache.releaseFromWrite(cacheEntry, writeCache, true);
         }
 
         atLeastOnePageUpdate.setValue(true);
@@ -6022,7 +6025,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void lockRidBags(final TreeMap<Integer, OCluster> clusters, final TreeMap<String, OTransactionIndexChanges> indexes,
       final OIndexManagerAbstract manager, ODatabaseDocumentInternal db) {
-    final OAtomicOperationBinaryTracking atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
     for (final Integer clusterId : clusters.keySet()) {
       atomicOperationsManager

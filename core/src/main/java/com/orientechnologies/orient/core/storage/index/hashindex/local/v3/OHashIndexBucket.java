@@ -39,7 +39,7 @@ import java.util.NoSuchElementException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 2/17/13
  */
-public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHashTable.Entry<K, V>> {
+public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHashTable.Entry<K, V>> {
   private static final int FREE_POINTER_OFFSET = NEXT_FREE_POSITION;
   private static final int DEPTH_OFFSET        = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int SIZE_OFFSET         = DEPTH_OFFSET + OByteSerializer.BYTE_SIZE;

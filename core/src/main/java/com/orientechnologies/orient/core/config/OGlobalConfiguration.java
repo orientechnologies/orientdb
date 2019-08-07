@@ -231,6 +231,13 @@ public enum OGlobalConfiguration {// ENVIRONMENT
           + "If both set maximum and minimum size of segments. Minimum size always will have priority over maximum size.",
       Integer.class, 256),
 
+  STORAGE_TRACK_PAGE_OPERATIONS_IN_TX("storage.trackOperationsInTx",
+      "If this flag switched on, transaction features will be implemented "
+          + "not by tracking of binary changes, but by tracking of operations on page level.", Boolean.class, false),
+
+  STORAGE_PAGE_OPERATIONS_CACHE_SIZE("storage.pageOperationsCacheSize", "Size of page operations cache in MB per transaction. "
+      + "If operations are cached, they are not read from WAL during rollback.", Integer.class, 16),
+
   STORAGE_CLUSTER_VERSION("storage.cluster.version", "Binary version of cluster which will be used inside of storage",
       Integer.class, OPaginatedCluster.getLatestBinaryVersion()),
 

@@ -239,27 +239,6 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
     }
   }
 
-  void resurrect(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry,
-      final OAtomicOperation atomicOperation) throws IOException {
-    final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES + 1;
-    final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
-
-    final long lastPage = getLastPage(atomicOperation);
-
-    if (pageIndex > lastPage) {
-      throw new OClusterPositionMapException(
-          "Passed in cluster position " + clusterPosition + " is outside of range of cluster-position map", this);
-    }
-
-    final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
-    try {
-      final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, false);
-      bucket.resurrect(index, entry);
-    } finally {
-      releasePageFromWrite(atomicOperation, cacheEntry);
-    }
-  }
-
   public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition, int pageCount,
       final OAtomicOperation atomicOperation) throws IOException {
     final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES + 1;

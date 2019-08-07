@@ -20,16 +20,13 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.serialization.types.*;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.pageoperation.PageOperationRecord;
 
 import java.nio.ByteBuffer;
 
@@ -56,16 +53,14 @@ public class ODurablePage {
   public static final    int MAGIC_NUMBER_OFFSET = 0;
   protected static final int CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
-  public static final int WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
-  public static final int MAX_PAGE_SIZE_BYTES = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  protected static final int WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  protected static final int WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
+  public static final    int MAX_PAGE_SIZE_BYTES = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   public static final int NEXT_FREE_POSITION = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private final OWALChanges changes;
-
-  private final OCacheEntry cacheEntry;
-
+  private final OWALChanges   changes;
+  private final OCacheEntry   cacheEntry;
   private final OCachePointer pointer;
 
   public ODurablePage(final OCacheEntry cacheEntry) {
@@ -272,6 +267,14 @@ public class ODurablePage {
     return changes;
   }
 
+  public void addPageOperation(PageOperationRecord pageOperation) {
+    cacheEntry.addPageOperationRecord(pageOperation);
+  }
+
+  public OCacheEntry getCacheEntry() {
+    return cacheEntry;
+  }
+
   public void restoreChanges(final OWALChanges changes) {
     final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
 
@@ -280,7 +283,15 @@ public class ODurablePage {
   }
 
   public void setLsn(final OLogSequenceNumber lsn) {
-    final ByteBuffer buffer = pointer.getBuffer();
+    final ByteBuffer buffer = pointer.getBufferDuplicate();
+    buffer.position(WAL_SEGMENT_OFFSET);
+
+    buffer.putLong(lsn.getSegment());
+    buffer.putLong(lsn.getPosition());
+  }
+
+  public static void setPageLSN(final OLogSequenceNumber lsn, final OCacheEntry cacheEntry) {
+    final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
     buffer.position(WAL_SEGMENT_OFFSET);
 
     buffer.putLong(lsn.getSegment());

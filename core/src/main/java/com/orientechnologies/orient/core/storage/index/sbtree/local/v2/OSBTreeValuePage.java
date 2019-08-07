@@ -44,7 +44,7 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 9/27/13
  */
-public class OSBTreeValuePage extends ODurablePage {
+public final class OSBTreeValuePage extends ODurablePage {
   private static final int FREE_LIST_NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
   private static final int WHOLE_VALUE_SIZE_OFFSET    = FREE_LIST_NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int PAGE_VALUE_SIZE_OFFSET     = WHOLE_VALUE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;

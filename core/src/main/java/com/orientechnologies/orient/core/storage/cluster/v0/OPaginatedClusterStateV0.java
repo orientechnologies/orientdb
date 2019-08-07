@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 20.08.13
  */
-public class OPaginatedClusterStateV0 extends ODurablePage {
+public final class OPaginatedClusterStateV0 extends ODurablePage {
   private static final int RECORDS_SIZE_OFFSET = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET         = RECORDS_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_LIST_OFFSET    = SIZE_OFFSET + OLongSerializer.LONG_SIZE;

@@ -281,7 +281,7 @@ public class SBTreeV2WALTestIT extends SBTreeV2TestIT {
               if (cacheEntry == null) {
                 do {
                   if (cacheEntry != null) {
-                    expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+                    expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
                   }
 
                   cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, null);
@@ -293,7 +293,7 @@ public class SBTreeV2WALTestIT extends SBTreeV2TestIT {
                 durablePage.restoreChanges(updatePageRecord.getChanges());
                 durablePage.setLsn(new OLogSequenceNumber(0, 0));
               } finally {
-                expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+                expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
               }
             }
 

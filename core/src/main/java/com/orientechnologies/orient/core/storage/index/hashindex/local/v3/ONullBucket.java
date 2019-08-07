@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/25/14
  */
-public class ONullBucket<V> extends ODurablePage {
+public final class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
   public ONullBucket(OCacheEntry cacheEntry, OBinarySerializer<V> valueSerializer, boolean isNew) {

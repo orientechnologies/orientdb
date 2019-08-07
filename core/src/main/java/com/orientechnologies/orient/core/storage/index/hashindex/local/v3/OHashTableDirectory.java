@@ -341,7 +341,8 @@ public class OHashTableDirectory extends ODurableComponent {
     return new ODirectoryPage(cacheEntry, cacheEntry);
   }
 
-  private void releasePage(final ODirectoryPage page, final boolean exclusiveLock, final OAtomicOperation atomicOperation) {
+  private void releasePage(final ODirectoryPage page, final boolean exclusiveLock, final OAtomicOperation atomicOperation)
+      throws IOException {
     final OCacheEntry cacheEntry = page.getEntry();
 
     if (exclusiveLock) {

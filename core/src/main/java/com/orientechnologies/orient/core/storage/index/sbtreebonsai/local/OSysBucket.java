@@ -41,7 +41,7 @@ import java.io.IOException;
  *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSysBucket extends OBonsaiBucketAbstract {
+public final class OSysBucket extends OBonsaiBucketAbstract {
   private static final int SYS_MAGIC_OFFSET        = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_SPACE_OFFSET       = SYS_MAGIC_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int FREE_LIST_HEAD_OFFSET   = FREE_SPACE_OFFSET + OBonsaiBucketPointer.SIZE;

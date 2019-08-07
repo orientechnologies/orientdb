@@ -37,21 +37,21 @@ import java.io.IOException;
  * <li>Next page which contains next portion of data. 8 bytes.</li>
  * <li>Serialized value presentation.</li>
  * </ol>
- * 
+ * <p>
  * !!! This functionality should be removed after new sbtree based ridbag will be implemented, because it doest not make any sense
  * to keep it, it will provide performance degradation only !!!!!!
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 9/27/13
  */
-public class OSBTreeValuePage extends ODurablePage {
+public final class OSBTreeValuePage extends ODurablePage {
   private static final int FREE_LIST_NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
   private static final int WHOLE_VALUE_SIZE_OFFSET    = FREE_LIST_NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int PAGE_VALUE_SIZE_OFFSET     = WHOLE_VALUE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int NEXT_VALUE_PAGE_OFFSET     = PAGE_VALUE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int BINARY_CONTENT_OFFSET      = NEXT_VALUE_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int  MAX_BINARY_VALUE_SIZE      = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
+  public static final int MAX_BINARY_VALUE_SIZE = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
 
   public OSBTreeValuePage(OCacheEntry cacheEntry, boolean isNew) throws IOException {
     super(cacheEntry);

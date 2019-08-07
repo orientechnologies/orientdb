@@ -96,6 +96,7 @@ public final class AsyncReadCache implements OReadCache {
 
     if (cacheEntry != null) {
       cacheEntry.acquireExclusiveLock();
+      cacheEntry.clearPageOperations();
       writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
     }
 
@@ -220,15 +221,23 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   @Override
-  public final void releaseFromWrite(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
+  public final void releaseFromWrite(final OCacheEntry cacheEntry, final OWriteCache writeCache, final boolean changed) {
     final OCachePointer cachePointer = cacheEntry.getCachePointer();
     assert cachePointer != null;
 
     final PageKey pageKey = new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex());
-    data.compute(pageKey, (page, entry) -> {
-      writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
-      return entry;//may be absent if page in pinned pages, in such case we use map as virtual lock
-    });
+    if (cacheEntry.isNewlyAllocatedPage() || changed) {
+      if (cacheEntry.isNewlyAllocatedPage()) {
+        cacheEntry.clearAllocationFlag();
+      }
+
+      data.compute(pageKey, (page, entry) -> {
+        writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
+        return entry;//may be absent if page in pinned pages, in such case we use map as virtual lock
+      });
+
+      cacheEntry.clearPageOperations();
+    }
 
     //We need to release exclusive lock from cache pointer after we put it into the write cache so both "dirty pages" of write
     //cache and write cache itself will contain actual values simultaneously. But because cache entry can be cleared after we put it back to the
@@ -254,10 +263,11 @@ public final class AsyncReadCache implements OReadCache {
     final int newPageIndex = writeCache.allocateNewPage(fileId);
     final OCacheEntry cacheEntry = addNewPagePointerToTheCache(fileId, newPageIndex);
 
-    if (cacheEntry != null) {
-      cacheEntry.acquireExclusiveLock();
-      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
-    }
+    cacheEntry.acquireExclusiveLock();
+    cacheEntry.markAllocated();
+    cacheEntry.clearPageOperations();
+
+    writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
 
     return cacheEntry;
   }
