@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageInitPO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -60,20 +61,22 @@ public final class OClusterPage extends ODurablePage {
   private static final int ENTRY_KIND_UNKNOWN = 0;
   private static final int ENTRY_KIND_DATA    = +1;
 
-  public OClusterPage(OCacheEntry cacheEntry, boolean newPage) {
+  public OClusterPage(OCacheEntry cacheEntry) {
     super(cacheEntry);
+  }
 
-    if (newPage) {
-      setLongValue(NEXT_PAGE_OFFSET, -1);
-      setLongValue(PREV_PAGE_OFFSET, -1);
+  public void init() {
+    setLongValue(NEXT_PAGE_OFFSET, -1);
+    setLongValue(PREV_PAGE_OFFSET, -1);
 
-      setIntValue(FREELIST_HEADER_OFFSET, 0);
-      setIntValue(PAGE_INDEXES_LENGTH_OFFSET, 0);
-      setIntValue(ENTRIES_COUNT_OFFSET, 0);
+    setIntValue(FREELIST_HEADER_OFFSET, 0);
+    setIntValue(PAGE_INDEXES_LENGTH_OFFSET, 0);
+    setIntValue(ENTRIES_COUNT_OFFSET, 0);
 
-      setIntValue(FREE_POSITION_OFFSET, PAGE_SIZE);
-      setIntValue(FREE_SPACE_COUNTER_OFFSET, PAGE_SIZE - PAGE_INDEXES_OFFSET);
-    }
+    setIntValue(FREE_POSITION_OFFSET, PAGE_SIZE);
+    setIntValue(FREE_SPACE_COUNTER_OFFSET, PAGE_SIZE - PAGE_INDEXES_OFFSET);
+
+    addPageOperation(new ClusterPageInitPO());
   }
 
   public int appendRecord(final int recordVersion, final byte[] record) {
@@ -152,7 +155,7 @@ public final class OClusterPage extends ODurablePage {
     return entryIndex;
   }
 
-  public  byte[]  replaceRecord(int entryIndex, byte[] record, final int recordVersion) {
+  public byte[] replaceRecord(int entryIndex, byte[] record, final int recordVersion) {
     int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
 
     if (recordVersion != -1) {
@@ -169,7 +172,6 @@ public final class OClusterPage extends ODurablePage {
 
     setIntValue(entryPointer + 2 * OIntegerSerializer.INT_SIZE, record.length);
     setBinaryValue(entryPointer + 3 * OIntegerSerializer.INT_SIZE, record);
-
 
     return oldRecord;
   }
