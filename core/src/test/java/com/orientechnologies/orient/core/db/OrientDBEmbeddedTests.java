@@ -207,6 +207,16 @@ public class OrientDBEmbeddedTests {
   }
 
   @Test
+  public void testClosePool() {
+    ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
+    assertFalse(pool.isClosed());
+
+    pool.close();
+
+    assertTrue(pool.isClosed());
+  }
+
+  @Test
   public void testOpenKeepClean() {
     OrientDB orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
     try {

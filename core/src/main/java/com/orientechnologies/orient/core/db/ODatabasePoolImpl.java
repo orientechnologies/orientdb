@@ -101,4 +101,9 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
   public OrientDBConfig getConfig() {
     return config;
   }
+
+  @Override
+  public boolean isClosed() {
+    return pool == null;
+  }
 }

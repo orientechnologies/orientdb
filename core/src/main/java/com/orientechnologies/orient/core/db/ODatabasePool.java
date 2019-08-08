@@ -146,4 +146,12 @@ public class ODatabasePool implements AutoCloseable {
     if (autoclose)
       orientDb.close();
   }
+
+  /**
+   * Check if database pool is closed
+   * @return true if database pool is closed
+   */
+  public boolean isClosed() {
+    return internal.isClosed();
+  }
 }
