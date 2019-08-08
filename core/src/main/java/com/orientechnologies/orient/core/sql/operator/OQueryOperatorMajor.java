@@ -50,7 +50,7 @@ import java.util.List;
  */
 public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
 
-  private boolean binaryEvaluate=false;
+  private boolean binaryEvaluate = false;
 
   public OQueryOperatorMajor() {
     super(">", 5, false);

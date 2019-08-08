@@ -173,10 +173,10 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       } else {
         for (Object val : map.values()) {
           Object convertedRight = iRight;
-          if(val instanceof ODocument && iRight instanceof Map){
+          if (val instanceof ODocument && iRight instanceof Map) {
             val = ((ODocument) val).toMap();
           }
-          if(val instanceof Map && iRight instanceof ODocument){
+          if (val instanceof Map && iRight instanceof ODocument) {
             convertedRight = ((ODocument) iRight).toMap();
           }
           if (OQueryOperatorEquals.equals(val, convertedRight)) {

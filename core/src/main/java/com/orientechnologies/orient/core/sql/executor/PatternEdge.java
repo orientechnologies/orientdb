@@ -20,6 +20,6 @@ public class PatternEdge {
 
   @Override
   public String toString() {
-    return "{as: "+in.alias+"}"+item.toString();
+    return "{as: " + in.alias + "}" + item.toString();
   }
 }

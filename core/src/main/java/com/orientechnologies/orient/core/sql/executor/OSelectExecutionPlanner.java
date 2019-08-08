@@ -206,7 +206,7 @@ public class OSelectExecutionPlanner {
 
     Map<String, Set<String>> clusterMap = db.getActiveClusterMap();
     Set<String> queryClusters = calculateTargetClusters(info, ctx);
-    if (queryClusters == null || queryClusters.size() == 0) {//no target
+    if (queryClusters == null || queryClusters.size() == 0) { //no target
       String localNode = db.getLocalNodeName();
       info.serverToClusters = new LinkedHashMap<>();
       info.serverToClusters.put(localNode, clusterMap.get(localNode));

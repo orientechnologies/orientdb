@@ -17,9 +17,9 @@ public class ODocumentEqualityWrapper {
   }
 
   public boolean equals(Object obj) {
-    if(obj instanceof ODocumentEqualityWrapper) {
+    if (obj instanceof ODocumentEqualityWrapper) {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      return ODocumentHelper.hasSameContentOf(internal, db, ((ODocumentEqualityWrapper)obj).internal, db, null);
+      return ODocumentHelper.hasSameContentOf(internal, db, ((ODocumentEqualityWrapper) obj).internal, db, null);
     }
     return false;
   }

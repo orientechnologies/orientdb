@@ -147,8 +147,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
       setDirty();
   }
 
-  private void removeNested(Object element){
-    if(element instanceof OTrackedMultiValue){
+  private void removeNested(Object element) {
+    if (element instanceof OTrackedMultiValue) {
       //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
     }
   }
@@ -183,7 +183,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   }
 
   public void addChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
-    if(changeListeners == null)
+    if (changeListeners == null)
       changeListeners = new LinkedList<OMultiValueChangeListener<Object, T>>();
     changeListeners.add(changeListener);
   }

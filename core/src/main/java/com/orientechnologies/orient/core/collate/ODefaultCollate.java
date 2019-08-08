@@ -45,7 +45,7 @@ public class ODefaultCollate extends ODefaultComparator implements OCollate {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj==null || obj.getClass() != this.getClass())
+    if (obj == null || obj.getClass() != this.getClass())
       return false;
 
     final ODefaultCollate that = (ODefaultCollate) obj;

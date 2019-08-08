@@ -59,7 +59,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
           context = ((Collection) value).iterator();
         } else if (value instanceof Iterator) {
           context = (Iterator) value;
-        } else if(value instanceof Iterable){
+        } else if (value instanceof Iterable) {
           context = ((Iterable) value).iterator();
         } else {
           context = Arrays.asList(value).iterator();

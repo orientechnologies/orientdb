@@ -16,12 +16,12 @@ public class OForEachExecutionPlan extends OUpdateExecutionPlan {
   }
 
   public boolean containsReturn() {
-    for (OExecutionStep step:getSteps()){
-      if(step instanceof ForEachStep){
-        return ((ForEachStep)step).containsReturn();
+    for (OExecutionStep step : getSteps()) {
+      if (step instanceof ForEachStep) {
+        return ((ForEachStep) step).containsReturn();
       }
-      if(step instanceof WhileStep){
-        return ((WhileStep)step).containsReturn();
+      if (step instanceof WhileStep) {
+        return ((WhileStep) step).containsReturn();
       }
     }
 

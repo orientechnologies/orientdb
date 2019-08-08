@@ -201,7 +201,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     return aggregatedResult;
   }
 
-  public boolean isDistributedExecutingOnLocalNodeFirst(){
+  public boolean isDistributedExecutingOnLocalNodeFirst() {
     return true;
   }
 }

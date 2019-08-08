@@ -298,7 +298,7 @@ public class OrientDB implements AutoCloseable {
    *
    * @return boolean true if is open false otherwise.
    */
-  public boolean isOpen(){
+  public boolean isOpen() {
     return this.internal.isOpen();
   }
 

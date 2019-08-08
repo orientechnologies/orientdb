@@ -157,7 +157,9 @@ public class ORole extends OIdentity implements OSecurityRole {
       if (storedRules != null) {
         for (ODocument ruleDoc : storedRules) {
           final ORule.ResourceGeneric resourceGeneric = ORule.ResourceGeneric.valueOf(ruleDoc.<String>field("resourceGeneric"));
-          if(resourceGeneric==null) continue;
+          if (resourceGeneric == null) {
+            continue;
+          }
           final Map<String, Byte> specificResources = ruleDoc.field("specificResources");
           final Byte access = ruleDoc.field("access");
 

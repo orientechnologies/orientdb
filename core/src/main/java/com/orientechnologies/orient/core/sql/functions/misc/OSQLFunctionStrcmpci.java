@@ -23,11 +23,11 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  *
  * @author mdjurovi
  */
-public class OSQLFunctionStrcmpci extends OSQLFunctionAbstract{
+public class OSQLFunctionStrcmpci extends OSQLFunctionAbstract {
 
   public static final String NAME = "strcmpci";
-  
-  public OSQLFunctionStrcmpci(){
+
+  public OSQLFunctionStrcmpci() {
     super(NAME, 2, 2);
   }
   
@@ -35,29 +35,29 @@ public class OSQLFunctionStrcmpci extends OSQLFunctionAbstract{
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams, OCommandContext iContext) {
     String s1 = null;
     String s2 = null;
-    
-    if (iParams[0] != null && iParams[0] instanceof String){
-      s1 = (String)iParams[0];
-    }    
-    
-    if (iParams[1] != null && iParams[1] instanceof String){
-      s2 = (String)iParams[1];
+
+    if (iParams[0] != null && iParams[0] instanceof String) {
+      s1 = (String) iParams[0];
     }
-    
-    if (s1 == null && s2 == null){
+
+    if (iParams[1] != null && iParams[1] instanceof String) {
+      s2 = (String) iParams[1];
+    }
+
+    if (s1 == null && s2 == null) {
       return 0;
     }
-    
-    if (s1 == null){
+
+    if (s1 == null) {
       return -1;
     }
-    
-    if (s2 == null){
+
+    if (s2 == null) {
       return 1;
     }
-    
+
     int res = s1.compareToIgnoreCase(s2);
-    if (res != 0){
+    if (res != 0) {
       //normalize res to -1, 0, 1
       res = res / Math.abs(res);
     }

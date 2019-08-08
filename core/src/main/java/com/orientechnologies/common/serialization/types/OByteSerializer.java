@@ -79,7 +79,7 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     serializeLiteral(object, stream, startPosition);
   }
   
-  public void serializeRawBytes(final byte[] bytesToWrite, final byte[] stream, int startPosition){    
+  public void serializeRawBytes(final byte[] bytesToWrite, final byte[] stream, int startPosition) {
     System.arraycopy(bytesToWrite, 0, stream, startPosition, bytesToWrite.length);
   }
 

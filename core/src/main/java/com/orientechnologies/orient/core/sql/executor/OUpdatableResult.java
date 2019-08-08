@@ -25,7 +25,7 @@ public class OUpdatableResult extends OResultInternal {
     return element.getPropertyNames();
   }
 
-  public boolean hasProperty(String propName){
+  public boolean hasProperty(String propName) {
     if (element != null && ((ODocument) element.getRecord()).containsField(propName)) {
       return true;
     }

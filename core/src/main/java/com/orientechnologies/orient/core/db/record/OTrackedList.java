@@ -139,8 +139,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     return oldValue;
   }
 
-  private void removeNested(Object element){
-    if(element instanceof OTrackedMultiValue){
+  private void removeNested(Object element) {
+    if (element instanceof OTrackedMultiValue) {
 //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
     }
   }
@@ -168,7 +168,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   public void clear() {
     final List<T> origValues;
 
-    if (changeListeners!=null && changeListeners.isEmpty())
+    if (changeListeners != null && changeListeners.isEmpty())
       origValues = null;
     else
       origValues = new ArrayList<T>(this);
@@ -215,14 +215,14 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   public void addChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
-    if(changeListeners==null){
+    if (changeListeners == null) {
       changeListeners = new LinkedList<OMultiValueChangeListener<Integer, T>>();
     }
     changeListeners.add(changeListener);
   }
 
   public void removeRecordChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
-    if(changeListeners!=null) {
+    if (changeListeners != null) {
       changeListeners.remove(changeListener);
     }
   }

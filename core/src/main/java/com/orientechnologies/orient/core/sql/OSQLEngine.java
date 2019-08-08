@@ -84,7 +84,7 @@ public class OSQLEngine {
     }
   }
 
-  public static OOrBlock parsePredicate(String predicate) throws OCommandSQLParsingException{
+  public static OOrBlock parsePredicate(String predicate) throws OCommandSQLParsingException {
     final InputStream is = new ByteArrayInputStream(predicate.getBytes());
     try {
       final OrientSql osql = new OrientSql(is);
@@ -95,7 +95,7 @@ public class OSQLEngine {
     }
   }
 
-  public static OSecurityResourceSegment parseSecurityResource(String exp){
+  public static OSecurityResourceSegment parseSecurityResource(String exp) {
     final InputStream is = new ByteArrayInputStream(exp.getBytes());
     try {
       final OrientSql osql = new OrientSql(is);

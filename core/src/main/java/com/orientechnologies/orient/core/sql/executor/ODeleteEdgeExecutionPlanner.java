@@ -35,7 +35,7 @@ public class ODeleteEdgeExecutionPlanner {
     this.statement = stm2;
   }
 
-  private void init(){
+  private void init() {
 
     this.className = this.statement.getClassName() == null ? null : this.statement.getClassName().copy();
     this.targetClusterName = this.statement.getTargetClusterName() == null ? null : this.statement.getTargetClusterName().copy();

@@ -58,7 +58,7 @@ public class OUpdateExecutionPlanner {
     OUpdateExecutionPlan result = new OUpdateExecutionPlan(ctx);
 
     handleTarget(result, ctx, this.target, this.whereClause, this.timeout, enableProfiling);
-    if(updateEdge){
+    if (updateEdge) {
       result.chain(new CheckRecordTypeStep(ctx, "E", enableProfiling));
     }
     handleUpsert(result, ctx, this.target, this.whereClause, this.upsert, enableProfiling);
@@ -151,8 +151,8 @@ public class OUpdateExecutionPlanner {
         switch (op.getType()) {
         case OUpdateOperations.TYPE_SET:
           plan.chain(new UpdateSetStep(op.getUpdateItems(), ctx, profilingEnabled));
-          if(updateEdge){
-            plan.chain(new UpdateEdgePointersStep( ctx, profilingEnabled));
+          if (updateEdge) {
+            plan.chain(new UpdateEdgePointersStep(ctx, profilingEnabled));
           }
           break;
         case OUpdateOperations.TYPE_REMOVE:

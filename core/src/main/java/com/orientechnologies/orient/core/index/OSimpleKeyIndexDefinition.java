@@ -165,10 +165,11 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       setCollate(collate);
     } else {
       final List<String> collatesNames = document.field("collates");
-      if( collatesNames != null ) {
+      if (collatesNames != null) {
         OCompositeCollate collates = new OCompositeCollate(this);
-        for (String collateName : collatesNames)
+        for (String collateName : collatesNames) {
           collates.addCollate(OSQLEngine.getCollate(collateName));
+        }
         this.collate = collates;
       }
     }

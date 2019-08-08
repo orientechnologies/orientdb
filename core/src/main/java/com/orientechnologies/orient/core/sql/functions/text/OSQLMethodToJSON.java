@@ -53,7 +53,7 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
 
     final String format = iParams.length > 0 ? ((String) iParams[0]).replace("\"", "") : null;
 
-    if(iThis instanceof OResult){
+    if (iThis instanceof OResult) {
       iThis = ((OResult) iThis).toElement();
     }
     if (iThis instanceof ORecord) {
