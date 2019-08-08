@@ -68,7 +68,7 @@ public class ClusterPageTest {
 
     int recordVersion = 1;
 
-    int position = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+    int position = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, -1, Collections.emptySet());
     Assert.assertEquals(localPage.getRecordsCount(), 1);
     Assert.assertEquals(localPage.getRecordSize(0), 11);
     Assert.assertEquals(position, 0);
@@ -127,9 +127,10 @@ public class ClusterPageTest {
     int recordVersion = 0;
     recordVersion++;
 
-    int positionOne = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
-    int positionTwo = localPage.appendRecord(recordVersion, new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
-    int positionThree = localPage.appendRecord(recordVersion, new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 });
+    int positionOne = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, -1, Collections.emptySet());
+    int positionTwo = localPage.appendRecord(recordVersion, new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 }, -1, Collections.emptySet());
+    int positionThree = localPage.appendRecord(recordVersion, new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 }, -1,
+        Collections.emptySet());
 
     Assert.assertEquals(localPage.getRecordsCount(), 3);
     Assert.assertEquals(positionOne, 0);
@@ -204,7 +205,7 @@ public class ClusterPageTest {
     byte counter = 0;
     int freeSpace = localPage.getFreeSpace();
     do {
-      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter });
+      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter }, -1, Collections.emptySet());
       if (lastPosition >= 0) {
         Assert.assertEquals(lastPosition, positions.size());
         positions.add(lastPosition);
@@ -271,13 +272,14 @@ public class ClusterPageTest {
     recordVersion++;
 
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
-    int position = localPage.appendRecord(recordVersion, record);
+    int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
 
     Assert.assertArrayEquals(record, localPage.deleteRecord(position));
 
     int newRecordVersion = 0;
 
-    Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
+    Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, -1,
+        Collections.emptySet()), position);
 
     int recordSize = localPage.getRecordSize(position);
     Assert.assertEquals(recordSize, 11);
@@ -330,7 +332,7 @@ public class ClusterPageTest {
     recordVersion++;
 
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
-    int position = localPage.appendRecord(recordVersion, record);
+    int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
 
     Assert.assertArrayEquals(record, localPage.deleteRecord(position));
 
@@ -340,7 +342,8 @@ public class ClusterPageTest {
     newRecordVersion++;
     newRecordVersion++;
 
-    Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
+    Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, -1,
+        Collections.emptySet()), position);
 
     int recordSize = localPage.getRecordSize(position);
     Assert.assertEquals(recordSize, 11);
@@ -393,11 +396,12 @@ public class ClusterPageTest {
     recordVersion++;
 
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
-    int position = localPage.appendRecord(recordVersion, record);
+    int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
 
     Assert.assertArrayEquals(record, localPage.deleteRecord(position));
 
-    Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
+    Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, -1,
+        Collections.emptySet()), position);
 
     int recordSize = localPage.getRecordSize(position);
     Assert.assertEquals(recordSize, 11);
@@ -449,11 +453,12 @@ public class ClusterPageTest {
     recordVersion++;
 
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
-    int position = localPage.appendRecord(recordVersion, record);
+    int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
 
     Assert.assertArrayEquals(record, localPage.deleteRecord(position));
 
-    Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
+    Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, -1,
+        Collections.emptySet()), position);
 
     int recordSize = localPage.getRecordSize(position);
     Assert.assertEquals(recordSize, 11);
@@ -509,11 +514,11 @@ public class ClusterPageTest {
     final byte[] recordThree = new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 };
     final byte[] recordFour = new byte[] { 4, 2, 3, 4, 5, 6, 5, 4, 3, 2, 4 };
 
-    int positionOne = localPage.appendRecord(recordVersion, recordOne);
-    int positionTwo = localPage.appendRecord(recordVersion, recordTwo);
+    int positionOne = localPage.appendRecord(recordVersion, recordOne, -1, Collections.emptySet());
+    int positionTwo = localPage.appendRecord(recordVersion, recordTwo, -1, Collections.emptySet());
 
-    int positionThree = localPage.appendRecord(recordVersion, recordThree);
-    int positionFour = localPage.appendRecord(recordVersion, recordFour);
+    int positionThree = localPage.appendRecord(recordVersion, recordThree, -1, Collections.emptySet());
+    int positionFour = localPage.appendRecord(recordVersion, recordFour, -1, Collections.emptySet());
 
     Assert.assertEquals(localPage.getRecordsCount(), 4);
     Assert.assertEquals(positionOne, 0);
@@ -611,7 +616,7 @@ public class ClusterPageTest {
     recordVersion++;
 
     do {
-      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter });
+      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter }, -1, Collections.emptySet());
       if (lastPosition >= 0) {
         Assert.assertEquals(lastPosition, positionCounter.size());
         positionCounter.put(lastPosition, counter);
@@ -633,7 +638,7 @@ public class ClusterPageTest {
 
     freeSpace = localPage.getFreeSpace();
     do {
-      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter });
+      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter }, -1, Collections.emptySet());
       if (lastPosition >= 0) {
         positionCounter.put(lastPosition, counter);
         counter++;
@@ -710,7 +715,7 @@ public class ClusterPageTest {
 
     mersenneTwisterFast.nextBytes(bigChunk);
 
-    int position = localPage.appendRecord(recordVersion, bigChunk);
+    int position = localPage.appendRecord(recordVersion, bigChunk, -1, Collections.emptySet());
     Assert.assertEquals(position, 0);
     Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
@@ -722,7 +727,7 @@ public class ClusterPageTest {
     int lastPosition;
     byte counter = 0;
     do {
-      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter });
+      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter }, -1, Collections.emptySet());
       if (lastPosition >= 0) {
         Assert.assertEquals(lastPosition, positionCounter.size());
         positionCounter.put(lastPosition, counter);
@@ -797,7 +802,7 @@ public class ClusterPageTest {
     recordVersion++;
 
     do {
-      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter });
+      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter }, -1, Collections.emptySet());
       if (lastPosition >= 0) {
         Assert.assertEquals(lastPosition, positions.size());
         positions.add(lastPosition);
@@ -890,7 +895,7 @@ public class ClusterPageTest {
     recordVersion++;
 
     do {
-      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter });
+      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter }, -1, Collections.emptySet());
       if (lastPosition >= 0) {
         Assert.assertEquals(lastPosition, positions.size());
         positions.add(lastPosition);
@@ -1057,7 +1062,7 @@ public class ClusterPageTest {
     recordVersion++;
 
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
-    int index = localPage.appendRecord(recordVersion, record);
+    int index = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
     int freeSpace = localPage.getFreeSpace();
 
     int newRecordVersion = 0;
@@ -1118,7 +1123,7 @@ public class ClusterPageTest {
     recordVersion++;
 
     byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
-    int index = localPage.appendRecord(recordVersion, record);
+    int index = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
     int freeSpace = localPage.getFreeSpace();
 
     byte[] oldRecord = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 }, -1);
@@ -1175,7 +1180,7 @@ public class ClusterPageTest {
     recordVersion++;
 
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
-    int index = localPage.appendRecord(recordVersion, record);
+    int index = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
     int freeSpace = localPage.getFreeSpace();
 
     int newRecordVersion = 0;

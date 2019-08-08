@@ -49,5 +49,6 @@ public final class WALRecordTypes {
   public static final byte CLUSTER_POSITION_MAP_UPDATE_ENTRY_PO        = 40;
   public static final byte CLUSTER_POSITION_MAP_UPDATE_STATUS_PO       = 41;
 
-  public static final byte CLUSTER_PAGE_INIT_PO = 42;
+  public static final byte CLUSTER_PAGE_INIT_PO          = 42;
+  public static final byte CLUSTER_PAGE_APPEND_RECORD_PO = 43;
 }

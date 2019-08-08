@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -61,6 +62,8 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
    * inside of the same transaction.
    */
   private final Set<OBonsaiBucketPointer> deletedBonsaiPointers = new HashSet<>();
+
+  private final Map<ORawPair<Integer, Integer>, Set<Integer>> deletedRecordPositions = new HashMap<>();
 
   OAtomicOperationBinaryTracking(final OLogSequenceNumber startLSN, final OOperationUnitId operationUnitId,
       final OReadCache readCache, final OWriteCache writeCache, final int storageId) {
@@ -632,5 +635,17 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     }
 
     return fileId;
+  }
+
+  @Override
+  public void addDeletedRecordPosition(int clusterId, int pageIndex, int recordPosition) {
+    final ORawPair<Integer, Integer> key = new ORawPair<>(clusterId, pageIndex);
+    final Set<Integer> recordPositions = deletedRecordPositions.computeIfAbsent(key, k -> new HashSet<>());
+    recordPositions.add(recordPosition);
+  }
+
+  @Override
+  public Set<Integer> getBookedRecordPositions(int clusterId, int pageIndex) {
+    return deletedRecordPositions.getOrDefault(new ORawPair<>(clusterId, pageIndex), Collections.emptySet());
   }
 }

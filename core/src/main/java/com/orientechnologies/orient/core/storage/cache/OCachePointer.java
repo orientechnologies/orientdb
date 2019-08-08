@@ -210,7 +210,10 @@ public final class OCachePointer {
       return null;
     }
 
-    return pointer.getNativeByteBuffer().duplicate().order(ByteOrder.nativeOrder());
+    final ByteBuffer duplicate = pointer.getNativeByteBuffer().duplicate().order(ByteOrder.nativeOrder());
+    duplicate.rewind();
+
+    return duplicate;
   }
 
   public void acquireExclusiveLock() {

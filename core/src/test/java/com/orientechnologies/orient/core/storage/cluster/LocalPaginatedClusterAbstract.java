@@ -579,7 +579,7 @@ public abstract class LocalPaginatedClusterAbstract {
   public void testUpdateManySmallRecords() throws IOException {
     final int records = 10000;
 
-    long seed = System.currentTimeMillis();
+    long seed = 1565251803798L; //System.currentTimeMillis();
     Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManySmallRecords seed : " + seed);
 
@@ -604,6 +604,7 @@ public abstract class LocalPaginatedClusterAbstract {
     newRecordVersion = recordVersion;
     newRecordVersion++;
 
+    int counter = 0;
     for (long clusterPosition : positionRecordMap.keySet()) {
       if (mersenneTwisterFast.nextBoolean()) {
         int recordSize = mersenneTwisterFast.nextInt(OClusterPage.MAX_RECORD_SIZE - 1) + 1;
@@ -615,6 +616,7 @@ public abstract class LocalPaginatedClusterAbstract {
         positionRecordMap.put(clusterPosition, smallRecord);
         updatedPositions.add(clusterPosition);
       }
+      counter++;
     }
 
     for (Map.Entry<Long, byte[]> entry : positionRecordMap.entrySet()) {

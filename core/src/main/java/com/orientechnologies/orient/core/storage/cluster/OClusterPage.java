@@ -25,10 +25,14 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageAppendRecordPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageInitPO;
+
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -79,7 +83,8 @@ public final class OClusterPage extends ODurablePage {
     addPageOperation(new ClusterPageInitPO());
   }
 
-  public int appendRecord(final int recordVersion, final byte[] record) {
+  public int appendRecord(final int recordVersion, final byte[] record, final int requestedPosition,
+      final Set<Integer> bookedRecordPositions) {
     int freePosition = getIntValue(FREE_POSITION_OFFSET);
     final int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
 
@@ -88,52 +93,23 @@ public final class OClusterPage extends ODurablePage {
     int entrySize = record.length + 3 * OIntegerSerializer.INT_SIZE;
     int freeListHeader = getIntValue(FREELIST_HEADER_OFFSET);
 
-    if (!checkSpace(entrySize, freeListHeader)) {
+    if (!checkSpace(entrySize)) {
       return -1;
     }
 
-    if (freeListHeader > 0) {
-      if (freePosition - entrySize < lastEntryIndexPosition) {
-        doDefragmentation();
-      }
-    } else {
-      if (freePosition - entrySize < lastEntryIndexPosition + INDEX_ITEM_SIZE) {
-        doDefragmentation();
-      }
+    if (freePosition - entrySize < lastEntryIndexPosition + INDEX_ITEM_SIZE) {
+      doDefragmentation();
     }
 
     freePosition = getIntValue(FREE_POSITION_OFFSET);
     freePosition -= entrySize;
     int entryIndex;
 
-    if (freeListHeader > 0) {
-      entryIndex = freeListHeader - 1;
-
-      final int tombstonePointer = getIntValue(PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * entryIndex);
-
-      int nextEntryPosition = tombstonePointer & POSITION_MASK;
-      if (nextEntryPosition > 0) {
-        setIntValue(FREELIST_HEADER_OFFSET, nextEntryPosition);
-      } else {
-        setIntValue(FREELIST_HEADER_OFFSET, 0);
-      }
-
-      setIntValue(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize);
-
-      int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
-      setIntValue(entryIndexPosition, freePosition);
-
-      setIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
+    if (requestedPosition < 0) {
+      entryIndex = findFirstEmptySlot(recordVersion, freePosition, indexesLength, entrySize, freeListHeader, bookedRecordPositions);
     } else {
-      entryIndex = indexesLength;
-
-      setIntValue(PAGE_INDEXES_LENGTH_OFFSET, indexesLength + 1);
-      setIntValue(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize - INDEX_ITEM_SIZE);
-
-      int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
-      setIntValue(entryIndexPosition, freePosition);
-
-      setIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
+      insertIntoRequestedSlot(recordVersion, freePosition, entrySize, requestedPosition, freeListHeader);
+      entryIndex = requestedPosition;
     }
 
     int entryPosition = freePosition;
@@ -152,6 +128,133 @@ public final class OClusterPage extends ODurablePage {
 
     incrementEntriesCount();
 
+    if (entryIndex >= 0) {
+      addPageOperation(new ClusterPageAppendRecordPO(recordVersion, record, requestedPosition, entryIndex));
+    }
+
+    return entryIndex;
+  }
+
+  private void insertIntoRequestedSlot(final int recordVersion, final int freePosition, final int entrySize,
+      final int requestedPosition, final int freeListHeader) {
+    int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
+    //1. requested position is first free slot inside of list of pointers
+    if (indexesLength == requestedPosition) {
+      setIntValue(PAGE_INDEXES_LENGTH_OFFSET, indexesLength + 1);
+      setIntValue(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize - INDEX_ITEM_SIZE);
+
+      int entryIndexPosition = PAGE_INDEXES_OFFSET + requestedPosition * INDEX_ITEM_SIZE;
+      setIntValue(entryIndexPosition, freePosition);
+
+      setIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
+    } else if (indexesLength > requestedPosition) {
+      //2 requested position inside of list of pointers
+      final int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * requestedPosition;
+      int entryPointer = getIntValue(entryIndexPosition);
+      //2.1 requested position already occupied by other record, should not really happen
+      if ((entryPointer & MARKED_AS_DELETED_FLAG) == 0) {
+        throw new OStorageException(
+            "Can not insert record inside of already occupied slot, record position = " + requestedPosition);
+      }
+
+      //2.2 requested position is already removed, read free list of removed pointers till we will not find one which we need
+      //remove
+      int prevFreeListItem = -1;
+      int currentFreeListItem = freeListHeader - 1;
+      while (true) {
+        final int tombstonePointer = getIntValue(PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * currentFreeListItem);
+        final int nextEntryPosition = (tombstonePointer & POSITION_MASK);
+
+        if (currentFreeListItem == requestedPosition) {
+          if (prevFreeListItem >= 0) {
+            setIntValue(PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * prevFreeListItem, tombstonePointer);
+          } else {
+            setIntValue(FREELIST_HEADER_OFFSET, nextEntryPosition);
+          }
+
+          break;
+        }
+
+        if (nextEntryPosition > 0) {
+          prevFreeListItem = currentFreeListItem;
+          currentFreeListItem = nextEntryPosition - 1;
+        } else {
+          throw new OStorageException(
+              "Record position " + requestedPosition + " marked as deleted but can not be found in the list of deleted records");
+        }
+      }
+
+      //insert record into acquired slot
+      setIntValue(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize);
+      setIntValue(entryIndexPosition, freePosition);
+
+      setIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
+    } else {
+      throw new OStorageException(
+          "Can not insert record out side of list of already inserted records, record position = " + requestedPosition);
+    }
+  }
+
+  private int findFirstEmptySlot(int recordVersion, int freePosition, int indexesLength, int entrySize, int freeListHeader,
+      Set<Integer> bookedRecordPositions) {
+    int entryIndex;
+    if (freeListHeader > 0) {
+      //iterate over free list of times to find first not booked position to reuse
+      entryIndex = -1;
+
+      int prevFreeListItem = -1;
+      int currentFreeListItem = freeListHeader - 1;
+      while (true) {
+        final int tombstonePointer = getIntValue(PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * currentFreeListItem);
+        final int nextEntryPosition = (tombstonePointer & POSITION_MASK);
+
+        if (!bookedRecordPositions.contains(currentFreeListItem)) {
+          if (prevFreeListItem >= 0) {
+            setIntValue(PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * prevFreeListItem, tombstonePointer);
+          } else {
+            setIntValue(FREELIST_HEADER_OFFSET, nextEntryPosition);
+          }
+
+          entryIndex = currentFreeListItem;
+          break;
+        }
+
+        if (nextEntryPosition > 0) {
+          prevFreeListItem = currentFreeListItem;
+          currentFreeListItem = nextEntryPosition - 1;
+        } else {
+          break;
+        }
+      }
+
+      if (entryIndex >= 0) {
+        setIntValue(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize);
+
+        int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
+        setIntValue(entryIndexPosition, freePosition);
+
+        setIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
+      } else {
+        entryIndex = appendEntry(recordVersion, freePosition, indexesLength, entrySize);
+      }
+    } else {
+      entryIndex = appendEntry(recordVersion, freePosition, indexesLength, entrySize);
+    }
+
+    return entryIndex;
+  }
+
+  private int appendEntry(int recordVersion, int freePosition, int indexesLength, int entrySize) {
+    int entryIndex;
+    entryIndex = indexesLength;
+
+    setIntValue(PAGE_INDEXES_LENGTH_OFFSET, indexesLength + 1);
+    setIntValue(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize - INDEX_ITEM_SIZE);
+
+    int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
+    setIntValue(entryIndexPosition, freePosition);
+
+    setIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
     return entryIndex;
   }
 
@@ -190,17 +293,8 @@ public final class OClusterPage extends ODurablePage {
     return getFreeSpace() == PAGE_SIZE - PAGE_INDEXES_OFFSET;
   }
 
-  private boolean checkSpace(int entrySize, int freeListHeader) {
-    if (freeListHeader > 0) {
-      if (getFreeSpace() - entrySize < 0) {
-        return false;
-      }
-    } else {
-      if (getFreeSpace() - entrySize - INDEX_ITEM_SIZE < 0) {
-        return false;
-      }
-    }
-    return true;
+  private boolean checkSpace(int entrySize) {
+    return getFreeSpace() - entrySize >= 0;
   }
 
   public byte[] deleteRecord(int position) {
@@ -312,21 +406,10 @@ public final class OClusterPage extends ODurablePage {
   }
 
   public int getMaxRecordSize() {
-    final int freeListHeader = getIntValue(FREELIST_HEADER_OFFSET);
-
-    final int maxEntrySize;
-    if (freeListHeader > 0) {
-      maxEntrySize = getFreeSpace();
-    } else {
-      maxEntrySize = getFreeSpace() - INDEX_ITEM_SIZE;
-    }
+    final int maxEntrySize = getFreeSpace() - INDEX_ITEM_SIZE;
 
     final int result = maxEntrySize - 3 * OIntegerSerializer.INT_SIZE;
-    if (result < 0) {
-      return 0;
-    }
-
-    return result;
+    return Math.max(result, 0);
   }
 
   public final int getRecordsCount() {

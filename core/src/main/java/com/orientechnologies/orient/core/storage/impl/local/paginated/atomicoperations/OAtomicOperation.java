@@ -65,4 +65,8 @@ public interface OAtomicOperation {
   OLogSequenceNumber commitChanges(OWriteAheadLog writeAheadLog) throws IOException;
 
   Iterable<String> lockedObjects();
+
+  void addDeletedRecordPosition(final int clusterId, final int pageIndex, final int recordPosition);
+
+  Set<Integer> getBookedRecordPositions(final int clusterId, final int pageIndex);
 }

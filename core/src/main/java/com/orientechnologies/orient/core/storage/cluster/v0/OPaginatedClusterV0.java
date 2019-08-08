@@ -728,14 +728,13 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
             }
 
             final byte[] content = localPage.deleteRecord(recordPosition);
+            atomicOperation.addDeletedRecordPosition(id, cacheEntry.getPageIndex(), recordPosition);
             assert content != null;
 
             recordChunks.add(content);
             contentSize += content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
 
             final int initialFreeSpace = localPage.getFreeSpace();
-            localPage.deleteRecord(recordPosition);
-
             removedContentSize += localPage.getFreeSpace() - initialFreeSpace;
             nextPagePointer = OLongSerializer.INSTANCE.deserializeNative(content, content.length - OLongSerializer.LONG_SIZE);
           } finally {
@@ -918,20 +917,15 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
                 updatedEntryPosition = nextRecordPosition;
               } else {
                 final byte[] oldRecord = localPage.deleteRecord(nextRecordPosition);
+                atomicOperation.addDeletedRecordPosition(id, cacheEntry.getPageIndex(), nextRecordPosition);
                 assert oldRecord != null;
 
                 oldContentSize += oldRecord.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
                 oldChunks.add(oldRecord);
 
                 if (localPage.getMaxRecordSize() >= entrySize) {
-                  updatedEntryPosition = localPage.appendRecord(recordVersion, updateEntry);
-
-                  if (updatedEntryPosition < 0) {
-                    localPage.dumpToLog();
-                    throw new IllegalStateException("Page " + cacheEntry.getPageIndex()
-                        + " does not have enough free space to add record content, freePageIndex=" + freePageIndex
-                        + ", updateEntry.length=" + updateEntry.length + ", content.length=" + content.length);
-                  }
+                  updatedEntryPosition = localPage.appendRecord(recordVersion, updateEntry, -1,
+                      atomicOperation.getBookedRecordPositions(id, cacheEntry.getPageIndex()));
                 } else {
                   updatedEntryPosition = -1;
                 }
@@ -947,14 +941,8 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
             } else {
               assert localPage.getFreeSpace() >= entrySize;
-              updatedEntryPosition = localPage.appendRecord(recordVersion, updateEntry);
-
-              if (updatedEntryPosition < 0) {
-                localPage.dumpToLog();
-                throw new IllegalStateException(
-                    "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content, freePageIndex="
-                        + freePageIndex + ", updateEntry.length=" + updateEntry.length + ", content.length=" + content.length);
-              }
+              updatedEntryPosition = localPage.appendRecord(recordVersion, updateEntry, -1,
+                  atomicOperation.getBookedRecordPositions(id, cacheEntry.getPageIndex()));
 
               nextPageIndex = -1;
               nextRecordPosition = -1;
@@ -1011,6 +999,8 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
             nextEntryPointer = localPage.getRecordLongValue(nextRecordPosition, -OLongSerializer.LONG_SIZE);
 
             final byte[] oldRecord = localPage.deleteRecord(nextRecordPosition);
+            atomicOperation.addDeletedRecordPosition(id, cacheEntry.getPageIndex(), nextRecordPosition);
+
             assert oldRecord != null;
 
             oldContentSize += oldRecord.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
@@ -1524,49 +1514,50 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
   private AddEntryResult addEntry(final int recordVersion, final byte[] entryContent, final OAtomicOperation atomicOperation)
       throws IOException {
-    final FindFreePageResult findFreePageResult = findFreePage(entryContent.length, atomicOperation);
-
-    final int freePageIndex = findFreePageResult.freePageIndex;
-    final long pageIndex = findFreePageResult.pageIndex;
-
-    final boolean newRecord = freePageIndex >= FREE_LIST_SIZE;
-
-    OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
-    if (cacheEntry == null) {
-      cacheEntry = addPage(atomicOperation, fileId);
-    }
-
     int recordSizesDiff;
     int position;
-    final int finalVersion;
+    int finalVersion = 0;
+    long pageIndex;
 
-    try {
-      final OClusterPage localPage = new OClusterPage(cacheEntry);
-      if (newRecord) {
-        localPage.init();
-      }
-      assert newRecord || freePageIndex == calculateFreePageIndex(localPage);
+    do {
+      final FindFreePageResult findFreePageResult = findFreePage(entryContent.length, atomicOperation);
 
-      final int initialFreeSpace = localPage.getFreeSpace();
+      final int freePageIndex = findFreePageResult.freePageIndex;
+      pageIndex = findFreePageResult.pageIndex;
 
-      position = localPage.appendRecord(recordVersion, entryContent);
+      final boolean newRecord = freePageIndex >= FREE_LIST_SIZE;
 
-      if (position < 0) {
-        localPage.dumpToLog();
-        throw new IllegalStateException(
-            "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content, freePageIndex="
-                + freePageIndex + ", entryContent.length=" + entryContent.length);
+      OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+      if (cacheEntry == null) {
+        cacheEntry = addPage(atomicOperation, fileId);
       }
 
-      finalVersion = localPage.getRecordVersion(position);
+      try {
+        final OClusterPage localPage = new OClusterPage(cacheEntry);
+        if (newRecord) {
+          localPage.init();
+        }
 
-      final int freeSpace = localPage.getFreeSpace();
-      recordSizesDiff = initialFreeSpace - freeSpace;
-    } finally {
-      releasePageFromWrite(atomicOperation, cacheEntry);
-    }
+        assert newRecord || freePageIndex == calculateFreePageIndex(localPage);
 
-    updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
+        final int initialFreeSpace = localPage.getFreeSpace();
+
+        position = localPage
+            .appendRecord(recordVersion, entryContent, -1, atomicOperation.getBookedRecordPositions(id, cacheEntry.getPageIndex()));
+
+        final int freeSpace = localPage.getFreeSpace();
+        recordSizesDiff = initialFreeSpace - freeSpace;
+
+        if (position >= 0) {
+          finalVersion = localPage.getRecordVersion(position);
+        }
+
+      } finally {
+        releasePageFromWrite(atomicOperation, cacheEntry);
+      }
+
+      updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
+    } while (position < 0);
 
     return new AddEntryResult(pageIndex, position, finalVersion, recordSizesDiff);
   }

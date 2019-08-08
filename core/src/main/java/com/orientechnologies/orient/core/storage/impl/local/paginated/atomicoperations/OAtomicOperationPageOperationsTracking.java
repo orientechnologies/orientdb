@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -43,6 +44,8 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   private final Set<OBonsaiBucketPointer> deletedBonsaiPointers = new HashSet<>();
 
   private final OLogSequenceNumber startLSN;
+
+  private final Map<ORawPair<Integer, Integer>, Set<Integer>> deletedRecordPositions = new HashMap<>();
 
   OAtomicOperationPageOperationsTracking(OReadCache readCache, OWriteCache writeCache, OWriteAheadLog writeAheadLog,
       OOperationUnitId operationUnitId, int operationsCacheLimit, OLogSequenceNumber startLSN) {
@@ -100,7 +103,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
       ODurablePage.setPageLSN(lastLSN, cacheEntry);
     }
 
-    readCache.releaseFromWrite(cacheEntry, writeCache, lastLSN != null || writeAheadLog == null);
+    readCache.releaseFromWrite(cacheEntry, writeCache, true);
   }
 
   @Override
@@ -292,7 +295,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
         ODurablePage.setPageLSN(lastLSN, cacheEntry);
       }
     } finally {
-      readCache.releaseFromWrite(cacheEntry, writeCache, lastLSN != null || writeAheadLog == null);
+      readCache.releaseFromWrite(cacheEntry, writeCache, true);
     }
   }
 
@@ -324,5 +327,17 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
    */
   private Map<String, OAtomicOperationMetadata<?>> getMetadata() {
     return Collections.unmodifiableMap(metadata);
+  }
+
+  @Override
+  public void addDeletedRecordPosition(int clusterId, int pageIndex, int recordPosition) {
+    final ORawPair<Integer, Integer> key = new ORawPair<>(clusterId, pageIndex);
+    final Set<Integer> recordPositions = deletedRecordPositions.computeIfAbsent(key, k -> new HashSet<>());
+    recordPositions.add(recordPosition);
+  }
+
+  @Override
+  public Set<Integer> getBookedRecordPositions(int clusterId, int pageIndex) {
+    return deletedRecordPositions.getOrDefault(new ORawPair<>(clusterId, pageIndex), Collections.emptySet());
   }
 }
