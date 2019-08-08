@@ -37,6 +37,7 @@ import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLoggi
 import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OQuarto;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -1273,17 +1274,18 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     filesLock.acquireWriteLock();
     try {
-      final String fileName = doDeleteFile(intId);
+      final ORawPair<String, String> file;
+      final Future<ORawPair<String, String>> future = commitExecutor.submit(new DeleteFileTask(fileId));
+      try {
+        file = future.get();
+      } catch (final InterruptedException e) {
+        throw OException.wrapException(new OInterruptedException("File data removal was interrupted"), e);
+      } catch (final Exception e) {
+        throw OException.wrapException(new OWriteCacheException("File data removal was abnormally terminated"), e);
+      }
 
-      if (fileName != null) {
-        final String name = idNameMap.get(intId);
-
-        idNameMap.remove(intId);
-
-        nameIdMap.put(name, -intId);
-        idNameMap.put(-intId, name);
-
-        writeNameIdEntry(new NameFileIdEntry(name, -intId, fileName), true);
+      if (file != null) {
+        writeNameIdEntry(new NameFileIdEntry(file.getFirst(), -intId, file.getSecond()), true);
       }
     } finally {
       filesLock.releaseWriteLock();
@@ -1629,17 +1631,29 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public long[] delete() throws IOException {
-    final List<Long> result = new ArrayList<>(1_000);
+    final List<Long> result = new ArrayList<>(1_024);
     filesLock.acquireWriteLock();
     try {
-      for (final int intId : nameIdMap.values()) {
-        if (intId < 0) {
+      for (final int internalFileId : nameIdMap.values()) {
+        if (internalFileId < 0) {
           continue;
         }
 
-        final long externalId = composeFileId(id, intId);
-        doDeleteFile(externalId);
-        result.add(externalId);
+        final long externalId = composeFileId(id, internalFileId);
+
+        final ORawPair<String, String> file;
+        final Future<ORawPair<String, String>> future = commitExecutor.submit(new DeleteFileTask(externalId));
+        try {
+          file = future.get();
+        } catch (final InterruptedException e) {
+          throw OException.wrapException(new OInterruptedException("File data removal was interrupted"), e);
+        } catch (final Exception e) {
+          throw OException.wrapException(new OWriteCacheException("File data removal was abnormally terminated"), e);
+        }
+
+        if (file != null) {
+          result.add(externalId);
+        }
       }
 
       if (nameIdMapHolderPath != null) {
@@ -2079,26 +2093,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private String doDeleteFile(long fileId) throws IOException {
-    final int intId = extractFileId(fileId);
-    fileId = composeFileId(id, intId);
-
-    removeCachedPages(intId);
-
-    final OFileClassic fileClassic = files.remove(fileId);
-
-    String name = null;
-    if (fileClassic != null) {
-      name = fileClassic.getName();
-
-      if (fileClassic.exists()) {
-        fileClassic.delete();
-      }
-    }
-
-    return name;
-  }
-
   private void removeCachedPages(final int fileId) {
     final Future<Void> future = commitExecutor.submit(new RemoveFilePagesTask(fileId));
     try {
@@ -2411,6 +2405,35 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     doubleWriteLog.truncate();
+  }
+
+  private void doRemoveCachePages(int internalFileId) {
+    final Iterator<Map.Entry<PageKey, OCachePointer>> entryIterator = writeCachePages.entrySet().iterator();
+    while (entryIterator.hasNext()) {
+      final Map.Entry<PageKey, OCachePointer> entry = entryIterator.next();
+      final PageKey pageKey = entry.getKey();
+
+      if (pageKey.fileId == internalFileId) {
+        final OCachePointer pagePointer = entry.getValue();
+        final Lock groupLock = lockManager.acquireExclusiveLock(pageKey);
+        try {
+          pagePointer.acquireExclusiveLock();
+          try {
+            pagePointer.decrementWritersReferrer();
+            pagePointer.setWritersListener(null);
+            writeCacheSize.decrementAndGet();
+
+            removeFromDirtyPages(pageKey);
+          } finally {
+            pagePointer.releaseExclusiveLock();
+          }
+
+          entryIterator.remove();
+        } finally {
+          groupLock.unlock();
+        }
+      }
+    }
   }
 
   private void printReport() {
@@ -3430,31 +3453,40 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     @Override
     public Void call() {
-      final Iterator<Map.Entry<PageKey, OCachePointer>> entryIterator = writeCachePages.entrySet().iterator();
-      while (entryIterator.hasNext()) {
-        final Map.Entry<PageKey, OCachePointer> entry = entryIterator.next();
-        final PageKey pageKey = entry.getKey();
+      doRemoveCachePages(fileId);
+      return null;
+    }
+  }
 
-        if (pageKey.fileId == fileId) {
-          final OCachePointer pagePointer = entry.getValue();
-          final Lock groupLock = lockManager.acquireExclusiveLock(pageKey);
-          try {
-            pagePointer.acquireExclusiveLock();
-            try {
-              pagePointer.decrementWritersReferrer();
-              pagePointer.setWritersListener(null);
-              writeCacheSize.decrementAndGet();
+  private final class DeleteFileTask implements Callable<ORawPair<String, String>> {
+    private final long externalFileId;
 
-              removeFromDirtyPages(pageKey);
-            } finally {
-              pagePointer.releaseExclusiveLock();
-            }
+    private DeleteFileTask(long externalFileId) {
+      this.externalFileId = externalFileId;
+    }
 
-            entryIterator.remove();
-          } finally {
-            groupLock.unlock();
-          }
+    @Override
+    public ORawPair<String, String> call() throws Exception {
+      final int internalFileId = extractFileId(externalFileId);
+      final long fileId = composeFileId(id, internalFileId);
+
+      doRemoveCachePages(internalFileId);
+
+      final OFileClassic fileClassic = files.remove(fileId);
+
+      if (fileClassic != null) {
+        if (fileClassic.exists()) {
+          fileClassic.delete();
         }
+
+        final String name = idNameMap.get(internalFileId);
+
+        idNameMap.remove(internalFileId);
+
+        nameIdMap.put(name, -internalFileId);
+        idNameMap.put(-internalFileId, name);
+
+        return new ORawPair<>(fileClassic.getName(), name);
       }
 
       return null;
