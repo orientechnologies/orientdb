@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -130,17 +131,12 @@ public class ORecordLazySet extends ORecordTrackedSet
       map.put(null, null);
     else if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
-      ORecordInternal.track(sourceRecord, e);
       map.put(e, e);
     } else if (!e.getIdentity().isPersistent()) {
-      ORecordInternal.track(sourceRecord, e);
       map.put(e, e);
     } else
       map.put(e, ENTRY_REMOVAL);
-
-    fireCollectionChangedEvent(
-        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
-
+    addEvent(e);
     return true;
   }
 
@@ -148,7 +144,7 @@ public class ORecordLazySet extends ORecordTrackedSet
     final Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
     while (all.hasNext()) {
       Entry<OIdentifiable, Object> entry = all.next();
-      if (!(entry.getValue() instanceof  ORecord)) {
+      if (!(entry.getValue() instanceof ORecord)) {
         try {
           ORecord record = entry.getKey().getRecord();
           if (record != null) {
@@ -207,10 +203,7 @@ public class ORecordLazySet extends ORecordTrackedSet
     if (old != null) {
       if (o instanceof ORecord)
         ORecordInternal.removeIdentityChangeListener((ORecord) o, this);
-
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o,
-              null, (OIdentifiable) o));
+      removeEvent((OIdentifiable) o);
       return true;
     }
     return false;
@@ -244,6 +237,12 @@ public class ORecordLazySet extends ORecordTrackedSet
   @Override
   public int hashCode() {
     return 0;
+  }
+
+  protected void addOwnerToEmbeddedDoc(OIdentifiable e) {
+    if (sourceRecord != null && e != null) {
+      ORecordInternal.track(sourceRecord, e);
+    }
   }
 
 }

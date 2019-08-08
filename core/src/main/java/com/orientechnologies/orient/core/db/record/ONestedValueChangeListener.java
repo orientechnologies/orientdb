@@ -31,7 +31,7 @@ public class ONestedValueChangeListener<K, V> implements OMultiValueChangeListen
 
     if (nestedEvent == null) {
       nestedEvent = new ONestedMultiValueChangeEvent(currentCollecion, currentCollecion);
-      ownerCollection.fireCollectionChangedEvent(nestedEvent);
+      //ownerCollection.fireCollectionChangedEvent(nestedEvent);
 
     }
     OMultiValueChangeTimeLine timeline = nestedEvent.getTimeLine();

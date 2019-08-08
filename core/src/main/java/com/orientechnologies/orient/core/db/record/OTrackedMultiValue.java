@@ -57,7 +57,7 @@ public interface OTrackedMultiValue<K, V> {
    */
   Object returnOriginalState(List<OMultiValueChangeEvent<K, V>> changeEvents);
 
-  void fireCollectionChangedEvent(final OMultiValueChangeEvent<K, V> event);
+  //void fireCollectionChangedEvent(final OMultiValueChangeEvent<K, V> event);
 
   Class<?> getGenericClass();
 

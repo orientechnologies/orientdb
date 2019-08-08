@@ -86,7 +86,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     }
 
     for (ODocument changedDocument : changedDocuments) {
-      changedDocument.undo();
+      if (!changedDocument.isEmbedded())
+        changedDocument.undo();
     }
 
     changedDocuments.clear();

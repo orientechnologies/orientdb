@@ -242,12 +242,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         }
       }
 
-      if (OSBTreeRidBag.this.owner != null) {
-        ORecordInternal.unTrack(OSBTreeRidBag.this.owner, currentValue);
-      }
-
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<>(OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
+      removeEvent(currentValue);
       currentRemoved = true;
     }
 
@@ -560,12 +555,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       size++;
     }
 
-    if (this.owner != null) {
-      ORecordInternal.track(this.owner, identifiable);
-    }
-
-    fireCollectionChangedEvent(
-        new OMultiValueChangeEvent<>(OMultiValueChangeEvent.OChangeType.ADD, identifiable, identifiable, null, false));
+    addEvent(identifiable, identifiable);
   }
 
   @Override
@@ -599,12 +589,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       }
     }
 
-    if (this.owner != null) {
-      ORecordInternal.unTrack(this.owner, identifiable);
-    }
-
-    fireCollectionChangedEvent(
-        new OMultiValueChangeEvent<>(OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
+    removeEvent(identifiable);
   }
 
   @Override
@@ -880,7 +865,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return Collections.unmodifiableList(changeListeners);
   }
 
-  @Override
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
@@ -1048,6 +1032,43 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //do nothing not needed
+  }
+
+  private void addEvent(OIdentifiable key, OIdentifiable identifiable) {
+    if (this.owner != null) {
+      ORecordInternal.track(this.owner, identifiable);
+    }
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, key, identifiable, null,
+              false));
+    } else {
+      setDirtyNoChanged();
+    }
+  }
+
+  private void updateEvent(OIdentifiable key, OIdentifiable oldValue, OIdentifiable newValue) {
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<>(OMultiValueChangeEvent.OChangeType.UPDATE, key, oldValue, newValue));
+    } else {
+      setDirtyNoChanged();
+    }
+  }
+
+  private void removeEvent(OIdentifiable removed) {
+
+    if (this.owner != null) {
+      ORecordInternal.unTrack(this.owner, removed);
+    }
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, removed, null, removed,
+              false));
+    } else {
+      setDirtyNoChanged();
+    }
   }
 
   private OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener;

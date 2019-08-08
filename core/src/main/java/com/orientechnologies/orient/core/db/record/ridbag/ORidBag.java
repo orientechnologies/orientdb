@@ -490,7 +490,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   public void fireCollectionChangedEvent(OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    delegate.fireCollectionChangedEvent(event);
+    //delegate.fireCollectionChangedEvent(event);
   }
 
   public NavigableMap<OIdentifiable, Change> getChanges() {

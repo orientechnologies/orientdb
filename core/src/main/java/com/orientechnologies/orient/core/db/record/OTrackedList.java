@@ -37,7 +37,6 @@ import java.util.*;
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
   protected final ORecord                                     sourceRecord;
-  protected       STATUS                                      status          = STATUS.NOT_LOADED;
   protected       List<OMultiValueChangeListener<Integer, T>> changeListeners = null;
   protected       Class<?>                                    genericClass;
   private final   boolean                                     embeddedCollection;
@@ -65,10 +64,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     final boolean result = super.add(element);
 
     if (result) {
-      addOwnerToEmbeddedDoc(element);
-
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, super.size() - 1, element));
+      addEvent(super.size() - 1, element);
     }
 
     return result;
@@ -105,9 +101,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   @Override
   public void add(int index, T element) {
     super.add(index, element);
-
-    addOwnerToEmbeddedDoc(element);
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, index, element));
+    addEvent(index, element);
   }
 
   public T setInternal(int index, T element) {
@@ -127,13 +121,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     final T oldValue = super.set(index, element);
 
     if (oldValue != null && !oldValue.equals(element)) {
-      if (oldValue instanceof ODocument)
-        ODocumentInternal.removeOwner((ODocument) oldValue, this);
-
-      addOwnerToEmbeddedDoc(element);
-
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, element, oldValue));
+      updateEvent(index, oldValue, element);
     }
 
     return oldValue;
@@ -150,20 +138,43 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   @Override
   public T remove(int index) {
     final T oldValue = super.remove(index);
-    if (oldValue instanceof ODocument) {
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
-    }
-
-    fireCollectionChangedEvent(
-        new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null, oldValue));
-    removeNested(oldValue);
-
+    removeEvent(index, oldValue);
     return oldValue;
   }
 
-  private void removeNested(Object element) {
-    if (element instanceof OTrackedMultiValue) {
-//      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
+  private void addEvent(int index, T added) {
+    addOwnerToEmbeddedDoc(added);
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, index, added));
+    } else {
+      setDirty();
+    }
+  }
+
+  private void updateEvent(int index, T oldValue, T newValue) {
+    if (oldValue instanceof ODocument)
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+
+    addOwnerToEmbeddedDoc(newValue);
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, newValue, oldValue));
+    } else {
+      setDirty();
+    }
+  }
+
+  private void removeEvent(int index, T removed) {
+    if (removed instanceof ODocument) {
+      ODocumentInternal.removeOwner((ODocument) removed, this);
+    }
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null, removed));
+    } else {
+      setDirty();
     }
   }
 
@@ -188,29 +199,11 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @Override
   public void clear() {
-    if (changeListeners != null && changeListeners.isEmpty()) {
-      for (final T item : this) {
-        if (item instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) item, this);
-      }
-      super.clear();
-      setDirty();
-    } else {
-      final List<T> origValues = new ArrayList<T>(this);
-      super.clear();
-      if (origValues != null)
-        for (int i = origValues.size() - 1; i >= 0; i--) {
-          final T origValue = origValues.get(i);
-
-          if (origValue instanceof ODocument)
-            ODocumentInternal.removeOwner((ODocument) origValue, this);
-
-          fireCollectionChangedEvent(
-              new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null, origValue));
-          removeNested(origValue);
-        }
+    for (int i = this.size() - 1; i >= 0; i--) {
+      final T origValue = this.get(i);
+      removeEvent(i, origValue);
     }
-
+    super.clear();
   }
 
   public void reset() {
@@ -278,14 +271,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
           changeListener.onAfterRecordChanged(event);
       }
     }
-  }
-
-  public STATUS getInternalStatus() {
-    return status;
-  }
-
-  public void setInternalStatus(final STATUS iStatus) {
-    status = iStatus;
   }
 
   public Class<?> getGenericClass() {

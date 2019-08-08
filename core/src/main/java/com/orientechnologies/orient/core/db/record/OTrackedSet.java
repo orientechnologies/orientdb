@@ -80,12 +80,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       @Override
       public void remove() {
         underlying.remove();
-        if (current instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) current, OTrackedSet.this);
-
-        fireCollectionChangedEvent(
-            new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) current, null, (T) current));
-        removeNested(current);
+        removeEvent(current);
       }
     };
   }
@@ -111,12 +106,9 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   public boolean add(final T e) {
     if (super.add(e)) {
-      addOwnerToEmbeddedDoc(e);
-
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
+      addEvent(e);
       return true;
     }
-
     return false;
   }
 
@@ -132,11 +124,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @Override
   public boolean remove(final Object o) {
     if (super.remove(o)) {
-      if (o instanceof ODocument)
-        ODocumentInternal.removeOwner((ODocument) o, this);
-
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) o, null, (T) o));
-      removeNested(o);
+      removeEvent((T) o);
       return true;
     }
     return false;
@@ -144,29 +132,45 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   @Override
   public void clear() {
-    if (changeListeners == null || changeListeners.isEmpty()) {
-      for (final T item : this) {
-        if (item instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) item, this);
-      }
-      super.clear();
-      setDirty();
-    } else {
-      final Set<T> origValues = new HashSet<T>(this);
-      super.clear();
-      for (final T item : origValues) {
-        if (item instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) item, this);
+    for (final T item : this) {
+      removeEvent(item);
+    }
+    super.clear();
+  }
 
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
-        removeNested(item);
-      }
+  private void addEvent(T added) {
+    addOwnerToEmbeddedDoc(added);
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, added, added));
+    } else {
+      setDirty();
     }
   }
 
-  private void removeNested(Object element) {
-    if (element instanceof OTrackedMultiValue) {
-      //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
+  private void updateEvent(T oldValue, T newValue) {
+    if (oldValue instanceof ODocument)
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+
+    addOwnerToEmbeddedDoc(newValue);
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.UPDATE, oldValue, newValue, oldValue));
+    } else {
+      setDirty();
+    }
+  }
+
+  private void removeEvent(T removed) {
+    if (removed instanceof ODocument) {
+      ODocumentInternal.removeOwner((ODocument) removed, this);
+    }
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, removed, null, removed));
+    } else {
+      setDirty();
     }
   }
 

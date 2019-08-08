@@ -61,15 +61,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
       return false;
 
     map.put(e, ENTRY_REMOVAL);
-    if (sourceRecord != null && e != null) {
-      ORecordInternal.track(sourceRecord, e);
-    }
-
-    if (e instanceof ODocument)
-      ODocumentInternal.addOwner((ODocument) e, this);
-
-    fireCollectionChangedEvent(
-        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
+    addEvent(e);
     return true;
   }
 
@@ -78,13 +70,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
       return false;
 
     map.put(e, ENTRY_REMOVAL);
-    setDirty();
-    if (sourceRecord != null && e != null) {
-      ORecordInternal.track(sourceRecord, e);
-    }
-
-    if (e instanceof ODocument)
-      ODocumentInternal.addOwner((ODocument) e, this);
+    addOwnerToEmbeddedDoc(e);
     return true;
   }
 
@@ -96,12 +82,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
   public boolean remove(Object o) {
     final Object old = map.remove(o);
     if (old != null) {
-      if (o instanceof ODocument)
-        ODocumentInternal.removeOwner((ODocument) o, this);
-
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o,
-              null, (OIdentifiable) o));
+      removeEvent((OIdentifiable) old);
       return true;
     }
     return false;
@@ -220,6 +201,54 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
         if (changeListener != null)
           changeListener.onAfterRecordChanged(event);
       }
+    }
+  }
+
+  protected void addOwnerToEmbeddedDoc(OIdentifiable e) {
+    if (e instanceof ODocument && !e.getIdentity().isValid()) {
+      ODocumentInternal.addOwner((ODocument) e, this);
+    }
+    if (sourceRecord != null && e != null) {
+      ORecordInternal.track(sourceRecord, e);
+    }
+  }
+
+  protected void addEvent(OIdentifiable added) {
+    addOwnerToEmbeddedDoc(added);
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, added, added));
+    } else {
+      setDirty();
+    }
+  }
+
+  private void updateEvent(OIdentifiable oldValue, OIdentifiable newValue) {
+    if (oldValue instanceof ODocument)
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+
+    addOwnerToEmbeddedDoc(newValue);
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.UPDATE, oldValue, newValue,
+              oldValue));
+    } else {
+      setDirty();
+    }
+  }
+
+  protected void removeEvent(OIdentifiable removed) {
+    if (removed instanceof ODocument) {
+      ODocumentInternal.removeOwner((ODocument) removed, this);
+    }
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, removed, null,
+              removed));
+    } else {
+      setDirty();
     }
   }
 

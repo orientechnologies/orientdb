@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeList
 public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
   protected final ORecord                                    sourceRecord;
-  protected       STATUS                                     status          = STATUS.NOT_LOADED;
   private         List<OMultiValueChangeListener<Object, T>> changeListeners = null;
   protected       Class<?>                                   genericClass;
   private final   boolean                                    embeddedCollection;
@@ -89,17 +88,11 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
     if (containsKey && oldValue == value)
       return oldValue;
-
-    if (oldValue instanceof ODocument)
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
-
-    addOwnerToEmbeddedDoc(value);
-
-    if (containsKey)
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, key, value, oldValue));
-    else
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
+    if (containsKey) {
+      updateEvent(key, oldValue, value);
+    } else {
+      addEvent(key, value);
+    }
     return oldValue;
   }
 
@@ -113,49 +106,21 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   @Override
   public T remove(final Object iKey) {
     boolean containsKey = containsKey(iKey);
-    final T oldValue = super.remove(iKey);
-
-    if (oldValue instanceof ODocument)
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
-
     if (containsKey) {
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null, oldValue));
-      removeNested(oldValue);
+      final T oldValue = super.remove(iKey);
+      removeEvent(iKey, oldValue);
+      return oldValue;
+    } else {
+      return null;
     }
-
-    return oldValue;
   }
 
   @Override
   public void clear() {
-    if (changeListeners == null || changeListeners.isEmpty()) {
-      for (T value : super.values()) {
-        if (value instanceof ODocument) {
-          ODocumentInternal.removeOwner((ODocument) value, this);
-        }
-      }
-      super.clear();
-      setDirty();
-    } else {
-      final Map<Object, T> origValues = new HashMap<Object, T>(this);
-      super.clear();
-      for (Map.Entry<Object, T> entry : origValues.entrySet()) {
-        if (entry.getValue() instanceof ODocument) {
-          ODocumentInternal.removeOwner((ODocument) entry.getValue(), this);
-        }
-        fireCollectionChangedEvent(
-            new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(), null,
-                entry.getValue()));
-        removeNested(entry.getValue());
-      }
+    for (Map.Entry<Object, T> entry : super.entrySet()) {
+      removeEvent(entry.getKey(), entry.getValue());
     }
-  }
-
-  private void removeNested(Object element) {
-    if (element instanceof OTrackedMultiValue) {
-      //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
-    }
+    super.clear();
   }
 
   @Override
@@ -187,14 +152,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   public void setDirtyNoChanged() {
     if (sourceRecord != null)
       sourceRecord.setDirtyNoChanged();
-  }
-
-  public STATUS getInternalStatus() {
-    return status;
-  }
-
-  public void setInternalStatus(final STATUS iStatus) {
-    status = iStatus;
   }
 
   public void addChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
@@ -254,6 +211,42 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     super.put(event.getKey(), (T) newValue);
+  }
+
+  private void addEvent(Object key, T value) {
+    addOwnerToEmbeddedDoc(value);
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
+    } else {
+      setDirty();
+    }
+  }
+
+  private void updateEvent(Object key, T oldValue, T newValue) {
+    if (oldValue instanceof ODocument)
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+
+    addOwnerToEmbeddedDoc(newValue);
+
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, key, newValue, oldValue));
+    } else {
+      setDirty();
+    }
+  }
+
+  private void removeEvent(Object iKey, T removed) {
+    if (removed instanceof ODocument) {
+      ODocumentInternal.removeOwner((ODocument) removed, this);
+    }
+    if (changeListeners != null && !changeListeners.isEmpty()) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null, removed));
+    } else {
+      setDirty();
+    }
   }
 
   private OSimpleMultiValueChangeListener<Object, T> changeListener;
