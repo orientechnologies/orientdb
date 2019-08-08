@@ -51,7 +51,7 @@ public class OServerCommandGetSupportedLanguages extends OServerCommandAuthentic
 
       OScriptManager scriptManager = Orient.instance().getScriptManager();
       for (String language : scriptManager.getSupportedLanguages()) {
-        if (scriptManager.getFormatters()!=null && scriptManager.getFormatters().get(language) != null) {
+        if (scriptManager.getFormatters() != null && scriptManager.getFormatters().get(language) != null) {
           languages.add(language);
         }
       }

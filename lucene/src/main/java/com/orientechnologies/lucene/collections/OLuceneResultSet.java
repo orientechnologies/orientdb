@@ -194,7 +194,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
         final IndexSearcher searcher = queryContext.getSearcher();
         if (searcher.getIndexReader().getRefCount() > 1) {
           engine.release(searcher);
-          closed= true;
+          closed = true;
         }
       }
       return hasNext;

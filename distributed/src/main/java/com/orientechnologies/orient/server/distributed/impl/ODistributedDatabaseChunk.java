@@ -65,7 +65,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
         buffer = new byte[] {};
         last = true;
       } else {
-        if(local.length == read){
+        if (local.length == read) {
           buffer = local;
         } else {
           buffer = new byte[read];

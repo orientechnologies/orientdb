@@ -146,7 +146,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
         }
       });
 
-      if (delta== null) {
+      if (delta == null) {
         // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
         throw new ODistributedDatabaseDeltaSyncException(lastLSN);
       } else if (delta.getEndLsn().equals(lastLSN)) {

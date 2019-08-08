@@ -240,7 +240,7 @@ public class OEntityManager {
    */
   public synchronized void setClassHandler(final OEntityManagerClassHandler iClassHandler) {
     Iterator<Entry<String, Class<?>>> iterator = classHandler.getClassesEntrySet().iterator();
-    while (iterator.hasNext()){
+    while (iterator.hasNext()) {
       Entry<String, Class<?>> entry = iterator.next();
       boolean forceSchemaReload = !iterator.hasNext();
       iClassHandler.registerEntityClass(entry.getValue(), forceSchemaReload);
