@@ -188,6 +188,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
     cacheEntry.acquireExclusiveLock();
 
+    cacheEntry.clearPageOperations();
     return cacheEntry;
   }
 
@@ -282,6 +283,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
   @Override
   public final void releaseFromWrite(final OCacheEntry cacheEntry, final OWriteCache writeCache, boolean changed) {
+    cacheEntry.clearPageOperations();
     cacheEntry.releaseExclusiveLock();
 
     doRelease(cacheEntry);
@@ -523,7 +525,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
           final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, id, index);
           cachePointer.incrementReferrer();
 
-          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), (int)index, cachePointer);
+          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), (int) index, cachePointer);
 
           final OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
 
