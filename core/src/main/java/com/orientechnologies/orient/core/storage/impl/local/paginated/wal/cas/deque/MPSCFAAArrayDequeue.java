@@ -201,7 +201,7 @@ public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
     while (node != null) {
       int deqidx = node.deqidx;
 
-      if (deqidx > idx || deqidx >= BUFFER_SIZE) {//idx == enqidx -1, that is why we use >, but not >=
+      if (deqidx > idx || deqidx >= BUFFER_SIZE) { //idx == enqidx -1, that is why we use >, but not >=
         if (deqidx > 0) {
           return null; //reached the end of the queue
         } else {

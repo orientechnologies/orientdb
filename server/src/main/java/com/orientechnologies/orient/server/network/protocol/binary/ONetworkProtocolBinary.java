@@ -316,7 +316,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             }
             exception = t;
           } catch (Error err) {
-            if(connection!=null) {
+            if (connection != null) {
               connection.release();
             }
             throw err;
@@ -623,7 +623,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         byte[] renewedToken = null;
         if (connection != null && connection.getToken() != null) {
           renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-          if(renewedToken.length > 0) {
+          if (renewedToken.length > 0) {
             connection.setTokenBytes(renewedToken);
           }
         }
@@ -739,7 +739,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       byte[] renewedToken = null;
       if (connection != null && connection.getToken() != null) {
         renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-        if(renewedToken.length > 0) {
+        if (renewedToken.length > 0) {
           connection.setTokenBytes(renewedToken);
         }
       }

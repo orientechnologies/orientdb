@@ -79,10 +79,10 @@ public class OMigrationConfigManager {
   private static String prepareConfigDirectoryForWriting(String outOrientGraphUri, String configName) {
 
     String outDBConfigPath;
-    if(configName == null) {
+    if (configName == null) {
       outDBConfigPath = buildConfigurationFilePath(outOrientGraphUri, configFileDefaultName);
     } else {
-      if(!configName.endsWith(".json")) {
+      if (!configName.endsWith(".json")) {
         configName += ".json";
       }
       outDBConfigPath = buildConfigurationFilePath(outOrientGraphUri, configName);
@@ -100,7 +100,7 @@ public class OMigrationConfigManager {
       outOrientGraphUri = outOrientGraphUri.replace("\\", "/");
     }
 
-    if(!configFileName.endsWith(".json")) {
+    if (!configFileName.endsWith(".json")) {
       configFileName += ".json";
     }
 

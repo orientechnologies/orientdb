@@ -787,7 +787,7 @@ public class ODocumentHelper {
       return null;
 
     final ODocument doc = ((ODocument) iCurrent.getRecord());
-    if (doc == null) {// broken link
+    if (doc == null) { // broken link
       return null;
     }
     return doc.accessProperty(iFieldName);

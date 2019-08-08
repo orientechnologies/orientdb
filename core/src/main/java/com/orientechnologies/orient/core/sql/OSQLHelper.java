@@ -130,7 +130,7 @@ public class OSQLHelper {
         if (VALUE_NOT_PARSED == value) {
           value = new OSQLPredicate(parts.get(1)).evaluate(iContext);
         }
-        if(value instanceof String){
+        if (value instanceof String) {
           value = OStringSerializerHelper.decode(value.toString());
         }
         map.put(key, value);

@@ -395,7 +395,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
               text.append(OPERATOR_IS_NOT);
               text.append(" NULL ");
               appendParam = false;
-            }else
+            } else
               text.append(OPERATOR_DIFFERENT);
             break;
           }

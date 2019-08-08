@@ -25,7 +25,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     while (nextN.hasNext()) {
       while (nextN.hasNext()) {
         OResult item = toTraverseResult(nextN.next());
-        if(item != null){
+        if (item != null) {
           List<ORID> stack = new ArrayList<>();
           item.getIdentity().ifPresent(x -> stack.add(x));
           ((OResultInternal) item).setMetadata("$stack", stack);

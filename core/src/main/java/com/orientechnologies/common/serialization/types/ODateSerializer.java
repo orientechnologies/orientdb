@@ -95,7 +95,7 @@ public class ODateSerializer implements OBinarySerializer<Date> {
 
   @Override
   public Date preprocess(Date value, Object... hints) {
-    if(value==null){
+    if (value == null) {
       return null;
     }
     final Calendar calendar = Calendar.getInstance();

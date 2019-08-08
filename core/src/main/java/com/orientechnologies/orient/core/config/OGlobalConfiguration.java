@@ -46,7 +46,7 @@ import java.util.logging.Level;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public enum OGlobalConfiguration {// ENVIRONMENT
+public enum OGlobalConfiguration { // ENVIRONMENT
   ENVIRONMENT_DUMP_CFG_AT_STARTUP("environment.dumpCfgAtStartup", "Dumps the configuration during application startup",
       Boolean.class, Boolean.FALSE),
 

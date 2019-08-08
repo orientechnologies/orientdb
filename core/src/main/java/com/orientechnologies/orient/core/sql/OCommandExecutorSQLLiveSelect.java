@@ -200,7 +200,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       final String clusterName = execDb.getClusterNameById(value.getIdentity().getClusterId());
       if (clusterName != null) {
         for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-          if (clusterName.equalsIgnoreCase(cluster)) {//make it case insensitive in 3.0?
+          if (clusterName.equalsIgnoreCase(cluster)) { //make it case insensitive in 3.0?
             return true;
           }
         }

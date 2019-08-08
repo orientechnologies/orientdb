@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 public class OSecurityPolicy {
 
 
-  public enum Scope {CREATE, READ, BEFORE_UPDATE, AFTER_UPDATE, DELETE, EXECUTE}
+  public enum Scope { CREATE, READ, BEFORE_UPDATE, AFTER_UPDATE, DELETE, EXECUTE }
 
   private OElement element;
 

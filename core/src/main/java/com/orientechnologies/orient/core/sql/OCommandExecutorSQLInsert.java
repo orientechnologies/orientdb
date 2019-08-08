@@ -374,7 +374,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
     final Object res = OSQLHelper.getValue(returnExpression, item, this.getContext());
     if (res instanceof OIdentifiable)
       return res;
-    else {// wrapping doc
+    else { // wrapping doc
       final ODocument wrappingDoc = new ODocument("result", res);
       wrappingDoc.field("rid", item.getIdentity());// passing record id.In many cases usable on client side
       wrappingDoc.field("version", item.getVersion());// passing record version

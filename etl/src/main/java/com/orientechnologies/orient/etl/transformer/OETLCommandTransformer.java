@@ -77,8 +77,8 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
 
       log(Level.FINE, "input=%s - command=%s - result=%s", input, cmd, result);
 
-      if(returnInput){
-        if(input instanceof OElement) {
+      if (returnInput) {
+        if (input instanceof OElement) {
           input = db.reload(((OElement) input).getRecord(), null, true);
         }
         return input;

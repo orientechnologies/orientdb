@@ -166,7 +166,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
             query = curDb.command(new OSQLAsynchQuery<ODocument>("select from E" + where, this));
           else
             // DELETE EDGES OF CLASS X
-            query = curDb.command(new OSQLAsynchQuery<ODocument>("select from `" + clazz.getName()+"` " + where, this));
+            query = curDb.command(new OSQLAsynchQuery<ODocument>("select from `" + clazz.getName() + "` " + where, this));
 
         return this;
       } finally {
@@ -342,12 +342,12 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
   private OEdge toEdge(OIdentifiable item) {
     if (item != null && item instanceof OElement) {
       final OIdentifiable a = item;
-      return ((OElement) item).asEdge().orElseThrow(() ->  new OCommandExecutionException(""+(a.getIdentity())+" is not an edge"));
+      return ((OElement) item).asEdge().orElseThrow(() -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
     } else {
       item = getDatabase().load(item.getIdentity());
       if (item != null && item instanceof OElement) {
         final OIdentifiable a = item;
-        return ((OElement) item).asEdge().orElseThrow(() ->  new OCommandExecutionException(""+(a.getIdentity())+" is not an edge"));
+        return ((OElement) item).asEdge().orElseThrow(() -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
       }
     }
     return null;

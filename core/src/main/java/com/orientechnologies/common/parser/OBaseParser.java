@@ -539,11 +539,11 @@ public abstract class OBaseParser {
 
           if (openGraph == 0) {
             final char nextChar = text2Use.charAt(parserCurrentPos + 1);
-            if(preserveEscapes){
+            if (preserveEscapes) {
               parserLastWord.append(c);
               parserLastWord.append(nextChar);
               parserCurrentPos++;
-            }else {
+            } else {
 
               if (nextChar == 'u') {
                 parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);

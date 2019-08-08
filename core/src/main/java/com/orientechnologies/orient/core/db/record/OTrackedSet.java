@@ -146,9 +146,8 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       setDirty();
   }
 
-
-  private void removeNested(Object element){
-    if(element instanceof OTrackedMultiValue){
+  private void removeNested(Object element) {
+    if (element instanceof OTrackedMultiValue) {
       //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
     }
   }
@@ -176,7 +175,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   }
 
   public void addChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
-    if(changeListeners == null)
+    if (changeListeners == null)
       changeListeners = new LinkedList<OMultiValueChangeListener<T, T>>();
     changeListeners.add(changeListener);
   }

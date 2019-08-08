@@ -80,7 +80,7 @@ public class OFunctionLibraryImpl {
 
     // LOAD ALL THE FUNCTIONS IN MEMORY
     if (db.getMetadata().getImmutableSchemaSnapshot().existsClass("OFunction")) {
-      try(OResultSet result = db.query("select from OFunction order by name")) {
+      try (OResultSet result = db.query("select from OFunction order by name")) {
         while (result.hasNext()) {
           OResult res = result.next();
           ODocument d = (ODocument) res.getElement().get();
@@ -184,7 +184,7 @@ public class OFunctionLibraryImpl {
     try {
       String oldName = (String) function.getOriginalValue("name");
       functions.remove(oldName.toUpperCase(Locale.ENGLISH));
-    }catch (Exception e){
+    } catch (Exception e) {
 
     }
     ODocument metadataCopy = function.copy();

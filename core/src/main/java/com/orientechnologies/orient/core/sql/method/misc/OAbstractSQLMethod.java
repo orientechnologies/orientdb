@@ -96,7 +96,7 @@ public abstract class OAbstractSQLMethod implements OSQLMethod {
       return iValue.substring(1, iValue.length() - 1);
     }
 
-    if(iRecord == null){
+    if (iRecord == null) {
       return null;
     }
     // SEARCH FOR FIELD

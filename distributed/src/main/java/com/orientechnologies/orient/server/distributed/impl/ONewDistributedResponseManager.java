@@ -112,8 +112,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return null;
   }
 
-
-  public String getNodeNameFromPayload(OTransactionResultPayload payload){
+  public String getNodeNameFromPayload(OTransactionResultPayload payload) {
     return this.payloadToNode.get(payload);
   }
 

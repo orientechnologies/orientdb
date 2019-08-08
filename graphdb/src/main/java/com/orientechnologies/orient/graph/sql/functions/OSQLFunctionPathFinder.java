@@ -87,7 +87,7 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
         // FOUND
         break;
 
-      if( !OCommandExecutorAbstract.checkInterruption(context) )
+      if ( !OCommandExecutorAbstract.checkInterruption(context) )
         break;
     }
 

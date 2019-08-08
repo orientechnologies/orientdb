@@ -72,8 +72,9 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   }
 
   protected void setParameters(final Object... iArgs) {
-    if (iArgs != null && iArgs.length>0)
+    if (iArgs != null && iArgs.length > 0) {
       parameters = convertToParameters(iArgs);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -87,7 +88,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
         iArgs = (Object[]) iArgs[0];
 
       params = new HashMap<Object, Object>(iArgs.length);
-      for (int i = 0; i<iArgs.length; ++i) {
+      for (int i = 0; i < iArgs.length; ++i) {
         Object par = iArgs[i];
 
         if (par instanceof OIdentifiable && ((OIdentifiable) par).getIdentity().isValid())

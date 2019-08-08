@@ -164,7 +164,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public boolean remove(final Object key) {
-    try(OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key)) {
+    try (OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key)) {
       if (!result.hasNext()) {
         return false;
       }

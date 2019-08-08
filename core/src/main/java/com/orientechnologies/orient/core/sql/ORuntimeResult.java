@@ -178,12 +178,13 @@ public class ORuntimeResult {
               type = OType.EMBEDDEDLIST;
             iValue.field(prjName, projectionValue, type);
 
-          } else if (projectionValue instanceof Iterable && !(projectionValue instanceof OIdentifiable)){
+          } else if (projectionValue instanceof Iterable && !(projectionValue instanceof OIdentifiable)) {
             Iterator iterator = ((Iterable) projectionValue).iterator();
             boolean link = true;
             // make temporary value typical case graph database elemenet's iterator edges
-            if (iterator instanceof OResettable)
+            if (iterator instanceof OResettable) {
               ((OResettable) iterator).reset();
+            }
 
             final List<Object> iteratorValues = new ArrayList<Object>();
             final Iterator projectionValueIterator = (Iterator) iterator;
@@ -191,16 +192,18 @@ public class ORuntimeResult {
               Object value = projectionValueIterator.next();
               if (value instanceof OIdentifiable) {
                 value = ((OIdentifiable) value).getRecord();
-                if (value != null && !((OIdentifiable) value).getIdentity().isPersistent())
+                if (value != null && !((OIdentifiable) value).getIdentity().isPersistent()) {
                   link = false;
+                }
               }
 
-              if (value != null)
+              if (value != null) {
                 iteratorValues.add(value);
+              }
             }
 
             iValue.field(prjName, iteratorValues, link ? OType.LINKLIST : OType.EMBEDDEDLIST);
-          }else {
+          } else {
             iValue.field(prjName, projectionValue);
           }
       }
@@ -214,8 +217,9 @@ public class ORuntimeResult {
       Iterator<OIdentifiable> it = ((ORecordLazyMultiValue) projectionValue).rawIterator();
       while (it.hasNext()) {
         OIdentifiable rec = it.next();
-        if (rec!= null && !rec.getIdentity().isPersistent())
+        if (rec != null && !rec.getIdentity().isPersistent()) {
           return false;
+        }
       }
     } else {
       for (OIdentifiable rec : projectionValue) {

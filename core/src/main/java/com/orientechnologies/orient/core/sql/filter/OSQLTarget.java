@@ -70,11 +70,10 @@ public class OSQLTarget extends OBaseParser {
             new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
 
       throw e;
-    } catch(OCommandExecutionException ex){
+    } catch (OCommandExecutionException ex) {
       throw ex;
-    }catch (Exception e) {
-      throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()),
-          e);
+    } catch (Exception e) {
+      throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
     }
   }
 
@@ -176,7 +175,7 @@ public class OSQLTarget extends OBaseParser {
       executor.setProgressListener(subCommand.getProgressListener());
       executor.parse(subCommand);
       OCommandContext childContext = executor.getContext();
-      if(childContext!=null) {
+      if (childContext != null) {
         childContext.setParent(context);
       }
 

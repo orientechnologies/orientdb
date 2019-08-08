@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 /**
  * @author Luigi Dell'Aquila
  */
-public interface OVertex extends OElement{
+public interface OVertex extends OElement {
 
   Iterable<OEdge> getEdges(ODirection direction);
   Iterable<OEdge> getEdges(ODirection direction, String... type);

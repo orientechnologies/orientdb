@@ -158,7 +158,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   }
 
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
-    if(changeListeners == null)
+    if (changeListeners == null)
       changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>();
     changeListeners.add(changeListener);
   }

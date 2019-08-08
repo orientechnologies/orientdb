@@ -308,7 +308,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
             else if (c == 's')
               return index != (iValue.length() - 1) ? OType.STRING : OType.SHORT;
             else if (c == 'e') { //eg. 1e-06
-              try{
+              try {
                 Double.parseDouble(iValue);
                 return  OType.DOUBLE;
               } catch (Exception ignore) {

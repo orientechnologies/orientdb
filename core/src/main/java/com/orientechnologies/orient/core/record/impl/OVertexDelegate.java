@@ -486,7 +486,7 @@ public class OVertexDelegate implements OVertex {
     final OType propType = prop != null && prop.getType() != OType.ANY ? prop.getType() : null;
 
     if (found == null) {
-      if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) {//TODO constant
+      if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) { //TODO constant
         final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(iTo);
         out = coll;
@@ -507,7 +507,7 @@ public class OVertexDelegate implements OVertex {
         throw new ODatabaseException(
             "Type of field provided in schema '" + prop.getType() + "' cannot be used for creation to hold several links.");
 
-      if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {//TODO constant
+      if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) { //TODO constant
         final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(found);
         coll.add(iTo);
