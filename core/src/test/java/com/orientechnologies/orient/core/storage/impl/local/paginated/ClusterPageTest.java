@@ -545,7 +545,7 @@ public class ClusterPageTest {
 
     Assert.assertTrue(localPage.isDeleted(0));
     Assert.assertEquals(localPage.getRecordSize(0), -1);
-    Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
+    Assert.assertEquals(localPage.getRecordVersion(0), -1);
 
     //    Assert.assertEquals(localPage.getRecordBinaryValue(1, 0, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
 
@@ -555,7 +555,7 @@ public class ClusterPageTest {
 
     Assert.assertTrue(localPage.isDeleted(2));
     Assert.assertEquals(localPage.getRecordSize(2), -1);
-    Assert.assertEquals(localPage.getRecordVersion(2), recordVersion);
+    Assert.assertEquals(localPage.getRecordVersion(2), -1);
 
     //    Assert.assertEquals(localPage.getRecordBinaryValue(3, 0, 11), new byte[] { 4, 2, 3, 4, 5, 6, 5, 4, 3, 2, 4 });
     assertThat(localPage.getRecordBinaryValue(3, 0, 11)).isEqualTo(new byte[] { 4, 2, 3, 4, 5, 6, 5, 4, 3, 2, 4 });
