@@ -35,7 +35,7 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("serial")
-public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
+public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
   protected final ORecord                               sourceRecord;
   private final   boolean                               embeddedCollection;
   protected       Class<?>                              genericClass;
@@ -272,7 +272,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       final OMultiValueChangeListener<T, T> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
-      this.dirty = false;
       removeRecordChangeListener(changeListener);
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
@@ -280,6 +279,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
         OTrackedMultiValue.nestedDisable(this.iterator(), this);
       }
     }
+    this.dirty = false;
   }
 
   @Override

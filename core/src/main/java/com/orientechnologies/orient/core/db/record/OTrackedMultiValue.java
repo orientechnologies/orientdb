@@ -35,20 +35,6 @@ import java.util.List;
 public interface OTrackedMultiValue<K, V> {
 
   /**
-   * Add change listener.
-   *
-   * @param changeListener Change listener instance.
-   */
-  void addChangeListener(OMultiValueChangeListener<K, V> changeListener);
-
-  /**
-   * Remove change listener.
-   *
-   * @param changeListener Change listener instance.
-   */
-  void removeRecordChangeListener(OMultiValueChangeListener<K, V> changeListener);
-
-  /**
    * Reverts all operations that were performed on collection and return original collection state.
    *
    * @param changeEvents List of operations that were performed on collection.

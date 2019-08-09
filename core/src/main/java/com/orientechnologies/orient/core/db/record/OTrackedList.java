@@ -306,7 +306,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       final OMultiValueChangeListener<Integer, T> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
-      this.dirty = false;
       removeRecordChangeListener(changeListener);
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
@@ -314,6 +313,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
         OTrackedMultiValue.nestedDisable(this.iterator(), this);
       }
     }
+    this.dirty = false;
   }
 
   @Override

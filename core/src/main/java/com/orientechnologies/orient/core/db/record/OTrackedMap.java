@@ -269,7 +269,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
       final OMultiValueChangeListener<Object, T> changeListener = this.changeListener;
       this.changeListener.timeLine = null;
       this.changeListener = null;
-      this.dirty = false;
       removeRecordChangeListener(changeListener);
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
@@ -277,6 +276,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
         OTrackedMultiValue.nestedDisable(this.values().iterator(), this);
       }
     }
+    this.dirty = false;
   }
 
   @Override

@@ -29,8 +29,7 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.UUID;
 
-public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMultiValue,
-    OTrackedMultiValue<OIdentifiable, OIdentifiable> , ORecordElement {
+public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMultiValue, OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordElement {
   void addAll(Collection<OIdentifiable> values);
 
   void add(OIdentifiable identifiable);
@@ -45,15 +44,13 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
 
   /**
    * Writes content of bag to stream.
-   * 
+   * <p>
    * OwnerUuid is needed to notify db about changes of collection pointer if some happens during serialization.
-   * 
-   * @param stream
-   *          to write content
-   * @param offset
-   *          in stream where start to write content
-   * @param ownerUuid
-   *          id of delegate owner
+   *
+   * @param stream    to write content
+   * @param offset    in stream where start to write content
+   * @param ownerUuid id of delegate owner
+   *
    * @return offset where content of stream is ended
    */
   int serialize(byte[] stream, int offset, UUID ownerUuid);
@@ -65,8 +62,8 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
   /**
    * THIS IS VERY EXPENSIVE METHOD AND CAN NOT BE CALLED IN REMOTE STORAGE.
    *
-   * @param identifiable
-   *          Object to check.
+   * @param identifiable Object to check.
+   *
    * @return true if ridbag contains at leas one instance with the same rid as passed in identifiable.
    */
   boolean contains(OIdentifiable identifiable);
@@ -79,8 +76,22 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
 
   public List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners();
 
-  NavigableMap<OIdentifiable,Change> getChanges();
-  
+  NavigableMap<OIdentifiable, Change> getChanges();
+
   void setSize(int size);
+
+  /**
+   * Add change listener.
+   *
+   * @param changeListener Change listener instance.
+   */
+  void addChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener);
+
+  /**
+   * Remove change listener.
+   *
+   * @param changeListener Change listener instance.
+   */
+  void removeRecordChangeListener(OMultiValueChangeListener<OIdentifiable,OIdentifiable> changeListener);
 
 }
