@@ -943,11 +943,6 @@ public class ODocumentHelper {
         newList.addAll((ORecordLazySet) fieldValue);
         return newList;
 
-      } else if (fieldValue instanceof ORecordTrackedSet) {
-        final ORecordTrackedSet newList = new ORecordTrackedSet(iCloned);
-        newList.addAll((ORecordTrackedSet) fieldValue);
-        return newList;
-
       } else if (fieldValue instanceof OTrackedSet<?>) {
         final OTrackedSet<Object> newList = new OTrackedSet<Object>(iCloned);
         newList.addAll((OTrackedSet<Object>) fieldValue);
