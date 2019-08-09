@@ -160,8 +160,8 @@ public class ODocumentHelper {
             ((Collection<Object>) newValue).add(s);
           }
         }
-        if (type.isLink()){
-          ((ORecordLazyMultiValue)newValue).convertLinks2Records();
+        if (type.isLink()) {
+          ((ORecordLazyMultiValue) newValue).convertLinks2Records();
         }
         return (RET) newValue;
       } else {
@@ -196,8 +196,8 @@ public class ODocumentHelper {
             ((Collection<Object>) newValue).add(s);
           }
         }
-        if (type.isLink()){
-          ((ORecordLazyMultiValue)newValue).convertLinks2Records();
+        if (type.isLink()) {
+          ((ORecordLazyMultiValue) newValue).convertLinks2Records();
         }
         return (RET) newValue;
       } else {
@@ -1589,7 +1589,7 @@ public class ODocumentHelper {
 
   public static OMultiValueChangeEvent.OChangeType isNestedValueChanged(ODocumentEntry entry, Object value,
       List<Object> ownersTrace, int ownersTraceOffset, Object valueIdentifier) {
-    if (entry.getTimeLine()!= null) {
+    if (entry.getTimeLine() != null) {
       List<OMultiValueChangeEvent<Object, Object>> timeline = entry.getTimeLine().getMultiValueChangeEvents();
       if (timeline != null) {
         for (OMultiValueChangeEvent<Object, Object> event : timeline) {
