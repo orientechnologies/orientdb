@@ -3,6 +3,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -194,7 +195,16 @@ public class OrientIndexAuto<T extends OrientElement> implements OrientIndex<T> 
         .query("select " + ELEMENT_FIELD + " from " + indexClassName + " where " + KEY_FIELD + " = ? and " + VALUE_FIELD + " = ? ",
             key, value.toString())) {
       while (resultSet.hasNext()) {
-        result.add(resultSet.next().getProperty(ELEMENT_FIELD));
+        final OElement element = resultSet.next().getElementProperty(ELEMENT_FIELD);
+
+        if (element.isVertex()) {
+          result.add((T) new OrientVertex(graph, element));
+        } else if (element.isEdge()) {
+          result.add((T) new OrientEdge(graph, element));
+        } else {
+          throw new IllegalStateException(
+              "Fetched record is not part of graph type system, its type is " + element.getSchemaType());
+        }
       }
     }
 
