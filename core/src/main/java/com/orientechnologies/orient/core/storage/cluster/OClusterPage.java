@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageAppendRecordPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageDeleteRecordPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageReplaceRecordPO;
 
@@ -290,6 +291,11 @@ public final class OClusterPage extends ODurablePage {
     }
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + position * INDEX_ITEM_SIZE;
+    final int entryPointer = getIntValue(entryIndexPosition);
+
+    if ((entryPointer & MARKED_AS_DELETED_FLAG) != 0) {
+      return -1;
+    }
     return getIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE);
   }
 
@@ -308,12 +314,13 @@ public final class OClusterPage extends ODurablePage {
     }
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
-    int entryPointer = getIntValue(entryIndexPosition);
+    final int entryPointer = getIntValue(entryIndexPosition);
 
     if ((entryPointer & MARKED_AS_DELETED_FLAG) != 0) {
       return null;
     }
 
+    final int oldVersion = getIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE);
     int entryPosition = entryPointer & POSITION_MASK;
 
     int freeListHeader = getIntValue(FREELIST_HEADER_OFFSET);
@@ -333,7 +340,12 @@ public final class OClusterPage extends ODurablePage {
 
     decrementEntriesCount();
 
-    return getBinaryValue(entryPosition + 3 * OIntegerSerializer.INT_SIZE, entrySize - 3 * OIntegerSerializer.INT_SIZE);
+    final byte[] oldRecord = getBinaryValue(entryPosition + 3 * OIntegerSerializer.INT_SIZE,
+        entrySize - 3 * OIntegerSerializer.INT_SIZE);
+
+    addPageOperation(new ClusterPageDeleteRecordPO(position, oldVersion, oldRecord));
+
+    return oldRecord;
   }
 
   public boolean isDeleted(final int position) {
@@ -475,6 +487,10 @@ public final class OClusterPage extends ODurablePage {
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;
     final int entryPointer = getIntValue(entryIndexPosition);
+    if ((entryPointer & MARKED_AS_DELETED_FLAG) != 0) {
+      return null;
+    }
+
     final int entryPosition = entryPointer & POSITION_MASK;
 
     if (offset >= 0) {
