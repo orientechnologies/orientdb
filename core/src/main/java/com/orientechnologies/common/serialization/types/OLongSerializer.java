@@ -164,7 +164,7 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   }
 
   private static void checkBoundaries(byte[] stream, int startPosition) {
-    if (startPosition + LONG_SIZE >= stream.length) {
+    if (startPosition + LONG_SIZE > stream.length) {
       throw new IllegalStateException(
           "Requested stream size is " + (startPosition + LONG_SIZE) + " but provided stream has size " + stream.length);
     }

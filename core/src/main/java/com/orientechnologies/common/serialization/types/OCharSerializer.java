@@ -153,7 +153,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   private static void checkBoundaries(byte[] stream, int startPosition) {
-    if (startPosition + CHAR_SIZE >= stream.length) {
+    if (startPosition + CHAR_SIZE > stream.length) {
       throw new IllegalStateException(
           "Requested stream size is " + (startPosition + CHAR_SIZE) + " but provided stream has size " + stream.length);
     }

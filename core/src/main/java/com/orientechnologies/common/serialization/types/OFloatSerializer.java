@@ -146,7 +146,7 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   }
 
   private static void checkBoundaries(byte[] stream, int startPosition) {
-    if (startPosition + FLOAT_SIZE >= stream.length) {
+    if (startPosition + FLOAT_SIZE > stream.length) {
       throw new IllegalStateException(
           "Requested stream size is " + (startPosition + FLOAT_SIZE) + " but provided stream has size " + stream.length);
     }

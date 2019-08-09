@@ -158,7 +158,7 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   }
 
   private static void checkBoundaries(byte[] stream, int startPosition) {
-    if (startPosition + INT_SIZE >= stream.length) {
+    if (startPosition + INT_SIZE > stream.length) {
       throw new IllegalStateException(
           "Requested stream size is " + (startPosition + INT_SIZE) + " but provided stream has size " + stream.length);
     }

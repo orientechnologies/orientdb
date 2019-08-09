@@ -146,7 +146,7 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   }
 
   private static void checkBoundaries(byte[] stream, int startPosition) {
-    if (startPosition + DOUBLE_SIZE >= stream.length) {
+    if (startPosition + DOUBLE_SIZE > stream.length) {
       throw new IllegalStateException(
           "Requested stream size is " + (startPosition + DOUBLE_SIZE) + " but provided stream has size " + stream.length);
     }

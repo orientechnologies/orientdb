@@ -155,7 +155,7 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   }
 
   private static void checkBoundaries(byte[] stream, int startPosition) {
-    if (startPosition + SHORT_SIZE >= stream.length) {
+    if (startPosition + SHORT_SIZE > stream.length) {
       throw new IllegalStateException(
           "Requested stream size is " + (startPosition + SHORT_SIZE) + " but provided stream has size " + stream.length);
     }
