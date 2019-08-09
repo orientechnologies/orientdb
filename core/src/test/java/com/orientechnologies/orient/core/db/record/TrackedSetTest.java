@@ -65,8 +65,6 @@ public class TrackedSetTest {
     final OTrackedSet<String> trackedSet = new OTrackedSet<String>(doc);
     final ORef<Boolean> changed = new ORef<Boolean>(false);
 
-    trackedSet.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-
     trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
         changed.value = true;

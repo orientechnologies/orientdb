@@ -39,7 +39,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   protected final ORecord                               sourceRecord;
   private final   boolean                               embeddedCollection;
   protected       Class<?>                              genericClass;
-  private         STATUS                                status = STATUS.NOT_LOADED;
   private         boolean                               dirty  = false;
   private         List<OMultiValueChangeListener<T, T>> changeListeners;
 
@@ -187,14 +186,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   public void setDirtyNoChanged() {
     if (sourceRecord != null)
       sourceRecord.setDirtyNoChanged();
-  }
-
-  public STATUS getInternalStatus() {
-    return status;
-  }
-
-  public void setInternalStatus(final STATUS iStatus) {
-    status = iStatus;
   }
 
   public void addChangeListener(final OMultiValueChangeListener<T, T> changeListener) {

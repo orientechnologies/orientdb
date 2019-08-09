@@ -48,7 +48,6 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   protected              boolean                    autoConvertToRecord = true;
   protected final        ORecord                    sourceRecord;
   protected              Map<OIdentifiable, Object> map                 = new HashMap<OIdentifiable, Object>();
-  private                STATUS                     status              = STATUS.NOT_LOADED;
   protected static final Object                     ENTRY_REMOVAL       = new Object();
   private                boolean                    dirty               = false;
 
@@ -147,14 +146,6 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   public void setDirtyNoChanged() {
     if (sourceRecord != null)
       sourceRecord.setDirtyNoChanged();
-  }
-
-  public STATUS getInternalStatus() {
-    return status;
-  }
-
-  public void setInternalStatus(final STATUS iStatus) {
-    status = iStatus;
   }
 
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {

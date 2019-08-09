@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings({ "serial" })
-public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMultiValue {
+public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORecordLazyMultiValue {
   protected final byte                                            recordType;
   protected       ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType         = MULTIVALUE_CONTENT_TYPE.EMPTY;
   protected       boolean                                         autoConvertToRecord = true;
@@ -417,5 +417,11 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     }
     return removed;
   }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    //not needed do nothing
+  }
+
 
 }

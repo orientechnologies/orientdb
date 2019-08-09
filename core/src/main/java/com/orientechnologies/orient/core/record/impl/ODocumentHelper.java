@@ -924,11 +924,6 @@ public class ODocumentHelper {
       } else if (fieldValue instanceof ORecordLazyList) {
         return ((ORecordLazyList) fieldValue).copy(iCloned);
 
-      } else if (fieldValue instanceof ORecordTrackedList) {
-        final ORecordTrackedList newList = new ORecordTrackedList(iCloned);
-        newList.addAll((ORecordTrackedList) fieldValue);
-        return newList;
-
       } else if (fieldValue instanceof OTrackedList<?>) {
         final OTrackedList<Object> newList = new OTrackedList<Object>(iCloned);
         newList.addAll((OTrackedList<Object>) fieldValue);
