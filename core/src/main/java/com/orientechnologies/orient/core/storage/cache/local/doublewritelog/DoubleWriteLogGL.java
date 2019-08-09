@@ -97,8 +97,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         blockSize = DEFAULT_BLOCK_SIZE;
       }
 
-      OLogManager.instance()
-          .info(this, "DWL: block size = %d bytes, maximum segment size = %d bytes", blockSize, maxSegSize);
+      OLogManager.instance().info(this, "DWL:%s: block size = %d bytes, maximum segment size = %d MB", storageName, blockSize,
+          maxSegSize / 1024 / 1024);
     }
   }
 

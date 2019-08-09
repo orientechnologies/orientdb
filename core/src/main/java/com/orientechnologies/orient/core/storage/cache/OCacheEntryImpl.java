@@ -39,6 +39,8 @@ public class OCacheEntryImpl implements OCacheEntry {
    */
   private List<PageOperationRecord> pageOperationRecords;
 
+  private int hash;
+
   public OCacheEntryImpl(final long fileId, final int pageIndex, final OCachePointer dataPointer) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
@@ -278,13 +280,13 @@ public class OCacheEntryImpl implements OCacheEntry {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
 
-    final OCacheEntryImpl that = (OCacheEntryImpl) o;
+    OCacheEntryImpl that = (OCacheEntryImpl) o;
 
     if (fileId != that.fileId)
       return false;
@@ -293,9 +295,16 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public int hashCode() {
+    if (hash != 0) {
+      return hash;
+    }
+
     int result = (int) (fileId ^ (fileId >>> 32));
-    result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
-    return result;
+    result = 31 * result + pageIndex;
+
+    hash = result;
+
+    return hash;
   }
 
   @Override

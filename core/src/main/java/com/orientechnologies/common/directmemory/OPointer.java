@@ -3,7 +3,6 @@ package com.orientechnologies.common.directmemory;
 import com.sun.jna.Pointer;
 
 import java.nio.ByteBuffer;
-import java.util.Objects;
 
 public final class OPointer {
   private final Pointer    pointer;
@@ -39,9 +38,12 @@ public final class OPointer {
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
-    OPointer other = (OPointer) o;
 
-    return size == other.size && Objects.equals(pointer, other.pointer);
+    OPointer pointer1 = (OPointer) o;
+
+    if (size != pointer1.size)
+      return false;
+    return pointer != null ? pointer.equals(pointer1.pointer) : pointer1.pointer == null;
   }
 
   @Override
@@ -50,7 +52,11 @@ public final class OPointer {
       return hash;
     }
 
-    hash = Objects.hash(pointer, size);
+    int result = pointer != null ? pointer.hashCode() : 0;
+    result = 31 * result + size;
+
+    hash = result;
+
     return hash;
   }
 }

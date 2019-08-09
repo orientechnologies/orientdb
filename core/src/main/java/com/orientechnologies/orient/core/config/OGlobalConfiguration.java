@@ -224,7 +224,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       -1),
 
   STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT("storage.doubleWriteLog.maxSegSizePercent",
-      "Maximum size of segment of double write log in percents, should be set to value bigger than 0", Integer.class, 1),
+      "Maximum size of segment of double write log in percents, should be set to value bigger than 0", Integer.class, 5),
 
   STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE("storage.doubleWriteLog.minSegSize",
       "Minimum size of segment of double write log in megabytes, should be set to value bigger than 0. "
@@ -409,8 +409,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
-  @Deprecated
-  TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
+  @Deprecated TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
       "This setting is used only for debug purposes. It creates a stack trace of methods, when an atomic operation is started",
       Boolean.class, false),
 

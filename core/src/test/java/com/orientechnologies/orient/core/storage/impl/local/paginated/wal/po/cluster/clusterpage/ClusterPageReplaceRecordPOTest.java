@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
-public class ClusterPageAppendRecordPOTest {
+public class ClusterPageReplaceRecordPOTest {
   @Test
   public void testRedo() {
     final int pageSize = OClusterPage.PAGE_SIZE;
@@ -45,14 +45,16 @@ public class ClusterPageAppendRecordPOTest {
 
       restoredBuffer.put(originalBuffer);
 
-      clusterPage.appendRecord(3, new byte[] { 3 }, -1, Collections.emptySet());
+      Assert.assertEquals(2, clusterPage.getRecordVersion(1));
+
+      clusterPage.replaceRecord(1, new byte[] { 3 }, 3);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof ClusterPageAppendRecordPO);
+      Assert.assertTrue(operations.get(0) instanceof ClusterPageReplaceRecordPO);
 
-      final ClusterPageAppendRecordPO pageOperation = (ClusterPageAppendRecordPO) operations.get(0);
+      final ClusterPageReplaceRecordPO pageOperation = (ClusterPageReplaceRecordPO) operations.get(0);
 
       OClusterPage restoredPage = new OClusterPage(restoredCacheEntry);
       Assert.assertEquals(2, restoredPage.getRecordsCount());
@@ -65,15 +67,13 @@ public class ClusterPageAppendRecordPOTest {
 
       pageOperation.redo(restoredCacheEntry);
 
-      Assert.assertEquals(3, restoredPage.getRecordsCount());
+      Assert.assertEquals(2, restoredPage.getRecordsCount());
 
       Assert.assertEquals(1, restoredPage.getRecordVersion(0));
-      Assert.assertEquals(2, restoredPage.getRecordVersion(1));
-      Assert.assertEquals(3, restoredPage.getRecordVersion(2));
+      Assert.assertEquals(3, restoredPage.getRecordVersion(1));
 
       Assert.assertArrayEquals(new byte[] { 1 }, restoredPage.getRecordBinaryValue(0, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 2 }, restoredPage.getRecordBinaryValue(1, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 3 }, restoredPage.getRecordBinaryValue(2, 0, 1));
+      Assert.assertArrayEquals(new byte[] { 3 }, restoredPage.getRecordBinaryValue(1, 0, 1));
 
       byteBufferPool.release(pointer);
       byteBufferPool.release(restoredPointer);
@@ -100,26 +100,24 @@ public class ClusterPageAppendRecordPOTest {
 
       entry.clearPageOperations();
 
-      clusterPage.appendRecord(3, new byte[] { 3 }, -1, Collections.emptySet());
+      clusterPage.replaceRecord(1, new byte[] { 3 }, 3);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof ClusterPageAppendRecordPO);
+      Assert.assertTrue(operations.get(0) instanceof ClusterPageReplaceRecordPO);
 
-      final ClusterPageAppendRecordPO pageOperation = (ClusterPageAppendRecordPO) operations.get(0);
+      final ClusterPageReplaceRecordPO pageOperation = (ClusterPageReplaceRecordPO) operations.get(0);
 
       final OClusterPage restoredPage = new OClusterPage(entry);
 
-      Assert.assertEquals(3, restoredPage.getRecordsCount());
+      Assert.assertEquals(2, restoredPage.getRecordsCount());
 
       Assert.assertEquals(1, restoredPage.getRecordVersion(0));
-      Assert.assertEquals(2, restoredPage.getRecordVersion(1));
-      Assert.assertEquals(3, restoredPage.getRecordVersion(2));
+      Assert.assertEquals(3, restoredPage.getRecordVersion(1));
 
       Assert.assertArrayEquals(new byte[] { 1 }, restoredPage.getRecordBinaryValue(0, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 2 }, restoredPage.getRecordBinaryValue(1, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 3 }, restoredPage.getRecordBinaryValue(2, 0, 1));
+      Assert.assertArrayEquals(new byte[] { 3 }, restoredPage.getRecordBinaryValue(1, 0, 1));
 
       pageOperation.undo(entry);
 
@@ -141,7 +139,7 @@ public class ClusterPageAppendRecordPOTest {
   public void testSerialization() {
     OOperationUnitId operationUnitId = OOperationUnitId.generateId();
 
-    ClusterPageAppendRecordPO operation = new ClusterPageAppendRecordPO(12, new byte[] { 4, 2 }, 23, 45);
+    ClusterPageReplaceRecordPO operation = new ClusterPageReplaceRecordPO(23, 12, new byte[] { 4, 2 }, 21, new byte[] { 2, 4 });
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -153,17 +151,17 @@ public class ClusterPageAppendRecordPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    ClusterPageAppendRecordPO restoredOperation = new ClusterPageAppendRecordPO();
+    ClusterPageReplaceRecordPO restoredOperation = new ClusterPageReplaceRecordPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());
     Assert.assertEquals(24, restoredOperation.getPageIndex());
     Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
 
+    Assert.assertEquals(23, restoredOperation.getRecordPosition());
     Assert.assertEquals(12, restoredOperation.getRecordVersion());
     Assert.assertArrayEquals(new byte[] { 4, 2 }, restoredOperation.getRecord());
-    Assert.assertEquals(23, restoredOperation.getRequestedPosition());
-    Assert.assertEquals(45, restoredOperation.getRecordPosition());
+    Assert.assertEquals(21, restoredOperation.getOldRecordVersion());
+    Assert.assertArrayEquals(new byte[] { 2, 4 }, restoredOperation.getOldRecord());
   }
-
 }
