@@ -181,11 +181,9 @@ public class OFunctionLibraryImpl {
 
   public void updatedFunction(ODocument function) {
     reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
-    try {
-      String oldName = (String) function.getOriginalValue("name");
+    String oldName = (String) function.getOriginalValue("name");
+    if (oldName != null) {
       functions.remove(oldName.toUpperCase(Locale.ENGLISH));
-    } catch (Exception e) {
-
     }
     ODocument metadataCopy = function.copy();
     OCallable<Object, Map<Object, Object>> callBack = null;
