@@ -409,7 +409,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
-
+  @Deprecated
   TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
       "This setting is used only for debug purposes. It creates a stack trace of methods, when an atomic operation is started",
       Boolean.class, false),
