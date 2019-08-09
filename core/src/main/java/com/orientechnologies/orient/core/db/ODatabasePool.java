@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 
+import java.util.Objects;
+
 /**
  * A Pool of databases.
  * <p>
@@ -127,6 +129,12 @@ public class ODatabasePool implements AutoCloseable {
     orientDb = new OrientDB(environment, configuration);
     autoclose = true;
     internal = orientDb.openPool(database, user, password, configuration);
+  }
+
+  ODatabasePool(OrientDB environment, ODatabasePoolInternal internal) {
+    this.orientDb = environment;
+    this.internal = internal;
+    autoclose = false;
   }
 
   /**

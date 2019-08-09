@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -7,6 +8,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -14,7 +16,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 import static org.junit.Assert.*;
 
 /**
@@ -218,26 +219,57 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testPoolFactory() {
-      OrientDB orientDB = new OrientDB("embedded:testdb", OrientDBConfig.defaultConfig());
-      orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
+    OrientDBConfig config = OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
+            .build();
+    OrientDB orientDB = new OrientDB("embedded:testdb", config);
+    orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
 
-      ODatabasePoolFactory factory = new ODatabasePoolFactory(orientDB, 2);
+    ODatabasePool poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolAdmin2 = orientDB.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolReader1 = orientDB.cachedPool("testdb", "reader", "reader");
+    ODatabasePool poolReader2 = orientDB.cachedPool("testdb", "reader", "reader");
 
-      ODatabasePool poolAdmin1 = factory.get("testdb", "admin", "admin");
-      ODatabasePool poolAdmin2 = factory.get("testdb", "admin", "admin");
-      ODatabasePool poolReader1 = factory.get("testdb", "reader", "reader");
-      ODatabasePool poolReader2 = factory.get("testdb", "reader", "reader");
+    assertEquals(poolAdmin1, poolAdmin2);
+    assertEquals(poolReader1, poolReader2);
+    assertNotEquals(poolAdmin1, poolReader1);
 
-      assertEquals(poolAdmin1, poolAdmin2);
-      assertEquals(poolReader1, poolReader2);
-      assertNotEquals(poolAdmin1, poolReader1);
+    ODatabasePool poolWriter1 = orientDB.cachedPool("testdb", "writer", "writer");
+    ODatabasePool poolWriter2 = orientDB.cachedPool("testdb", "writer", "writer");
+    assertEquals(poolWriter1, poolWriter2);
 
-      ODatabasePool poolWriter1 = factory.get("testdb", "writer", "writer");
-      ODatabasePool poolWriter2 = factory.get("testdb", "writer", "writer");
-      assertEquals(poolWriter1, poolWriter2);
+    ODatabasePool poolAdmin3 = orientDB.cachedPool("testdb", "admin", "admin");
+    assertNotEquals(poolAdmin1, poolAdmin3);
 
-      ODatabasePool poolAdmin3 = factory.get("testdb", "admin", "admin");
-      assertNotEquals(poolAdmin1, poolAdmin3);
+    orientDB.close();
+  }
+
+  @Test
+  public void testPoolFactoryCleanUp() throws Exception {
+    OrientDBConfig config = OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
+            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 1_000)
+            .build();
+    OrientDB orientDB = new OrientDB("embedded:testdb", config);
+    orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
+
+    ODatabasePool poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolAdmin2 = orientDB.cachedPool("testdb", "admin", "admin");
+
+    assertFalse(poolAdmin1.isClosed());
+    assertEquals(poolAdmin1, poolAdmin2);
+
+    poolAdmin1.close();
+
+    assertTrue(poolAdmin1.isClosed());
+
+    Thread.sleep(3_000);
+
+    ODatabasePool poolAdmin3 = orientDB.cachedPool("testdb", "admin", "admin");
+    assertNotEquals(poolAdmin1, poolAdmin3);
+    assertFalse(poolAdmin3.isClosed());
+
+    orientDB.close();
   }
 
   @Test

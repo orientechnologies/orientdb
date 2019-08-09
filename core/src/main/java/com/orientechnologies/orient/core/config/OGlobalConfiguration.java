@@ -373,6 +373,10 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
+  DB_CACHED_POOL_CAPACITY("db.cached.pool.capacity", "Default database cached pools capacity", Integer.class, 100),
+
+  DB_CACHED_POOL_CLEAN_UP_TIMEOUT("db.cached.pool.clean.up.timeout", "Default timeout for clean up cache from closed database pools", Long.class, 600_000),
+
   DB_POOL_ACQUIRE_TIMEOUT("db.pool.acquireTimeout", "Default database pool timeout in milliseconds", Integer.class, 60000),
 
   DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking for free databases in the pool", Integer.class, 0),

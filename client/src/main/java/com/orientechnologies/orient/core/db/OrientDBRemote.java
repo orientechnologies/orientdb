@@ -254,6 +254,16 @@ public class OrientDBRemote implements OrientDBInternal {
     return pool;
   }
 
+  @Override
+  public ODatabasePoolInternal cachedPool(String database, String user, String password) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public ODatabasePoolInternal cachedPool(String database, String user, String password, OrientDBConfig config) {
+    throw new UnsupportedOperationException();
+  }
+
   public void removePool(ODatabasePoolInternal pool) {
     pools.remove(pool);
   }
