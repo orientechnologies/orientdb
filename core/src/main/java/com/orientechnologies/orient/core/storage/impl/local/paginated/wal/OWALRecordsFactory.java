@@ -38,10 +38,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageAppendRecordPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageDeleteRecordPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageInitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageReplaceRecordPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.*;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
@@ -234,6 +231,9 @@ public final class OWALRecordsFactory {
       break;
     case CLUSTER_PAGE_DELETE_RECORD_PO:
       walRecord = new ClusterPageDeleteRecordPO();
+      break;
+    case CLUSTER_PAGE_SET_NEXT_PAGE_PO:
+      walRecord = new ClusterPageSetNextPagePO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

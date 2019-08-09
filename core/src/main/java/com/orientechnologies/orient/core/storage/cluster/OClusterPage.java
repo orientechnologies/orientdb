@@ -28,10 +28,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageAppendRecordPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageDeleteRecordPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageInitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageReplaceRecordPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.*;
 
 import java.util.Set;
 
@@ -437,7 +434,11 @@ public final class OClusterPage extends ODurablePage {
   }
 
   public void setNextPage(final long nextPage) {
+    final int oldNextPage = (int) getLongValue(NEXT_PAGE_OFFSET);
+
     setLongValue(NEXT_PAGE_OFFSET, nextPage);
+
+    addPageOperation(new ClusterPageSetNextPagePO((int) nextPage, oldNextPage));
   }
 
   public long getPrevPage() {

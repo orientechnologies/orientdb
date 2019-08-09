@@ -53,4 +53,5 @@ public final class WALRecordTypes {
   public static final byte CLUSTER_PAGE_APPEND_RECORD_PO  = 43;
   public static final byte CLUSTER_PAGE_REPLACE_RECORD_PO = 44;
   public static final byte CLUSTER_PAGE_DELETE_RECORD_PO  = 45;
+  public static final byte CLUSTER_PAGE_SET_NEXT_PAGE_PO  = 46;
 }
