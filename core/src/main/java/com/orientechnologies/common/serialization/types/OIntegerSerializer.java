@@ -80,19 +80,27 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
 
   @Override
   public void serializeNativeObject(Integer object, byte[] stream, int startPosition, Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
   @Override
   public Integer deserializeNativeObject(final byte[] stream, final int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
   }
 
   public void serializeNative(int object, byte[] stream, int startPosition, Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
   public int deserializeNative(final byte[] stream, final int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
   }
 
@@ -147,5 +155,12 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return INT_SIZE;
+  }
+
+  private static void checkBoundaries(byte[] stream, int startPosition) {
+    if (startPosition + INT_SIZE >= stream.length) {
+      throw new IllegalStateException(
+          "Requested stream size is " + (startPosition + INT_SIZE) + " but provided stream has size " + stream.length);
+    }
   }
 }

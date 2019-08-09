@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.record;
 
-import com.orientechnologies.common.serialization.OBinaryConverter;
-import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 /**
@@ -31,7 +29,6 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORecordVersionHelper {
-  public static final OBinaryConverter CONVERTER       = OBinaryConverterFactory.getConverter();
   public static final int              SERIALIZED_SIZE = OBinaryProtocol.SIZE_INT;
 
   protected ORecordVersionHelper() {

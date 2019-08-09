@@ -20,12 +20,9 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.serialization.OBinaryConverter;
-import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -35,9 +32,8 @@ import java.util.Arrays;
  * @since 20.01.12
  */
 public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
-  public static final  OBinaryTypeSerializer INSTANCE  = new OBinaryTypeSerializer();
-  public static final  byte                  ID        = 17;
-  private static final OBinaryConverter      CONVERTER = OBinaryConverterFactory.getConverter();
+  public static final OBinaryTypeSerializer INSTANCE = new OBinaryTypeSerializer();
+  public static final byte                  ID       = 17;
 
   public int getObjectSize(int length) {
     return length + OIntegerSerializer.INT_SIZE;
@@ -64,17 +60,17 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
   }
 
   public int getObjectSizeNative(byte[] stream, int startPosition) {
-    return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()) + OIntegerSerializer.INT_SIZE;
+    return OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition) + OIntegerSerializer.INT_SIZE;
   }
 
   public void serializeNativeObject(byte[] object, byte[] stream, int startPosition, Object... hints) {
     final int len = object.length;
-    CONVERTER.putInt(stream, startPosition, len, ByteOrder.nativeOrder());
+    OIntegerSerializer.INSTANCE.serializeNative(len, stream, startPosition, hints);
     System.arraycopy(object, 0, stream, startPosition + OIntegerSerializer.INT_SIZE, len);
   }
 
   public byte[] deserializeNativeObject(byte[] stream, int startPosition) {
-    final int len = CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
+    final int len = OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition);
     return Arrays
         .copyOfRange(stream, startPosition + OIntegerSerializer.INT_SIZE, startPosition + OIntegerSerializer.INT_SIZE + len);
   }
