@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -3134,41 +3135,48 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     final ByteBuffer[] buffers = new ByteBuffer[chunk.size()];
     final OPointer[] directPointers = new OPointer[chunk.size()];
 
-    for (int i = 0; i < buffers.length; i++) {
-      final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> quarto = chunk.get(i);
-      final ByteBuffer buffer = quarto.two;
+    final boolean fsyncFiles;
+    final OPointer containerPointer = ODirectMemoryAllocator.instance().allocate(chunk.size() * pageSize, -1);
+    final ByteBuffer containerBuffer = containerPointer.getNativeByteBuffer();
+    try {
+      for (int i = 0; i < chunk.size(); i++) {
+        final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> quarto = chunk.get(i);
+        final ByteBuffer buffer = quarto.two;
 
-      final OCachePointer pointer = quarto.four;
+        final OCachePointer pointer = quarto.four;
 
-      addMagicChecksumAndEncryption(extractFileId(pointer.getFileId()), (int) pointer.getPageIndex(), buffer);
+        addMagicChecksumAndEncryption(extractFileId(pointer.getFileId()), (int) pointer.getPageIndex(), buffer);
 
-      buffer.position(0);
-      buffers[i] = buffer;
-      directPointers[i] = quarto.three;
-    }
+        buffer.position(0);
+        containerBuffer.put(buffer);
 
-    final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> firstChunk = chunk.get(0);
+        buffer.position(0);
+        buffers[i] = buffer;
+        directPointers[i] = quarto.three;
+      }
 
-    final OCachePointer firstCachePointer = firstChunk.four;
-    final long firstFileId = firstCachePointer.getFileId();
-    final long firstPageIndex = firstCachePointer.getPageIndex();
+      final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> firstChunk = chunk.get(0);
 
-    final boolean fsyncFiles = doubleWriteLog.write(buffers, internalFileId(firstFileId), (int) firstPageIndex);
+      final OCachePointer firstCachePointer = firstChunk.four;
+      final long firstFileId = firstCachePointer.getFileId();
+      final long firstPageIndex = firstCachePointer.getPageIndex();
 
-    for (ByteBuffer buffer : buffers) {
-      buffer.rewind();
+      fsyncFiles = doubleWriteLog.write(buffers, internalFileId(firstFileId), (int) firstPageIndex);
 
       final OClosableEntry<Long, OFileClassic> fileEntry = files.acquire(firstFileId);
       try {
         final OFileClassic file = fileEntry.get();
-        file.write(firstPageIndex * pageSize, buffers);
+        containerBuffer.rewind();
+        file.write(firstPageIndex * pageSize, containerBuffer);
       } finally {
         files.release(fileEntry);
       }
+    } finally {
+      ODirectMemoryAllocator.instance().deallocate(containerPointer);
+    }
 
-      if (fsyncFiles) {
-        fsyncFiles();
-      }
+    if (fsyncFiles) {
+      fsyncFiles();
     }
 
     for (final OPointer directPointer : directPointers) {
