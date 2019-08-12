@@ -395,7 +395,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private long lsnPagesFlushIntervalSum;
   private int  lsnPagesFlushIntervalCount;
 
-  private final int chunkSize;
+  private int chunkSize;
 
   private final    long      pagesFlushInterval;
   private volatile boolean   stopFlush;
@@ -1139,7 +1139,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       if (pagePointer == null) {
         try {
           //load requested page and preload requested amount of pages
-          final OCachePointer filePagePointer = loadFileContent(intId, (int) startPageIndex, verifyChecksums);
+          final OCachePointer filePagePointer = loadFileContent(intId, startPageIndex, verifyChecksums);
           if (filePagePointer != null) {
             filePagePointer.incrementReadersReferrer();
           }
@@ -2105,7 +2105,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private OCachePointer loadFileContent(final int internalFileId, final int pageIndex, final boolean verifyChecksums)
+  private OCachePointer loadFileContent(final int internalFileId, final long pageIndex, final boolean verifyChecksums)
       throws IOException {
     final long fileId = composeFileId(id, internalFileId);
     try {
@@ -2138,7 +2138,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
               //if page is broken inside of data file we check double write log
               if (!verifyMagicChecksumAndDecryptPage(buffer, internalFileId, pageIndex)) {
-                final OPointer doubleWritePointer = doubleWriteLog.loadPage(internalFileId, pageIndex, bufferPool);
+                final OPointer doubleWritePointer = doubleWriteLog.loadPage(internalFileId, (int) pageIndex, bufferPool);
 
                 if (doubleWritePointer == null) {
                   assertPageIsBroken(pageIndex, fileId, pointer);
@@ -2158,7 +2158,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             buffer.position(0);
 
             pagesRead = 1;
-            return new OCachePointer(pointer, bufferPool, fileId, pageIndex);
+            return new OCachePointer(pointer, bufferPool, fileId, (int) pageIndex);
           } finally {
             if (printCacheStatistics) {
               final long endTs = System.nanoTime();
@@ -2169,7 +2169,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             }
           }
         } else {
-          final OPointer pointer = doubleWriteLog.loadPage(internalFileId, pageIndex, bufferPool);
+          final OPointer pointer = doubleWriteLog.loadPage(internalFileId, (int) pageIndex, bufferPool);
           if (pointer != null) {
             final ByteBuffer buffer = pointer.getNativeByteBuffer();
 
@@ -2722,30 +2722,44 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           int lsnPages = 0;
           if (writeAheadLog != null) {
-            convertSharedDirtyPagesToLocal();
+            final long startFlushTs = System.nanoTime();
+            long flushTs;
+            do {
+              convertSharedDirtyPagesToLocal();
 
-            final long startSegment = writeAheadLog.begin().getSegment();
-            final long endSegment = writeAheadLog.end().getSegment();
-            final int segmentCount = localDirtyPagesBySegment.size();
+              final long startSegment = writeAheadLog.begin().getSegment();
+              final long endSegment = writeAheadLog.end().getSegment();
+              final int segmentCount = localDirtyPagesBySegment.size();
 
-            if (segmentCount > 1) {
-              final Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
+              if (segmentCount > 1) {
+                final Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
-              if (lsnEntry != null && lsnEntry.getKey() < endSegment) {
-                lsnPages = flushChunk(lsnFlushInterval, startSegment, endSegment);
-              }
-            }
-
-            if (lsnPages + exclusivePages == 0) {
-              final Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
-              if (firstSegment != null && firstSegment.getKey() < endSegment) {
-                final TreeSet<PageKey> pages = firstSegment.getValue();
-
-                if (pages.size() >= 256 * chunkSize) {
-                  flushChunk(lsnFlushInterval, startSegment, endSegment);
+                if (lsnEntry != null && lsnEntry.getKey() < endSegment) {
+                  lsnPages = flushChunk(lsnFlushInterval, startSegment, endSegment);
                 }
               }
+
+              if (lsnPages + exclusivePages == 0) {
+                final Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
+                if (firstSegment != null && firstSegment.getKey() < endSegment) {
+                  final TreeSet<PageKey> pages = firstSegment.getValue();
+
+                  if (pages.size() >= 1024 * 1024 * 1024 / pageSize) {
+                    lsnPages += flushChunk(lsnFlushInterval, startSegment, endSegment);
+                  }
+                }
+              }
+
+              flushTs = System.nanoTime();
+            } while ((flushTs - startFlushTs) / 1_000_000_000 < pagesFlushInterval);
+
+            final long nsPerPage = (flushTs - startFlushTs) / lsnPages;
+            chunkSize = (int) ((pagesFlushInterval * 1_000_000_000) / nsPerPage);
+
+            if (chunkSize < 1) {
+              chunkSize = 1;
             }
+
           }
         } catch (final Error | Exception t) {
           OLogManager.instance().error(this, "Exception during data flush", t);
