@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.cache;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
@@ -264,6 +265,13 @@ public class WOWCacheTestIT {
 
     for (int i = 0; i < 2048; i++) {
       wowCache.allocateNewPage(fileId);
+
+      final OPointer pointer = bufferPool.acquireDirect(true);
+      final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, i);
+
+      cachePointer.incrementReadersReferrer();
+      wowCache.store(fileId, i, cachePointer);
+      cachePointer.decrementReadersReferrer();
     }
 
     for (int i = 0; i < 600; i++) {
@@ -535,7 +543,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
 
     try {
@@ -568,7 +576,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.write(0, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
+    file.write(0, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
 
     try {
@@ -601,7 +609,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
 
     wowCache.load(fileId, 0, new OModifiableBoolean(), false).decrementReadersReferrer();
@@ -629,7 +637,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
 
     wowCache.load(fileId, 0, new OModifiableBoolean(), true).decrementReadersReferrer();
@@ -657,7 +665,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
 
     wowCache.load(fileId, 0, new OModifiableBoolean(), true).decrementReadersReferrer();
@@ -685,7 +693,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
 
     wowCache.setChecksumMode(OChecksumMode.StoreAndThrow);

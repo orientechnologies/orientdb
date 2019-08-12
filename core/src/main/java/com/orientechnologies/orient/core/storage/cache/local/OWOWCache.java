@@ -2209,7 +2209,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final int computedChecksum = (int) crc32.getValue();
 
       buffer.position(CHECKSUM_OFFSET);
-      OIntegerSerializer.INSTANCE.serializeInByteBufferObject(computedChecksum, buffer);
+      buffer.putInt(computedChecksum);
     }
 
     if (aesKey != null) {
@@ -3038,7 +3038,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       flushTs = System.nanoTime();
     }
 
-    final boolean fsyncFiles;
+    boolean fsyncFiles = false;
 
     int flushedPages = 0;
 
@@ -3060,8 +3060,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         containerPointers[i] = containerPointer;
         containerBuffers[i] = containerBuffer;
 
-        for (int n = 0; n < chunks.size(); n++) {
-          final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> quarto = chunk.get(n);
+        for (final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> quarto : chunk) {
           final ByteBuffer buffer = quarto.two;
 
           final OCachePointer pointer = quarto.four;
@@ -3070,7 +3069,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           buffer.position(0);
           containerBuffer.put(buffer);
-          containerBuffer.rewind();
         }
 
         final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> firstChunk = chunk.get(0);
@@ -3383,9 +3381,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           if (chunks.size() >= chunkSize) {
             flushPages(chunks, maxLSN);
+            chunks.clear();
           }
         }
       }
+
+      flushPages(chunks, maxLSN);
 
       if (callFsync) {
         for (final int iFileId : fileIdSet) {
