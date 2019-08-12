@@ -71,10 +71,13 @@ public final class OFileClassic implements OClosableItem {
 
   private int version;
 
-  private volatile long size;
+  private final    AtomicLong size          = new AtomicLong();
+  private volatile long       committedSize = 0;
 
   private AllocationMode allocationMode;
   private int            fd;
+
+  private final int pageSize;
 
   /**
    * Map which calculates which files are opened and how many users they have
@@ -91,26 +94,38 @@ public final class OFileClassic implements OClosableItem {
    */
   private final boolean trackFileOpen = OGlobalConfiguration.STORAGE_TRACK_FILE_ACCESS.getValueAsBoolean();
 
-  public OFileClassic(final Path osFile) {
+  public OFileClassic(final Path osFile, final int pageSize) {
     this.osFile = osFile;
+    this.pageSize = pageSize;
   }
 
   public long allocateSpace(final int size) throws IOException {
+    acquireReadLock();
+    try {
+      final long currentSize = this.size.addAndGet(size);
+      final long currentCommittedSize = this.committedSize;
+
+      final int pagesDifference = (int) ((currentSize - currentCommittedSize) / pageSize);
+      if (pagesDifference < 10 || pagesDifference < 0.1 * currentCommittedSize) {
+        return currentSize;
+      }
+    } finally {
+      releaseReadLock();
+    }
+
     acquireWriteLock();
     try {
-      final long currentSize = this.size;
-      assert channel.size() == currentSize + HEADER_SIZE;
+      final long currentSize = this.size.get();
+      assert channel.size() == this.committedSize + HEADER_SIZE;
 
-      //noinspection NonAtomicOperationOnVolatileField
-      this.size += size;
-
-      assert this.size >= size;
+      final long sizeDiff = currentSize - this.committedSize;
+      this.committedSize = currentSize;
 
       assert allocationMode != null;
       if (allocationMode == AllocationMode.WRITE) {
-        final long ptr = Native.malloc(size);
+        final long ptr = Native.malloc(sizeDiff);
         try {
-          final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
+          final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
           buffer.position(0);
           OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
         } finally {
@@ -120,7 +135,7 @@ public final class OFileClassic implements OClosableItem {
         assert fd > 0;
 
         try {
-          ONative.instance().fallocate(fd, currentSize + HEADER_SIZE, size);
+          ONative.instance().fallocate(fd, currentSize + HEADER_SIZE, sizeDiff);
         } catch (final LastErrorException e) {
           OLogManager.instance()
               .debug(this, "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
@@ -136,9 +151,9 @@ public final class OFileClassic implements OClosableItem {
                     lee.getErrorCode());
           }
 
-          final long ptr = Native.malloc(size);
+          final long ptr = Native.malloc(sizeDiff);
           try {
-            final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
+            final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
             buffer.position(0);
             OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
           } finally {
@@ -147,12 +162,12 @@ public final class OFileClassic implements OClosableItem {
         }
 
       } else if (allocationMode == AllocationMode.LENGTH) {
-        frnd.setLength(this.size + HEADER_SIZE);
+        frnd.setLength(currentSize + HEADER_SIZE);
       } else {
         throw new IllegalStateException("Unknown allocation mode");
       }
 
-      assert channel.size() == this.size + HEADER_SIZE;
+      assert channel.size() == currentSize + HEADER_SIZE;
       return currentSize;
     } finally {
       releaseWriteLock();
@@ -167,9 +182,11 @@ public final class OFileClassic implements OClosableItem {
     try {
       //noinspection resource
       channel.truncate(HEADER_SIZE + size);
-      this.size = size;
+      this.size.set(size);
+      this.committedSize = size;
 
-      assert this.size >= 0;
+      assert this.committedSize >= 0;
+      assert this.size.get() >= 0;
 
     } finally {
       releaseWriteLock();
@@ -177,7 +194,7 @@ public final class OFileClassic implements OClosableItem {
   }
 
   public long getFileSize() {
-    return size;
+    return size.get();
   }
 
   public void read(long offset, final ByteBuffer buffer, final boolean throwOnEof) throws IOException {
@@ -289,16 +306,16 @@ public final class OFileClassic implements OClosableItem {
   /**
    * ALWAYS ADD THE HEADER SIZE BECAUSE ON THIS TYPE IS ALWAYS NEEDED
    */
-  private long checkRegions(final long iOffset, final long iLength) {
+  private long checkRegions(final long offset, final long iLength) {
     acquireReadLock();
     try {
-      if (iOffset < 0 || iOffset + iLength > size) {
+      if (offset < 0 || offset + iLength > size.get()) {
         throw new OIOException(
-            "You cannot access outside the file size (" + size + " bytes). You have requested portion from " + iOffset + "-" + (iOffset
-                + iLength) + " bytes. File: " + this);
+            "You cannot access outside the file size (" + size.get() + " bytes). You have requested portion from " + offset + "-"
+                + (offset + iLength) + " bytes. File: " + this);
       }
 
-      return iOffset + HEADER_SIZE;
+      return offset + HEADER_SIZE;
     } finally {
       releaseReadLock();
     }
@@ -520,8 +537,10 @@ public final class OFileClassic implements OClosableItem {
   }
 
   private void init() throws IOException {
-    size = channel.size() - HEADER_SIZE;
-    assert size >= 0;
+    size.set(channel.size() - HEADER_SIZE);
+    assert size.get() >= 0;
+
+    this.committedSize = size.get();
 
     final ByteBuffer buffer = ByteBuffer.allocate(1);
 
