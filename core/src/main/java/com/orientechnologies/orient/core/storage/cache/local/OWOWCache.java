@@ -2735,7 +2735,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 final Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
                 if (lsnEntry != null && lsnEntry.getKey() < endSegment) {
-                  lsnPages = flushChunk(lsnFlushInterval, startSegment, endSegment);
+                  lsnPages += flushChunk(lsnFlushInterval, startSegment, endSegment);
                 }
               }
 
