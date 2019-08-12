@@ -2751,13 +2751,17 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               }
 
               flushTs = System.nanoTime();
-            } while ((flushTs - startFlushTs) / 1_000_000_000 < pagesFlushInterval);
+            } while ((flushTs - startFlushTs) / 1_000_000_000 < pagesFlushInterval && !localDirtyPages.isEmpty());
 
-            final long nsPerPage = (flushTs - startFlushTs) / lsnPages;
-            chunkSize = (int) ((pagesFlushInterval * 1_000_000_000) / nsPerPage);
+            if (lsnPages > 0) {
+              final long nsPerPage = (flushTs - startFlushTs) / lsnPages;
+              if (nsPerPage > 0) {
+                chunkSize = (int) ((pagesFlushInterval * 1_000_000_000) / nsPerPage);
 
-            if (chunkSize < 1) {
-              chunkSize = 1;
+                if (chunkSize < 1) {
+                  chunkSize = 1;
+                }
+              }
             }
 
           }
