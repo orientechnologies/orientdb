@@ -20,11 +20,13 @@
 package com.orientechnologies.orient.core.storage.fs;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableItem;
+import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.sun.jna.LastErrorException;
@@ -39,9 +41,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -57,13 +60,15 @@ public final class OFileClassic implements OClosableItem {
 
   private static final int OPEN_RETRY_MAX = 10;
 
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final ReadWriteLock  lock      = new ReentrantReadWriteLock();
+  private final ScalableRWLock flushLock = new ScalableRWLock();
 
   private volatile Path osFile;
 
-  private       FileChannel      channel;
-  private       RandomAccessFile frnd;
-  private final AtomicLong       dirtyCounter = new AtomicLong();
+  private FileChannel      channel;
+  private RandomAccessFile frnd;
+
+  private volatile boolean dirty;
 
   private int version;
 
@@ -176,18 +181,6 @@ public final class OFileClassic implements OClosableItem {
     return size;
   }
 
-  public void read(long offset, final byte[] iData, final int iLength, final int iArrayOffset) throws IOException {
-    acquireReadLock();
-    try {
-      offset = checkRegions(offset, iLength);
-
-      final ByteBuffer buffer = ByteBuffer.wrap(iData, iArrayOffset, iLength);
-      readByteBuffer(buffer, channel, offset, true);
-    } finally {
-      releaseReadLock();
-    }
-  }
-
   public void read(long offset, final ByteBuffer buffer, final boolean throwOnEof) throws IOException {
     acquireReadLock();
     try {
@@ -198,32 +191,34 @@ public final class OFileClassic implements OClosableItem {
     }
   }
 
-  public void write(long offset, final ByteBuffer buffer) throws IOException {
+  public void write(final long offset, final ByteBuffer buffer) throws IOException {
     acquireReadLock();
     try {
-      dirtyCounter.incrementAndGet();
-      offset += HEADER_SIZE;
-      writeByteBuffer(buffer, channel, offset);
+      flushLock.sharedLock();
+      try {
+        dirty = true;
+        writeByteBuffer(buffer, channel, offset + HEADER_SIZE);
+      } finally {
+        flushLock.sharedUnlock();
+      }
     } finally {
       releaseReadLock();
     }
   }
 
-  public void read(final long iOffset, final byte[] iDestBuffer, final int iLength) throws IOException {
-    read(iOffset, iDestBuffer, iLength, 0);
-  }
+  public CountDownLatch write(List<ORawPair<Long, ByteBuffer>> buffers) throws IOException {
+    final CountDownLatch latch = new CountDownLatch(0);
 
-  public void writeByte(long iOffset, final byte iValue) throws IOException {
-    acquireWriteLock();
-    try {
-      iOffset += HEADER_SIZE;
-      final ByteBuffer buffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_BYTE);
-      buffer.put(iValue);
-      writeBuffer(buffer, iOffset);
-      dirtyCounter.incrementAndGet();
-    } finally {
-      releaseWriteLock();
+    for (final ORawPair<Long, ByteBuffer> pair : buffers) {
+      final long position = pair.getFirst();
+
+      final ByteBuffer buffer = pair.getSecond();
+      buffer.rewind();
+
+      write(position, buffer);
     }
+
+    return latch;
   }
 
   /**
@@ -232,16 +227,20 @@ public final class OFileClassic implements OClosableItem {
   public void synch() {
     acquireReadLock();
     try {
-      final long dirtyCounterValue = dirtyCounter.get();
-      if (dirtyCounterValue > 0) {
-        dirtyCounter.addAndGet(-dirtyCounterValue);
-        try {
-          channel.force(false);
-        } catch (final IOException e) {
-          OLogManager.instance()
-              .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
-        }
+      flushLock.exclusiveLock();
+      try {
+        if (dirty) {
+          dirty = false;
+          try {
+            channel.force(false);
+          } catch (final IOException e) {
+            OLogManager.instance()
+                .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
+          }
 
+        }
+      } finally {
+        flushLock.exclusiveUnlock();
       }
     } finally {
       releaseReadLock();
@@ -311,19 +310,16 @@ public final class OFileClassic implements OClosableItem {
 
   }
 
-  private void writeBuffer(final ByteBuffer buffer, final long offset) throws IOException {
-    buffer.rewind();
-    writeByteBuffer(buffer, channel, offset);
-  }
-
   @SuppressWarnings("SameParameterValue")
   private void setVersion(final int version) throws IOException {
     acquireWriteLock();
     try {
+      dirty = true;
+
       final ByteBuffer buffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_BYTE);
       buffer.put((byte) version);
-      writeBuffer(buffer, VERSION_OFFSET);
-      dirtyCounter.incrementAndGet();
+      buffer.rewind();
+      writeByteBuffer(buffer, channel, VERSION_OFFSET);
     } finally {
       releaseWriteLock();
     }
@@ -454,7 +450,7 @@ public final class OFileClassic implements OClosableItem {
         releaseWriteLock();
       }
 
-      dirtyCounter.set(0);
+      dirty = false;
       releaseExclusiveAccess();
     } catch (final IOException ioe) {
       throw OException.wrapException(new OIOException("Error during file close"), ioe);

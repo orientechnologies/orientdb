@@ -52,11 +52,11 @@ public final class OCachePointer {
   private long version;
 
   private final long fileId;
-  private final long pageIndex;
+  private final int pageIndex;
 
   private OLogSequenceNumber endLSN;
 
-  public OCachePointer(final OPointer pointer, final OByteBufferPool bufferPool, final long fileId, final long pageIndex) {
+  public OCachePointer(final OPointer pointer, final OByteBufferPool bufferPool, final long fileId, final int pageIndex) {
     this.pointer = pointer;
     this.bufferPool = bufferPool;
 
@@ -72,7 +72,7 @@ public final class OCachePointer {
     return fileId;
   }
 
-  public long getPageIndex() {
+  public int getPageIndex() {
     return pageIndex;
   }
 

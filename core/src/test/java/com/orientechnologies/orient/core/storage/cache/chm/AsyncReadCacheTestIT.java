@@ -386,7 +386,7 @@ public class AsyncReadCacheTestIT {
     public OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit,
         final boolean verifyChecksums) {
       final OPointer pointer = byteBufferPool.acquireDirect(true);
-      final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, fileId, startPageIndex);
+      final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, fileId, (int)startPageIndex);
       cachePointer.incrementReadersReferrer();
       return cachePointer;
     }

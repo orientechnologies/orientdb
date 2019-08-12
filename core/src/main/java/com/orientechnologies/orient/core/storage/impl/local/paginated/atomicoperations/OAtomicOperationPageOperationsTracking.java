@@ -101,6 +101,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
 
     if (lastLSN != null) {
       ODurablePage.setPageLSN(lastLSN, cacheEntry);
+      cacheEntry.setEndLSN(lastLSN);
     }
 
     readCache.releaseFromWrite(cacheEntry, writeCache, true);
@@ -293,6 +294,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
 
       if (lastLSN != null) {
         ODurablePage.setPageLSN(lastLSN, cacheEntry);
+        cacheEntry.setEndLSN(lastLSN);
       }
     } finally {
       readCache.releaseFromWrite(cacheEntry, writeCache, true);

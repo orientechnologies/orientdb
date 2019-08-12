@@ -12,7 +12,7 @@ import java.nio.file.Path;
  */
 public class DoubleWriteLogNoOP implements DoubleWriteLog {
   @Override
-  public boolean write(ByteBuffer[] buffers, int fileId, int pageIndex) {
+  public boolean write(ByteBuffer[] buffers, int[] fileId, int[] pageIndex) {
     return false;
   }
 

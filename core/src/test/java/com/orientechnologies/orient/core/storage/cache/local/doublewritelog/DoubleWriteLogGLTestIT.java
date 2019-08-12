@@ -56,7 +56,7 @@ public class DoubleWriteLogGLTestIT {
         buffer.put(data);
 
         buffer.position(0);
-        doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24);
+        doubleWriteLog.write(new ByteBuffer[] { buffer }, new int[] { 12 }, new int[] { 24 });
         doubleWriteLog.truncate();
 
         pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
@@ -104,13 +104,13 @@ public class DoubleWriteLogGLTestIT {
 
         buffer.put(data);
 
-        doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24);
+        doubleWriteLog.write(new ByteBuffer[] { buffer }, new int[] { 12 }, new int[] { 24 });
 
         buffer.rewind();
         random.nextBytes(data);
         buffer.put(data);
 
-        doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24);
+        doubleWriteLog.write(new ByteBuffer[] { buffer }, new int[] { 12 }, new int[] { 24 });
         doubleWriteLog.truncate();
 
         OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
@@ -158,14 +158,12 @@ public class DoubleWriteLogGLTestIT {
           datas.add(data);
         }
 
-        ByteBuffer[] buffers = new ByteBuffer[datas.size()];
-        for (int i = 0; i < buffers.length; i++) {
-          final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-          buffer.put(datas.get(i));
-          buffers[i] = buffer;
+        final ByteBuffer buffer = ByteBuffer.allocate(pageSize * datas.size()).order(ByteOrder.nativeOrder());
+        for (final byte[] data : datas) {
+          buffer.put(data);
         }
 
-        doubleWriteLog.write(buffers, 12, 24);
+        doubleWriteLog.write(new ByteBuffer[] { buffer }, new int[] { 12 }, new int[] { 24 });
 
         OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
         Assert.assertNull(pointer);
@@ -222,14 +220,12 @@ public class DoubleWriteLogGLTestIT {
           datas.add(data);
         }
 
-        ByteBuffer[] buffers = new ByteBuffer[datas.size()];
-        for (int i = 0; i < buffers.length; i++) {
-          final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-          buffer.put(datas.get(i));
-          buffers[i] = buffer;
+        ByteBuffer buffer = ByteBuffer.allocate(datas.size() * pageSize).order(ByteOrder.nativeOrder());
+        for (final byte[] data : datas) {
+          buffer.put(data);
         }
 
-        doubleWriteLog.write(buffers, 12, 24);
+        doubleWriteLog.write(new ByteBuffer[] { buffer }, new int[] { 12 }, new int[] { 24 });
 
         OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
         Assert.assertNull(pointer);
@@ -278,12 +274,11 @@ public class DoubleWriteLogGLTestIT {
           datas.add(data);
         }
 
-        for (int i = 0; i < datas.size(); i++) {
-          final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
-          buffer.put(datas.get(i));
-
-          doubleWriteLog.write(new ByteBuffer[] { buffer }, 12, 24 + i);
+        final ByteBuffer buffer = ByteBuffer.allocate(pageSize * datas.size()).order(ByteOrder.nativeOrder());
+        for (byte[] data : datas) {
+          buffer.put(data);
         }
+        doubleWriteLog.write(new ByteBuffer[] { buffer }, new int[] { 12 }, new int[] { 24 });
 
         OPointer pointer = doubleWriteLog.loadPage(12, 24, bufferPool);
         Assert.assertNull(pointer);
@@ -333,15 +328,13 @@ public class DoubleWriteLogGLTestIT {
         }
 
         for (int i = 0; i < 10; i++) {
-          ByteBuffer[] buffers = new ByteBuffer[10];
+          ByteBuffer buffer = ByteBuffer.allocate(10 * pageSize).order(ByteOrder.nativeOrder());
 
           for (int j = 0; j < 10; j++) {
-            final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
             buffer.put(datas.get(i * 10 + j));
-            buffers[j] = buffer;
           }
 
-          doubleWriteLog.write(buffers, 12 + i, 24);
+          doubleWriteLog.write(new ByteBuffer[] { buffer }, new int[] { 12 + i }, new int[] { 24 });
         }
 
         doubleWriteLog.restoreModeOn();
@@ -401,15 +394,13 @@ public class DoubleWriteLogGLTestIT {
 
           while (writtenPages < pagesToWrite) {
             final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
-            ByteBuffer[] buffers = new ByteBuffer[pagesForSinglePatch];
+            final ByteBuffer buffer = ByteBuffer.allocate(pagesForSinglePatch * pageSize).order(ByteOrder.nativeOrder());
 
             for (int j = 0; j < pagesForSinglePatch; j++) {
-              final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
               buffer.put(datas.get(pageIndex + j));
-              buffers[j] = buffer;
             }
 
-            doubleWriteLog.write(buffers, 12, 24 + pageIndex);
+            doubleWriteLog.write(new ByteBuffer[] { buffer }, new int[] { 12 }, new int[] { 24 + pageIndex });
             pageIndex += pagesForSinglePatch;
             writtenPages += pagesForSinglePatch;
           }
@@ -478,13 +469,20 @@ public class DoubleWriteLogGLTestIT {
               final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
               ByteBuffer[] buffers = new ByteBuffer[pagesForSinglePatch];
 
+              ByteBuffer containerBuffer = ByteBuffer.allocate(pagesForSinglePatch * pageSize).order(ByteOrder.nativeOrder());
               for (int j = 0; j < pagesForSinglePatch; j++) {
                 final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
                 buffer.put(datas.get(pageIndex + j));
                 buffers[j] = buffer;
+
+                buffer.rewind();
+                containerBuffer.put(buffer);
+                buffer.rewind();
               }
 
-              doubleWriteLog.write(buffers, 12, startPageIndex + pageIndex);
+              doubleWriteLog
+                  .write(new ByteBuffer[] { containerBuffer }, new int[] { 12 }, new int[] { startPageIndex + pageIndex });
+
               for (int j = 0; j < buffers.length; j++) {
                 pageMap.put(startPageIndex + pageIndex + j, buffers[j]);
               }
@@ -558,15 +556,13 @@ public class DoubleWriteLogGLTestIT {
 
           while (writtenPages < pagesToWrite) {
             final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
-            ByteBuffer[] buffers = new ByteBuffer[pagesForSinglePatch];
+            ByteBuffer buffer = ByteBuffer.allocate(pagesForSinglePatch * pageSize).order(ByteOrder.nativeOrder());
 
             for (int j = 0; j < pagesForSinglePatch; j++) {
-              final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
               buffer.put(datas.get(pageIndex + j));
-              buffers[j] = buffer;
             }
 
-            doubleWriteLog.write(buffers, 12, 24 + pageIndex);
+            doubleWriteLog.write(new ByteBuffer[] { buffer }, new int[] { 12 }, new int[] { 24 + pageIndex });
             pageIndex += pagesForSinglePatch;
             writtenPages += pagesForSinglePatch;
           }
@@ -638,14 +634,19 @@ public class DoubleWriteLogGLTestIT {
             while (writtenPages < pagesToWrite) {
               final int pagesForSinglePatch = random.nextInt(pagesToWrite - writtenPages) + 1;
               ByteBuffer[] buffers = new ByteBuffer[pagesForSinglePatch];
+              ByteBuffer containerBuffer = ByteBuffer.allocate(pagesForSinglePatch * pageSize).order(ByteOrder.nativeOrder());
 
               for (int j = 0; j < pagesForSinglePatch; j++) {
                 final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
                 buffer.put(datas.get(pageIndex + j));
+                buffer.rewind();
+
                 buffers[j] = buffer;
+                containerBuffer.put(buffer);
               }
 
-              doubleWriteLog.write(buffers, 12, startPageIndex + pageIndex);
+              doubleWriteLog
+                  .write(new ByteBuffer[] { containerBuffer }, new int[] { 12 }, new int[] { startPageIndex + pageIndex });
               for (int j = 0; j < buffers.length; j++) {
                 pageMap.put(startPageIndex + pageIndex + j, buffers[j]);
               }
@@ -706,7 +707,8 @@ public class DoubleWriteLogGLTestIT {
         Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
 
         for (int i = 0; i < 4; i++) {
-          final boolean overflow = doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+          final boolean overflow = doubleWriteLog
+              .write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, new int[] { 12 }, new int[] { 45 });
           Assert.assertTrue(overflow && i > 0 || i == 0 && !overflow);
         }
 
@@ -766,7 +768,7 @@ public class DoubleWriteLogGLTestIT {
         Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
 
         for (int i = 0; i < 4; i++) {
-          doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+          doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, new int[] { 12 }, new int[] { 45 });
         }
 
         paths = Arrays.asList(
@@ -801,7 +803,7 @@ public class DoubleWriteLogGLTestIT {
       doubleWriteLog.open("test", Paths.get(buildDirectory), pageSize);
       try {
         for (int i = 0; i < 4; i++) {
-          doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+          doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, new int[] { 12 }, new int[] { 45 });
         }
 
         List<Path> paths = Arrays.asList(
@@ -852,26 +854,33 @@ public class DoubleWriteLogGLTestIT {
         Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
 
         doubleWriteLog.startCheckpoint();
+        doubleWriteLog.truncate();
 
         for (int i = 0; i < 4; i++) {
-          final boolean overflow = doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+          final boolean overflow = doubleWriteLog
+              .write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, new int[] { 12 }, new int[] { 45 });
           Assert.assertFalse(overflow);
         }
 
-        paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+        paths = Arrays.asList(
+            Files.list(Paths.get(buildDirectory)).sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                .toArray(Path[]::new));
 
         Assert.assertEquals(1, paths.size());
-        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
 
         doubleWriteLog.endCheckpoint();
 
-        paths = Arrays.asList(Files.list(Paths.get(buildDirectory)).toArray(Path[]::new));
+        paths = Arrays.asList(
+            Files.list(Paths.get(buildDirectory)).sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                .toArray(Path[]::new));
 
         Assert.assertEquals(1, paths.size());
-        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
 
         for (int i = 0; i < 4; i++) {
-          final boolean overflow = doubleWriteLog.write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, 12, 45);
+          final boolean overflow = doubleWriteLog
+              .write(new ByteBuffer[] { ByteBuffer.allocate(pageSize) }, new int[] { 12 }, new int[] { 45 });
           Assert.assertTrue(overflow);
         }
 
@@ -880,11 +889,11 @@ public class DoubleWriteLogGLTestIT {
                 .toArray(Path[]::new));
 
         Assert.assertEquals(5, paths.size());
-        Assert.assertEquals("test_0" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
-        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(1).getFileName().toString());
-        Assert.assertEquals("test_2" + DoubleWriteLogGL.EXTENSION, paths.get(2).getFileName().toString());
-        Assert.assertEquals("test_3" + DoubleWriteLogGL.EXTENSION, paths.get(3).getFileName().toString());
-        Assert.assertEquals("test_4" + DoubleWriteLogGL.EXTENSION, paths.get(4).getFileName().toString());
+        Assert.assertEquals("test_1" + DoubleWriteLogGL.EXTENSION, paths.get(0).getFileName().toString());
+        Assert.assertEquals("test_2" + DoubleWriteLogGL.EXTENSION, paths.get(1).getFileName().toString());
+        Assert.assertEquals("test_3" + DoubleWriteLogGL.EXTENSION, paths.get(2).getFileName().toString());
+        Assert.assertEquals("test_4" + DoubleWriteLogGL.EXTENSION, paths.get(3).getFileName().toString());
+        Assert.assertEquals("test_5" + DoubleWriteLogGL.EXTENSION, paths.get(4).getFileName().toString());
       } finally {
         doubleWriteLog.close();
       }

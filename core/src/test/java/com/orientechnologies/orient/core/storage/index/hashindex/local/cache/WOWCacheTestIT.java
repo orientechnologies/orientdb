@@ -27,6 +27,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -534,7 +535,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.writeByte(ODurablePage.NEXT_FREE_POSITION, (byte) 1);
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
     file.close();
 
     try {
@@ -567,7 +568,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.writeByte(0, (byte) 1);
+    file.write(0, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
     file.close();
 
     try {
@@ -600,7 +601,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.writeByte(ODurablePage.NEXT_FREE_POSITION, (byte) 1);
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
     file.close();
 
     wowCache.load(fileId, 0, new OModifiableBoolean(), false).decrementReadersReferrer();
@@ -628,7 +629,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.writeByte(ODurablePage.NEXT_FREE_POSITION, (byte) 1);
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
     file.close();
 
     wowCache.load(fileId, 0, new OModifiableBoolean(), true).decrementReadersReferrer();
@@ -656,7 +657,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.writeByte(ODurablePage.NEXT_FREE_POSITION, (byte) 1);
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
     file.close();
 
     wowCache.load(fileId, 0, new OModifiableBoolean(), true).decrementReadersReferrer();
@@ -684,7 +685,7 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
-    file.writeByte(ODurablePage.NEXT_FREE_POSITION, (byte) 1);
+    file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
     file.close();
 
     wowCache.setChecksumMode(OChecksumMode.StoreAndThrow);
@@ -695,7 +696,8 @@ public class WOWCacheTestIT {
     OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName));
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
-    fileClassic.read(pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION), content, 8 + ODurablePage.NEXT_FREE_POSITION);
+    fileClassic
+        .read(pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION), ByteBuffer.wrap(content).order(ByteOrder.nativeOrder()), true);
 
     Assert.assertArrayEquals(Arrays.copyOfRange(content, ODurablePage.NEXT_FREE_POSITION, 8 + ODurablePage.NEXT_FREE_POSITION),
         value);
@@ -719,7 +721,8 @@ public class WOWCacheTestIT {
     OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName));
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
-    fileClassic.read(pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION), content, 8 + ODurablePage.NEXT_FREE_POSITION);
+    fileClassic
+        .read(pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION), ByteBuffer.wrap(content).order(ByteOrder.nativeOrder()), true);
 
     final Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 

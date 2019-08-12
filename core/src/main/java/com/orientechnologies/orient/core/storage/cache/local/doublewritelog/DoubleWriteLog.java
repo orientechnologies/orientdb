@@ -11,8 +11,7 @@ import java.nio.file.Path;
  * Interface for the log which keeps data of pages before they will be finally fsync-ed to the data files. This log is used to
  * implement double write pattern.
  * <p>
- * At the first step we perform fsync of the data to the log using single sequential write calling {@link #write(ByteBuffer[], int,
- * int)} method.
+ * At the first step we perform fsync of the data to the log using single sequential write calling {@link #write(ByteBuffer[], int[], int[])} method.
  * <p>
  * As the second step we write pages to the data files.
  * <p>
@@ -20,11 +19,11 @@ import java.nio.file.Path;
  * file and truncation of data should be done in single lock to prevent situation when data are written to the log but not to the
  * pages and then truncated. That is typically not a problem because write cache uses single thread model.
  * <p>
- * If during the write of pages we reach log threshold {@link #write(ByteBuffer[], int, int)} method will return true. If that
+ * If during the write of pages we reach log threshold {@link #write(ByteBuffer[], int[], int[])} method will return true. If that
  * happens fsync of pages should be called to truncate page log.
  */
 public interface DoubleWriteLog {
-  boolean write(ByteBuffer[] buffers, int fileId, int pageIndex) throws IOException;
+  boolean write(ByteBuffer[] buffers, int[] fileId, int[] pageIndex) throws IOException;
 
   void truncate() throws IOException;
 
@@ -38,7 +37,7 @@ public interface DoubleWriteLog {
 
   void close() throws IOException;
 
-  void startCheckpoint();
+  void startCheckpoint() throws IOException;
 
   void endCheckpoint();
 }

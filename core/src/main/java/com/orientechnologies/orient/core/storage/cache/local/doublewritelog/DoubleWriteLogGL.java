@@ -30,7 +30,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   public static final String EXTENSION = ".dwl";
 
   private static final ODirectMemoryAllocator ALLOCATOR          = ODirectMemoryAllocator.instance();
-  public static final  int                    DEFAULT_BLOCK_SIZE = 4 * 1024;
+  static final         int                    DEFAULT_BLOCK_SIZE = 4 * 1024;
   private static final int                    METADATA_SIZE      = 4 * OIntegerSerializer.INT_SIZE;
 
   private Path   storagePath;
@@ -79,13 +79,12 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       this.tailSegments = new ArrayList<>();
       this.pageMap = new HashMap<>();
 
-      final Optional<Path> latestPath = Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).peek((path) -> {
-        tailSegments.add(extractSegmentId(path.getFileName().toString()));
-      }).min((pathOne, pathTwo) -> {
-        final long indexOne = extractSegmentId(pathOne.getFileName().toString());
-        final long indexTwo = extractSegmentId(pathTwo.getFileName().toString());
-        return -Long.compare(indexOne, indexTwo);
-      });
+      final Optional<Path> latestPath = Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter)
+          .peek((path) -> tailSegments.add(extractSegmentId(path.getFileName().toString()))).min((pathOne, pathTwo) -> {
+            final long indexOne = extractSegmentId(pathOne.getFileName().toString());
+            final long indexTwo = extractSegmentId(pathTwo.getFileName().toString());
+            return -Long.compare(indexOne, indexTwo);
+          });
 
       this.currentSegment = latestPath.map(path -> extractSegmentId(path.getFileName().toString()) + 1).orElse(0L);
 
@@ -125,82 +124,78 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   }
 
   @Override
-  public boolean write(final ByteBuffer[] buffers, final int fileId, final int pageIndex) throws IOException {
+  public boolean write(final ByteBuffer[] buffers, final int[] fileIds, final int[] pageIndexes) throws IOException {
     synchronized (mutex) {
       assert checkpointCounter >= 0;
 
       if (checkpointCounter == 0 && currentFile.position() >= maxSegSize) {
-        currentFile.close();
-
-        tailSegments.add(currentSegment);
-
-        this.currentSegment++;
-        this.currentFile = createLogFile();
+        addNewSegment();
       }
 
-      final OPointer pageContainer;
-      if (buffers.length > 1) {
-        pageContainer = ALLOCATOR.allocate(buffers.length * pageSize, -1);
-      } else {
-        pageContainer = null;
+      int sizeToAllocate = 0;
+      for (final ByteBuffer byteBuffer : buffers) {
+        sizeToAllocate += LZ_4_COMPRESSOR.maxCompressedLength(byteBuffer.limit());
       }
+
+      sizeToAllocate += buffers.length * 3 * OIntegerSerializer.INT_SIZE;
+      final OPointer pageContainer = ALLOCATOR.allocate(sizeToAllocate, -1);
 
       try {
         final ByteBuffer containerBuffer;
-        if (buffers.length > 1) {
-          containerBuffer = pageContainer.getNativeByteBuffer();
 
-          for (ByteBuffer buffer : buffers) {
-            buffer.rewind();
-            containerBuffer.put(buffer);
+        containerBuffer = pageContainer.getNativeByteBuffer();
+
+        for (int i = 0; i < buffers.length; i++) {
+          final ByteBuffer buffer = buffers[i];
+          buffer.rewind();
+
+          final int maxCompressedLength = LZ_4_COMPRESSOR.maxCompressedLength(buffer.limit());
+          final OPointer compressedPointer = ODirectMemoryAllocator.instance().allocate(maxCompressedLength, -1);
+          try {
+            final ByteBuffer compressedBuffer = compressedPointer.getNativeByteBuffer();
+            LZ_4_COMPRESSOR.compress(buffer, compressedBuffer);
+
+            final int compressedSize = compressedBuffer.position();
+            compressedBuffer.rewind();
+            compressedBuffer.limit(compressedSize);
+
+            containerBuffer.putInt(fileIds[i]);
+            containerBuffer.putInt(pageIndexes[i]);
+            containerBuffer.putInt(buffer.limit() / pageSize);
+            containerBuffer.putInt(compressedSize);
+
+            containerBuffer.put(compressedBuffer);
+          } finally {
+            ALLOCATOR.deallocate(compressedPointer);
           }
-        } else {
-          containerBuffer = buffers[0];
         }
 
+        containerBuffer.limit(containerBuffer.position());
         containerBuffer.rewind();
 
-        final int maxCompressedLength = LZ_4_COMPRESSOR.maxCompressedLength(buffers.length * pageSize);
-        final OPointer compressedPointer = ODirectMemoryAllocator.instance().allocate(maxCompressedLength, -1);
-        try {
-          final ByteBuffer compressedBuffer = compressedPointer.getNativeByteBuffer();
-          LZ_4_COMPRESSOR.compress(containerBuffer, compressedBuffer);
+        final long filePosition = currentFile.position();
+        long bytesWritten = OIOUtils.writeByteBuffer(containerBuffer, currentFile, filePosition);
+        bytesWritten = ((bytesWritten + blockSize - 1) / blockSize) * blockSize;
+        currentFile.force(false);
+        currentFile.position(bytesWritten + filePosition);
 
-          final int compressedSize = compressedBuffer.position();
-          compressedBuffer.rewind();
-          compressedBuffer.limit(compressedSize);
-
-          final ByteBuffer metadataBuffer = ByteBuffer.allocate(4 * OIntegerSerializer.INT_SIZE).order(ByteOrder.nativeOrder());
-          metadataBuffer.putInt(fileId);
-          metadataBuffer.putInt(pageIndex);
-          metadataBuffer.putInt(buffers.length);
-          metadataBuffer.putInt(compressedSize);
-
-          metadataBuffer.rewind();
-
-          final long filePosition = currentFile.position();
-          long bytesWritten = OIOUtils.writeByteBuffer(metadataBuffer, currentFile, filePosition);
-          bytesWritten += OIOUtils.writeByteBuffer(compressedBuffer, currentFile, filePosition + bytesWritten);
-          bytesWritten = ((bytesWritten + blockSize - 1) / blockSize) * blockSize;
-
-          currentFile.position(bytesWritten + filePosition);
-
-          currentFile.force(false);
-
-          //all writes are quantified by page size, to prevent corruption of already written data at the next write
-          this.currentLogSize += bytesWritten;
-        } finally {
-          ALLOCATOR.deallocate(compressedPointer);
-        }
+        this.currentLogSize += bytesWritten;
       } finally {
-        if (pageContainer != null) {
-          ALLOCATOR.deallocate(pageContainer);
-        }
+        ALLOCATOR.deallocate(pageContainer);
       }
 
       //we can not truncate log in restore mode because we remove all restore information
       return !restoreMode && this.currentLogSize >= maxSegSize && !tailSegments.isEmpty();
     }
+  }
+
+  private void addNewSegment() throws IOException {
+    currentFile.close();
+
+    tailSegments.add(currentSegment);
+
+    this.currentSegment++;
+    this.currentFile = createLogFile();
   }
 
   @Override
@@ -373,8 +368,10 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   }
 
   @Override
-  public void startCheckpoint() {
+  public void startCheckpoint() throws IOException {
     synchronized (mutex) {
+      addNewSegment();
+
       checkpointCounter++;
     }
   }
