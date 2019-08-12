@@ -424,50 +424,6 @@ public class OIOUtils {
     return written;
   }
 
-  public static void writeByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToWrite) throws IOException {
-    long written = 0;
-
-    for (ByteBuffer buffer : buffers) {
-      buffer.position(0);
-    }
-
-    final int bufferLimit = buffers[0].limit();
-
-    while (written < bytesToWrite) {
-      final int bufferIndex = (int) written / bufferLimit;
-
-      written += channel.write(buffers, bufferIndex, buffers.length - bufferIndex);
-    }
-  }
-
-  public static void readByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToRead, boolean throwOnEof)
-      throws IOException {
-    long read = 0;
-
-    for (ByteBuffer buffer : buffers) {
-      buffer.position(0);
-    }
-
-    final int bufferLimit = buffers[0].limit();
-
-    while (read < bytesToRead) {
-      final int bufferIndex = (int) read / bufferLimit;
-
-      final long r = channel.read(buffers, bufferIndex, buffers.length - bufferIndex);
-
-      if (r < 0)
-        if (throwOnEof)
-          throw new EOFException("End of file is reached");
-        else {
-          for (int i = bufferIndex; i < buffers.length; ++i)
-            buffers[i].put(new byte[buffers[i].remaining()]);
-          return;
-        }
-
-      read += r;
-    }
-  }
-
   public static int calculateBlockSize(String path) {
     if (!Platform.isLinux()) {
       return -1;

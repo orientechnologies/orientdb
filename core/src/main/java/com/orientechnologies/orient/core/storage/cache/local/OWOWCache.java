@@ -2910,7 +2910,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               chunk = new ArrayList<>();
             }
           }
-
         }
 
         final OCachePointer pointer = writeCachePages.get(pageKey);
@@ -3071,8 +3070,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           containerBuffer.put(buffer);
         }
 
-        final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> firstChunk = chunk.get(0);
-        final OCachePointer firstCachePointer = firstChunk.four;
+        final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> firstPage = chunk.get(0);
+        final OCachePointer firstCachePointer = firstPage.four;
 
         final long fileId = firstCachePointer.getFileId();
         final int pageIndex = firstCachePointer.getPageIndex();
@@ -3080,7 +3079,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final List<ORawPair<Long, ByteBuffer>> fileBuffers = buffersByFileId.computeIfAbsent(fileId, (id) -> new ArrayList<>());
         fileBuffers.add(new ORawPair<>(((long) pageIndex) * pageSize, containerBuffer));
 
-        chunkPositions[i] = firstCachePointer.getPageIndex();
+        chunkPositions[i] = pageIndex;
         chunkFileIds[i] = internalFileId(fileId);
       }
 

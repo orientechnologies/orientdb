@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.storage.fs;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableItem;
-import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -45,6 +44,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -60,15 +60,14 @@ public final class OFileClassic implements OClosableItem {
 
   private static final int OPEN_RETRY_MAX = 10;
 
-  private final ReadWriteLock  lock      = new ReentrantReadWriteLock();
-  private final ScalableRWLock flushLock = new ScalableRWLock();
-
-  private volatile Path osFile;
+  private final    ReadWriteLock lock = new ReentrantReadWriteLock();
+  private volatile Path          osFile;
 
   private FileChannel      channel;
   private RandomAccessFile frnd;
 
-  private volatile boolean dirty;
+  private final AtomicLong dirtyCounter   = new AtomicLong();
+  private final Object     flushSemaphore = new Object();
 
   private int version;
 
@@ -184,6 +183,8 @@ public final class OFileClassic implements OClosableItem {
   public void read(long offset, final ByteBuffer buffer, final boolean throwOnEof) throws IOException {
     acquireReadLock();
     try {
+      buffer.rewind();
+
       offset = checkRegions(offset, buffer.limit());
       readByteBuffer(buffer, channel, offset, throwOnEof);
     } finally {
@@ -191,16 +192,14 @@ public final class OFileClassic implements OClosableItem {
     }
   }
 
-  public void write(final long offset, final ByteBuffer buffer) throws IOException {
+  public void write(long offset, final ByteBuffer buffer) throws IOException {
     acquireReadLock();
     try {
-      flushLock.sharedLock();
-      try {
-        dirty = true;
-        writeByteBuffer(buffer, channel, offset + HEADER_SIZE);
-      } finally {
-        flushLock.sharedUnlock();
-      }
+      buffer.rewind();
+
+      offset = checkRegions(offset, buffer.limit());
+      writeByteBuffer(buffer, channel, offset);
+      dirtyCounter.incrementAndGet();
     } finally {
       releaseReadLock();
     }
@@ -213,8 +212,6 @@ public final class OFileClassic implements OClosableItem {
       final long position = pair.getFirst();
 
       final ByteBuffer buffer = pair.getSecond();
-      buffer.rewind();
-
       write(position, buffer);
     }
 
@@ -227,10 +224,9 @@ public final class OFileClassic implements OClosableItem {
   public void synch() {
     acquireReadLock();
     try {
-      flushLock.exclusiveLock();
-      try {
-        if (dirty) {
-          dirty = false;
+      synchronized (flushSemaphore) {
+        long dirtyCounterValue = dirtyCounter.get();
+        if (dirtyCounterValue > 0) {
           try {
             channel.force(false);
           } catch (final IOException e) {
@@ -238,9 +234,8 @@ public final class OFileClassic implements OClosableItem {
                 .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
           }
 
+          dirtyCounter.addAndGet(-dirtyCounterValue);
         }
-      } finally {
-        flushLock.exclusiveUnlock();
       }
     } finally {
       releaseReadLock();
@@ -314,12 +309,11 @@ public final class OFileClassic implements OClosableItem {
   private void setVersion(final int version) throws IOException {
     acquireWriteLock();
     try {
-      dirty = true;
-
       final ByteBuffer buffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_BYTE);
       buffer.put((byte) version);
       buffer.rewind();
       writeByteBuffer(buffer, channel, VERSION_OFFSET);
+      dirtyCounter.incrementAndGet();
     } finally {
       releaseWriteLock();
     }
@@ -450,7 +444,7 @@ public final class OFileClassic implements OClosableItem {
         releaseWriteLock();
       }
 
-      dirty = false;
+      dirtyCounter.set(0);
       releaseExclusiveAccess();
     } catch (final IOException ioe) {
       throw OException.wrapException(new OIOException("Error during file close"), ioe);
