@@ -26,8 +26,6 @@ public abstract class OSecurityResource {
 
     //TODO
 //    public static final String DATABASE          = "database";
-//    public static final String SCHEMA            = "database.schema";
-//    public static final String SYSTEMCLUSTERS    = "database.systemclusters";
 //    public static final String COMMAND           = "database.command";
 //    public static final String COMMAND_GREMLIN   = "database.command.gremlin";
 //    public static final String FUNCTION          = "database.function";
@@ -38,14 +36,18 @@ public abstract class OSecurityResource {
 
     if (resource.equals("*")) {
       return OSecurityResourceAll.INSTANCE;
+    } else if (resource.equals("database.schema")) {
+      return OSecurityResourceSchema.INSTANCE;
     } else if (resource.equals("database.class.*")) {
       return OSecurityResourceClass.ALL_CLASSES;
     } else if (resource.equals("database.class.*.*")) {
       return OSecurityResourceProperty.ALL_PROPERTIES;
     } else if (resource.equals("database.cluster.*")) {
       return OSecurityResourceCluster.ALL_CLUSTERS;
+    } else if (resource.equals("database.systemclusters")) {
+      return OSecurityResourceCluster.SYSTEM_CLUSTERS;
     } else if (resource.equals("database.function.*")) {
-      return OSecurityResourceCluster.ALL_CLUSTERS;
+      return OSecurityResourceFunction.ALL_FUNCTIONS;
     }
     try {
       OSecurityResourceSegment parsed = OSQLEngine.parseSecurityResource(resource);
