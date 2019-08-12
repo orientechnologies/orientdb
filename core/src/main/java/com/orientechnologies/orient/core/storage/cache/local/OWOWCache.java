@@ -160,7 +160,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
-  private static final int CHUNK_SIZE = 64 * 1024 * 1024;
+  private static final int CHUNK_SIZE = 4 * 1024 * 1024;
 
   /**
    * Executor which runs in single thread all tasks are related to flush of write cache data.
@@ -1182,7 +1182,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               //otherwise we switch storage in read-only mode
               freeSpaceCheckAfterNewPageAdd();
 
-              return (int) allocationIndex;
+              final int pageIndex = (int) allocationIndex;
+              if (pageIndex < 0) {
+                throw new IllegalStateException("Illegal page index value " + pageIndex);
+              }
+
+              return pageIndex;
             } else {
               allocationIndex = fileClassic.getFileSize() / pageSize;
             }
@@ -2736,7 +2741,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               if (firstSegment != null && firstSegment.getKey() < endSegment) {
                 final TreeSet<PageKey> pages = firstSegment.getValue();
 
-                if (pages.size() >= 16 * chunkSize) {
+                if (pages.size() >= 256 * chunkSize) {
                   flushChunk(lsnFlushInterval, startSegment, endSegment);
                 }
               }
@@ -3037,7 +3042,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       flushTs = System.nanoTime();
     }
 
-    boolean fsyncFiles = false;
+    final boolean fsyncFiles;
 
     int flushedPages = 0;
 

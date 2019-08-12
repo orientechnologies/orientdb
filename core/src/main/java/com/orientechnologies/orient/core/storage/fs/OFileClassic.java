@@ -294,7 +294,7 @@ public final class OFileClassic implements OClosableItem {
     try {
       if (iOffset < 0 || iOffset + iLength > size) {
         throw new OIOException(
-            "You cannot access outside the file size (" + size + " bytes). You have requested portion " + iOffset + "-" + (iOffset
+            "You cannot access outside the file size (" + size + " bytes). You have requested portion from " + iOffset + "-" + (iOffset
                 + iLength) + " bytes. File: " + this);
       }
 

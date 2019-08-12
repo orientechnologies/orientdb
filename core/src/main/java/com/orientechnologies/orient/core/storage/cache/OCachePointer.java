@@ -60,6 +60,15 @@ public final class OCachePointer {
     this.pointer = pointer;
     this.bufferPool = bufferPool;
 
+    if (fileId < 0) {
+      throw new IllegalStateException("File id has invalid value " + fileId);
+    }
+
+    if (pageIndex < 0) {
+      throw new IllegalStateException("Page index has invalid value " + pageIndex);
+    }
+
+
     this.fileId = fileId;
     this.pageIndex = pageIndex;
   }
