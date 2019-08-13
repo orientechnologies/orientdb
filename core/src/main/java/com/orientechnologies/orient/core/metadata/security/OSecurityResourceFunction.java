@@ -4,6 +4,8 @@ import java.util.Objects;
 
 public class OSecurityResourceFunction extends OSecurityResource {
 
+  public static final OSecurityResourceFunction ALL_FUNCTIONS = new OSecurityResourceFunction("database.function.*", "*");
+
   private final String functionName;
 
   public OSecurityResourceFunction(String resourceString, String functionName) {

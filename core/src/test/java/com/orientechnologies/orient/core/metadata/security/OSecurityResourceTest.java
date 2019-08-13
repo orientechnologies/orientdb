@@ -10,7 +10,7 @@ public class OSecurityResourceTest {
     Assert.assertEquals(OSecurityResourceClass.ALL_CLASSES, OSecurityResource.parseResource("database.class.*"));
     Assert.assertEquals(OSecurityResourceProperty.ALL_PROPERTIES, OSecurityResource.parseResource("database.class.*.*"));
     Assert.assertEquals(OSecurityResourceCluster.ALL_CLUSTERS, OSecurityResource.parseResource("database.cluster.*"));
-    Assert.assertEquals(OSecurityResourceCluster.ALL_CLUSTERS, OSecurityResource.parseResource("database.function.*"));
+    Assert.assertEquals(OSecurityResourceFunction.ALL_FUNCTIONS, OSecurityResource.parseResource("database.function.*"));
     Assert.assertTrue(OSecurityResource.parseResource("database.class.Person") instanceof OSecurityResourceClass);
     Assert.assertTrue(OSecurityResource.parseResource("database.class.Person.name") instanceof OSecurityResourceProperty);
     Assert.assertTrue(OSecurityResource.parseResource("database.class.*.name") instanceof OSecurityResourceProperty);

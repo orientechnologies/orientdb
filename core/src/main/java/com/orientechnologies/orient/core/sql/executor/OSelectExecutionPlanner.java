@@ -714,7 +714,8 @@ public class OSelectExecutionPlanner {
       Iterator<OLetItem> iterator = info.perRecordLetClause.getItems().iterator();
       while (iterator.hasNext()) {
         OLetItem item = iterator.next();
-        if (item.getExpression() != null && item.getExpression().isEarlyCalculated(ctx)) {
+        if (item.getExpression() != null
+                && (item.getExpression().isEarlyCalculated(ctx) || isUnionAllOfQueries(info, item.getVarName(), item.getExpression()))) {
           iterator.remove();
           addGlobalLet(info, item.getVarName(), item.getExpression());
         } else if (item.getQuery() != null && !item.getQuery().refersToParent()) {
@@ -723,6 +724,25 @@ public class OSelectExecutionPlanner {
         }
       }
     }
+  }
+
+  private static boolean isUnionAllOfQueries(QueryPlanningInfo info, OIdentifier varName, OExpression expression) {
+    if (expression.getMathExpression() instanceof OBaseExpression) {
+      OBaseExpression exp = (OBaseExpression) expression.getMathExpression();
+      if (exp.getIdentifier() != null && exp.getModifier() == null && exp.getIdentifier().getLevelZero() != null
+              && exp.getIdentifier().getLevelZero().getFunctionCall() != null) {
+        OFunctionCall fc = exp.getIdentifier().getLevelZero().getFunctionCall();
+        if (fc.getName().getStringValue().equalsIgnoreCase("unionall")) {
+          for (OExpression param : fc.getParams()) {
+            if (param.toString().startsWith("$")) {
+              return true;
+            }
+          }
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -1434,6 +1454,7 @@ public class OSelectExecutionPlanner {
   private void handleGlobalLet(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     if (info.globalLetClause != null) {
       List<OLetItem> items = info.globalLetClause.getItems();
+      items = sortLet(items, this.statement.getLetClause());
       for (OLetItem item : items) {
         if (item.getExpression() != null) {
           result.chain(new GlobalLetExpressionStep(item.getVarName(), item.getExpression(), ctx, profilingEnabled));
@@ -1477,6 +1498,9 @@ public class OSelectExecutionPlanner {
   }
 
   private List<OLetItem> sortLet(List<OLetItem> items, OLetClause letClause) {
+    if (letClause == null) {
+      return items;
+    }
     List<OLetItem> i = new ArrayList<>();
     i.addAll(items);
     ArrayList<OLetItem> result = new ArrayList<>();

@@ -4,7 +4,8 @@ import java.util.Objects;
 
 public class OSecurityResourceCluster extends OSecurityResource {
 
-  public static final OSecurityResourceClass ALL_CLUSTERS = new OSecurityResourceClass("database.cluster.*", "*");
+  public static final OSecurityResourceCluster ALL_CLUSTERS = new OSecurityResourceCluster("database.cluster.*", "*");
+  public static final OSecurityResourceCluster SYSTEM_CLUSTERS = new OSecurityResourceCluster("database.systemclusters", "");
 
   private final String clusterName;
 
