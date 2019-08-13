@@ -2601,7 +2601,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               final long firstSegmentIndex = firstSegment.getKey();
               final int flushedPages = flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
 
-              System.out.println("Flushed pages = " + flushedPages);
+              System.out.println("Flushed pages = " + flushedPages + " dirt pages limit " + dirtyPagesLimit);
 
               convertSharedDirtyPagesToLocal();
             }
