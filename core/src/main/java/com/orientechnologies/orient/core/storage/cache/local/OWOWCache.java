@@ -362,7 +362,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final boolean callFsync;
 
-  private int chunkSize;
+  private final int chunkSize;
 
   private final    long      pagesFlushInterval;
   private volatile boolean   stopFlush;
@@ -2684,7 +2684,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private int flushWriteCacheFromMinLSN(final long segStart, final long segEnd, final int pagesFlushLimit)
+  private void flushWriteCacheFromMinLSN(final long segStart, final long segEnd, final int pagesFlushLimit)
       throws InterruptedException, IOException {
     //first we try to find page which contains the oldest not flushed changes
     //that is needed to allow to compact WAL as earlier as possible
@@ -2834,8 +2834,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     if (copiedPages != flushedPages) {
       throw new IllegalStateException("Copied pages (" + copiedPages + " ) != flushed pages (" + flushedPages + ")");
     }
-
-    return flushedPages;
   }
 
   private int flushPages(final List<List<OQuarto<Long, ByteBuffer, OPointer, OCachePointer>>> chunks,
@@ -3180,7 +3178,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             pageLock.unlock();
           }
 
-          if (chunks.size() >= chunkSize) {
+          if (chunks.size() >= 16 * chunkSize) {
             flushPages(chunks, maxLSN);
             chunks.clear();
           }
