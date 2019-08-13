@@ -401,7 +401,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       throw new OInvalidStorageEncryptionKeyException("IV can not be null");
     }
 
-    this.hardDirtyPagesLimit = (int) hardDirtyPagesLimit / pageSize;
+    this.hardDirtyPagesLimit = (int) (hardDirtyPagesLimit / pageSize);
     this.dirtyPagesLimit = this.hardDirtyPagesLimit;
 
     this.shutdownTimeout = shutdownTimeout;
@@ -2567,8 +2567,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               dirtyPageUpdateTs = ts;
 
-              if (dirtyPagesLimit < 0) {
-                dirtyPagesLimit = 0;
+              if (dirtyPagesLimit <= 0) {
+                dirtyPagesLimit = 1;
               }
             } else if (dirtyPageUpdateTs < 0 || dirtyPageUpdateTs - ts >= 5L * 60L * 1_000_000_000L) {
               dirtyPagesLimit += (int) (hardDirtyPagesLimit * 0.1);
