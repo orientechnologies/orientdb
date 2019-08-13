@@ -231,8 +231,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private final ConcurrentSkipListSet<PageKey> exclusiveWritePages = new ConcurrentSkipListSet<>();
 
-  private final OReadersWriterSpinLock dirtyPagesLock = new OReadersWriterSpinLock();
-
   /**
    * Container for dirty pages. Dirty pages table is concept taken from ARIES protocol. It contains earliest LSNs of operations on
    * each page which is potentially changed but not flushed to the disk. It allows us by calculation of minimal LSN contained by
@@ -824,12 +822,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       dirtyLSN = new OLogSequenceNumber(0, 0);
     }
 
-    dirtyPagesLock.acquireReadLock();
-    try {
-      dirtyPages.putIfAbsent(pageKey, dirtyLSN);
-    } finally {
-      dirtyPagesLock.releaseReadLock();
-    }
+    dirtyPages.putIfAbsent(pageKey, dirtyLSN);
   }
 
   @Override
@@ -2562,7 +2555,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           if (writeAheadLog != null) {
             convertSharedDirtyPagesToLocal();
 
-            if (exclusivePages > 0 || localDirtyPagesBySegment.size() >= 2) {
+            if (exclusivePages > 0) {
               dirtyPagesLimit -= (int) (hardDirtyPagesLimit * 0.1);
 
               dirtyPageUpdateTs = ts;
@@ -2637,30 +2630,27 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private void convertSharedDirtyPagesToLocal() {
-    dirtyPagesLock.acquireWriteLock();
-    try {
-      for (final Map.Entry<PageKey, OLogSequenceNumber> entry : dirtyPages.entrySet()) {
-        final OLogSequenceNumber localLSN = localDirtyPages.get(entry.getKey());
+    for (final Map.Entry<PageKey, OLogSequenceNumber> entry : dirtyPages.entrySet()) {
+      final OLogSequenceNumber localLSN = localDirtyPages.get(entry.getKey());
 
-        if (localLSN == null || localLSN.compareTo(entry.getValue()) > 0) {
-          localDirtyPages.put(entry.getKey(), entry.getValue());
+      if (localLSN == null || localLSN.compareTo(entry.getValue()) > 0) {
+        localDirtyPages.put(entry.getKey(), entry.getValue());
 
-          final long segment = entry.getValue().getSegment();
-          TreeSet<PageKey> pages = localDirtyPagesBySegment.get(segment);
-          if (pages == null) {
-            pages = new TreeSet<>();
-            pages.add(entry.getKey());
+        final long segment = entry.getValue().getSegment();
+        TreeSet<PageKey> pages = localDirtyPagesBySegment.get(segment);
+        if (pages == null) {
+          pages = new TreeSet<>();
+          pages.add(entry.getKey());
 
-            localDirtyPagesBySegment.put(segment, pages);
-          } else {
-            pages.add(entry.getKey());
-          }
+          localDirtyPagesBySegment.put(segment, pages);
+        } else {
+          pages.add(entry.getKey());
         }
       }
+    }
 
-      dirtyPages.clear();
-    } finally {
-      dirtyPagesLock.releaseWriteLock();
+    for (final Map.Entry<PageKey, OLogSequenceNumber> entry : localDirtyPages.entrySet()) {
+      dirtyPages.remove(entry.getKey(), entry.getValue());
     }
   }
 
