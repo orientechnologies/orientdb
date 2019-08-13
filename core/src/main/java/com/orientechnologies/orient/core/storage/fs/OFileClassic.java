@@ -123,7 +123,7 @@ public final class OFileClassic implements OClosableItem {
       this.committedSize = currentSize;
 
       final long channelSize = channel.size();
-      final long sizeDiff = currentSize - channelSize - HEADER_SIZE;
+      final long sizeDiff = currentSize - channelSize + HEADER_SIZE;
       assert sizeDiff >= 0 && sizeDiff <= currentSize;
 
       assert allocationMode != null;
