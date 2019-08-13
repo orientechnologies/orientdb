@@ -97,8 +97,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
       pages.clear();
     }
 
-    readCache = new AsyncReadCache(OByteBufferPool.instance(null), diskCacheSize, pageSize,
-        OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean());
+    readCache = new AsyncReadCache(OByteBufferPool.instance(null), diskCacheSize, pageSize, false);
 
   }
 

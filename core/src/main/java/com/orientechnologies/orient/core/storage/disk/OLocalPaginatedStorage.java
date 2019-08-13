@@ -47,7 +47,6 @@ import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConf
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedStorageDirtyFlag;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -106,7 +105,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private final int deleteMaxRetries;
   private final int deleteWaitTime;
 
-  private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
   private final Path                                         storagePath;
@@ -134,7 +132,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
 
     storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
-    variableParser = new OStorageVariableParser(storagePath);
 
     deleteMaxRetries = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
     deleteWaitTime = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
@@ -200,10 +197,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   public final Path getStoragePath() {
     return storagePath;
-  }
-
-  public OStorageVariableParser getVariableParser() {
-    return variableParser;
   }
 
   @Override
@@ -657,11 +650,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final long diskCacheSize = contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_SIZE) * 1024 * 1024;
     final long writeCacheSize = (long) (contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PART) / 100.0
         * diskCacheSize);
-    final boolean printCacheStatistics = contextConfiguration
-        .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS);
-    final int statisticsPrintInterval = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL);
-    final DoubleWriteLog doubleWriteLog;
 
+    final DoubleWriteLog doubleWriteLog;
     if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_USE_DOUBLE_WRITE_LOG)) {
       doubleWriteLog = new DoubleWriteLogGL(doubleWriteLogMaxSegSize);
     } else {
@@ -670,11 +660,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog, doubleWriteLog,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize, storagePath, getName(),
-        OStringSerializer.INSTANCE, files, getId(),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize,
+        diskCacheSize - writeCacheSize, storagePath, getName(), OStringSerializer.INSTANCE, files, getId(),
         contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), iv, aesKey,
-        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC), printCacheStatistics,
-        statisticsPrintInterval);
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC));
 
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();

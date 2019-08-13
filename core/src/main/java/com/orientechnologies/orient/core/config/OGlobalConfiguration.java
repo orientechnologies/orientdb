@@ -325,12 +325,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
 
-  DISK_CACHE_PRINT_CACHE_STATISTICS("storage.diskCache.printCacheStatistics",
-      "Print information about write cache performance metrics", Boolean.class, false),
-
-  DISK_CACHE_STATISTICS_INTERVAL("storage.diskCache.cacheStatisticsInterval",
-      "Period in sec. after which information about write cache performance metrics will be printed", Integer.class, 10),
-
   DISK_CACHE_PRINT_FLUSH_TILL_SEGMENT_STATISTICS("storage.diskCache.printFlushTillSegmentStatistics",
       "Print information about write cache state when it is requested to flush all data operations on which are logged "
           + "till provided WAL segment", Boolean.class, true),

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.storage.fs;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableItem;
+import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -45,8 +46,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
 import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
@@ -60,8 +59,8 @@ public final class OFileClassic implements OClosableItem {
 
   private static final int OPEN_RETRY_MAX = 10;
 
-  private final    ReadWriteLock lock = new ReentrantReadWriteLock();
-  private volatile Path          osFile;
+  private final    ScalableRWLock lock = new ScalableRWLock();
+  private volatile Path           osFile;
 
   private FileChannel      channel;
   private RandomAccessFile frnd;
@@ -331,16 +330,11 @@ public final class OFileClassic implements OClosableItem {
 
   @SuppressWarnings("SameParameterValue")
   private void setVersion(final int version) throws IOException {
-    acquireWriteLock();
-    try {
-      final ByteBuffer buffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_BYTE);
-      buffer.put((byte) version);
-      buffer.rewind();
-      writeByteBuffer(buffer, channel, VERSION_OFFSET);
-      dirtyCounter.incrementAndGet();
-    } finally {
-      releaseWriteLock();
-    }
+    final ByteBuffer buffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_BYTE);
+    buffer.put((byte) version);
+    buffer.rewind();
+    writeByteBuffer(buffer, channel, VERSION_OFFSET);
+    dirtyCounter.incrementAndGet();
   }
 
   /**
@@ -511,35 +505,29 @@ public final class OFileClassic implements OClosableItem {
   }
 
   private void openChannel() throws IOException {
-    acquireWriteLock();
-    try {
-      for (int i = 0; i < OPEN_RETRY_MAX; ++i) {
-        try {
-          frnd = new RandomAccessFile(osFile.toFile(), "rw");
-          channel = frnd.getChannel();
-          break;
-        } catch (final FileNotFoundException e) {
-          if (i == OPEN_RETRY_MAX - 1) {
-            throw e;
-          }
-
-          // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
-          // FREQUENTLY)
-          Files.createDirectories(osFile.getParent());
+    for (int i = 0; i < OPEN_RETRY_MAX; ++i) {
+      try {
+        frnd = new RandomAccessFile(osFile.toFile(), "rw");
+        channel = frnd.getChannel();
+        break;
+      } catch (final FileNotFoundException e) {
+        if (i == OPEN_RETRY_MAX - 1) {
+          throw e;
         }
-      }
 
-      if (channel == null) {
-        throw new FileNotFoundException(osFile.toString());
+        // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
+        // FREQUENTLY)
+        Files.createDirectories(osFile.getParent());
       }
+    }
 
-      if (channel.size() == 0) {
-        final ByteBuffer buffer = ByteBuffer.allocate(HEADER_SIZE);
-        OIOUtils.writeByteBuffer(buffer, channel, 0);
-      }
+    if (channel == null) {
+      throw new FileNotFoundException(osFile.toString());
+    }
 
-    } finally {
-      releaseWriteLock();
+    if (channel.size() == 0) {
+      final ByteBuffer buffer = ByteBuffer.allocate(HEADER_SIZE);
+      OIOUtils.writeByteBuffer(buffer, channel, 0);
     }
   }
 
