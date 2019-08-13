@@ -714,8 +714,8 @@ public class OSelectExecutionPlanner {
       Iterator<OLetItem> iterator = info.perRecordLetClause.getItems().iterator();
       while (iterator.hasNext()) {
         OLetItem item = iterator.next();
-        if (item.getExpression() != null &&
-                (item.getExpression().isEarlyCalculated(ctx) || isUnionAllOfQueries(info, item.getVarName(), item.getExpression()))) {
+        if (item.getExpression() != null
+                && (item.getExpression().isEarlyCalculated(ctx) || isUnionAllOfQueries(info, item.getVarName(), item.getExpression()))) {
           iterator.remove();
           addGlobalLet(info, item.getVarName(), item.getExpression());
         } else if (item.getQuery() != null && !item.getQuery().refersToParent()) {
@@ -734,7 +734,7 @@ public class OSelectExecutionPlanner {
         OFunctionCall fc = exp.getIdentifier().getLevelZero().getFunctionCall();
         if (fc.getName().getStringValue().equalsIgnoreCase("unionall")) {
           for (OExpression param : fc.getParams()) {
-            if(param.toString().startsWith("$")){
+            if (param.toString().startsWith("$")) {
               return true;
             }
           }
