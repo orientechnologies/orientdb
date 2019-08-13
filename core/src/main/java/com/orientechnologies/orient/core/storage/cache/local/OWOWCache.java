@@ -2599,12 +2599,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               convertSharedDirtyPagesToLocal();
             }
 
-            Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
-            while (firstSegment != null && writeCacheSize.get() >= dirtyPagesLimit) {
-              final long firstSegmentIndex = firstSegment.getKey();
-              flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
+            if (dirtyPagesLimit > 0) {
+              Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
+              while (firstSegment != null && writeCacheSize.get() >= dirtyPagesLimit) {
+                final long firstSegmentIndex = firstSegment.getKey();
+                flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
 
-              convertSharedDirtyPagesToLocal();
+                convertSharedDirtyPagesToLocal();
+              }
             }
           }
         } catch (final Error | Exception t) {
