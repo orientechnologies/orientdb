@@ -101,13 +101,17 @@ public final class OFileClassic implements OClosableItem {
 
   public long allocateSpace(final int size) throws IOException {
     acquireReadLock();
+    final long allocatedPosition;
     try {
       final long currentSize = this.size.addAndGet(size);
+      allocatedPosition = currentSize - size;
+
       final long currentCommittedSize = this.committedSize;
 
-      final int pagesDifference = (int) ((currentSize - currentCommittedSize) / pageSize);
-      if (pagesDifference < 10 || pagesDifference < 0.1 * currentCommittedSize) {
-        return currentSize;
+      final long sizeDifference = currentSize - currentCommittedSize;
+      final int pagesDifference = (int) (sizeDifference / pageSize);
+      if (pagesDifference < 10 || sizeDifference < 0.1 * currentSize) {
+        return allocatedPosition;
       }
     } finally {
       releaseReadLock();
@@ -116,10 +120,11 @@ public final class OFileClassic implements OClosableItem {
     acquireWriteLock();
     try {
       final long currentSize = this.size.get();
-      assert channel.size() == this.committedSize + HEADER_SIZE;
-
-      final long sizeDiff = currentSize - this.committedSize;
       this.committedSize = currentSize;
+
+      final long channelSize = channel.size();
+      final long sizeDiff = currentSize - channelSize - HEADER_SIZE;
+      assert sizeDiff >= 0 && sizeDiff <= currentSize;
 
       assert allocationMode != null;
       if (allocationMode == AllocationMode.WRITE) {
@@ -127,7 +132,7 @@ public final class OFileClassic implements OClosableItem {
         try {
           final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
           buffer.position(0);
-          OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+          OIOUtils.writeByteBuffer(buffer, channel, channelSize);
         } finally {
           Native.free(ptr);
         }
@@ -135,7 +140,7 @@ public final class OFileClassic implements OClosableItem {
         assert fd > 0;
 
         try {
-          ONative.instance().fallocate(fd, currentSize + HEADER_SIZE, sizeDiff);
+          ONative.instance().fallocate(fd, channelSize, sizeDiff);
         } catch (final LastErrorException e) {
           OLogManager.instance()
               .debug(this, "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
@@ -155,7 +160,7 @@ public final class OFileClassic implements OClosableItem {
           try {
             final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
             buffer.position(0);
-            OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+            OIOUtils.writeByteBuffer(buffer, channel, channelSize);
           } finally {
             Native.free(ptr);
           }
@@ -165,13 +170,15 @@ public final class OFileClassic implements OClosableItem {
         frnd.setLength(currentSize + HEADER_SIZE);
       } else {
         throw new IllegalStateException("Unknown allocation mode");
+
       }
 
       assert channel.size() == currentSize + HEADER_SIZE;
-      return currentSize;
     } finally {
       releaseWriteLock();
     }
+
+    return allocatedPosition;
   }
 
   /**

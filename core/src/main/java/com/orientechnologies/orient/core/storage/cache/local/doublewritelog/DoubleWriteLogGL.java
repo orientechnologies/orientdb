@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class DoubleWriteLogGL implements DoubleWriteLog {
 
@@ -79,12 +80,15 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       this.tailSegments = new ArrayList<>();
       this.pageMap = new HashMap<>();
 
-      final Optional<Path> latestPath = Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter)
-          .peek((path) -> tailSegments.add(extractSegmentId(path.getFileName().toString()))).min((pathOne, pathTwo) -> {
-            final long indexOne = extractSegmentId(pathOne.getFileName().toString());
-            final long indexTwo = extractSegmentId(pathTwo.getFileName().toString());
-            return -Long.compare(indexOne, indexTwo);
-          });
+      final Optional<Path> latestPath;
+      try (final Stream<Path> stream = Files.list(storagePath)) {
+        latestPath = stream.filter(DoubleWriteLogGL::fileFilter)
+            .peek((path) -> tailSegments.add(extractSegmentId(path.getFileName().toString()))).min((pathOne, pathTwo) -> {
+              final long indexOne = extractSegmentId(pathOne.getFileName().toString());
+              final long indexTwo = extractSegmentId(pathTwo.getFileName().toString());
+              return -Long.compare(indexOne, indexTwo);
+            });
+      }
 
       this.currentSegment = latestPath.map(path -> extractSegmentId(path.getFileName().toString()) + 1).orElse(0L);
 
@@ -221,13 +225,15 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   }
 
   private long calculateLogSize() throws IOException {
-    return Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).mapToLong(path -> {
-      try {
-        return Files.size(path);
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Can not calculate size of file " + path.toAbsolutePath()), e);
-      }
-    }).sum();
+    try (final Stream<Path> stream = Files.list(storagePath)) {
+      return stream.filter(DoubleWriteLogGL::fileFilter).mapToLong(path -> {
+        try {
+          return Files.size(path);
+        } catch (IOException e) {
+          throw OException.wrapException(new OStorageException("Can not calculate size of file " + path.toAbsolutePath()), e);
+        }
+      }).sum();
+    }
   }
 
   @Override
@@ -302,12 +308,14 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       pageMap.clear();
 
       //sort to fetch the
-      final Path[] segments = Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).sorted((pathOne, pathTwo) -> {
-        final long indexOne = extractSegmentId(pathOne.getFileName().toString());
-        final long indexTwo = extractSegmentId((pathTwo.getFileName().toString()));
-
-        return Long.compare(indexOne, indexTwo);
-      }).toArray(Path[]::new);
+      final Path[] segments;
+      try (final Stream<Path> stream = Files.list(storagePath)) {
+        segments = stream.filter(DoubleWriteLogGL::fileFilter).sorted((pathOne, pathTwo) -> {
+          final long indexOne = extractSegmentId(pathOne.getFileName().toString());
+          final long indexTwo = extractSegmentId((pathTwo.getFileName().toString()));
+          return Long.compare(indexOne, indexTwo);
+        }).toArray(Path[]::new);
+      }
 
       segmentLoop:
       for (final Path segment : segments) {
@@ -357,13 +365,18 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   @Override
   public void close() throws IOException {
     synchronized (mutex) {
-      Files.list(storagePath).filter(DoubleWriteLogGL::fileFilter).forEach(path -> {
-        try {
-          Files.delete(path);
-        } catch (IOException e) {
-          throw new OStorageException("Can not delete file " + path.toString() + " in storage " + storageName);
-        }
-      });
+      currentFile.close();
+
+      try (final Stream<Path> stream = Files.list(storagePath)) {
+        stream.filter(DoubleWriteLogGL::fileFilter).forEach(path -> {
+          try {
+            Files.delete(path);
+          } catch (IOException e) {
+            throw new OStorageException("Can not delete file " + path.toString() + " in storage " + storageName);
+          }
+        });
+      }
+
     }
   }
 

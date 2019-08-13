@@ -149,8 +149,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       stateLock.acquireWriteLock();
       try {
         final Path storageFolder = storagePath;
-        if (!Files.exists(storageFolder))
+        if (!Files.exists(storageFolder)) {
           Files.createDirectories(storageFolder);
+        }
 
         super.create(contextConfiguration);
       } finally {
