@@ -447,26 +447,30 @@ public final class OFileClassic implements OClosableItem {
     try {
       acquireWriteLock();
       try {
-        if (channel != null && channel.isOpen()) {
-          channel.close();
-          channel = null;
-        }
-
-        if (frnd != null) {
-          frnd.close();
-          frnd = null;
-        }
-
-        closeFD();
+        doClose();
       } finally {
         releaseWriteLock();
       }
-
-      dirtyCounter.set(0);
-      releaseExclusiveAccess();
     } catch (final IOException ioe) {
       throw OException.wrapException(new OIOException("Error during file close"), ioe);
     }
+  }
+
+  private void doClose() throws IOException {
+    if (channel != null && channel.isOpen()) {
+      channel.close();
+      channel = null;
+    }
+
+    if (frnd != null) {
+      frnd.close();
+      frnd = null;
+    }
+
+    closeFD();
+
+    dirtyCounter.set(0);
+    releaseExclusiveAccess();
   }
 
   private void closeFD() {
@@ -495,7 +499,8 @@ public final class OFileClassic implements OClosableItem {
   public void delete() throws IOException {
     acquireWriteLock();
     try {
-      close();
+      doClose();
+
       if (osFile != null) {
         Files.deleteIfExists(osFile);
       }
