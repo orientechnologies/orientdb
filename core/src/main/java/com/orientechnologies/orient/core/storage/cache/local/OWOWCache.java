@@ -2599,9 +2599,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
             while (firstSegment != null && writeCacheSize.get() >= dirtyPagesLimit) {
               final long firstSegmentIndex = firstSegment.getKey();
-              final int flushedPages = flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
-
-              System.out.println("Flushed pages = " + flushedPages + " dirt pages limit " + dirtyPagesLimit);
+              flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
 
               convertSharedDirtyPagesToLocal();
             }
