@@ -400,7 +400,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     this.hardDirtyPagesLimit = (int) (hardDirtyPagesLimit / pageSize);
-    this.dirtyPagesLimit = this.hardDirtyPagesLimit;
+    this.dirtyPagesLimit = -1;
 
     this.shutdownTimeout = shutdownTimeout;
     this.pagesFlushInterval = pagesFlushInterval;
@@ -2556,20 +2556,33 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             convertSharedDirtyPagesToLocal();
 
             if (exclusivePages > 0) {
-              dirtyPagesLimit -= (int) (hardDirtyPagesLimit * 0.1);
-
-              dirtyPageUpdateTs = ts;
-
-              if (dirtyPagesLimit <= 0) {
-                dirtyPagesLimit = 1;
-              }
-            } else if (dirtyPageUpdateTs < 0 || dirtyPageUpdateTs - ts >= 5L * 60L * 1_000_000_000L) {
-              dirtyPagesLimit += (int) (hardDirtyPagesLimit * 0.1);
-
-              dirtyPageUpdateTs = ts;
-
-              if (dirtyPagesLimit > hardDirtyPagesLimit) {
+              if (dirtyPagesLimit < 0) {
                 dirtyPagesLimit = hardDirtyPagesLimit;
+              } else {
+                dirtyPagesLimit -= (int) (hardDirtyPagesLimit * 0.1);
+
+                dirtyPageUpdateTs = ts;
+
+                if (dirtyPagesLimit <= 0) {
+                  dirtyPagesLimit = 1;
+                }
+              }
+
+            } else if (dirtyPageUpdateTs < 0 || dirtyPageUpdateTs - ts >= 5L * 60L * 1_000_000_000L) {
+              if (dirtyPagesLimit > 0) {
+                assert dirtyPagesLimit <= hardDirtyPagesLimit;
+
+                if (dirtyPagesLimit == hardDirtyPagesLimit) {
+                  dirtyPagesLimit = -1;
+                } else {
+                  dirtyPagesLimit += (int) (hardDirtyPagesLimit * 0.1);
+
+                  dirtyPageUpdateTs = ts;
+
+                  if (dirtyPagesLimit > hardDirtyPagesLimit) {
+                    dirtyPagesLimit = hardDirtyPagesLimit;
+                  }
+                }
               }
             }
 
