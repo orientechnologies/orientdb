@@ -160,7 +160,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
-  private static final int CHUNK_SIZE = 4 * 1024 * 1024;
+  private static final int CHUNK_SIZE = 64 * 1024 * 1024;
 
   /**
    * Executor which runs in single thread all tasks are related to flush of write cache data.
@@ -2531,6 +2531,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         return;
       }
 
+      long flushInterval = pagesFlushInterval;
+
       try {
         if (flushError != null) {
           OLogManager.instance()
@@ -2588,24 +2590,20 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               final long firstSegmentIndex = firstSegment.getKey();
               flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
 
-              convertSharedDirtyPagesToLocal();
-            }
-
-            while (localDirtyPagesBySegment.size() > 2) {
-              final Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
-              final long firstSegmentIndex = firstSegment.getKey();
-              flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
-
-              convertSharedDirtyPagesToLocal();
+              if (localDirtyPagesBySegment.size() > 1) {
+                flushInterval = 1;
+              }
             }
 
             if (dirtyPagesLimit > 0) {
               Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
-              while (firstSegment != null && writeCacheSize.get() >= dirtyPagesLimit) {
+              if (firstSegment != null && writeCacheSize.get() >= dirtyPagesLimit) {
                 final long firstSegmentIndex = firstSegment.getKey();
                 flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
+              }
 
-                convertSharedDirtyPagesToLocal();
+              if (writeCacheSize.get() >= dirtyPagesLimit) {
+                flushInterval = 1;
               }
             }
           }
@@ -2615,8 +2613,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           flushError = t;
         }
       } finally {
-        if (pagesFlushInterval > 0 && !stopFlush) {
-          flushFuture = commitExecutor.schedule(this, pagesFlushInterval, TimeUnit.MILLISECONDS);
+        if (flushInterval > 0 && !stopFlush) {
+          flushFuture = commitExecutor.schedule(this, flushInterval, TimeUnit.MILLISECONDS);
         }
       }
     }
