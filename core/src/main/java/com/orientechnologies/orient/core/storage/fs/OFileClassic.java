@@ -28,18 +28,21 @@ import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.sun.jna.LastErrorException;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -53,27 +56,18 @@ import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
 public final class OFileClassic implements OClosableItem {
   private static final int ALLOCATION_THRESHOLD = 1024 * 1024;
 
-  public static final  String NAME            = "classic";
-  private static final int    CURRENT_VERSION = 2;
-
-  public static final int HEADER_SIZE    = 1024;
-  public static final int VERSION_OFFSET = 48;
-
-  private static final int OPEN_RETRY_MAX = 10;
+  public static final int HEADER_SIZE = 1024;
 
   private final    ScalableRWLock lock = new ScalableRWLock();
   private volatile Path           osFile;
 
-  private FileChannel      channel;
-  private RandomAccessFile frnd;
+  private FileChannel channel;
 
   private final AtomicLong dirtyCounter   = new AtomicLong();
   private final Object     flushSemaphore = new Object();
 
-  private int version;
-
-  private final    AtomicLong size          = new AtomicLong();
-  private volatile long       committedSize = 0;
+  private final AtomicLong size          = new AtomicLong();
+  private final AtomicLong committedSize = new AtomicLong();
 
   private AllocationMode allocationMode;
   private int            fd;
@@ -104,23 +98,22 @@ public final class OFileClassic implements OClosableItem {
       final long currentSize = this.size.addAndGet(size);
       allocatedPosition = currentSize - size;
 
-      final long currentCommittedSize = this.committedSize;
+      long currentCommittedSize = this.committedSize.get();
 
       final long sizeDifference = currentSize - currentCommittedSize;
       if (sizeDifference <= ALLOCATION_THRESHOLD || sizeDifference < 0.1 * currentSize) {
         return allocatedPosition;
       }
-    } finally {
-      releaseReadLock();
-    }
 
-    acquireWriteLock();
-    try {
-      final long currentSize = this.size.get();
-      this.committedSize = currentSize;
+      while (currentCommittedSize < currentSize) {
+        if (this.committedSize.compareAndSet(currentCommittedSize, currentSize)) {
+          break;
+        }
 
-      final long channelSize = channel.size();
-      final long sizeDiff = currentSize - channelSize + HEADER_SIZE;
+        currentCommittedSize = committedSize.get();
+      }
+
+      final long sizeDiff = currentSize - currentCommittedSize;
       assert sizeDiff >= 0 && sizeDiff <= currentSize;
 
       assert allocationMode != null;
@@ -129,7 +122,7 @@ public final class OFileClassic implements OClosableItem {
         try {
           final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
           buffer.position(0);
-          OIOUtils.writeByteBuffer(buffer, channel, channelSize);
+          OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize);
         } finally {
           Native.free(ptr);
         }
@@ -137,7 +130,7 @@ public final class OFileClassic implements OClosableItem {
         assert fd > 0;
 
         try {
-          ONative.instance().fallocate(fd, channelSize, sizeDiff);
+          ONative.instance().fallocate(fd, currentCommittedSize, sizeDiff);
         } catch (final LastErrorException e) {
           OLogManager.instance()
               .debug(this, "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
@@ -157,22 +150,21 @@ public final class OFileClassic implements OClosableItem {
           try {
             final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
             buffer.position(0);
-            OIOUtils.writeByteBuffer(buffer, channel, channelSize);
+            OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize);
           } finally {
             Native.free(ptr);
           }
         }
 
-      } else if (allocationMode == AllocationMode.LENGTH) {
-        frnd.setLength(currentSize + HEADER_SIZE);
       } else {
         throw new IllegalStateException("Unknown allocation mode");
 
       }
 
       assert channel.size() == currentSize + HEADER_SIZE;
+
     } finally {
-      releaseWriteLock();
+      releaseReadLock();
     }
 
     return allocatedPosition;
@@ -187,9 +179,9 @@ public final class OFileClassic implements OClosableItem {
       //noinspection resource
       channel.truncate(HEADER_SIZE + size);
       this.size.set(size);
-      this.committedSize = size;
+      this.committedSize.set(size);
 
-      assert this.committedSize >= 0;
+      assert this.committedSize.get() >= 0;
       assert this.size.get() >= 0;
 
     } finally {
@@ -274,9 +266,6 @@ public final class OFileClassic implements OClosableItem {
       openChannel();
       init();
 
-      setVersion(OFileClassic.CURRENT_VERSION);
-      version = OFileClassic.CURRENT_VERSION;
-
       initAllocationMode();
     } finally {
       releaseWriteLock();
@@ -300,8 +289,6 @@ public final class OFileClassic implements OClosableItem {
         allocationMode = AllocationMode.WRITE;
       }
       this.fd = fd;
-    } else if (Platform.isWindows()) {
-      allocationMode = AllocationMode.LENGTH;
     } else {
       allocationMode = AllocationMode.WRITE;
     }
@@ -326,15 +313,6 @@ public final class OFileClassic implements OClosableItem {
 
   }
 
-  @SuppressWarnings("SameParameterValue")
-  private void setVersion(final int version) throws IOException {
-    final ByteBuffer buffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_BYTE);
-    buffer.put((byte) version);
-    buffer.rewind();
-    writeByteBuffer(buffer, channel, VERSION_OFFSET);
-    dirtyCounter.incrementAndGet();
-  }
-
   /**
    * Opens the file.
    */
@@ -356,11 +334,6 @@ public final class OFileClassic implements OClosableItem {
       init();
 
       OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getFileName() + "...");
-
-      if (version < CURRENT_VERSION) {
-        setVersion(CURRENT_VERSION);
-        version = CURRENT_VERSION;
-      }
 
       initAllocationMode();
     } catch (final IOException e) {
@@ -460,11 +433,6 @@ public final class OFileClassic implements OClosableItem {
       channel = null;
     }
 
-    if (frnd != null) {
-      frnd.close();
-      frnd = null;
-    }
-
     closeFD();
 
     dirtyCounter.set(0);
@@ -508,21 +476,7 @@ public final class OFileClassic implements OClosableItem {
   }
 
   private void openChannel() throws IOException {
-    for (int i = 0; i < OPEN_RETRY_MAX; ++i) {
-      try {
-        frnd = new RandomAccessFile(osFile.toFile(), "rw");
-        channel = frnd.getChannel();
-        break;
-      } catch (final FileNotFoundException e) {
-        if (i == OPEN_RETRY_MAX - 1) {
-          throw e;
-        }
-
-        // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
-        // FREQUENTLY)
-        Files.createDirectories(osFile.getParent());
-      }
-    }
+    channel = FileChannel.open(osFile, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
     if (channel == null) {
       throw new FileNotFoundException(osFile.toString());
@@ -538,14 +492,7 @@ public final class OFileClassic implements OClosableItem {
     size.set(channel.size() - HEADER_SIZE);
     assert size.get() >= 0;
 
-    this.committedSize = size.get();
-
-    final ByteBuffer buffer = ByteBuffer.allocate(1);
-
-    channel.read(buffer, VERSION_OFFSET);
-
-    buffer.position(0);
-    version = buffer.get();
+    this.committedSize.set(size.get());
   }
 
   /*
@@ -704,7 +651,7 @@ public final class OFileClassic implements OClosableItem {
   }
 
   private enum AllocationMode {
-    LENGTH, DESCRIPTOR, WRITE
+    DESCRIPTOR, WRITE
   }
 
 }

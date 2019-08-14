@@ -1116,38 +1116,26 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public int allocateNewPage(final long fileId) throws IOException {
-    final int intId = extractFileId(fileId);
     filesLock.acquireReadLock();
     try {
       final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
       try {
         final OFileClassic fileClassic = entry.get();
-        long allocationIndex = fileClassic.getFileSize() / pageSize;
+        final long allocationIndex = fileClassic.getFileSize() / pageSize;
 
-        while (true) {
-          final Lock lock = lockManager.acquireExclusiveLock(new PageKey(intId, allocationIndex));
-          try {
-            if (fileClassic.getFileSize() == allocationIndex * pageSize) {
-              final long allocatedPosition = fileClassic.allocateSpace(pageSize);
-              assert allocationIndex * pageSize == allocatedPosition;
+        final long allocatedPosition = fileClassic.allocateSpace(pageSize);
+        assert allocationIndex * pageSize == allocatedPosition;
 
-              //we check is it enough space on disk to continue to write data on it
-              //otherwise we switch storage in read-only mode
-              freeSpaceCheckAfterNewPageAdd();
+        //we check is it enough space on disk to continue to write data on it
+        //otherwise we switch storage in read-only mode
+        freeSpaceCheckAfterNewPageAdd();
 
-              final int pageIndex = (int) allocationIndex;
-              if (pageIndex < 0) {
-                throw new IllegalStateException("Illegal page index value " + pageIndex);
-              }
-
-              return pageIndex;
-            } else {
-              allocationIndex = fileClassic.getFileSize() / pageSize;
-            }
-          } finally {
-            lock.unlock();
-          }
+        final int pageIndex = (int) allocationIndex;
+        if (pageIndex < 0) {
+          throw new IllegalStateException("Illegal page index value " + pageIndex);
         }
+
+        return pageIndex;
       } finally {
         files.release(entry);
       }
