@@ -5,12 +5,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.parser.*;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public abstract class OSecurityResource {
 
-  static Map<String, OSecurityResource> cache;
+  static Map<String, OSecurityResource> cache = new HashMap<>();
 
   public static OSecurityResource getInstance(String resource) {
     OSecurityResource result = cache.get(resource);
@@ -24,12 +25,6 @@ public abstract class OSecurityResource {
   }
 
   protected static OSecurityResource parseResource(String resource) {
-
-    //TODO
-
-
-//    public static final String RECORD_HOOK       = "database.hook.record";
-
 
     if (resource.equals("*")) {
       return OSecurityResourceAll.INSTANCE;

@@ -67,4 +67,11 @@ public class OSecurityResourceTest {
     }
 
   }
+
+  @Test
+  public void testCache(){
+    OSecurityResource person = OSecurityResource.getInstance("database.class.Person");
+    OSecurityResource person2 = OSecurityResource.getInstance("database.class.Person");
+    Assert.assertTrue(person == person2);
+  }
 }
