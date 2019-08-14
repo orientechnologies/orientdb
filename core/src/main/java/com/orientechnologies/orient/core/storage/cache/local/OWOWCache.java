@@ -2780,10 +2780,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
 
-          if (chunk.size() >= pagesFlushLimit || chunk.size() >= chunkSize) {
-            chunks.add(chunk);
-            chunksSize += chunk.size();
-            chunk = new ArrayList<>();
+          if (chunksSize + chunk.size() >= pagesFlushLimit) {
+            if (!chunk.isEmpty()) {
+              chunks.add(chunk);
+              chunksSize += chunk.size();
+              chunk = new ArrayList<>();
+            }
 
             lastPageIndex = -1;
             lastFileId = -1;
@@ -2978,7 +2980,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       long lastFileId = -1;
       long lastPageIndex = -1;
 
-      while (chunk.size() < chunkSize && flushedPages + chunk.size() < pagesToFlush) {
+      while (chunksSize + chunk.size() < pagesToFlush) {
         if (!iterator.hasNext()) {
           if (!chunk.isEmpty()) {
             chunks.add(chunk);
@@ -3033,7 +3035,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 chunksSize += chunk.size();
                 chunk = new ArrayList<>();
 
-                if (flushedPages - chunksSize >= this.chunkSize) {
+                if (chunksSize - flushedPages >= this.chunkSize) {
                   flushedPages += flushPages(chunks, maxFullLogLSN);
                   chunks.clear();
 
@@ -3053,11 +3055,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             lastFileId = pointer.getFileId();
             lastPageIndex = pointer.getPageIndex();
           } else {
-            chunks.add(chunk);
-            chunksSize += chunk.size();
-            chunk = new ArrayList<>();
+            if (!chunk.isEmpty()) {
+              chunks.add(chunk);
+              chunksSize += chunk.size();
+              chunk = new ArrayList<>();
+            }
 
-            if (flushedPages - chunksSize >= this.chunkSize) {
+            if (chunksSize - flushedPages >= this.chunkSize) {
               flushedPages += flushPages(chunks, maxFullLogLSN);
               chunks.clear();
 
@@ -3079,7 +3083,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         chunksSize += chunk.size();
         chunk = new ArrayList<>();
 
-        if (flushedPages - chunksSize >= this.chunkSize) {
+        if (chunksSize - flushedPages >= this.chunkSize) {
           flushedPages += flushPages(chunks, maxFullLogLSN);
           chunks.clear();
 
