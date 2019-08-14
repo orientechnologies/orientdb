@@ -219,7 +219,7 @@ public final class AsyncFile implements OFile {
       long currentCommittedSize = this.committedSize.get();
 
       final long sizeDifference = currentSize - currentCommittedSize;
-      if (sizeDifference <= ALLOCATION_THRESHOLD || sizeDifference < 0.1 * currentSize) {
+      if (sizeDifference <= ALLOCATION_THRESHOLD) {
         return allocatedPosition;
       }
 
