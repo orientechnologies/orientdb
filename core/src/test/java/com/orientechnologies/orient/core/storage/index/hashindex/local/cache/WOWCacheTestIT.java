@@ -541,7 +541,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path, pageSize);
+    final OFileClassic file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -574,7 +574,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path, pageSize);
+    final OFileClassic file = new OFileClassic(path);
     file.open();
     file.write(0, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -607,7 +607,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path, pageSize);
+    final OFileClassic file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -635,7 +635,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path, pageSize);
+    final OFileClassic file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -663,7 +663,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path, pageSize);
+    final OFileClassic file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -691,7 +691,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path, pageSize);
+    final OFileClassic file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -701,7 +701,7 @@ public class WOWCacheTestIT {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
-    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName), pageSize);
+    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName));
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic
@@ -726,7 +726,7 @@ public class WOWCacheTestIT {
 
   private void assertFileEncrypted(int fileId, int pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName,
       final byte[] aesKey, final byte[] iv) throws Exception {
-    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName), pageSize);
+    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName));
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic

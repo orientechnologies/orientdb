@@ -1761,7 +1761,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private OFileClassic createFileInstance(final String fileName, final int fileId) {
     final String internalFileName = createInternalFileName(fileName, fileId);
-    return new OFileClassic(storagePath.resolve(internalFileName), pageSize);
+    return new OFileClassic(storagePath.resolve(internalFileName));
   }
 
   private static String createInternalFileName(final String fileName, final int fileId) {
@@ -1830,7 +1830,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         if (files.get(externalId) == null) {
           final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
-          final OFileClassic fileClassic = new OFileClassic(path, pageSize);
+          final OFileClassic fileClassic = new OFileClassic(path);
 
           if (fileClassic.exists()) {
             fileClassic.open();
@@ -1902,7 +1902,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          final OFileClassic fileClassic = new OFileClassic(storagePath.resolve(nameIdEntry.getKey()), pageSize);
+          final OFileClassic fileClassic = new OFileClassic(storagePath.resolve(nameIdEntry.getKey()));
 
           if (fileClassic.exists()) {
             fileClassic.open();

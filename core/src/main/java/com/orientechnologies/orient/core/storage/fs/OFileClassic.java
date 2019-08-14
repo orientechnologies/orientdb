@@ -51,6 +51,8 @@ import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
 import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
 
 public final class OFileClassic implements OClosableItem {
+  private static final int ALLOCATION_THRESHOLD = 1024 * 1024;
+
   public static final  String NAME            = "classic";
   private static final int    CURRENT_VERSION = 2;
 
@@ -76,8 +78,6 @@ public final class OFileClassic implements OClosableItem {
   private AllocationMode allocationMode;
   private int            fd;
 
-  private final int pageSize;
-
   /**
    * Map which calculates which files are opened and how many users they have
    */
@@ -93,9 +93,8 @@ public final class OFileClassic implements OClosableItem {
    */
   private final boolean trackFileOpen = OGlobalConfiguration.STORAGE_TRACK_FILE_ACCESS.getValueAsBoolean();
 
-  public OFileClassic(final Path osFile, final int pageSize) {
+  public OFileClassic(final Path osFile) {
     this.osFile = osFile;
-    this.pageSize = pageSize;
   }
 
   public long allocateSpace(final int size) throws IOException {
@@ -108,8 +107,7 @@ public final class OFileClassic implements OClosableItem {
       final long currentCommittedSize = this.committedSize;
 
       final long sizeDifference = currentSize - currentCommittedSize;
-      final int pagesDifference = (int) (sizeDifference / pageSize);
-      if (pagesDifference < 10 || sizeDifference < 0.1 * currentSize) {
+      if (sizeDifference <= ALLOCATION_THRESHOLD || sizeDifference < 0.1 * currentSize) {
         return allocatedPosition;
       }
     } finally {
