@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
-import com.orientechnologies.common.collection.closabledictionary.OClosableItem;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -53,10 +52,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
 import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
 
-public final class OFileClassic implements OClosableItem {
+public final class OFileClassic implements File {
   private static final int ALLOCATION_THRESHOLD = 1024 * 1024;
-
-  public static final int HEADER_SIZE = 1024;
 
   private final    ScalableRWLock lock = new ScalableRWLock();
   private volatile Path           osFile;
@@ -91,6 +88,7 @@ public final class OFileClassic implements OClosableItem {
     this.osFile = osFile;
   }
 
+  @Override
   public long allocateSpace(final int size) throws IOException {
     acquireReadLock();
     final long allocatedPosition;
@@ -172,6 +170,7 @@ public final class OFileClassic implements OClosableItem {
   /**
    * Shrink the file content (filledUpTo attribute only)
    */
+  @Override
   public void shrink(final long size) throws IOException {
     acquireWriteLock();
     try {
@@ -188,10 +187,12 @@ public final class OFileClassic implements OClosableItem {
     }
   }
 
+  @Override
   public long getFileSize() {
     return size.get();
   }
 
+  @Override
   public void read(long offset, final ByteBuffer buffer, final boolean throwOnEof) throws IOException {
     acquireReadLock();
     try {
@@ -204,6 +205,7 @@ public final class OFileClassic implements OClosableItem {
     }
   }
 
+  @Override
   public void write(long offset, final ByteBuffer buffer) throws IOException {
     acquireReadLock();
     try {
@@ -217,6 +219,7 @@ public final class OFileClassic implements OClosableItem {
     }
   }
 
+  @Override
   public CountDownLatch write(List<ORawPair<Long, ByteBuffer>> buffers) throws IOException {
     final CountDownLatch latch = new CountDownLatch(0);
 
@@ -233,6 +236,7 @@ public final class OFileClassic implements OClosableItem {
   /**
    * Synchronizes the buffered changes to disk.
    */
+  @Override
   public void synch() {
     acquireReadLock();
     try {
@@ -257,6 +261,7 @@ public final class OFileClassic implements OClosableItem {
   /**
    * Creates the file.
    */
+  @Override
   public void create() throws IOException {
     acquireWriteLock();
     try {
@@ -320,6 +325,7 @@ public final class OFileClassic implements OClosableItem {
    *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#open()
    */
+  @Override
   public void open() {
     acquireWriteLock();
     try {
@@ -413,6 +419,7 @@ public final class OFileClassic implements OClosableItem {
    *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#close()
    */
+  @Override
   public void close() {
     try {
       acquireWriteLock();
@@ -461,6 +468,7 @@ public final class OFileClassic implements OClosableItem {
    *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#delete()
    */
+  @Override
   public void delete() throws IOException {
     acquireWriteLock();
     try {
@@ -499,6 +507,7 @@ public final class OFileClassic implements OClosableItem {
    *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#isOpen()
    */
+  @Override
   public boolean isOpen() {
     acquireReadLock();
     try {
@@ -514,6 +523,7 @@ public final class OFileClassic implements OClosableItem {
    *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#exists()
    */
+  @Override
   public boolean exists() {
     acquireReadLock();
     try {
@@ -523,6 +533,7 @@ public final class OFileClassic implements OClosableItem {
     }
   }
 
+  @Override
   public String getName() {
     acquireReadLock();
     try {
@@ -532,6 +543,7 @@ public final class OFileClassic implements OClosableItem {
     }
   }
 
+  @Override
   public String getPath() {
     acquireReadLock();
     try {
@@ -541,6 +553,7 @@ public final class OFileClassic implements OClosableItem {
     }
   }
 
+  @Override
   public void renameTo(final Path newFile) throws IOException {
     acquireWriteLock();
     try {
@@ -560,6 +573,7 @@ public final class OFileClassic implements OClosableItem {
    *
    * @param newContentFile the new content file to replace the content with.
    */
+  @Override
   public void replaceContentWith(final Path newContentFile) throws IOException {
     acquireWriteLock();
     try {

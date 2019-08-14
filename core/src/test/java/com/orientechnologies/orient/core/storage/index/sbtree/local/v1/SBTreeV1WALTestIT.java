@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.fs.File;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
@@ -18,7 +18,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OW
 import org.assertj.core.api.Assertions;
 import org.junit.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Paths;
@@ -56,7 +55,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/" + DIR_NAME;
 
-    final File buildDir = new File(buildDirectory);
+    final java.io.File buildDir = new java.io.File(buildDirectory);
     OFileUtils.deleteRecursively(buildDir);
 
     orientDB = new OrientDB("plocal:" + buildDir, OrientDBConfig.defaultConfig());
@@ -314,17 +313,17 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
   }
 
   private void assertFileContentIsTheSame(String expectedBTreeFileName, String actualBTreeFileName) throws IOException {
-    File expectedFile = new File(expectedStorageDir, expectedBTreeFileName);
+    java.io.File expectedFile = new java.io.File(expectedStorageDir, expectedBTreeFileName);
     try (RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r")) {
-      try (RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTreeFileName), "r")) {
+      try (RandomAccessFile fileTwo = new RandomAccessFile(new java.io.File(actualStorageDir, actualBTreeFileName), "r")) {
 
         Assert.assertEquals(fileOne.length(), fileTwo.length());
 
         byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
         byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-        fileOne.seek(OFileClassic.HEADER_SIZE);
-        fileTwo.seek(OFileClassic.HEADER_SIZE);
+        fileOne.seek(File.HEADER_SIZE);
+        fileTwo.seek(File.HEADER_SIZE);
 
         int bytesRead = fileOne.read(expectedContent);
         while (bytesRead >= 0) {
