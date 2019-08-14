@@ -114,55 +114,54 @@ public final class OFileClassic implements OClosableItem {
       }
 
       final long sizeDiff = currentSize - currentCommittedSize;
-      assert sizeDiff >= 0 && sizeDiff <= currentSize;
-
-      assert allocationMode != null;
-      if (allocationMode == AllocationMode.WRITE) {
-        final long ptr = Native.malloc(sizeDiff);
-        try {
-          final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
-          buffer.position(0);
-          OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize);
-        } finally {
-          Native.free(ptr);
-        }
-      } else if (allocationMode == AllocationMode.DESCRIPTOR) {
-        assert fd > 0;
-
-        try {
-          ONative.instance().fallocate(fd, currentCommittedSize, sizeDiff);
-        } catch (final LastErrorException e) {
-          OLogManager.instance()
-              .debug(this, "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
-                  e.getErrorCode(), osFile.toAbsolutePath().toString());
-
-          allocationMode = AllocationMode.WRITE;
-
-          try {
-            ONative.instance().close(fd);
-          } catch (final LastErrorException lee) {
-            OLogManager.instance()
-                .warnNoDb(this, "Can not close Linux descriptor of file %s, error %d", osFile.toAbsolutePath().toString(),
-                    lee.getErrorCode());
-          }
-
+      if (sizeDiff > 0) {
+        assert allocationMode != null;
+        if (allocationMode == AllocationMode.WRITE) {
           final long ptr = Native.malloc(sizeDiff);
           try {
             final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
             buffer.position(0);
-            OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize);
+            OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize + HEADER_SIZE);
           } finally {
             Native.free(ptr);
           }
+        } else if (allocationMode == AllocationMode.DESCRIPTOR) {
+          assert fd > 0;
+
+          try {
+            ONative.instance().fallocate(fd, currentCommittedSize + HEADER_SIZE, sizeDiff);
+          } catch (final LastErrorException e) {
+            OLogManager.instance().debug(this,
+                "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
+                e.getErrorCode(), osFile.toAbsolutePath().toString());
+
+            allocationMode = AllocationMode.WRITE;
+
+            try {
+              ONative.instance().close(fd);
+            } catch (final LastErrorException lee) {
+              OLogManager.instance()
+                  .warnNoDb(this, "Can not close Linux descriptor of file %s, error %d", osFile.toAbsolutePath().toString(),
+                      lee.getErrorCode());
+            }
+
+            final long ptr = Native.malloc(sizeDiff);
+            try {
+              final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
+              buffer.position(0);
+              OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize + HEADER_SIZE);
+            } finally {
+              Native.free(ptr);
+            }
+          }
+
+        } else {
+          throw new IllegalStateException("Unknown allocation mode");
+
         }
 
-      } else {
-        throw new IllegalStateException("Unknown allocation mode");
-
+        assert channel.size() >= currentSize + HEADER_SIZE;
       }
-
-      assert channel.size() >= currentSize + HEADER_SIZE;
-
     } finally {
       releaseReadLock();
     }
