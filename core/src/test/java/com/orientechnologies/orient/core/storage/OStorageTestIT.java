@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.fs.File;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.junit.After;
 import org.junit.Assert;
@@ -132,7 +132,7 @@ public class OStorageTestIT {
     storage.close(true, false);
     ctx.close();
 
-    int position = File.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
+    int position = OFile.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
 
     RandomAccessFile file = new RandomAccessFile(storagePath.resolve(nativeFileName).toFile(), "rw");
     file.seek(position);
@@ -191,7 +191,7 @@ public class OStorageTestIT {
     storage.close(true, false);
     ctx.close();
 
-    int position = File.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
+    int position = OFile.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
 
     RandomAccessFile file = new RandomAccessFile(storagePath.resolve(nativeFileName).toFile(), "rw");
     file.seek(position);

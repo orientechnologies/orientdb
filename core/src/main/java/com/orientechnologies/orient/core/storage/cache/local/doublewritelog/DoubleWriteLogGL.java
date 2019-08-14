@@ -52,7 +52,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
   private List<Long> tailSegments;
 
-  private boolean restoreMode;
+  private volatile boolean restoreMode;
 
   private int checkpointCounter;
 
@@ -238,6 +238,10 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
   @Override
   public OPointer loadPage(int fileId, int pageIndex, OByteBufferPool bufferPool) throws IOException {
+    if (!restoreMode) {
+      return null;
+    }
+
     synchronized (mutex) {
       if (!restoreMode) {
         return null;

@@ -44,7 +44,7 @@ import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.Doub
 import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogNoOP;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
-import com.orientechnologies.orient.core.storage.fs.File;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedStorageDirtyFlag;
@@ -107,8 +107,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private final Path                                 storagePath;
-  private final OClosableLinkedContainer<Long, File> files;
+  private final Path                                  storagePath;
+  private final OClosableLinkedContainer<Long, OFile> files;
 
   private Future<?> fuzzyCheckpointTask;
 
@@ -120,7 +120,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   protected volatile byte[] iv;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id,
-      final OReadCache readCache, final OClosableLinkedContainer<Long, File> files, final long walMaxSegSize,
+      final OReadCache readCache, final OClosableLinkedContainer<Long, OFile> files, final long walMaxSegSize,
       long doubleWriteLogMaxSegSize) {
     super(name, filePath, mode, id);
 
@@ -271,7 +271,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         close(true, false);
       try {
         stateLock.acquireWriteLock();
-        final java.io.File dbDir = new java.io.File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
+        final java.io.File dbDir = new java.io.File(
+            OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
         final java.io.File[] storageFiles = dbDir.listFiles();
         if (storageFiles != null) {
           // TRY TO DELETE ALL THE FILES
@@ -663,7 +664,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize,
         diskCacheSize - writeCacheSize, storagePath, getName(), OStringSerializer.INSTANCE, files, getId(),
         contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), iv, aesKey,
-        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC));
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.DISK_WRITE_CACHE_USE_ASYNC_IO));
 
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();

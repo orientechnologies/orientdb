@@ -50,7 +50,9 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLog;
-import com.orientechnologies.orient.core.storage.fs.File;
+import com.orientechnologies.orient.core.storage.fs.AsyncFile;
+import com.orientechnologies.orient.core.storage.fs.IOResult;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
@@ -219,7 +221,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    * Container of all files are managed by write cache. That is special type of container which ensures that only limited amount of
    * files is open at the same time and opens closed files upon request
    */
-  private final OClosableLinkedContainer<Long, File> files;
+  private final OClosableLinkedContainer<Long, OFile> files;
 
   /**
    * The main storage of pages for write cache. If pages is hold by write cache it should be present in this map. Map is ordered by
@@ -387,11 +389,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final int  hardDirtyPagesLimit;
   private       long dirtyPageUpdateLimitTs = -1;
 
+  private final boolean useAsyncIO;
+
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
       final DoubleWriteLog doubleWriteLog, final long pagesFlushInterval, final int shutdownTimeout,
       final long exclusiveWriteCacheMaxSize, long hardDirtyPagesLimit, final Path storagePath, final String storageName,
-      final OBinarySerializer<String> stringSerializer, final OClosableLinkedContainer<Long, File> files, final int id,
-      final OChecksumMode checksumMode, byte[] iv, byte[] aesKey, final boolean callFsync) {
+      final OBinarySerializer<String> stringSerializer, final OClosableLinkedContainer<Long, OFile> files, final int id,
+      final OChecksumMode checksumMode, final byte[] iv, final byte[] aesKey, final boolean callFsync, final boolean useAsyncIO) {
+
     if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
       throw new OInvalidStorageEncryptionKeyException("Invalid length of the encryption key, provided size is " + aesKey.length);
     }
@@ -400,6 +405,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       throw new OInvalidStorageEncryptionKeyException("IV can not be null");
     }
 
+    this.useAsyncIO = useAsyncIO;
     this.hardDirtyPagesLimit = (int) (hardDirtyPagesLimit / pageSize);
     this.dirtyPagesLimit = -1;
 
@@ -672,7 +678,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     filesLock.acquireWriteLock();
     try {
       Integer fileId = nameIdMap.get(fileName);
-      final File fileClassic;
+      final OFile fileClassic;
 
       //check that file is already registered
       if (!(fileId == null || fileId < 0)) {
@@ -732,7 +738,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     filesLock.acquireWriteLock();
     try {
       Integer fileId = nameIdMap.get(fileName);
-      final File fileClassic;
+      final OFile fileClassic;
 
       if (fileId != null && fileId >= 0) {
         throw new OStorageException("File with name " + fileName + " already exists in storage " + storageName);
@@ -830,7 +836,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   public long addFile(final String fileName, long fileId) throws IOException {
     filesLock.acquireWriteLock();
     try {
-      File fileClassic;
+      OFile fileClassic;
 
       final Integer existingFileId = nameIdMap.get(fileName);
 
@@ -909,9 +915,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             if (callFsync) {
               final long fileId = composeFileId(id, intId);
-              final OClosableEntry<Long, File> entry = files.acquire(fileId);
+              final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
               try {
-                final File fileClassic = entry.get();
+                final OFile fileClassic = entry.get();
                 fileClassic.synch();
               } finally {
                 files.release(entry);
@@ -954,7 +960,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final Integer intId = nameIdMap.get(fileName);
 
       if (intId != null && intId >= 0) {
-        final File fileClassic = files.get(externalFileId(intId));
+        final OFile fileClassic = files.get(externalFileId(intId));
 
         if (fileClassic == null) {
           return false;
@@ -976,7 +982,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final int intId = extractFileId(fileId);
       fileId = composeFileId(id, intId);
 
-      final File file = files.get(fileId);
+      final OFile file = files.get(fileId);
 
       if (file == null) {
         return false;
@@ -1119,13 +1125,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   public int allocateNewPage(final long fileId) throws IOException {
     filesLock.acquireReadLock();
     try {
-      final OClosableEntry<Long, File> entry = files.acquire(fileId);
+      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
       try {
-        final File fileClassic = entry.get();
-        final long allocationIndex = fileClassic.getFileSize() / pageSize;
-
+        final OFile fileClassic = entry.get();
         final long allocatedPosition = fileClassic.allocateSpace(pageSize);
-        assert allocationIndex * pageSize == allocatedPosition;
+        final long allocationIndex = allocatedPosition / pageSize;
 
         //we check is it enough space on disk to continue to write data on it
         //otherwise we switch storage in read-only mode
@@ -1193,7 +1197,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     filesLock.acquireReadLock();
     try {
-      final OClosableEntry<Long, File> entry = files.acquire(fileId);
+      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
       try {
         return entry.get().getFileSize() / pageSize;
       } finally {
@@ -1243,7 +1247,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     filesLock.acquireWriteLock();
     try {
       removeCachedPages(intId);
-      final OClosableEntry<Long, File> entry = files.acquire(fileId);
+      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
       try {
         entry.get().shrink(0);
       } finally {
@@ -1265,7 +1269,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     try {
       removeCachedPages(intId);
 
-      final OClosableEntry<Long, File> entry = files.acquire(fileId);
+      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
       try {
         entry.get().replaceContentWith(newContentFile);
       } finally {
@@ -1285,7 +1289,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     filesLock.acquireWriteLock();
     try {
-      final OClosableEntry<Long, File> entry = files.acquire(fileId);
+      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
 
       if (entry == null) {
         return;
@@ -1295,7 +1299,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final String newOsFileName = createInternalFileName(newFileName, intId);
 
       try {
-        final File file = entry.get();
+        final OFile file = entry.get();
         oldOsFileName = file.getName();
 
         final Path newFile = storagePath.resolve(newOsFileName);
@@ -1363,7 +1367,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       for (final Integer intId : fileIds) {
         if (intId >= 0) {
           final long extId = composeFileId(id, intId);
-          final File fileClassic = files.remove(extId);
+          final OFile fileClassic = files.remove(extId);
 
           idFileNameMap.put(intId, fileClassic.getName());
           fileClassic.close();
@@ -1477,8 +1481,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final Integer intId) throws InterruptedException {
     boolean fileIsCorrect;
     final long externalId = composeFileId(id, intId);
-    final OClosableEntry<Long, File> entry = files.acquire(externalId);
-    final File fileClassic = entry.get();
+    final OClosableEntry<Long, OFile> entry = files.acquire(externalId);
+    final OFile fileClassic = entry.get();
     final String fileName = idNameMap.get(intId);
 
     try {
@@ -1633,7 +1637,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public String nativeFileNameById(final long fileId) {
-    final File fileClassic = files.get(fileId);
+    final OFile fileClassic = files.get(fileId);
     if (fileClassic != null) {
       return fileClassic.getName();
     }
@@ -1658,7 +1662,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     return exclusiveWriteCacheSize.get();
   }
 
-  private static void openFile(final File fileClassic) {
+  private static void openFile(final OFile fileClassic) {
     if (fileClassic.exists()) {
       if (!fileClassic.isOpen()) {
         fileClassic.open();
@@ -1669,7 +1673,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   }
 
-  private static void createFile(final File fileClassic, final boolean callFsync) throws IOException {
+  private static void createFile(final OFile fileClassic, final boolean callFsync) throws IOException {
     if (!fileClassic.exists()) {
       fileClassic.create();
 
@@ -1731,7 +1735,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
       if (nameIdEntry.getValue() >= 0) {
-        final File fileClassic = files.get(externalFileId(nameIdEntry.getValue()));
+        final OFile fileClassic = files.get(externalFileId(nameIdEntry.getValue()));
         final String fileSystemName = fileClassic.getName();
 
         final NameFileIdEntry nameFileIdEntry = new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), fileSystemName);
@@ -1748,8 +1752,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     Files.move(nameIdMapHolderFileV2T, storagePath.resolve(NAME_ID_MAP_V2));
   }
 
-  private File createFileInstance(final String fileName, final int fileId) {
+  private OFile createFileInstance(final String fileName, final int fileId) {
     final String internalFileName = createInternalFileName(fileName, fileId);
+    if (useAsyncIO) {
+      return new AsyncFile(storagePath.resolve(internalFileName));
+    }
+
     return new OFileClassic(storagePath.resolve(internalFileName));
   }
 
@@ -1819,7 +1827,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         if (files.get(externalId) == null) {
           final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
-          final File fileClassic = new OFileClassic(path);
+          final OFile fileClassic = new OFileClassic(path);
 
           if (fileClassic.exists()) {
             fileClassic.open();
@@ -1891,7 +1899,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          final File fileClassic = new OFileClassic(storagePath.resolve(nameIdEntry.getKey()));
+          final OFile fileClassic = new OFileClassic(storagePath.resolve(nameIdEntry.getKey()));
 
           if (fileClassic.exists()) {
             fileClassic.open();
@@ -2051,9 +2059,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       throws IOException {
     final long fileId = composeFileId(id, internalFileId);
     try {
-      final OClosableEntry<Long, File> entry = files.acquire(fileId);
+      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
       try {
-        final File fileClassic = entry.get();
+        final OFile fileClassic = entry.get();
         if (fileClassic == null) {
           throw new IllegalArgumentException("File with id " + internalFileId + " not found in WOW Cache");
         }
@@ -2063,7 +2071,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         //if page is not stored in the file may be page is stored in double write log
         if (fileClassic.getFileSize() >= pageEndPosition) {
-          OPointer pointer = bufferPool.acquireDirect(false);
+          OPointer pointer = bufferPool.acquireDirect(true);
           ByteBuffer buffer = pointer.getNativeByteBuffer();
           assert buffer.position() == 0;
           fileClassic.read(pagePosition, buffer, false);
@@ -2254,9 +2262,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       if (intFileId >= 0) {
         final long extFileId = externalFileId(intFileId);
 
-        final OClosableEntry<Long, File> fileEntry = files.acquire(extFileId);
+        final OClosableEntry<Long, OFile> fileEntry = files.acquire(extFileId);
         try {
-          final File fileClassic = fileEntry.get();
+          final OFile fileClassic = fileEntry.get();
           fileClassic.synch();
         } finally {
           files.release(fileEntry);
@@ -2891,25 +2899,25 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       fsyncFiles = doubleWriteLog.write(containerBuffers, chunkFileIds, chunkPositions);
 
-      final CountDownLatch[] latches = new CountDownLatch[buffersByFileId.size()];
-      int latchCounter = 0;
+      final IOResult[] ioResults = new IOResult[buffersByFileId.size()];
+      int resultCounter = 0;
 
       for (Map.Entry<Long, List<ORawPair<Long, ByteBuffer>>> entry : buffersByFileId.entrySet()) {
-        final OClosableEntry<Long, File> fileEntry = files.acquire(entry.getKey());
+        final OClosableEntry<Long, OFile> fileEntry = files.acquire(entry.getKey());
         try {
-          final File file = fileEntry.get();
+          final OFile file = fileEntry.get();
 
           final List<ORawPair<Long, ByteBuffer>> bufferList = entry.getValue();
 
-          latches[latchCounter] = file.write(bufferList);
-          latchCounter++;
+          ioResults[resultCounter] = file.write(bufferList);
+          resultCounter++;
         } finally {
           files.release(fileEntry);
         }
       }
 
-      for (CountDownLatch latch : latches) {
-        latch.await();
+      for (final IOResult ioResult : ioResults) {
+        ioResult.await();
       }
 
     } finally {
@@ -3181,7 +3189,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       if (callFsync) {
         for (final int iFileId : fileIdSet) {
           final long finalId = composeFileId(id, iFileId);
-          final OClosableEntry<Long, File> entry = files.acquire(finalId);
+          final OClosableEntry<Long, OFile> entry = files.acquire(finalId);
           if (entry != null) {
             try {
               entry.get().synch();
@@ -3232,7 +3240,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       doRemoveCachePages(internalFileId);
 
-      final File fileClassic = files.remove(fileId);
+      final OFile fileClassic = files.remove(fileId);
 
       if (fileClassic != null) {
         if (fileClassic.exists()) {

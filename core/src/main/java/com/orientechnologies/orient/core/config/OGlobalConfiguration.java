@@ -133,6 +133,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percentage of disk cache, which is used as write cache", Integer.class,
       5),
 
+  DISK_WRITE_CACHE_USE_ASYNC_IO("storage.diskCache.useAsyncIO",
+      "Use asynchronous IO API to facilitate abilities of SSD to parallelize IO requests", Boolean.class, true),
+
   DISK_WRITE_CACHE_SHUTDOWN_TIMEOUT("storage.diskCache.writeCacheShutdownTimeout",
       "Timeout of shutdown of write cache for single task in min.", Integer.class, 30),
 

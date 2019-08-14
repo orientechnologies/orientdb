@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.chm.AsyncReadCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.fs.File;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   private volatile OReadCache readCache;
 
-  protected final OClosableLinkedContainer<Long, File> files = new OClosableLinkedContainer<>(getOpenFilesLimit());
+  protected final OClosableLinkedContainer<Long, OFile> files = new OClosableLinkedContainer<>(getOpenFilesLimit());
 
   public OEngineLocalPaginated() {
   }

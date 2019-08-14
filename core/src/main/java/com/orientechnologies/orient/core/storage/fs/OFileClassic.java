@@ -46,13 +46,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
 import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
 
-public final class OFileClassic implements File {
+public final class OFileClassic implements OFile {
   private static final int ALLOCATION_THRESHOLD = 1024 * 1024;
 
   private final    ScalableRWLock lock = new ScalableRWLock();
@@ -220,9 +219,7 @@ public final class OFileClassic implements File {
   }
 
   @Override
-  public CountDownLatch write(List<ORawPair<Long, ByteBuffer>> buffers) throws IOException {
-    final CountDownLatch latch = new CountDownLatch(0);
-
+  public IOResult write(List<ORawPair<Long, ByteBuffer>> buffers) throws IOException {
     for (final ORawPair<Long, ByteBuffer> pair : buffers) {
       final long position = pair.getFirst();
 
@@ -230,7 +227,7 @@ public final class OFileClassic implements File {
       write(position, buffer);
     }
 
-    return latch;
+    return SyncIOResult.INSTANCE;
   }
 
   /**
@@ -329,23 +326,27 @@ public final class OFileClassic implements File {
   public void open() {
     acquireWriteLock();
     try {
-      if (!Files.exists(osFile)) {
-        throw new FileNotFoundException("File: " + osFile);
-      }
-
-      acquireExclusiveAccess();
-
-      openChannel();
-      init();
-
-      OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getFileName() + "...");
-
-      initAllocationMode();
+      doOpen();
     } catch (final IOException e) {
       throw OException.wrapException(new OIOException("Error during file open"), e);
     } finally {
       releaseWriteLock();
     }
+  }
+
+  private void doOpen() throws IOException {
+    if (!Files.exists(osFile)) {
+      throw new FileNotFoundException("File: " + osFile);
+    }
+
+    acquireExclusiveAccess();
+
+    openChannel();
+    init();
+
+    OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getFileName() + "...");
+
+    initAllocationMode();
   }
 
   private void acquireExclusiveAccess() {
@@ -544,25 +545,15 @@ public final class OFileClassic implements File {
   }
 
   @Override
-  public String getPath() {
-    acquireReadLock();
-    try {
-      return osFile.toString();
-    } finally {
-      releaseReadLock();
-    }
-  }
-
-  @Override
   public void renameTo(final Path newFile) throws IOException {
     acquireWriteLock();
     try {
-      close();
+      doClose();
 
       //noinspection NonAtomicOperationOnVolatileField
       osFile = Files.move(osFile, newFile);
 
-      open();
+      doOpen();
     } finally {
       releaseWriteLock();
     }
@@ -577,11 +568,11 @@ public final class OFileClassic implements File {
   public void replaceContentWith(final Path newContentFile) throws IOException {
     acquireWriteLock();
     try {
-      close();
+      doClose();
 
       Files.copy(newContentFile, osFile, StandardCopyOption.REPLACE_EXISTING);
 
-      open();
+      doOpen();
     } finally {
       releaseWriteLock();
     }
@@ -665,6 +656,14 @@ public final class OFileClassic implements File {
 
   private enum AllocationMode {
     DESCRIPTOR, WRITE
+  }
+
+  private static final class SyncIOResult implements IOResult {
+    static SyncIOResult INSTANCE = new SyncIOResult();
+
+    @Override
+    public void await() {
+    }
   }
 
 }

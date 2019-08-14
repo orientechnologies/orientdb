@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogNoOP;
-import com.orientechnologies.orient.core.storage.fs.File;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
@@ -49,7 +49,7 @@ public class WOWCacheTestIT {
   private static       OWOWCache             wowCache;
   private static       String                storageName;
 
-  private final OClosableLinkedContainer<Long, File> files = new OClosableLinkedContainer<>(1024);
+  private final OClosableLinkedContainer<Long, OFile> files = new OClosableLinkedContainer<>(1024);
 
   @BeforeClass
   public static void beforeClass() {
@@ -123,7 +123,7 @@ public class WOWCacheTestIT {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, null, null, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
     wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, new DoubleWriteLogNoOP(), 10, 10, 100, Integer.MAX_VALUE,
-        storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, null, null, false);
+        storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, null, null, false, true);
 
     wowCache.loadRegisteredFiles();
   }
@@ -190,7 +190,7 @@ public class WOWCacheTestIT {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, aesKey, iv, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
     wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, new DoubleWriteLogNoOP(), 10, 10, 100, Integer.MAX_VALUE,
-        storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false);
+        storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false, true);
 
     wowCache.loadRegisteredFiles();
 
@@ -366,7 +366,7 @@ public class WOWCacheTestIT {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, aesKey, iv, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
     wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, new DoubleWriteLogNoOP(), 10, 10, 100, Integer.MAX_VALUE,
-        storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false);
+        storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false, true);
 
     wowCache.loadRegisteredFiles();
 
@@ -379,7 +379,8 @@ public class WOWCacheTestIT {
     Random random = new Random(seed);
 
     for (int i = 0; i < 2048; i++) {
-      wowCache.allocateNewPage(fileId);
+      final long position = wowCache.allocateNewPage(fileId);
+      Assert.assertEquals(i, position);
     }
 
     for (int i = 0; i < 600; i++) {
@@ -392,6 +393,8 @@ public class WOWCacheTestIT {
       pageIndexDataMap.put(pageIndex, data);
 
       final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, new OModifiableBoolean(), verifyChecksums);
+      Assert.assertEquals(new OLogSequenceNumber(0, 0), ODurablePage.getLogSequenceNumberFromPage(cachePointer.getBufferDuplicate()));
+
       cachePointer.acquireExclusiveLock();
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
 
@@ -541,7 +544,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final File file = new OFileClassic(path);
+    final OFile file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -574,7 +577,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final File file = new OFileClassic(path);
+    final OFile file = new OFileClassic(path);
     file.open();
     file.write(0, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -607,7 +610,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final File file = new OFileClassic(path);
+    final OFile file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -635,7 +638,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final File file = new OFileClassic(path);
+    final OFile file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -663,7 +666,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final File file = new OFileClassic(path);
+    final OFile file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -691,7 +694,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final File file = new OFileClassic(path);
+    final OFile file = new OFileClassic(path);
     file.open();
     file.write(ODurablePage.NEXT_FREE_POSITION, ByteBuffer.wrap(new byte[] { 1 }).order(ByteOrder.nativeOrder()));
     file.close();
@@ -701,7 +704,7 @@ public class WOWCacheTestIT {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
-    File fileClassic = new OFileClassic(storagePath.resolve(fileName));
+    OFile fileClassic = new OFileClassic(storagePath.resolve(fileName));
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic
@@ -726,7 +729,7 @@ public class WOWCacheTestIT {
 
   private void assertFileEncrypted(int fileId, int pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName,
       final byte[] aesKey, final byte[] iv) throws Exception {
-    File fileClassic = new OFileClassic(storagePath.resolve(fileName));
+    OFile fileClassic = new OFileClassic(storagePath.resolve(fileName));
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic

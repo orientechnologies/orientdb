@@ -7,9 +7,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
-public interface File extends OClosableItem {
+public interface OFile extends OClosableItem {
   int HEADER_SIZE = 1024;
 
   long allocateSpace(int size) throws IOException;
@@ -22,7 +21,7 @@ public interface File extends OClosableItem {
 
   void write(long offset, ByteBuffer buffer) throws IOException;
 
-  CountDownLatch write(List<ORawPair<Long, ByteBuffer>> buffers) throws IOException;
+  IOResult write(List<ORawPair<Long, ByteBuffer>> buffers) throws IOException;
 
   void synch();
 
@@ -64,8 +63,6 @@ public interface File extends OClosableItem {
   boolean exists();
 
   String getName();
-
-  String getPath();
 
   void renameTo(Path newFile) throws IOException;
 
