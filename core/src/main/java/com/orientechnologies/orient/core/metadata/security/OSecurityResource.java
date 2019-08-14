@@ -29,7 +29,6 @@ public abstract class OSecurityResource {
 
 
 //    public static final String RECORD_HOOK       = "database.hook.record";
-//    public static final String SERVER_ADMIN      = "server.admin";
 
 
     if (resource.equals("*")) {
@@ -68,12 +67,16 @@ public abstract class OSecurityResource {
       return OSecurityResourceDatabaseOp.PASS_THROUGH;
     } else if (resource.equals("database.bypassRestricted")) {
       return OSecurityResourceDatabaseOp.BYPASS_RESTRICTED;
+    } else if (resource.equals("database.hook.record")) {
+      return OSecurityResourceDatabaseOp.HOOK_RECORD;
     } else if (resource.equals("server")) {
       return OSecurityResourceServerOp.SERVER;
     } else if (resource.equals("server.status")) {
       return OSecurityResourceServerOp.STATUS;
     } else if (resource.equals("server.remove")) {
       return OSecurityResourceServerOp.REMOVE;
+    } else if (resource.equals("server.admin")) {
+      return OSecurityResourceServerOp.ADMIN;
     }
     try {
       OSecurityResourceSegment parsed = OSQLEngine.parseSecurityResource(resource);

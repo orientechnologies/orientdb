@@ -31,11 +31,13 @@ public class OSecurityResourceTest {
     Assert.assertEquals(OSecurityResourceDatabaseOp.FREEZE, OSecurityResource.parseResource("database.freeze"));
     Assert.assertEquals(OSecurityResourceDatabaseOp.PASS_THROUGH, OSecurityResource.parseResource("database.passthrough"));
     Assert.assertEquals(OSecurityResourceDatabaseOp.RELEASE, OSecurityResource.parseResource("database.release"));
+    Assert.assertEquals(OSecurityResourceDatabaseOp.HOOK_RECORD, OSecurityResource.parseResource("database.hook.record"));
     Assert.assertNotEquals(OSecurityResourceDatabaseOp.DB, OSecurityResource.parseResource("database.command"));
 
     Assert.assertEquals(OSecurityResourceServerOp.SERVER, OSecurityResource.parseResource("server"));
     Assert.assertEquals(OSecurityResourceServerOp.REMOVE, OSecurityResource.parseResource("server.remove"));
     Assert.assertEquals(OSecurityResourceServerOp.STATUS, OSecurityResource.parseResource("server.status"));
+    Assert.assertEquals(OSecurityResourceServerOp.ADMIN, OSecurityResource.parseResource("server.admin"));
 
 
     try{
