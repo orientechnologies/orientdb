@@ -233,23 +233,26 @@ public final class AsyncFile implements OFile {
 
       final long sizeDiff = currentSize - currentCommittedSize;
       if (sizeDiff > 0) {
-        final long ptr = Native.malloc(sizeDiff);
-        try {
-          final Pointer pointer = new Pointer(ptr);
-          pointer.setMemory(0, size, (byte) 0);
-          final ByteBuffer buffer = pointer.getByteBuffer(0, sizeDiff);
-
-          int written = 0;
-          do {
-            final Future<Integer> writeFuture = fileChannel.write(buffer, currentCommittedSize + written + HEADER_SIZE);
-            try {
-              written += writeFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
-              throw OException.wrapException(new OStorageException("Error during write operation to the file " + osFile), e);
-            }
-          } while (written < sizeDiff);
-        } finally {
-          Native.free(ptr);
+        for (long n = 0; n < sizeDiff / Integer.MAX_VALUE; n++) {
+          final int chunkSize = (int) Math.min(Integer.MAX_VALUE, sizeDiff - n * Integer.MAX_VALUE);
+          final long ptr = Native.malloc(chunkSize);
+          try {
+            final Pointer pointer = new Pointer(ptr);
+            pointer.setMemory(0, chunkSize, (byte) 0);
+            final ByteBuffer buffer = pointer.getByteBuffer(0, chunkSize);
+            int written = 0;
+            do {
+              final Future<Integer> writeFuture = fileChannel
+                  .write(buffer, currentCommittedSize + written + HEADER_SIZE + n * Integer.MAX_VALUE);
+              try {
+                written += writeFuture.get();
+              } catch (InterruptedException | ExecutionException e) {
+                throw OException.wrapException(new OStorageException("Error during write operation to the file " + osFile), e);
+              }
+            } while (written < chunkSize);
+          } finally {
+            Native.free(ptr);
+          }
         }
 
         assert fileChannel.size() >= currentSize + HEADER_SIZE;
