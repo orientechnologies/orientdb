@@ -161,7 +161,7 @@ public final class OFileClassic implements OClosableItem {
 
       }
 
-      assert channel.size() == currentSize + HEADER_SIZE;
+      assert channel.size() >= currentSize + HEADER_SIZE;
 
     } finally {
       releaseReadLock();
