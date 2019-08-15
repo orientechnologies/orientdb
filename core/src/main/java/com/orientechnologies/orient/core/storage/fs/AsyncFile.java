@@ -64,6 +64,7 @@ public final class AsyncFile implements OFile {
 
       int written = 0;
       do {
+        buffer.position(written);
         final Future<Integer> writeFuture = fileChannel.write(buffer, written);
         try {
           written += writeFuture.get();
@@ -240,6 +241,7 @@ public final class AsyncFile implements OFile {
           final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff);
           int written = 0;
           do {
+            buffer.position(written);
             final Future<Integer> writeFuture = fileChannel.write(buffer, currentCommittedSize + written + HEADER_SIZE);
             try {
               written += writeFuture.get();
