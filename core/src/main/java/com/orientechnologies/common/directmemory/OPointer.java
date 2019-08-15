@@ -15,6 +15,7 @@ public final class OPointer {
     this.pointer = pointer;
     this.size = size;
     this.byteBuffer = MemoryIO.getInstance().newDirectByteBuffer(pointer, size).order(ByteOrder.nativeOrder());
+    assert this.byteBuffer.position() == 0;
   }
 
   public void clear() {

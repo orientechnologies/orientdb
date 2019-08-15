@@ -2091,6 +2091,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 bufferPool.release(pointer);
 
                 buffer = doubleWritePointer.getNativeByteBuffer();
+                assert buffer.position() == 0;
                 pointer = doubleWritePointer;
 
                 if (!verifyMagicChecksumAndDecryptPage(buffer, internalFileId, pageIndex)) {
@@ -2106,6 +2107,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final OPointer pointer = doubleWriteLog.loadPage(internalFileId, (int) pageIndex, bufferPool);
           if (pointer != null) {
             final ByteBuffer buffer = pointer.getNativeByteBuffer();
+            assert buffer.position() == 0;
 
             if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
                 || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
@@ -2765,6 +2767,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           final OPointer directPointer = bufferPool.acquireDirect(false);
           final ByteBuffer copy = directPointer.getNativeByteBuffer();
+          assert copy.position() == 0;
           try {
             version = pointer.getVersion();
             final ByteBuffer buffer = pointer.getBufferDuplicate();
@@ -2872,6 +2875,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         final OPointer containerPointer = ODirectMemoryAllocator.instance().allocate(chunk.size() * pageSize, -1, false);
         final ByteBuffer containerBuffer = containerPointer.getNativeByteBuffer();
+        assert containerBuffer.position() == 0;
 
         containerPointers[i] = containerPointer;
         containerBuffers[i] = containerBuffer;
@@ -3014,6 +3018,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             final OPointer directPointer = bufferPool.acquireDirect(false);
             final ByteBuffer copy = directPointer.getNativeByteBuffer();
+            assert copy.position() == 0;
             try {
               version = pointer.getVersion();
               final ByteBuffer buffer = pointer.getBufferDuplicate();
@@ -3160,6 +3165,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               final OPointer directPointer = bufferPool.acquireDirect(false);
               final ByteBuffer copy = directPointer.getNativeByteBuffer();
+              assert copy.position() == 0;
 
               assert buffer != null;
               buffer.position(0);

@@ -148,6 +148,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         final ByteBuffer containerBuffer;
 
         containerBuffer = pageContainer.getNativeByteBuffer();
+        assert containerBuffer.position() == 0;
 
         for (int i = 0; i < buffers.length; i++) {
           final ByteBuffer buffer = buffers[i];
@@ -287,6 +288,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
                 final OPointer pointer = bufferPool.acquireDirect(false);
                 final ByteBuffer pageBuffer = pointer.getNativeByteBuffer();
+                assert pageBuffer.position() == 0;
                 pageBuffer.put(pagesBuffer);
 
                 pageBuffer.rewind();
