@@ -385,12 +385,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private final DoubleWriteLog doubleWriteLog;
 
-  private       int  dirtyPagesLimit;
-  private final int  hardDirtyPagesLimit;
-  private       long dirtyPageUpdateLimitTs = -1;
-
-  private long dirtyPagesPrintLimtTs = -1;
-
   private final boolean useAsyncIO;
 
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
@@ -408,8 +402,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     this.useAsyncIO = useAsyncIO;
-    this.hardDirtyPagesLimit = (int) (hardDirtyPagesLimit / pageSize);
-    this.dirtyPagesLimit = -1;
 
     this.shutdownTimeout = shutdownTimeout;
     this.pagesFlushInterval = pagesFlushInterval;
@@ -2550,53 +2542,16 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           }
 
           long ewcSize = exclusiveWriteCacheSize.get();
-          int exclusivePages = 0;
-
           if (ewcSize >= 0) {
-            exclusivePages = flushExclusiveWriteCache(null, Math.min(ewcSize, 4 * chunkSize));
+            flushExclusiveWriteCache(null, Math.min(ewcSize, 4 * chunkSize));
 
             if (exclusiveWriteCacheSize.get() > 0) {
               flushInterval = 1;
             }
           }
 
-          final long ts = System.nanoTime();
-
           if (writeAheadLog != null) {
             convertSharedDirtyPagesToLocal();
-
-            if (exclusivePages > 0) {
-              if (dirtyPagesLimit < 0) {
-                dirtyPagesLimit = hardDirtyPagesLimit;
-              } else {
-                dirtyPagesLimit -= (int) (hardDirtyPagesLimit * 0.1);
-
-                if (dirtyPagesLimit <= 0) {
-                  dirtyPagesLimit = 1;
-                }
-              }
-
-              dirtyPageUpdateLimitTs = ts;
-            } else if (dirtyPageUpdateLimitTs < 0 || ts - dirtyPageUpdateLimitTs >= 5L * 60L * 1_000_000_000L) {
-              if (dirtyPagesLimit > 0) {
-                assert dirtyPagesLimit <= hardDirtyPagesLimit;
-                if (dirtyPagesLimit == hardDirtyPagesLimit) {
-                  dirtyPagesLimit = -1;
-                } else {
-                  dirtyPagesLimit += (int) (hardDirtyPagesLimit * 0.1);
-                  if (dirtyPagesLimit > hardDirtyPagesLimit) {
-                    dirtyPagesLimit = hardDirtyPagesLimit;
-                  }
-                }
-              }
-
-              dirtyPageUpdateLimitTs = ts;
-            }
-
-            if (dirtyPagesPrintLimtTs < 0 || ts - dirtyPagesPrintLimtTs > 5L * 60L * 1_000_000_000L) {
-              System.out.println("Dirty pages limit " + dirtyPagesLimit);
-              dirtyPagesPrintLimtTs = ts;
-            }
 
             if (localDirtyPagesBySegment.size() > 1) {
               final Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
@@ -2604,18 +2559,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
 
               if (localDirtyPagesBySegment.size() > 1) {
-                flushInterval = 1;
-              }
-            }
-
-            if (dirtyPagesLimit > 0) {
-              Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
-              if (firstSegment != null && writeCacheSize.get() >= dirtyPagesLimit) {
-                final long firstSegmentIndex = firstSegment.getKey();
-                flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
-              }
-
-              if (writeCacheSize.get() >= dirtyPagesLimit) {
                 flushInterval = 1;
               }
             }
