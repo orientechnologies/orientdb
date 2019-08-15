@@ -2553,7 +2553,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           int exclusivePages = 0;
 
           if (ewcSize >= 0) {
-            exclusivePages = flushExclusiveWriteCache(null, ewcSize);
+            exclusivePages = flushExclusiveWriteCache(null, Math.min(ewcSize, 4 * chunkSize));
+
+            if (exclusiveWriteCacheSize.get() > 0) {
+              flushInterval = 1;
+            }
           }
 
           final long ts = System.nanoTime();
