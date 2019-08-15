@@ -112,9 +112,7 @@ public class ONative {
   public int getOpenFilesLimit(boolean verbose, int recommended, int defLimit) {
     final Platform.OS os = Platform.getPlatform().getOS();
     if (os == Platform.OS.LINUX) {
-
       RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_NOFILE);
-      checkLastError();
 
       if (rLimit.rlimCur() > 0) {
         if (verbose) {
@@ -175,7 +173,6 @@ public class ONative {
     final Platform.OS os = Platform.getPlatform().getOS();
     if (os == Platform.OS.LINUX) {
       RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_NOFILE);
-      checkLastError();
 
       if (printSteps)
         OLogManager.instance().infoNoDb(this, "Soft memory limit for this process is set to %d B/%d MB/%d GB", rLimit.rlimCur(),
