@@ -27,13 +27,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class AsyncFile implements OFile {
+  private static final int ALLOCATION_THRESHOLD = 1024 * 1024;
+
   private final    ScalableRWLock lock = new ScalableRWLock();
   private volatile Path           osFile;
 
   private final AtomicLong dirtyCounter   = new AtomicLong();
   private final Object     flushSemaphore = new Object();
 
-  private final AtomicLong size = new AtomicLong();
+  private final AtomicLong size          = new AtomicLong();
+  private final AtomicLong committedSize = new AtomicLong();
 
   private AsynchronousFileChannel fileChannel;
   private int                     fd = -1;
@@ -88,6 +91,7 @@ public final class AsyncFile implements OFile {
     final long currentSize = fileChannel.size() - HEADER_SIZE;
 
     size.set(currentSize);
+    this.committedSize.set(currentSize);
   }
 
   @Override
@@ -229,6 +233,21 @@ public final class AsyncFile implements OFile {
       final long currentSize = this.size.addAndGet(size);
       allocatedPosition = currentSize - size;
 
+      long currentCommittedSize = this.committedSize.get();
+
+      final long sizeDifference = currentSize - currentCommittedSize;
+      if (fd >= 0 && sizeDifference <= ALLOCATION_THRESHOLD) {
+        return allocatedPosition;
+      }
+
+      while (currentCommittedSize < currentSize) {
+        if (this.committedSize.compareAndSet(currentCommittedSize, currentSize)) {
+          break;
+        }
+
+        currentCommittedSize = committedSize.get();
+      }
+
       if (fd < 0) {
         final MemoryIO memoryIO = MemoryIO.getInstance();
         final long ptr = memoryIO.allocateMemory(size, true);
@@ -250,7 +269,8 @@ public final class AsyncFile implements OFile {
           memoryIO.freeMemory(ptr);
         }
       } else {
-        ONative.instance().fallocate(fd, allocatedPosition + HEADER_SIZE, size);
+        final long sizeDiff = currentSize - currentCommittedSize;
+        ONative.instance().fallocate(fd, allocatedPosition + HEADER_SIZE, sizeDiff);
       }
 
       assert fileChannel.size() >= currentSize + HEADER_SIZE;
@@ -268,6 +288,8 @@ public final class AsyncFile implements OFile {
       checkForClose();
 
       this.size.set(0);
+      this.committedSize.set(size);
+
       fileChannel.truncate(size + HEADER_SIZE);
     } finally {
       lock.exclusiveUnlock();
