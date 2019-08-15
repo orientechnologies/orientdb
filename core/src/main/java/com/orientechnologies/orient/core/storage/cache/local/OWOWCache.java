@@ -389,6 +389,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final int  hardDirtyPagesLimit;
   private       long dirtyPageUpdateLimitTs = -1;
 
+  private long dirtyPagesPrintLimtTs = -1;
+
   private final boolean useAsyncIO;
 
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
@@ -2585,6 +2587,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               }
 
               dirtyPageUpdateLimitTs = ts;
+            }
+
+            if (dirtyPagesPrintLimtTs < 0 || ts - dirtyPagesPrintLimtTs > 5L * 60L * 1_000_000_000L) {
+              System.out.println("Dirty pages limit " + dirtyPagesLimit);
+              dirtyPagesPrintLimtTs = ts;
             }
 
             if (localDirtyPagesBySegment.size() > 1) {
