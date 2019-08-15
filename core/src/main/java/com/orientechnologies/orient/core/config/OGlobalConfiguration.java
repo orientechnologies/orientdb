@@ -1063,7 +1063,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   @Deprecated TX_LOG_SYNCH("tx.log.synch",
       "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
-      Boolean.class, Boolean.FALSE), @Deprecated TX_USE_LOG("tx.useLog",
+      Boolean.class, Boolean.FALSE),
+
+  @Deprecated TX_USE_LOG("tx.useLog",
       "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class, true),
 
   @Deprecated INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",

@@ -2550,7 +2550,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           long ewcSize = exclusiveWriteCacheSize.get();
           int exclusivePages = 0;
 
-          if (ewcSize >= 0.8 * exclusiveWriteCacheMaxSize) {
+          if (ewcSize >= 0) {
             exclusivePages = flushExclusiveWriteCache(null, ewcSize);
           }
 
