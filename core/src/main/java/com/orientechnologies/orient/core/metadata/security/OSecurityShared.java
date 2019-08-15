@@ -755,11 +755,11 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public Set<String> getFilteredProperties(ODatabaseSession session, ODocument document) {
-    return Collections.emptySet();
+    return Collections.emptySet(); //TODO
   }
 
   @Override
-  public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String name) {
+  public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String propertyName) {
     return true; //TODO
   }
 
@@ -775,6 +775,11 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public boolean canRead(ODatabaseSession session, ORecord record) {
+    //TODO what about server users?
+//    if (session.getUser() == null) {
+//      //root
+//      return true;
+//    }
     if (record instanceof OElement) {
       OBooleanExpression predicate = ((OElement) record).getSchemaType()
               .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName(), OSecurityPolicy.Scope.READ)).orElse(null);

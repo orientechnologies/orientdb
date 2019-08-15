@@ -251,8 +251,8 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
-  public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String name) {
-    return delegate.isAllowedWrite(session, document, name);
+  public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String propertyName) {
+    return delegate.isAllowedWrite(session, document, propertyName);
   }
 
   @Override

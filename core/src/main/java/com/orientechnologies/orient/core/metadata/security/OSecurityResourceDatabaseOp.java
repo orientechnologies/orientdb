@@ -13,6 +13,7 @@ public class OSecurityResourceDatabaseOp extends OSecurityResource {
   public static OSecurityResourceDatabaseOp RELEASE = new OSecurityResourceDatabaseOp("database.release");
   public static OSecurityResourceDatabaseOp PASS_THROUGH = new OSecurityResourceDatabaseOp("database.passthrough");
   public static OSecurityResourceDatabaseOp BYPASS_RESTRICTED = new OSecurityResourceDatabaseOp("database.bypassRestricted");
+  public static OSecurityResourceDatabaseOp HOOK_RECORD = new OSecurityResourceDatabaseOp("database.hook.record");
 
 
   private OSecurityResourceDatabaseOp(String resourceString) {

@@ -16,6 +16,25 @@ import java.util.Set;
 
 public class OSecurityEngine {
 
+  /**
+   * Calculates a predicate for a security resource. It also takes into consideration the security and schema hierarchies.
+   * ie. invoking it with a specific session for a specific class, the method checks all the roles of the session, all the parent roles
+   * and all the parent classes until it finds a valid predicarte (the most specific one).
+   *
+   * For multiple-role session, the result is the OR of the predicates that would be calculated for each single role.
+   *
+   * For class hierarchies:
+   * - the most specific (ie. defined on subclass) defined predicate is applied
+   * - in case a class does not have a direct predicate defined, the superclass predicate is used (and recursively)
+   * - in case of multiple superclasses, the AND of the predicates for superclasses (also recursively) is applied
+   *
+   *
+   * @param session
+   * @param security
+   * @param resourceString
+   * @param scope
+   * @return always returns a valid predicate (it never supposed to be null)
+   */
   static OBooleanExpression getPredicateForSecurityResource(ODatabaseSession session, OSecurityShared security, String resourceString, OSecurityPolicy.Scope scope) {
     OSecurityUser user = session.getUser();
     if (user == null) {

@@ -5,12 +5,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.parser.*;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public abstract class OSecurityResource {
 
-  static Map<String, OSecurityResource> cache;
+  static Map<String, OSecurityResource> cache = new HashMap<>();
 
   public static OSecurityResource getInstance(String resource) {
     OSecurityResource result = cache.get(resource);
@@ -24,13 +25,6 @@ public abstract class OSecurityResource {
   }
 
   protected static OSecurityResource parseResource(String resource) {
-
-    //TODO
-
-
-//    public static final String RECORD_HOOK       = "database.hook.record";
-//    public static final String SERVER_ADMIN      = "server.admin";
-
 
     if (resource.equals("*")) {
       return OSecurityResourceAll.INSTANCE;
@@ -68,12 +62,16 @@ public abstract class OSecurityResource {
       return OSecurityResourceDatabaseOp.PASS_THROUGH;
     } else if (resource.equals("database.bypassRestricted")) {
       return OSecurityResourceDatabaseOp.BYPASS_RESTRICTED;
+    } else if (resource.equals("database.hook.record")) {
+      return OSecurityResourceDatabaseOp.HOOK_RECORD;
     } else if (resource.equals("server")) {
       return OSecurityResourceServerOp.SERVER;
     } else if (resource.equals("server.status")) {
       return OSecurityResourceServerOp.STATUS;
     } else if (resource.equals("server.remove")) {
       return OSecurityResourceServerOp.REMOVE;
+    } else if (resource.equals("server.admin")) {
+      return OSecurityResourceServerOp.ADMIN;
     }
     try {
       OSecurityResourceSegment parsed = OSQLEngine.parseSecurityResource(resource);

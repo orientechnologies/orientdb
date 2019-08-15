@@ -57,6 +57,12 @@ public interface OSecurityInternal {
 
   void setSecurityPolicy(ODatabaseSession session, ORole role, String resource, OSecurityPolicy policy);
 
+  /**
+   * creates and saves an empty security policy
+   * @param session the session to a DB where the policy has to be created
+   * @param name the policy name
+   * @return
+   */
   OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name);
 
   OSecurityPolicy getSecurityPolicy(ODatabaseSession session, String name);
@@ -94,11 +100,11 @@ public interface OSecurityInternal {
   /**
    * For property-level security
    * @param session
-   * @param document
-   * @param name
+   * @param document current document to check for proeprty-level security
+   * @param propertyName the property to check for write access
    * @return
    */
-  boolean isAllowedWrite(ODatabaseSession session, ODocument document, String name);
+  boolean isAllowedWrite(ODatabaseSession session, ODocument document, String propertyName);
 
   boolean canCreate(ODatabaseSession session, ORecord record);
 
