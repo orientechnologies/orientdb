@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -116,7 +117,7 @@ public final class OFileClassic implements OFile {
         if (allocationMode == AllocationMode.WRITE) {
           final long ptr = memoryIO.allocateMemory(sizeDiff, true);
           try {
-            final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff);
+            final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff).order(ByteOrder.nativeOrder());
             buffer.position(0);
             OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize + HEADER_SIZE);
           } finally {
@@ -144,7 +145,7 @@ public final class OFileClassic implements OFile {
 
             final long ptr = memoryIO.allocateMemory(sizeDiff, true);
             try {
-              final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff);
+              final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff).order(ByteOrder.nativeOrder());
               buffer.position(0);
               OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize + HEADER_SIZE);
             } finally {

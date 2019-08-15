@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.file.Files;
@@ -238,7 +239,7 @@ public final class AsyncFile implements OFile {
         final MemoryIO memoryIO = MemoryIO.getInstance();
         final long ptr = memoryIO.allocateMemory(sizeDiff, true);
         try {
-          final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff);
+          final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff).order(ByteOrder.nativeOrder());
           int written = 0;
           do {
             buffer.position(written);

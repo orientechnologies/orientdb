@@ -2073,7 +2073,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if (fileClassic.getFileSize() >= pageEndPosition) {
           OPointer pointer = bufferPool.acquireDirect(true);
           ByteBuffer buffer = pointer.getNativeByteBuffer();
+
           assert buffer.position() == 0;
+          assert buffer.order() == ByteOrder.nativeOrder();
+
           fileClassic.read(pagePosition, buffer, false);
 
           if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow

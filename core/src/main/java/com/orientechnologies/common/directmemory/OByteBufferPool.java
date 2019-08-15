@@ -146,9 +146,6 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
       pointer = allocator.allocate(pageSize, -1, clear);
     }
 
-    final ByteBuffer buffer = pointer.getNativeByteBuffer();
-    buffer.position(0);
-
     if (TRACK) {
       pointerMapping.put(pointer, generatePointer());
     }

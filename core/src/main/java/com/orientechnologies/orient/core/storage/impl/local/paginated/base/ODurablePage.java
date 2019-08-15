@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Base page class for all durable data structures, that is data structures state of which can be consistently restored after system
@@ -70,6 +71,9 @@ public class ODurablePage {
 
     this.pointer = cacheEntry.getCachePointer();
     this.changes = cacheEntry.getChanges();
+
+    assert pointer.getBuffer().order() == ByteOrder.nativeOrder();
+    assert pointer.getBufferDuplicate().order() == ByteOrder.nativeOrder();
   }
 
   public static OLogSequenceNumber getLogSequenceNumberFromPage(final ByteBuffer buffer) {

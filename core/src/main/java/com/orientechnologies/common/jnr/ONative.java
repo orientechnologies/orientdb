@@ -172,7 +172,7 @@ public class ONative {
 
     final Platform.OS os = Platform.getPlatform().getOS();
     if (os == Platform.OS.LINUX) {
-      RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_NOFILE);
+      RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_AS);
 
       if (printSteps)
         OLogManager.instance().infoNoDb(this, "Soft memory limit for this process is set to %d B/%d MB/%d GB", rLimit.rlimCur(),
