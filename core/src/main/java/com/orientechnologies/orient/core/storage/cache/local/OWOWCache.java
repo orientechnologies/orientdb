@@ -3177,7 +3177,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             pageLock.unlock();
           }
 
-          if (chunks.size() >= 16 * chunkSize) {
+          if (chunks.size() >= chunkSize) {
             flushPages(chunks, maxLSN);
             chunks.clear();
           }
