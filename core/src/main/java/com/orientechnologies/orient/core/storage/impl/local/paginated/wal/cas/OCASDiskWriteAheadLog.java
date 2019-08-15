@@ -2145,11 +2145,13 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
           assert buffer.position() == 0;
           assert file.position() % pageSize == 0;
           assert buffer.limit() == limit;
+          assert file.position() == expectedPosition - buffer.limit();
 
           while (buffer.remaining() > 0) {
             final int initialPos = buffer.position();
             final int written = file.write(buffer);
             assert buffer.position() == initialPos + written;
+            assert file.position() == expectedPosition - buffer.limit() + initialPos + written;
           }
 
           assert file.position() == expectedPosition;
