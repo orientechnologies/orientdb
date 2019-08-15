@@ -302,7 +302,7 @@ public class ONative {
   }
 
   public long lseek(int fd, long offset, int whence) throws LastErrorException {
-    final long fileOffset = posix.lseek(fd, offset, whence);
+    final long fileOffset = posix.lseekLong(fd, offset, whence);
     if (fileOffset == -1) {
       checkLastError();
     }
