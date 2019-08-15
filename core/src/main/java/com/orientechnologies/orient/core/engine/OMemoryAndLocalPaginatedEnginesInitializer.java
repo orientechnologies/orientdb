@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.engine;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.jna.ONative;
+import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;

@@ -19,18 +19,17 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
+import com.kenai.jffi.MemoryIO;
+import com.kenai.jffi.Platform;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.jna.ONative;
+import com.orientechnologies.common.jnr.LastErrorException;
+import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.sun.jna.LastErrorException;
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -112,15 +111,16 @@ public final class OFileClassic implements OFile {
 
       final long sizeDiff = currentSize - currentCommittedSize;
       if (sizeDiff > 0) {
+        final MemoryIO memoryIO = MemoryIO.getInstance();
         assert allocationMode != null;
         if (allocationMode == AllocationMode.WRITE) {
-          final long ptr = Native.malloc(sizeDiff);
+          final long ptr = memoryIO.allocateMemory(sizeDiff, true);
           try {
-            final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
+            final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff);
             buffer.position(0);
             OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize + HEADER_SIZE);
           } finally {
-            Native.free(ptr);
+            memoryIO.freeMemory(ptr);
           }
         } else if (allocationMode == AllocationMode.DESCRIPTOR) {
           assert fd > 0;
@@ -142,13 +142,13 @@ public final class OFileClassic implements OFile {
                       lee.getErrorCode());
             }
 
-            final long ptr = Native.malloc(sizeDiff);
+            final long ptr = memoryIO.allocateMemory(sizeDiff, true);
             try {
-              final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, sizeDiff);
+              final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff);
               buffer.position(0);
               OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize + HEADER_SIZE);
             } finally {
-              Native.free(ptr);
+              memoryIO.freeMemory(ptr);
             }
           }
 
@@ -278,7 +278,7 @@ public final class OFileClassic implements OFile {
       return;
     }
 
-    if (Platform.isLinux()) {
+    if (Platform.getPlatform().getOS() == Platform.OS.LINUX) {
       allocationMode = AllocationMode.DESCRIPTOR;
       int fd = 0;
       try {

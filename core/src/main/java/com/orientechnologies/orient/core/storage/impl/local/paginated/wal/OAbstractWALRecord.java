@@ -20,10 +20,11 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.kenai.jffi.MemoryIO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
-import com.sun.jna.Native;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * Abstract WAL record.
@@ -42,7 +43,6 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   private long       pointer;
 
   private boolean written;
-
 
   protected OAbstractWALRecord() {
   }
@@ -76,7 +76,7 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   @Override
   public void freeBinaryContent() {
     if (pointer > 0) {
-      Native.free(pointer);
+      MemoryIO.getInstance().freeMemory(pointer);
     }
 
     this.pointer = 0;
@@ -135,10 +135,7 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
 
     final OAbstractWALRecord that = (OAbstractWALRecord) o;
 
-    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null)
-      return false;
-
-    return true;
+    return Objects.equals(lsn, that.lsn);
   }
 
   @Override

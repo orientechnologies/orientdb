@@ -308,10 +308,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     this.commitDelay = commitDelay;
 
-    writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize);
+    writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize, false);
     writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
-    writeBufferPointerTwo = allocator.allocate(bufferSize1, blockSize);
+    writeBufferPointerTwo = allocator.allocate(bufferSize1, blockSize, false);
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
     this.recordsWriterFuture = commitExecutor.schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
@@ -667,7 +667,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             while (pageIndex * pageSize < chSize) {
               file.position(pageIndex * pageSize);
 
-              final OPointer ptr = allocator.allocate(pageSize, blockSize);
+              final OPointer ptr = allocator.allocate(pageSize, blockSize, false);
               try {
                 final ByteBuffer buffer = ptr.getNativeByteBuffer().order(ByteOrder.nativeOrder());
                 file.readBuffer(buffer);

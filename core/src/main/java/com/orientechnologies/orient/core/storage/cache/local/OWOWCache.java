@@ -2867,7 +2867,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         flushedPages += chunk.size();
 
-        final OPointer containerPointer = ODirectMemoryAllocator.instance().allocate(chunk.size() * pageSize, -1);
+        final OPointer containerPointer = ODirectMemoryAllocator.instance().allocate(chunk.size() * pageSize, -1, false);
         final ByteBuffer containerBuffer = containerPointer.getNativeByteBuffer();
 
         containerPointers[i] = containerPointer;

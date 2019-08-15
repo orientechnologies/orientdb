@@ -44,8 +44,8 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
   private static final boolean TRACK = OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
 
   /**
-   * Holder for singleton instance. We use {@link AtomicReference} instead of static constructor to avoid throwing of exceptions
-   * in static initializers.
+   * Holder for singleton instance. We use {@link AtomicReference} instead of static constructor to avoid throwing of exceptions in
+   * static initializers.
    */
   private static final AtomicReference<OByteBufferPool> INSTANCE_HOLDER = new AtomicReference<>();
 
@@ -124,9 +124,8 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
   }
 
   /**
-   * Acquires direct memory buffer with native byte order.
-   * If there is free (already released) direct memory page we reuse it, otherwise new
-   * memory chunk is allocated from direct memory.
+   * Acquires direct memory buffer with native byte order. If there is free (already released) direct memory page we reuse it,
+   * otherwise new memory chunk is allocated from direct memory.
    *
    * @param clear Whether returned buffer should be filled with zeros before return.
    *
@@ -139,12 +138,12 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
 
     if (pointer != null) {
       pointersPoolSize.decrementAndGet();
-    } else {
-      pointer = allocator.allocate(pageSize, -1);
-    }
 
-    if (clear) {
-      pointer.clear();
+      if (clear) {
+        pointer.clear();
+      }
+    } else {
+      pointer = allocator.allocate(pageSize, -1, clear);
     }
 
     final ByteBuffer buffer = pointer.getNativeByteBuffer();

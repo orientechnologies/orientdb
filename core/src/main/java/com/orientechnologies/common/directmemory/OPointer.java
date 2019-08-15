@@ -1,30 +1,31 @@
 package com.orientechnologies.common.directmemory;
 
-import com.sun.jna.Pointer;
+import com.kenai.jffi.MemoryIO;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public final class OPointer {
-  private final Pointer    pointer;
+  private final long       pointer;
   private final int        size;
   private final ByteBuffer byteBuffer;
   private       int        hash = 0;
 
-  OPointer(Pointer pointer, int size) {
+  OPointer(long pointer, int size) {
     this.pointer = pointer;
     this.size = size;
-    this.byteBuffer = pointer.getByteBuffer(0, size);
+    this.byteBuffer = MemoryIO.getInstance().newDirectByteBuffer(pointer, size).order(ByteOrder.nativeOrder());
   }
 
   public void clear() {
-    pointer.setMemory(0, size, (byte) 0);
+    MemoryIO.getInstance().setMemory(pointer, size, (byte) 0);
   }
 
   public ByteBuffer getNativeByteBuffer() {
     return byteBuffer;
   }
 
-  Pointer getNativePointer() {
+  long getNativePointer() {
     return pointer;
   }
 
@@ -41,9 +42,9 @@ public final class OPointer {
 
     OPointer pointer1 = (OPointer) o;
 
-    if (size != pointer1.size)
+    if (pointer != pointer1.pointer)
       return false;
-    return pointer != null ? pointer.equals(pointer1.pointer) : pointer1.pointer == null;
+    return size == pointer1.size;
   }
 
   @Override
@@ -52,11 +53,10 @@ public final class OPointer {
       return hash;
     }
 
-    int result = pointer != null ? pointer.hashCode() : 0;
+    int result = (int) (pointer ^ (pointer >>> 32));
     result = 31 * result + size;
 
     hash = result;
-
     return hash;
   }
 }

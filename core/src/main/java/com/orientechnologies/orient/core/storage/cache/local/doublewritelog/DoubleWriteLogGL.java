@@ -142,7 +142,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       }
 
       sizeToAllocate += buffers.length * 3 * OIntegerSerializer.INT_SIZE;
-      final OPointer pageContainer = ALLOCATOR.allocate(sizeToAllocate, -1);
+      final OPointer pageContainer = ALLOCATOR.allocate(sizeToAllocate, -1, false);
 
       try {
         final ByteBuffer containerBuffer;
@@ -154,7 +154,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
           buffer.rewind();
 
           final int maxCompressedLength = LZ_4_COMPRESSOR.maxCompressedLength(buffer.limit());
-          final OPointer compressedPointer = ODirectMemoryAllocator.instance().allocate(maxCompressedLength, -1);
+          final OPointer compressedPointer = ODirectMemoryAllocator.instance().allocate(maxCompressedLength, -1, false);
           try {
             final ByteBuffer compressedBuffer = compressedPointer.getNativeByteBuffer();
             LZ_4_COMPRESSOR.compress(buffer, compressedBuffer);

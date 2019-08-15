@@ -1,12 +1,11 @@
 package com.orientechnologies.orient.core.storage.fs;
 
+import com.kenai.jffi.MemoryIO;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -130,7 +129,7 @@ public final class AsyncFile implements OFile {
   }
 
   @Override
-  public void write(long offset, ByteBuffer buffer) throws IOException {
+  public void write(long offset, ByteBuffer buffer) {
     lock.sharedLock();
     try {
       buffer.rewind();
@@ -140,6 +139,7 @@ public final class AsyncFile implements OFile {
 
       int written = 0;
       do {
+        buffer.position(written);
         final Future<Integer> writeFuture = fileChannel.write(buffer, offset + HEADER_SIZE + written);
         try {
           written += writeFuture.get();
@@ -184,6 +184,7 @@ public final class AsyncFile implements OFile {
 
       int read = 0;
       do {
+        buffer.position(read);
         final Future<Integer> readFuture = fileChannel.read(buffer, offset + HEADER_SIZE + read);
         final int bytesRead;
         try {
@@ -233,11 +234,10 @@ public final class AsyncFile implements OFile {
 
       final long sizeDiff = currentSize - currentCommittedSize;
       if (sizeDiff > 0) {
-        final long ptr = Native.malloc(sizeDiff);
+        final MemoryIO memoryIO = MemoryIO.getInstance();
+        final long ptr = memoryIO.allocateMemory(sizeDiff, true);
         try {
-          final Pointer pointer = new Pointer(ptr);
-          pointer.setMemory(0, sizeDiff, (byte) 0);
-          final ByteBuffer buffer = pointer.getByteBuffer(0, sizeDiff);
+          final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff);
           int written = 0;
           do {
             final Future<Integer> writeFuture = fileChannel.write(buffer, currentCommittedSize + written + HEADER_SIZE);
@@ -248,7 +248,7 @@ public final class AsyncFile implements OFile {
             }
           } while (written < sizeDiff);
         } finally {
-          Native.free(ptr);
+          memoryIO.freeMemory(ptr);
         }
 
         assert fileChannel.size() >= currentSize + HEADER_SIZE;
@@ -391,6 +391,7 @@ public final class AsyncFile implements OFile {
         try {
           checkForClose();
 
+          byteBuffer.position(written);
           fileChannel.write(byteBuffer, position + written, attachment, this);
         } finally {
           lock.sharedUnlock();

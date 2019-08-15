@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.common.io;
 
-import com.orientechnologies.common.jna.ONative;
+import com.kenai.jffi.Platform;
+import com.orientechnologies.common.jnr.LastErrorException;
+import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.util.OPatternConst;
-import com.sun.jna.LastErrorException;
-import com.sun.jna.Platform;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -425,7 +425,7 @@ public class OIOUtils {
   }
 
   public static int calculateBlockSize(String path) {
-    if (!Platform.isLinux()) {
+    if (Platform.getPlatform().getOS() != Platform.OS.LINUX) {
       return -1;
     }
 
