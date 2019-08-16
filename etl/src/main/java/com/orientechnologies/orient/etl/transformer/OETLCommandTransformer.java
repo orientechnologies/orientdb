@@ -25,23 +25,29 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Executes a command.
  */
 public class OETLCommandTransformer extends OETLAbstractTransformer {
   private String language = "sql";
+  private boolean newSqlExecutor = false;
   private String command;
   private boolean returnInput = false;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{language:{optional:true,description:'Command language, SQL by default'}},"
-        + "{command:{optional:false,description:'Command to execute'}}]," + "input:['ODocument'],output:'ODocument'}");
+            + "{language:{optional:true,description:'Command language, SQL by default'}},"
+            + "{command:{optional:false,description:'Command to execute'}}]," + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
@@ -53,6 +59,7 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
 
     command = conf.field("command");
     returnInput = Boolean.TRUE.equals(conf.field("returnInput"));
+    newSqlExecutor = Boolean.TRUE.equals(conf.field("newSqlExecutor"));
   }
 
   @Override
@@ -64,32 +71,51 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
   public Object executeTransform(ODatabaseDocument db, Object input) {
     String runtimeCommand = (String) resolve(command);
 
-    final OCommandRequest cmd;
-    if (language.equals("sql")) {
-      cmd = new OCommandSQL(runtimeCommand);
-    } else {
-      cmd = new OCommandScript(language, runtimeCommand);
-    }
-    cmd.setContext(context);
-    try {
-
-      Object result = db.command(cmd).execute();
-
-      log(Level.FINE, "input=%s - command=%s - result=%s", input, cmd, result);
+    if (newSqlExecutor) {
+      OResultSet result;
+      if (language.equals("sql")) {
+        result = db.command(runtimeCommand);
+      } else {
+        result = db.execute(language, runtimeCommand);
+      }
+      List<OElement> finalResult = result.stream().map(x -> x.toElement()).collect(Collectors.toList());
+      result.close();
 
       if (returnInput) {
         if (input instanceof OElement) {
           input = db.reload(((OElement) input).getRecord(), null, true);
         }
         return input;
-
+      } else {
+        return finalResult;
       }
-      return result;
-    } catch (Exception e) {
+    } else {
+      final OCommandRequest cmd;
+      if (language.equals("sql")) {
+        cmd = new OCommandSQL(runtimeCommand);
+      } else {
+        cmd = new OCommandScript(language, runtimeCommand);
+      }
+      cmd.setContext(context);
+      try {
+        Object result = db.command(cmd).execute();
 
-      log(Level.SEVERE, "exception=%s - input=%s - command=%s ", e.getMessage(), input, cmd);
+        log(Level.FINE, "input=%s - command=%s - result=%s", input, cmd, result);
 
-      throw e;
+        if (returnInput) {
+          if (input instanceof OElement) {
+            input = db.reload(((OElement) input).getRecord(), null, true);
+          }
+          return input;
+
+        }
+        return result;
+      } catch (Exception e) {
+
+        log(Level.SEVERE, "exception=%s - input=%s - command=%s ", e.getMessage(), input, cmd);
+
+        throw e;
+      }
     }
   }
 
