@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetSizePO;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
@@ -240,6 +241,9 @@ public final class OWALRecordsFactory {
       break;
     case CLUSTER_PAGE_SET_RECORD_LONG_VALUE_PO:
       walRecord = new ClusterPageSetRecordLongValuePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V0_SET_SIZE_PO:
+      walRecord = new PaginatedClusterStateV0SetSizePO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.cluster.v0;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetSizePO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -38,7 +39,10 @@ public final class OPaginatedClusterStateV0 extends ODurablePage {
   }
 
   public void setSize(long size) {
+    final long oldSize = getLongValue(SIZE_OFFSET);
     setLongValue(SIZE_OFFSET, size);
+
+    addPageOperation(new PaginatedClusterStateV0SetSizePO(oldSize, size));
   }
 
   public long getSize() {

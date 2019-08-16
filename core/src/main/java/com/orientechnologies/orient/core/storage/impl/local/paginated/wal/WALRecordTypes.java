@@ -56,4 +56,6 @@ public final class WALRecordTypes {
   public static final byte CLUSTER_PAGE_SET_NEXT_PAGE_PO         = 46;
   public static final byte CLUSTER_PAGE_SET_PREV_PAGE_PO         = 47;
   public static final byte CLUSTER_PAGE_SET_RECORD_LONG_VALUE_PO = 48;
+
+  public static final byte PAGINATED_CLUSTER_STATE_V0_SET_SIZE_PO = 49;
 }
