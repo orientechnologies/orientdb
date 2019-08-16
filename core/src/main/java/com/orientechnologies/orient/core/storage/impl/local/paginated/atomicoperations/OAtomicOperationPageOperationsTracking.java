@@ -25,7 +25,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
 
   private final OOperationUnitId operationUnitId;
 
-  private int startCounter;
+  private int startCounter = 1;
 
   private final Set<String> lockedObjects = new HashSet<>();
 

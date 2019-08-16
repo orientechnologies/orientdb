@@ -161,6 +161,7 @@ public final class AsyncFile implements OFile {
         }
       } while (written < buffer.limit());
 
+      dirtyCounter.incrementAndGet();
       assert written == buffer.limit();
     } finally {
       lock.sharedUnlock();
@@ -298,21 +299,25 @@ public final class AsyncFile implements OFile {
   public void synch() {
     lock.sharedLock();
     try {
-      synchronized (flushSemaphore) {
-        long dirtyCounterValue = dirtyCounter.get();
-        if (dirtyCounterValue > 0) {
-          try {
-            fileChannel.force(false);
-          } catch (final IOException e) {
-            OLogManager.instance()
-                .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
-          }
-
-          dirtyCounter.addAndGet(-dirtyCounterValue);
-        }
-      }
+      doSynch();
     } finally {
       lock.sharedUnlock();
+    }
+  }
+
+  private void doSynch() {
+    synchronized (flushSemaphore) {
+      long dirtyCounterValue = dirtyCounter.get();
+      if (dirtyCounterValue > 0) {
+        try {
+          fileChannel.force(false);
+        } catch (final IOException e) {
+          OLogManager.instance()
+              .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
+        }
+
+        dirtyCounter.addAndGet(-dirtyCounterValue);
+      }
     }
   }
 
@@ -320,6 +325,7 @@ public final class AsyncFile implements OFile {
   public void close() {
     lock.exclusiveLock();
     try {
+      doSynch();
       doClose();
     } catch (IOException e) {
       throw OException.wrapException(new OStorageException("Error during closing the file " + osFile), e);
@@ -422,6 +428,8 @@ public final class AsyncFile implements OFile {
         }
       } else {
         assert written == byteBuffer.limit();
+
+        dirtyCounter.incrementAndGet();
         attachment.countDown();
       }
     }
@@ -430,6 +438,8 @@ public final class AsyncFile implements OFile {
     public void failed(Throwable exc, CountDownLatch attachment) {
       ioResult.exc = exc;
       OLogManager.instance().error(this, "Error during write operation to the file " + osFile, exc);
+
+      dirtyCounter.incrementAndGet();
       attachment.countDown();
     }
   }

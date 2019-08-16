@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.cluster;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import org.assertj.core.api.Assertions;
@@ -13,9 +14,11 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class LocalPaginatedClusterAbstract {
-  protected static String              buildDirectory;
-  protected static OPaginatedCluster   paginatedCluster;
-  public static    ODatabaseDocumentTx databaseDocumentTx;
+  protected static String                    buildDirectory;
+  protected static OPaginatedCluster         paginatedCluster;
+  protected static ODatabaseDocumentInternal databaseDocumentTx;
+  protected static OrientDB                  orientDB;
+  protected static String                    dbName;
 
   @AfterClass
   public static void afterClass() throws IOException {
@@ -30,7 +33,8 @@ public abstract class LocalPaginatedClusterAbstract {
     }
     paginatedCluster.delete();
 
-    databaseDocumentTx.drop();
+    orientDB.drop(dbName);
+    orientDB.close();
   }
 
   @Before
@@ -604,7 +608,6 @@ public abstract class LocalPaginatedClusterAbstract {
     newRecordVersion = recordVersion;
     newRecordVersion++;
 
-    int counter = 0;
     for (long clusterPosition : positionRecordMap.keySet()) {
       if (mersenneTwisterFast.nextBoolean()) {
         int recordSize = mersenneTwisterFast.nextInt(OClusterPage.MAX_RECORD_SIZE - 1) + 1;
@@ -616,7 +619,6 @@ public abstract class LocalPaginatedClusterAbstract {
         positionRecordMap.put(clusterPosition, smallRecord);
         updatedPositions.add(clusterPosition);
       }
-      counter++;
     }
 
     for (Map.Entry<Long, byte[]> entry : positionRecordMap.entrySet()) {

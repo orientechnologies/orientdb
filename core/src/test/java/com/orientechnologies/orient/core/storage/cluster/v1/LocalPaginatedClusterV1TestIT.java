@@ -1,6 +1,11 @@
 package com.orientechnologies.orient.core.storage.cluster.v1;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.storage.cluster.LocalPaginatedClusterAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.BeforeClass;
@@ -15,16 +20,17 @@ public class LocalPaginatedClusterV1TestIT extends LocalPaginatedClusterAbstract
     if (buildDirectory == null || buildDirectory.isEmpty())
       buildDirectory = ".";
 
-    buildDirectory += "/localPaginatedClusterTestV1";
+    buildDirectory += File.separator + LocalPaginatedClusterV1TestIT.class.getSimpleName();
+    OFileUtils.deleteRecursively(new File(buildDirectory));
 
-    databaseDocumentTx = new ODatabaseDocumentTx(
-        "plocal:" + buildDirectory + File.separator + LocalPaginatedClusterV1TestIT.class.getSimpleName());
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-    }
+    dbName = "clusterTest";
 
-    databaseDocumentTx.create();
+    final OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX, true)
+        .build();
+    orientDB = new OrientDB("plocal:" + buildDirectory, config);
+    orientDB.create(dbName, ODatabaseType.PLOCAL);
+
+    databaseDocumentTx = (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin");
 
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
 

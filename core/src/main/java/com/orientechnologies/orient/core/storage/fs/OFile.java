@@ -46,7 +46,7 @@ public interface OFile extends OClosableItem {
    *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#delete()
    */
-  void delete() throws IOException;
+  void delete() throws IOException, InterruptedException;
 
   /*
    * (non-Javadoc)
@@ -64,9 +64,9 @@ public interface OFile extends OClosableItem {
 
   String getName();
 
-  void renameTo(Path newFile) throws IOException;
+  void renameTo(Path newFile) throws IOException, InterruptedException;
 
-  void replaceContentWith(Path newContentFile) throws IOException;
+  void replaceContentWith(Path newContentFile) throws IOException, InterruptedException;
 
   /*
    * (non-Javadoc)

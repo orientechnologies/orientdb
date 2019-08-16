@@ -2863,22 +2863,24 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final IOResult[] ioResults = new IOResult[buffersByFileId.size()];
       int resultCounter = 0;
 
+      final List<OClosableEntry<Long, OFile>> acquiredFiles = new ArrayList<>(buffersByFileId.size());
       for (Map.Entry<Long, List<ORawPair<Long, ByteBuffer>>> entry : buffersByFileId.entrySet()) {
         final OClosableEntry<Long, OFile> fileEntry = files.acquire(entry.getKey());
-        try {
-          final OFile file = fileEntry.get();
+        final OFile file = fileEntry.get();
 
-          final List<ORawPair<Long, ByteBuffer>> bufferList = entry.getValue();
+        final List<ORawPair<Long, ByteBuffer>> bufferList = entry.getValue();
 
-          ioResults[resultCounter] = file.write(bufferList);
-          resultCounter++;
-        } finally {
-          files.release(fileEntry);
-        }
+        ioResults[resultCounter] = file.write(bufferList);
+        resultCounter++;
+        acquiredFiles.add(fileEntry);
       }
 
       for (final IOResult ioResult : ioResults) {
         ioResult.await();
+      }
+
+      for (final OClosableEntry<Long, OFile> closableEntry : acquiredFiles) {
+        files.release(closableEntry);
       }
 
     } finally {
