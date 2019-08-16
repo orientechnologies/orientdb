@@ -33,6 +33,37 @@ public class OSecurityEngineTest {
   }
 
   @Test
+  public void testNoRule() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OBooleanExpression pred = OSecurityEngine
+            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
+
+    Assert.assertEquals("false", pred.toString());
+  }
+
+  @Test
+  public void testAllClasses() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.*", policy);
+
+
+    OBooleanExpression pred = OSecurityEngine
+            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
+
+    Assert.assertEquals("name = 'foo'", pred.toString());
+  }
+
+  @Test
   public void testSingleClass() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
@@ -49,7 +80,77 @@ public class OSecurityEngineTest {
             .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
 
     Assert.assertEquals("name = 'foo'", pred.toString());
+  }
+
+  @Test
+  public void testSuperclass() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+    db.createClass("Employee", "Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Person", policy);
 
 
+    OBooleanExpression pred = OSecurityEngine
+            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
+
+    Assert.assertEquals("name = 'foo'", pred.toString());
+  }
+
+  @Test
+  public void testSuperclass2() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+    db.createClass("Employee", "Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Person", policy);
+
+    policy = security.createSecurityPolicy(db, "policy2");
+    policy.setActive(true);
+    policy.setReadRule("name = 'bar'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Employee", policy);
+
+
+    OBooleanExpression pred = OSecurityEngine
+            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
+
+    Assert.assertEquals("name = 'bar'", pred.toString());
+  }
+
+  @Test
+  public void testSuperclass3() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+    db.createClass("Employee", "Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Person", policy);
+
+    policy = security.createSecurityPolicy(db, "policy2");
+    policy.setActive(true);
+    policy.setReadRule("name = 'bar'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.*", policy);
+
+
+    OBooleanExpression pred = OSecurityEngine
+            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
+
+    Assert.assertEquals("name = 'foo'", pred.toString());
   }
 }
