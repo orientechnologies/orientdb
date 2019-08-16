@@ -64,4 +64,5 @@ public final class WALRecordTypes {
   public static final byte PAGINATED_CLUSTER_STATE_V1_SET_FREE_LIST_PAGE_PO = 52;
   public static final byte PAGINATED_CLUSTER_STATE_V1_SET_RECORDS_SIZE_PO   = 53;
   public static final byte PAGINATED_CLUSTER_STATE_V1_SET_SIZE_PO           = 54;
+  public static final byte PAGINATED_CLUSTER_STATE_V1_SET_FILE_SIZE_PO      = 55;
 }

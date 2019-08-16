@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.cluster.v1;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetFileSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetFreeListPagePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetRecordsSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetSizePO;
@@ -65,7 +66,10 @@ public final class OPaginatedClusterStateV1 extends ODurablePage {
   }
 
   public void setFileSize(int size) {
+    final int oldFileSize = getIntValue(FILE_SIZE_OFFSET);
     setIntValue(FILE_SIZE_OFFSET, size);
+
+    addPageOperation(new PaginatedClusterStateV1SetFileSizePO(oldFileSize, size));
   }
 
   public int getFileSize() {
