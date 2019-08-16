@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate;
 
-import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.v0.OPaginatedClusterStateV0;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
@@ -8,61 +8,72 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 
 import java.nio.ByteBuffer;
 
-public final class PaginatedClusterStateV0SetRecordsSizePO extends PageOperationRecord {
-  private long oldRecordsSize;
-  private long newRecordsSize;
+public final class PaginatedClusterStateV0SetFreeListPagePO extends PageOperationRecord {
+  private int index;
 
-  public PaginatedClusterStateV0SetRecordsSizePO() {
+  private int oldPageIndex;
+  private int newPageIndex;
+
+  public PaginatedClusterStateV0SetFreeListPagePO() {
   }
 
-  public PaginatedClusterStateV0SetRecordsSizePO(long oldRecordsSize, long newRecordsSize) {
-    this.oldRecordsSize = oldRecordsSize;
-    this.newRecordsSize = newRecordsSize;
+  public PaginatedClusterStateV0SetFreeListPagePO(int index, int oldPageIndex, int newPageIndex) {
+    this.index = index;
+    this.oldPageIndex = oldPageIndex;
+    this.newPageIndex = newPageIndex;
   }
 
-  public long getOldRecordsSize() {
-    return oldRecordsSize;
+  public int getIndex() {
+    return index;
   }
 
-  public long getNewRecordsSize() {
-    return newRecordsSize;
+  public int getOldPageIndex() {
+    return oldPageIndex;
+  }
+
+  public int getNewPageIndex() {
+    return newPageIndex;
   }
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OPaginatedClusterStateV0 paginatedClusterStateV0 = new OPaginatedClusterStateV0(cacheEntry);
-    paginatedClusterStateV0.setRecordsSize(newRecordsSize);
+    paginatedClusterStateV0.setFreeListPage(index, newPageIndex);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OPaginatedClusterStateV0 paginatedClusterStateV0 = new OPaginatedClusterStateV0(cacheEntry);
-    paginatedClusterStateV0.setRecordsSize(oldRecordsSize);
+    paginatedClusterStateV0.setFreeListPage(index, oldPageIndex);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.PAGINATED_CLUSTER_STATE_V0_SET_RECORDS_SIZE_PO;
+    return WALRecordTypes.PAGINATED_CLUSTER_STATE_V0_SET_FREE_LIST_PAGE_PO;
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 2 * OLongSerializer.LONG_SIZE;
+    return super.serializedSize() + 3 * OIntegerSerializer.INT_SIZE;
   }
 
   @Override
   protected void serializeToByteBuffer(ByteBuffer buffer) {
     super.serializeToByteBuffer(buffer);
 
-    buffer.putLong(oldRecordsSize);
-    buffer.putLong(newRecordsSize);
+    buffer.putInt(index);
+
+    buffer.putInt(oldPageIndex);
+    buffer.putInt(newPageIndex);
   }
 
   @Override
   protected void deserializeFromByteBuffer(ByteBuffer buffer) {
     super.deserializeFromByteBuffer(buffer);
 
-    oldRecordsSize = buffer.getLong();
-    newRecordsSize = buffer.getLong();
+    index = buffer.getInt();
+
+    oldPageIndex = buffer.getInt();
+    newPageIndex = buffer.getInt();
   }
 }

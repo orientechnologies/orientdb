@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 
 import java.nio.ByteBuffer;
 
-public class PaginatedClusterStateV0SetSizePO extends PageOperationRecord {
+public final class PaginatedClusterStateV0SetSizePO extends PageOperationRecord {
   private long oldSize;
   private long newSize;
 
