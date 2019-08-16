@@ -235,6 +235,12 @@ public final class OWALRecordsFactory {
     case CLUSTER_PAGE_SET_NEXT_PAGE_PO:
       walRecord = new ClusterPageSetNextPagePO();
       break;
+    case CLUSTER_PAGE_SET_PREV_PAGE_PO:
+      walRecord = new ClusterPageSetPrevPagePO();
+      break;
+    case CLUSTER_PAGE_SET_RECORD_LONG_VALUE_PO:
+      walRecord = new ClusterPageSetRecordLongValuePO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
