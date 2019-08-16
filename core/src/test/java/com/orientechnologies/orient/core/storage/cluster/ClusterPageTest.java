@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated;
+package com.orientechnologies.orient.core.storage.cluster;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import org.junit.Assert;
 import org.junit.Test;
