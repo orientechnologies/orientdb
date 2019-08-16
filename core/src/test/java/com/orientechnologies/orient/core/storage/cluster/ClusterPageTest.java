@@ -178,6 +178,201 @@ public class ClusterPageTest {
   }
 
   @Test
+  public void testAddDeleteAddBookedPositionsOne() {
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OPointer pointer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
+    cacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage localPage = new OClusterPage(cacheEntry);
+      localPage.init();
+
+      addDeleteAddBookedPositionsOne(localPage);
+
+      assertChangesTracking(localPage, bufferPool);
+    } finally {
+      cacheEntry.releaseExclusiveLock();
+      cachePointer.decrementReferrer();
+    }
+  }
+
+  private void addDeleteAddBookedPositionsOne(final OClusterPage clusterPage) {
+    final Set<Integer> bookedPositions = new HashSet<>();
+
+    clusterPage.appendRecord(1, new byte[] { 1 }, -1, bookedPositions);
+    clusterPage.appendRecord(1, new byte[] { 2 }, -1, bookedPositions);
+    clusterPage.appendRecord(1, new byte[] { 3 }, -1, bookedPositions);
+    clusterPage.appendRecord(1, new byte[] { 4 }, -1, bookedPositions);
+
+    clusterPage.deleteRecord(0);
+    clusterPage.deleteRecord(1);
+    clusterPage.deleteRecord(2);
+    clusterPage.deleteRecord(3);
+
+    bookedPositions.add(1);
+    bookedPositions.add(2);
+
+    int position = clusterPage.appendRecord(1, new byte[] { 5 }, -1, bookedPositions);
+    Assert.assertEquals(3, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 6 }, -1, bookedPositions);
+    Assert.assertEquals(0, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 7 }, -1, bookedPositions);
+    Assert.assertEquals(4, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 8 }, 1, bookedPositions);
+    Assert.assertEquals(1, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 9 }, 2, bookedPositions);
+    Assert.assertEquals(2, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 10 }, -1, bookedPositions);
+    Assert.assertEquals(5, position);
+
+    Assert.assertArrayEquals(new byte[] { 6 }, clusterPage.getRecordBinaryValue(0, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 8 }, clusterPage.getRecordBinaryValue(1, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 9 }, clusterPage.getRecordBinaryValue(2, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 5 }, clusterPage.getRecordBinaryValue(3, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 7 }, clusterPage.getRecordBinaryValue(4, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 10 }, clusterPage.getRecordBinaryValue(5, 0, 1));
+  }
+
+  @Test
+  public void testAddDeleteAddBookedPositionsTwo() {
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OPointer pointer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
+    cacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage localPage = new OClusterPage(cacheEntry);
+      localPage.init();
+
+      addDeleteAddBookedPositionsTwo(localPage);
+
+      assertChangesTracking(localPage, bufferPool);
+    } finally {
+      cacheEntry.releaseExclusiveLock();
+      cachePointer.decrementReferrer();
+    }
+  }
+
+  private void addDeleteAddBookedPositionsTwo(final OClusterPage clusterPage) {
+    final Set<Integer> bookedPositions = new HashSet<>();
+
+    clusterPage.appendRecord(1, new byte[] { 1 }, -1, bookedPositions);
+    clusterPage.appendRecord(1, new byte[] { 2 }, -1, bookedPositions);
+    clusterPage.appendRecord(1, new byte[] { 3 }, -1, bookedPositions);
+    clusterPage.appendRecord(1, new byte[] { 4 }, -1, bookedPositions);
+
+    clusterPage.deleteRecord(0);
+    clusterPage.deleteRecord(1);
+    clusterPage.deleteRecord(2);
+    clusterPage.deleteRecord(3);
+
+    bookedPositions.add(1);
+    bookedPositions.add(2);
+
+    int position = clusterPage.appendRecord(1, new byte[] { 5 }, -1, bookedPositions);
+    Assert.assertEquals(3, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 6 }, -1, bookedPositions);
+    Assert.assertEquals(0, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 9 }, 2, bookedPositions);
+    Assert.assertEquals(2, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 7 }, -1, bookedPositions);
+    Assert.assertEquals(4, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 8 }, 1, bookedPositions);
+    Assert.assertEquals(1, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 10 }, -1, bookedPositions);
+    Assert.assertEquals(5, position);
+
+    Assert.assertArrayEquals(new byte[] { 6 }, clusterPage.getRecordBinaryValue(0, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 8 }, clusterPage.getRecordBinaryValue(1, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 9 }, clusterPage.getRecordBinaryValue(2, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 5 }, clusterPage.getRecordBinaryValue(3, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 7 }, clusterPage.getRecordBinaryValue(4, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 10 }, clusterPage.getRecordBinaryValue(5, 0, 1));
+  }
+
+  @Test
+  public void testAddDeleteAddBookedPositionsThree() {
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OPointer pointer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
+    cacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage localPage = new OClusterPage(cacheEntry);
+      localPage.init();
+
+      addDeleteAddBookedPositionsThree(localPage);
+
+      assertChangesTracking(localPage, bufferPool);
+    } finally {
+      cacheEntry.releaseExclusiveLock();
+      cachePointer.decrementReferrer();
+    }
+  }
+
+  private void addDeleteAddBookedPositionsThree(final OClusterPage clusterPage) {
+    final Set<Integer> bookedPositions = new HashSet<>();
+
+    clusterPage.appendRecord(1, new byte[] { 1 }, -1, bookedPositions);
+    clusterPage.appendRecord(1, new byte[] { 2 }, -1, bookedPositions);
+    clusterPage.appendRecord(1, new byte[] { 3 }, -1, bookedPositions);
+    clusterPage.appendRecord(1, new byte[] { 4 }, -1, bookedPositions);
+
+    clusterPage.deleteRecord(0);
+    clusterPage.deleteRecord(1);
+    clusterPage.deleteRecord(2);
+    clusterPage.deleteRecord(3);
+
+    bookedPositions.add(1);
+    bookedPositions.add(2);
+
+    int position  = clusterPage.appendRecord(1, new byte[] { 9 }, 2, bookedPositions);
+    Assert.assertEquals(2, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 8 }, 1, bookedPositions);
+    Assert.assertEquals(1, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 5 }, -1, bookedPositions);
+    Assert.assertEquals(3, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 6 }, -1, bookedPositions);
+    Assert.assertEquals(0, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 7 }, -1, bookedPositions);
+    Assert.assertEquals(4, position);
+
+    position = clusterPage.appendRecord(1, new byte[] { 10 }, -1, bookedPositions);
+    Assert.assertEquals(5, position);
+
+    Assert.assertArrayEquals(new byte[] { 6 }, clusterPage.getRecordBinaryValue(0, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 8 }, clusterPage.getRecordBinaryValue(1, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 9 }, clusterPage.getRecordBinaryValue(2, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 5 }, clusterPage.getRecordBinaryValue(3, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 7 }, clusterPage.getRecordBinaryValue(4, 0, 1));
+    Assert.assertArrayEquals(new byte[] { 10 }, clusterPage.getRecordBinaryValue(5, 0, 1));
+  }
+
+  @Test
   public void testDeleteAddLowerVersion() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     OPointer pointer = bufferPool.acquireDirect(true);
