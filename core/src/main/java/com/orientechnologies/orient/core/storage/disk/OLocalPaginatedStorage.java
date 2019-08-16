@@ -661,8 +661,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog, doubleWriteLog,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize,
-        diskCacheSize - writeCacheSize, storagePath, getName(), OStringSerializer.INSTANCE, files, getId(),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize, storagePath, getName(), OStringSerializer.INSTANCE, files, getId(),
         contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), iv, aesKey,
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.DISK_WRITE_CACHE_USE_ASYNC_IO));

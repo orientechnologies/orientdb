@@ -1,21 +1,21 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cluster.v1.OPaginatedClusterStateV1;
+import com.orientechnologies.orient.core.storage.cluster.v2.OPaginatedClusterStateV2;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 
 import java.nio.ByteBuffer;
 
-public final class PaginatedClusterStateV1SetRecordsSizePO extends PageOperationRecord {
+public final class PaginatedClusterStateV2SetRecordsSizePO extends PageOperationRecord {
   private int oldRecordsSize;
   private int newRecordsSize;
 
-  public PaginatedClusterStateV1SetRecordsSizePO() {
+  public PaginatedClusterStateV2SetRecordsSizePO() {
   }
 
-  public PaginatedClusterStateV1SetRecordsSizePO(int oldRecordsSize, int newRecordsSize) {
+  public PaginatedClusterStateV2SetRecordsSizePO(int oldRecordsSize, int newRecordsSize) {
     this.oldRecordsSize = oldRecordsSize;
     this.newRecordsSize = newRecordsSize;
   }
@@ -30,19 +30,19 @@ public final class PaginatedClusterStateV1SetRecordsSizePO extends PageOperation
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OPaginatedClusterStateV1 paginatedClusterStateV1 = new OPaginatedClusterStateV1(cacheEntry);
-    paginatedClusterStateV1.setRecordsSize(newRecordsSize);
+    final OPaginatedClusterStateV2 paginatedClusterStateV2 = new OPaginatedClusterStateV2(cacheEntry);
+    paginatedClusterStateV2.setRecordsSize(newRecordsSize);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final OPaginatedClusterStateV1 paginatedClusterStateV1 = new OPaginatedClusterStateV1(cacheEntry);
-    paginatedClusterStateV1.setRecordsSize(oldRecordsSize);
+    final OPaginatedClusterStateV2 paginatedClusterStateV2 = new OPaginatedClusterStateV2(cacheEntry);
+    paginatedClusterStateV2.setRecordsSize(oldRecordsSize);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.PAGINATED_CLUSTER_STATE_V1_SET_RECORDS_SIZE_PO;
+    return WALRecordTypes.PAGINATED_CLUSTER_STATE_V2_SET_RECORDS_SIZE_PO;
   }
 
   @Override
