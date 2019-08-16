@@ -43,6 +43,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.clu
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetFreeListPagePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetRecordsSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetFileSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetFreeListPagePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetRecordsSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetFileSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetFreeListPagePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetRecordsSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetSizePO;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
@@ -252,6 +260,30 @@ public final class OWALRecordsFactory {
       break;
     case PAGINATED_CLUSTER_STATE_V0_SET_FREE_LIST_PAGE_PO:
       walRecord = new PaginatedClusterStateV0SetFreeListPagePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V1_SET_SIZE_PO:
+      walRecord = new PaginatedClusterStateV1SetSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V1_SET_RECORDS_SIZE_PO:
+      walRecord = new PaginatedClusterStateV1SetRecordsSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V1_SET_FREE_LIST_PAGE_PO:
+      walRecord = new PaginatedClusterStateV1SetFreeListPagePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V1_SET_FILE_SIZE_PO:
+      walRecord = new PaginatedClusterStateV1SetFileSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V2_SET_SIZE_PO:
+      walRecord = new PaginatedClusterStateV2SetSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V2_SET_RECORDS_SIZE_PO:
+      walRecord = new PaginatedClusterStateV2SetRecordsSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V2_SET_FREE_LIST_PAGE_PO:
+      walRecord = new PaginatedClusterStateV2SetFreeListPagePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V2_SET_FILE_SIZE_PO:
+      walRecord = new PaginatedClusterStateV2SetFileSizePO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

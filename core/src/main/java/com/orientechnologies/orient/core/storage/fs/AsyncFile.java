@@ -218,8 +218,6 @@ public final class AsyncFile implements OFile {
 
         read += bytesRead;
       } while (read < buffer.limit());
-
-      assert read == buffer.limit();
     } finally {
       lock.sharedUnlock();
     }

@@ -389,7 +389,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
       final DoubleWriteLog doubleWriteLog, final long pagesFlushInterval, final int shutdownTimeout,
-      final long exclusiveWriteCacheMaxSize, long hardDirtyPagesLimit, final Path storagePath, final String storageName,
+      final long exclusiveWriteCacheMaxSize, final Path storagePath, final String storageName,
       final OBinarySerializer<String> stringSerializer, final OClosableLinkedContainer<Long, OFile> files, final int id,
       final OChecksumMode checksumMode, final byte[] iv, final byte[] aesKey, final boolean callFsync, final boolean useAsyncIO) {
 
@@ -2926,7 +2926,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     return flushedPages;
   }
 
-  private int flushExclusiveWriteCache(final CountDownLatch latch, long pagesToFlush) throws InterruptedException, IOException {
+  private void flushExclusiveWriteCache(final CountDownLatch latch, long pagesToFlush) throws InterruptedException, IOException {
     final Iterator<PageKey> iterator = exclusiveWritePages.iterator();
 
     int flushedPages = 0;
@@ -3073,7 +3073,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       throw new IllegalStateException("Copied pages (" + copiedPages + " ) != flushed pages (" + flushedPages + ")");
     }
 
-    return flushedPages;
   }
 
   private final class FileFlushTask implements Callable<Void> {
@@ -3127,7 +3126,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               final OLogSequenceNumber endLSN = pagePointer.getEndLSN();
 
-              if (maxLSN == null || endLSN.compareTo(maxLSN) > 0) {
+              if (endLSN != null && (maxLSN == null || endLSN.compareTo(maxLSN) > 0)) {
                 maxLSN = endLSN;
               }
 
