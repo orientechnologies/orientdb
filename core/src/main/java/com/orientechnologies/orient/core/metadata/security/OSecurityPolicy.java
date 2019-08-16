@@ -98,11 +98,11 @@ public class OSecurityPolicy {
   public String get(Scope scope) {
     switch (scope) {
     case CREATE: return getCreateRule();
-    case READ: return getCreateRule();
-    case BEFORE_UPDATE: return getCreateRule();
-    case AFTER_UPDATE: return getCreateRule();
-    case DELETE: return getCreateRule();
-    case EXECUTE: return getCreateRule();
+    case READ: return getReadRule();
+    case BEFORE_UPDATE: return getBeforeUpdateRule();
+    case AFTER_UPDATE: return getAfterUpdateRule();
+    case DELETE: return getDeleteRule();
+    case EXECUTE: return getExecuteRule();
     default: throw new IllegalArgumentException();
     }
   }

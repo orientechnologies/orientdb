@@ -180,17 +180,17 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
-  public Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, ORole role) {
+  public Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, OSecurityRole role) {
     return delegate.getSecurityPolicies(session, role);
   }
 
   @Override
-  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, ORole role, String resource) {
+  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource) {
     return delegate.getSecurityPolicy(session, role, resource);
   }
 
   @Override
-  public void setSecurityPolicy(ODatabaseSession session, ORole role, String resource, OSecurityPolicy policy) {
+  public void setSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
     delegate.setSecurityPolicy(session, role, resource, policy);
   }
 
