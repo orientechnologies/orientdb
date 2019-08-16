@@ -259,5 +259,10 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     public int hashCode() {
       return Objects.hash(pageIndex, recordPosition);
     }
+
+    @Override
+    public String toString() {
+      return "PositionEntry{" + "pageIndex=" + pageIndex + ", recordPosition=" + recordPosition + '}';
+    }
   }
 }

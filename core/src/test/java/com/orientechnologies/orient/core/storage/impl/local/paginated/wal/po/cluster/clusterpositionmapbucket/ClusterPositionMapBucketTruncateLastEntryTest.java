@@ -59,6 +59,10 @@ public class ClusterPositionMapBucketTruncateLastEntryTest {
       OClusterPositionMapBucket restoredBucket = new OClusterPositionMapBucket(restoredCacheEntry);
       Assert.assertEquals(3, restoredBucket.getSize());
 
+      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
+      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(34, 56), restoredBucket.get(1));
+      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(67, 89), restoredBucket.get(2));
+
       pageOperation.redo(restoredCacheEntry);
 
       Assert.assertEquals(2, restoredBucket.getSize());
@@ -102,9 +106,13 @@ public class ClusterPositionMapBucketTruncateLastEntryTest {
       final ClusterPositionMapBucketTruncateLastEntryPO pageOperation = (ClusterPositionMapBucketTruncateLastEntryPO) operations
           .get(0);
 
+      OClusterPositionMapBucket restoredBucket = new OClusterPositionMapBucket(entry);
+
+      Assert.assertEquals(1, restoredBucket.getSize());
+      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
+
       pageOperation.undo(entry);
 
-      OClusterPositionMapBucket restoredBucket = new OClusterPositionMapBucket(entry);
       Assert.assertEquals(2, restoredBucket.getSize());
 
       Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));

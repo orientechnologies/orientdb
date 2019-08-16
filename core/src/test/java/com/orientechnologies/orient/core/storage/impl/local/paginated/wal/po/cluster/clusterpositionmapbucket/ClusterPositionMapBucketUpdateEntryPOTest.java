@@ -99,9 +99,16 @@ public class ClusterPositionMapBucketUpdateEntryPOTest {
 
       final ClusterPositionMapBucketUpdateEntryPO pageOperation = (ClusterPositionMapBucketUpdateEntryPO) operations.get(0);
 
+      OClusterPositionMapBucket restoredBucket = new OClusterPositionMapBucket(entry);
+
+      Assert.assertEquals(2, restoredBucket.getSize());
+
+      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
+      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(24, 42), restoredBucket.get(1));
+
       pageOperation.undo(entry);
 
-      OClusterPositionMapBucket restoredBucket = new OClusterPositionMapBucket(entry);
+
       Assert.assertEquals(2, restoredBucket.getSize());
 
       Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
