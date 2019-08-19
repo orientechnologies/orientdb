@@ -355,7 +355,7 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   @Override
-  public Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, ORole role) {
+  public Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, OSecurityRole role) {
     Map<String, OSecurityPolicy> result = new HashMap<>();
 
     OElement roleDoc = session.reload(role.getDocument(), null, false);
@@ -371,7 +371,7 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   @Override
-  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, ORole role, String resource) {
+  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource) {
     resource = normalizeSecurityResource(session, resource);
     OElement roleDoc = session.reload(role.getDocument(), null, false);
     if (roleDoc == null) {
@@ -389,7 +389,7 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   @Override
-  public void setSecurityPolicy(ODatabaseSession session, ORole role, String resource, OSecurityPolicy policy) {
+  public void setSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
     resource = normalizeSecurityResource(session, resource);
     OElement roleDoc = session.reload(role.getDocument(), null, false);
     if (roleDoc == null) {
@@ -402,7 +402,9 @@ public class OSecurityShared implements OSecurityInternal {
     }
     policies.put(resource, policy.getElement());
     roleDoc.save();
-    role.reload();
+    if (role instanceof ORole) {
+      ((ORole) role).reload();
+    }
   }
 
   @Override

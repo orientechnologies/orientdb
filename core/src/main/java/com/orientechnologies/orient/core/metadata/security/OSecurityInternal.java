@@ -51,11 +51,11 @@ public interface OSecurityInternal {
 
   List<ODocument> getAllRoles(ODatabaseSession session);
 
-  Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, ORole role);
+  Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, OSecurityRole role);
 
-  OSecurityPolicy getSecurityPolicy(ODatabaseSession session, ORole role, String resource);
+  OSecurityPolicy getSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource);
 
-  void setSecurityPolicy(ODatabaseSession session, ORole role, String resource, OSecurityPolicy policy);
+  void setSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy);
 
   /**
    * creates and saves an empty security policy
