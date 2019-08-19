@@ -2860,27 +2860,61 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       fsyncFiles = doubleWriteLog.write(containerBuffers, chunkFileIds, chunkPositions);
 
-      final IOResult[] ioResults = new IOResult[buffersByFileId.size()];
-      int resultCounter = 0;
-
       final List<OClosableEntry<Long, OFile>> acquiredFiles = new ArrayList<>(buffersByFileId.size());
-      for (Map.Entry<Long, List<ORawPair<Long, ByteBuffer>>> entry : buffersByFileId.entrySet()) {
-        final OClosableEntry<Long, OFile> fileEntry = files.acquire(entry.getKey());
-        final OFile file = fileEntry.get();
+      final List<IOResult> ioResults = new ArrayList<>(buffersByFileId.size());
 
-        final List<ORawPair<Long, ByteBuffer>> bufferList = entry.getValue();
+      final Iterator<Map.Entry<Long, List<ORawPair<Long, ByteBuffer>>>> filesIterator = buffersByFileId.entrySet().iterator();
+      Map.Entry<Long, List<ORawPair<Long, ByteBuffer>>> entry = null;
+      //acquire as much files as possible and flush data
+      while (true) {
+        if (entry == null) {
+          if (filesIterator.hasNext()) {
+            entry = filesIterator.next();
+          } else {
+            break;
+          }
+        }
 
-        ioResults[resultCounter] = file.write(bufferList);
-        resultCounter++;
-        acquiredFiles.add(fileEntry);
+        final OClosableEntry<Long, OFile> fileEntry = files.tryAcquire(entry.getKey());
+        if (fileEntry != null) {
+          final OFile file = fileEntry.get();
+
+          final List<ORawPair<Long, ByteBuffer>> bufferList = entry.getValue();
+
+          ioResults.add(file.write(bufferList));
+          acquiredFiles.add(fileEntry);
+
+          entry = null;
+        } else {
+          assert ioResults.size() == acquiredFiles.size();
+
+          if (!ioResults.isEmpty()) {
+            for (final IOResult ioResult : ioResults) {
+              ioResult.await();
+            }
+
+            for (final OClosableEntry<Long, OFile> closableEntry : acquiredFiles) {
+              files.release(closableEntry);
+            }
+
+            ioResults.clear();
+            acquiredFiles.clear();
+          } else {
+            Thread.yield();
+          }
+        }
       }
 
-      for (final IOResult ioResult : ioResults) {
-        ioResult.await();
-      }
+      assert ioResults.size() == acquiredFiles.size();
 
-      for (final OClosableEntry<Long, OFile> closableEntry : acquiredFiles) {
-        files.release(closableEntry);
+      if (!ioResults.isEmpty()) {
+        for (final IOResult ioResult : ioResults) {
+          ioResult.await();
+        }
+
+        for (final OClosableEntry<Long, OFile> closableEntry : acquiredFiles) {
+          files.release(closableEntry);
+        }
       }
 
     } finally {
