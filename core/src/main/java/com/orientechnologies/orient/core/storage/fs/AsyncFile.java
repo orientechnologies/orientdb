@@ -55,16 +55,7 @@ public final class AsyncFile implements OFile {
 
       Files.createFile(osFile);
 
-      fileChannel = AsynchronousFileChannel.open(osFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
-      if (Platform.getPlatform().getOS() == Platform.OS.LINUX) {
-        try {
-          fd = ONative.instance().open(osFile.toAbsolutePath().toString(), ONative.O_CREAT | ONative.O_RDONLY | ONative.O_WRONLY);
-        } catch (LastErrorException e) {
-          fd = -1;
-        }
-      }
-
-      initSize();
+      doOpen();
     } finally {
       lock.exclusiveUnlock();
     }
@@ -112,6 +103,13 @@ public final class AsyncFile implements OFile {
     }
 
     fileChannel = AsynchronousFileChannel.open(osFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
+    if (Platform.getPlatform().getOS() == Platform.OS.LINUX) {
+      try {
+        fd = ONative.instance().open(osFile.toAbsolutePath().toString(), ONative.O_CREAT | ONative.O_RDONLY | ONative.O_WRONLY);
+      } catch (LastErrorException e) {
+        fd = -1;
+      }
+    }
 
     initSize();
   }
@@ -269,7 +267,9 @@ public final class AsyncFile implements OFile {
         }
       } else {
         final long sizeDiff = currentSize - currentCommittedSize;
-        ONative.instance().fallocate(fd, allocatedPosition + HEADER_SIZE, sizeDiff);
+        if (sizeDiff > 0) {
+          ONative.instance().fallocate(fd, allocatedPosition + HEADER_SIZE, sizeDiff);
+        }
       }
 
       assert fileChannel.size() >= currentSize + HEADER_SIZE;
@@ -335,12 +335,20 @@ public final class AsyncFile implements OFile {
   }
 
   private void doClose() throws IOException {
-    fileChannel.close();
-    fileChannel = null;
+    //ignore if closed
+    if (fileChannel != null) {
+      fileChannel.close();
+      fileChannel = null;
 
-    if (fd >= 0) {
-      ONative.instance().close(fd);
-      fd = -1;
+      if (fd >= 0) {
+        final long sizeDiff = this.size.get() - this.committedSize.get();
+        if (sizeDiff > 0) {
+          ONative.instance().fallocate(fd, this.committedSize.get() + HEADER_SIZE, sizeDiff);
+        }
+
+        ONative.instance().close(fd);
+        fd = -1;
+      }
     }
   }
 

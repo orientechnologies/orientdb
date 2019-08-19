@@ -590,6 +590,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     try {
       emptyWriteBuffer();
       emptyReadBuffers();
+
+      evict();
     } finally {
       lruLock.unlock();
     }
