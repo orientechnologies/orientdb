@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.db.record.ridbag;
 
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageMemoryConfiguration;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 
 import java.util.Collection;
@@ -29,7 +31,8 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.UUID;
 
-public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMultiValue, OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordElement {
+public interface ORidBagDelegate
+    extends Iterable<OIdentifiable>, ORecordLazyMultiValue, OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordElement {
   void addAll(Collection<OIdentifiable> values);
 
   void add(OIdentifiable identifiable);
@@ -74,24 +77,11 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
 
   public String toString();
 
-  public List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners();
-
   NavigableMap<OIdentifiable, Change> getChanges();
 
   void setSize(int size);
 
-  /**
-   * Add change listener.
-   *
-   * @param changeListener Change listener instance.
-   */
-  void addChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener);
+  OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> getTracker();
 
-  /**
-   * Remove change listener.
-   *
-   * @param changeListener Change listener instance.
-   */
-  void removeRecordChangeListener(OMultiValueChangeListener<OIdentifiable,OIdentifiable> changeListener);
-
+  void setTracker(OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> tracker);
 }

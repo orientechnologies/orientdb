@@ -276,9 +276,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
 
-        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners()) {
-          delegate.addChangeListener(listener);
-        }
+        delegate.setTracker(oldDelegate.getTracker());
 
         delegate.setDirty();
 
@@ -297,9 +295,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
 
-        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners()) {
-          delegate.addChangeListener(listener);
-        }
+        delegate.setTracker(oldDelegate.getTracker());
 
         delegate.setDirty();
 
@@ -467,9 +463,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     final OSBTreeRidBag treeBag = new OSBTreeRidBag();
     treeBag.setCollectionPointer(pointer);
     treeBag.setOwner(delegate.getOwner());
-    for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : delegate.getChangeListeners()) {
-      treeBag.addChangeListener(listener);
-    }
+    treeBag.setTracker(delegate.getTracker());
     delegate = treeBag;
   }
 

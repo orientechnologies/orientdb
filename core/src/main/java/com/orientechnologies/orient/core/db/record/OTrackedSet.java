@@ -17,6 +17,7 @@
  *  * For more information: http://orientdb.com
  *
  */
+
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.record.ORecord;
@@ -36,17 +37,19 @@ import java.util.*;
  */
 @SuppressWarnings("serial")
 public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
-  protected final ORecord                               sourceRecord;
-  private final   boolean                               embeddedCollection;
-  protected       Class<?>                              genericClass;
-  private         boolean                               dirty  = false;
-  private         List<OMultiValueChangeListener<T, T>> changeListeners;
+  protected final ORecord  sourceRecord;
+  private final   boolean  embeddedCollection;
+  protected       Class<?> genericClass;
+  private         boolean  dirty = false;
+
+  private OSimpleMultiValueChangeListener<T, T> changeListener = new OSimpleMultiValueChangeListener<>(this);
 
   public OTrackedSet(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
-    if (iOrigin != null && !iOrigin.isEmpty())
+    if (iOrigin != null && !iOrigin.isEmpty()) {
       addAll(iOrigin);
+    }
   }
 
   public OTrackedSet(final ORecord iSourceRecord) {
@@ -93,8 +96,9 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
     }
     boolean modified = false;
     for (T o : c) {
-      if (add(o))
+      if (add(o)) {
         modified = true;
+      }
     }
 
     if (c instanceof OAutoConvertToRecord) {
@@ -140,22 +144,22 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
   private void addEvent(T added) {
     addOwnerToEmbeddedDoc(added);
 
-    if (changeListeners != null && !changeListeners.isEmpty()) {
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, added, added));
+    if (changeListener.isEnabled()) {
+      changeListener.add(added, added);
     } else {
       setDirty();
     }
   }
 
   private void updateEvent(T oldValue, T newValue) {
-    if (oldValue instanceof ODocument)
+    if (oldValue instanceof ODocument) {
       ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    }
 
     addOwnerToEmbeddedDoc(newValue);
 
-    if (changeListeners != null && !changeListeners.isEmpty()) {
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.UPDATE, oldValue, newValue, oldValue));
+    if (changeListener.isEnabled()) {
+      changeListener.updated(oldValue, newValue, oldValue);
     } else {
       setDirty();
     }
@@ -165,9 +169,8 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
     if (removed instanceof ODocument) {
       ODocumentInternal.removeOwner((ODocument) removed, this);
     }
-    if (changeListeners != null && !changeListeners.isEmpty()) {
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, removed, null, removed));
+    if (changeListener.isEnabled()) {
+      changeListener.remove(removed, removed);
     } else {
       setDirty();
     }
@@ -184,19 +187,9 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
 
   @Override
   public void setDirtyNoChanged() {
-    if (sourceRecord != null)
+    if (sourceRecord != null) {
       sourceRecord.setDirtyNoChanged();
-  }
-
-  public void addChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
-    if (changeListeners == null)
-      changeListeners = new LinkedList<OMultiValueChangeListener<T, T>>();
-    changeListeners.add(changeListener);
-  }
-
-  public void removeRecordChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
-    if (changeListeners != null)
-      changeListeners.remove(changeListener);
+    }
   }
 
   public Set<T> returnOriginalState(final List<OMultiValueChangeEvent<T, T>> multiValueChangeEvents) {
@@ -226,15 +219,6 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
     return genericClass;
   }
 
-  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
-    if (changeListeners != null) {
-      for (final OMultiValueChangeListener<T, T> changeListener : changeListeners) {
-        if (changeListener != null)
-          changeListener.onAfterRecordChanged(event);
-      }
-    }
-  }
-
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid()) {
       ODocumentInternal.addOwner((ODocument) e, this);
@@ -252,13 +236,9 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
     super.add((T) newValue);
   }
 
-  private OSimpleMultiValueChangeListener<T, T> changeListener;
-
   public void enableTracking(ORecordElement parent) {
-    if (changeListener == null) {
-      final OSimpleMultiValueChangeListener<T, T> listener = new OSimpleMultiValueChangeListener<>(this);
-      this.addChangeListener(listener);
-      changeListener = listener;
+    if (!changeListener.isEnabled()) {
+      this.changeListener.enable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -268,11 +248,8 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
   }
 
   public void disableTracking(ORecordElement document) {
-    if (changeListener != null) {
-      final OMultiValueChangeListener<T, T> changeListener = this.changeListener;
-      this.changeListener.timeLine = null;
-      this.changeListener = null;
-      removeRecordChangeListener(changeListener);
+    if (changeListener.isEnabled()) {
+      this.changeListener.disable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -289,10 +266,6 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
 
   @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (changeListener == null) {
-      return null;
-    } else {
-      return changeListener.timeLine;
-    }
+    return changeListener.timeLine;
   }
 }

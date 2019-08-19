@@ -21,10 +21,8 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 
 import java.lang.ref.WeakReference;
 
@@ -35,27 +33,56 @@ import java.lang.ref.WeakReference;
  * @param <K> Value that uniquely identifies position of item in collection
  * @param <V> Item value.
  */
-public final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeListener<K, V> {
+public final class OSimpleMultiValueChangeListener<K, V> {
   /**
    *
    */
   private final WeakReference<ORecordElement>             element;
   public        OMultiValueChangeTimeLine<Object, Object> timeLine;
+  private       boolean                                   enabled;
 
   public OSimpleMultiValueChangeListener(ORecordElement element) {
     this.element = new WeakReference<ORecordElement>(element);
   }
 
+  public void addNoDirty(K key, V value) {
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value, null, false));
+  }
+
+  public void removeNoDirty(K key, V value) {
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value, false));
+  }
+
+  public void add(K key, V value) {
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
+  }
+
+  public void updated(K key, V newValue, V oldValue) {
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.UPDATE, key, newValue, oldValue));
+  }
+
+  public void remove(K key, V value) {
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value));
+  }
+
   public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
+
+    if (!enabled) {
+      return;
+    }
+
     ORecordElement document = this.element.get();
     if (document == null)
-      //doc not alive anymore, do nothing.
+    //doc not alive anymore, do nothing.
+    {
       return;
+    }
 
-    if (event.isChangesOwnerContent())
+    if (event.isChangesOwnerContent()) {
       document.setDirty();
-    else
+    } else {
       document.setDirtyNoChanged();
+    }
 
     if (timeLine == null) {
       timeLine = new OMultiValueChangeTimeLine<Object, Object>();
@@ -63,4 +90,22 @@ public final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueC
 
     timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
   }
+
+  public void enable() {
+    if (!this.enabled) {
+      this.enabled = true;
+    }
+  }
+
+  public void disable() {
+    if (this.enabled) {
+      this.timeLine = null;
+      this.enabled = false;
+    }
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
 }

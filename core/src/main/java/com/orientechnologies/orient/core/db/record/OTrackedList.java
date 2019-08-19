@@ -37,10 +37,11 @@ import java.util.*;
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
   protected final ORecord                                     sourceRecord;
-  protected       List<OMultiValueChangeListener<Integer, T>> changeListeners = null;
   protected       Class<?>                                    genericClass;
   private final   boolean                                     embeddedCollection;
   private         boolean                                     dirty           = false;
+
+  private OSimpleMultiValueChangeListener<Integer, T> changeListener = new OSimpleMultiValueChangeListener<>(this);
 
   public OTrackedList(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
     this(iRecord);
@@ -145,8 +146,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   private void addEvent(int index, T added) {
     addOwnerToEmbeddedDoc(added);
 
-    if (changeListeners != null && !changeListeners.isEmpty()) {
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, index, added));
+    if (changeListener.isEnabled()) {
+      changeListener.add(index, added);
     } else {
       setDirty();
     }
@@ -158,9 +159,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
     addOwnerToEmbeddedDoc(newValue);
 
-    if (changeListeners != null && !changeListeners.isEmpty()) {
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, newValue, oldValue));
+    if (changeListener.isEnabled()) {
+      changeListener.updated(index,newValue,oldValue);
     } else {
       setDirty();
     }
@@ -170,9 +170,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     if (removed instanceof ODocument) {
       ODocumentInternal.removeOwner((ODocument) removed, this);
     }
-    if (changeListeners != null && !changeListeners.isEmpty()) {
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null, removed));
+    if (changeListener.isEnabled()) {
+      changeListener.remove(index,removed);
     } else {
       setDirty();
     }
@@ -225,19 +224,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void addChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
-    if (changeListeners == null) {
-      changeListeners = new LinkedList<OMultiValueChangeListener<Integer, T>>();
-    }
-    changeListeners.add(changeListener);
-  }
-
-  public void removeRecordChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
-    if (changeListeners != null) {
-      changeListeners.remove(changeListener);
-    }
-  }
-
   public List<T> returnOriginalState(final List<OMultiValueChangeEvent<Integer, T>> multiValueChangeEvents) {
     final List<T> reverted = new ArrayList<T>(this);
 
@@ -264,15 +250,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     return reverted;
   }
 
-  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, T> event) {
-    if (changeListeners != null) {
-      for (final OMultiValueChangeListener<Integer, T> changeListener : changeListeners) {
-        if (changeListener != null)
-          changeListener.onAfterRecordChanged(event);
-      }
-    }
-  }
-
   public Class<?> getGenericClass() {
     return genericClass;
   }
@@ -286,13 +263,9 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     super.set((Integer) event.getKey(), (T) newValue);
   }
 
-  private OSimpleMultiValueChangeListener<Integer, T> changeListener;
-
   public void enableTracking(ORecordElement parent) {
-    if (changeListener == null) {
-      final OSimpleMultiValueChangeListener<Integer, T> listener = new OSimpleMultiValueChangeListener<>(this);
-      this.addChangeListener(listener);
-      changeListener = listener;
+    if (!changeListener.isEnabled()) {
+      changeListener.enable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -302,11 +275,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   public void disableTracking(ORecordElement parent) {
-    if (changeListener != null) {
-      final OMultiValueChangeListener<Integer, T> changeListener = this.changeListener;
-      this.changeListener.timeLine = null;
-      this.changeListener = null;
-      removeRecordChangeListener(changeListener);
+    if (changeListener.isEnabled()) {
+      changeListener.disable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -323,11 +293,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (changeListener == null) {
-      return null;
-    } else {
-      return changeListener.timeLine;
-    }
+    return changeListener.timeLine;
   }
 
 }

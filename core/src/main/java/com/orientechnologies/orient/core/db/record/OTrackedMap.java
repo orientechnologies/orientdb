@@ -37,11 +37,12 @@ import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeList
 @SuppressWarnings("serial")
 public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
-  protected final ORecord                                    sourceRecord;
-  private         List<OMultiValueChangeListener<Object, T>> changeListeners = null;
-  protected       Class<?>                                   genericClass;
-  private final   boolean                                    embeddedCollection;
-  private         boolean                                    dirty           = false;
+  protected final ORecord  sourceRecord;
+  protected       Class<?> genericClass;
+  private final   boolean  embeddedCollection;
+  private         boolean  dirty = false;
+
+  private OSimpleMultiValueChangeListener<Object, T> changeListener = new OSimpleMultiValueChangeListener<>(this);
 
   public OTrackedMap(final ORecord iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
@@ -154,17 +155,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void addChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
-    if (changeListeners == null)
-      changeListeners = new LinkedList<OMultiValueChangeListener<Object, T>>();
-    changeListeners.add(changeListener);
-  }
-
-  public void removeRecordChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
-    if (changeListeners != null)
-      changeListeners.remove(changeListener);
-  }
-
   public Map<Object, T> returnOriginalState(final List<OMultiValueChangeEvent<Object, T>> multiValueChangeEvents) {
     final Map<Object, T> reverted = new HashMap<Object, T>(this);
 
@@ -191,15 +181,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     return reverted;
   }
 
-  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, T> event) {
-    if (changeListeners != null) {
-      for (final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
-        if (changeListener != null)
-          changeListener.onAfterRecordChanged(event);
-      }
-    }
-  }
-
   public Class<?> getGenericClass() {
     return genericClass;
   }
@@ -216,8 +197,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   private void addEvent(Object key, T value) {
     addOwnerToEmbeddedDoc(value);
 
-    if (changeListeners != null && !changeListeners.isEmpty()) {
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
+    if (changeListener.isEnabled()) {
+      changeListener.add(key, value);
     } else {
       setDirty();
     }
@@ -229,9 +210,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
     addOwnerToEmbeddedDoc(newValue);
 
-    if (changeListeners != null && !changeListeners.isEmpty()) {
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, key, newValue, oldValue));
+    if (changeListener.isEnabled()) {
+      changeListener.updated(key, newValue, oldValue);
     } else {
       setDirty();
     }
@@ -241,21 +221,16 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     if (removed instanceof ODocument) {
       ODocumentInternal.removeOwner((ODocument) removed, this);
     }
-    if (changeListeners != null && !changeListeners.isEmpty()) {
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null, removed));
+    if (changeListener.isEnabled()) {
+      changeListener.remove(iKey, removed);
     } else {
       setDirty();
     }
   }
 
-  private OSimpleMultiValueChangeListener<Object, T> changeListener;
-
   public void enableTracking(ORecordElement parent) {
-    if (changeListener == null) {
-      final OSimpleMultiValueChangeListener<Object, T> listener = new OSimpleMultiValueChangeListener<>(this);
-      this.addChangeListener(listener);
-      changeListener = listener;
+    if (!changeListener.isEnabled()) {
+      changeListener.enable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -265,11 +240,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   }
 
   public void disableTracking(ORecordElement document) {
-    if (changeListener != null) {
-      final OMultiValueChangeListener<Object, T> changeListener = this.changeListener;
-      this.changeListener.timeLine = null;
-      this.changeListener = null;
-      removeRecordChangeListener(changeListener);
+    if (changeListener.isEnabled()) {
+      this.changeListener.disable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
