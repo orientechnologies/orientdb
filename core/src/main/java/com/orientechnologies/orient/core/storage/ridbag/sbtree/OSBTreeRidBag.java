@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTre
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -79,8 +78,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   private       OBonsaiCollectionPointer                           collectionPointer;
   private       int                                                size;
 
-  private OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener = new OSimpleMultiValueChangeListener<>(
-      this);
+  private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker = new OSimpleMultiValueTracker<>(this);
 
   private boolean autoConvertToRecord = true;
 
@@ -1004,8 +1002,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       ORecordInternal.track(this.owner, identifiable);
     }
 
-    if (changeListener.isEnabled()) {
-      changeListener.addNoDirty(key, identifiable);
+    if (tracker.isEnabled()) {
+      tracker.addNoDirty(key, identifiable);
     } else {
       setDirtyNoChanged();
     }
@@ -1017,22 +1015,22 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       ORecordInternal.unTrack(this.owner, removed);
     }
 
-    if (changeListener.isEnabled()) {
-      changeListener.removeNoDirty(removed, removed);
+    if (tracker.isEnabled()) {
+      tracker.removeNoDirty(removed, removed);
     } else {
       setDirtyNoChanged();
     }
   }
 
   public void enableTracking(ORecordElement parent) {
-    if (!changeListener.isEnabled()) {
-      changeListener.enable();
+    if (!tracker.isEnabled()) {
+      tracker.enable();
     }
   }
 
   public void disableTracking(ORecordElement document) {
-    if (changeListener.isEnabled()) {
-      this.changeListener.disable();
+    if (tracker.isEnabled()) {
+      this.tracker.disable();
       this.dirty = false;
     }
   }
@@ -1044,10 +1042,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (changeListener == null) {
+    if (tracker == null) {
       return null;
     } else {
-      return changeListener.timeLine;
+      return tracker.timeLine;
     }
   }
 
@@ -1067,12 +1065,12 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> getTracker() {
-    return changeListener;
+  public OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> getTracker() {
+    return tracker;
   }
 
   @Override
-  public void setTracker(OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> tracker) {
-    this.changeListener = tracker;
+  public void setTracker(OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker) {
+    this.tracker = tracker;
   }
 }

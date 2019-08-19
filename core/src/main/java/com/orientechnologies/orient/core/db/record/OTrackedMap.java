@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 
 /**
  * Implementation of LinkedHashMap bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
@@ -42,7 +42,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   private final   boolean  embeddedCollection;
   private         boolean  dirty = false;
 
-  private OSimpleMultiValueChangeListener<Object, T> changeListener = new OSimpleMultiValueChangeListener<>(this);
+  private OSimpleMultiValueTracker<Object, T> tracker = new OSimpleMultiValueTracker<>(this);
 
   public OTrackedMap(final ORecord iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
@@ -197,8 +197,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   private void addEvent(Object key, T value) {
     addOwnerToEmbeddedDoc(value);
 
-    if (changeListener.isEnabled()) {
-      changeListener.add(key, value);
+    if (tracker.isEnabled()) {
+      tracker.add(key, value);
     } else {
       setDirty();
     }
@@ -210,8 +210,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
     addOwnerToEmbeddedDoc(newValue);
 
-    if (changeListener.isEnabled()) {
-      changeListener.updated(key, newValue, oldValue);
+    if (tracker.isEnabled()) {
+      tracker.updated(key, newValue, oldValue);
     } else {
       setDirty();
     }
@@ -221,16 +221,16 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     if (removed instanceof ODocument) {
       ODocumentInternal.removeOwner((ODocument) removed, this);
     }
-    if (changeListener.isEnabled()) {
-      changeListener.remove(iKey, removed);
+    if (tracker.isEnabled()) {
+      tracker.remove(iKey, removed);
     } else {
       setDirty();
     }
   }
 
   public void enableTracking(ORecordElement parent) {
-    if (!changeListener.isEnabled()) {
-      changeListener.enable();
+    if (!tracker.isEnabled()) {
+      tracker.enable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -240,8 +240,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   }
 
   public void disableTracking(ORecordElement document) {
-    if (changeListener.isEnabled()) {
-      this.changeListener.disable();
+    if (tracker.isEnabled()) {
+      this.tracker.disable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -258,10 +258,10 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
   @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (changeListener == null) {
+    if (tracker == null) {
       return null;
     } else {
-      return changeListener.timeLine;
+      return tracker.timeLine;
     }
   }
 

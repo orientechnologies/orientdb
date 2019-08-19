@@ -22,12 +22,10 @@ package com.orientechnologies.orient.core.db.record.ridbag;
 
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageMemoryConfiguration;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.NavigableMap;
 import java.util.UUID;
 
@@ -81,7 +79,7 @@ public interface ORidBagDelegate
 
   void setSize(int size);
 
-  OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> getTracker();
+  OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> getTracker();
 
-  void setTracker(OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> tracker);
+  void setTracker(OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker);
 }

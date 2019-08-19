@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -51,8 +51,7 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   protected static final Object                     ENTRY_REMOVAL       = new Object();
   private                boolean                    dirty               = false;
 
-  private OSimpleMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener = new OSimpleMultiValueChangeListener<>(
-      this);
+  private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker = new OSimpleMultiValueTracker<>(this);
 
   public ORecordLazySet(final ODocument iSourceRecord) {
     this.sourceRecord = iSourceRecord;
@@ -180,8 +179,8 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   protected void addEvent(OIdentifiable added) {
     addOwnerToEmbeddedDoc(added);
 
-    if (changeListener.isEnabled()) {
-      changeListener.add(added, added);
+    if (tracker.isEnabled()) {
+      tracker.add(added, added);
     } else {
       setDirty();
     }
@@ -193,8 +192,8 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
 
     addOwnerToEmbeddedDoc(newValue);
 
-    if (changeListener.isEnabled()) {
-      changeListener.updated(oldValue, newValue, newValue);
+    if (tracker.isEnabled()) {
+      tracker.updated(oldValue, newValue, newValue);
     } else {
       setDirty();
     }
@@ -204,8 +203,8 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
     if (removed instanceof ODocument) {
       ODocumentInternal.removeOwner((ODocument) removed, this);
     }
-    if (changeListener.isEnabled()) {
-      changeListener.remove(removed, removed);
+    if (tracker.isEnabled()) {
+      tracker.remove(removed, removed);
     } else {
       setDirty();
     }
@@ -222,8 +221,8 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   }
 
   public void enableTracking(ORecordElement parent) {
-    if (!changeListener.isEnabled()) {
-      changeListener.enable();
+    if (!tracker.isEnabled()) {
+      tracker.enable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -233,8 +232,8 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   }
 
   public void disableTracking(ORecordElement document) {
-    if (changeListener.isEnabled()) {
-      changeListener.disable();
+    if (tracker.isEnabled()) {
+      tracker.disable();
       this.dirty = false;
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
@@ -251,10 +250,10 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
 
   @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (changeListener == null) {
+    if (tracker == null) {
       return null;
     } else {
-      return changeListener.timeLine;
+      return tracker.timeLine;
     }
   }
 

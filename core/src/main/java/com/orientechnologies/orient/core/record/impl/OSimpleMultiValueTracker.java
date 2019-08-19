@@ -33,52 +33,49 @@ import java.lang.ref.WeakReference;
  * @param <K> Value that uniquely identifies position of item in collection
  * @param <V> Item value.
  */
-public final class OSimpleMultiValueChangeListener<K, V> {
-  /**
-   *
-   */
+public final class OSimpleMultiValueTracker<K, V> {
   private final WeakReference<ORecordElement>             element;
   public        OMultiValueChangeTimeLine<Object, Object> timeLine;
   private       boolean                                   enabled;
 
-  public OSimpleMultiValueChangeListener(ORecordElement element) {
+  public OSimpleMultiValueTracker(ORecordElement element) {
     this.element = new WeakReference<ORecordElement>(element);
   }
 
   public void addNoDirty(K key, V value) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value, null, false));
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value, null), false);
   }
 
   public void removeNoDirty(K key, V value) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value, false));
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value), false);
   }
 
   public void add(K key, V value) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value), true);
   }
 
   public void updated(K key, V newValue, V oldValue) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.UPDATE, key, newValue, oldValue));
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.UPDATE, key, newValue, oldValue),
+        true);
   }
 
   public void remove(K key, V value) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value));
+    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value), true);
   }
 
-  public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
+  public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event, boolean changeOwner) {
 
     if (!enabled) {
       return;
     }
 
     ORecordElement document = this.element.get();
-    if (document == null)
-    //doc not alive anymore, do nothing.
-    {
+    if (document == null) {
+      //doc not alive anymore, do nothing.
       return;
     }
 
-    if (event.isChangesOwnerContent()) {
+    if (changeOwner) {
       document.setDirty();
     } else {
       document.setDirtyNoChanged();

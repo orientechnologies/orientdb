@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 
 import java.io.Serializable;
 import java.util.*;
@@ -42,7 +42,7 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
   protected       Class<?> genericClass;
   private         boolean  dirty = false;
 
-  private OSimpleMultiValueChangeListener<T, T> changeListener = new OSimpleMultiValueChangeListener<>(this);
+  private OSimpleMultiValueTracker<T, T> tracker = new OSimpleMultiValueTracker<>(this);
 
   public OTrackedSet(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
@@ -144,8 +144,8 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
   private void addEvent(T added) {
     addOwnerToEmbeddedDoc(added);
 
-    if (changeListener.isEnabled()) {
-      changeListener.add(added, added);
+    if (tracker.isEnabled()) {
+      tracker.add(added, added);
     } else {
       setDirty();
     }
@@ -158,8 +158,8 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
 
     addOwnerToEmbeddedDoc(newValue);
 
-    if (changeListener.isEnabled()) {
-      changeListener.updated(oldValue, newValue, oldValue);
+    if (tracker.isEnabled()) {
+      tracker.updated(oldValue, newValue, oldValue);
     } else {
       setDirty();
     }
@@ -169,8 +169,8 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
     if (removed instanceof ODocument) {
       ODocumentInternal.removeOwner((ODocument) removed, this);
     }
-    if (changeListener.isEnabled()) {
-      changeListener.remove(removed, removed);
+    if (tracker.isEnabled()) {
+      tracker.remove(removed, removed);
     } else {
       setDirty();
     }
@@ -237,8 +237,8 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
   }
 
   public void enableTracking(ORecordElement parent) {
-    if (!changeListener.isEnabled()) {
-      this.changeListener.enable();
+    if (!tracker.isEnabled()) {
+      this.tracker.enable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -248,8 +248,8 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
   }
 
   public void disableTracking(ORecordElement document) {
-    if (changeListener.isEnabled()) {
-      this.changeListener.disable();
+    if (tracker.isEnabled()) {
+      this.tracker.disable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -266,6 +266,6 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
 
   @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    return changeListener.timeLine;
+    return tracker.timeLine;
   }
 }

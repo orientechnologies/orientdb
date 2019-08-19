@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueChangeListener;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 
 import java.io.Serializable;
 import java.util.*;
@@ -41,7 +41,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   private final   boolean                                     embeddedCollection;
   private         boolean                                     dirty           = false;
 
-  private OSimpleMultiValueChangeListener<Integer, T> changeListener = new OSimpleMultiValueChangeListener<>(this);
+  private OSimpleMultiValueTracker<Integer, T> tracker = new OSimpleMultiValueTracker<>(this);
 
   public OTrackedList(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
     this(iRecord);
@@ -146,8 +146,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   private void addEvent(int index, T added) {
     addOwnerToEmbeddedDoc(added);
 
-    if (changeListener.isEnabled()) {
-      changeListener.add(index, added);
+    if (tracker.isEnabled()) {
+      tracker.add(index, added);
     } else {
       setDirty();
     }
@@ -159,8 +159,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
     addOwnerToEmbeddedDoc(newValue);
 
-    if (changeListener.isEnabled()) {
-      changeListener.updated(index,newValue,oldValue);
+    if (tracker.isEnabled()) {
+      tracker.updated(index,newValue,oldValue);
     } else {
       setDirty();
     }
@@ -170,8 +170,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     if (removed instanceof ODocument) {
       ODocumentInternal.removeOwner((ODocument) removed, this);
     }
-    if (changeListener.isEnabled()) {
-      changeListener.remove(index,removed);
+    if (tracker.isEnabled()) {
+      tracker.remove(index,removed);
     } else {
       setDirty();
     }
@@ -264,8 +264,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   public void enableTracking(ORecordElement parent) {
-    if (!changeListener.isEnabled()) {
-      changeListener.enable();
+    if (!tracker.isEnabled()) {
+      tracker.enable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -275,8 +275,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   public void disableTracking(ORecordElement parent) {
-    if (changeListener.isEnabled()) {
-      changeListener.disable();
+    if (tracker.isEnabled()) {
+      tracker.disable();
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
@@ -293,7 +293,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    return changeListener.timeLine;
+    return tracker.timeLine;
   }
 
 }
