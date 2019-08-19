@@ -169,7 +169,6 @@
                             <arguments>
                                 <argument>-Xmx${heapSize}</argument>
                                 <argument>-DridBag.embeddedToSbtreeBonsaiThreshold=10000000</argument>
-                                <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</argument>
                                 <argument>-classpath</argument>
                                 <classpath/>
                                 <argument>com.orientechnologies.orient.console.OConsoleDatabaseApp</argument>
