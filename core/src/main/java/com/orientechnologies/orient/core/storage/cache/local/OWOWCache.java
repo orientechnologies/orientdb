@@ -3096,7 +3096,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         writeAheadLog.flush();
       }
 
-      final List<PageKey> pagesToFlush = new ArrayList<>();
+      final TreeSet<PageKey> pagesToFlush = new TreeSet<>();
       for (final Map.Entry<PageKey, OCachePointer> entry : writeCachePages.entrySet()) {
         final PageKey pageKey = entry.getKey();
         if (fileIdSet.contains(pageKey.fileId)) {
