@@ -3,6 +3,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
@@ -28,8 +34,38 @@ public class OCreateSecurityPolicyStatement extends OSimpleExecStatement {
 
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
+    ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+    OSecurityPolicy policy = security.createSecurityPolicy(db, name.getStringValue());
+    policy.setActive(true);
+    if (create != null) {
+      policy.setCreateRule(create.toString());
+    }
+    if (read != null) {
+      policy.setReadRule(read.toString());
+    }
+    if (beforeUpdate != null) {
+      policy.setBeforeUpdateRule(beforeUpdate.toString());
+    }
+    if (afterUpdate != null) {
+      policy.setAfterUpdateRule(afterUpdate.toString());
+    }
+    if (delete != null) {
+      policy.setDeleteRule(delete.toString());
+    }
+    if (execute != null) {
+      policy.setExecuteRule(execute.toString());
+    }
+    security.saveSecurityPolicy(db, policy);
 
-    throw new UnsupportedOperationException(); //TODO
+
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "create security policy");
+    result.setProperty("name", name.getStringValue());
+    OInternalResultSet rs = new OInternalResultSet();
+    rs.add(result);
+    return rs;
+
   }
 
 

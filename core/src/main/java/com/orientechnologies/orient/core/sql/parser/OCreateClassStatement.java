@@ -51,9 +51,9 @@ public class OCreateClassStatement extends ODDLStatement {
 
     OSchema schema = ctx.getDatabase().getMetadata().getSchema();
     if (schema.existsClass(name.getStringValue())) {
-      if(ifNotExists){
+      if (ifNotExists) {
         return new OInternalResultSet();
-      }else {
+      } else {
         throw new OCommandExecutionException("Class " + name + " already exists");
       }
     }
@@ -87,7 +87,7 @@ public class OCreateClassStatement extends ODDLStatement {
   }
 
   private OClass[] getSuperClasses(OSchema schema) {
-    if(superclasses==null){
+    if (superclasses == null) {
       return new OClass[]{};
     }
     return superclasses.stream().map(x -> schema.getClass(x.getStringValue())).filter(x -> x != null).collect(Collectors.toList())
@@ -108,7 +108,7 @@ public class OCreateClassStatement extends ODDLStatement {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE CLASS ");
     name.toString(params, builder);
-    if(ifNotExists){
+    if (ifNotExists) {
       builder.append(" IF NOT EXISTS");
     }
     if (superclasses != null && superclasses.size() > 0) {
@@ -171,7 +171,7 @@ public class OCreateClassStatement extends ODDLStatement {
       return false;
     if (totalClusterNo != null ? !totalClusterNo.equals(that.totalClusterNo) : that.totalClusterNo != null)
       return false;
-    if(ifNotExists!=that.ifNotExists){
+    if (ifNotExists != that.ifNotExists) {
       return false;
     }
 
