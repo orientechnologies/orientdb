@@ -521,7 +521,7 @@ public class OSecurityShared implements OSecurityInternal {
     if (identityClass == null)
       identityClass = session.getMetadata().getSchema().createAbstractClass(OIdentity.CLASS_NAME);
 
-    createOrUpdateOSecurityPolicyClass(session, identityClass);
+    createOrUpdateOSecurityPolicyClass(session);
 
     OClass roleClass = createOrUpdateORoleClass(session, identityClass);
 
@@ -604,15 +604,13 @@ public class OSecurityShared implements OSecurityInternal {
       userClass.createProperty("status", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true);
   }
 
-  private OClass createOrUpdateOSecurityPolicyClass(final ODatabaseDocument database, OClass identityClass) {
+  private OClass createOrUpdateOSecurityPolicyClass(final ODatabaseDocument database) {
     OClass policyClass = database.getMetadata().getSchema().getClass("OSecurityPolicy");
     boolean unsafe = false;
     if (policyClass == null) {
-      policyClass = database.getMetadata().getSchema().createClass("OSecurityPolicy", identityClass);
+      policyClass = database.getMetadata().getSchema().createClass("OSecurityPolicy");
       unsafe = true;
-    } else if (!policyClass.getSuperClasses().contains(identityClass))
-      // MIGRATE AUTOMATICALLY TO 1.2.0
-      policyClass.setSuperClasses(Arrays.asList(identityClass));
+    }
 
     if (!policyClass.existsProperty("name")) {
       policyClass.createProperty("name", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true).setCollate("ci");

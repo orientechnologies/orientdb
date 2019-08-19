@@ -395,6 +395,10 @@ TOKEN:
 	|
 	< RID: ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) >
 	|
+	< SECURITY: ( "s" | "S" ) ( "e" | "E" ) ( "c" | "C" ) ( "u" | "U" ) ( "r" | "R" ) ( "i" | "I" ) ( "t" | "T" ) ( "y" | "Y" ) >
+	|
+	< POLICY: ( "p" | "P" ) ( "o" | "O" ) ( "l" | "L" ) ( "i" | "I" ) ( "c" | "C" ) ( "y" | "Y" ) >
+	|
 	< DEFAULTCLUSTER: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
@@ -935,6 +939,10 @@ OIdentifier Identifier():
     |
     token = <DEFAULTCLUSTER>
     |
+    token = <SECURITY>
+    |
+    token = <POLICY>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -1067,6 +1075,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(2)
                 result = DropUserStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateSecurityPolicyStatement()
                 |
                 LOOKAHEAD(2)
                 result = CreateSequenceStatement()
@@ -5274,4 +5285,47 @@ OSecurityResourceSegment SecurityResourceSegment():
         ]
     )
     { return jjtThis; }
+}
+
+
+OCreateSecurityPolicyStatement CreateSecurityPolicyStatement():
+{}
+{
+  (
+    <CREATE> <SECURITY> <POLICY>
+    jjtThis.name = Identifier()
+    [
+    <SET>
+    (
+        ( <CREATE> <EQ> <LPAREN> jjtThis.create = OrBlock() <RPAREN> )
+        |
+        ( <READ> <EQ> <LPAREN> jjtThis.read = OrBlock() <RPAREN> )
+        |
+        ( <BEFORE> <UPDATE> <EQ> <LPAREN> jjtThis.beforeUpdate = OrBlock() <RPAREN> )
+        |
+        ( <AFTER> <UPDATE> <EQ> <LPAREN> jjtThis.afterUpdate = OrBlock() <RPAREN> )
+        |
+        ( <DELETE> <EQ> <LPAREN> jjtThis.delete = OrBlock() <RPAREN> )
+        |
+        ( <EXECUTE> <EQ> <LPAREN> jjtThis.execute = OrBlock() <RPAREN> )
+    )
+    ( <COMMA>
+          (
+             ( <CREATE> <EQ> <LPAREN> jjtThis.create = OrBlock() <RPAREN> )
+             |
+             ( <READ> <EQ> <LPAREN> jjtThis.read = OrBlock() <RPAREN> )
+             |
+             ( <BEFORE> <UPDATE> <EQ> <LPAREN> jjtThis.beforeUpdate = OrBlock() <RPAREN> )
+             |
+             ( <AFTER> <UPDATE> <EQ> <LPAREN> jjtThis.afterUpdate = OrBlock() <RPAREN> )
+             |
+             ( <DELETE> <EQ> <LPAREN> jjtThis.delete = OrBlock() <RPAREN> )
+             |
+             ( <EXECUTE> <EQ> <LPAREN> jjtThis.execute = OrBlock() <RPAREN> )
+         )
+    )*
+
+    ]
+
+  ) {return jjtThis; }
 }
