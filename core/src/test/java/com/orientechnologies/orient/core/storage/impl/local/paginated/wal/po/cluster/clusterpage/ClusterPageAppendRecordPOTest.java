@@ -141,7 +141,7 @@ public class ClusterPageAppendRecordPOTest {
   public void testSerialization() {
     OOperationUnitId operationUnitId = OOperationUnitId.generateId();
 
-    ClusterPageAppendRecordPO operation = new ClusterPageAppendRecordPO(12, new byte[] { 4, 2 }, 23, 45);
+    ClusterPageAppendRecordPO operation = new ClusterPageAppendRecordPO(12, new byte[] { 4, 2 }, 23, 45, true);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -160,6 +160,7 @@ public class ClusterPageAppendRecordPOTest {
     Assert.assertEquals(24, restoredOperation.getPageIndex());
     Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
 
+    Assert.assertTrue(restoredOperation.isAllocatedFromFreeList());
     Assert.assertEquals(12, restoredOperation.getRecordVersion());
     Assert.assertArrayEquals(new byte[] { 4, 2 }, restoredOperation.getRecord());
     Assert.assertEquals(23, restoredOperation.getRequestedPosition());

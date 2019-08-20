@@ -215,7 +215,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
           final PageOperationRecord pageOperationRecord = pageOperationCache.get(i);
           revertPageOperation(pageOperationRecord);
         }
-      } else {
+      } else if (!pageOperationRefs.isEmpty()) {
         final int chunkSize = 100;
         final List<PageOperationRecord> chunkToRevert = new ArrayList<>();
 
@@ -232,9 +232,15 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
           int recordsRead = 0;
           while (true) {
             for (final OWriteableWALRecord walRecord : walRecords) {
-              if (walRecord.getLsn().equals(pageOperationRefs.get(recordsRead + startIndex))) {
-                chunkToRevert.add((PageOperationRecord) walRecord);
-                recordsRead++;
+              final int index = recordsRead + startIndex;
+
+              if (startIndex + recordsRead < endIndex) {
+                if (walRecord.getLsn().equals(pageOperationRefs.get(index))) {
+                  chunkToRevert.add((PageOperationRecord) walRecord);
+                  recordsRead++;
+                }
+              } else {
+                break;
               }
             }
 
@@ -257,8 +263,8 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
             break;
           }
 
-          startIndex = startIndex - recordsRead;
           endIndex = startIndex;
+          startIndex = startIndex - recordsRead;
 
           if (startIndex < 0) {
             startIndex = 0;
@@ -284,9 +290,10 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
       if (writeAheadLog != null) {
         final List<PageOperationRecord> rollbackOperationRecords = cacheEntry.getPageOperations();
         for (final PageOperationRecord rollbackOperationRecord : rollbackOperationRecords) {
-          pageOperationRecord.setOperationUnitId(operationUnitId);
-          pageOperationRecord.setFileId(cacheEntry.getFileId());
-          pageOperationRecord.setPageIndex(cacheEntry.getPageIndex());
+
+          rollbackOperationRecord.setOperationUnitId(operationUnitId);
+          rollbackOperationRecord.setFileId(cacheEntry.getFileId());
+          rollbackOperationRecord.setPageIndex(cacheEntry.getPageIndex());
 
           lastLSN = writeAheadLog.log(rollbackOperationRecord);
         }

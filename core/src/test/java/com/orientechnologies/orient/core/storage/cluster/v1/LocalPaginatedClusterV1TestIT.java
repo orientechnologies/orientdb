@@ -32,7 +32,7 @@ public class LocalPaginatedClusterV1TestIT extends LocalPaginatedClusterAbstract
 
     databaseDocumentTx = (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin");
 
-    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+    storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
 
     paginatedCluster = new OPaginatedClusterV1("paginatedClusterTest", storage);
     paginatedCluster.configure(42, "paginatedClusterTest");

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage;
 
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
@@ -10,10 +11,11 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 
 public class ClusterPageAppendRecordPO extends PageOperationRecord {
-  private int    recordVersion;
-  private byte[] record;
-  private int    requestedPosition;
-  private int    recordPosition;
+  private int     recordVersion;
+  private byte[]  record;
+  private int     requestedPosition;
+  private int     recordPosition;
+  private boolean allocatedFromFreeList;
 
   public ClusterPageAppendRecordPO() {
   }
@@ -34,27 +36,41 @@ public class ClusterPageAppendRecordPO extends PageOperationRecord {
     return recordPosition;
   }
 
-  public ClusterPageAppendRecordPO(int recordVersion, byte[] record, int requestedPosition, int recordPosition) {
+  public boolean isAllocatedFromFreeList() {
+    return allocatedFromFreeList;
+  }
+
+  public ClusterPageAppendRecordPO(int recordVersion, byte[] record, int requestedPosition, int recordPosition,
+      boolean allocatedFromFreeList) {
     this.recordVersion = recordVersion;
     this.record = record;
     this.requestedPosition = requestedPosition;
     this.recordPosition = recordPosition;
+    this.allocatedFromFreeList = allocatedFromFreeList;
   }
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OClusterPage clusterPage = new OClusterPage(cacheEntry);
+    int allocatedPosition;
     if (requestedPosition < 0) {
-      clusterPage.appendRecord(recordVersion, record, recordPosition, Collections.emptySet());
+      allocatedPosition = clusterPage.appendRecord(recordVersion, record, recordPosition, Collections.emptySet());
     } else {
-      clusterPage.appendRecord(recordVersion, record, requestedPosition, Collections.emptySet());
+      allocatedPosition = clusterPage.appendRecord(recordVersion, record, requestedPosition, Collections.emptySet());
+    }
+
+    if (allocatedPosition < 0) {
+      throw new IllegalStateException("Can not redo operation of record creation");
     }
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OClusterPage clusterPage = new OClusterPage(cacheEntry);
-    clusterPage.deleteRecord(recordPosition);
+    final byte[] deletedRecord = clusterPage.deleteRecord(recordPosition, allocatedFromFreeList);
+    if (deletedRecord == null) {
+      throw new IllegalStateException("Can not undo operation of record creation");
+    }
   }
 
   @Override
@@ -64,12 +80,14 @@ public class ClusterPageAppendRecordPO extends PageOperationRecord {
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 4 * OIntegerSerializer.INT_SIZE + record.length;
+    return super.serializedSize() + 4 * OIntegerSerializer.INT_SIZE + record.length + OByteSerializer.BYTE_SIZE;
   }
 
   @Override
   protected void serializeToByteBuffer(ByteBuffer buffer) {
     super.serializeToByteBuffer(buffer);
+
+    buffer.put(allocatedFromFreeList ? 1 : (byte) 0);
 
     buffer.putInt(recordVersion);
     buffer.putInt(requestedPosition);
@@ -82,6 +100,8 @@ public class ClusterPageAppendRecordPO extends PageOperationRecord {
   @Override
   protected void deserializeFromByteBuffer(ByteBuffer buffer) {
     super.deserializeFromByteBuffer(buffer);
+
+    allocatedFromFreeList = buffer.get() > 0;
 
     recordVersion = buffer.getInt();
     requestedPosition = buffer.getInt();

@@ -46,7 +46,7 @@ public class ClusterPageDeleteRecordPOTest {
 
       restoredBuffer.put(originalBuffer);
 
-      clusterPage.deleteRecord(1);
+      clusterPage.deleteRecord(1, true);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
@@ -105,7 +105,7 @@ public class ClusterPageDeleteRecordPOTest {
 
       entry.clearPageOperations();
 
-      clusterPage.deleteRecord(1);
+      clusterPage.deleteRecord(1, true);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
@@ -148,7 +148,7 @@ public class ClusterPageDeleteRecordPOTest {
   public void testSerialization() {
     OOperationUnitId operationUnitId = OOperationUnitId.generateId();
 
-    ClusterPageDeleteRecordPO operation = new ClusterPageDeleteRecordPO(34, 12, new byte[] { 4, 2 });
+    ClusterPageDeleteRecordPO operation = new ClusterPageDeleteRecordPO(34, 12, new byte[] { 4, 2 }, true);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -167,6 +167,7 @@ public class ClusterPageDeleteRecordPOTest {
     Assert.assertEquals(24, restoredOperation.getPageIndex());
     Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
 
+    Assert.assertTrue(restoredOperation.isPreserveFreeListPointer());
     Assert.assertEquals(34, restoredOperation.getRecordPosition());
     Assert.assertEquals(12, restoredOperation.getRecordVersion());
     Assert.assertArrayEquals(new byte[] { 4, 2 }, restoredOperation.getRecord());

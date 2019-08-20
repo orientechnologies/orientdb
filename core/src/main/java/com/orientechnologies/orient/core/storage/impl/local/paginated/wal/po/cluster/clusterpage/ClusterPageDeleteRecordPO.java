@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage;
 
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
@@ -10,17 +11,19 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 
 public class ClusterPageDeleteRecordPO extends PageOperationRecord {
-  private int    recordPosition;
-  private int    recordVersion;
-  private byte[] record;
+  private int     recordPosition;
+  private int     recordVersion;
+  private byte[]  record;
+  private boolean preserveFreeListPointer;
 
   public ClusterPageDeleteRecordPO() {
   }
 
-  public ClusterPageDeleteRecordPO(int recordPosition, int recordVersion, byte[] record) {
+  public ClusterPageDeleteRecordPO(int recordPosition, int recordVersion, byte[] record, boolean preserveFreeListPointer) {
     this.recordPosition = recordPosition;
     this.recordVersion = recordVersion;
     this.record = record;
+    this.preserveFreeListPointer = preserveFreeListPointer;
   }
 
   public int getRecordPosition() {
@@ -35,16 +38,26 @@ public class ClusterPageDeleteRecordPO extends PageOperationRecord {
     return record;
   }
 
+  public boolean isPreserveFreeListPointer() {
+    return preserveFreeListPointer;
+  }
+
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OClusterPage clusterPage = new OClusterPage(cacheEntry);
-    clusterPage.deleteRecord(recordPosition);
+    final byte[] deletedRecord = clusterPage.deleteRecord(recordPosition, preserveFreeListPointer);
+    if (deletedRecord == null) {
+      throw new IllegalStateException("Can not redo operation of record deletion");
+    }
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OClusterPage clusterPage = new OClusterPage(cacheEntry);
-    clusterPage.appendRecord(recordVersion, record, recordPosition, Collections.emptySet());
+    final int allocatedPosition = clusterPage.appendRecord(recordVersion, record, recordPosition, Collections.emptySet());
+    if (allocatedPosition < 0) {
+      throw new IllegalStateException("Can not undo operation of record creation.");
+    }
   }
 
   @Override
@@ -54,12 +67,14 @@ public class ClusterPageDeleteRecordPO extends PageOperationRecord {
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 3 * OIntegerSerializer.INT_SIZE + record.length;
+    return super.serializedSize() + OByteSerializer.BYTE_SIZE + 3 * OIntegerSerializer.INT_SIZE + record.length;
   }
 
   @Override
   protected void serializeToByteBuffer(ByteBuffer buffer) {
     super.serializeToByteBuffer(buffer);
+
+    buffer.put(preserveFreeListPointer ? 1 : (byte) 0);
 
     buffer.putInt(recordPosition);
     buffer.putInt(recordVersion);
@@ -71,6 +86,8 @@ public class ClusterPageDeleteRecordPO extends PageOperationRecord {
   @Override
   protected void deserializeFromByteBuffer(ByteBuffer buffer) {
     super.deserializeFromByteBuffer(buffer);
+
+    preserveFreeListPointer = buffer.get() != 0;
 
     recordPosition = buffer.getInt();
     recordVersion = buffer.getInt();

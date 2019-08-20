@@ -692,7 +692,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
               recordVersion = localPage.getRecordVersion(recordPosition);
             }
 
-            final byte[] content = localPage.deleteRecord(recordPosition);
+            final byte[] content = localPage.deleteRecord(recordPosition, true);
             atomicOperation.addDeletedRecordPosition(id, cacheEntry.getPageIndex(), recordPosition);
             assert content != null;
 
@@ -700,7 +700,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
             contentSize += content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
 
             final int initialFreeSpace = localPage.getFreeSpace();
-            localPage.deleteRecord(recordPosition);
+            localPage.deleteRecord(recordPosition, true);
             atomicOperation.addDeletedRecordPosition(id, cacheEntry.getPageIndex(), recordPosition);
 
             removedContentSize += localPage.getFreeSpace() - initialFreeSpace;
@@ -900,7 +900,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
 
                 updatedEntryPosition = nextRecordPosition;
               } else {
-                final byte[] oldRecord = localPage.deleteRecord(nextRecordPosition);
+                final byte[] oldRecord = localPage.deleteRecord(nextRecordPosition, true);
                 atomicOperation.addDeletedRecordPosition(id, cacheEntry.getPageIndex(), nextRecordPosition);
 
                 assert oldRecord != null;
@@ -982,7 +982,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
             freePagesIndex = calculateFreePageIndex(localPage);
 
             nextEntryPointer = localPage.getRecordLongValue(nextRecordPosition, -OLongSerializer.LONG_SIZE);
-            final byte[] oldRecord = localPage.deleteRecord(nextRecordPosition);
+            final byte[] oldRecord = localPage.deleteRecord(nextRecordPosition, true);
             atomicOperation.addDeletedRecordPosition(id, cacheEntry.getPageIndex(), nextRecordPosition);
 
             assert oldRecord != null;

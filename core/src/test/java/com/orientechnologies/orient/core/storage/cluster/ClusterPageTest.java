@@ -208,10 +208,10 @@ public class ClusterPageTest {
     clusterPage.appendRecord(1, new byte[] { 3 }, -1, bookedPositions);
     clusterPage.appendRecord(1, new byte[] { 4 }, -1, bookedPositions);
 
-    clusterPage.deleteRecord(0);
-    clusterPage.deleteRecord(1);
-    clusterPage.deleteRecord(2);
-    clusterPage.deleteRecord(3);
+    clusterPage.deleteRecord(0, true);
+    clusterPage.deleteRecord(1, true);
+    clusterPage.deleteRecord(2, true);
+    clusterPage.deleteRecord(3, true);
 
     bookedPositions.add(1);
     bookedPositions.add(2);
@@ -273,10 +273,10 @@ public class ClusterPageTest {
     clusterPage.appendRecord(1, new byte[] { 3 }, -1, bookedPositions);
     clusterPage.appendRecord(1, new byte[] { 4 }, -1, bookedPositions);
 
-    clusterPage.deleteRecord(0);
-    clusterPage.deleteRecord(1);
-    clusterPage.deleteRecord(2);
-    clusterPage.deleteRecord(3);
+    clusterPage.deleteRecord(0, true);
+    clusterPage.deleteRecord(1, true);
+    clusterPage.deleteRecord(2, true);
+    clusterPage.deleteRecord(3, true);
 
     bookedPositions.add(1);
     bookedPositions.add(2);
@@ -338,15 +338,15 @@ public class ClusterPageTest {
     clusterPage.appendRecord(1, new byte[] { 3 }, -1, bookedPositions);
     clusterPage.appendRecord(1, new byte[] { 4 }, -1, bookedPositions);
 
-    clusterPage.deleteRecord(0);
-    clusterPage.deleteRecord(1);
-    clusterPage.deleteRecord(2);
-    clusterPage.deleteRecord(3);
+    clusterPage.deleteRecord(0, true);
+    clusterPage.deleteRecord(1, true);
+    clusterPage.deleteRecord(2, true);
+    clusterPage.deleteRecord(3, true);
 
     bookedPositions.add(1);
     bookedPositions.add(2);
 
-    int position  = clusterPage.appendRecord(1, new byte[] { 9 }, 2, bookedPositions);
+    int position = clusterPage.appendRecord(1, new byte[] { 9 }, 2, bookedPositions);
     Assert.assertEquals(2, position);
 
     position = clusterPage.appendRecord(1, new byte[] { 8 }, 1, bookedPositions);
@@ -404,7 +404,55 @@ public class ClusterPageTest {
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
     int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
 
-    Assert.assertArrayEquals(record, localPage.deleteRecord(position));
+    Assert.assertArrayEquals(record, localPage.deleteRecord(position, true));
+
+    int newRecordVersion = 0;
+
+    Assert.assertEquals(
+        localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, -1, Collections.emptySet()),
+        position);
+
+    int recordSize = localPage.getRecordSize(position);
+    Assert.assertEquals(recordSize, 11);
+
+    Assert.assertEquals(localPage.getRecordVersion(position), newRecordVersion);
+
+    assertThat(localPage.getRecordBinaryValue(position, 0, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+  }
+
+  @Test
+  public void testDeleteAddLowerVersionNFL() {
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OPointer pointer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
+    cacheEntry.acquireExclusiveLock();
+
+    try {
+      OClusterPage localPage = new OClusterPage(cacheEntry);
+      localPage.init();
+
+      deleteAddLowerVersionNFL(localPage);
+
+      assertChangesTracking(localPage, bufferPool);
+    } finally {
+      cacheEntry.releaseExclusiveLock();
+      cachePointer.decrementReferrer();
+    }
+  }
+
+  private void deleteAddLowerVersionNFL(OClusterPage localPage) {
+    int recordVersion = 0;
+    recordVersion++;
+    recordVersion++;
+
+    final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
+    int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
+
+    Assert.assertArrayEquals(record, localPage.deleteRecord(position, false));
 
     int newRecordVersion = 0;
 
@@ -450,7 +498,56 @@ public class ClusterPageTest {
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
     int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
 
-    Assert.assertArrayEquals(record, localPage.deleteRecord(position));
+    Assert.assertArrayEquals(record, localPage.deleteRecord(position, true));
+
+    int newRecordVersion = 0;
+    newRecordVersion++;
+    newRecordVersion++;
+    newRecordVersion++;
+    newRecordVersion++;
+
+    Assert.assertEquals(
+        localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, -1, Collections.emptySet()),
+        position);
+
+    int recordSize = localPage.getRecordSize(position);
+    Assert.assertEquals(recordSize, 11);
+
+    Assert.assertEquals(localPage.getRecordVersion(position), newRecordVersion);
+    assertThat(localPage.getRecordBinaryValue(position, 0, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+  }
+
+  @Test
+  public void testDeleteAddBiggerVersionNFL() {
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OPointer pointer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
+    cacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage localPage = new OClusterPage(cacheEntry);
+      localPage.init();
+
+      deleteAddBiggerVersionNFL(localPage);
+      assertChangesTracking(localPage, bufferPool);
+    } finally {
+      cacheEntry.releaseExclusiveLock();
+      cachePointer.decrementReferrer();
+    }
+  }
+
+  private void deleteAddBiggerVersionNFL(OClusterPage localPage) {
+    int recordVersion = 0;
+    recordVersion++;
+    recordVersion++;
+
+    final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
+    int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
+
+    Assert.assertArrayEquals(record, localPage.deleteRecord(position, false));
 
     int newRecordVersion = 0;
     newRecordVersion++;
@@ -499,7 +596,50 @@ public class ClusterPageTest {
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
     int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
 
-    Assert.assertArrayEquals(record, localPage.deleteRecord(position));
+    Assert.assertArrayEquals(record, localPage.deleteRecord(position, true));
+
+    Assert.assertEquals(
+        localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, -1, Collections.emptySet()),
+        position);
+
+    int recordSize = localPage.getRecordSize(position);
+    Assert.assertEquals(recordSize, 11);
+
+    Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
+    assertThat(localPage.getRecordBinaryValue(position, 0, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+  }
+
+  @Test
+  public void testDeleteAddEqualVersionNFL() {
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OPointer pointer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
+    cacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage localPage = new OClusterPage(cacheEntry);
+      localPage.init();
+
+      deleteAddEqualVersionNFL(localPage);
+      assertChangesTracking(localPage, bufferPool);
+    } finally {
+      cacheEntry.releaseExclusiveLock();
+      cachePointer.decrementReferrer();
+    }
+  }
+
+  private void deleteAddEqualVersionNFL(OClusterPage localPage) {
+    int recordVersion = 0;
+    recordVersion++;
+    recordVersion++;
+
+    final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
+    int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
+
+    Assert.assertArrayEquals(record, localPage.deleteRecord(position, false));
 
     Assert.assertEquals(
         localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, -1, Collections.emptySet()),
@@ -542,7 +682,7 @@ public class ClusterPageTest {
     final byte[] record = new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
     int position = localPage.appendRecord(recordVersion, record, -1, Collections.emptySet());
 
-    Assert.assertArrayEquals(record, localPage.deleteRecord(position));
+    Assert.assertArrayEquals(record, localPage.deleteRecord(position, true));
 
     Assert.assertEquals(
         localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, -1, Collections.emptySet()),
@@ -605,11 +745,11 @@ public class ClusterPageTest {
 
     int freeSpace = localPage.getFreeSpace();
 
-    Assert.assertArrayEquals(recordOne, localPage.deleteRecord(0));
-    Assert.assertArrayEquals(recordThree, localPage.deleteRecord(2));
+    Assert.assertArrayEquals(recordOne, localPage.deleteRecord(0, true));
+    Assert.assertArrayEquals(recordThree, localPage.deleteRecord(2, true));
 
-    Assert.assertNull(localPage.deleteRecord(0));
-    Assert.assertNull(localPage.deleteRecord(7));
+    Assert.assertNull(localPage.deleteRecord(0, true));
+    Assert.assertNull(localPage.deleteRecord(7, true));
 
     Assert.assertEquals(localPage.findFirstDeletedRecord(0), 0);
     Assert.assertEquals(localPage.findFirstDeletedRecord(1), 2);
@@ -684,7 +824,7 @@ public class ClusterPageTest {
     Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
 
     for (int i = 0; i < filledRecordsCount; i += 2) {
-      localPage.deleteRecord(i);
+      localPage.deleteRecord(i, true);
       deletedPositions.add(i);
       positionCounter.remove(i);
     }
@@ -711,6 +851,78 @@ public class ClusterPageTest {
       if (deletedPositions.contains(entry.getKey()))
         Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
 
+    }
+  }
+
+  @Test
+  public void testAddFullPageDeleteAndAddAgainNFL() {
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OPointer pointer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
+    cacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage localPage = new OClusterPage(cacheEntry);
+      localPage.init();
+
+      addFullPageDeleteAndAddAgainNFL(localPage);
+      assertChangesTracking(localPage, bufferPool);
+    } finally {
+      cacheEntry.releaseExclusiveLock();
+      cachePointer.decrementReferrer();
+    }
+  }
+
+  private void addFullPageDeleteAndAddAgainNFL(OClusterPage localPage) {
+    Map<Integer, Byte> positionCounter = new HashMap<>();
+
+    int lastPosition;
+    byte counter = 0;
+    int freeSpace = localPage.getFreeSpace();
+    int recordVersion = 0;
+    recordVersion++;
+
+    do {
+      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter }, -1, Collections.emptySet());
+      if (lastPosition >= 0) {
+        Assert.assertEquals(lastPosition, positionCounter.size());
+        positionCounter.put(lastPosition, counter);
+        counter++;
+
+        Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + ORecordVersionHelper.SERIALIZED_SIZE));
+        freeSpace = localPage.getFreeSpace();
+      }
+    } while (lastPosition >= 0);
+
+    int filledRecordsCount = positionCounter.size();
+    Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
+
+    for (int i = filledRecordsCount; i >= 0; i--) {
+      localPage.deleteRecord(i, false);
+      positionCounter.remove(i);
+    }
+
+    freeSpace = localPage.getFreeSpace();
+    do {
+      lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter }, -1, Collections.emptySet());
+      if (lastPosition >= 0) {
+        positionCounter.put(lastPosition, counter);
+        counter++;
+
+        Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15 - OClusterPage.INDEX_ITEM_SIZE);
+        freeSpace = localPage.getFreeSpace();
+      }
+    } while (lastPosition >= 0);
+
+    Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
+    for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
+      assertThat(localPage.getRecordBinaryValue(entry.getKey(), 0, 3))
+          .isEqualTo(new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+
+      Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
     }
   }
 
@@ -754,7 +966,7 @@ public class ClusterPageTest {
     Assert.assertEquals(position, 0);
     Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-    Assert.assertArrayEquals(bigChunk, localPage.deleteRecord(0));
+    Assert.assertArrayEquals(bigChunk, localPage.deleteRecord(0, true));
 
     recordVersion++;
     int freeSpace = localPage.getFreeSpace();
@@ -839,7 +1051,7 @@ public class ClusterPageTest {
 
     for (int i = 0; i < filledRecordsCount; i++) {
       if (mersenneTwister.nextBoolean()) {
-        localPage.deleteRecord(i);
+        localPage.deleteRecord(i, true);
         positions.remove(i);
       }
     }
@@ -917,7 +1129,7 @@ public class ClusterPageTest {
 
     for (int i = 0; i < filledRecordsCount; i++) {
       if (mersenneTwister.nextBoolean()) {
-        localPage.deleteRecord(i);
+        localPage.deleteRecord(i, true);
         positions.remove(i);
       }
     }
