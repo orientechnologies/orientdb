@@ -1080,6 +1080,9 @@ OStatement StatementInternal():
                 result = CreateSecurityPolicyStatement()
                 |
                 LOOKAHEAD(2)
+                result = AlterSecurityPolicyStatement()
+                |
+                LOOKAHEAD(2)
                 result = CreateSequenceStatement()
                 |
                 LOOKAHEAD(CreateVertexStatementNoTarget())
@@ -5326,6 +5329,83 @@ OCreateSecurityPolicyStatement CreateSecurityPolicyStatement():
     )*
 
     ]
+
+  ) {return jjtThis; }
+}
+
+
+OAlterSecurityPolicyStatement AlterSecurityPolicyStatement():
+{}
+{
+  (
+    <ALTER> <SECURITY> <POLICY>
+    jjtThis.name = Identifier()
+    (
+      (
+        <SET>
+        (
+            ( <CREATE> <EQ> <LPAREN> jjtThis.create = OrBlock() <RPAREN> )
+            |
+            ( <READ> <EQ> <LPAREN> jjtThis.read = OrBlock() <RPAREN> )
+            |
+            ( <BEFORE> <UPDATE> <EQ> <LPAREN> jjtThis.beforeUpdate = OrBlock() <RPAREN> )
+            |
+            ( <AFTER> <UPDATE> <EQ> <LPAREN> jjtThis.afterUpdate = OrBlock() <RPAREN> )
+            |
+            ( <DELETE> <EQ> <LPAREN> jjtThis.delete = OrBlock() <RPAREN> )
+            |
+            ( <EXECUTE> <EQ> <LPAREN> jjtThis.execute = OrBlock() <RPAREN> )
+        )
+        ( <COMMA>
+              (
+                 ( <CREATE> <EQ> <LPAREN> jjtThis.create = OrBlock() <RPAREN> )
+                 |
+                 ( <READ> <EQ> <LPAREN> jjtThis.read = OrBlock() <RPAREN> )
+                 |
+                 ( <BEFORE> <UPDATE> <EQ> <LPAREN> jjtThis.beforeUpdate = OrBlock() <RPAREN> )
+                 |
+                 ( <AFTER> <UPDATE> <EQ> <LPAREN> jjtThis.afterUpdate = OrBlock() <RPAREN> )
+                 |
+                 ( <DELETE> <EQ> <LPAREN> jjtThis.delete = OrBlock() <RPAREN> )
+                 |
+                 ( <EXECUTE> <EQ> <LPAREN> jjtThis.execute = OrBlock() <RPAREN> )
+             )
+        )*
+      )
+      |
+      (
+        <REMOVE>
+        (
+          ( <CREATE> { jjtThis.removeCreate = true; } )
+          |
+          ( <READ>{ jjtThis.removeRead = true; } )
+          |
+          ( <BEFORE> <UPDATE> { jjtThis.removeBeforeUpdate = true; } )
+          |
+          ( <AFTER> <UPDATE> { jjtThis.removeAfterUpdate = true; } )
+          |
+          ( <DELETE> { jjtThis.removeDelete = true; } )
+          |
+          ( <EXECUTE> { jjtThis.removeExecute = true; } )
+        )
+        (
+          <COMMA>
+          (
+              ( <CREATE> { jjtThis.removeCreate = true; } )
+              |
+              ( <READ>{ jjtThis.removeRead = true; } )
+              |
+              ( <BEFORE> <UPDATE> { jjtThis.removeBeforeUpdate = true; } )
+              |
+              ( <AFTER> <UPDATE> { jjtThis.removeAfterUpdate = true; } )
+              |
+              ( <DELETE> { jjtThis.removeDelete = true; } )
+              |
+              ( <EXECUTE> { jjtThis.removeExecute = true; } )
+          )
+        )*
+      )
+    )+
 
   ) {return jjtThis; }
 }
