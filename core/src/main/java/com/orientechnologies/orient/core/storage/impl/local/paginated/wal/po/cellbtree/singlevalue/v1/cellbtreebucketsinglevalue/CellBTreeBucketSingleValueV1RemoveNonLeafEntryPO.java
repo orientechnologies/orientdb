@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue;
 
-import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
@@ -9,39 +8,35 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCe
 
 import java.nio.ByteBuffer;
 
-public class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOperationRecord {
-  private int     index;
-  private byte[]  key;
-  private boolean updateNeighbours;
-
-  private int leftChild;
-  private int rightChild;
-
+public class CellBTreeBucketSingleValueV1RemoveNonLeafEntryPO extends PageOperationRecord {
+  private int index;
   private int prevChild;
 
-  public CellBTreeBucketSingleValueV1AddNonLeafEntryPO() {
+  private byte[] key;
+  private int    leftChild;
+  private int    rightChild;
+
+  public CellBTreeBucketSingleValueV1RemoveNonLeafEntryPO() {
   }
 
-  public CellBTreeBucketSingleValueV1AddNonLeafEntryPO(int index, byte[] key, boolean updateNeighbours, int leftChild,
-      int rightChild, int prevChild) {
+  public CellBTreeBucketSingleValueV1RemoveNonLeafEntryPO(int index, int prevChild, byte[] key, int leftChild, int rightChild) {
     this.index = index;
+    this.prevChild = prevChild;
     this.key = key;
-    this.updateNeighbours = updateNeighbours;
     this.leftChild = leftChild;
     this.rightChild = rightChild;
-    this.prevChild = prevChild;
   }
 
   public int getIndex() {
     return index;
   }
 
-  public byte[] getKey() {
-    return key;
+  public int getPrevChild() {
+    return prevChild;
   }
 
-  public boolean isUpdateNeighbours() {
-    return updateNeighbours;
+  public byte[] getKey() {
+    return key;
   }
 
   public int getLeftChild() {
@@ -52,33 +47,26 @@ public class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOperation
     return rightChild;
   }
 
-  public int getPrevChild() {
-    return prevChild;
-  }
-
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
-    final boolean added = bucket.addNonLeafEntry(index, leftChild, rightChild, key, updateNeighbours);
-    if (!added) {
-      throw new IllegalStateException("Can not redo operation of addition of non leaf entry.");
-    }
-  }
-
-  @Override
-  public void undo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
     bucket.removeNonLeafEntry(index, key, prevChild);
   }
 
   @Override
+  public void undo(OCacheEntry cacheEntry) {
+    final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
+    bucket.addNonLeafEntry(index, leftChild, rightChild, key, true);
+  }
+
+  @Override
   public byte getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_NON_LEAF_ENTRY_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_REMOVE_NON_LEAF_ENTRY_PO;
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 5 * OIntegerSerializer.INT_SIZE + key.length + OByteSerializer.BYTE_SIZE;
+    return super.serializedSize() + 5 * OIntegerSerializer.INT_SIZE + key.length;
   }
 
   @Override
@@ -86,16 +74,13 @@ public class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOperation
     super.serializeToByteBuffer(buffer);
 
     buffer.putInt(index);
+    buffer.putInt(prevChild);
 
     buffer.putInt(key.length);
     buffer.put(key);
 
-    buffer.put(updateNeighbours ? (byte) 1 : 0);
-
     buffer.putInt(leftChild);
     buffer.putInt(rightChild);
-
-    buffer.putInt(prevChild);
   }
 
   @Override
@@ -103,15 +88,13 @@ public class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOperation
     super.deserializeFromByteBuffer(buffer);
 
     index = buffer.getInt();
-    final int len = buffer.getInt();
-    key = new byte[len];
-    buffer.get(key);
+    prevChild = buffer.getInt();
 
-    updateNeighbours = buffer.get() > 0;
+    final int keyLen = buffer.getInt();
+    key = new byte[keyLen];
+    buffer.get(key);
 
     leftChild = buffer.getInt();
     rightChild = buffer.getInt();
-
-    prevChild = buffer.getInt();
   }
 }

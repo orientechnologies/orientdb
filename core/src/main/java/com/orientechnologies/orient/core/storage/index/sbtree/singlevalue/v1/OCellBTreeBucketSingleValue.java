@@ -28,10 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1AddLeafEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1AddNonLeafEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1InitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1RemoveLeafEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -134,14 +131,18 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
     addPageOperation(new CellBTreeBucketSingleValueV1RemoveLeafEntryPO(entryIndex, key, value));
   }
 
-  public void removeNonLeafEntry(final int entryIndex, final int keySize, final int prevChild) {
+  public void removeNonLeafEntry(final int entryIndex, final byte[] key, final int prevChild) {
     if (isLeaf()) {
       throw new IllegalStateException("Remove is applied to non-leaf buckets only");
     }
 
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
-    final int entrySize = keySize + 2 * OIntegerSerializer.INT_SIZE;
+    final int entrySize = key.length + 2 * OIntegerSerializer.INT_SIZE;
     int size = getIntValue(SIZE_OFFSET);
+
+    final int leftChild = getIntValue(entryPosition);
+    final int rightChild = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
+
     if (entryIndex < size - 1) {
       moveData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE,
           POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
@@ -178,6 +179,8 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
         setIntValue(nextEntryPosition, prevChild);
       }
     }
+
+    addPageOperation(new CellBTreeBucketSingleValueV1RemoveNonLeafEntryPO(entryIndex, prevChild, key, leftChild, rightChild));
   }
 
   public int size() {
@@ -541,7 +544,9 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
         final int nextEntryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE);
         prevChild = getIntValue(nextEntryPosition);
         setIntValue(nextEntryPosition, rightChild);
-      } else {
+      }
+
+      if (index > 0) {
         final int prevEntryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + (index - 1) * OIntegerSerializer.INT_SIZE);
         prevChild = getIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE);
         setIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE, leftChild);
