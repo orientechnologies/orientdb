@@ -46,14 +46,14 @@ public class OSecurityResourceSegment extends SimpleNode {
   @Override
   public String toString() {
     String result;
-    if(this.star){
+    if (this.star) {
       result = "*";
-    }else if(this.cluster){
+    } else if (this.cluster) {
       result = "cluster";
-    }else{
+    } else {
       result = identifier.toString();
     }
-    if(next!=null){
+    if (next != null) {
       result += ".";
       result += next.toString();
     }

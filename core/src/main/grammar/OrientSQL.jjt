@@ -1077,6 +1077,9 @@ OStatement StatementInternal():
                 result = DropUserStatement()
                 |
                 LOOKAHEAD(2)
+                result = AlterRoleStatement()
+                |
+                LOOKAHEAD(2)
                 result = CreateSecurityPolicyStatement()
                 |
                 LOOKAHEAD(2)
@@ -4894,6 +4897,31 @@ ODropUserStatement DropUserStatement():
     )
     { return jjtThis; }
 }
+
+OAlterRoleStatement AlterRoleStatement():
+{
+  OSecurityResourceSegment lastSecurityResource;
+  OIdentifier lastPolicy;
+}
+{
+  (
+    <ALTER> <ROLE>
+    jjtThis.name = Identifier()
+    (
+      ( <SET> <POLICY> lastPolicy = Identifier() <ON> lastSecurityResource = SecurityResourceSegment()
+
+        {
+        jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+          com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_ADD,
+          lastSecurityResource, lastPolicy));
+        }
+      )
+      |
+      ( <REMOVE> <POLICY> <ON> lastSecurityResource = SecurityResourceSegment()  )
+    )+
+  ) { return jjtThis; }
+}
+
 
 
 OLetStatement LetStatement():
