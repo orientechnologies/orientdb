@@ -285,7 +285,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
             assert oldRawValue != null;
 
             if (oldRawValue.length == serializedValue.length) {
-              keyBucket.updateValue(bucketSearchResult.itemIndex, serializedValue, keySerializer, encryption);
+              keyBucket.updateValue(bucketSearchResult.itemIndex, serializedValue, rawKey.length);
               releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
               return true;
             } else {

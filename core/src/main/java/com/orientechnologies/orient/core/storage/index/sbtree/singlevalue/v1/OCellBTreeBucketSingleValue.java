@@ -546,38 +546,26 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
 
     size++;
 
-    int prevLeftChild = -1;
-    int prevRightChild = -1;
-
+    int prevChild = -1;
     if (updateNeighbors && size > 1) {
       if (index < size - 1) {
         final int nextEntryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE);
-        prevRightChild = getIntValue(nextEntryPosition);
+        prevChild = getIntValue(nextEntryPosition);
         setIntValue(nextEntryPosition, rightChild);
-      }
-
-      if (index > 0) {
+      } else {
         final int prevEntryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + (index - 1) * OIntegerSerializer.INT_SIZE);
-        prevLeftChild = getIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE);
+        prevChild = getIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE);
         setIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE, leftChild);
       }
     }
 
     addPageOperation(
-        new CellBTreeBucketSingleValueV1AddNonLeafEntryPO(index, key, updateNeighbors, leftChild, rightChild, prevLeftChild));
+        new CellBTreeBucketSingleValueV1AddNonLeafEntryPO(index, key, updateNeighbors, leftChild, rightChild, prevChild));
     return true;
   }
 
-  void updateValue(final int index, final byte[] value, OBinarySerializer<K> keySerializer, OEncryption encryption) {
-    int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
-
-    if (encryption == null) {
-      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
-    } else {
-      final int encryptedValue = getIntValue(entryPosition);
-      entryPosition += OIntegerSerializer.INT_SIZE + encryptedValue;
-    }
-
+  void updateValue(final int index, final byte[] value, final int keySize) {
+    final int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) + keySize;
     setBinaryValue(entryPosition, value);
   }
 
