@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCe
 
 import java.nio.ByteBuffer;
 
-public class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOperationRecord {
+public final class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOperationRecord {
   private int     index;
   private byte[]  key;
   private boolean updateNeighbours;

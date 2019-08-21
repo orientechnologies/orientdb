@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 import java.nio.ByteBuffer;
 import java.util.Collections;
 
-public class ClusterPageDeleteRecordPO extends PageOperationRecord {
+public final class ClusterPageDeleteRecordPO extends PageOperationRecord {
   private int     recordPosition;
   private int     recordVersion;
   private byte[]  record;

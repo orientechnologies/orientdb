@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 
 import java.nio.ByteBuffer;
 
-public class ClusterPageSetRecordLongValuePO extends PageOperationRecord {
+public final class ClusterPageSetRecordLongValuePO extends PageOperationRecord {
   private int recordPosition;
   private int offset;
 

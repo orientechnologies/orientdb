@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 
 import java.nio.ByteBuffer;
 
-public class ClusterPageReplaceRecordPO extends PageOperationRecord {
+public final class ClusterPageReplaceRecordPO extends PageOperationRecord {
   private int recordPosition;
 
   private int    recordVersion;

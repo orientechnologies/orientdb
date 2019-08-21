@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 
-public class ClusterPageInitPO extends PageOperationRecord {
+public final class ClusterPageInitPO extends PageOperationRecord {
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OClusterPage clusterPage = new OClusterPage(cacheEntry);

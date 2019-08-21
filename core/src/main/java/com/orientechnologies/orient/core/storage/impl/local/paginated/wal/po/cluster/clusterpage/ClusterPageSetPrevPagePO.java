@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 
 import java.nio.ByteBuffer;
 
-public class ClusterPageSetPrevPagePO extends PageOperationRecord {
+public final class ClusterPageSetPrevPagePO extends PageOperationRecord {
   private int oldPrevPage;
   private int prevPage;
 
