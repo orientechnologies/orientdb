@@ -8,15 +8,15 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCe
 
 import java.nio.ByteBuffer;
 
-public final class CellBTreeBucketSingleValueV1AddLeafEntryPO extends PageOperationRecord {
+public class CellBTreeBucketSingleValueV1RemoveLeafEntryPO extends PageOperationRecord {
   private int    index;
   private byte[] key;
   private byte[] value;
 
-  public CellBTreeBucketSingleValueV1AddLeafEntryPO() {
+  public CellBTreeBucketSingleValueV1RemoveLeafEntryPO() {
   }
 
-  public CellBTreeBucketSingleValueV1AddLeafEntryPO(int index, byte[] key, byte[] value) {
+  public CellBTreeBucketSingleValueV1RemoveLeafEntryPO(int index, byte[] key, byte[] value) {
     this.index = index;
     this.key = key;
     this.value = value;
@@ -37,21 +37,18 @@ public final class CellBTreeBucketSingleValueV1AddLeafEntryPO extends PageOperat
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
-    final boolean result = bucket.addLeafEntry(index, key, value);
-    if (!result) {
-      throw new IllegalStateException("Can not redo leaf entry addition");
-    }
+    bucket.removeLeafEntry(index, key, value);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
-    bucket.removeLeafEntry(index, key, value);
+    bucket.addLeafEntry(index, key, value);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAF_ENTRY_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_REMOVE_LEAF_ENTRY_PO;
   }
 
   @Override

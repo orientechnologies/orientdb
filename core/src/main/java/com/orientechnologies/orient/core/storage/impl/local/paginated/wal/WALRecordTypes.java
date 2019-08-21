@@ -74,4 +74,5 @@ public final class WALRecordTypes {
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_INIT_PO               = 60;
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAF_ENTRY_PO     = 61;
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_NON_LEAF_ENTRY_PO = 62;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_REMOVE_LEAF_ENTRY_PO  = 63;
 }

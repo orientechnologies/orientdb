@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1AddLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1AddNonLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1RemoveLeafEntryPO;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -94,12 +95,12 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
     return -(low + 1); // key not found.
   }
 
-  public void removeLeafEntry(final int entryIndex, final int keySize) {
+  public void removeLeafEntry(final int entryIndex, byte[] key, byte[] value) {
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
 
     final int entrySize;
     if (isLeaf()) {
-      entrySize = keySize + RID_SIZE;
+      entrySize = key.length + RID_SIZE;
     } else {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
@@ -129,6 +130,8 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
       }
       currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
+
+    addPageOperation(new CellBTreeBucketSingleValueV1RemoveLeafEntryPO(entryIndex, key, value));
   }
 
   public void removeNonLeafEntry(final int entryIndex, final int keySize, final int prevChild) {
@@ -301,20 +304,6 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
     final long clusterPosition = getLongValue(entryPosition + OShortSerializer.SHORT_SIZE);
 
     return new ORecordId(clusterId, clusterPosition);
-  }
-
-  public int getLeafKeySize(final int entryIndex, final boolean isEncrypted, final OBinarySerializer<K> keySerializer) {
-    if (!isLeaf()) {
-      throw new IllegalStateException("Can not be used in non-leaf bucket");
-    }
-
-    final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
-    if (isEncrypted) {
-      final int encryptionSize = getIntValue(entryPosition);
-      return encryptionSize + OIntegerSerializer.INT_SIZE;
-    }
-
-    return getObjectSizeInDirectMemory(keySerializer, entryPosition);
   }
 
   public ORID getValue(final int entryIndex, final int keyLen) {

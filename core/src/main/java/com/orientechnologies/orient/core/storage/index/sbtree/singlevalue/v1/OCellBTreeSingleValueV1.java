@@ -289,7 +289,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
               releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
               return true;
             } else {
-              keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, rawKey.length);
+              keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, rawKey, oldRawValue);
               insertionIndex = bucketSearchResult.itemIndex;
               sizeDiff = 0;
             }
@@ -478,21 +478,22 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
             return null;
           }
 
-          removedValue = removeKey(atomicOperation, bucketSearchResult);
+          final byte[] rawKey = serializeKey(key);
+          final OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.pageIndex, false,
+              true);
+          try {
+            final OCellBTreeBucketSingleValue<K> keyBucket = new OCellBTreeBucketSingleValue<>(keyBucketCacheEntry);
+            final byte[] rawRemovedValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, encryption, keySerializer);
 
-          assert removedValue != null;
+            final int clusterId = OShortSerializer.INSTANCE.deserializeNative(rawRemovedValue, 0);
+            final long clusterPosition = OLongSerializer.INSTANCE.deserializeNative(rawRemovedValue, OShortSerializer.SHORT_SIZE);
 
-          final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
+            removedValue = new ORecordId(clusterId, clusterPosition);
 
-          final byte[] rawKey;
-          if (encryption == null) {
-            rawKey = serializedKey;
-          } else {
-            final byte[] encryptedKey = encryption.encrypt(serializedKey);
-
-            rawKey = new byte[OIntegerSerializer.INT_SIZE + encryptedKey.length];
-            OIntegerSerializer.INSTANCE.serializeNative(encryptedKey.length, rawKey, 0);
-            System.arraycopy(encryptedKey, 0, rawKey, OIntegerSerializer.INT_SIZE, encryptedKey.length);
+            keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, rawKey, rawRemovedValue);
+            updateSize(-1, atomicOperation);
+          } finally {
+            releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
           }
 
           atomicOperation.addComponentOperation(
@@ -541,22 +542,6 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
       updateSize(-1, atomicOperation);
     }
 
-    return removedValue;
-  }
-
-  private ORID removeKey(final OAtomicOperation atomicOperation, final BucketSearchResult bucketSearchResult) throws IOException {
-    final ORID removedValue;
-    final OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.pageIndex, false, true);
-    try {
-      final OCellBTreeBucketSingleValue<K> keyBucket = new OCellBTreeBucketSingleValue<>(keyBucketCacheEntry);
-      final int keySize = keyBucket.getLeafKeySize(bucketSearchResult.itemIndex, encryption != null, keySerializer);
-      removedValue = keyBucket.getValue(bucketSearchResult.itemIndex, keySize);
-
-      keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, keySize);
-      updateSize(-1, atomicOperation);
-    } finally {
-      releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
-    }
     return removedValue;
   }
 
