@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueAddLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueInitPO;
 
 import java.util.ArrayList;
@@ -92,12 +93,12 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
     return -(low + 1); // key not found.
   }
 
-  public void remove(final int entryIndex, final byte[] oldRawKey, final OEncryption encryption,
+  public void remove(final int entryIndex, final int oldKeyLen, final OEncryption encryption,
       final OBinarySerializer<K> keySerializer) {
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
     final int keySize;
 
-    if (oldRawKey == null) {
+    if (oldKeyLen <= 0) {
       if (encryption == null) {
         keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition);
       } else {
@@ -105,7 +106,7 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
         keySize = OIntegerSerializer.INT_SIZE + encryptionSize;
       }
     } else {
-      keySize = oldRawKey.length;
+      keySize = oldKeyLen;
     }
 
     final int entrySize;
@@ -333,7 +334,7 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
     setIntValue(SIZE_OFFSET, newSize);
   }
 
-  boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {
+  public boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {
     final int entrySize = serializedKey.length + serializedValue.length;
 
     assert isLeaf();
@@ -358,6 +359,7 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
     setBinaryValue(freePointer, serializedKey);
     setBinaryValue(freePointer + serializedKey.length, serializedValue);
 
+    addPageOperation(new CellBTreeBucketSingleValueAddLeafEntryPO(index, serializedKey, serializedValue));
     return true;
   }
 

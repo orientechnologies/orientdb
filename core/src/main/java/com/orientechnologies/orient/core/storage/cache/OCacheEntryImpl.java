@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by tglman on 23/06/16.
  */
-public class OCacheEntryImpl implements OCacheEntry {
+public final class OCacheEntryImpl implements OCacheEntry {
   private static final int FROZEN = -1;
   private static final int DEAD   = -2;
 

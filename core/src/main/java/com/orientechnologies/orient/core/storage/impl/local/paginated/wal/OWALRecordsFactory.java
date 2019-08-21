@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueAddLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.*;
@@ -286,8 +287,11 @@ public final class OWALRecordsFactory {
     case PAGINATED_CLUSTER_STATE_V2_SET_FILE_SIZE_PO:
       walRecord = new PaginatedClusterStateV2SetFileSizePO();
       break;
-    case CELL_BTREE_BUCKET_SINGLE_VALUE_INIT_PO:
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_INIT_PO:
       walRecord = new CellBTreeBucketSingleValueInitPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAD_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueAddLeafEntryPO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

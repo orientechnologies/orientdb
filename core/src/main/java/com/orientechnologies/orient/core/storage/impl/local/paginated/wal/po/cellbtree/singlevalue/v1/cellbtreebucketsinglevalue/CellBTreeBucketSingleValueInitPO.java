@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCe
 
 import java.nio.ByteBuffer;
 
-public class CellBTreeBucketSingleValueInitPO extends PageOperationRecord {
+public final class CellBTreeBucketSingleValueInitPO extends PageOperationRecord {
   private boolean isLeaf;
 
   public CellBTreeBucketSingleValueInitPO() {
@@ -30,7 +30,7 @@ public class CellBTreeBucketSingleValueInitPO extends PageOperationRecord {
 
   @Override
   public byte getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_INIT_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_INIT_PO;
   }
 
   @Override
