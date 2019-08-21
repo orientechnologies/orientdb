@@ -46,28 +46,28 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  */
 @SuppressWarnings({ "serial" })
 public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORecordLazyMultiValue {
-  protected final byte                                            recordType;
-  protected       ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType         = MULTIVALUE_CONTENT_TYPE.EMPTY;
-  protected       boolean                                         autoConvertToRecord = true;
-  protected       boolean                                         ridOnly             = false;
+  protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType         = MULTIVALUE_CONTENT_TYPE.EMPTY;
+  protected boolean                                         autoConvertToRecord = true;
+  protected boolean                                         ridOnly             = false;
 
   public ORecordLazyList() {
     super(null);
-    this.recordType = ODocument.RECORD_TYPE;
   }
 
-  public ORecordLazyList(final ODocument iSourceRecord) {
+  public ORecordLazyList(final ORecordElement iSourceRecord) {
     super(iSourceRecord);
     if (iSourceRecord != null) {
-      this.recordType = ORecordInternal.getRecordType(iSourceRecord);
-      if (!iSourceRecord.isLazyLoad())
+      ORecordElement source = iSourceRecord;
+      while (!(source instanceof ODocument)) {
+        source = source.getOwner();
+      }
+      if (!((ODocument) source).isLazyLoad())
         // SET AS NON-LAZY LOAD THE COLLECTION TOO
         autoConvertToRecord = false;
-    } else
-      this.recordType = ODocument.RECORD_TYPE;
+    }
   }
 
-  public ORecordLazyList(final ODocument iSourceRecord, final Collection<? extends OIdentifiable> iOrigin) {
+  public ORecordLazyList(final ORecordElement iSourceRecord, final Collection<? extends OIdentifiable> iOrigin) {
     this(iSourceRecord);
     if (iOrigin != null && !iOrigin.isEmpty())
       addAll(iOrigin);
@@ -318,10 +318,6 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
     return ORecordMultiValueHelper.toString(this);
   }
 
-  public byte getRecordType() {
-    return recordType;
-  }
-
   public ORecordLazyList copy(final ODocument iSourceRecord) {
     final ORecordLazyList copy = new ORecordLazyList(iSourceRecord);
     copy.contentType = contentType;
@@ -422,6 +418,5 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //not needed do nothing
   }
-
 
 }

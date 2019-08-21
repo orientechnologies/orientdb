@@ -339,12 +339,12 @@ public class HelperClasses {
     }
   }
 
-  public static Map<Object, OIdentifiable> readLinkMap(final BytesContainer bytes, final ODocument document,
+  public static Map<Object, OIdentifiable> readLinkMap(final BytesContainer bytes, final ORecordElement owner,
       boolean justRunThrough) {
     int size = OVarIntSerializer.readAsInteger(bytes);
     ORecordLazyMap result = null;
     if (!justRunThrough)
-      result = new ORecordLazyMap(document);
+      result = new ORecordLazyMap(owner);
     while ((size--) > 0) {
       final String key = readString(bytes);
       final ORecordId value = readOptimizedLink(bytes, justRunThrough);

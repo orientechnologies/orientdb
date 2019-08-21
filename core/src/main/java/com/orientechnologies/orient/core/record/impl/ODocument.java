@@ -3130,19 +3130,19 @@ public class ODocument extends ORecordAbstract
       case EMBEDDEDLIST:
         if (fieldValue instanceof List<?>) {
           newValue = new OTrackedList<>(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+          fillTrackedCollection((Collection<Object>) newValue, (ORecordElement) newValue, (Collection<Object>) fieldValue);
         }
         break;
       case EMBEDDEDSET:
         if (fieldValue instanceof Set<?>) {
           newValue = new OTrackedSet<>(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+          fillTrackedCollection((Collection<Object>) newValue, (ORecordElement) newValue, (Collection<Object>) fieldValue);
         }
         break;
       case EMBEDDEDMAP:
         if (fieldValue instanceof Map<?, ?>) {
           newValue = new OTrackedMap<>(this);
-          fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
+          fillTrackedMap((Map<Object, Object>) newValue, (ORecordElement) newValue, (Map<Object, Object>) fieldValue);
         }
         break;
       case LINKLIST:
@@ -3199,13 +3199,18 @@ public class ODocument extends ORecordAbstract
     for (OMultiValueChangeEvent<Object, Object> event : events) {
       Object value = event.getValue();
       if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD && !(value instanceof OTrackedMultiValue)) {
-        if (value instanceof Collection) {
-          Collection<Object> newCollection = value instanceof List ? new OTrackedList<>(this) : new OTrackedSet<>(this);
-          fillTrackedCollection(newCollection, (Collection<Object>) value);
+        if (value instanceof List) {
+          OTrackedList newCollection = new OTrackedList<>(this) ;
+          fillTrackedCollection(newCollection, newCollection, (Collection<Object>) value);
           origin.replace(event, newCollection);
+        } else if (value instanceof Set) {
+          OTrackedSet newCollection = new OTrackedSet<>(this);
+          fillTrackedCollection(newCollection, newCollection, (Collection<Object>) value);
+          origin.replace(event, newCollection);
+
         } else if (value instanceof Map) {
-          Map<Object, Object> newMap = new OTrackedMap<>(this);
-          fillTrackedMap(newMap, (Map<Object, Object>) value);
+          OTrackedMap<Object> newMap = new OTrackedMap<>(this);
+          fillTrackedMap(newMap, newMap, (Map<Object, Object>) value);
           origin.replace(event, newMap);
         }
       } else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED) {
@@ -3216,45 +3221,45 @@ public class ODocument extends ORecordAbstract
     }
   }
 
-  private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {
+  private void fillTrackedCollection(Collection<Object> dest, ORecordElement parent, Collection<Object> source) {
     for (Object cur : source) {
       if (cur instanceof ODocument) {
         ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
         ((ODocument) cur).clearTrackData();
       } else if (cur instanceof List) {
-        List newList = new OTrackedList<>(this);
-        fillTrackedCollection((Collection) newList, (Collection<Object>) cur);
+        OTrackedList newList = new OTrackedList<>(parent);
+        fillTrackedCollection((Collection) newList, newList, (Collection<Object>) cur);
         cur = newList;
       } else if (cur instanceof Set) {
-        Set<Object> newSet = new OTrackedSet<>(this);
-        fillTrackedCollection(newSet, (Collection<Object>) cur);
+        OTrackedSet<Object> newSet = new OTrackedSet<>(parent);
+        fillTrackedCollection(newSet, newSet, (Collection<Object>) cur);
         cur = newSet;
       } else if (cur instanceof Map) {
-        Map<Object, Object> newMap = new OTrackedMap<>(this);
-        fillTrackedMap(newMap, (Map<Object, Object>) cur);
+        OTrackedMap<Object> newMap = new OTrackedMap<>(parent);
+        fillTrackedMap(newMap, newMap, (Map<Object, Object>) cur);
         cur = newMap;
       }
       dest.add(cur);
     }
   }
 
-  private void fillTrackedMap(Map<Object, Object> dest, Map<Object, Object> source) {
+  private void fillTrackedMap(Map<Object, Object> dest, ORecordElement parent, Map<Object, Object> source) {
     for (Entry<Object, Object> cur : source.entrySet()) {
       Object value = cur.getValue();
       if (value instanceof ODocument) {
         ((ODocument) value).convertAllMultiValuesToTrackedVersions();
         ((ODocument) value).clearTrackData();
       } else if (cur.getValue() instanceof List) {
-        List<Object> newList = new OTrackedList<>(this);
-        fillTrackedCollection(newList, (Collection<Object>) value);
+        OTrackedList<Object> newList = new OTrackedList<>(parent);
+        fillTrackedCollection(newList, newList, (Collection<Object>) value);
         value = newList;
       } else if (value instanceof Set) {
-        Set<Object> newSet = new OTrackedSet<>(this);
-        fillTrackedCollection(newSet, (Collection<Object>) value);
+        OTrackedSet<Object> newSet = new OTrackedSet<>(parent);
+        fillTrackedCollection(newSet, newSet, (Collection<Object>) value);
         value = newSet;
       } else if (value instanceof Map) {
-        Map<Object, Object> newMap = new OTrackedMap<>(this);
-        fillTrackedMap(newMap, (Map<Object, Object>) value);
+        OTrackedMap<Object> newMap = new OTrackedMap<>(parent);
+        fillTrackedMap(newMap, newMap, (Map<Object, Object>) value);
         value = newMap;
       }
       dest.put(cur.getKey(), value);
