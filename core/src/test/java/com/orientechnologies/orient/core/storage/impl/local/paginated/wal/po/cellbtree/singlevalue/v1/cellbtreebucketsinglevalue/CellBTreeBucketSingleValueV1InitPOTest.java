@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class CellBTreeBucketSingleValueInitPOTest {
+public class CellBTreeBucketSingleValueV1InitPOTest {
   @Test
   public void testRedo() {
     final int pageSize = 256;
@@ -28,9 +28,9 @@ public class CellBTreeBucketSingleValueInitPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeBucketSingleValueInitPO);
+      Assert.assertTrue(operations.get(0) instanceof CellBTreeBucketSingleValueV1InitPO);
 
-      final CellBTreeBucketSingleValueInitPO pageOperation = (CellBTreeBucketSingleValueInitPO) operations.get(0);
+      final CellBTreeBucketSingleValueV1InitPO pageOperation = (CellBTreeBucketSingleValueV1InitPO) operations.get(0);
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
       final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);

@@ -8,13 +8,13 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCe
 
 import java.nio.ByteBuffer;
 
-public final class CellBTreeBucketSingleValueInitPO extends PageOperationRecord {
+public final class CellBTreeBucketSingleValueV1InitPO extends PageOperationRecord {
   private boolean isLeaf;
 
-  public CellBTreeBucketSingleValueInitPO() {
+  public CellBTreeBucketSingleValueV1InitPO() {
   }
 
-  public CellBTreeBucketSingleValueInitPO(boolean isLeaf) {
+  public CellBTreeBucketSingleValueV1InitPO(boolean isLeaf) {
     this.isLeaf = isLeaf;
   }
 

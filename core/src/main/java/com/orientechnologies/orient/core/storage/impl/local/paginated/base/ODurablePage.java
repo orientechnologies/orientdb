@@ -113,7 +113,7 @@ public class ODurablePage {
     return new OLogSequenceNumber(segment, position);
   }
 
-  protected int getIntValue(final int pageOffset) {
+  protected final int getIntValue(final int pageOffset) {
     if (changes == null) {
       final ByteBuffer buffer = pointer.getBuffer();
       assert buffer.order() == ByteOrder.nativeOrder();
@@ -133,7 +133,7 @@ public class ODurablePage {
     return changes.getShortValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
-  protected long getLongValue(final int pageOffset) {
+  protected final long getLongValue(final int pageOffset) {
     if (changes == null) {
       final ByteBuffer buffer = pointer.getBuffer();
       assert buffer.order() == ByteOrder.nativeOrder();
@@ -143,7 +143,7 @@ public class ODurablePage {
     return changes.getLongValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
-  protected byte[] getBinaryValue(final int pageOffset, final int valLen) {
+  protected final byte[] getBinaryValue(final int pageOffset, final int valLen) {
     final ByteBuffer buffer = pointer.getBufferDuplicate();
     if (changes == null) {
       assert buffer.order() == ByteOrder.nativeOrder();
@@ -182,7 +182,7 @@ public class ODurablePage {
     return binarySerializer.deserializeFromByteBufferObject(buffer, changes, offset);
   }
 
-  protected byte getByteValue(final int pageOffset) {
+  protected final byte getByteValue(final int pageOffset) {
     if (changes == null) {
       final ByteBuffer buffer = pointer.getBuffer();
       assert buffer.order() == ByteOrder.nativeOrder();
@@ -194,7 +194,7 @@ public class ODurablePage {
   }
 
   @SuppressWarnings("SameReturnValue")
-  protected int setIntValue(final int pageOffset, final int value) {
+  protected final int setIntValue(final int pageOffset, final int value) {
     final ByteBuffer buffer = pointer.getBuffer();
     if (changes != null) {
       changes.setIntValue(buffer, value, pageOffset);
@@ -206,7 +206,7 @@ public class ODurablePage {
     return OIntegerSerializer.INT_SIZE;
   }
 
-  protected int setShortValue(final int pageOffset, final short value) {
+  protected final int setShortValue(final int pageOffset, final short value) {
     final ByteBuffer buffer = pointer.getBuffer();
     if (changes != null) {
       changes.setIntValue(buffer, value, pageOffset);
@@ -219,7 +219,7 @@ public class ODurablePage {
   }
 
   @SuppressWarnings("SameReturnValue")
-  protected int setByteValue(final int pageOffset, final byte value) {
+  protected final int setByteValue(final int pageOffset, final byte value) {
     final ByteBuffer buffer = pointer.getBuffer();
     if (changes != null) {
       changes.setByteValue(buffer, value, pageOffset);
@@ -232,7 +232,7 @@ public class ODurablePage {
   }
 
   @SuppressWarnings("SameReturnValue")
-  protected int setLongValue(final int pageOffset, final long value) {
+  protected final int setLongValue(final int pageOffset, final long value) {
     final ByteBuffer buffer = pointer.getBuffer();
     if (changes != null) {
       changes.setLongValue(buffer, value, pageOffset);
@@ -244,7 +244,7 @@ public class ODurablePage {
     return OLongSerializer.LONG_SIZE;
   }
 
-  protected int setBinaryValue(final int pageOffset, final byte[] value) {
+  protected final int setBinaryValue(final int pageOffset, final byte[] value) {
     if (value.length == 0) {
       return 0;
     }
@@ -261,7 +261,7 @@ public class ODurablePage {
     return value.length;
   }
 
-  protected void moveData(final int from, final int to, final int len) {
+  protected final void moveData(final int from, final int to, final int len) {
     if (len == 0) {
       return;
     }
@@ -288,7 +288,7 @@ public class ODurablePage {
     cacheEntry.addPageOperationRecord(pageOperation);
   }
 
-  public OCacheEntry getCacheEntry() {
+  public final OCacheEntry getCacheEntry() {
     return cacheEntry;
   }
 
@@ -299,7 +299,7 @@ public class ODurablePage {
     changes.applyChanges(buffer);
   }
 
-  public void setLsn(final OLogSequenceNumber lsn) {
+  public final void setLsn(final OLogSequenceNumber lsn) {
     final ByteBuffer buffer = pointer.getBufferDuplicate();
     assert buffer.order() == ByteOrder.nativeOrder();
 

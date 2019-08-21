@@ -227,7 +227,6 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
         if (key != null) {
 
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
-          final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
 
           if (keySize > MAX_KEY_SIZE) {
             throw new OTooBigIndexKeyException(
@@ -279,17 +278,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
           OShortSerializer.INSTANCE.serializeNative((short) value.getClusterId(), serializedValue, 0);
           OLongSerializer.INSTANCE.serializeNative(value.getClusterPosition(), serializedValue, OShortSerializer.SHORT_SIZE);
 
-          final byte[] rawKey;
-          if (encryption == null) {
-            rawKey = serializedKey;
-          } else {
-            final byte[] encryptedKey = encryption.encrypt(serializedKey);
-
-            rawKey = new byte[OIntegerSerializer.INT_SIZE + encryptedKey.length];
-            OIntegerSerializer.INSTANCE.serializeNative(encryptedKey.length, rawKey, 0);
-            System.arraycopy(encryptedKey, 0, rawKey, OIntegerSerializer.INT_SIZE, encryptedKey.length);
-          }
-
+          final byte[] rawKey = serializeKey(key);
           int insertionIndex;
           final int sizeDiff;
           if (bucketSearchResult.itemIndex >= 0) {
@@ -300,7 +289,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
               releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
               return true;
             } else {
-              keyBucket.remove(bucketSearchResult.itemIndex, rawKey.length, encryption, keySerializer);
+              keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, rawKey.length);
               insertionIndex = bucketSearchResult.itemIndex;
               sizeDiff = 0;
             }
@@ -560,9 +549,10 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     final OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.pageIndex, false, true);
     try {
       final OCellBTreeBucketSingleValue<K> keyBucket = new OCellBTreeBucketSingleValue<>(keyBucketCacheEntry);
+      final int keySize = keyBucket.getLeafKeySize(bucketSearchResult.itemIndex, encryption != null, keySerializer);
+      removedValue = keyBucket.getValue(bucketSearchResult.itemIndex, keySize);
 
-      removedValue = keyBucket.getValue(bucketSearchResult.itemIndex, encryption, keySerializer);
-      keyBucket.remove(bucketSearchResult.itemIndex, -1, encryption, keySerializer);
+      keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, keySize);
       updateSize(-1, atomicOperation);
     } finally {
       releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
@@ -1087,11 +1077,9 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
       OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
       try {
         OCellBTreeBucketSingleValue<K> parentBucket = new OCellBTreeBucketSingleValue<>(parentCacheEntry);
-        final OCellBTreeBucketSingleValue.SBTreeEntry<K> parentEntry = new OCellBTreeBucketSingleValue.SBTreeEntry<>(
-            (int) pageIndex, (int) rightBucketEntry.getPageIndex(), separationKey, null);
-
         int insertionIndex = itemPointers.get(itemPointers.size() - 2);
-        while (!parentBucket.addEntry(insertionIndex, parentEntry, true, keySerializer, encryption, keyTypes)) {
+        while (!parentBucket
+            .addNonLeafEntry(insertionIndex, (int) pageIndex, rightBucketEntry.getPageIndex(), serializeKey(separationKey), true)) {
           final UpdateBucketSearchResult bucketSearchResult = splitBucket(parentBucket, parentCacheEntry,
               path.subList(0, path.size() - 1), itemPointers.subList(0, itemPointers.size() - 1), insertionIndex, atomicOperation);
 
@@ -1136,6 +1124,20 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
 
     resultItemPointers.add(keyIndex - indexToSplit - 1);
     return new UpdateBucketSearchResult(resultItemPointers, resultPath, keyIndex - indexToSplit - 1);
+  }
+
+  private byte[] serializeKey(K separationKey) {
+    final byte[] serializedKey = keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes);
+    final byte[] rawKey;
+    if (encryption == null) {
+      rawKey = serializedKey;
+    } else {
+      final byte[] encryptedKey = encryption.encrypt(serializedKey);
+      rawKey = new byte[encryptedKey.length + OIntegerSerializer.INT_SIZE];
+      OIntegerSerializer.INSTANCE.serializeNative(encryptedKey.length, rawKey, 0);
+      System.arraycopy(encryptedKey, 0, rawKey, OIntegerSerializer.INT_SIZE, encryptedKey.length);
+    }
+    return rawKey;
   }
 
   private UpdateBucketSearchResult splitRootBucket(final int keyIndex, final OCacheEntry bucketEntry,
@@ -1210,9 +1212,8 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     bucketToSplit = new OCellBTreeBucketSingleValue<>(bucketEntry);
     bucketToSplit.init(false);
 
-    bucketToSplit.addEntry(0,
-        new OCellBTreeBucketSingleValue.SBTreeEntry<>((int) leftBucketEntry.getPageIndex(), (int) rightBucketEntry.getPageIndex(),
-            separationKey, null), true, keySerializer, encryption, keyTypes);
+    bucketToSplit
+        .addNonLeafEntry(0, leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(), serializeKey(separationKey), true);
 
     final ArrayList<Long> resultPath = new ArrayList<>(8);
     resultPath.add(ROOT_INDEX);

@@ -38,8 +38,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueAddLeafEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1AddLeafEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1AddNonLeafEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.CellBTreeBucketSingleValueV1InitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetFreeListPagePO;
@@ -288,10 +289,13 @@ public final class OWALRecordsFactory {
       walRecord = new PaginatedClusterStateV2SetFileSizePO();
       break;
     case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_INIT_PO:
-      walRecord = new CellBTreeBucketSingleValueInitPO();
+      walRecord = new CellBTreeBucketSingleValueV1InitPO();
       break;
-    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAD_ENTRY_PO:
-      walRecord = new CellBTreeBucketSingleValueAddLeafEntryPO();
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV1AddLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_NON_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV1AddNonLeafEntryPO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

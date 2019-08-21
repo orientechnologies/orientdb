@@ -8,15 +8,15 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCe
 
 import java.nio.ByteBuffer;
 
-public final class CellBTreeBucketSingleValueAddLeafEntryPO extends PageOperationRecord {
+public final class CellBTreeBucketSingleValueV1AddLeafEntryPO extends PageOperationRecord {
   private int    index;
   private byte[] key;
   private byte[] value;
 
-  public CellBTreeBucketSingleValueAddLeafEntryPO() {
+  public CellBTreeBucketSingleValueV1AddLeafEntryPO() {
   }
 
-  public CellBTreeBucketSingleValueAddLeafEntryPO(int index, byte[] key, byte[] value) {
+  public CellBTreeBucketSingleValueV1AddLeafEntryPO(int index, byte[] key, byte[] value) {
     this.index = index;
     this.key = key;
     this.value = value;
@@ -46,13 +46,12 @@ public final class CellBTreeBucketSingleValueAddLeafEntryPO extends PageOperatio
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
-    //noinspection unchecked
-    bucket.remove(index, key.length, null, null);
+    bucket.removeLeafEntry(index, key.length);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAD_ENTRY_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAF_ENTRY_PO;
   }
 
   @Override

@@ -71,6 +71,7 @@ public final class WALRecordTypes {
   public static final byte PAGINATED_CLUSTER_STATE_V2_SET_RECORDS_SIZE_PO   = 58;
   public static final byte PAGINATED_CLUSTER_STATE_V2_SET_SIZE_PO           = 59;
 
-  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_INIT_PO           = 60;
-  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAD_ENTRY_PO = 61;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_INIT_PO               = 60;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAF_ENTRY_PO     = 61;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_NON_LEAF_ENTRY_PO = 62;
 }
