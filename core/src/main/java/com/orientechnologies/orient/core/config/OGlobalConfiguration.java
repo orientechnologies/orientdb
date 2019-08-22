@@ -730,7 +730,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 
-  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache", Integer.class, 100),
+  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache. Zero means cache disabled", Integer.class, 100),
 
   // GRAPH
   SQL_GRAPH_CONSISTENCY_MODE("sql.graphConsistencyMode",
