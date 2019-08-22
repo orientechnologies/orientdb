@@ -361,31 +361,38 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
   }
 
   public void addAll(final List<byte[]> rawEntries, final boolean isEncrypted, final OBinarySerializer<K> keySerializer) {
+    final int currentSize = size();
     for (int i = 0; i < rawEntries.size(); i++) {
-      appendRawEntry(i, rawEntries.get(i));
+      appendRawEntry(i + currentSize, rawEntries.get(i));
     }
 
-    setIntValue(SIZE_OFFSET, rawEntries.size());
+    setIntValue(SIZE_OFFSET, currentSize + rawEntries.size());
 
-    addPageOperation(new CellBTreeBucketSingleValueV1AddAllPO(rawEntries, isEncrypted, keySerializer));
+    addPageOperation(new CellBTreeBucketSingleValueV1AddAllPO(currentSize, rawEntries, isEncrypted, keySerializer));
   }
 
   public void shrink(final int newSize, final boolean isEncrypted, final OBinarySerializer<K> keySerializer) {
+    final int currentSize = size();
     final List<byte[]> rawEntries = new ArrayList<>(newSize);
+    final List<byte[]> removedEntries = new ArrayList<>(currentSize - newSize);
 
     for (int i = 0; i < newSize; i++) {
       rawEntries.add(getRawEntry(i, isEncrypted, keySerializer));
     }
 
+    for (int i = newSize; i < currentSize; i++) {
+      removedEntries.add(getRawEntry(i, isEncrypted, keySerializer));
+    }
+
     setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
 
-    int index = 0;
-    for (final byte[] entry : rawEntries) {
-      appendRawEntry(index, entry);
-      index++;
+    for (int i = 0; i < newSize; i++) {
+      appendRawEntry(i, rawEntries.get(i));
     }
 
     setIntValue(SIZE_OFFSET, newSize);
+
+    addPageOperation(new CellBTreeBucketSingleValueV1ShrinkPO(newSize, removedEntries, isEncrypted, keySerializer));
   }
 
   public boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {
