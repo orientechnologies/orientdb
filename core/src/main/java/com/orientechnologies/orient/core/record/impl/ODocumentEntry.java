@@ -196,4 +196,10 @@ public class ODocumentEntry {
       exist = true;
     }
   }
+
+  public void transactionClear() {
+    if (value instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) value).transactionClear();
+    }
+  }
 }

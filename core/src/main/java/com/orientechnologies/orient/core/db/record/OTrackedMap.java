@@ -254,6 +254,17 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   }
 
   @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    if (this instanceof ORecordLazyMultiValue) {
+      OTrackedMultiValue.nestedTransactionClear(((ORecordLazyMultiValue) this).rawIterator());
+    } else {
+      OTrackedMultiValue.nestedTransactionClear(this.values().iterator());
+    }
+    this.transactionDirty = false;
+  }
+
+  @Override
   public boolean isModified() {
     return dirty;
   }

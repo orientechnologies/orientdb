@@ -543,6 +543,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   @Override
+  public void transactionClear() {
+    delegate.transactionClear();
+  }
+
+  @Override
   public boolean isModified() {
     return delegate.isModified();
   }

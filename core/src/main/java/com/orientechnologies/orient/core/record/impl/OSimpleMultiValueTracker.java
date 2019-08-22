@@ -123,4 +123,8 @@ public final class OSimpleMultiValueTracker<K, V> {
   public OMultiValueChangeTimeLine<Object, Object> getTransactionTimeLine() {
     return transactionTimeLine;
   }
+
+  public void transactionClear() {
+    transactionTimeLine = null;
+  }
 }

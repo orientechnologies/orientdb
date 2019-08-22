@@ -2304,6 +2304,21 @@ public class ODocument extends ORecordAbstract
     }
   }
 
+  protected void clearTransactionTrackData() {
+    if (fields != null) {
+      // FREE RESOURCES
+      Iterator<Entry<String, ODocumentEntry>> iter = fields.entrySet().iterator();
+      while (iter.hasNext()) {
+        Entry<String, ODocumentEntry> cur = iter.next();
+        if (cur.getValue().exist()) {
+          cur.getValue().transactionClear();
+        }
+      }
+    }
+
+  }
+
+
   public boolean isOrdered() {
     return ordered;
   }
@@ -3948,4 +3963,5 @@ public class ODocument extends ORecordAbstract
   protected OImmutableSchema getImmutableSchema() {
     return schema;
   }
+
 }

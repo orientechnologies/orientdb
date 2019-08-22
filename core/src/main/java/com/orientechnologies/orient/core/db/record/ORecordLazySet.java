@@ -246,6 +246,17 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   }
 
   @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    if (this instanceof ORecordLazyMultiValue) {
+      OTrackedMultiValue.nestedTransactionClear(((ORecordLazyMultiValue) this).rawIterator());
+    } else {
+      OTrackedMultiValue.nestedTransactionClear(this.iterator());
+    }
+    this.transactionDirty = false;
+  }
+
+  @Override
   public boolean isModified() {
     return dirty;
   }

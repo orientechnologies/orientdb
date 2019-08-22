@@ -1037,6 +1037,12 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    this.transactionDirty = false;
+  }
+
+  @Override
   public boolean isModified() {
     return dirty;
   }

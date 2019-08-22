@@ -288,6 +288,17 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    if (this instanceof ORecordLazyMultiValue) {
+      OTrackedMultiValue.nestedTransactionClear(((ORecordLazyMultiValue) this).rawIterator());
+    } else {
+      OTrackedMultiValue.nestedTransactionClear(this.iterator());
+    }
+    this.transactionDirty = false;
+  }
+
+  @Override
   public boolean isModified() {
     return dirty;
   }
