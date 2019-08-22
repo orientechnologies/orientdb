@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRec
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueEntryPoint;
 
-public class CellBTreeEntryPointSingleValueV1InitPO extends PageOperationRecord {
+public final class CellBTreeEntryPointSingleValueV1InitPO extends PageOperationRecord {
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OCellBTreeSingleValueEntryPoint bucket = new OCellBTreeSingleValueEntryPoint(cacheEntry);

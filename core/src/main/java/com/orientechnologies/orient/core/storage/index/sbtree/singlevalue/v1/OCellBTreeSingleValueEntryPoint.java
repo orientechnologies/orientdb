@@ -6,6 +6,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1SetPagesSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1SetTreeSizePO;
 
 public final class OCellBTreeSingleValueEntryPoint extends ODurablePage {
@@ -29,7 +30,6 @@ public final class OCellBTreeSingleValueEntryPoint extends ODurablePage {
     final long prevSize = getLongValue(TREE_SIZE_OFFSET);
 
     setLongValue(TREE_SIZE_OFFSET, size);
-
     addPageOperation(new CellBTreeEntryPointSingleValueV1SetTreeSizePO(prevSize, size));
   }
 
@@ -38,7 +38,10 @@ public final class OCellBTreeSingleValueEntryPoint extends ODurablePage {
   }
 
   public void setPagesSize(final int pages) {
+    final int prevPages = getIntValue(PAGES_SIZE_OFFSET);
+
     setIntValue(PAGES_SIZE_OFFSET, pages);
+    addPageOperation(new CellBTreeEntryPointSingleValueV1SetPagesSizePO(prevPages, pages));
   }
 
   public int getPagesSize() {
