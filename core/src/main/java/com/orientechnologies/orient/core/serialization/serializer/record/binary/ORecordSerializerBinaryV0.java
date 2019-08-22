@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEmbedded;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
@@ -399,7 +400,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   protected Object deserializeEmbeddedAsDocument(final BytesContainer bytes, final ORecordElement owner) {
-    Object value = new ODocument();
+    Object value = new ODocumentEmbedded();
     deserializeWithClassName((ODocument) value, bytes);
     if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
       String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);

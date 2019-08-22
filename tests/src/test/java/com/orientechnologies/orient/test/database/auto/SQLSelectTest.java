@@ -254,7 +254,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     List<ODocument> resultset = executeQuery("select coll[name='Jay'] as value from Profile where coll is not null", database);
     Assert.assertEquals(resultset.size(), 1);
-    Assert.assertEquals(resultset.get(0).field("value").getClass(), ODocument.class);
+    Assert.assertTrue(resultset.get(0).field("value") instanceof ODocument);
     Assert.assertEquals(((ODocument) resultset.get(0).field("value")).field("name"), "Jay");
 
     doc.delete();
@@ -273,7 +273,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     List<ODocument> resultset = executeQuery("select coll[name='Jay'] as value from Profile where coll is not null", database);
     Assert.assertEquals(resultset.size(), 1);
-    Assert.assertEquals(resultset.get(0).field("value").getClass(), ODocument.class);
+    Assert.assertTrue(resultset.get(0).field("value") instanceof ODocument);
     Assert.assertEquals(((ODocument) resultset.get(0).field("value")).field("name"), "Jay");
 
     doc.delete();

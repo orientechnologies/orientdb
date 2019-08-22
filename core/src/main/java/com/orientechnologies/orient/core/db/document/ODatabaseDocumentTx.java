@@ -528,6 +528,18 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.newElement(className);
   }
 
+  @Override
+  public OElement newEmbeddedElement() {
+    checkOpenness();
+    return internal.newEmbeddedElement();
+  }
+
+  @Override
+  public OElement newEmbeddedElement(String className) {
+    checkOpenness();
+    return internal.newEmbeddedElement(className);
+  }
+
   public boolean isUseLightweightEdges() {
     return internal.isUseLightweightEdges();
   }

@@ -23,6 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEmbedded;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -43,7 +44,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
       // NULL VALUE
       return null;
 
-    final ODocument instance = new ODocument();
+    final ODocument instance = new ODocumentEmbedded();
     try {
       ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(iStream.getBytes("UTF-8"), instance, null);
     } catch (UnsupportedEncodingException e) {
@@ -67,7 +68,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
     if (ODocumentSerializable.class.isAssignableFrom(clazz)) {
       try {
         final ODocumentSerializable documentSerializable = (ODocumentSerializable) clazz.newInstance();
-        final ODocument docClone = new ODocument();
+        final ODocument docClone = new ODocumentEmbedded();
         instance.copyTo(docClone);
         docClone.removeField(ODocumentSerializable.CLASS_NAME);
         documentSerializable.fromDocument(docClone);

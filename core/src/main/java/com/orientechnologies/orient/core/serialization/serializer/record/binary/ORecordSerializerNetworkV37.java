@@ -251,7 +251,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       value = new Date(savedTime);
       break;
     case EMBEDDED:
-      value = new ODocument();
+      value = new ODocumentEmbedded();
       deserialize((ODocument) value, bytes);
       if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
         String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);

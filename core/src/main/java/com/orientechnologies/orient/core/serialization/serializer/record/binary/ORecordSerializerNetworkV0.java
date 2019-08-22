@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEmbedded;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
@@ -315,7 +316,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       value = new Date(savedTime);
       break;
     case EMBEDDED:
-      value = new ODocument();
+      value = new ODocumentEmbedded();
       deserialize((ODocument) value, bytes);
       if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
         String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);

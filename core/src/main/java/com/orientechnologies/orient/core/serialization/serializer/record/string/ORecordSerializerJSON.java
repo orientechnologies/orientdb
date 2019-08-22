@@ -43,10 +43,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
@@ -497,7 +494,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
 
       case EMBEDDED:
-        return fromString(iFieldValueAsString);
+        return fromString(iFieldValueAsString, new ODocumentEmbedded(), null);
 
       case DATE:
         if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
