@@ -23,7 +23,7 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
   static class Op {
 
     static int TYPE_ADD = 0;
-    static int TYPE_REMOVE = 0;
+    static int TYPE_REMOVE = 1;
 
     Op(int type, OSecurityResourceSegment resource, OIdentifier policyName) {
       this.type = type;
@@ -90,7 +90,20 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
 
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    super.toString(params, builder);//TODO
+    builder.append("ALTER ROLE ");
+    name.toString(params, builder);
+
+    for (Op operation : operations) {
+      if (operation.type == Op.TYPE_ADD) {
+        builder.append(" SET POLICY ");
+        operation.policyName.toString(params, builder);
+        builder.append(" ON ");
+        operation.resource.toString(params, builder);
+      } else {
+        builder.append(" REMOVE POLICY ON ");
+        operation.resource.toString(params, builder);
+      }
+    }
   }
 
   /**

@@ -4918,6 +4918,11 @@ OAlterRoleStatement AlterRoleStatement():
       )
       |
       ( <REMOVE> <POLICY> <ON> lastSecurityResource = SecurityResourceSegment()  )
+        {
+          jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+            com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_REMOVE,
+            lastSecurityResource, null));
+        }
     )+
   ) { return jjtThis; }
 }

@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OSecurityResourceSegment extends SimpleNode {
 
   protected boolean star = false;
@@ -44,20 +46,18 @@ public class OSecurityResourceSegment extends SimpleNode {
 
 
   @Override
-  public String toString() {
-    String result;
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (this.star) {
-      result = "*";
+      builder.append("*");
     } else if (this.cluster) {
-      result = "cluster";
+      builder.append("cluster");
     } else {
-      result = identifier.toString();
+      identifier.toString(params, builder);
     }
     if (next != null) {
-      result += ".";
-      result += next.toString();
+      builder.append(".");
+      next.toString(params, builder);
     }
-    return result;
   }
 }
 /* JavaCC - OriginalChecksum=f51870252b37ccb5ff69ec19ed9687ab (do not edit this line) */
