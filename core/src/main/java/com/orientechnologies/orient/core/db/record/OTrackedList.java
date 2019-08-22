@@ -36,12 +36,12 @@ import java.util.*;
  */
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
-  protected final ORecordElement                              sourceRecord;
-  protected       Class<?>                                    genericClass;
-  private final   boolean                                     embeddedCollection;
-  private         boolean                                     dirty           = false;
-
-  private OSimpleMultiValueTracker<Integer, T> tracker = new OSimpleMultiValueTracker<>(this);
+  protected final ORecordElement                       sourceRecord;
+  protected       Class<?>                             genericClass;
+  private final   boolean                              embeddedCollection;
+  private         boolean                              dirty            = false;
+  private         boolean                              transactionDirty = false;
+  private         OSimpleMultiValueTracker<Integer, T> tracker          = new OSimpleMultiValueTracker<>(this);
 
   public OTrackedList(final ORecordElement iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
     this(iRecord);
@@ -160,7 +160,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     addOwnerToEmbeddedDoc(newValue);
 
     if (tracker.isEnabled()) {
-      tracker.updated(index,newValue,oldValue);
+      tracker.updated(index, newValue, oldValue);
     } else {
       setDirty();
     }
@@ -171,7 +171,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       ODocumentInternal.removeOwner((ODocument) removed, this);
     }
     if (tracker.isEnabled()) {
-      tracker.remove(index,removed);
+      tracker.remove(index, removed);
     } else {
       setDirty();
     }
@@ -215,6 +215,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       sourceRecord.setDirty();
     }
     this.dirty = true;
+    this.transactionDirty = true;
     return (RET) this;
   }
 
@@ -292,8 +293,13 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    return tracker.timeLine;
+    return tracker.getTimeLine();
   }
 
 }

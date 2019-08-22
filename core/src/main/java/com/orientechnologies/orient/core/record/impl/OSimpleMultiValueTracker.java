@@ -35,8 +35,9 @@ import java.lang.ref.WeakReference;
  */
 public final class OSimpleMultiValueTracker<K, V> {
   private final WeakReference<ORecordElement>             element;
-  public        OMultiValueChangeTimeLine<Object, Object> timeLine;
+  private       OMultiValueChangeTimeLine<Object, Object> timeLine;
   private       boolean                                   enabled;
+  private       OMultiValueChangeTimeLine<Object, Object> transactionTimeLine;
 
   public OSimpleMultiValueTracker(ORecordElement element) {
     this.element = new WeakReference<ORecordElement>(element);
@@ -86,6 +87,12 @@ public final class OSimpleMultiValueTracker<K, V> {
     }
 
     timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
+
+    if (transactionTimeLine == null) {
+      transactionTimeLine = new OMultiValueChangeTimeLine<Object, Object>();
+    }
+
+    transactionTimeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
   }
 
   public void enable() {
@@ -107,5 +114,13 @@ public final class OSimpleMultiValueTracker<K, V> {
 
   public void sourceFrom(OSimpleMultiValueTracker<V, V> tracker) {
     this.timeLine = tracker.timeLine;
+  }
+
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    return timeLine;
+  }
+
+  public OMultiValueChangeTimeLine<Object, Object> getTransactionTimeLine() {
+    return transactionTimeLine;
   }
 }

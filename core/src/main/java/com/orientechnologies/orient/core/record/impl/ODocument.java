@@ -3213,10 +3213,6 @@ public class ODocument extends ORecordAbstract
           fillTrackedMap(newMap, newMap, (Map<Object, Object>) value);
           origin.replace(event, newMap);
         }
-      } else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED) {
-        OMultiValueChangeTimeLine nestedTimeline = ((ONestedMultiValueChangeEvent) event).getTimeLine();
-        if (nestedTimeline != null)
-          checkTimelineTrackable(nestedTimeline, (OTrackedMultiValue) value);
       }
     }
   }
@@ -3620,7 +3616,7 @@ public class ODocument extends ORecordAbstract
 
   private UpdateTypeValueType getUpdateForRidbagWithoutPreviousValue(ORidBag currentValue, ODocumentEntry parent) {
     UpdateTypeValueType retVal = null;
-    if (currentValue != null && currentValue.isEmbedded() && ODocumentHelper.isChangedRidbag(currentValue, parent)) {
+    if (currentValue != null && currentValue.isEmbedded() && currentValue.isModified()) {
       retVal = new UpdateTypeValueType();
       retVal.setUpdateType(UpdateDeltaValueType.RIDBAG_UPDATE);
       List deltaList = new ArrayList();
@@ -3668,9 +3664,9 @@ public class ODocument extends ORecordAbstract
           listElementDelta.field("v", new ValueType(deltaUpdate, ODeltaDocumentFieldType.DELTA_RECORD));
           deltaList.add(listElementDelta);
         }
-      } else if (currentElement instanceof List) {
+      } else if (currentElement instanceof OTrackedMultiValue && currentElement instanceof List) {
         List currentElementAsList = (List) currentElement;
-        if (ODocumentHelper.isChangedCollection(currentElementAsList, parent, new ArrayList<>(ownersTrace), 1)) {
+        if (((OTrackedMultiValue)currentElementAsList).isModified()) {
           ODocumentDelta listElementDelta = new ODocumentDelta();
           listElementDelta.field("i", new ValueType(i, OType.INTEGER));
           listElementDelta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
@@ -3875,21 +3871,17 @@ public class ODocument extends ORecordAbstract
   }
 
   private ODocumentDelta getDeltaFromOriginalForUpdate() {
-    return getDeltaFromOriginalForUpdate(new ArrayList<>());
-  }
-
-  private ODocumentDelta getDeltaFromOriginalForUpdate(List<Object> ownersTrace) {
     ODocumentDelta updated = new ODocumentDelta();
     //get updated and new records
     for (Map.Entry<String, ODocumentEntry> fieldVal : fields.entrySet()) {
       ODocumentEntry val = fieldVal.getValue();
-      if (val.isChangedTree(new ArrayList<Object>(ownersTrace))) {
+      if (val.isChangedTree()) {
         String fieldName = fieldVal.getKey();
         OType currentFieldType = val.type != null ? val.type : OType.getTypeByValue(val.value);
         OType currentFieldLinkedType = HelperClasses.getLinkedType(this, currentFieldType, fieldName);
         OType previousFieldValueType = OType.getTypeByValue(val.original);
         OType previousFieldValueLinkedType = null;
-        UpdateTypeValueType deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged(), val, ownersTrace,
+        UpdateTypeValueType deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged(), val, new ArrayList<>(),
             currentFieldType, currentFieldLinkedType, previousFieldValueType, previousFieldValueLinkedType);
         ODocumentDelta doc = new ODocumentDelta();
         doc.field("v", new ValueType(deltaValue.getValue(), deltaValue.getValueType()));
@@ -3937,7 +3929,7 @@ public class ODocument extends ORecordAbstract
 
   protected boolean isChangedInDepth() {
     for (Map.Entry<String, ODocumentEntry> field : fields.entrySet()) {
-      if (field.getValue().isChangedTree(new ArrayList<>())) {
+      if (field.getValue().isChangedTree()) {
         return true;
       }
     }

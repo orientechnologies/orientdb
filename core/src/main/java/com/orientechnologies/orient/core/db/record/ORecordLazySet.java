@@ -50,6 +50,7 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   protected              Map<OIdentifiable, Object> map                 = new HashMap<OIdentifiable, Object>();
   protected static final Object                     ENTRY_REMOVAL       = new Object();
   private                boolean                    dirty               = false;
+  private                boolean                    transactionDirty    = false;
 
   private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker = new OSimpleMultiValueTracker<>(this);
 
@@ -139,6 +140,7 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
       sourceRecord.setDirty();
     }
     this.dirty = true;
+    this.transactionDirty = true;
     return this;
   }
 
@@ -249,12 +251,13 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   }
 
   @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (tracker == null) {
-      return null;
-    } else {
-      return tracker.timeLine;
-    }
+    return tracker.getTimeLine();
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
@@ -828,8 +829,8 @@ public class ODocumentTest {
         copyValue.add(containedDoc.copy());
       }
 
-      doc.field(fieldName, originalValue);
-      originalDoc.field(fieldName, copyValue);
+      doc.field(fieldName, originalValue, OType.EMBEDDEDLIST);
+      originalDoc.field(fieldName, copyValue, OType.EMBEDDEDLIST);
 
       doc = db.save(doc);
 
@@ -950,12 +951,13 @@ public class ODocumentTest {
       ODocument originalDoc = new ODocument(claz);
 
       String fieldName = "testField";
-      List<List<ODocument>> originalValue = new ArrayList<>();
-      List<List<ODocument>> copyValue = new ArrayList<>();
+      OTrackedList<List<ODocument>> originalValue = new OTrackedList<>(doc);
+      OTrackedList<List<ODocument>> copyValue = new OTrackedList<>(originalDoc);
       for (int i = 0; i < 2; i++) {
-        List<ODocument> containedList = new ArrayList<>();
-        List<ODocument> copyContainedList = new ArrayList<>();
+        List<ODocument> containedList = new OTrackedList<>(originalValue);
+        List<ODocument> copyContainedList = new OTrackedList<>(copyValue);
         ODocument d1 = new ODocument();
+
         d1.field(constantField, constValue);
         d1.field(variableField, "one");
         ODocument d2 = new ODocument();
@@ -968,8 +970,8 @@ public class ODocumentTest {
         copyValue.add(copyContainedList);
       }
 
-      doc.field(fieldName, originalValue);
-      originalDoc.field(fieldName, copyValue);
+      doc.field(fieldName, originalValue, OType.EMBEDDEDLIST);
+      originalDoc.field(fieldName, copyValue, OType.EMBEDDEDLIST);
 
       doc = db.save(doc);
 
@@ -1190,8 +1192,8 @@ public class ODocumentTest {
         copyValue.add(copyContainedDoc);
       }
 
-      doc.field(fieldName, originalValue);
-      originalDoc.field(fieldName, copyValue);
+      doc.field(fieldName, originalValue, OType.EMBEDDEDLIST);
+      originalDoc.field(fieldName, copyValue, OType.EMBEDDEDLIST);
 
       doc = db.save(doc);
 

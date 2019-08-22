@@ -566,4 +566,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public ORecordElement getOwner() {
     return delegate.getOwner();
   }
+
+  @Override
+  public boolean isTransactionModified() {
+    return delegate.isTransactionModified();
+  }
 }

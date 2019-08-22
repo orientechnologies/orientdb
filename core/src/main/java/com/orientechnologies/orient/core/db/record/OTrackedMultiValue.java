@@ -53,6 +53,8 @@ public interface OTrackedMultiValue<K, V> {
 
   boolean isModified();
 
+  boolean isTransactionModified();
+
   OMultiValueChangeTimeLine<Object, Object> getTimeLine();
 
   static <X> void nestedEnabled(Iterator<X> iterator, ORecordElement parent) {

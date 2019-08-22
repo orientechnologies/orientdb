@@ -50,7 +50,8 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   private transient ORecordElement owner;
 
-  private boolean dirty;
+  private boolean dirty            = false;
+  private boolean transactionDirty = false;
 
   private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker = new OSimpleMultiValueTracker<>(this);
 
@@ -590,12 +591,13 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (tracker == null) {
-      return null;
-    } else {
-      return tracker.timeLine;
-    }
+    return tracker.getTimeLine();
   }
 
   @Override
@@ -604,6 +606,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       owner.setDirty();
     }
     this.dirty = true;
+    this.transactionDirty = true;
     return (RET) this;
   }
 

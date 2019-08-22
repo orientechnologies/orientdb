@@ -84,6 +84,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   private transient ORecordElement owner;
   private           boolean        dirty;
+  private           boolean        transactionDirty = false;
 
   @Override
   public void setSize(int size) {
@@ -1041,12 +1042,13 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (tracker == null) {
-      return null;
-    } else {
-      return tracker.timeLine;
-    }
+    return tracker.getTimeLine();
   }
 
   @Override
@@ -1055,6 +1057,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       owner.setDirty();
     }
     this.dirty = true;
+    this.transactionDirty = true;
     return (RET) this;
   }
 

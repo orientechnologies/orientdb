@@ -40,7 +40,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   protected final ORecordElement sourceRecord;
   protected       Class<?>       genericClass;
   private final   boolean        embeddedCollection;
-  private         boolean        dirty = false;
+  private         boolean        dirty            = false;
+  private         boolean        transactionDirty = false;
 
   private OSimpleMultiValueTracker<Object, T> tracker = new OSimpleMultiValueTracker<>(this);
 
@@ -146,6 +147,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
       sourceRecord.setDirty();
     }
     this.dirty = true;
+    this.transactionDirty = true;
     return this;
   }
 
@@ -257,12 +259,13 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   }
 
   @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (tracker == null) {
-      return null;
-    } else {
-      return tracker.timeLine;
-    }
+    return tracker.getTimeLine();
   }
 
 }

@@ -40,7 +40,8 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
   protected final ORecordElement sourceRecord;
   private final   boolean        embeddedCollection;
   protected       Class<?>       genericClass;
-  private         boolean        dirty = false;
+  private         boolean        dirty            = false;
+  private         boolean        transactionDirty = false;
 
   private OSimpleMultiValueTracker<T, T> tracker = new OSimpleMultiValueTracker<>(this);
 
@@ -182,6 +183,7 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
       sourceRecord.setDirty();
     }
     this.dirty = true;
+    this.transactionDirty = true;
     return this;
   }
 
@@ -265,7 +267,12 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
   }
 
   @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    return tracker.timeLine;
+    return tracker.getTimeLine();
   }
 }
