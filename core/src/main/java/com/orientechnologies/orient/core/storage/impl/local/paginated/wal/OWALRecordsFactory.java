@@ -310,6 +310,12 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_UPDATE_VALUE_PO:
       walRecord = new CellBTreeBucketSingleValueV1UpdateValuePO();
       break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SET_LEFT_SIBLING_PO:
+      walRecord = new CellBTreeBucketSingleValueV1SetLeftSiblingPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SET_RIGHT_SIBLING_PO:
+      walRecord = new CellBTreeBucketSingleValueV1SetRightSiblingPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {

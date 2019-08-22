@@ -589,7 +589,10 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
   }
 
   public void setRightSibling(final long pageIndex) {
+    final int prevRightSibling = (int) getLongValue(RIGHT_SIBLING_OFFSET);
     setLongValue(RIGHT_SIBLING_OFFSET, pageIndex);
+
+    addPageOperation(new CellBTreeBucketSingleValueV1SetRightSiblingPO(prevRightSibling, (int) pageIndex));
   }
 
   public long getRightSibling() {
