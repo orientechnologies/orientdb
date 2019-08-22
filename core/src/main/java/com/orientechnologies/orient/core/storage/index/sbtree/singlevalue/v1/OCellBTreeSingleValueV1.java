@@ -996,7 +996,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
 
     for (int i = startRightIndex; i < bucketSize; i++) {
-      rightEntries.add(bucketToSplit.getRawEntry(i, encryption, keySerializer));
+      rightEntries.add(bucketToSplit.getRawEntry(i, encryption != null, keySerializer));
     }
 
     if (entryToSplit.getPageIndex() != ROOT_INDEX) {
@@ -1035,9 +1035,9 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
       final OCellBTreeBucketSingleValue<K> newRightBucket = new OCellBTreeBucketSingleValue<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
 
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, encryption != null, keySerializer);
 
-      bucketToSplit.shrink(indexToSplit, encryption, keySerializer);
+      bucketToSplit.shrink(indexToSplit, encryption != null, keySerializer);
 
       if (splitLeaf) {
         final long rightSiblingPageIndex = bucketToSplit.getRightSibling();
@@ -1131,7 +1131,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     final List<byte[]> leftEntries = new ArrayList<>(indexToSplit);
 
     for (int i = 0; i < indexToSplit; i++) {
-      leftEntries.add(bucketToSplit.getRawEntry(i, encryption, keySerializer));
+      leftEntries.add(bucketToSplit.getRawEntry(i, encryption != null, keySerializer));
     }
 
     final OCacheEntry leftBucketEntry;
@@ -1171,7 +1171,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
       final OCellBTreeBucketSingleValue<K> newLeftBucket = new OCellBTreeBucketSingleValue<>(leftBucketEntry);
       newLeftBucket.init(splitLeaf);
 
-      newLeftBucket.addAll(leftEntries);
+      newLeftBucket.addAll(leftEntries, encryption != null, keySerializer);
 
       if (splitLeaf) {
         newLeftBucket.setRightSibling(rightBucketEntry.getPageIndex());
@@ -1185,7 +1185,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
       final OCellBTreeBucketSingleValue<K> newRightBucket = new OCellBTreeBucketSingleValue<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
 
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, encryption != null, keySerializer);
 
       if (splitLeaf) {
         newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());

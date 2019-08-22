@@ -301,6 +301,9 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_REMOVE_NON_LEAF_ENTRY_PO:
       walRecord = new CellBTreeBucketSingleValueV1RemoveNonLeafEntryPO();
       break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_ALL_PO:
+      walRecord = new CellBTreeBucketSingleValueV1AddAllPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {

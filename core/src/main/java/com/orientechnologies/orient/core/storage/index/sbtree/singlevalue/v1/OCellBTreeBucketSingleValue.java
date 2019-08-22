@@ -254,13 +254,13 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
     return getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
   }
 
-  byte[] getRawEntry(final int entryIndex, OEncryption encryption, OBinarySerializer<K> keySerializer) {
+  public byte[] getRawEntry(final int entryIndex, boolean isEncrypted, OBinarySerializer<K> keySerializer) {
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     final int startEntryPosition = entryPosition;
 
     if (isLeaf()) {
       final int keySize;
-      if (encryption == null) {
+      if (!isEncrypted) {
         keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition);
       } else {
         final int encryptedSize = getIntValue(entryPosition);
@@ -272,7 +272,7 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
       entryPosition += 2 * OIntegerSerializer.INT_SIZE;
 
       final int keySize;
-      if (encryption == null) {
+      if (!isEncrypted) {
         keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition);
       } else {
         final int encryptedSize = getIntValue(entryPosition);
@@ -360,19 +360,21 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
     return getByteValue(IS_LEAF_OFFSET) > 0;
   }
 
-  public void addAll(final List<byte[]> rawEntries) {
+  public void addAll(final List<byte[]> rawEntries, final boolean isEncrypted, final OBinarySerializer<K> keySerializer) {
     for (int i = 0; i < rawEntries.size(); i++) {
       appendRawEntry(i, rawEntries.get(i));
     }
 
     setIntValue(SIZE_OFFSET, rawEntries.size());
+
+    addPageOperation(new CellBTreeBucketSingleValueV1AddAllPO(rawEntries, isEncrypted, keySerializer));
   }
 
-  public void shrink(final int newSize, OEncryption encryption, OBinarySerializer<K> keySerializer) {
+  public void shrink(final int newSize, final boolean isEncrypted, final OBinarySerializer<K> keySerializer) {
     final List<byte[]> rawEntries = new ArrayList<>(newSize);
 
     for (int i = 0; i < newSize; i++) {
-      rawEntries.add(getRawEntry(i, encryption, keySerializer));
+      rawEntries.add(getRawEntry(i, isEncrypted, keySerializer));
     }
 
     setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
