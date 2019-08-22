@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -8,41 +8,41 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCe
 
 import java.nio.ByteBuffer;
 
-public class CellBTreeBucketSingleValueV1SetRightSiblingPO extends PageOperationRecord {
-  private int prevRightSibling;
-  private int rightSibling;
+public final class CellBTreeBucketSingleValueV1SetLeftSiblingPO extends PageOperationRecord {
+  private int prevLeftSibling;
+  private int leftSibling;
 
-  public CellBTreeBucketSingleValueV1SetRightSiblingPO() {
+  public CellBTreeBucketSingleValueV1SetLeftSiblingPO() {
   }
 
-  public CellBTreeBucketSingleValueV1SetRightSiblingPO(int prevRightSibling, int rightSibling) {
-    this.prevRightSibling = prevRightSibling;
-    this.rightSibling = rightSibling;
+  public CellBTreeBucketSingleValueV1SetLeftSiblingPO(int prevLeftSibling, int leftSibling) {
+    this.prevLeftSibling = prevLeftSibling;
+    this.leftSibling = leftSibling;
   }
 
-  public int getPrevRightSibling() {
-    return prevRightSibling;
+  public int getPrevLeftSibling() {
+    return prevLeftSibling;
   }
 
-  public int getRightSibling() {
-    return rightSibling;
+  public int getLeftSibling() {
+    return leftSibling;
   }
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
-    bucket.setRightSibling(rightSibling);
+    bucket.setLeftSibling(leftSibling);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
-    bucket.setRightSibling(prevRightSibling);
+    bucket.setLeftSibling(prevLeftSibling);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SET_RIGHT_SIBLING_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SET_LEFT_SIBLING_PO;
   }
 
   @Override
@@ -54,15 +54,15 @@ public class CellBTreeBucketSingleValueV1SetRightSiblingPO extends PageOperation
   protected void serializeToByteBuffer(ByteBuffer buffer) {
     super.serializeToByteBuffer(buffer);
 
-    buffer.putInt(prevRightSibling);
-    buffer.putInt(rightSibling);
+    buffer.putInt(prevLeftSibling);
+    buffer.putInt(leftSibling);
   }
 
   @Override
   protected void deserializeFromByteBuffer(ByteBuffer buffer) {
     super.deserializeFromByteBuffer(buffer);
 
-    prevRightSibling = buffer.getInt();
-    rightSibling = buffer.getInt();
+    prevLeftSibling = buffer.getInt();
+    leftSibling = buffer.getInt();
   }
 }

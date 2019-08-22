@@ -129,7 +129,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
 
         final OCacheEntry entryPointCacheEntry = addPage(atomicOperation, fileId);
         try {
-          final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
+          final OCellBTreeSingleValueEntryPoint entryPoint = new OCellBTreeSingleValueEntryPoint(entryPointCacheEntry);
           entryPoint.init();
         } finally {
           releasePageFromWrite(atomicOperation, entryPointCacheEntry);
@@ -446,7 +446,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
 
         final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
         try {
-          final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
+          final OCellBTreeSingleValueEntryPoint entryPoint = new OCellBTreeSingleValueEntryPoint(entryPointCacheEntry);
           return entryPoint.getTreeSize();
         } finally {
           releasePageFromRead(atomicOperation, entryPointCacheEntry);
@@ -704,7 +704,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
   private void updateSize(final long diffSize, final OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
-      final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
+      final OCellBTreeSingleValueEntryPoint entryPoint = new OCellBTreeSingleValueEntryPoint(entryPointCacheEntry);
       entryPoint.setTreeSize(entryPoint.getTreeSize() + diffSize);
     } finally {
       releasePageFromWrite(atomicOperation, entryPointCacheEntry);
@@ -1016,7 +1016,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     final OCacheEntry rightBucketEntry;
     final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
-      final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
+      final OCellBTreeSingleValueEntryPoint entryPoint = new OCellBTreeSingleValueEntryPoint(entryPointCacheEntry);
       final int pageSize = entryPoint.getPagesSize();
 
       if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
@@ -1140,7 +1140,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
 
     final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
-      final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
+      final OCellBTreeSingleValueEntryPoint entryPoint = new OCellBTreeSingleValueEntryPoint(entryPointCacheEntry);
       int pageSize = entryPoint.getPagesSize();
 
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
@@ -1459,7 +1459,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
 
             final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
             try {
-              final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
+              final OCellBTreeSingleValueEntryPoint entryPoint = new OCellBTreeSingleValueEntryPoint(entryPointCacheEntry);
               if (pageIndex >= entryPoint.getPagesSize() + 1) {
                 pageIndex = -1;
                 break;

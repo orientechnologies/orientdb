@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCe
 
 import java.nio.ByteBuffer;
 
-public class CellBTreeNullBucketSingleValueV1RemoveValuePO extends PageOperationRecord {
+public final class CellBTreeNullBucketSingleValueV1RemoveValuePO extends PageOperationRecord {
   private ORID value;
 
   public CellBTreeNullBucketSingleValueV1RemoveValuePO() {

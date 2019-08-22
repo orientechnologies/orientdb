@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -13,30 +13,29 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CellBTreeBucketSingleValueV1AddAllPO extends PageOperationRecord {
-  private int prevSize;
-
-  private List<byte[]>      rawRecords;
+public final class CellBTreeBucketSingleValueV1ShrinkPO extends PageOperationRecord {
+  private int               newSize;
+  private List<byte[]>      removedRecords;
   private boolean           isEncrypted;
   private OBinarySerializer keySerializer;
 
-  public CellBTreeBucketSingleValueV1AddAllPO() {
+  public CellBTreeBucketSingleValueV1ShrinkPO() {
   }
 
-  public CellBTreeBucketSingleValueV1AddAllPO(int prevSize, List<byte[]> rawRecords, boolean isEncrypted,
+  public CellBTreeBucketSingleValueV1ShrinkPO(int newSize, List<byte[]> removedRecords, boolean isEncrypted,
       OBinarySerializer keySerializer) {
-    this.prevSize = prevSize;
-    this.rawRecords = rawRecords;
+    this.newSize = newSize;
+    this.removedRecords = removedRecords;
     this.isEncrypted = isEncrypted;
     this.keySerializer = keySerializer;
   }
 
-  public int getPrevSize() {
-    return prevSize;
+  public int getNewSize() {
+    return newSize;
   }
 
-  public List<byte[]> getRawRecords() {
-    return rawRecords;
+  public List<byte[]> getRemovedRecords() {
+    return removedRecords;
   }
 
   public boolean isEncrypted() {
@@ -51,26 +50,26 @@ public class CellBTreeBucketSingleValueV1AddAllPO extends PageOperationRecord {
   public void redo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
     //noinspection unchecked
-    bucket.addAll(rawRecords, isEncrypted, keySerializer);
+    bucket.shrink(newSize, isEncrypted, keySerializer);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
     //noinspection unchecked
-    bucket.shrink(prevSize, isEncrypted, keySerializer);
+    bucket.addAll(removedRecords, isEncrypted, keySerializer);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_ALL_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SHRINK_PO;
   }
 
   @Override
   public int serializedSize() {
     int serializedSize =
-        2 * OByteSerializer.BYTE_SIZE + 2 * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE * rawRecords.size();
-    for (final byte[] record : rawRecords) {
+        2 * OIntegerSerializer.INT_SIZE + 2 * OByteSerializer.BYTE_SIZE + removedRecords.size() * OIntegerSerializer.INT_SIZE;
+    for (final byte[] record : removedRecords) {
       serializedSize += record.length;
     }
 
@@ -81,35 +80,35 @@ public class CellBTreeBucketSingleValueV1AddAllPO extends PageOperationRecord {
   protected void serializeToByteBuffer(ByteBuffer buffer) {
     super.serializeToByteBuffer(buffer);
 
-    buffer.putInt(prevSize);
+    buffer.putInt(newSize);
+    buffer.putInt(removedRecords.size());
 
-    buffer.put(isEncrypted ? (byte) 1 : 0);
-    buffer.put(keySerializer.getId());
-
-    buffer.putInt(rawRecords.size());
-    for (final byte[] record : rawRecords) {
+    for (final byte[] record : removedRecords) {
       buffer.putInt(record.length);
       buffer.put(record);
     }
+
+    buffer.put(isEncrypted ? (byte) 1 : 0);
+    buffer.put(keySerializer.getId());
   }
 
   @Override
   protected void deserializeFromByteBuffer(ByteBuffer buffer) {
     super.deserializeFromByteBuffer(buffer);
 
-    prevSize = buffer.getInt();
+    newSize = buffer.getInt();
+    final int records = buffer.getInt();
+
+    removedRecords = new ArrayList<>();
+    for (int i = 0; i < records; i++) {
+      final int recordLen = buffer.getInt();
+      final byte[] record = new byte[recordLen];
+      buffer.get(record);
+
+      removedRecords.add(record);
+    }
 
     isEncrypted = buffer.get() > 0;
     keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(buffer.get());
-
-    rawRecords = new ArrayList<>();
-    final int recordsSize = buffer.getInt();
-    for (int i = 0; i < recordsSize; i++) {
-      final int recordSize = buffer.getInt();
-      final byte[] record = new byte[recordSize];
-      buffer.get(record);
-
-      rawRecords.add(record);
-    }
   }
 }

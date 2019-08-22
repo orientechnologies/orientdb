@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -8,20 +8,17 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCe
 
 import java.nio.ByteBuffer;
 
-public class CellBTreeBucketSingleValueV1UpdateValuePO extends PageOperationRecord {
-  private int index;
-  private int keySize;
-
-  private byte[] prevValue;
+public final class CellBTreeBucketSingleValueV1RemoveLeafEntryPO extends PageOperationRecord {
+  private int    index;
+  private byte[] key;
   private byte[] value;
 
-  public CellBTreeBucketSingleValueV1UpdateValuePO() {
+  public CellBTreeBucketSingleValueV1RemoveLeafEntryPO() {
   }
 
-  public CellBTreeBucketSingleValueV1UpdateValuePO(int index, int keySize, byte[] prevValue, byte[] value) {
+  public CellBTreeBucketSingleValueV1RemoveLeafEntryPO(int index, byte[] key, byte[] value) {
     this.index = index;
-    this.keySize = keySize;
-    this.prevValue = prevValue;
+    this.key = key;
     this.value = value;
   }
 
@@ -29,12 +26,8 @@ public class CellBTreeBucketSingleValueV1UpdateValuePO extends PageOperationReco
     return index;
   }
 
-  public int getKeySize() {
-    return keySize;
-  }
-
-  public byte[] getPrevValue() {
-    return prevValue;
+  public byte[] getKey() {
+    return key;
   }
 
   public byte[] getValue() {
@@ -44,23 +37,23 @@ public class CellBTreeBucketSingleValueV1UpdateValuePO extends PageOperationReco
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
-    bucket.updateValue(index, value, keySize);
+    bucket.removeLeafEntry(index, key, value);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
-    bucket.updateValue(index, prevValue, keySize);
+    bucket.addLeafEntry(index, key, value);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_UPDATE_VALUE_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_REMOVE_LEAF_ENTRY_PO;
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 4 * OIntegerSerializer.INT_SIZE + prevValue.length + value.length;
+    return super.serializedSize() + 3 * OIntegerSerializer.INT_SIZE + key.length + value.length;
   }
 
   @Override
@@ -68,10 +61,9 @@ public class CellBTreeBucketSingleValueV1UpdateValuePO extends PageOperationReco
     super.serializeToByteBuffer(buffer);
 
     buffer.putInt(index);
-    buffer.putInt(keySize);
 
-    buffer.putInt(prevValue.length);
-    buffer.put(prevValue);
+    buffer.putInt(key.length);
+    buffer.put(key);
 
     buffer.putInt(value.length);
     buffer.put(value);
@@ -82,11 +74,10 @@ public class CellBTreeBucketSingleValueV1UpdateValuePO extends PageOperationReco
     super.deserializeFromByteBuffer(buffer);
 
     index = buffer.getInt();
-    keySize = buffer.getInt();
 
-    final int prevValueLen = buffer.getInt();
-    prevValue = new byte[prevValueLen];
-    buffer.get(prevValue);
+    final int keyLen = buffer.getInt();
+    key = new byte[keyLen];
+    buffer.get(key);
 
     final int valueLen = buffer.getInt();
     value = new byte[valueLen];
