@@ -620,6 +620,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public void setTracker(OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker) {
-    this.tracker = tracker;
+    this.tracker.sourceFrom(tracker);
   }
 }

@@ -105,4 +105,7 @@ public final class OSimpleMultiValueTracker<K, V> {
     return enabled;
   }
 
+  public void sourceFrom(OSimpleMultiValueTracker<V, V> tracker) {
+    this.timeLine = tracker.timeLine;
+  }
 }

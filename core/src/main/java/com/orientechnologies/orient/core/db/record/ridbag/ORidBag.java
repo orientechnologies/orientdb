@@ -277,6 +277,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         delegate.setOwner(owner);
 
         delegate.setTracker(oldDelegate.getTracker());
+        oldDelegate.disableTracking(owner);
 
         delegate.setDirty();
 
@@ -296,6 +297,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         delegate.setOwner(owner);
 
         delegate.setTracker(oldDelegate.getTracker());
+        oldDelegate.disableTracking(owner);
 
         delegate.setDirty();
 
