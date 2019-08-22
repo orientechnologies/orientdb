@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
@@ -55,6 +56,9 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
+    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+      return false;
+    }
     synchronized (map) {
       return map.containsKey(statement);
     }
@@ -98,6 +102,11 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     if (statement == null) {
       return;
     }
+
+    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+      return;
+    }
+
     synchronized (map) {
       OInternalExecutionPlan internal = (OInternalExecutionPlan) plan;
       internal = internal.copy(null);
@@ -116,6 +125,9 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     if (statement == null) {
       return null;
     }
+    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+      return null;
+    }
     synchronized (map) {
       //LRU
       result = map.remove(statement);
@@ -129,6 +141,11 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
   }
 
   public void invalidate() {
+    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+      lastInvalidation = System.currentTimeMillis();
+      return;
+    }
+
     synchronized (this) {
       synchronized (map) {
         map.clear();
