@@ -24,4 +24,9 @@ public class ODocumentEmbedded extends ODocument {
   public boolean isEmbedded() {
     return true;
   }
+
+  @Override
+  public ODocumentEmbedded copy() {
+    return (ODocumentEmbedded) copyTo(new ODocumentEmbedded());
+  }
 }

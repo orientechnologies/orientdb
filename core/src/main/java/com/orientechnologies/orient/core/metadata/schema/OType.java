@@ -276,7 +276,7 @@ public enum OType implements OTypeInterface {
   private static boolean checkLinkCollection(Collection<?> toCheck) {
     boolean empty = true;
     for (Object object : toCheck) {
-      if (object != null && (!(object instanceof OIdentifiable) || (object instanceof ODocumentDelta)))
+      if (object != null && (!(object instanceof OIdentifiable) || (object instanceof ODocument && ((ODocument) object).isEmbedded()) || (object instanceof ODocumentDelta)))
         return false;
       else if (object != null)
         empty = false;
