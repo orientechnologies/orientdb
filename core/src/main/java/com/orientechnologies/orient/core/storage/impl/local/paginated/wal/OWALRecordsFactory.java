@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.cellbtreebucketsinglevalue.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.nullbucket.CellBTreeNullBucketSingleValueV1InitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetFreeListPagePO;
@@ -315,6 +316,9 @@ public final class OWALRecordsFactory {
       break;
     case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SET_RIGHT_SIBLING_PO:
       walRecord = new CellBTreeBucketSingleValueV1SetRightSiblingPO();
+      break;
+    case CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V1_INIT_PO:
+      walRecord = new CellBTreeNullBucketSingleValueV1InitPO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

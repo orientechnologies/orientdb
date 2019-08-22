@@ -147,7 +147,8 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
         final OCacheEntry nullCacheEntry = addPage(atomicOperation, nullBucketFileId);
         try {
           @SuppressWarnings("unused")
-          final ONullBucket nullBucket = new ONullBucket(nullCacheEntry, true);
+          final OCellBTreeNullBucketSingleValue nullBucket = new OCellBTreeNullBucketSingleValue(nullCacheEntry);
+          nullBucket.init();
         } finally {
           releasePageFromWrite(atomicOperation, nullCacheEntry);
         }
@@ -190,7 +191,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
         } else {
           final OCacheEntry nullBucketCacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
           try {
-            final ONullBucket nullBucket = new ONullBucket(nullBucketCacheEntry, false);
+            final OCellBTreeNullBucketSingleValue nullBucket = new OCellBTreeNullBucketSingleValue(nullBucketCacheEntry);
             return nullBucket.getValue();
           } finally {
             releasePageFromRead(atomicOperation, nullBucketCacheEntry);
@@ -332,7 +333,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
 
           final ORID oldValue;
           try {
-            final ONullBucket nullBucket = new ONullBucket(cacheEntry, false);
+            final OCellBTreeNullBucketSingleValue nullBucket = new OCellBTreeNullBucketSingleValue(cacheEntry);
             oldValue = nullBucket.getValue();
 
             if (validator != null) {
@@ -528,7 +529,7 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     ORID removedValue;
     final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
     try {
-      final ONullBucket nullBucket = new ONullBucket(nullCacheEntry, false);
+      final OCellBTreeNullBucketSingleValue nullBucket = new OCellBTreeNullBucketSingleValue(nullCacheEntry);
       removedValue = nullBucket.getValue();
 
       if (removedValue != null) {
