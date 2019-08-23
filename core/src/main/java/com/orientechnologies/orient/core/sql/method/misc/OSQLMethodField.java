@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
 
@@ -48,6 +49,9 @@ public class OSQLMethodField extends OAbstractSQLMethod {
     final String paramAsString = iParams[0].toString();
 
     if (ioResult != null) {
+      if(ioResult instanceof OResult){
+        ioResult = ((OResult) ioResult).toElement();
+      }
       if(ioResult instanceof Iterable && !(ioResult instanceof ODocument)){
         ioResult = ((Iterable) ioResult).iterator();
       }

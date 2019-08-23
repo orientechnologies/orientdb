@@ -3634,6 +3634,8 @@ OMatchExpression MatchExpression():
                 |
                 LOOKAHEAD(BothPathItem())
                 nextItem = BothPathItem()
+                |
+                nextItem = FieldMatchPathItem()
             )
             { jjtThis.items.add(nextItem); }
         )*
@@ -3646,6 +3648,16 @@ OMatchPathItem MatchPathItem():
 {
     (
         jjtThis.method = MethodCall()
+        [ jjtThis.filter = MatchFilter() ]
+    ){ return jjtThis; }
+}
+
+OMatchPathItem FieldMatchPathItem():
+{}
+{
+    (
+        <DOT>
+        jjtThis.field = Identifier()
         [ jjtThis.filter = MatchFilter() ]
     ){ return jjtThis; }
 }
