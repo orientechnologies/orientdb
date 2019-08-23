@@ -53,6 +53,8 @@ public interface OTrackedMultiValue<K, V> {
 
   boolean isModified();
 
+  boolean isTransactionModified();
+
   OMultiValueChangeTimeLine<Object, Object> getTimeLine();
 
   static <X> void nestedEnabled(Iterator<X> iterator, ORecordElement parent) {
@@ -77,4 +79,19 @@ public interface OTrackedMultiValue<K, V> {
       }
     }
   }
+
+  static <X> void nestedTransactionClear(Iterator<X> iterator) {
+    while (iterator.hasNext()) {
+      X x = iterator.next();
+      if (x instanceof OTrackedMultiValue) {
+        ((OTrackedMultiValue) x).transactionClear();
+      } else if (x instanceof ODocument) {
+        if (((ODocument) x).isEmbedded()) {
+          ODocumentInternal.clearTransactionTrackData((ODocument) x);
+        }
+      }
+    }
+  }
+
+  void transactionClear();
 }

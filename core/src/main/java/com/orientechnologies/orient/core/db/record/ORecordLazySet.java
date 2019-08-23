@@ -46,18 +46,19 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
     OIdentityChangeListener {
 
   protected              boolean                    autoConvertToRecord = true;
-  protected final        ORecord                    sourceRecord;
+  protected final        ORecordElement             sourceRecord;
   protected              Map<OIdentifiable, Object> map                 = new HashMap<OIdentifiable, Object>();
   protected static final Object                     ENTRY_REMOVAL       = new Object();
   private                boolean                    dirty               = false;
+  private                boolean                    transactionDirty    = false;
 
   private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker = new OSimpleMultiValueTracker<>(this);
 
-  public ORecordLazySet(final ODocument iSourceRecord) {
+  public ORecordLazySet(final ORecordElement iSourceRecord) {
     this.sourceRecord = iSourceRecord;
   }
 
-  public ORecordLazySet(ODocument iSourceRecord, Collection<OIdentifiable> iOrigin) {
+  public ORecordLazySet(ORecordElement iSourceRecord, Collection<OIdentifiable> iOrigin) {
     this(iSourceRecord);
     if (iOrigin != null && !iOrigin.isEmpty())
       addAll(iOrigin);
@@ -139,6 +140,7 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
       sourceRecord.setDirty();
     }
     this.dirty = true;
+    this.transactionDirty = true;
     return this;
   }
 
@@ -244,17 +246,29 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   }
 
   @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    if (this instanceof ORecordLazyMultiValue) {
+      OTrackedMultiValue.nestedTransactionClear(((ORecordLazyMultiValue) this).rawIterator());
+    } else {
+      OTrackedMultiValue.nestedTransactionClear(this.iterator());
+    }
+    this.transactionDirty = false;
+  }
+
+  @Override
   public boolean isModified() {
     return dirty;
   }
 
   @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (tracker == null) {
-      return null;
-    } else {
-      return tracker.timeLine;
-    }
+    return tracker.getTimeLine();
   }
 
   @Override

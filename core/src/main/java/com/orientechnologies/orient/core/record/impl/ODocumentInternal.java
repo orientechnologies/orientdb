@@ -136,4 +136,8 @@ public class ODocumentInternal {
   public static OPropertyEncryption getPropertyEncryption(ODocument doc) {
     return doc.propertyEncryption;
   }
+
+  public static void clearTransactionTrackData(ODocument doc) {
+    doc.clearTransactionTrackData();
+  }
 }

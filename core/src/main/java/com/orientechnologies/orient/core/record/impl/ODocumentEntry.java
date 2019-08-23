@@ -19,14 +19,11 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -54,77 +51,10 @@ public class ODocumentEntry {
     return changed;
   }
 
-  public boolean isChangedTree(List<Object> ownersTrace) {
-    if (changed && exist) {
+  public boolean isChangedTree() {
+    if ((changed || isTrackedModified()) && exist ) {
       return true;
     }
-
-    ownersTrace.add(value);
-
-    if (value instanceof ODocument) {
-      ODocument doc = (ODocument) value;
-      return doc.isChangedInDepth();
-    }
-
-    if (value instanceof Collection) {
-      Collection list = (Collection) value;
-      for (Object element : list) {
-        if (element instanceof ODocument) {
-          ODocument doc = (ODocument) element;
-          for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
-            if (field.getValue().isChangedTree(new ArrayList<>())) {
-              return true;
-            }
-          }
-        } else if (element instanceof Collection) {
-          if (ODocumentHelper.isChangedCollection((Collection) element, this, ownersTrace, 1)) {
-            return true;
-          }
-        } else if (element instanceof Map) {
-          if (ODocumentHelper.isChangedMap((Map<Object, Object>) element, this, ownersTrace, 1)) {
-            return true;
-          }
-        }
-      }
-    }
-
-    if (value instanceof Map) {
-      Map<Object, Object> map = (Map) value;
-      for (Map.Entry<Object, Object> entry : map.entrySet()) {
-        Object element = entry.getValue();
-        if (element instanceof ODocument) {
-          ODocument doc = (ODocument) element;
-          for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
-            if (field.getValue().isChangedTree(new ArrayList<>())) {
-              return true;
-            }
-          }
-        } else if (element instanceof Collection) {
-          if (ODocumentHelper.isChangedCollection((List) element, this, ownersTrace, 1)) {
-            return true;
-          }
-        } else if (element instanceof Map) {
-          if (ODocumentHelper.isChangedMap((Map<Object, Object>) element, this, ownersTrace, 1)) {
-            return true;
-          }
-        }
-      }
-    }
-
-    if (getTimeLine() != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = getTimeLine().getMultiValueChangeEvents();
-      if (timeline != null) {
-        for (OMultiValueChangeEvent<Object, Object> event : timeline) {
-          if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD
-              || event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED
-              || event.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE
-              || event.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE) {
-            return true;
-          }
-        }
-      }
-    }
-
     return false;
   }
 
@@ -236,6 +166,9 @@ public class ODocumentEntry {
     if (value instanceof OTrackedMultiValue) {
       return ((OTrackedMultiValue) value).isModified();
     }
+    if (value instanceof ODocument) {
+      return ((ODocument) value).isDirty();
+    }
     return false;
   }
 
@@ -261,6 +194,12 @@ public class ODocumentEntry {
       unmarkChanged();
       original = null;
       exist = true;
+    }
+  }
+
+  public void transactionClear() {
+    if (value instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) value).transactionClear();
     }
   }
 }

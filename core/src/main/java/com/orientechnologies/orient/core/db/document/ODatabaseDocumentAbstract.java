@@ -1421,6 +1421,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
+  public OElement newEmbeddedElement() {
+    return new ODocumentEmbedded(this);
+  }
+
+  @Override
+  public OElement newEmbeddedElement(String className) {
+    return new ODocumentEmbedded(className, this);
+  }
+
+  @Override
   public OElement newElement() {
     return newInstance();
   }

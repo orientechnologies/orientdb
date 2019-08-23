@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -38,7 +39,7 @@ public interface ODocumentSerializer {
 
   void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
 
-  Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
+  Object deserializeValue(BytesContainer bytes, OType type, ORecordElement owner);
 
   OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName, boolean embedded, OImmutableSchema schema,
       OPropertyEncryption encryption);

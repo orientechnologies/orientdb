@@ -69,9 +69,9 @@ public interface ORidBagDelegate
    */
   boolean contains(OIdentifiable identifiable);
 
-  public void setOwner(ORecord owner);
+  public void setOwner(ORecordElement owner);
 
-  public ORecord getOwner();
+  public ORecordElement getOwner();
 
   public String toString();
 

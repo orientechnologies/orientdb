@@ -42,7 +42,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
   private       ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE multiValueStatus    = MULTIVALUE_CONTENT_TYPE.EMPTY;
   private       boolean                                         autoConvertToRecord = true;
 
-  public ORecordLazyMap(final ODocument iSourceRecord) {
+  public ORecordLazyMap(final ORecordElement iSourceRecord) {
     super(iSourceRecord);
     this.recordType = ODocument.RECORD_TYPE;
   }

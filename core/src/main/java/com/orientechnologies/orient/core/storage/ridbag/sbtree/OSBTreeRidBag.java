@@ -82,8 +82,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   private boolean autoConvertToRecord = true;
 
-  private transient ORecord owner;
-  private           boolean dirty;
+  private transient ORecordElement owner;
+  private           boolean        dirty;
+  private           boolean        transactionDirty = false;
 
   @Override
   public void setSize(int size) {
@@ -399,12 +400,12 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public ORecord getOwner() {
+  public ORecordElement getOwner() {
     return owner;
   }
 
   @Override
-  public void setOwner(ORecord owner) {
+  public void setOwner(ORecordElement owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
@@ -1036,17 +1037,24 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    this.transactionDirty = false;
+  }
+
+  @Override
   public boolean isModified() {
     return dirty;
   }
 
   @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (tracker == null) {
-      return null;
-    } else {
-      return tracker.timeLine;
-    }
+    return tracker.getTimeLine();
   }
 
   @Override
@@ -1055,6 +1063,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       owner.setDirty();
     }
     this.dirty = true;
+    this.transactionDirty = true;
     return (RET) this;
   }
 

@@ -37,21 +37,22 @@ import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 @SuppressWarnings("serial")
 public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
-  protected final ORecord  sourceRecord;
-  protected       Class<?> genericClass;
-  private final   boolean  embeddedCollection;
-  private         boolean  dirty = false;
+  protected final ORecordElement sourceRecord;
+  protected       Class<?>       genericClass;
+  private final   boolean        embeddedCollection;
+  private         boolean        dirty            = false;
+  private         boolean        transactionDirty = false;
 
   private OSimpleMultiValueTracker<Object, T> tracker = new OSimpleMultiValueTracker<>(this);
 
-  public OTrackedMap(final ORecord iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
+  public OTrackedMap(final ORecordElement iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
     if (iOrigin != null && !iOrigin.isEmpty())
       putAll(iOrigin);
   }
 
-  public OTrackedMap(final ORecord iSourceRecord) {
+  public OTrackedMap(final ORecordElement iSourceRecord) {
     this.sourceRecord = iSourceRecord;
     embeddedCollection = this.getClass().equals(OTrackedMap.class);
   }
@@ -146,6 +147,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
       sourceRecord.setDirty();
     }
     this.dirty = true;
+    this.transactionDirty = true;
     return this;
   }
 
@@ -252,17 +254,29 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   }
 
   @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    if (this instanceof ORecordLazyMultiValue) {
+      OTrackedMultiValue.nestedTransactionClear(((ORecordLazyMultiValue) this).rawIterator());
+    } else {
+      OTrackedMultiValue.nestedTransactionClear(this.values().iterator());
+    }
+    this.transactionDirty = false;
+  }
+
+  @Override
   public boolean isModified() {
     return dirty;
   }
 
   @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
-    if (tracker == null) {
-      return null;
-    } else {
-      return tracker.timeLine;
-    }
+    return tracker.getTimeLine();
   }
 
 }

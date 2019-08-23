@@ -2304,6 +2304,21 @@ public class ODocument extends ORecordAbstract
     }
   }
 
+  protected void clearTransactionTrackData() {
+    if (fields != null) {
+      // FREE RESOURCES
+      Iterator<Entry<String, ODocumentEntry>> iter = fields.entrySet().iterator();
+      while (iter.hasNext()) {
+        Entry<String, ODocumentEntry> cur = iter.next();
+        if (cur.getValue().exist()) {
+          cur.getValue().transactionClear();
+        }
+      }
+    }
+
+  }
+
+
   public boolean isOrdered() {
     return ordered;
   }
@@ -3130,19 +3145,19 @@ public class ODocument extends ORecordAbstract
       case EMBEDDEDLIST:
         if (fieldValue instanceof List<?>) {
           newValue = new OTrackedList<>(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+          fillTrackedCollection((Collection<Object>) newValue, (ORecordElement) newValue, (Collection<Object>) fieldValue);
         }
         break;
       case EMBEDDEDSET:
         if (fieldValue instanceof Set<?>) {
           newValue = new OTrackedSet<>(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+          fillTrackedCollection((Collection<Object>) newValue, (ORecordElement) newValue, (Collection<Object>) fieldValue);
         }
         break;
       case EMBEDDEDMAP:
         if (fieldValue instanceof Map<?, ?>) {
           newValue = new OTrackedMap<>(this);
-          fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
+          fillTrackedMap((Map<Object, Object>) newValue, (ORecordElement) newValue, (Map<Object, Object>) fieldValue);
         }
         break;
       case LINKLIST:
@@ -3199,62 +3214,63 @@ public class ODocument extends ORecordAbstract
     for (OMultiValueChangeEvent<Object, Object> event : events) {
       Object value = event.getValue();
       if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD && !(value instanceof OTrackedMultiValue)) {
-        if (value instanceof Collection) {
-          Collection<Object> newCollection = value instanceof List ? new OTrackedList<>(this) : new OTrackedSet<>(this);
-          fillTrackedCollection(newCollection, (Collection<Object>) value);
+        if (value instanceof List) {
+          OTrackedList newCollection = new OTrackedList<>(this) ;
+          fillTrackedCollection(newCollection, newCollection, (Collection<Object>) value);
           origin.replace(event, newCollection);
+        } else if (value instanceof Set) {
+          OTrackedSet newCollection = new OTrackedSet<>(this);
+          fillTrackedCollection(newCollection, newCollection, (Collection<Object>) value);
+          origin.replace(event, newCollection);
+
         } else if (value instanceof Map) {
-          Map<Object, Object> newMap = new OTrackedMap<>(this);
-          fillTrackedMap(newMap, (Map<Object, Object>) value);
+          OTrackedMap<Object> newMap = new OTrackedMap<>(this);
+          fillTrackedMap(newMap, newMap, (Map<Object, Object>) value);
           origin.replace(event, newMap);
         }
-      } else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED) {
-        OMultiValueChangeTimeLine nestedTimeline = ((ONestedMultiValueChangeEvent) event).getTimeLine();
-        if (nestedTimeline != null)
-          checkTimelineTrackable(nestedTimeline, (OTrackedMultiValue) value);
       }
     }
   }
 
-  private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {
+  private void fillTrackedCollection(Collection<Object> dest, ORecordElement parent, Collection<Object> source) {
     for (Object cur : source) {
       if (cur instanceof ODocument) {
         ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
         ((ODocument) cur).clearTrackData();
       } else if (cur instanceof List) {
-        List newList = new OTrackedList<>(this);
-        fillTrackedCollection((Collection) newList, (Collection<Object>) cur);
+        OTrackedList newList = new OTrackedList<>(parent);
+        fillTrackedCollection((Collection) newList, newList, (Collection<Object>) cur);
         cur = newList;
       } else if (cur instanceof Set) {
-        Set<Object> newSet = new OTrackedSet<>(this);
-        fillTrackedCollection(newSet, (Collection<Object>) cur);
+        OTrackedSet<Object> newSet = new OTrackedSet<>(parent);
+        fillTrackedCollection(newSet, newSet, (Collection<Object>) cur);
         cur = newSet;
       } else if (cur instanceof Map) {
-        Map<Object, Object> newMap = new OTrackedMap<>(this);
-        fillTrackedMap(newMap, (Map<Object, Object>) cur);
+        OTrackedMap<Object> newMap = new OTrackedMap<>(parent);
+        fillTrackedMap(newMap, newMap, (Map<Object, Object>) cur);
         cur = newMap;
       }
       dest.add(cur);
     }
   }
 
-  private void fillTrackedMap(Map<Object, Object> dest, Map<Object, Object> source) {
+  private void fillTrackedMap(Map<Object, Object> dest, ORecordElement parent, Map<Object, Object> source) {
     for (Entry<Object, Object> cur : source.entrySet()) {
       Object value = cur.getValue();
       if (value instanceof ODocument) {
         ((ODocument) value).convertAllMultiValuesToTrackedVersions();
         ((ODocument) value).clearTrackData();
       } else if (cur.getValue() instanceof List) {
-        List<Object> newList = new OTrackedList<>(this);
-        fillTrackedCollection(newList, (Collection<Object>) value);
+        OTrackedList<Object> newList = new OTrackedList<>(parent);
+        fillTrackedCollection(newList, newList, (Collection<Object>) value);
         value = newList;
       } else if (value instanceof Set) {
-        Set<Object> newSet = new OTrackedSet<>(this);
-        fillTrackedCollection(newSet, (Collection<Object>) value);
+        OTrackedSet<Object> newSet = new OTrackedSet<>(parent);
+        fillTrackedCollection(newSet, newSet, (Collection<Object>) value);
         value = newSet;
       } else if (value instanceof Map) {
-        Map<Object, Object> newMap = new OTrackedMap<>(this);
-        fillTrackedMap(newMap, (Map<Object, Object>) value);
+        OTrackedMap<Object> newMap = new OTrackedMap<>(parent);
+        fillTrackedMap(newMap, newMap, (Map<Object, Object>) value);
         value = newMap;
       }
       dest.put(cur.getKey(), value);
@@ -3615,7 +3631,7 @@ public class ODocument extends ORecordAbstract
 
   private UpdateTypeValueType getUpdateForRidbagWithoutPreviousValue(ORidBag currentValue, ODocumentEntry parent) {
     UpdateTypeValueType retVal = null;
-    if (currentValue != null && currentValue.isEmbedded() && ODocumentHelper.isChangedRidbag(currentValue, parent)) {
+    if (currentValue != null && currentValue.isEmbedded() && currentValue.isModified()) {
       retVal = new UpdateTypeValueType();
       retVal.setUpdateType(UpdateDeltaValueType.RIDBAG_UPDATE);
       List deltaList = new ArrayList();
@@ -3663,9 +3679,9 @@ public class ODocument extends ORecordAbstract
           listElementDelta.field("v", new ValueType(deltaUpdate, ODeltaDocumentFieldType.DELTA_RECORD));
           deltaList.add(listElementDelta);
         }
-      } else if (currentElement instanceof List) {
+      } else if (currentElement instanceof OTrackedMultiValue && currentElement instanceof List) {
         List currentElementAsList = (List) currentElement;
-        if (ODocumentHelper.isChangedCollection(currentElementAsList, parent, new ArrayList<>(ownersTrace), 1)) {
+        if (((OTrackedMultiValue)currentElementAsList).isModified()) {
           ODocumentDelta listElementDelta = new ODocumentDelta();
           listElementDelta.field("i", new ValueType(i, OType.INTEGER));
           listElementDelta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
@@ -3870,21 +3886,17 @@ public class ODocument extends ORecordAbstract
   }
 
   private ODocumentDelta getDeltaFromOriginalForUpdate() {
-    return getDeltaFromOriginalForUpdate(new ArrayList<>());
-  }
-
-  private ODocumentDelta getDeltaFromOriginalForUpdate(List<Object> ownersTrace) {
     ODocumentDelta updated = new ODocumentDelta();
     //get updated and new records
     for (Map.Entry<String, ODocumentEntry> fieldVal : fields.entrySet()) {
       ODocumentEntry val = fieldVal.getValue();
-      if (val.isChangedTree(new ArrayList<Object>(ownersTrace))) {
+      if (val.isChangedTree()) {
         String fieldName = fieldVal.getKey();
         OType currentFieldType = val.type != null ? val.type : OType.getTypeByValue(val.value);
         OType currentFieldLinkedType = HelperClasses.getLinkedType(this, currentFieldType, fieldName);
         OType previousFieldValueType = OType.getTypeByValue(val.original);
         OType previousFieldValueLinkedType = null;
-        UpdateTypeValueType deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged(), val, ownersTrace,
+        UpdateTypeValueType deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged(), val, new ArrayList<>(),
             currentFieldType, currentFieldLinkedType, previousFieldValueType, previousFieldValueLinkedType);
         ODocumentDelta doc = new ODocumentDelta();
         doc.field("v", new ValueType(deltaValue.getValue(), deltaValue.getValueType()));
@@ -3932,7 +3944,7 @@ public class ODocument extends ORecordAbstract
 
   protected boolean isChangedInDepth() {
     for (Map.Entry<String, ODocumentEntry> field : fields.entrySet()) {
-      if (field.getValue().isChangedTree(new ArrayList<>())) {
+      if (field.getValue().isChangedTree()) {
         return true;
       }
     }
@@ -3951,4 +3963,5 @@ public class ODocument extends ORecordAbstract
   protected OImmutableSchema getImmutableSchema() {
     return schema;
   }
+
 }
