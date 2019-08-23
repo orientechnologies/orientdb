@@ -128,7 +128,7 @@ public class ONewDistributedTransactionManager {
       dManager.getMessageService().getDatabase(database.getName()).popTxContext(requestId).destroy();
       int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
       throw new ODistributedRecordLockedException(dManager.getLocalNodeName(), ((OTxRecordLockTimeout) localResult).getLockedId(),
-          null, timeout);
+          timeout);
     }
     if (localResult.getResponseType() == OTxKeyLockTimeout.ID) {
       dManager.getMessageService().getDatabase(database.getName()).popTxContext(requestId).destroy();
@@ -175,7 +175,7 @@ public class ONewDistributedTransactionManager {
       case OTxRecordLockTimeout.ID: {
         int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
         throw new ODistributedRecordLockedException(dManager.getLocalNodeName(), ((OTxRecordLockTimeout) localResult).getLockedId(),
-            null, timeout);
+            timeout);
       }
       case OTxKeyLockTimeout.ID: {
         int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
@@ -267,7 +267,7 @@ public class ONewDistributedTransactionManager {
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
         localKo(requestId, database);
         throw new ODistributedRecordLockedException(((OTxRecordLockTimeout) resultPayload).getNode(),
-            ((OTxRecordLockTimeout) resultPayload).getLockedId(), null, timeout);
+            ((OTxRecordLockTimeout) resultPayload).getLockedId(), timeout);
       case OTxKeyLockTimeout.ID:
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
         localKo(requestId, database);
@@ -281,12 +281,13 @@ public class ONewDistributedTransactionManager {
       List<Exception> exceptions = new ArrayList<>();
       List<String> messages = new ArrayList<>();
       for (OTransactionResultPayload result : results) {
+        String node = responseManager.getNodeNameFromPayload(result);
         switch (result.getResponseType()) {
         case OTxRecordLockTimeout.ID:
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
           localKo(requestId, database);
           throw new ODistributedRecordLockedException(((OTxRecordLockTimeout) result).getNode(),
-              ((OTxRecordLockTimeout) result).getLockedId(), null, timeout);
+              ((OTxRecordLockTimeout) result).getLockedId(), timeout);
         case OTxKeyLockTimeout.ID:
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
           localKo(requestId, database);
@@ -300,24 +301,23 @@ public class ONewDistributedTransactionManager {
               ((OTxConcurrentCreation) result).getActualRid());
 
         case OTxSuccess.ID:
-          messages.add("success");
+          messages.add("node: " + node + " success");
           break;
         case OTxConcurrentModification.ID:
           ORecordId recordId = ((OTxConcurrentModification) result).getRecordId();
-          messages.add(String.format("concurrent modification record (node " + responseManager.getNodeNameFromPayload(result)
-                  + "): %s database version: %d transaction version: %d", recordId.toString(),
-              ((OTxConcurrentModification) result).getVersion(), iTx.getRecordEntry(recordId).getRecord().getVersion()));
+          messages.add(String
+              .format("concurrent modification record (node " + node + "): %s database version: %d transaction version: %d",
+                  recordId.toString(), ((OTxConcurrentModification) result).getVersion(),
+                  iTx.getRecordEntry(recordId).getRecord().getVersion()));
           break;
         case OTxException.ID:
           exceptions.add(((OTxException) result).getException());
           OLogManager.instance().debug(this, "distributed exception", ((OTxException) result).getException());
-          messages.add(String.format("exception (node " + responseManager.getNodeNameFromPayload(result) + "): '%s'",
-              ((OTxException) result).getException().getMessage()));
+          messages.add(String.format("exception (node " + node + "): '%s'", ((OTxException) result).getException().getMessage()));
           break;
         case OTxUniqueIndex.ID:
-          messages.add(String.format("unique index violation on index (node " + responseManager.getNodeNameFromPayload(result)
-                  + "):'$s' with key:'%s' and rid:'%s'", ((OTxUniqueIndex) result).getIndex(), ((OTxUniqueIndex) result).getKey(),
-              ((OTxUniqueIndex) result).getRecordId()));
+          messages.add(String.format("unique index violation on index (node " + node + "):'$s' with key:'%s' and rid:'%s'",
+              ((OTxUniqueIndex) result).getIndex(), ((OTxUniqueIndex) result).getKey(), ((OTxUniqueIndex) result).getRecordId()));
           break;
 
         }
@@ -326,7 +326,7 @@ public class ONewDistributedTransactionManager {
       localKo(requestId, database);
 
       ODistributedOperationException ex = new ODistributedOperationException(
-          String.format("quorum not reached, responses: [%s]", String.join(",", messages)));
+          String.format("quorum of '%i' not reached, responses: [%s]", responseManager.getQuorum(), String.join(",", messages)));
       for (Exception e : exceptions) {
         ex.addSuppressed(e);
       }

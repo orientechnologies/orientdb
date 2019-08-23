@@ -25,17 +25,22 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 
 /**
  * Exception thrown when a record is locked by a running distributed transaction.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- * 
  */
 public class ODistributedRecordLockedException extends ONeedRetryException {
   protected ORID                  rid;
   protected ODistributedRequestId lockHolder;
-  protected String node;
+  protected String                node;
 
   public ODistributedRecordLockedException(final ODistributedRecordLockedException exception) {
     super(exception);
+  }
+
+  public ODistributedRecordLockedException(final String localNodeName, final ORID iRid, long timeout) {
+    super("Timeout (" + timeout + "ms) on acquiring lock on record " + iRid + " on server '" + localNodeName + "'. ");
+    this.rid = iRid;
+    this.node = localNodeName;
   }
 
   public ODistributedRecordLockedException(final String localNodeName, final ORID iRid,
