@@ -1,6 +1,7 @@
 package com.orientechnologies.common.util;
 
 import com.orientechnologies.common.log.OLogManager;
+
 /**
  * Handler which is used to log all exceptions which are left uncaught by any exception handler.
  */

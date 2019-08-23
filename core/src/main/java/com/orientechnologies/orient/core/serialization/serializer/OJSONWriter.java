@@ -408,6 +408,7 @@ public class OJSONWriter {
       final String iFormat) throws IOException {
     return writeAttribute(iIdentLevel, iNewLine, iName, iValue, iFormat, null);
   }
+
   public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
       final String iFormat,OType valueType) throws IOException {
     if (!firstAttribute)

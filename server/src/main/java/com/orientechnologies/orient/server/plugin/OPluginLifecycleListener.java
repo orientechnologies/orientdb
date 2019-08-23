@@ -29,11 +29,14 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  */
 public interface OPluginLifecycleListener {
   void onBeforeConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg);
+
   void onAfterConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg);
 
   void onBeforeStartup(final OServerPlugin plugin);
+
   void onAfterStartup(final OServerPlugin plugin);
 
   void onBeforeShutdown(final OServerPlugin plugin);
+
   void onAfterShutdown(final OServerPlugin plugin);
 }

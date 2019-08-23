@@ -30,6 +30,7 @@ public class EdgeTraversal {
   public String getLeftClass() {
     return leftClass;
   }
+
   public String getLeftCluster() {
     return leftCluster;
   }

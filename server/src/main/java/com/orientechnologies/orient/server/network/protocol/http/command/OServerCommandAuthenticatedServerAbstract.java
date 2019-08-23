@@ -85,6 +85,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
     sendNotAuthorizedResponse(iRequest, iResponse);
     return false;
   }
+
   protected boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse, final boolean iAskForAuthentication)
       throws IOException {
     return authenticate(iRequest,iResponse,iAskForAuthentication,resource);
