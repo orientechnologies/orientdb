@@ -16,9 +16,11 @@ public class OCloseQueryResponse implements OBinaryResponse {
   public OCloseQueryResponse() {
   }
 
-  @Override public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  @Override
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
   }
 
-  @Override public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
+  @Override
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
   }
 }

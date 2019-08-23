@@ -57,11 +57,13 @@ public class OrientEdgeType extends OrientElementType {
     return this;
   }
 
-  @Override public boolean isEdgeType() {
+  @Override
+  public boolean isEdgeType() {
     return true;
   }
 
-  @Override public boolean isVertexType() {
+  @Override
+  public boolean isVertexType() {
     return false;
   }
 

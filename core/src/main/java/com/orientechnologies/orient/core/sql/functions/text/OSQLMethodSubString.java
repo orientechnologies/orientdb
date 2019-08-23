@@ -34,11 +34,13 @@ public class OSQLMethodSubString extends OAbstractSQLMethod {
     super(NAME, 1, 2);
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "subString(<from-index> [,<to-index>])";
   }
 
-  @Override public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult,
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult,
       Object[] iParams) {
     if (iThis == null || iParams[0] == null) {
       return null;

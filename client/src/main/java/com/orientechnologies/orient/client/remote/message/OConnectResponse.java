@@ -22,13 +22,15 @@ public class OConnectResponse implements OBinaryResponse {
     this.sessionToken = token;
   }
 
-  @Override public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  @Override
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     channel.writeInt(sessionId);
     if (protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       channel.writeBytes(sessionToken);
   }
 
-  @Override public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
+  @Override
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     sessionId = network.readInt();
     sessionToken = network.readBytes();
     session.getServerSession(((OChannelBinaryAsynchClient) network).getServerURL()).setSession(sessionId, sessionToken);

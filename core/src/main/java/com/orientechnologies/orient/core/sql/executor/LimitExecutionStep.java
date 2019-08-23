@@ -17,7 +17,8 @@ public class LimitExecutionStep extends AbstractExecutionStep {
     this.limit = limit;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     int limitVal = limit.getValue(ctx);
     if (limitVal == -1) {
       return getPrev().get().syncPull(ctx, nRecords);
@@ -31,15 +32,18 @@ public class LimitExecutionStep extends AbstractExecutionStep {
     return result;
   }
 
-  @Override public void sendTimeout() {
+  @Override
+  public void sendTimeout() {
 
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     prev.ifPresent(x -> x.close());
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ LIMIT (" + limit.toString() + ")";
   }
 

@@ -11,7 +11,8 @@ public class ODeleteExecutionPlan extends OUpdateExecutionPlan {
     super(ctx);
   }
 
-  @Override public OResult toResult() {
+  @Override
+  public OResult toResult() {
     OResultInternal res = (OResultInternal) super.toResult();
     res.setProperty("type", "DeleteExecutionPlan");
     return res;

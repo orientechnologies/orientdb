@@ -61,7 +61,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     try {
       final ODatabaseDocumentInternal db = getDatabase();
       execInSeparateDatabase(new OCallable() {
-        @Override public Object call(Object iArgument) {
+        @Override
+        public Object call(Object iArgument) {
           return execDb = db.copy();
         }
       });
@@ -127,7 +128,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     final OCommandResultListener listener = request.getResultListener();
     if (listener instanceof OLiveResultListener) {
       execInSeparateDatabase(new OCallable() {
-        @Override public Object call(Object iArgument) {
+        @Override
+        public Object call(Object iArgument) {
           execDb.activateOnCurrentThread();
           ((OLiveResultListener) listener).onLiveResult(token, iOp);
           return null;
@@ -226,7 +228,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
   }
 
-  @Override public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
+  @Override
+  public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
     final OCommandRequestText requestText = (OCommandRequestText) iRequest;
     final String originalText = requestText.getText();
     final String remainingText = requestText.getText().trim().substring(5).trim();
@@ -238,7 +241,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.NONE;
   }
 

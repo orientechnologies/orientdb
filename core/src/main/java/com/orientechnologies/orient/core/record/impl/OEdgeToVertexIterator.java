@@ -21,11 +21,13 @@ public class OEdgeToVertexIterator implements Iterator<OVertex> {
     this.direction = direction;
   }
 
-  @Override public boolean hasNext() {
+  @Override
+  public boolean hasNext() {
     return edgeIterator.hasNext();
   }
 
-  @Override public OVertex next() {
+  @Override
+  public OVertex next() {
     OEdge edge = edgeIterator.next();
     switch (direction) {
     case OUT:

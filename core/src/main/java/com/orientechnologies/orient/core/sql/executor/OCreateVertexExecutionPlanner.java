@@ -23,7 +23,8 @@ public class OCreateVertexExecutionPlanner extends OInsertExecutionPlanner {
     this.returnStatement = statement.getReturnStatement() == null ? null : statement.getReturnStatement().copy();
   }
 
-  @Override public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  @Override
+  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OInsertExecutionPlan prev = super.createExecutionPlan(ctx, enableProfiling);
     List<OExecutionStep> steps = new ArrayList<>(prev.getSteps());
     OInsertExecutionPlan result = new OInsertExecutionPlan(ctx);
