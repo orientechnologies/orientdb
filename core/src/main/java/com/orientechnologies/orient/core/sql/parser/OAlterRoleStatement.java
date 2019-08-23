@@ -64,10 +64,10 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
       result.setProperty("operation", "alter role");
       result.setProperty("name", name.getStringValue());
       result.setProperty("resource", op.resource.toString());
-      OSecurityPolicy policy = security.getSecurityPolicy(db, op.policyName.getStringValue());
       if (op.type == Op.TYPE_ADD) {
+        OSecurityPolicy policy = security.getSecurityPolicy(db, op.policyName.getStringValue());
         result.setProperty("operation", "ADD POLICY");
-        result.setProperty("policyName", op.policyName);
+        result.setProperty("policyName", op.policyName.getStringValue());
         try {
           security.setSecurityPolicy(db, role, op.resource.toString(), policy);
           result.setProperty("result", "OK");
