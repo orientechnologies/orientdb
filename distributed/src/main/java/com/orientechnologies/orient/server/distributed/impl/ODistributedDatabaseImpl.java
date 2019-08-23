@@ -684,7 +684,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     if (currentLock != null)
-      throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, null, timeout);
+      throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, timeout);
 
     return newLock;
   }
