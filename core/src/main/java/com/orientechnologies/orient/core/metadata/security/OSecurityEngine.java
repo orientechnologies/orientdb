@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
@@ -20,14 +23,13 @@ public class OSecurityEngine {
    * Calculates a predicate for a security resource. It also takes into consideration the security and schema hierarchies.
    * ie. invoking it with a specific session for a specific class, the method checks all the roles of the session, all the parent roles
    * and all the parent classes until it finds a valid predicarte (the most specific one).
-   *
+   * <p>
    * For multiple-role session, the result is the OR of the predicates that would be calculated for each single role.
-   *
+   * <p>
    * For class hierarchies:
    * - the most specific (ie. defined on subclass) defined predicate is applied
    * - in case a class does not have a direct predicate defined, the superclass predicate is used (and recursively)
    * - in case of multiple superclasses, the AND of the predicates for superclasses (also recursively) is applied
-   *
    *
    * @param session
    * @param security
@@ -104,7 +106,7 @@ public class OSecurityEngine {
     return result;
   }
 
-  private static OBooleanExpression getPredicateForClass(ODatabaseSession session, OSecurityShared security,OSecurityResourceClass resource, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForClass(ODatabaseSession session, OSecurityShared security, OSecurityResourceClass resource, OSecurityPolicy.Scope scope) {
     OClass clazz = session.getClass(resource.getClassName());
     Set<? extends OSecurityRole> roles = session.getUser().getRoles();
     if (roles == null || roles.size() == 0) {
@@ -128,7 +130,7 @@ public class OSecurityEngine {
   }
 
 
-  private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security,OSecurityRole role, OFunction function, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OFunction function, OSecurityPolicy.Scope scope) {
     //TODO cache!
 
     OBooleanExpression result = getPredicateForFunction(session, security, role, function, scope);
@@ -222,7 +224,7 @@ public class OSecurityEngine {
   }
 
 
-  private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security,OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
     String resource = "database.class." + clazz.getName() + "." + propertyName;
     Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, (ORole) role);
     OSecurityPolicy classPolicy = definedPolicies.get(resource);
@@ -256,19 +258,31 @@ public class OSecurityEngine {
 
 
   static boolean evaluateSecuirtyPolicyPredicate(ODatabaseSession session, OBooleanExpression predicate, ORecord record) {
-    //TODO execute with a different session (reload the record...?)
-    OBasicCommandContext ctx = new OBasicCommandContext();
-    ctx.setDatabase(session);
-    ctx.setVariable("$currentUser", session.getUser().getDocument());
-    return predicate.evaluate(record, ctx);
+    try {
+      final ODocument user = session.getUser().getDocument();
+      return ((ODatabaseInternal) session).getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {
+        OBasicCommandContext ctx = new OBasicCommandContext();
+        ctx.setDatabase(db);
+        ctx.setVariable("$currentUser", user);
+        return predicate.evaluate(record, ctx);
+      })).get();
+    } catch (Exception e) {
+      throw new OSecurityException("Cannot execute security predicate");
+    }
   }
 
   static boolean evaluateSecuirtyPolicyPredicate(ODatabaseSession session, OBooleanExpression predicate, OResult record) {
-    //TODO execute with a different session (reload the record...?)
-    OBasicCommandContext ctx = new OBasicCommandContext();
-    ctx.setDatabase(session);
-    ctx.setVariable("$currentUser", session.getUser().getDocument());
-    return predicate.evaluate(record, ctx);
+    try {
+      final ODocument user = session.getUser().getDocument();
+      return ((ODatabaseInternal) session).getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {
+        OBasicCommandContext ctx = new OBasicCommandContext();
+        ctx.setDatabase(db);
+        ctx.setVariable("$currentUser", user);
+        return predicate.evaluate(record, ctx);
+      })).get();
+    } catch (Exception e) {
+      throw new OSecurityException("Cannot execute security predicate");
+    }
   }
 
   /**
@@ -277,7 +291,7 @@ public class OSecurityEngine {
    * @param resource a resource string
    * @return
    */
-  private  static OSecurityResource getResourceFromString(String resource) {
+  private static OSecurityResource getResourceFromString(String resource) {
     return OSecurityResource.getInstance(resource);
   }
 
