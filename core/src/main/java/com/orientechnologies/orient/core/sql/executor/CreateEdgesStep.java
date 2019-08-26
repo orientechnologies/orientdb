@@ -253,7 +253,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       return ((OElement) currentFrom).asVertex()
           .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
     }
-    throw new OCommandExecutionException("Invalid vertex for edge creation: " + currentFrom.toString());
+    throw new OCommandExecutionException("Invalid vertex for edge creation: " + (currentFrom == null ? "null" : currentFrom.toString()));
   }
 
   @Override
