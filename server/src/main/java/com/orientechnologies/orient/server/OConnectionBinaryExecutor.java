@@ -1503,7 +1503,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeSubscribeLiveQuery(OSubscribeLiveQueryRequest request) {
     ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connection.getProtocol();
-    OServerLiveQueryResultListener listener = new OServerLiveQueryResultListener(protocol);
+    OServerLiveQueryResultListener listener = new OServerLiveQueryResultListener(protocol,
+        connection.getDatabase().getSharedContext());
     OLiveQueryMonitor monitor = connection.getDatabase().live(request.getQuery(), listener, request.getParams());
     listener.setMonitorId(monitor.getMonitorId());
     return new OSubscribeLiveQueryResponse(monitor.getMonitorId());

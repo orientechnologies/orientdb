@@ -5,9 +5,11 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
 import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.exception.OLiveQueryInterruptedException;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
@@ -19,10 +21,13 @@ import java.util.Collections;
  */
 class OServerLiveQueryResultListener implements OLiveQueryResultListener {
   private final ONetworkProtocolBinary protocol;
+  private final OSharedContext         sharedContext;
   private       int                    monitorId;
 
-  public OServerLiveQueryResultListener(ONetworkProtocolBinary protocol) {
+  public OServerLiveQueryResultListener(ONetworkProtocolBinary protocol, OSharedContext sharedContext) {
     this.protocol = protocol;
+    this.sharedContext = sharedContext;
+
   }
 
   public void setMonitorId(int monitorId) {
@@ -33,6 +38,7 @@ class OServerLiveQueryResultListener implements OLiveQueryResultListener {
     try {
       protocol.push(new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.HAS_MORE, Collections.singletonList(event)));
     } catch (IOException e) {
+      sharedContext.getLiveQueryOpsV2().getSubscribers().remove(monitorId);
       throw OException.wrapException(new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
     }
   }
