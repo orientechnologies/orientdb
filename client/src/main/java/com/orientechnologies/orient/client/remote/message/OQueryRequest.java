@@ -106,6 +106,8 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
 
     // params
     ODocument paramsDoc = new ODocument();
+    paramsDoc.setTrackingChanges(false);
+
     byte[] bytes = channel.readBytes();
     serializer.fromStream(bytes, paramsDoc, null);
     this.params = paramsDoc.field("params");
