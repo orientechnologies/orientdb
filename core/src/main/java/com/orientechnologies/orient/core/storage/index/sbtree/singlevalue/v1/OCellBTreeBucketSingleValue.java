@@ -67,6 +67,21 @@ public final class OCellBTreeBucketSingleValue<K> extends ODurablePage {
     addPageOperation(new CellBTreeBucketSingleValueV1InitPO(isLeaf));
   }
 
+  public void switchBucketType() {
+    if (!isEmpty()) {
+      throw new IllegalStateException("Type of bucket can be changed only bucket if bucket is empty");
+    }
+
+    final boolean isLeaf = isLeaf();
+    if (isLeaf) {
+      setByteValue(IS_LEAF_OFFSET, (byte) 0);
+    } else {
+      setByteValue(IS_LEAF_OFFSET, (byte) 1);
+    }
+
+    addPageOperation(new CellBTreeBucketSingleValueV1SwitchBucketTypePO());
+  }
+
   public boolean isEmpty() {
     return size() == 0;
   }

@@ -340,6 +340,9 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V1_SET_PAGES_SIZE_PO:
       walRecord = new CellBTreeEntryPointSingleValueV1SetPagesSizePO();
       break;
+    case WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SWITCH_BUCKET_TYPE_PO:
+      walRecord = new CellBTreeBucketSingleValueV1SwitchBucketTypePO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {

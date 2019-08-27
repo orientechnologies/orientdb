@@ -1017,11 +1017,12 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OCellBTreeSingleValueEntryPoint entryPoint = new OCellBTreeSingleValueEntryPoint(entryPointCacheEntry);
-      final int pageSize = entryPoint.getPagesSize();
+      int pageSize = entryPoint.getPagesSize();
 
       if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
+        pageSize++;
         rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-        entryPoint.setPagesSize(pageSize + 1);
+        entryPoint.setPagesSize(pageSize);
       } else {
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
 
@@ -1141,29 +1142,29 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OCellBTreeSingleValueEntryPoint entryPoint = new OCellBTreeSingleValueEntryPoint(entryPointCacheEntry);
-      int pageSize = entryPoint.getPagesSize();
+      int pagesSize = entryPoint.getPagesSize();
 
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
-      if (pageSize < filledUpTo - 1) {
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-        pageSize++;
+      if (pagesSize < filledUpTo - 1) {
+        pagesSize++;
+        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pagesSize, false, false);
       } else {
-        assert pageSize == filledUpTo - 1;
+        assert pagesSize == filledUpTo - 1;
         leftBucketEntry = addPage(atomicOperation, fileId);
-        pageSize = (int) leftBucketEntry.getPageIndex();
+        pagesSize = (int) leftBucketEntry.getPageIndex();
       }
 
-      if (pageSize < filledUpTo) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-        pageSize++;
+      if (pagesSize < filledUpTo) {
+        pagesSize++;
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pagesSize, false, false);
       } else {
-        assert pageSize == filledUpTo;
+        assert pagesSize == filledUpTo;
         rightBucketEntry = addPage(atomicOperation, fileId);
-        pageSize = (int) rightBucketEntry.getPageIndex();
+        pagesSize = (int) rightBucketEntry.getPageIndex();
       }
 
-      entryPoint.setPagesSize(pageSize);
+      entryPoint.setPagesSize(pagesSize);
     } finally {
       releasePageFromWrite(atomicOperation, entryPointCacheEntry);
     }
@@ -1196,7 +1197,10 @@ public final class OCellBTreeSingleValueV1<K> extends ODurableComponent implemen
     }
 
     bucketToSplit = new OCellBTreeBucketSingleValue<>(bucketEntry);
-    bucketToSplit.init(false);
+    bucketToSplit.shrink(0, encryption != null, keySerializer);
+    if (splitLeaf) {
+      bucketToSplit.switchBucketType();
+    }
 
     bucketToSplit
         .addNonLeafEntry(0, leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(), serializeKey(separationKey), true);
