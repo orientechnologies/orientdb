@@ -706,6 +706,9 @@ public class OSecurityShared implements OSecurityInternal {
 
       if (roleClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
+
+      //TODO create OSecurityPolicy
+      //TODO migrate ORole to use security policies
     }
   }
 
@@ -776,10 +779,10 @@ public class OSecurityShared implements OSecurityInternal {
   @Override
   public boolean canRead(ODatabaseSession session, ORecord record) {
     //TODO what about server users?
-//    if (session.getUser() == null) {
-//      //root
-//      return true;
-//    }
+    if (session.getUser() == null) {
+      //executeNoAuth
+      return true;
+    }
     if (record instanceof OElement) {
       OBooleanExpression predicate = ((OElement) record).getSchemaType()
               .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName(), OSecurityPolicy.Scope.READ)).orElse(null);
@@ -790,6 +793,10 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public boolean canUpdate(ODatabaseSession session, ORecord record) {
+    if (session.getUser() == null) {
+      //executeNoAuth
+      return true;
+    }
     if (record instanceof OElement) {
       OBooleanExpression beforePredicate = ((OElement) record).getSchemaType()
               .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName(), OSecurityPolicy.Scope.AFTER_UPDATE)).orElse(null);
@@ -811,6 +818,10 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public boolean canDelete(ODatabaseSession session, ORecord record) {
+    if (session.getUser() == null) {
+      //executeNoAuth
+      return true;
+    }
     if (record instanceof OElement) {
       OBooleanExpression predicate = ((OElement) record).getSchemaType()
               .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName(), OSecurityPolicy.Scope.DELETE)).orElse(null);
@@ -822,6 +833,10 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public boolean canExecute(ODatabaseSession session, OFunction function) {
+    if (session.getUser() == null) {
+      //executeNoAuth
+      return true;
+    }
     OBooleanExpression predicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.function." + function.getName(), OSecurityPolicy.Scope.EXECUTE);
     return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, function.getDocument());
   }
