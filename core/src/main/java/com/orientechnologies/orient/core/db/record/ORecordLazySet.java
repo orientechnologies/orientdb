@@ -248,4 +248,8 @@ public class ORecordLazySet extends ORecordTrackedSet
     return 0;
   }
 
+  @Override
+  public String toString() {
+    return ORecordMultiValueHelper.toString(this);
+  }
 }
