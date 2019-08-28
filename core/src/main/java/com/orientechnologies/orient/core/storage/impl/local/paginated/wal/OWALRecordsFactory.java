@@ -362,6 +362,9 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SHRINK_PO:
       walRecord = new CellBTreeBucketSingleValueV3ShrinkPO();
       break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_UPDATE_VALUE_PO:
+      walRecord = new CellBTreeBucketSingleValueV3UpdateValuePO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {

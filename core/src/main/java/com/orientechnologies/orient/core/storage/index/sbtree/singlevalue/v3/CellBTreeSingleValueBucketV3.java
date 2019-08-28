@@ -436,6 +436,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     final byte[] prevValue = getBinaryValue(entryPosition, RID_SIZE);
 
     setBinaryValue(entryPosition, value);
+    addPageOperation(new CellBTreeBucketSingleValueV3UpdateValuePO(index, keySize, prevValue, value));
   }
 
   public void setLeftSibling(final long pageIndex) {

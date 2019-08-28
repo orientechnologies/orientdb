@@ -98,4 +98,5 @@ public final class WALRecordTypes {
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_REMOVE_LEAF_ENTRY_PO  = 80;
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_ALL_PO            = 81;
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SHRINK_PO             = 82;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_UPDATE_VALUE_PO          = 83;
 }
