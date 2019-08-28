@@ -45,6 +45,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   private String              statement;
   private byte                operationType;
   private Map<String, Object> params;
+  private byte[]              paramsBytes;
   private boolean             namedParams;
 
   public OQueryRequest(String language, String iCommand, Object[] positionalParams, byte operationType,
@@ -59,6 +60,11 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
       this.recordsPerPage = 100;
     }
     this.operationType = operationType;
+    ODocument parms = new ODocument();
+    parms.field("params", this.params);
+
+    paramsBytes = OMessageHelper.getRecordBytes(parms, serializer);
+
   }
 
   public OQueryRequest(String language, String iCommand, Map<String, Object> namedParams, byte operationType,
@@ -66,6 +72,10 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     this.language = language;
     this.statement = iCommand;
     this.params = (Map) namedParams;
+    ODocument parms = new ODocument();
+    parms.field("params", this.params);
+
+    paramsBytes = OMessageHelper.getRecordBytes(parms, serializer);
     this.namedParams = true;
     this.serializer = serializer;
     this.recordsPerPage = recordsPerPage;
@@ -88,11 +98,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     network.writeString(null);
 
     // params
-    ODocument parms = new ODocument();
-    parms.field("params", this.params);
-
-    byte[] bytes = OMessageHelper.getRecordBytes(parms, serializer);
-    network.writeBytes(bytes);
+    network.writeBytes(paramsBytes);
     network.writeBoolean(namedParams);
   }
 
@@ -104,14 +110,9 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     //THIS IS FOR POSSIBLE FUTURE FETCH PLAN
     channel.readString();
 
-    // params
-    ODocument paramsDoc = new ODocument();
-    paramsDoc.setTrackingChanges(false);
-
-    byte[] bytes = channel.readBytes();
-    serializer.fromStream(bytes, paramsDoc, null);
-    this.params = paramsDoc.field("params");
+    this.paramsBytes = channel.readBytes();
     this.namedParams = channel.readBoolean();
+    this.serializer = serializer;
   }
 
   @Override
@@ -140,6 +141,13 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   }
 
   public Map<String, Object> getParams() {
+    if (params == null && this.paramsBytes != null) {
+      // params
+      ODocument paramsDoc = new ODocument();
+      paramsDoc.setTrackingChanges(false);
+      serializer.fromStream(this.paramsBytes, paramsDoc, null);
+      this.params = paramsDoc.field("params");
+    }
     return params;
   }
 
@@ -152,10 +160,11 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   }
 
   public Map getNamedParameters() {
-    return params;
+    return getParams();
   }
 
   public Object[] getPositionalParameters() {
+    Map<String, Object> params = getParams();
     if (params == null)
       return null;
     Object[] result = new Object[params.size()];

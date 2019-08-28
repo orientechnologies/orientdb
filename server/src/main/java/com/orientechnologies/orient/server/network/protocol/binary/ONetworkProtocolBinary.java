@@ -383,7 +383,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           // THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR COMPATIBILITY IT'S ONLY IF THERE
           // IS NO CONNECTION
           shutdown();
-          throw new OIOException("Found unknown session " + clientTxId);
+          throw new ONetworkProtocolException("Found unknown session " + clientTxId);
         }
         connection = server.getClientConnectionManager().connect(this);
         connection.getData().sessionId = clientTxId;

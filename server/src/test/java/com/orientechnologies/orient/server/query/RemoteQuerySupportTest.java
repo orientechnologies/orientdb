@@ -8,6 +8,8 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -235,6 +237,17 @@ public class RemoteQuerySupportTest {
 
     Assert.assertTrue(record.getIdentity().isPersistent());
 
+  }
+
+  @Test(expected = OSerializationException.class)
+  public void testBrokenParameter() {
+    try {
+      session.query("select from Some where prop= ?", new Object()).close();
+    } catch (RuntimeException e) {
+      //should be possible to run a query after without getting the server stuck
+      session.query("select from Some where prop= ?", new ORecordId(10, 10)).close();
+      throw e;
+    }
   }
 
   @After
