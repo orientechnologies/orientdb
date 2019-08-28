@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueEntryPoint;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueEntryPointV1;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -22,7 +22,7 @@ public class CellBTreeEntryPointSingleValueV1InitPOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeSingleValueEntryPoint bucket = new OCellBTreeSingleValueEntryPoint(entry);
+      CellBTreeSingleValueEntryPointV1 bucket = new CellBTreeSingleValueEntryPointV1(entry);
       bucket.init();
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
@@ -38,7 +38,7 @@ public class CellBTreeEntryPointSingleValueV1InitPOTest {
 
       pageOperation.redo(restoredCacheEntry);
 
-      OCellBTreeSingleValueEntryPoint restoredPage = new OCellBTreeSingleValueEntryPoint(restoredCacheEntry);
+      CellBTreeSingleValueEntryPointV1 restoredPage = new CellBTreeSingleValueEntryPointV1(restoredCacheEntry);
 
       Assert.assertEquals(1, restoredPage.getPagesSize());
       Assert.assertEquals(0, restoredPage.getTreeSize());

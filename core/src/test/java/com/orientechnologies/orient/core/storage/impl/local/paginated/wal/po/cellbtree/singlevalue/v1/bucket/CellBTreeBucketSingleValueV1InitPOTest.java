@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValueV1;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -22,7 +22,7 @@ public class CellBTreeBucketSingleValueV1InitPOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(entry);
+      OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(entry);
       bucket.init(true);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
@@ -38,7 +38,7 @@ public class CellBTreeBucketSingleValueV1InitPOTest {
 
       pageOperation.redo(restoredCacheEntry);
 
-      OCellBTreeBucketSingleValue restoredPage = new OCellBTreeBucketSingleValue(restoredCacheEntry);
+      OCellBTreeBucketSingleValueV1 restoredPage = new OCellBTreeBucketSingleValueV1(restoredCacheEntry);
 
       Assert.assertTrue(restoredPage.isLeaf());
       Assert.assertEquals(0, restoredPage.size());

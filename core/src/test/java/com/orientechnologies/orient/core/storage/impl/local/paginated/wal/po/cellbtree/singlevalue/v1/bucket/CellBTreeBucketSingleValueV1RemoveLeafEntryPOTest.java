@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValueV1;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +28,7 @@ public class CellBTreeBucketSingleValueV1RemoveLeafEntryPOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(entry);
+      OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(entry);
       bucket.init(true);
 
       bucket.addLeafEntry(0, new byte[] { 0 }, serializeRid(new ORecordId(0, 0)));
@@ -59,7 +59,7 @@ public class CellBTreeBucketSingleValueV1RemoveLeafEntryPOTest {
       final CellBTreeBucketSingleValueV1RemoveLeafEntryPO pageOperation = (CellBTreeBucketSingleValueV1RemoveLeafEntryPO) operations
           .get(0);
 
-      OCellBTreeBucketSingleValue<Byte> restoredBucket = new OCellBTreeBucketSingleValue<>(restoredCacheEntry);
+      OCellBTreeBucketSingleValueV1<Byte> restoredBucket = new OCellBTreeBucketSingleValueV1<>(restoredCacheEntry);
       Assert.assertEquals(3, restoredBucket.size());
 
       Assert.assertEquals(new ORecordId(0, 0), restoredBucket.getValue(0, null, OByteSerializer.INSTANCE));
@@ -90,7 +90,7 @@ public class CellBTreeBucketSingleValueV1RemoveLeafEntryPOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(entry);
+      OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(entry);
       bucket.init(true);
 
       bucket.addLeafEntry(0, new byte[] { 0 }, serializeRid(new ORecordId(0, 0)));
@@ -109,7 +109,7 @@ public class CellBTreeBucketSingleValueV1RemoveLeafEntryPOTest {
       final CellBTreeBucketSingleValueV1RemoveLeafEntryPO pageOperation = (CellBTreeBucketSingleValueV1RemoveLeafEntryPO) operations
           .get(0);
 
-      final OCellBTreeBucketSingleValue<Byte> restoredBucket = new OCellBTreeBucketSingleValue<>(entry);
+      final OCellBTreeBucketSingleValueV1<Byte> restoredBucket = new OCellBTreeBucketSingleValueV1<>(entry);
 
       Assert.assertEquals(2, restoredBucket.size());
 

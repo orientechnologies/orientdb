@@ -3,12 +3,12 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.ce
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeNullBucketSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeNullBucketSingleValueV1;
 
 public final class CellBTreeNullBucketSingleValueV1InitPO extends PageOperationRecord {
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OCellBTreeNullBucketSingleValue bucket = new OCellBTreeNullBucketSingleValue(cacheEntry);
+    final CellBTreeNullBucketSingleValueV1 bucket = new CellBTreeNullBucketSingleValueV1(cacheEntry);
     bucket.init();
   }
 

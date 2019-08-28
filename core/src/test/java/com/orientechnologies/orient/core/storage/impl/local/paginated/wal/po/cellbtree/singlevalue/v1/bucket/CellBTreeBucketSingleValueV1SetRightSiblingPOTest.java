@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValueV1;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,7 +24,7 @@ public class CellBTreeBucketSingleValueV1SetRightSiblingPOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(entry);
+      OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(entry);
       bucket.init(true);
 
       bucket.setRightSibling(24);
@@ -53,7 +53,7 @@ public class CellBTreeBucketSingleValueV1SetRightSiblingPOTest {
       final CellBTreeBucketSingleValueV1SetRightSiblingPO pageOperation = (CellBTreeBucketSingleValueV1SetRightSiblingPO) operations
           .get(0);
 
-      OCellBTreeBucketSingleValue<Byte> restoredBucket = new OCellBTreeBucketSingleValue<>(restoredCacheEntry);
+      OCellBTreeBucketSingleValueV1<Byte> restoredBucket = new OCellBTreeBucketSingleValueV1<>(restoredCacheEntry);
 
       Assert.assertEquals(24, restoredBucket.getRightSibling());
 
@@ -79,7 +79,7 @@ public class CellBTreeBucketSingleValueV1SetRightSiblingPOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(entry);
+      OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(entry);
       bucket.init(true);
 
       bucket.setRightSibling(24);
@@ -96,7 +96,7 @@ public class CellBTreeBucketSingleValueV1SetRightSiblingPOTest {
       final CellBTreeBucketSingleValueV1SetRightSiblingPO pageOperation = (CellBTreeBucketSingleValueV1SetRightSiblingPO) operations
           .get(0);
 
-      final OCellBTreeBucketSingleValue<Byte> restoredBucket = new OCellBTreeBucketSingleValue<>(entry);
+      final OCellBTreeBucketSingleValueV1<Byte> restoredBucket = new OCellBTreeBucketSingleValueV1<>(entry);
 
       Assert.assertEquals(42, restoredBucket.getRightSibling());
 

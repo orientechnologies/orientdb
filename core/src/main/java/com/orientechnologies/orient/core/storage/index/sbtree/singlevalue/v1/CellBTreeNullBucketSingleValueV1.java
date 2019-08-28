@@ -40,8 +40,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cel
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
  */
-public final class OCellBTreeNullBucketSingleValue extends ODurablePage {
-  public OCellBTreeNullBucketSingleValue(final OCacheEntry cacheEntry) {
+public final class CellBTreeNullBucketSingleValueV1 extends ODurablePage {
+  public CellBTreeNullBucketSingleValueV1(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 

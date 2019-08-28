@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeNullBucketSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeNullBucketSingleValueV1;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,7 +25,7 @@ public class CellBTreeNullBucketSingleValueV1RemoveValuePOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeNullBucketSingleValue bucket = new OCellBTreeNullBucketSingleValue(entry);
+      CellBTreeNullBucketSingleValueV1 bucket = new CellBTreeNullBucketSingleValueV1(entry);
       bucket.init();
 
       bucket.setValue(new ORecordId(2, 2));
@@ -54,7 +54,7 @@ public class CellBTreeNullBucketSingleValueV1RemoveValuePOTest {
       final CellBTreeNullBucketSingleValueV1RemoveValuePO pageOperation = (CellBTreeNullBucketSingleValueV1RemoveValuePO) operations
           .get(0);
 
-      OCellBTreeNullBucketSingleValue restoredBucket = new OCellBTreeNullBucketSingleValue(restoredCacheEntry);
+      CellBTreeNullBucketSingleValueV1 restoredBucket = new CellBTreeNullBucketSingleValueV1(restoredCacheEntry);
 
       Assert.assertEquals(new ORecordId(2, 2), restoredBucket.getValue());
 
@@ -79,7 +79,7 @@ public class CellBTreeNullBucketSingleValueV1RemoveValuePOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeNullBucketSingleValue bucket = new OCellBTreeNullBucketSingleValue(entry);
+      CellBTreeNullBucketSingleValueV1 bucket = new CellBTreeNullBucketSingleValueV1(entry);
       bucket.init();
 
       bucket.setValue(new ORecordId(2, 2));
@@ -96,7 +96,7 @@ public class CellBTreeNullBucketSingleValueV1RemoveValuePOTest {
       final CellBTreeNullBucketSingleValueV1RemoveValuePO pageOperation = (CellBTreeNullBucketSingleValueV1RemoveValuePO) operations
           .get(0);
 
-      final OCellBTreeNullBucketSingleValue restoredBucket = new OCellBTreeNullBucketSingleValue(entry);
+      final CellBTreeNullBucketSingleValueV1 restoredBucket = new CellBTreeNullBucketSingleValueV1(entry);
 
       Assert.assertNull(restoredBucket.getValue());
 

@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueEntryPoint;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueEntryPointV1;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,7 +24,7 @@ public class CellBTreeEntryPointSingleValueV1SetTreeSizePOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeSingleValueEntryPoint bucket = new OCellBTreeSingleValueEntryPoint(entry);
+      CellBTreeSingleValueEntryPointV1 bucket = new CellBTreeSingleValueEntryPointV1(entry);
       bucket.init();
 
       bucket.setTreeSize(42);
@@ -53,7 +53,7 @@ public class CellBTreeEntryPointSingleValueV1SetTreeSizePOTest {
       final CellBTreeEntryPointSingleValueV1SetTreeSizePO pageOperation = (CellBTreeEntryPointSingleValueV1SetTreeSizePO) operations
           .get(0);
 
-      OCellBTreeSingleValueEntryPoint restoredBucket = new OCellBTreeSingleValueEntryPoint(restoredCacheEntry);
+      CellBTreeSingleValueEntryPointV1 restoredBucket = new CellBTreeSingleValueEntryPointV1(restoredCacheEntry);
       Assert.assertEquals(42, restoredBucket.getTreeSize());
 
       pageOperation.redo(restoredCacheEntry);
@@ -77,7 +77,7 @@ public class CellBTreeEntryPointSingleValueV1SetTreeSizePOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeSingleValueEntryPoint bucket = new OCellBTreeSingleValueEntryPoint(entry);
+      CellBTreeSingleValueEntryPointV1 bucket = new CellBTreeSingleValueEntryPointV1(entry);
       bucket.init();
 
       bucket.setTreeSize(42);
@@ -94,7 +94,7 @@ public class CellBTreeEntryPointSingleValueV1SetTreeSizePOTest {
       final CellBTreeEntryPointSingleValueV1SetTreeSizePO pageOperation = (CellBTreeEntryPointSingleValueV1SetTreeSizePO) operations
           .get(0);
 
-      final OCellBTreeSingleValueEntryPoint restoredBucket = new OCellBTreeSingleValueEntryPoint(entry);
+      final CellBTreeSingleValueEntryPointV1 restoredBucket = new CellBTreeSingleValueEntryPointV1(entry);
 
       Assert.assertEquals(24, restoredBucket.getTreeSize());
 

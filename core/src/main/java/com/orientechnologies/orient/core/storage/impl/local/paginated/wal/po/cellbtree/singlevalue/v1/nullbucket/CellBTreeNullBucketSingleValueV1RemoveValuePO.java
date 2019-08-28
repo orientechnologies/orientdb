@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeNullBucketSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeNullBucketSingleValueV1;
 
 import java.nio.ByteBuffer;
 
@@ -27,13 +27,13 @@ public final class CellBTreeNullBucketSingleValueV1RemoveValuePO extends PageOpe
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OCellBTreeNullBucketSingleValue bucket = new OCellBTreeNullBucketSingleValue(cacheEntry);
+    final CellBTreeNullBucketSingleValueV1 bucket = new CellBTreeNullBucketSingleValueV1(cacheEntry);
     bucket.removeValue();
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final OCellBTreeNullBucketSingleValue bucket = new OCellBTreeNullBucketSingleValue(cacheEntry);
+    final CellBTreeNullBucketSingleValueV1 bucket = new CellBTreeNullBucketSingleValueV1(cacheEntry);
     bucket.setValue(value);
   }
 

@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeNullBucketSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeNullBucketSingleValueV1;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -22,7 +22,7 @@ public class CellBTreeNullBucketSingleValueV1InitPOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeNullBucketSingleValue bucket = new OCellBTreeNullBucketSingleValue(entry);
+      CellBTreeNullBucketSingleValueV1 bucket = new CellBTreeNullBucketSingleValueV1(entry);
       bucket.init();
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
@@ -38,7 +38,7 @@ public class CellBTreeNullBucketSingleValueV1InitPOTest {
 
       pageOperation.redo(restoredCacheEntry);
 
-      OCellBTreeNullBucketSingleValue restoredPage = new OCellBTreeNullBucketSingleValue(restoredCacheEntry);
+      CellBTreeNullBucketSingleValueV1 restoredPage = new CellBTreeNullBucketSingleValueV1(restoredCacheEntry);
 
       Assert.assertNull(restoredPage.getValue());
 

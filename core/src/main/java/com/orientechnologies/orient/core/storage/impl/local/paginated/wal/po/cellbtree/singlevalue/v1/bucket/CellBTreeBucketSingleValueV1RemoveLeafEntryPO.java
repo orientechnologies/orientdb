@@ -4,7 +4,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValueV1;
 
 import java.nio.ByteBuffer;
 
@@ -36,13 +36,13 @@ public final class CellBTreeBucketSingleValueV1RemoveLeafEntryPO extends PageOpe
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
+    final OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(cacheEntry);
     bucket.removeLeafEntry(index, key, value);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final OCellBTreeBucketSingleValue bucket = new OCellBTreeBucketSingleValue(cacheEntry);
+    final OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(cacheEntry);
     bucket.addLeafEntry(index, key, value);
   }
 
