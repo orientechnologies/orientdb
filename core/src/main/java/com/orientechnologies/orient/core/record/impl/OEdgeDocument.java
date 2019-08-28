@@ -12,7 +12,7 @@ public class OEdgeDocument extends ODocument implements OEdge {
     super(cl);
   }
 
-  public OEdgeDocument(ODatabaseSession session,String cl) {
+  public OEdgeDocument(ODatabaseSession session, String cl) {
     super(session, cl);
   }
 
@@ -56,4 +56,14 @@ public class OEdgeDocument extends ODocument implements OEdge {
     return false;
   }
 
+  public OEdgeDocument delete() {
+    OEdgeDelegate.deleteLinks(this);
+    super.delete();
+    return this;
+  }
+
+  @Override
+  public OEdgeDocument copy() {
+    return (OEdgeDocument) super.copyTo(new OEdgeDocument());
+  }
 }

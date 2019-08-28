@@ -563,4 +563,8 @@ public class OVertexDocument extends ODocument implements OVertex {
     return "E";//TODO constant
   }
 
+  @Override
+  public OVertexDocument copy() {
+    return (OVertexDocument) copyTo(new OVertexDocument());
+  }
 }
