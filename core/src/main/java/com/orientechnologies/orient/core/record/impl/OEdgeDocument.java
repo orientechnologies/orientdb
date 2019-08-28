@@ -53,4 +53,8 @@ public class OEdgeDocument extends ODocument implements OEdge {
     return this;
   }
 
+  @Override
+  public OEdgeDocument copy() {
+    return (OEdgeDocument) super.copyTo(new OEdgeDocument());
+  }
 }
