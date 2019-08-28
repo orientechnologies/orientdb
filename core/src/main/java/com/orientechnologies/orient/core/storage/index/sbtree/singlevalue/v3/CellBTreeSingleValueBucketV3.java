@@ -190,6 +190,8 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
         setIntValue(nextEntryPosition, prevChild);
       }
     }
+
+    addPageOperation(new CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO(entryIndex, prevChild, key, leftChild, rightChild));
   }
 
   public int size() {
