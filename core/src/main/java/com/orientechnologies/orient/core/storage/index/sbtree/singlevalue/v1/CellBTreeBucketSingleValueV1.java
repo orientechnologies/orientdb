@@ -39,7 +39,7 @@ import java.util.Objects;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-public final class OCellBTreeBucketSingleValueV1<K> extends ODurablePage {
+public final class CellBTreeBucketSingleValueV1<K> extends ODurablePage {
   private static final int RID_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
 
   private static final int FREE_POINTER_OFFSET  = NEXT_FREE_POSITION;
@@ -52,7 +52,7 @@ public final class OCellBTreeBucketSingleValueV1<K> extends ODurablePage {
 
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-  public OCellBTreeBucketSingleValueV1(final OCacheEntry cacheEntry) {
+  public CellBTreeBucketSingleValueV1(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 

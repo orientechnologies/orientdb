@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(entry);
+      CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(entry);
       bucket.init(true);
 
       entry.clearPageOperations();
@@ -50,7 +50,7 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final CellBTreeBucketSingleValueV1SwitchBucketTypePO pageOperation = (CellBTreeBucketSingleValueV1SwitchBucketTypePO) operations
           .get(0);
 
-      OCellBTreeBucketSingleValueV1<Byte> restoredBucket = new OCellBTreeBucketSingleValueV1<>(restoredCacheEntry);
+      CellBTreeBucketSingleValueV1<Byte> restoredBucket = new CellBTreeBucketSingleValueV1<>(restoredCacheEntry);
 
       Assert.assertTrue(restoredBucket.isLeaf());
 
@@ -75,7 +75,7 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(entry);
+      CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(entry);
       bucket.init(true);
 
       bucket.setLeftSibling(24);
@@ -92,7 +92,7 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final CellBTreeBucketSingleValueV1SwitchBucketTypePO pageOperation = (CellBTreeBucketSingleValueV1SwitchBucketTypePO) operations
           .get(0);
 
-      final OCellBTreeBucketSingleValueV1<Byte> restoredBucket = new OCellBTreeBucketSingleValueV1<>(entry);
+      final CellBTreeBucketSingleValueV1<Byte> restoredBucket = new CellBTreeBucketSingleValueV1<>(entry);
 
       Assert.assertFalse(restoredBucket.isLeaf());
 

@@ -4,7 +4,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
 
 import java.nio.ByteBuffer;
 
@@ -20,7 +20,7 @@ public final class CellBTreeBucketSingleValueV1InitPO extends PageOperationRecor
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(cacheEntry);
+    final CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(cacheEntry);
     bucket.init(isLeaf);
   }
 

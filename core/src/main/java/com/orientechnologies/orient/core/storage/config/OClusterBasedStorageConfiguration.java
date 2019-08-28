@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -82,8 +82,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private OContextConfiguration configuration;
   private boolean               validation;
 
-  private final OCellBTreeSingleValueV1<String> btree;
-  private final OPaginatedCluster               cluster;
+  private final CellBTreeSingleValueV1<String> btree;
+  private final OPaginatedCluster              cluster;
 
   private final OAbstractPaginatedStorage storage;
   private final OAtomicOperationsManager  atomicOperationsManager;
@@ -103,7 +103,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     cluster = OPaginatedClusterFactory
         .createCluster(COMPONENT_NAME, OPaginatedCluster.getLatestBinaryVersion(), storage, DATA_FILE_EXTENSION,
             MAP_FILE_EXTENSION);
-    btree = new OCellBTreeSingleValueV1<>(COMPONENT_NAME, OAbstractPaginatedStorage.STORAGE_CONFIGURATION_INDEX_ID,
+    btree = new CellBTreeSingleValueV1<>(COMPONENT_NAME, OAbstractPaginatedStorage.STORAGE_CONFIGURATION_INDEX_ID,
         TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
 

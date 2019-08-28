@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.ce
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
 
 public class CellBTreeBucketSingleValueV1SwitchBucketTypePO extends PageOperationRecord {
   public CellBTreeBucketSingleValueV1SwitchBucketTypePO() {
@@ -11,13 +11,13 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePO extends PageOperatio
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(cacheEntry);
+    final CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(cacheEntry);
     bucket.switchBucketType();
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(cacheEntry);
+    final CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(cacheEntry);
     bucket.switchBucketType();
   }
 

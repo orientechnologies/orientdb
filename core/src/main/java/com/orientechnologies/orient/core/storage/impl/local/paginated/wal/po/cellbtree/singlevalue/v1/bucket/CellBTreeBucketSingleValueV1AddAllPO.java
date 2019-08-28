@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeBucketSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -49,14 +49,14 @@ public final class CellBTreeBucketSingleValueV1AddAllPO extends PageOperationRec
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(cacheEntry);
+    final CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(cacheEntry);
     //noinspection unchecked
     bucket.addAll(rawRecords, isEncrypted, keySerializer);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final OCellBTreeBucketSingleValueV1 bucket = new OCellBTreeBucketSingleValueV1(cacheEntry);
+    final CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(cacheEntry);
     //noinspection unchecked
     bucket.shrink(prevSize, isEncrypted, keySerializer);
   }

@@ -17,17 +17,17 @@ import org.junit.Test;
 import java.io.File;
 import java.util.*;
 
-public class OCellBTreeSingleValueV1TestIT {
-  private OAbstractPaginatedStorage       storage;
-  private OCellBTreeSingleValueV1<String> singleValueTree;
-  private OrientDB                        orientDB;
+public class CellBTreeSingleValueV1TestIT {
+  private OAbstractPaginatedStorage      storage;
+  private CellBTreeSingleValueV1<String> singleValueTree;
+  private OrientDB                       orientDB;
 
   private String dbName;
 
   @Before
   public void before() throws Exception {
     final String buildDirectory =
-        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeSingleValueV1TestIT.class.getSimpleName();
+        System.getProperty("buildDirectory", ".") + File.separator + CellBTreeSingleValueV1TestIT.class.getSimpleName();
 
     dbName = "localSingleBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);
@@ -41,7 +41,7 @@ public class OCellBTreeSingleValueV1TestIT {
     final ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
     storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
-    singleValueTree = new OCellBTreeSingleValueV1<>("singleBTree", 42, ".sbt", ".nbt", storage);
+    singleValueTree = new CellBTreeSingleValueV1<>("singleBTree", 42, ".sbt", ".nbt", storage);
     singleValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
 

@@ -12,7 +12,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.OCellBTreeSingleValueV3;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
     this.id = id;
 
     if (version < 3) {
-      this.sbTree = new OCellBTreeSingleValueV1<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      this.sbTree = new CellBTreeSingleValueV1<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 3) {
       this.sbTree = new OCellBTreeSingleValueV3<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
