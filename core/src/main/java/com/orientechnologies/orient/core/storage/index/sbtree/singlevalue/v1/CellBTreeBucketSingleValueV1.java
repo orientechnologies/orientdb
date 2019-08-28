@@ -25,7 +25,6 @@ import com.orientechnologies.common.serialization.types.*;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket.*;
@@ -447,87 +446,6 @@ public final class CellBTreeBucketSingleValueV1<K> extends ODurablePage {
     setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);
 
     setBinaryValue(freePointer, rawEntry);
-  }
-
-  public boolean addEntry(final int index, final SBTreeEntry<K> treeEntry, final boolean updateNeighbors,
-      OBinarySerializer<K> keySerializer, OEncryption encryption, OType[] keyTypes) {
-    final byte[] serializedKey = keySerializer.serializeNativeAsWhole(treeEntry.key, (Object[]) keyTypes);
-    final int keySize;
-    byte[] encryptedKey = null;
-
-    if (encryption == null) {
-      keySize = keySerializer.getObjectSize(treeEntry.key, (Object[]) keyTypes);
-    } else {
-      encryptedKey = encryption.encrypt(serializedKey);
-      keySize = encryptedKey.length + OIntegerSerializer.INT_SIZE;
-    }
-
-    int entrySize = keySize;
-
-    if (isLeaf()) {
-      entrySize += RID_SIZE;
-    } else {
-      entrySize += 2 * OIntegerSerializer.INT_SIZE;
-    }
-
-    int size = size();
-    int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
-      return false;
-    }
-
-    if (index <= size - 1) {
-      moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
-          POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE);
-    }
-
-    freePointer -= entrySize;
-
-    setIntValue(FREE_POINTER_OFFSET, freePointer);
-    setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);
-    setIntValue(SIZE_OFFSET, size + 1);
-
-    if (isLeaf()) {
-      if (encryption == null) {
-        freePointer += setBinaryValue(freePointer, serializedKey);
-      } else {
-        setIntValue(freePointer, encryptedKey.length);
-        freePointer += OIntegerSerializer.INT_SIZE;
-
-        freePointer += setBinaryValue(freePointer, encryptedKey);
-      }
-
-      freePointer += setShortValue(freePointer, (short) treeEntry.value.getClusterId());
-      setLongValue(freePointer, treeEntry.value.getClusterPosition());
-    } else {
-      freePointer += setIntValue(freePointer, treeEntry.leftChild);
-      freePointer += setIntValue(freePointer, treeEntry.rightChild);
-
-      if (encryption == null) {
-        setBinaryValue(freePointer, serializedKey);
-      } else {
-        setIntValue(freePointer, encryptedKey.length);
-        freePointer += OIntegerSerializer.INT_SIZE;
-
-        setBinaryValue(freePointer, encryptedKey);
-      }
-
-      size++;
-
-      if (updateNeighbors && size > 1) {
-        if (index < size - 1) {
-          final int nextEntryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE);
-          setIntValue(nextEntryPosition, treeEntry.rightChild);
-        }
-
-        if (index > 0) {
-          final int prevEntryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + (index - 1) * OIntegerSerializer.INT_SIZE);
-          setIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE, treeEntry.leftChild);
-        }
-      }
-    }
-
-    return true;
   }
 
   public boolean addNonLeafEntry(final int index, final int leftChild, final int rightChild, final byte[] key,
