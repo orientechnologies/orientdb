@@ -1020,7 +1020,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     try {
       final CellBTreeSingleValueBucketV3<K> newRightBucket = new CellBTreeSingleValueBucketV3<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, keySerializer);
 
       bucketToSplit.shrink(indexToSplit, keySerializer);
 
@@ -1142,7 +1142,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     try {
       final CellBTreeSingleValueBucketV3<K> newLeftBucket = new CellBTreeSingleValueBucketV3<>(leftBucketEntry);
       newLeftBucket.init(splitLeaf);
-      newLeftBucket.addAll(leftEntries);
+      newLeftBucket.addAll(leftEntries, keySerializer);
 
       if (splitLeaf) {
         newLeftBucket.setRightSibling(rightBucketEntry.getPageIndex());
@@ -1155,7 +1155,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     try {
       final CellBTreeSingleValueBucketV3<K> newRightBucket = new CellBTreeSingleValueBucketV3<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, keySerializer);
 
       if (splitLeaf) {
         newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());

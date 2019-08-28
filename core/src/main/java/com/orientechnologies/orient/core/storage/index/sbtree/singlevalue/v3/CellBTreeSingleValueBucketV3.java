@@ -26,10 +26,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.bucket.CellBTreeBucketSingleValueV3AddLeafEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.bucket.CellBTreeBucketSingleValueV3AddNonLeafEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.bucket.CellBTreeBucketSingleValueV3InitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.bucket.CellBTreeBucketSingleValueV3RemoveLeafEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.bucket.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -242,7 +239,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
   }
 
-  byte[] getRawEntry(final int entryIndex, final OBinarySerializer<K> keySerializer) {
+  public byte[] getRawEntry(final int entryIndex, final OBinarySerializer<K> keySerializer) {
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     final int startEntryPosition = entryPosition;
 
@@ -305,27 +302,34 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return getByteValue(IS_LEAF_OFFSET) > 0;
   }
 
-  public void addAll(final List<byte[]> rawEntries) {
+  public void addAll(final List<byte[]> rawEntries, final OBinarySerializer<K> keySerializer) {
+    final int currentSize = size();
     for (int i = 0; i < rawEntries.size(); i++) {
       appendRawEntry(i, rawEntries.get(i));
     }
 
-    setIntValue(SIZE_OFFSET, rawEntries.size());
+    setIntValue(SIZE_OFFSET, rawEntries.size() + currentSize);
+
+    addPageOperation(new CellBTreeBucketSingleValueV3AddAllPO(currentSize, rawEntries, keySerializer));
   }
 
   public void shrink(final int newSize, final OBinarySerializer<K> keySerializer) {
+    final int currentSize = size();
     final List<byte[]> rawEntries = new ArrayList<>(newSize);
+    final List<byte[]> removedEntries = new ArrayList<>(currentSize - newSize);
 
     for (int i = 0; i < newSize; i++) {
       rawEntries.add(getRawEntry(i, keySerializer));
     }
 
+    for (int i = newSize; i < currentSize; i++) {
+      removedEntries.add(getRawEntry(i, keySerializer));
+    }
+
     setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
 
-    int index = 0;
-    for (final byte[] entry : rawEntries) {
-      appendRawEntry(index, entry);
-      index++;
+    for (int i = 0; i < newSize; i++) {
+      appendRawEntry(i, rawEntries.get(i));
     }
 
     setIntValue(SIZE_OFFSET, newSize);
