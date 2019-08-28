@@ -359,6 +359,9 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_ALL_PO:
       walRecord = new CellBTreeBucketSingleValueV3AddAllPO();
       break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SHRINK_PO:
+      walRecord = new CellBTreeBucketSingleValueV3ShrinkPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {

@@ -305,7 +305,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
   public void addAll(final List<byte[]> rawEntries, final OBinarySerializer<K> keySerializer) {
     final int currentSize = size();
     for (int i = 0; i < rawEntries.size(); i++) {
-      appendRawEntry(i, rawEntries.get(i));
+      appendRawEntry(i + currentSize, rawEntries.get(i));
     }
 
     setIntValue(SIZE_OFFSET, rawEntries.size() + currentSize);
@@ -333,6 +333,8 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     }
 
     setIntValue(SIZE_OFFSET, newSize);
+
+    addPageOperation(new CellBTreeBucketSingleValueV3ShrinkPO(newSize, removedEntries, keySerializer));
   }
 
   public boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {
