@@ -15,16 +15,16 @@ import org.junit.Test;
 import java.io.File;
 import java.util.*;
 
-public class OCellBTreeSingleValueV3TestIT {
-  private OCellBTreeSingleValueV3<String> singleValueTree;
-  private OrientDB                        orientDB;
+public class CellBTreeSingleValueV3TestIT {
+  private CellBTreeSingleValueV3<String> singleValueTree;
+  private OrientDB                       orientDB;
 
   private String dbName;
 
   @Before
   public void before() throws Exception {
     final String buildDirectory =
-        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeSingleValueV3TestIT.class.getSimpleName();
+        System.getProperty("buildDirectory", ".") + File.separator + CellBTreeSingleValueV3TestIT.class.getSimpleName();
 
     dbName = "localSingleBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);
@@ -35,7 +35,7 @@ public class OCellBTreeSingleValueV3TestIT {
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
-    singleValueTree = new OCellBTreeSingleValueV3<>("singleBTree", 42, ".sbt", ".nbt",
+    singleValueTree = new CellBTreeSingleValueV3<>("singleBTree", 42, ".sbt", ".nbt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     singleValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }

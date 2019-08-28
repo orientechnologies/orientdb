@@ -6,13 +6,13 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
-final class OEntryPoint<K> extends ODurablePage {
+final class CellBTreeSingleValueEntryPointV3<K> extends ODurablePage {
   private static final int KEY_SERIALIZER_OFFSET = NEXT_FREE_POSITION;
   private static final int KEY_SIZE_OFFSET       = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int TREE_SIZE_OFFSET      = KEY_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int PAGES_SIZE_OFFSET     = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  OEntryPoint(final OCacheEntry cacheEntry) {
+  CellBTreeSingleValueEntryPointV3(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 

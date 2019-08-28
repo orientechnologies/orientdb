@@ -37,7 +37,7 @@ import java.util.Objects;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-final class OSBTreeBucketSingleValue<K> extends ODurablePage {
+final class CellBTreeBucketSingleValueV3<K> extends ODurablePage {
   private static final int RID_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
 
   private static final int FREE_POINTER_OFFSET  = NEXT_FREE_POSITION;
@@ -56,7 +56,7 @@ final class OSBTreeBucketSingleValue<K> extends ODurablePage {
 
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-  OSBTreeBucketSingleValue(final OCacheEntry cacheEntry, final boolean isLeaf, final OBinarySerializer<K> keySerializer,
+  CellBTreeBucketSingleValueV3(final OCacheEntry cacheEntry, final boolean isLeaf, final OBinarySerializer<K> keySerializer,
       final OType[] keyTypes) {
     super(cacheEntry);
 
@@ -72,7 +72,7 @@ final class OSBTreeBucketSingleValue<K> extends ODurablePage {
     setLongValue(RIGHT_SIBLING_OFFSET, -1);
   }
 
-  OSBTreeBucketSingleValue(final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer, final OType[] keyTypes) {
+  CellBTreeBucketSingleValueV3(final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer, final OType[] keyTypes) {
     super(cacheEntry);
     this.keyTypes = keyTypes;
 
