@@ -1171,7 +1171,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
       bucketToSplit.switchBucketType();
     }
     bucketToSplit.addNonLeafEntry(0, leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(),
-        keySerializer.serializeNativeAsWhole(separationKey, (Object[]) separationKey), true);
+        keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes), true);
 
     final ArrayList<Long> resultPath = new ArrayList<>(8);
     resultPath.add(ROOT_INDEX);
