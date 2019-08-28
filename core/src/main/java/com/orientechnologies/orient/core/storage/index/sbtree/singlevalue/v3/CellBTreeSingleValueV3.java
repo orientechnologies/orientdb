@@ -469,9 +469,10 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
           final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
           final OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.pageIndex, false,
               true);
+          final byte[] rawValue;
           try {
             final CellBTreeSingleValueBucketV3<K> keyBucket = new CellBTreeSingleValueBucketV3<>(keyBucketCacheEntry);
-            final byte[] rawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, keySerializer);
+            rawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, keySerializer);
             keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, serializedKey, rawValue);
             updateSize(-1, atomicOperation);
           } finally {
@@ -479,8 +480,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
 
           }
 
-          final int clusterId = OShortSerializer.INSTANCE.deserializeNative(serializedKey, 0);
-          final long clusterPosition = OLongSerializer.INSTANCE.deserializeNative(serializedKey, OShortSerializer.SHORT_SIZE);
+          final int clusterId = OShortSerializer.INSTANCE.deserializeNative(rawValue, 0);
+          final long clusterPosition = OLongSerializer.INSTANCE.deserializeNative(rawValue, OShortSerializer.SHORT_SIZE);
 
           removedValue = new ORecordId(clusterId, clusterPosition);
 
