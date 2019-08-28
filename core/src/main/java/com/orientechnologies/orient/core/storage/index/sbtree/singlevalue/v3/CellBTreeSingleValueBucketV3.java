@@ -442,7 +442,10 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
   }
 
   public void setLeftSibling(final long pageIndex) {
+    final int prevLeft = (int) getLongValue(LEFT_SIBLING_OFFSET);
     setLongValue(LEFT_SIBLING_OFFSET, pageIndex);
+
+    addPageOperation(new CellBTreeBucketSingleValueV3SetLeftSiblingPO(prevLeft, (int) pageIndex));
   }
 
   public long getLeftSibling() {
@@ -450,7 +453,11 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
   }
 
   public void setRightSibling(final long pageIndex) {
+    final int prevRight = (int) getLongValue(RIGHT_SIBLING_OFFSET);
+
     setLongValue(RIGHT_SIBLING_OFFSET, pageIndex);
+
+    addPageOperation(new CellBTreeBucketSingleValueV3SetRightSiblingPO(prevRight, (int) pageIndex));
   }
 
   public long getRightSibling() {

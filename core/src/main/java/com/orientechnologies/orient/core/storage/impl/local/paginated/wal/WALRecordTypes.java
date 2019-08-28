@@ -92,12 +92,14 @@ public final class WALRecordTypes {
 
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SWITCH_BUCKET_TYPE_PO = 76;
 
-  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_INIT_PO               = 77;
-  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_LEAF_ENTRY_PO     = 78;
-  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_NON_LEAF_ENTRY_PO = 79;
-  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_REMOVE_LEAF_ENTRY_PO  = 80;
-  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_ALL_PO            = 81;
-  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SHRINK_PO             = 82;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_INIT_PO                  = 77;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_LEAF_ENTRY_PO        = 78;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_NON_LEAF_ENTRY_PO    = 79;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_REMOVE_LEAF_ENTRY_PO     = 80;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_ALL_PO               = 81;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SHRINK_PO                = 82;
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_UPDATE_VALUE_PO          = 83;
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_REMOVE_NON_LEAF_ENTRY_PO = 84;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SET_LEFT_SIBLING_PO      = 85;
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SET_RIGHT_SIBLING_PO     = 86;
 }
