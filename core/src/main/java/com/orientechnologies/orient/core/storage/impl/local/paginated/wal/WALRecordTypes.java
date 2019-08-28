@@ -91,4 +91,6 @@ public final class WALRecordTypes {
   public static final byte CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V1_SET_PAGES_SIZE_PO = 75;
 
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SWITCH_BUCKET_TYPE_PO = 76;
+
+  public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_INIT_PO = 77;
 }

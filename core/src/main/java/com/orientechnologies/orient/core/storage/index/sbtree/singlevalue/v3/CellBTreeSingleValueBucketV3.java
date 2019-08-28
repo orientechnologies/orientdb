@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.bucket.CellBTreeBucketSingleValueV3InitPO;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -73,6 +74,8 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     setByteValue(IS_LEAF_OFFSET, (byte) (isLeaf ? 1 : 0));
     setLongValue(LEFT_SIBLING_OFFSET, -1);
     setLongValue(RIGHT_SIBLING_OFFSET, -1);
+
+    addPageOperation(new CellBTreeBucketSingleValueV3InitPO(isLeaf));
   }
 
   public boolean isEmpty() {
