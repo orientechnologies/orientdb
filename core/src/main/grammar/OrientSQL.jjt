@@ -5325,7 +5325,7 @@ OSecurityResourceSegment SecurityResourceSegment():
             |
             jjtThis.identifier = Identifier()
             |
-            <CLUSTER> { jjtThis.cluster = true; }
+            token = <CLUSTER> { jjtThis.identifier = new OIdentifier(token.image); }
             |
             token = <CREATE> { jjtThis.identifier = new OIdentifier(token.image); }
             |
@@ -5336,6 +5336,20 @@ OSecurityResourceSegment SecurityResourceSegment():
             token = <SELECT> { jjtThis.identifier = new OIdentifier(token.image); }
             |
             token = <LIKE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <VERTEX> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <EDGE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINS> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINSALL> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINSANY> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINSKEY> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINSVALUE> { jjtThis.identifier = new OIdentifier(token.image); }
         )
         [
           <DOT>

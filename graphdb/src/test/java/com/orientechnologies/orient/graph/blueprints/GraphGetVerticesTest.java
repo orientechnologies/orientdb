@@ -42,7 +42,7 @@ public class GraphGetVerticesTest {
   public void test() {
 
     Iterator<Vertex> iterator = null;
-    OrientGraphNoTx graph = new OrientGraphNoTx("memory:/TestDB", "admin", "admin");
+    OrientGraphNoTx graph = new OrientGraphNoTx("memory:TestDB", "admin", "admin");
     OrientVertexType personType = graph.createVertexType("Person");
     personType.createProperty("person_id", OType.STRING);
     personType.createProperty("name", OType.STRING);

@@ -108,6 +108,9 @@ public class OSecurityEngine {
 
   private static OBooleanExpression getPredicateForClass(ODatabaseSession session, OSecurityShared security, OSecurityResourceClass resource, OSecurityPolicy.Scope scope) {
     OClass clazz = session.getClass(resource.getClassName());
+    if (clazz == null) {
+      return OBooleanExpression.TRUE;
+    }
     Set<? extends OSecurityRole> roles = session.getUser().getRoles();
     if (roles == null || roles.size() == 0) {
       return null;
@@ -284,6 +287,12 @@ public class OSecurityEngine {
 
 
   static boolean evaluateSecuirtyPolicyPredicate(ODatabaseSession session, OBooleanExpression predicate, ORecord record) {
+    if (OBooleanExpression.TRUE.equals(predicate)) {
+      return true;
+    }
+    if (OBooleanExpression.FALSE.equals(predicate)) {
+      return false;
+    }
     try {
       final ODocument user = session.getUser().getDocument();
       return ((ODatabaseInternal) session).getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {
@@ -299,6 +308,12 @@ public class OSecurityEngine {
   }
 
   static boolean evaluateSecuirtyPolicyPredicate(ODatabaseSession session, OBooleanExpression predicate, OResult record) {
+    if (OBooleanExpression.TRUE.equals(predicate)) {
+      return true;
+    }
+    if (OBooleanExpression.FALSE.equals(predicate)) {
+      return false;
+    }
     try {
       final ODocument user = session.getUser().getDocument();
       return ((ODatabaseInternal) session).getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {

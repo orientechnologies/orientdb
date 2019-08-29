@@ -773,8 +773,38 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public Set<String> getFilteredProperties(ODatabaseSession session, ODocument document) {
+    if (session.getUser() == null) {
+      return Collections.emptySet();
+    }
+    if (OSecurityPolicy.class.getSimpleName().equalsIgnoreCase(document.getClassName())) {
+      return Collections.emptySet();
+    }
+    if (document.getClassName() == null) {
+      return Collections.emptySet();
+    }
+    Set<String> props = document.getPropertyNames();
+    Set<String> result = new HashSet<>();
+    OClass schemaType = ((OElement) document).getSchemaType().orElse(null);
+    if (schemaType == null) {
+      return Collections.emptySet();
+    }
+    for (String prop : props) {
+      OBooleanExpression predicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + schemaType.getName() + "." + prop, OSecurityPolicy.Scope.CREATE);
+      if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document)) {
+        result.add(prop);
+        System.out.println("CHECK!!! - " + prop + " : " + predicate);
+        System.out.println("CHECK!!! - " + prop + " : " + predicate);
+      }
+    }
+    if (result.size() > 0) {
+      System.out.println("CHECK!!!! ");
+      System.out.println(props.stream().collect(Collectors.joining(",")));
+      System.out.println(document.getClassName());
+      System.out.println(document);
 
-    return Collections.emptySet(); //TODO
+    }
+    return result;
+//    return Collections.emptySet();
   }
 
   @Override
