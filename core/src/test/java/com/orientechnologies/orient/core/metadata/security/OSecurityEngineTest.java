@@ -35,18 +35,6 @@ public class OSecurityEngineTest {
   }
 
   @Test
-  public void testNoRule() {
-    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
-
-    db.createClass("Person");
-
-    OBooleanExpression pred = OSecurityEngine
-            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
-
-    Assert.assertEquals("false", pred.toString());
-  }
-
-  @Test
   public void testAllClasses() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 

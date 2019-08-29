@@ -193,7 +193,7 @@ public class OSecurityEngine {
 
   private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, OSecurityPolicy.Scope scope) {
     String resource = "database.class." + clazz.getName();
-    Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, (OSecurityRole) role);
+    Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, role);
     OSecurityPolicy classPolicy = definedPolicies.get(resource);
 
     String predicateString = classPolicy != null ? classPolicy.get(scope) : null;
@@ -217,6 +217,11 @@ public class OSecurityEngine {
       OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class.*");
       predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
     }
+
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("*");
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
     if (predicateString != null) {
       return parsePredicate(session, predicateString);
     }
@@ -226,7 +231,7 @@ public class OSecurityEngine {
 
   private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
     String resource = "database.class." + clazz.getName() + "." + propertyName;
-    Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, (ORole) role);
+    Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, role);
     OSecurityPolicy classPolicy = definedPolicies.get(resource);
 
     String predicateString = classPolicy != null ? classPolicy.get(scope) : null;
@@ -245,6 +250,27 @@ public class OSecurityEngine {
       return result;
     }
 
+
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class." + clazz.getName() + ".*");
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
+
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class.*." + propertyName);
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
+
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class.*.*");
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
+
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("*");
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
+    //TODO
 
     if (predicateString != null) {
       return parsePredicate(session, predicateString);
@@ -267,6 +293,7 @@ public class OSecurityEngine {
         return predicate.evaluate(record, ctx);
       })).get();
     } catch (Exception e) {
+      e.printStackTrace();
       throw new OSecurityException("Cannot execute security predicate");
     }
   }
@@ -281,6 +308,7 @@ public class OSecurityEngine {
         return predicate.evaluate(record, ctx);
       })).get();
     } catch (Exception e) {
+      e.printStackTrace();
       throw new OSecurityException("Cannot execute security predicate");
     }
   }

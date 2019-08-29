@@ -5326,6 +5326,16 @@ OSecurityResourceSegment SecurityResourceSegment():
             jjtThis.identifier = Identifier()
             |
             <CLUSTER> { jjtThis.cluster = true; }
+            |
+            token = <CREATE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <DELETE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <INSERT> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <SELECT> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <LIKE> { jjtThis.identifier = new OIdentifier(token.image); }
         )
         [
           <DOT>
