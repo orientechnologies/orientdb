@@ -773,6 +773,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public Set<String> getFilteredProperties(ODatabaseSession session, ODocument document) {
+
     return Collections.emptySet(); //TODO
   }
 
@@ -784,9 +785,24 @@ public class OSecurityShared implements OSecurityInternal {
       //executeNoAuth
       return true;
     }
-    OBooleanExpression predicate = ((OElement) document).getSchemaType()
-            .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName() + "." + propertyName, OSecurityPolicy.Scope.CREATE)).orElse(null);
-    return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document);
+    if (document.getIdentity().isNew()) {
+      OBooleanExpression predicate = ((OElement) document).getSchemaType()
+              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName() + "." + propertyName, OSecurityPolicy.Scope.CREATE)).orElse(null);
+      return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document);
+    } else {
+
+      OBooleanExpression beforePredicate = document.getSchemaType()
+              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName() + "." + propertyName, OSecurityPolicy.Scope.AFTER_UPDATE)).orElse(null);
+      OResultInternal originalRecord = calculateOriginalValue(document);
+      if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, beforePredicate, originalRecord)) {
+        return false;
+      }
+
+      OBooleanExpression predicate = document.getSchemaType()
+              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName() + "." + propertyName, OSecurityPolicy.Scope.AFTER_UPDATE)).orElse(null);
+      return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document);
+    }
+
   }
 
   @Override
