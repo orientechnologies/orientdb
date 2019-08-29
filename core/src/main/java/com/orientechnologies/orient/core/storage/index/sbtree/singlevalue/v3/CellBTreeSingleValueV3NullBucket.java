@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3RemoveValuePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3SetValuePO;
 
 /**
@@ -72,6 +73,9 @@ public final class CellBTreeSingleValueV3NullBucket extends ODurablePage {
   }
 
   public void removeValue() {
+    final ORID prevValue = getValue();
     setByteValue(NEXT_FREE_POSITION, (byte) 0);
+
+    addPageOperation(new CellBTreeNullBucketSingleValueV3RemoveValuePO(prevValue));
   }
 }
