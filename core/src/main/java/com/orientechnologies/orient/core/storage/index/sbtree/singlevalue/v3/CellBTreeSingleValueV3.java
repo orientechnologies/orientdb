@@ -144,7 +144,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         final OCacheEntry nullCacheEntry = addPage(atomicOperation, nullBucketFileId);
         try {
           @SuppressWarnings("unused")
-          final CellBTreeSingleValueV3NullBucket nullBucket = new CellBTreeSingleValueV3NullBucket(nullCacheEntry, true);
+          final CellBTreeSingleValueV3NullBucket nullBucket = new CellBTreeSingleValueV3NullBucket(nullCacheEntry);
+          nullBucket.init();
         } finally {
           releasePageFromWrite(atomicOperation, nullCacheEntry);
         }
@@ -187,7 +188,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         } else {
           final OCacheEntry nullBucketCacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
           try {
-            final CellBTreeSingleValueV3NullBucket nullBucket = new CellBTreeSingleValueV3NullBucket(nullBucketCacheEntry, false);
+            final CellBTreeSingleValueV3NullBucket nullBucket = new CellBTreeSingleValueV3NullBucket(nullBucketCacheEntry);
             return nullBucket.getValue();
           } finally {
             releasePageFromRead(atomicOperation, nullBucketCacheEntry);
@@ -326,7 +327,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
 
           final ORID oldValue;
           try {
-            final CellBTreeSingleValueV3NullBucket nullBucket = new CellBTreeSingleValueV3NullBucket(cacheEntry, false);
+            final CellBTreeSingleValueV3NullBucket nullBucket = new CellBTreeSingleValueV3NullBucket(cacheEntry);
             oldValue = nullBucket.getValue();
 
             if (validator != null) {
@@ -515,7 +516,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     ORID removedValue;
     final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
     try {
-      final CellBTreeSingleValueV3NullBucket nullBucket = new CellBTreeSingleValueV3NullBucket(nullCacheEntry, false);
+      final CellBTreeSingleValueV3NullBucket nullBucket = new CellBTreeSingleValueV3NullBucket(nullCacheEntry);
       removedValue = nullBucket.getValue();
 
       if (removedValue != null) {
