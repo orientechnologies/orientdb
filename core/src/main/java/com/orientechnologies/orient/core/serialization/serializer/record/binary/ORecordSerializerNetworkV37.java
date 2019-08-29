@@ -690,7 +690,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
   }
 
-  private int writeOptimizedLink(final BytesContainer bytes, OIdentifiable link) {
+  protected int writeOptimizedLink(final BytesContainer bytes, OIdentifiable link) {
     if (!link.getIdentity().isPersistent()) {
       final ORecord real = link.getRecord();
       if (real != null)
