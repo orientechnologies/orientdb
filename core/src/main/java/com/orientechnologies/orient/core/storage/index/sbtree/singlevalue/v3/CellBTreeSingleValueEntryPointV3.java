@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.entrypoint.CellBTreeEntryPointSingleValueV3InitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.entrypoint.CellBTreeEntryPointSingleValueV3SetPagesSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.entrypoint.CellBTreeEntryPointSingleValueV3SetTreeSizePO;
 
 public final class CellBTreeSingleValueEntryPointV3<K> extends ODurablePage {
   private static final int KEY_SERIALIZER_OFFSET = NEXT_FREE_POSITION;
@@ -26,7 +27,11 @@ public final class CellBTreeSingleValueEntryPointV3<K> extends ODurablePage {
   }
 
   public void setTreeSize(final long size) {
+    final long prevSize = getIntValue(TREE_SIZE_OFFSET);
+
     setLongValue(TREE_SIZE_OFFSET, size);
+
+    addPageOperation(new CellBTreeEntryPointSingleValueV3SetTreeSizePO(prevSize, size));
   }
 
   public long getTreeSize() {
