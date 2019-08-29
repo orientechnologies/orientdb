@@ -104,4 +104,5 @@ public final class WALRecordTypes {
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SET_RIGHT_SIBLING_PO     = 86;
 
   public static final byte CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V3_INIT_PO = 87;
+  public static final byte CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V3_SET_PAGES_SIZE_PO = 88;
 }
