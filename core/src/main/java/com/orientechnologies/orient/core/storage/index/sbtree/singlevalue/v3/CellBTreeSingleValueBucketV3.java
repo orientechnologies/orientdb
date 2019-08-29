@@ -65,6 +65,8 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     } else {
       setByteValue(IS_LEAF_OFFSET, (byte) 1);
     }
+
+    addPageOperation(new CellBTreeBucketSingleValueV3SwitchBucketTypePO());
   }
 
   public void init(boolean isLeaf) {

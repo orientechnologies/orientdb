@@ -1004,11 +1004,12 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final CellBTreeSingleValueEntryPointV3<K> entryPoint = new CellBTreeSingleValueEntryPointV3<>(entryPointCacheEntry);
-      final int pageSize = entryPoint.getPagesSize();
+      int pageSize = entryPoint.getPagesSize();
 
       if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
+        pageSize++;
         rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-        entryPoint.setPagesSize(pageSize + 1);
+        entryPoint.setPagesSize(pageSize);
       } else {
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
 
@@ -1119,8 +1120,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
       if (pageSize < filledUpTo - 1) {
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
         pageSize++;
+        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
       } else {
         assert pageSize == filledUpTo - 1;
         leftBucketEntry = addPage(atomicOperation, fileId);
@@ -1128,8 +1129,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
       }
 
       if (pageSize < filledUpTo) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
         pageSize++;
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
       } else {
         assert pageSize == filledUpTo;
         rightBucketEntry = addPage(atomicOperation, fileId);
