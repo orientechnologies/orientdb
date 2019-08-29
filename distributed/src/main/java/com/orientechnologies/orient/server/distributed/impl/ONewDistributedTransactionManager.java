@@ -326,7 +326,7 @@ public class ONewDistributedTransactionManager {
       localKo(requestId, database);
 
       ODistributedOperationException ex = new ODistributedOperationException(
-          String.format("quorum of '%i' not reached, responses: [%s]", responseManager.getQuorum(), String.join(",", messages)));
+          String.format("quorum of '%d' not reached, responses: [%s]", responseManager.getQuorum(), String.join(",", messages)));
       for (Exception e : exceptions) {
         ex.addSuppressed(e);
       }
