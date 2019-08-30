@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
@@ -90,8 +91,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   private List<OEnterpriseStorageOperationListener> listeners = Collections.synchronizedList(new ArrayList<>());
 
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache,
-      OClosableLinkedContainer<Long, OFileClassic> files, long walMaxSize) {
-    super(name, filePath, mode, id, readCache, files, walMaxSize);
+      OClosableLinkedContainer<Long, OFile> files, long walMaxSize, long doubleWriteLogMaxSize) {
+    super(name, filePath, mode, id, readCache, files, walMaxSize, doubleWriteLogMaxSize);
     OLogManager.instance().info(this, "Enterprise storage installed correctly.");
   }
 
@@ -671,7 +672,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
-                readCache.releaseFromWrite(cacheEntry, writeCache);
+                readCache.releaseFromWrite(cacheEntry, writeCache, true);
 
               cacheEntry = readCache.allocateNewPage(fileId, writeCache, null);
             } while (cacheEntry.getPageIndex() != pageIndex);
@@ -700,7 +701,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             }
 
           } finally {
-            readCache.releaseFromWrite(cacheEntry, writeCache);
+            readCache.releaseFromWrite(cacheEntry, writeCache, true);
           }
         }
       }
