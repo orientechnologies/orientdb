@@ -386,6 +386,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
       final Object... iResourcesSpecific) {
 
+
+
     if (user != null) {
       try {
         if (iResourcesSpecific.length != 0) {
