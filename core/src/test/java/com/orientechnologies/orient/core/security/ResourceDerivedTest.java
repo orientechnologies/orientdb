@@ -17,8 +17,9 @@
  *  * For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.orient.core.db.document;
+package com.orientechnologies.orient.core.security;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -50,6 +51,10 @@ public class ResourceDerivedTest {
     }
 
     db.create();
+
+    db.command("CREATE SECURITY POLICY r SET create = (false), read = (true), before update = (false), after update = (false), delete = (false), execute = (true)");
+    db.command("CREATE SECURITY POLICY rw SET create = (true), read = (true), before update = (true), after update = (true), delete = (true), execute = (true)");
+
     
     command("CREATE CLASS Customer extends V ABSTRACT");
     command("CREATE PROPERTY Customer.name String");
@@ -61,17 +66,24 @@ public class ResourceDerivedTest {
     command("CREATE CLASS Customer_u2 extends Customer_t2");
 
     command("INSERT INTO ORole SET name = 'tenant1', mode = 0");
+    db.command("ALTER ROLE tenant1 set policy rw ON database.class.*.*");
     command("UPDATE ORole PUT rules = 'database.class.customer', 2 WHERE name = ?", "tenant1");
+    db.command("ALTER ROLE tenant1 set policy r ON database.class.Customer");
     command("UPDATE ORole PUT rules = 'database.class.customer_t1', 31 WHERE name = ?", "tenant1");
+    db.command("ALTER ROLE tenant1 set policy rw ON database.class.Customer_t1");
     command("UPDATE ORole PUT rules = 'database.class.customer_t2', 2 WHERE name = ?", "tenant1");
+    db.command("ALTER ROLE tenant1 set policy r ON database.class.Custome_t2r");
     command("UPDATE ORole PUT rules = 'database.class.customer_u2', 0 WHERE name = ?", "tenant1");
     command("UPDATE ORole SET inheritedRole = (SELECT FROM ORole WHERE name = 'reader') WHERE name = ?", "tenant1");
+
 
     command("INSERT INTO OUser set name = 'tenant1', password = 'password', status = 'ACTIVE', roles = (SELECT FROM ORole WHERE name = 'tenant1')");
 
     command("INSERT INTO ORole SET name = 'tenant2', mode = 0");
+    db.command("ALTER ROLE tenant2 set policy rw ON database.class.*.*");
     command("UPDATE ORole PUT rules = 'database.class.customer_t1', 0 WHERE name = ?", "tenant2");
     command("UPDATE ORole PUT rules = 'database.class.customer_t2', 31 WHERE name = ?", "tenant2");
+    db.command("ALTER ROLE tenant2 set policy rw ON database.class.Customer_t2");
     command("UPDATE ORole PUT rules = 'database.class.customer', 0 WHERE name = ?", "tenant2");
     command("UPDATE ORole SET inheritedRole = (SELECT FROM ORole WHERE name = 'reader') WHERE name = 'tenant2'");
 

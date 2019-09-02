@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.db.hook;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -43,7 +44,7 @@ public class HookReadTest {
 
       @Override
       public RESULT onTrigger(TYPE iType, ORecord iRecord) {
-        if (iType == TYPE.AFTER_READ)
+        if (iType == TYPE.AFTER_READ && !((ODocument) iRecord).getClassName().equalsIgnoreCase(OSecurityPolicy.class.getSimpleName()))
           ((ODocument) iRecord).field("read", "test");
         return RESULT.RECORD_CHANGED;
       }

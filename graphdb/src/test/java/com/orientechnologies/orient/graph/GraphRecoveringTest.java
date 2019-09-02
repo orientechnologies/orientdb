@@ -194,7 +194,7 @@ public class GraphRecoveringTest {
         if (key == 0)
           record.field("out_", record);
         else if (key == 1)
-          record.field("in_E1", new ORecordId(100, 200));
+          record.field("in_E1", new ORecordId(5, 20000000));
         else if (key == 2)
           record.field("out_E2", record);
 

@@ -116,6 +116,7 @@ public class RemoteTransactionHookTest {
   @Test
   public void testCalledInTxServer() {
     database.begin();
+    CountCallHookServer calls = CountCallHookServer.instance;
     ODocument doc = new ODocument("SomeTx");
     doc.setProperty("name", "some");
     database.save(doc);
@@ -125,7 +126,6 @@ public class RemoteTransactionHookTest {
     res.close();
     database.command("delete from SomeTx where name='aa'").close();
     database.commit();
-    CountCallHookServer calls = CountCallHookServer.instance;
     assertEquals(2, calls.getBeforeCreate());
     assertEquals(2, calls.getAfterCreate());
     assertEquals(1, calls.getBeforeUpdate());

@@ -282,9 +282,13 @@ public class OSecurityEngine {
   }
 
   private static OOrBlock parsePredicate(ODatabaseSession session, String predicateString) {
-    return OSQLEngine.parsePredicate(predicateString);
+    try {
+      return OSQLEngine.parsePredicate(predicateString);
+    } catch (Exception e) {
+      System.out.println("Error parsing predicate: " + predicateString);
+      throw e;
+    }
   }
-
 
   static boolean evaluateSecuirtyPolicyPredicate(ODatabaseSession session, OBooleanExpression predicate, ORecord record) {
     if (OBooleanExpression.TRUE.equals(predicate)) {
@@ -292,6 +296,9 @@ public class OSecurityEngine {
     }
     if (OBooleanExpression.FALSE.equals(predicate)) {
       return false;
+    }
+    if (predicate == null) {
+      return true; //TODO check!
     }
     try {
       final ODocument user = session.getUser().getDocument();

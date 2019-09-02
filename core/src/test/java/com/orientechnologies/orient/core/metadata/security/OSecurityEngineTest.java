@@ -42,7 +42,7 @@ public class OSecurityEngineTest {
 
     OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
-    policy.setReadRule("name = 'foo'");
+    policy.setReadRule("name = 'admin'");
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.*", policy);
 
@@ -50,7 +50,7 @@ public class OSecurityEngineTest {
     OBooleanExpression pred = OSecurityEngine
             .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
 
-    Assert.assertEquals("name = 'foo'", pred.toString());
+    Assert.assertEquals("name = 'admin'", pred.toString());
   }
 
   @Test
@@ -127,13 +127,13 @@ public class OSecurityEngineTest {
 
     OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
-    policy.setReadRule("name = 'foo'");
+    policy.setReadRule("name = 'admin'");
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Person", policy);
 
     policy = security.createSecurityPolicy(db, "policy2");
     policy.setActive(true);
-    policy.setReadRule("name = 'bar'");
+    policy.setReadRule("name = 'bar' OR name = 'admin'");
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.*", policy);
 
@@ -141,7 +141,7 @@ public class OSecurityEngineTest {
     OBooleanExpression pred = OSecurityEngine
             .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
 
-    Assert.assertEquals("name = 'foo'", pred.toString());
+    Assert.assertEquals("name = 'admin'", pred.toString());
   }
 
 

@@ -775,10 +775,16 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
     checkClusterSecurity(ORole.PERMISSION_CREATE, id, iClusterName);
 
+
     ORecordHook.RESULT triggerChanged = null;
     boolean changed = false;
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
+
+      if (!getSharedContext().getSecurity().canCreate(this, doc)) {
+        throw new OSecurityException("Cannot update record " + doc + ": the resource has restricted access due to security policies");
+      }
+
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isScheduler()) {
@@ -837,6 +843,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isRestricted()) {
           if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_UPDATE, true))
             throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access");
+        }
+        if (!getSharedContext().getSecurity().canUpdate(this, doc)) {
+          throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access due to security policies");
         }
         ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
       }
@@ -922,6 +931,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isRestricted()) {
           if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_DELETE, true))
             throw new OSecurityException("Cannot delete record " + doc.getIdentity() + ": the resource has restricted access");
+        }
+        if (!getSharedContext().getSecurity().canDelete(this, doc)) {
+          throw new OSecurityException("Cannot delete record " + doc.getIdentity() + ": the resource has restricted access due to security policies");
         }
       }
     }
@@ -1051,6 +1063,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
             return true;
           }
         }
+
+        if (!getSharedContext().getSecurity().canRead(this, doc)) {
+          return true;
+        }
+
         ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(this, doc, getSharedContext().getSecurity()));
         ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
       }

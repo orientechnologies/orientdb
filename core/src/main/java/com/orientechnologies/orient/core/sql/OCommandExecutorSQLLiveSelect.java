@@ -26,15 +26,13 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -158,7 +156,9 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     } catch (OSecurityException ignore) {
       return false;
     }
-    return ORestrictedAccessHook.isAllowed((ODatabaseDocumentInternal) execDb, (ODocument) value.getRecord(), ORestrictedOperation.ALLOW_READ, false);
+    OSecurityInternal security = ((ODatabaseDocumentInternal) execDb).getSharedContext().getSecurity();
+    boolean allowedByPolicy = security.canRead((ODatabaseSession) execDb, value.getRecord());
+    return allowedByPolicy && ORestrictedAccessHook.isAllowed((ODatabaseDocumentInternal) execDb, (ODocument) value.getRecord(), ORestrictedOperation.ALLOW_READ, false);
   }
 
   private boolean matchesFilters(OIdentifiable value) {
