@@ -28,8 +28,10 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -138,7 +140,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
    * THIS IS VERY EXPENSIVE METHOD AND CAN NOT BE CALLED IN REMOTE STORAGE.
    *
    * @param identifiable Object to check.
-   *
    * @return true if ridbag contains at leas one instance with the same rid as passed in identifiable.
    */
   public boolean contains(OIdentifiable identifiable) {
@@ -164,7 +165,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
    *
    * @param index
    * @param newValue
-   *
    * @return
    */
   public boolean changeValue(int index, OIdentifiable newValue) {
@@ -367,12 +367,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   public void setOwner(ORecordElement owner) {
-    //DISABLED FOR BACKWARD COMPATIBILITY RE-ENABLE IN FUTURE
-//    if (owner instanceof ODocument) {
-//      if (((ODocument) owner).isEmbedded()) {
-//        throw new ODatabaseException("RidBag not supported in embedded document");
-//      }
-//    }
+    if ((!(owner instanceof ODocument) && owner != null) || (owner != null && ((ODocument) owner).isEmbedded())) {
+      throw new ODatabaseException("RidBag are supported only at document root");
+    }
     delegate.setOwner(owner);
   }
 
