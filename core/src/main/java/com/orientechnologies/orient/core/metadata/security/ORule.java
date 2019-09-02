@@ -18,6 +18,11 @@ public class ORule implements Serializable {
     private static final TreeMap<String, ResourceGeneric> legacyToGenericMap = new TreeMap<String, ResourceGeneric>();
     private static final Map<ResourceGeneric, String>     genericToLegacyMap = new HashMap<ResourceGeneric, String>();
 
+    public static final ResourceGeneric ALL = new ResourceGeneric("ALL", ODatabaseSecurityResources.ALL) {
+      private static final long serialVersionUID = 1L;
+    };
+
+
     public static final ResourceGeneric FUNCTION          = new ResourceGeneric("FUNCTION", ODatabaseSecurityResources.FUNCTION) {
       private static final long serialVersionUID = 1L;
     };

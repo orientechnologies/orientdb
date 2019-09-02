@@ -438,7 +438,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       pool = new ODatabasePool(orient, dbCtx, dbUser, dbPassword);
     } else if ("plocal".equalsIgnoreCase(kind)) {
 
-      String dbName = dbCtx.substring(dbCtx.lastIndexOf("/"));
+      String dbName = dbCtx.substring(dbCtx.lastIndexOf("/") >= 0 ? dbCtx.lastIndexOf("/") + 1 : dbCtx.lastIndexOf("/"));
       dbCtx = dbCtx.substring(0, dbCtx.lastIndexOf("/"));
 
       orient = new OrientDB("embedded:" + dbCtx, dbUser, dbPassword, null);

@@ -7,7 +7,6 @@ import java.util.Map;
 public class OSecurityResourceSegment extends SimpleNode {
 
   protected boolean star = false;
-  protected boolean cluster = false;
   protected OIdentifier identifier;
 
   protected OSecurityResourceSegment next;
@@ -32,10 +31,6 @@ public class OSecurityResourceSegment extends SimpleNode {
     return star;
   }
 
-  public boolean isCluster() {
-    return cluster;
-  }
-
   public OIdentifier getIdentifier() {
     return identifier;
   }
@@ -49,8 +44,6 @@ public class OSecurityResourceSegment extends SimpleNode {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (this.star) {
       builder.append("*");
-    } else if (this.cluster) {
-      builder.append("cluster");
     } else {
       identifier.toString(params, builder);
     }

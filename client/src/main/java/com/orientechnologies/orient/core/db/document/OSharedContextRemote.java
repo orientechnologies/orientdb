@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRemote;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -20,7 +21,7 @@ public class OSharedContextRemote extends OSharedContext {
     this.orientDB = orientDBRemote;
     this.storage = storage;
     schema = new OSchemaRemote();
-    security = OSecurityManager.instance().newSecurity();
+    security = new OSecurityRemote(OSecurityManager.instance().newSecurity());
     indexManager = new OIndexManagerRemote(storage);
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl();

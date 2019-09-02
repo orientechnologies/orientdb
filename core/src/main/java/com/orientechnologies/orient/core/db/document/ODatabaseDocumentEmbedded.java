@@ -1341,4 +1341,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific, int iOperation) {
+    return super.checkSecurity(resourceGeneric, resourceSpecific, iOperation);
+  }
+
 }

@@ -385,25 +385,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
       final Object... iResourcesSpecific) {
-
-    if (user != null) {
-      try {
-        if (iResourcesSpecific.length != 0) {
-          for (Object target : iResourcesSpecific) {
-            if (target != null) {
-              user.allow(iResourceGeneric, target.toString(), iOperation);
-            } else
-              user.allow(iResourceGeneric, null, iOperation);
-          }
-        } else
-          user.allow(iResourceGeneric, null, iOperation);
-      } catch (OSecurityAccessException e) {
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(this, "[checkSecurity] User '%s' tried to access the reserved resource '%s', target(s) '%s', operation '%s'",
-                  getUser(), iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
-
-        throw e;
+    if (iResourcesSpecific == null || iResourcesSpecific.length == 0) {
+      checkSecurity(iResourceGeneric, null, iOperation);
+    } else {
+      for (Object target : iResourcesSpecific) {
+        checkSecurity(iResourceGeneric, target == null ? null : target.toString(), iOperation);
       }
     }
     return (DB) this;
@@ -415,21 +401,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
       final Object iResourceSpecific) {
     checkOpenness();
-    if (user != null) {
-      try {
-        if (iResourceSpecific != null)
-          user.allow(iResourceGeneric, iResourceSpecific.toString(), iOperation);
-        else
-          user.allow(iResourceGeneric, null, iOperation);
-      } catch (OSecurityAccessException e) {
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(this, "[checkSecurity] User '%s' tried to access the reserved resource '%s', target '%s', operation '%s'",
-                  getUser(), iResourceGeneric, iResourceSpecific, iOperation);
+    checkSecurity(iResourceGeneric, iResourceSpecific == null ? null : iResourceSpecific.toString(), iOperation);
 
-        throw e;
-      }
-    }
     return (DB) this;
   }
 

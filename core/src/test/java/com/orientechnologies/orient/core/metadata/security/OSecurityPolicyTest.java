@@ -39,13 +39,13 @@ public class OSecurityPolicyTest {
 
   @Test
   public void testSecurityPolicyCreate() {
-    OResultSet rs = db.query("select from " + OSecurityPolicy.class.getSimpleName());
+    OResultSet rs = db.query("select from " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", "test");
     Assert.assertFalse(rs.hasNext());
     rs.close();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
 
-    rs = db.query("select from " + OSecurityPolicy.class.getSimpleName());
+    rs = db.query("select from " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", "test");
     Assert.assertTrue(rs.hasNext());
     OResult item = rs.next();
     Assert.assertEquals("test", item.getProperty("name"));

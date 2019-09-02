@@ -108,6 +108,9 @@ public class OSecurityEngine {
 
   private static OBooleanExpression getPredicateForClass(ODatabaseSession session, OSecurityShared security, OSecurityResourceClass resource, OSecurityPolicy.Scope scope) {
     OClass clazz = session.getClass(resource.getClassName());
+    if (clazz == null) {
+      return OBooleanExpression.TRUE;
+    }
     Set<? extends OSecurityRole> roles = session.getUser().getRoles();
     if (roles == null || roles.size() == 0) {
       return null;
@@ -193,7 +196,7 @@ public class OSecurityEngine {
 
   private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, OSecurityPolicy.Scope scope) {
     String resource = "database.class." + clazz.getName();
-    Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, (OSecurityRole) role);
+    Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, role);
     OSecurityPolicy classPolicy = definedPolicies.get(resource);
 
     String predicateString = classPolicy != null ? classPolicy.get(scope) : null;
@@ -217,6 +220,11 @@ public class OSecurityEngine {
       OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class.*");
       predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
     }
+
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("*");
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
     if (predicateString != null) {
       return parsePredicate(session, predicateString);
     }
@@ -226,7 +234,7 @@ public class OSecurityEngine {
 
   private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
     String resource = "database.class." + clazz.getName() + "." + propertyName;
-    Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, (ORole) role);
+    Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, role);
     OSecurityPolicy classPolicy = definedPolicies.get(resource);
 
     String predicateString = classPolicy != null ? classPolicy.get(scope) : null;
@@ -246,6 +254,27 @@ public class OSecurityEngine {
     }
 
 
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class." + clazz.getName() + ".*");
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
+
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class.*." + propertyName);
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
+
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class.*.*");
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
+
+    if (predicateString == null) {
+      OSecurityPolicy wildcardPolicy = definedPolicies.get("*");
+      predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
+    }
+    //TODO
+
     if (predicateString != null) {
       return parsePredicate(session, predicateString);
     }
@@ -258,6 +287,12 @@ public class OSecurityEngine {
 
 
   static boolean evaluateSecuirtyPolicyPredicate(ODatabaseSession session, OBooleanExpression predicate, ORecord record) {
+    if (OBooleanExpression.TRUE.equals(predicate)) {
+      return true;
+    }
+    if (OBooleanExpression.FALSE.equals(predicate)) {
+      return false;
+    }
     try {
       final ODocument user = session.getUser().getDocument();
       return ((ODatabaseInternal) session).getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {
@@ -267,11 +302,18 @@ public class OSecurityEngine {
         return predicate.evaluate(record, ctx);
       })).get();
     } catch (Exception e) {
+      e.printStackTrace();
       throw new OSecurityException("Cannot execute security predicate");
     }
   }
 
   static boolean evaluateSecuirtyPolicyPredicate(ODatabaseSession session, OBooleanExpression predicate, OResult record) {
+    if (OBooleanExpression.TRUE.equals(predicate)) {
+      return true;
+    }
+    if (OBooleanExpression.FALSE.equals(predicate)) {
+      return false;
+    }
     try {
       final ODocument user = session.getUser().getDocument();
       return ((ODatabaseInternal) session).getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {
@@ -281,6 +323,7 @@ public class OSecurityEngine {
         return predicate.evaluate(record, ctx);
       })).get();
     } catch (Exception e) {
+      e.printStackTrace();
       throw new OSecurityException("Cannot execute security predicate");
     }
   }

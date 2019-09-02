@@ -82,8 +82,6 @@ public abstract class OSecurityResource {
         boolean allClasses = false;
         if (classElement.getIdentifier() != null) {
           className = classElement.getIdentifier().getStringValue();
-        } else if (classElement.isCluster()) {
-          className = "cluster";
         } else {
           className = null;
           allClasses = true;
@@ -120,6 +118,7 @@ public abstract class OSecurityResource {
 
       throw new OSecurityException("Invalid resource: " + resource);
     } catch (Exception ex) {
+      ex.printStackTrace();
       throw new OSecurityException("Invalid resource: " + resource);
     }
   }
