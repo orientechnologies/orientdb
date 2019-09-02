@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
@@ -386,7 +387,7 @@ public class AsyncReadCacheTestIT {
     public OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit,
         final boolean verifyChecksums) {
       final OPointer pointer = byteBufferPool.acquireDirect(true);
-      final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, fileId, (int)startPageIndex);
+      final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, fileId, (int) startPageIndex);
       cachePointer.incrementReadersReferrer();
       return cachePointer;
     }
@@ -509,6 +510,14 @@ public class AsyncReadCacheTestIT {
 
     @Override
     public void updateDirtyPagesTable(final OCachePointer pointer, final OLogSequenceNumber startLSN) {
+    }
+
+    @Override
+    public void create() throws IOException {
+    }
+
+    @Override
+    public void open() throws IOException {
     }
   }
 

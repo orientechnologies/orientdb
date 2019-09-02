@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -670,6 +671,16 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
   @Override
   public final void updateDirtyPagesTable(final OCachePointer pointer, final OLogSequenceNumber startLSN) {
+  }
+
+  @Override
+  public void create() throws IOException {
+
+  }
+
+  @Override
+  public void open() throws IOException {
+
   }
 
   @Override

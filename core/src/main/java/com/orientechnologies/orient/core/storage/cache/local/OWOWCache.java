@@ -827,6 +827,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   @Override
+  public void create() throws IOException {
+  }
+
+  @Override
+  public void open() throws IOException {
+  }
+
+  @Override
   public long addFile(final String fileName, long fileId) throws IOException {
     filesLock.acquireWriteLock();
     try {

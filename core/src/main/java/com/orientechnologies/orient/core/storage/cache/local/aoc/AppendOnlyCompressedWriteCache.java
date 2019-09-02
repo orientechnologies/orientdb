@@ -29,6 +29,7 @@ import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -69,7 +70,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -104,6 +105,7 @@ import java.util.concurrent.locks.Lock;
  */
 public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
     implements OWriteCache, OCachePointer.WritersListener {
+  private static final String DATA_EXTENSION = ".dat";
   private static final String ALGORITHM_NAME = "AES";
   private static final String TRANSFORMATION = "AES/CTR/NoPadding";
 
@@ -336,9 +338,28 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
    */
   private final List<WeakReference<OBackgroundExceptionListener>> backgroundExceptionListeners = new CopyOnWriteArrayList<>();
 
+  /**
+   * Whether we should use asynchronous IO for interaction with disk.
+   */
   private final boolean useAsyncIO;
 
+  /**
+   * Mapping between logical index of page (fileId:pageIndex) to physical index of page on real file.
+   */
   private ConcurrentHashMap<Integer, FileMap> fileLogicalPhysicalPageMap = new ConcurrentHashMap<>();
+
+  /**
+   * Set of pages which are locked for read. Those pages can not be overwritten during data flush otherwise we will get incorrect
+   * pages.
+   */
+  private final OPartitionedLockManager<Integer> readIOLockManager = new OPartitionedLockManager<>(false, true);
+
+  /**
+   * Path to the file where all data will be stored.
+   */
+  private final Path dataFilePath;
+
+  private AsynchronousFileChannel dataFileChannel;
 
   public AppendOnlyCompressedWriteCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
       final DoubleWriteLog doubleWriteLog, final long pagesFlushInterval, final int shutdownTimeout,
@@ -382,15 +403,59 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
         throw OException.wrapException(new OStorageException("Error during retrieving of file store"), e);
       }
 
+      this.dataFilePath = this.storagePath.resolve(storageName + DATA_EXTENSION);
+
       this.stringSerializer = stringSerializer;
       this.storageName = storageName;
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
 
-      if (pagesFlushInterval > 0) {
-        flushFuture = commitExecutor.schedule(new PeriodicFlushTask(), pagesFlushInterval, TimeUnit.MILLISECONDS);
+  @Override
+  public void create() throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      if (dataFileChannel != null) {
+        throw new OStorageException("Storage " + storageName + " is already opened");
       }
+
+      if (Files.exists(dataFilePath)) {
+        throw new OStorageException("Can not create storage " + storageName + " because it already exists");
+      }
+
+      Files.createFile(dataFilePath);
+
+      init();
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void open() throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      if (dataFileChannel != null) {
+        throw new OStorageException("Storage " + storageName + " is already opened");
+      }
+
+      if (!Files.exists(dataFilePath)) {
+        throw new OStorageException("Can not open storage " + storageName + " because it does not exist");
+      }
+
+      init();
 
     } finally {
       filesLock.releaseWriteLock();
+    }
+  }
+
+  private void init() throws IOException {
+    dataFileChannel = AsynchronousFileChannel.open(dataFilePath, StandardOpenOption.READ, StandardOpenOption.WRITE);
+
+    if (pagesFlushInterval > 0) {
+      flushFuture = commitExecutor.schedule(new PeriodicFlushTask(), pagesFlushInterval, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -990,12 +1055,12 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
   }
 
   @Override
-  public OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit,
+  public OCachePointer load(final long fileId, final long pageIndex, final OModifiableBoolean cacheHit,
       final boolean verifyChecksums) throws IOException {
-    final int intId = extractFileId(fileId);
+    final int internalFileId = extractFileId(fileId);
     filesLock.acquireReadLock();
     try {
-      final PageKey pageKey = new PageKey(intId, startPageIndex);
+      final PageKey pageKey = new PageKey(internalFileId, pageIndex);
       final Lock pageLock = lockManager.acquireSharedLock(pageKey);
 
       //check if page already presented in write cache
@@ -1004,13 +1069,35 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
       //page is not cached load it from file
       if (pagePointer == null) {
         try {
-          //load requested page and preload requested amount of pages
-          final OCachePointer filePagePointer = loadFileContent(intId, startPageIndex, verifyChecksums);
-          if (filePagePointer != null) {
-            filePagePointer.incrementReadersReferrer();
+          final int[] mappingData = fileLogicalPhysicalPageMap.get(internalFileId).mappingData((int) pageIndex);
+          //requested page index is outside of file size
+          if (mappingData == null) {
+            return null;
           }
 
-          return filePagePointer;
+          final int startPateIndex = mappingData[0];
+          final int offsetInsidePage = mappingData[1];
+          final int pagesToRead = mappingData[2];
+
+          final int[] physicalPagesToLock = new int[pagesToRead];
+          for (int i = 0; i < pagesToRead; i++) {
+            physicalPagesToLock[i] = startPateIndex + i;
+          }
+
+          final Lock[] pageLocks = readIOLockManager.acquireExclusiveLocksInBatch(physicalPagesToLock);
+          try {
+            //load requested page and preload requested amount of pages
+            final OCachePointer filePagePointer = loadFileContent(startPateIndex, pagesToRead, offsetInsidePage);
+            if (filePagePointer != null) {
+              filePagePointer.incrementReadersReferrer();
+            }
+
+            return filePagePointer;
+          } finally {
+            for (final Lock lock : pageLocks) {
+              lock.unlock();
+            }
+          }
         } finally {
           pageLock.unlock();
         }
@@ -1282,6 +1369,11 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
         nameIdMapHolder.force(true);
       }
 
+      dataFileChannel.force(true);
+      dataFileChannel.close();
+
+      dataFileChannel = null;
+
       nameIdMap.clear();
       idNameMap.clear();
 
@@ -1464,6 +1556,8 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
 
   @Override
   public long[] delete() throws IOException {
+    stopFlush();
+
     final List<Long> result = new ArrayList<>(1_024);
     filesLock.acquireWriteLock();
     try {
@@ -1496,11 +1590,14 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
 
         nameIdMapHolderPath = null;
       }
+
+      dataFileChannel.close();
+      Files.delete(dataFilePath);
+
+      dataFileChannel = null;
     } finally {
       filesLock.releaseWriteLock();
     }
-
-    stopFlush();
 
     final long[] fIds = new long[result.size()];
     int n = 0;
@@ -1939,48 +2036,38 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
     }
   }
 
-  private OCachePointer loadFileContent(final int internalFileId, final long pageIndex, final boolean verifyChecksums)
+  private OCachePointer loadFileContent(final long pageIndex, final int pagesToRead, final int offsetInsidePage)
       throws IOException {
-    final long fileId = composeFileId(id, internalFileId);
+    final OPointer pointer = ODirectMemoryAllocator.instance().allocate(pagesToRead * pagesToRead, -1, false);
     try {
-      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
-      try {
-        final OFile fileClassic = entry.get();
-        if (fileClassic == null) {
-          throw new IllegalArgumentException("File with id " + internalFileId + " not found in WOW Cache");
-        }
+      final ByteBuffer buffer = pointer.getNativeByteBuffer();
 
-        final long pagePosition = pageIndex * pageSize;
-        final long pageEndPosition = pagePosition + pageSize;
+      int read = 0;
+      final int toRead = pagesToRead * pageSize;
+      final long position = pageIndex * pageSize;
 
-        //if page is not stored in the file may be page is stored in double write log
-        if (fileClassic.getFileSize() >= pageEndPosition) {
-          OPointer pointer = bufferPool.acquireDirect(true);
-          ByteBuffer buffer = pointer.getNativeByteBuffer();
+      while (read < toRead) {
+        buffer.position(read);
 
-          assert buffer.position() == 0;
-          assert buffer.order() == ByteOrder.nativeOrder();
-
-          fileClassic.read(pagePosition, buffer, false);
-
-          if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
-              || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
-            //if page is broken inside of data file we check double write log
-            if (!verifyMagicChecksumAndDecryptPage(buffer, internalFileId, pageIndex)) {
-              assertPageIsBroken(pageIndex, fileId, pointer);
-            }
+        final Future<Integer> future = dataFileChannel.read(buffer, position + read);
+        try {
+          final int bytesRead = future.get();
+          if (bytesRead == -1) {
+            throw new EOFException("Unexpected end of file " + dataFilePath);
           }
 
-          buffer.position(0);
-          return new OCachePointer(pointer, bufferPool, fileId, (int) pageIndex);
-        } else {
-          return null;
+          read += bytesRead;
+        } catch (final InterruptedException e) {
+          throw OException.wrapException(new OInterruptedException("File read was interrupted"), e);
+        } catch (ExecutionException e) {
+          throw OException.wrapException(new OIOException("Exception during the read of file " + dataFilePath), e);
         }
-      } finally {
-        files.release(entry);
       }
-    } catch (final InterruptedException e) {
-      throw OException.wrapException(new OStorageException("Data load was interrupted"), e);
+
+      //TODO: continue page read from here.
+      return null;
+    } finally {
+      ODirectMemoryAllocator.instance().deallocate(pointer);
     }
   }
 

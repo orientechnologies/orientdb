@@ -23,15 +23,11 @@ public class FileMap {
     doSet(index, mappingEntry);
   }
 
-  public int mapIndex(final int index) {
-    checkFileSize(index);
-
-    final long mappingEntry = doGet(index);
-    return physicalIndex(mappingEntry);
-  }
-
-  public int[] fullMappingData(final int index) {
-    checkFileSize(index);
+  public int[] mappingData(final int index) {
+    final int currentSize = size.get();
+    if (index >= currentSize) {
+      return null;
+    }
 
     final long mappingEntry = doGet(index);
     return mappingData(mappingEntry);

@@ -220,4 +220,8 @@ public interface OWriteCache {
   Long getMinimalNotFlushedSegment();
 
   void updateDirtyPagesTable(OCachePointer pointer, OLogSequenceNumber startLSN);
+
+  void create() throws IOException;
+
+  void open() throws IOException;
 }

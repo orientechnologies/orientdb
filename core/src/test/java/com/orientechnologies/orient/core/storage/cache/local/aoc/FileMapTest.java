@@ -10,8 +10,7 @@ public class FileMapTest {
     final int pageIndex = fileMap.allocateNewPage();
 
     Assert.assertEquals(0, pageIndex);
-    Assert.assertEquals(-1, fileMap.mapIndex(0));
-    Assert.assertArrayEquals(new int[] { -1, 0, 0 }, fileMap.fullMappingData(0));
+    Assert.assertArrayEquals(new int[] { -1, 0, 0 }, fileMap.mappingData(0));
   }
 
   @Test
@@ -23,8 +22,7 @@ public class FileMapTest {
     }
 
     for (int i = 0; i < 64; i++) {
-      Assert.assertEquals(-1, fileMap.mapIndex(i));
-      Assert.assertArrayEquals(new int[] { -1, 0, 0 }, fileMap.fullMappingData(i));
+       Assert.assertArrayEquals(new int[] { -1, 0, 0 }, fileMap.mappingData(i));
     }
 
     for (int i = 0; i < 64; i++) {
@@ -32,8 +30,7 @@ public class FileMapTest {
     }
 
     for (int i = 0; i < 64; i++) {
-      Assert.assertEquals(64 - i, fileMap.mapIndex(i));
-      Assert.assertArrayEquals(new int[] { 64 - i, i, i * 5 }, fileMap.fullMappingData(i));
+      Assert.assertArrayEquals(new int[] { 64 - i, i, i * 5 }, fileMap.mappingData(i));
     }
   }
 }
