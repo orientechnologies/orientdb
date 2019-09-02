@@ -839,45 +839,46 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
 
   @Override
   public void makeFuzzyCheckpoint(final long segmentId) throws IOException {
-    if (writeAheadLog != null) {
-      filesLock.acquireReadLock();
-      try {
-        final OLogSequenceNumber startLSN = writeAheadLog.begin(segmentId);
-        if (startLSN == null) {
-          return;
-        }
-
-        writeAheadLog.logFuzzyCheckPointStart(startLSN);
-
-        for (final Integer intId : nameIdMap.values()) {
-          if (intId < 0) {
-            continue;
-          }
-
-          if (callFsync) {
-            final long fileId = composeFileId(id, intId);
-            final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
-            try {
-              final OFile fileClassic = entry.get();
-              fileClassic.synch();
-            } finally {
-              files.release(entry);
-            }
-          }
-
-        }
-
-        writeAheadLog.logFuzzyCheckPointEnd();
-        writeAheadLog.flush();
-
-        writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
-
-      } catch (final InterruptedException e) {
-        throw OException.wrapException(new OStorageException("Fuzzy checkpoint was interrupted"), e);
-      } finally {
-        filesLock.releaseReadLock();
-      }
-    }
+    //TODO:rewrite it
+//    if (writeAheadLog != null) {
+//      filesLock.acquireReadLock();
+//      try {
+//        final OLogSequenceNumber startLSN = writeAheadLog.begin(segmentId);
+//        if (startLSN == null) {
+//          return;
+//        }
+//
+//        writeAheadLog.logFuzzyCheckPointStart(startLSN);
+//
+//        for (final Integer intId : nameIdMap.values()) {
+//          if (intId < 0) {
+//            continue;
+//          }
+//
+//          if (callFsync) {
+//            final long fileId = composeFileId(id, intId);
+//            final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
+//            try {
+//              final OFile fileClassic = entry.get();
+//              fileClassic.synch();
+//            } finally {
+//              files.release(entry);
+//            }
+//          }
+//
+//        }
+//
+//        writeAheadLog.logFuzzyCheckPointEnd();
+//        writeAheadLog.flush();
+//
+//        writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
+//
+//      } catch (final InterruptedException e) {
+//        throw OException.wrapException(new OStorageException("Fuzzy checkpoint was interrupted"), e);
+//      } finally {
+//        filesLock.releaseReadLock();
+//      }
+//    }
   }
 
   @Override
@@ -894,19 +895,8 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
   public boolean exists(final String fileName) {
     filesLock.acquireReadLock();
     try {
-      final Integer intId = nameIdMap.get(fileName);
-
-      if (intId != null && intId >= 0) {
-        final OFile fileClassic = files.get(externalFileId(intId));
-
-        if (fileClassic == null) {
-          return false;
-        }
-
-        return fileClassic.exists();
-      }
-
-      return false;
+      final Integer internalFileId = nameIdMap.get(fileName);
+      return internalFileId != null && internalFileId >= 0;
     } finally {
       filesLock.releaseReadLock();
     }
@@ -916,16 +906,8 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
   public boolean exists(long fileId) {
     filesLock.acquireReadLock();
     try {
-      final int intId = extractFileId(fileId);
-      fileId = composeFileId(id, intId);
-
-      final OFile file = files.get(fileId);
-
-      if (file == null) {
-        return false;
-      }
-
-      return file.exists();
+      final int internalFileId = extractFileId(fileId);
+      return idNameMap.containsKey(internalFileId);
     } finally {
       filesLock.releaseReadLock();
     }
