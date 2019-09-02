@@ -60,9 +60,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListene
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import javax.crypto.*;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -75,15 +74,12 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
-import java.util.zip.CRC32;
 
 /**
  * Write part of disk cache which is used to collect pages which were changed on read cache and store them to the disk in background
@@ -105,7 +101,8 @@ import java.util.zip.CRC32;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 7/23/13
  */
-public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache implements OWriteCache, OCachePointer.WritersListener {
+public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
+    implements OWriteCache, OCachePointer.WritersListener {
   private static final String ALGORITHM_NAME = "AES";
   private static final String TRANSFORMATION = "AES/CTR/NoPadding";
 
@@ -114,54 +111,12 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
   /**
    * Extension for the file which contains mapping between file name and file id
    */
-  private static final String NAME_ID_MAP_EXTENSION = ".cm";
+  private static final String NAME_ID_MAP_EXTENSION = ".cma";
 
   /**
    * Name for file which contains first version of binary format
    */
   private static final String NAME_ID_MAP_V1 = "name_id_map" + NAME_ID_MAP_EXTENSION;
-
-  /**
-   * Name for file which contains second version of binary format. Second version of format contains not only file name which is
-   * used in write cache but also file name which is used in file system so those two names may be different which allows usage of
-   * case sensitive file names.
-   */
-  private static final String NAME_ID_MAP_V2 = "name_id_map_v2" + NAME_ID_MAP_EXTENSION;
-
-  /**
-   * Name of file temporary which contains second version of binary format. Temporary name is used to prevent situation when DB is
-   * crashed because of migration from first to second version of binary format and data are lost.
-   *
-   * @see #NAME_ID_MAP_V2
-   * @see #convertNameIdMapFromV1ToV2()
-   */
-  private static final String NAME_ID_MAP_V2_T = "name_id_map_v2_t" + NAME_ID_MAP_EXTENSION;
-
-  /**
-   * Marks pages which have a checksum stored.
-   */
-  public static final long MAGIC_NUMBER_WITH_CHECKSUM = 0xFACB03FEL;
-
-  /**
-   * Marks pages which have a checksum stored and data encrypted
-   */
-  public static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0x1L;
-
-  /**
-   * Marks pages which have no checksum stored.
-   */
-  private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM = 0xEF30BCAFL;
-
-  /**
-   * Marks pages which have no checksum stored but have data encrypted
-   */
-  private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED = 0x2L;
-
-  private static final int MAGIC_NUMBER_OFFSET = 0;
-
-  public static final int CHECKSUM_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
-
-  private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
   private static final int CHUNK_SIZE = 64 * 1024 * 1024;
 
@@ -380,11 +335,6 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
    */
   private final List<WeakReference<OBackgroundExceptionListener>> backgroundExceptionListeners = new CopyOnWriteArrayList<>();
 
-  /**
-   * Double write log which is used in write cache to prevent page tearing in case of server crash.
-   */
-  private final DoubleWriteLog doubleWriteLog;
-
   private final boolean useAsyncIO;
 
   public AppendOnlyCompressedWriteCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
@@ -432,8 +382,6 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
       this.stringSerializer = stringSerializer;
       this.storageName = storageName;
 
-      this.doubleWriteLog = doubleWriteLog;
-
       if (pagesFlushInterval > 0) {
         flushFuture = commitExecutor.schedule(new PeriodicFlushTask(), pagesFlushInterval, TimeUnit.MILLISECONDS);
       }
@@ -450,8 +398,6 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
-
-      doubleWriteLog.open(storageName, storagePath, pageSize);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -893,42 +839,36 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
     if (writeAheadLog != null) {
       filesLock.acquireReadLock();
       try {
-        doubleWriteLog.startCheckpoint();
-        try {
-          final OLogSequenceNumber startLSN = writeAheadLog.begin(segmentId);
-          if (startLSN == null) {
-            return;
-          }
-
-          writeAheadLog.logFuzzyCheckPointStart(startLSN);
-
-          for (final Integer intId : nameIdMap.values()) {
-            if (intId < 0) {
-              continue;
-            }
-
-            if (callFsync) {
-              final long fileId = composeFileId(id, intId);
-              final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
-              try {
-                final OFile fileClassic = entry.get();
-                fileClassic.synch();
-              } finally {
-                files.release(entry);
-              }
-            }
-
-          }
-
-          writeAheadLog.logFuzzyCheckPointEnd();
-          writeAheadLog.flush();
-
-          writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
-
-          doubleWriteLog.truncate();
-        } finally {
-          doubleWriteLog.endCheckpoint();
+        final OLogSequenceNumber startLSN = writeAheadLog.begin(segmentId);
+        if (startLSN == null) {
+          return;
         }
+
+        writeAheadLog.logFuzzyCheckPointStart(startLSN);
+
+        for (final Integer intId : nameIdMap.values()) {
+          if (intId < 0) {
+            continue;
+          }
+
+          if (callFsync) {
+            final long fileId = composeFileId(id, intId);
+            final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
+            try {
+              final OFile fileClassic = entry.get();
+              fileClassic.synch();
+            } finally {
+              files.release(entry);
+            }
+          }
+
+        }
+
+        writeAheadLog.logFuzzyCheckPointEnd();
+        writeAheadLog.flush();
+
+        writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
+
       } catch (final InterruptedException e) {
         throw OException.wrapException(new OStorageException("Fuzzy checkpoint was interrupted"), e);
       } finally {
@@ -990,23 +930,10 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
 
   @Override
   public void restoreModeOn() throws IOException {
-    filesLock.acquireWriteLock();
-    try {
-      doubleWriteLog.restoreModeOn();
-    } finally {
-      filesLock.releaseWriteLock();
-    }
-
   }
 
   @Override
   public void restoreModeOff() {
-    filesLock.acquireWriteLock();
-    try {
-      doubleWriteLog.restoreModeOff();
-    } finally {
-      filesLock.releaseWriteLock();
-    }
   }
 
   @Override
@@ -1388,8 +1315,6 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
         nameIdMapHolder.force(true);
       }
 
-      doubleWriteLog.close();
-
       nameIdMap.clear();
       idNameMap.clear();
 
@@ -1511,34 +1436,34 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
           bufferPool.release(pointer);
         }
 
-        final long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, MAGIC_NUMBER_OFFSET);
-
-        if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM
-            && magicNumber != MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
-          magicNumberIncorrect = true;
-          if (commandOutputListener != null) {
-            commandOutputListener
-                .onMessage("Error: Magic number for page " + (pos / pageSize) + " in file '" + fileName + "' does not match!\n");
-          }
-          fileIsCorrect = false;
-        }
-
-        if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
-          final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, CHECKSUM_OFFSET);
-
-          final CRC32 crc32 = new CRC32();
-          crc32.update(data, PAGE_OFFSET_TO_CHECKSUM_FROM, data.length - PAGE_OFFSET_TO_CHECKSUM_FROM);
-          final int calculatedCRC32 = (int) crc32.getValue();
-
-          if (storedCRC32 != calculatedCRC32) {
-            checkSumIncorrect = true;
-            if (commandOutputListener != null) {
-              commandOutputListener
-                  .onMessage("Error: Checksum for page " + (pos / pageSize) + " in file '" + fileName + "' is incorrect!\n");
-            }
-            fileIsCorrect = false;
-          }
-        }
+//        final long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, MAGIC_NUMBER_OFFSET);
+//
+//        if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM
+//            && magicNumber != MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
+//          magicNumberIncorrect = true;
+//          if (commandOutputListener != null) {
+//            commandOutputListener
+//                .onMessage("Error: Magic number for page " + (pos / pageSize) + " in file '" + fileName + "' does not match!\n");
+//          }
+//          fileIsCorrect = false;
+//        }
+//
+//        if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
+//          final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, CHECKSUM_OFFSET);
+//
+//          final CRC32 crc32 = new CRC32();
+//          crc32.update(data, PAGE_OFFSET_TO_CHECKSUM_FROM, data.length - PAGE_OFFSET_TO_CHECKSUM_FROM);
+//          final int calculatedCRC32 = (int) crc32.getValue();
+//
+//          if (storedCRC32 != calculatedCRC32) {
+//            checkSumIncorrect = true;
+//            if (commandOutputListener != null) {
+//              commandOutputListener
+//                  .onMessage("Error: Checksum for page " + (pos / pageSize) + " in file '" + fileName + "' is incorrect!\n");
+//            }
+//            fileIsCorrect = false;
+//          }
+//        }
 
         if (magicNumberIncorrect || checkSumIncorrect) {
           errors.add(new OPageDataVerificationError(magicNumberIncorrect, checkSumIncorrect, pos / pageSize, fileName));
@@ -1617,8 +1542,6 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
       n++;
     }
 
-    doubleWriteLog.close();
-
     return fIds;
   }
 
@@ -1686,64 +1609,64 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
   }
 
   private void initNameIdMapping() throws IOException, InterruptedException {
-    if (!Files.exists(storagePath)) {
-      Files.createDirectories(storagePath);
-    }
-
-    final Path nameIdMapHolderV1 = storagePath.resolve(NAME_ID_MAP_V1);
-    final Path nameIdMapHolderV2 = storagePath.resolve(NAME_ID_MAP_V2);
-
-    if (Files.exists(nameIdMapHolderV1)) {
-      if (Files.exists(nameIdMapHolderV2)) {
-        Files.delete(nameIdMapHolderV2);
-      }
-
-      nameIdMapHolderPath = nameIdMapHolderV1;
-      try (final FileChannel nameIdMapHolder = FileChannel
-          .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
-        readNameIdMapV1(nameIdMapHolder);
-        convertNameIdMapFromV1ToV2();
-      }
-
-      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
-
-      Files.delete(nameIdMapHolderV1);
-    } else {
-      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
-      try (final FileChannel nameIdMapHolder = FileChannel
-          .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
-        readNameIdMapV2(nameIdMapHolder);
-      }
-    }
+//    if (!Files.exists(storagePath)) {
+//      Files.createDirectories(storagePath);
+//    }
+//
+//    final Path nameIdMapHolderV1 = storagePath.resolve(NAME_ID_MAP_V1);
+//    final Path nameIdMapHolderV2 = storagePath.resolve(NAME_ID_MAP_V2);
+//
+//    if (Files.exists(nameIdMapHolderV1)) {
+//      if (Files.exists(nameIdMapHolderV2)) {
+//        Files.delete(nameIdMapHolderV2);
+//      }
+//
+//      nameIdMapHolderPath = nameIdMapHolderV1;
+//      try (final FileChannel nameIdMapHolder = FileChannel
+//          .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
+//        readNameIdMapV1(nameIdMapHolder);
+//        convertNameIdMapFromV1ToV2();
+//      }
+//
+//      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+//
+//      Files.delete(nameIdMapHolderV1);
+//    } else {
+//      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+//      try (final FileChannel nameIdMapHolder = FileChannel
+//          .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE)) {
+//        readNameIdMapV2(nameIdMapHolder);
+//      }
+//    }
   }
 
   private void convertNameIdMapFromV1ToV2() throws IOException {
-    final Path nameIdMapHolderFileV2T = storagePath.resolve(NAME_ID_MAP_V2_T);
-
-    if (Files.exists(nameIdMapHolderFileV2T)) {
-      Files.delete(nameIdMapHolderFileV2T);
-    }
-
-    final FileChannel v2NameIdMapHolder = FileChannel
-        .open(nameIdMapHolderFileV2T, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ);
-
-    for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
-      if (nameIdEntry.getValue() >= 0) {
-        final OFile fileClassic = files.get(externalFileId(nameIdEntry.getValue()));
-        final String fileSystemName = fileClassic.getName();
-
-        final NameFileIdEntry nameFileIdEntry = new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), fileSystemName);
-        writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
-      } else {
-        final NameFileIdEntry nameFileIdEntry = new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), "");
-        writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
-      }
-    }
-
-    v2NameIdMapHolder.force(true);
-    v2NameIdMapHolder.close();
-
-    Files.move(nameIdMapHolderFileV2T, storagePath.resolve(NAME_ID_MAP_V2));
+//    final Path nameIdMapHolderFileV2T = storagePath.resolve(NAME_ID_MAP_V2_T);
+//
+//    if (Files.exists(nameIdMapHolderFileV2T)) {
+//      Files.delete(nameIdMapHolderFileV2T);
+//    }
+//
+//    final FileChannel v2NameIdMapHolder = FileChannel
+//        .open(nameIdMapHolderFileV2T, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ);
+//
+//    for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
+//      if (nameIdEntry.getValue() >= 0) {
+//        final OFile fileClassic = files.get(externalFileId(nameIdEntry.getValue()));
+//        final String fileSystemName = fileClassic.getName();
+//
+//        final NameFileIdEntry nameFileIdEntry = new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), fileSystemName);
+//        writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
+//      } else {
+//        final NameFileIdEntry nameFileIdEntry = new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), "");
+//        writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
+//      }
+//    }
+//
+//    v2NameIdMapHolder.force(true);
+//    v2NameIdMapHolder.close();
+//
+//    Files.move(nameIdMapHolderFileV2T, storagePath.resolve(NAME_ID_MAP_V2));
   }
 
   private OFile createFileInstance(final String fileName, final int fileId) {
@@ -2077,40 +2000,13 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
               || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
             //if page is broken inside of data file we check double write log
             if (!verifyMagicChecksumAndDecryptPage(buffer, internalFileId, pageIndex)) {
-              final OPointer doubleWritePointer = doubleWriteLog.loadPage(internalFileId, (int) pageIndex, bufferPool);
-
-              if (doubleWritePointer == null) {
-                assertPageIsBroken(pageIndex, fileId, pointer);
-              } else {
-                bufferPool.release(pointer);
-
-                buffer = doubleWritePointer.getNativeByteBuffer();
-                assert buffer.position() == 0;
-                pointer = doubleWritePointer;
-
-                if (!verifyMagicChecksumAndDecryptPage(buffer, internalFileId, pageIndex)) {
-                  assertPageIsBroken(pageIndex, fileId, pointer);
-                }
-              }
+              assertPageIsBroken(pageIndex, fileId, pointer);
             }
           }
 
           buffer.position(0);
           return new OCachePointer(pointer, bufferPool, fileId, (int) pageIndex);
         } else {
-          final OPointer pointer = doubleWriteLog.loadPage(internalFileId, (int) pageIndex, bufferPool);
-          if (pointer != null) {
-            final ByteBuffer buffer = pointer.getNativeByteBuffer();
-            assert buffer.position() == 0;
-
-            if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
-                || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode)) {
-              if (!verifyMagicChecksumAndDecryptPage(buffer, internalFileId, pageIndex)) {
-                assertPageIsBroken(pageIndex, fileId, pointer);
-              }
-            }
-          }
-
           return null;
         }
       } finally {
@@ -2135,113 +2031,114 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
   }
 
   private void addMagicChecksumAndEncryption(final int intId, final int pageIndex, final ByteBuffer buffer) {
-    assert buffer.order() == ByteOrder.nativeOrder();
-
-    if (checksumMode != OChecksumMode.Off) {
-      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
-      final CRC32 crc32 = new CRC32();
-      crc32.update(buffer);
-      final int computedChecksum = (int) crc32.getValue();
-
-      buffer.position(CHECKSUM_OFFSET);
-      buffer.putInt(computedChecksum);
-    }
-
-    if (aesKey != null) {
-      long magicNumber = buffer.getLong(MAGIC_NUMBER_OFFSET);
-
-      long updateCounter = magicNumber >>> 8;
-      updateCounter++;
-
-      magicNumber = (updateCounter << 8) | ((checksumMode == OChecksumMode.Off
-          ? MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED
-          : MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED));
-
-      buffer.putLong(MAGIC_NUMBER_OFFSET, magicNumber);
-      doEncryptionDecryption(intId, pageIndex, Cipher.ENCRYPT_MODE, buffer, updateCounter);
-    } else {
-      buffer.putLong(MAGIC_NUMBER_OFFSET,
-          checksumMode == OChecksumMode.Off ? MAGIC_NUMBER_WITHOUT_CHECKSUM : MAGIC_NUMBER_WITH_CHECKSUM);
-    }
+//    assert buffer.order() == ByteOrder.nativeOrder();
+//
+//    if (checksumMode != OChecksumMode.Off) {
+//      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
+//      final CRC32 crc32 = new CRC32();
+//      crc32.update(buffer);
+//      final int computedChecksum = (int) crc32.getValue();
+//
+//      buffer.position(CHECKSUM_OFFSET);
+//      buffer.putInt(computedChecksum);
+//    }
+//
+//    if (aesKey != null) {
+//      long magicNumber = buffer.getLong(MAGIC_NUMBER_OFFSET);
+//
+//      long updateCounter = magicNumber >>> 8;
+//      updateCounter++;
+//
+//      magicNumber = (updateCounter << 8) | ((checksumMode == OChecksumMode.Off
+//          ? MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED
+//          : MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED));
+//
+//      buffer.putLong(MAGIC_NUMBER_OFFSET, magicNumber);
+//      doEncryptionDecryption(intId, pageIndex, Cipher.ENCRYPT_MODE, buffer, updateCounter);
+//    } else {
+//      buffer.putLong(MAGIC_NUMBER_OFFSET,
+//          checksumMode == OChecksumMode.Off ? MAGIC_NUMBER_WITHOUT_CHECKSUM : MAGIC_NUMBER_WITH_CHECKSUM);
+//    }
   }
 
   private void doEncryptionDecryption(final int intId, final int pageIndex, final int mode, final ByteBuffer buffer,
       final long updateCounter) {
-    try {
-      final Cipher cipher = CIPHER.get();
-      final SecretKey aesKey = new SecretKeySpec(this.aesKey, ALGORITHM_NAME);
-
-      final byte[] updatedIv = new byte[iv.length];
-
-      for (int i = 0; i < OIntegerSerializer.INT_SIZE; i++) {
-        updatedIv[i] = (byte) (iv[i] ^ ((pageIndex >>> i) & 0xFF));
-      }
-
-      for (int i = 0; i < OIntegerSerializer.INT_SIZE; i++) {
-        updatedIv[i + OIntegerSerializer.INT_SIZE] = (byte) (iv[i + OIntegerSerializer.INT_SIZE] ^ ((intId >>> i) & 0xFF));
-      }
-
-      for (int i = 0; i < OLongSerializer.LONG_SIZE - 1; i++) {
-        updatedIv[i + 2 * OIntegerSerializer.INT_SIZE] = (byte) (iv[i + 2 * OIntegerSerializer.INT_SIZE] ^ ((updateCounter >>> i)
-            & 0xFF));
-      }
-
-      updatedIv[updatedIv.length - 1] = iv[iv.length - 1];
-
-      cipher.init(mode, aesKey, new IvParameterSpec(updatedIv));
-
-      final ByteBuffer outBuffer = ByteBuffer.allocate(buffer.capacity() - CHECKSUM_OFFSET).order(ByteOrder.nativeOrder());
-
-      buffer.position(CHECKSUM_OFFSET);
-      cipher.doFinal(buffer, outBuffer);
-
-      buffer.position(CHECKSUM_OFFSET);
-      outBuffer.position(0);
-      buffer.put(outBuffer);
-
-    } catch (InvalidKeyException e) {
-      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(e.getMessage()), e);
-    } catch (InvalidAlgorithmParameterException e) {
-      throw new IllegalArgumentException("Invalid IV.", e);
-    } catch (IllegalBlockSizeException | BadPaddingException | ShortBufferException e) {
-      throw new IllegalStateException("Unexpected exception during CRT encryption.", e);
-    }
+//    try {
+//      final Cipher cipher = CIPHER.get();
+//      final SecretKey aesKey = new SecretKeySpec(this.aesKey, ALGORITHM_NAME);
+//
+//      final byte[] updatedIv = new byte[iv.length];
+//
+//      for (int i = 0; i < OIntegerSerializer.INT_SIZE; i++) {
+//        updatedIv[i] = (byte) (iv[i] ^ ((pageIndex >>> i) & 0xFF));
+//      }
+//
+//      for (int i = 0; i < OIntegerSerializer.INT_SIZE; i++) {
+//        updatedIv[i + OIntegerSerializer.INT_SIZE] = (byte) (iv[i + OIntegerSerializer.INT_SIZE] ^ ((intId >>> i) & 0xFF));
+//      }
+//
+//      for (int i = 0; i < OLongSerializer.LONG_SIZE - 1; i++) {
+//        updatedIv[i + 2 * OIntegerSerializer.INT_SIZE] = (byte) (iv[i + 2 * OIntegerSerializer.INT_SIZE] ^ ((updateCounter >>> i)
+//            & 0xFF));
+//      }
+//
+//      updatedIv[updatedIv.length - 1] = iv[iv.length - 1];
+//
+//      cipher.init(mode, aesKey, new IvParameterSpec(updatedIv));
+//
+//      final ByteBuffer outBuffer = ByteBuffer.allocate(buffer.capacity() - CHECKSUM_OFFSET).order(ByteOrder.nativeOrder());
+//
+//      buffer.position(CHECKSUM_OFFSET);
+//      cipher.doFinal(buffer, outBuffer);
+//
+//      buffer.position(CHECKSUM_OFFSET);
+//      outBuffer.position(0);
+//      buffer.put(outBuffer);
+//
+//    } catch (InvalidKeyException e) {
+//      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(e.getMessage()), e);
+//    } catch (InvalidAlgorithmParameterException e) {
+//      throw new IllegalArgumentException("Invalid IV.", e);
+//    } catch (IllegalBlockSizeException | BadPaddingException | ShortBufferException e) {
+//      throw new IllegalStateException("Unexpected exception during CRT encryption.", e);
+//    }
   }
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   private boolean verifyMagicChecksumAndDecryptPage(final ByteBuffer buffer, final int intId, final long pageIndex) {
-    assert buffer.order() == ByteOrder.nativeOrder();
-
-    buffer.position(MAGIC_NUMBER_OFFSET);
-    final long magicNumber = OLongSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
-
-    if ((aesKey == null && magicNumber != MAGIC_NUMBER_WITH_CHECKSUM) || (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM
-        && (magicNumber & 0xFF) != MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED)) {
-      if ((aesKey == null && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) || (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM
-          && (magicNumber & 0xFF) != MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED)) {
-        return false;
-      }
-
-      if (aesKey != null && (magicNumber & 0xFF) == MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
-        doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer, magicNumber >>> 8);
-      }
-
-      return true;
-    }
-
-    if (aesKey != null && (magicNumber & 0xFF) == MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED) {
-      doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer, magicNumber >>> 8);
-    }
-
-    buffer.position(CHECKSUM_OFFSET);
-    final int storedChecksum = OIntegerSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
-
-    buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
-    final CRC32 crc32 = new CRC32();
-    crc32.update(buffer);
-    final int computedChecksum = (int) crc32.getValue();
-
-    return computedChecksum == storedChecksum;
+//    assert buffer.order() == ByteOrder.nativeOrder();
+//
+//    buffer.position(MAGIC_NUMBER_OFFSET);
+//    final long magicNumber = OLongSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+//
+//    if ((aesKey == null && magicNumber != MAGIC_NUMBER_WITH_CHECKSUM) || (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM
+//        && (magicNumber & 0xFF) != MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED)) {
+//      if ((aesKey == null && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) || (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM
+//          && (magicNumber & 0xFF) != MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED)) {
+//        return false;
+//      }
+//
+//      if (aesKey != null && (magicNumber & 0xFF) == MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED) {
+//        doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer, magicNumber >>> 8);
+//      }
+//
+//      return true;
+//    }
+//
+//    if (aesKey != null && (magicNumber & 0xFF) == MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED) {
+//      doEncryptionDecryption(intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer, magicNumber >>> 8);
+//    }
+//
+//    buffer.position(CHECKSUM_OFFSET);
+//    final int storedChecksum = OIntegerSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+//
+//    buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
+//    final CRC32 crc32 = new CRC32();
+//    crc32.update(buffer);
+//    final int computedChecksum = (int) crc32.getValue();
+//
+//    return computedChecksum == storedChecksum;
+    return true;
   }
 
   private void dumpStackTrace(final String message) {
@@ -2270,8 +2167,6 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
         }
       }
     }
-
-    doubleWriteLog.truncate();
   }
 
   private void doRemoveCachePages(int internalFileId) {
@@ -2811,8 +2706,6 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
       }
     }
 
-    final boolean fsyncFiles;
-
     int flushedPages = 0;
 
     final OPointer[] containerPointers = new OPointer[chunks.size()];
@@ -2857,8 +2750,6 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
         chunkPositions[i] = pageIndex;
         chunkFileIds[i] = internalFileId(fileId);
       }
-
-      fsyncFiles = doubleWriteLog.write(containerBuffers, chunkFileIds, chunkPositions);
 
       final List<OClosableEntry<Long, OFile>> acquiredFiles = new ArrayList<>(buffersByFileId.size());
       final List<IOResult> ioResults = new ArrayList<>(buffersByFileId.size());
@@ -2921,10 +2812,6 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache im
       for (final OPointer containerPointer : containerPointers) {
         ODirectMemoryAllocator.instance().deallocate(containerPointer);
       }
-    }
-
-    if (fsyncFiles) {
-      fsyncFiles();
     }
 
     for (final List<OQuarto<Long, ByteBuffer, OPointer, OCachePointer>> chunk : chunks) {
