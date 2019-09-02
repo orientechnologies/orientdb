@@ -85,7 +85,7 @@ public final class CellBTreeBucketSingleValueV1<K> extends ODurablePage {
     return size() == 0;
   }
 
-  public int find(final K key, OBinarySerializer<K> keySerializer, OEncryption encryption) {
+  public int find(final K key, final OBinarySerializer<K> keySerializer, final OEncryption encryption) {
     int low = 0;
     int high = size() - 1;
 

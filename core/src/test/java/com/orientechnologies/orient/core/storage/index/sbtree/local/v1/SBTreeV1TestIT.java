@@ -22,7 +22,7 @@ import java.util.*;
  * @since 12.08.13
  */
 public class SBTreeV1TestIT {
-  private static final int KEYS_COUNT = 500000;
+  private int keysCount = 1_000_000;
   OSBTreeV1<Integer, OIdentifiable> sbTree;
   protected ODatabaseSession databaseDocumentTx;
   protected String           buildDirectory;
@@ -33,6 +33,15 @@ public class SBTreeV1TestIT {
   @Before
   public void before() throws Exception {
     buildDirectory = System.getProperty("buildDirectory", ".") + File.separator + SBTreeV1TestIT.class.getSimpleName();
+
+    try {
+      keysCount = Integer
+          .parseInt(System.getProperty(SBTreeV1TestIT.class.getSimpleName() + "KeysCount", Integer.toString(keysCount)));
+    } catch (NumberFormatException e) {
+      //ignore
+    }
+
+    System.out.println("keysCount parameter is set to " + keysCount);
 
     dbName = "localSBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);
@@ -56,22 +65,25 @@ public class SBTreeV1TestIT {
 
   @Test
   public void testKeyPut() throws Exception {
-    for (int i = 0; i < KEYS_COUNT; i++) {
+    for (int i = 0; i < keysCount; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
-    for (int i = 0; i < KEYS_COUNT; i++) {
+    for (int i = 0; i < keysCount; i++) {
       Assert.assertEquals(i + " key is absent", sbTree.get(i), new ORecordId(i % 32000, i));
     }
 
-    Assert.assertEquals(0, (int) sbTree.firstKey());
+    final Integer firstKey = sbTree.firstKey();
+    Assert.assertNotNull(firstKey);
+    Assert.assertEquals(0, (int) firstKey);
 
-    Assert.assertEquals(KEYS_COUNT - 1, (int) sbTree.lastKey());
+    final Integer lastKey = sbTree.lastKey();
+    Assert.assertNotNull(lastKey);
+    Assert.assertEquals(keysCount - 1, (int) lastKey);
 
-    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++) {
+    for (int i = keysCount; i < 2 * keysCount; i++) {
       Assert.assertNull(sbTree.get(i));
     }
-
   }
 
   @Test
@@ -79,7 +91,7 @@ public class SBTreeV1TestIT {
     final NavigableSet<Integer> keys = new TreeSet<>();
     final Random random = new Random();
 
-    while (keys.size() < KEYS_COUNT) {
+    while (keys.size() < 1_000_000) {
       int key = random.nextInt(Integer.MAX_VALUE);
       sbTree.put(key, new ORecordId(key % 32000, key));
       keys.add(key);
@@ -105,7 +117,7 @@ public class SBTreeV1TestIT {
 
     Random random = new Random(seed);
 
-    while (keys.size() < KEYS_COUNT) {
+    while (keys.size() < 1_000_000) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
       if (key < 0)
         continue;
@@ -128,7 +140,7 @@ public class SBTreeV1TestIT {
   @Test
   public void testKeyDeleteRandomUniform() throws Exception {
     NavigableSet<Integer> keys = new TreeSet<>();
-    for (int i = 0; i < KEYS_COUNT; i++) {
+    for (int i = 0; i < 1_000_000; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
       keys.add(i);
     }
@@ -163,7 +175,7 @@ public class SBTreeV1TestIT {
     System.out.println("testKeyDeleteRandomGaussian seed : " + seed);
     Random random = new Random(seed);
 
-    while (keys.size() < KEYS_COUNT) {
+    while (keys.size() < 1_000_000) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
       if (key < 0)
         continue;
@@ -199,20 +211,23 @@ public class SBTreeV1TestIT {
 
   @Test
   public void testKeyDelete() throws Exception {
-    for (int i = 0; i < KEYS_COUNT; i++) {
+    for (int i = 0; i < keysCount; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
-    for (int i = 0; i < KEYS_COUNT; i++) {
+    for (int i = 0; i < keysCount; i++) {
       if (i % 3 == 0)
         Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, i));
     }
 
-    Assert.assertEquals((int) sbTree.firstKey(), 1);
-    //noinspection ConstantConditions
-    Assert.assertEquals((int) sbTree.lastKey(), (KEYS_COUNT - 1) % 3 == 0 ? KEYS_COUNT - 2 : KEYS_COUNT - 1);
+    final Integer firstKey = sbTree.firstKey();
+    Assert.assertNotNull(firstKey);
 
-    for (int i = 0; i < KEYS_COUNT; i++) {
+    Assert.assertEquals((int) firstKey, 1);
+    //noinspection ConstantConditions
+    Assert.assertEquals((int) sbTree.lastKey(), (keysCount - 1) % 3 == 0 ? keysCount - 2 : keysCount - 1);
+
+    for (int i = 0; i < keysCount; i++) {
       if (i % 3 == 0)
         Assert.assertNull(sbTree.get(i));
       else
@@ -222,33 +237,37 @@ public class SBTreeV1TestIT {
 
   @Test
   public void testKeyAddDelete() throws Exception {
-    for (int i = 0; i < KEYS_COUNT; i++) {
+    for (int i = 0; i < keysCount; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
 
       Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
     }
 
-    for (int i = 0; i < KEYS_COUNT; i++) {
+    for (int i = 0; i < keysCount; i++) {
       if (i % 3 == 0)
         Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, i));
 
       if (i % 2 == 0)
-        sbTree.put(KEYS_COUNT + i, new ORecordId((KEYS_COUNT + i) % 32000, KEYS_COUNT + i));
+        sbTree.put(keysCount + i, new ORecordId((keysCount + i) % 32000, keysCount + i));
 
     }
 
-    Assert.assertEquals((int) sbTree.firstKey(), 1);
+    final Integer firstKey = sbTree.firstKey();
+    Assert.assertNotNull(firstKey);
+    Assert.assertEquals((int) firstKey, 1);
 
-    Assert.assertEquals((int) sbTree.lastKey(), 2 * KEYS_COUNT - 2);
+    final Integer lastKey = sbTree.lastKey();
+    Assert.assertNotNull(lastKey);
+    Assert.assertEquals((int) lastKey, 2 * keysCount - 2);
 
-    for (int i = 0; i < KEYS_COUNT; i++) {
+    for (int i = 0; i < keysCount; i++) {
       if (i % 3 == 0)
         Assert.assertNull(sbTree.get(i));
       else
         Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
 
       if (i % 2 == 0)
-        Assert.assertEquals(sbTree.get(KEYS_COUNT + i), new ORecordId((KEYS_COUNT + i) % 32000, KEYS_COUNT + i));
+        Assert.assertEquals(sbTree.get(keysCount + i), new ORecordId((keysCount + i) % 32000, keysCount + i));
     }
   }
 
@@ -257,7 +276,7 @@ public class SBTreeV1TestIT {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
-    while (keyValues.size() < KEYS_COUNT) {
+    while (keyValues.size() < keysCount) {
       int key = random.nextInt(Integer.MAX_VALUE);
 
       sbTree.put(key, new ORecordId(key % 32000, key));
@@ -279,7 +298,7 @@ public class SBTreeV1TestIT {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
-    while (keyValues.size() < KEYS_COUNT) {
+    while (keyValues.size() < keysCount) {
       int key = random.nextInt(Integer.MAX_VALUE);
 
       sbTree.put(key, new ORecordId(key % 32000, key));
@@ -301,7 +320,7 @@ public class SBTreeV1TestIT {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
-    while (keyValues.size() < KEYS_COUNT) {
+    while (keyValues.size() < keysCount) {
       int key = random.nextInt(Integer.MAX_VALUE);
 
       sbTree.put(key, new ORecordId(key % 32000, key));
@@ -332,7 +351,9 @@ public class SBTreeV1TestIT {
       sbTree.remove(i);
     }
 
-    Assert.assertEquals((int) sbTree.firstKey(), 3500);
+    final Integer firstKey = sbTree.firstKey();
+    Assert.assertNotNull(firstKey);
+    Assert.assertEquals((int) firstKey, 3500);
     for (int i = 0; i < 3500; i++) {
       Assert.assertNull(sbTree.get(i));
     }
@@ -353,7 +374,9 @@ public class SBTreeV1TestIT {
       sbTree.remove(i);
     }
 
-    Assert.assertEquals((int) sbTree.lastKey(), 1700);
+    final Integer lastKey = sbTree.lastKey();
+    Assert.assertNotNull(lastKey);
+    Assert.assertEquals((int) lastKey, 1700);
 
     for (int i = 5166; i > 1700; i--) {
       Assert.assertNull(sbTree.get(i));
@@ -382,8 +405,13 @@ public class SBTreeV1TestIT {
     for (int i = 8600; i < 12055; i++)
       sbTree.remove(i);
 
-    Assert.assertEquals((int) sbTree.firstKey(), 1730);
-    Assert.assertEquals((int) sbTree.lastKey(), 8599);
+    final Integer firstKey = sbTree.firstKey();
+    Assert.assertNotNull(firstKey);
+    Assert.assertEquals((int) firstKey, 1730);
+
+    final Integer lastKey = sbTree.lastKey();
+    Assert.assertNotNull(lastKey);
+    Assert.assertEquals((int) lastKey, 8599);
 
     Set<OIdentifiable> identifiables = new HashSet<>();
 
@@ -564,7 +592,6 @@ public class SBTreeV1TestIT {
         Assert.assertEquals(indexEntry.getValue(), entry.getValue());
       }
 
-      Assert.assertFalse(iterator.hasNext());
       Assert.assertNull(cursor.next(-1));
     }
   }
@@ -603,7 +630,6 @@ public class SBTreeV1TestIT {
         Assert.assertEquals(indexEntry.getValue(), entry.getValue());
       }
 
-      Assert.assertFalse(iterator.hasNext());
       Assert.assertNull(cursor.next(-1));
     }
   }

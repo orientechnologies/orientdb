@@ -9,8 +9,6 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
@@ -27,8 +25,10 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, OStringSerializer.INSTANCE, true);
-    Assert.assertNull(bucket.getValue());
+    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry);
+    bucket.init();
+
+    Assert.assertNull(bucket.getValue(OStringSerializer.INSTANCE));
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
@@ -36,7 +36,7 @@ public class ONullBucketV1Test {
   }
 
   @Test
-  public void testAddGetValue() throws IOException {
+  public void testAddGetValue() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
     OPointer pointer = bufferPool.acquireDirect(true);
 
@@ -46,10 +46,12 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, OStringSerializer.INSTANCE, true);
+    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry);
+    bucket.init();
 
-    bucket.setValue(new OSBTreeValue<String>(false, -1, "test"));
-    OSBTreeValue<String> treeValue = bucket.getValue();
+    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"));
+    OSBTreeValue<String> treeValue = bucket.getValue(OStringSerializer.INSTANCE);
+    Assert.assertNotNull(treeValue);
     Assert.assertEquals(treeValue.getValue(), "test");
 
     cacheEntry.releaseExclusiveLock();
@@ -58,7 +60,7 @@ public class ONullBucketV1Test {
   }
 
   @Test
-  public void testAddRemoveValue() throws IOException {
+  public void testAddRemoveValue() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
     OPointer pointer = bufferPool.acquireDirect(true);
 
@@ -68,12 +70,13 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, OStringSerializer.INSTANCE, true);
+    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry);
+    bucket.init();
 
-    bucket.setValue(new OSBTreeValue<String>(false, -1, "test"));
+    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"));
     bucket.removeValue();
 
-    OSBTreeValue<String> treeValue = bucket.getValue();
+    OSBTreeValue<String> treeValue = bucket.getValue(OStringSerializer.INSTANCE);
     Assert.assertNull(treeValue);
 
     cacheEntry.releaseExclusiveLock();
@@ -82,7 +85,7 @@ public class ONullBucketV1Test {
   }
 
   @Test
-  public void testAddRemoveAddValue() throws IOException {
+  public void testAddRemoveAddValue() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
     OPointer pointer = bufferPool.acquireDirect(true);
 
@@ -92,17 +95,19 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, OStringSerializer.INSTANCE, true);
+    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry);
+    bucket.init();
 
-    bucket.setValue(new OSBTreeValue<String>(false, -1, "test"));
+    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"));
     bucket.removeValue();
 
-    OSBTreeValue<String> treeValue = bucket.getValue();
+    OSBTreeValue<String> treeValue = bucket.getValue(OStringSerializer.INSTANCE);
     Assert.assertNull(treeValue);
 
-    bucket.setValue(new OSBTreeValue<String>(false, -1, "testOne"));
+    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("testOne"));
 
-    treeValue = bucket.getValue();
+    treeValue = bucket.getValue(OStringSerializer.INSTANCE);
+    Assert.assertNotNull(treeValue);
     Assert.assertEquals(treeValue.getValue(), "testOne");
 
     cacheEntry.releaseExclusiveLock();

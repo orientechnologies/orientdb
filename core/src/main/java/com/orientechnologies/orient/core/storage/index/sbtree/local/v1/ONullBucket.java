@@ -23,8 +23,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
-import java.io.IOException;
-
 /**
  * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
  * <ol>
@@ -38,49 +36,37 @@ import java.io.IOException;
  * @since 4/15/14
  */
 public final class ONullBucket<V> extends ODurablePage {
-  private final OBinarySerializer<V> valueSerializer;
-
-  public ONullBucket(OCacheEntry cacheEntry, OBinarySerializer<V> valueSerializer, boolean isNew) {
+  public ONullBucket(OCacheEntry cacheEntry) {
     super(cacheEntry);
-    this.valueSerializer = valueSerializer;
-
-    if (isNew)
-      setByteValue(NEXT_FREE_POSITION, (byte) 0);
   }
 
-  public void setValue(OSBTreeValue<V> value) throws IOException {
+  public void init() {
+    setByteValue(NEXT_FREE_POSITION, (byte) 0);
+  }
+
+  public void setValue(final byte[] value) {
     setByteValue(NEXT_FREE_POSITION, (byte) 1);
 
-    if (value.isLink()) {
-      setByteValue(NEXT_FREE_POSITION + 1, (byte) 0);
-      setLongValue(NEXT_FREE_POSITION + 2, value.getLink());
-    } else {
-      final int valueSize = valueSerializer.getObjectSize(value.getValue());
-
-      final byte[] serializedValue = new byte[valueSize];
-      valueSerializer.serializeNativeObject(value.getValue(), serializedValue, 0);
-
-      setByteValue(NEXT_FREE_POSITION + 1, (byte) 1);
-      setBinaryValue(NEXT_FREE_POSITION + 2, serializedValue);
-    }
+    setByteValue(NEXT_FREE_POSITION + 1, (byte) 1);
+    setBinaryValue(NEXT_FREE_POSITION + 2, value);
   }
 
-  public OSBTreeValue<V> getValue() {
-    if (getByteValue(NEXT_FREE_POSITION) == 0)
+  public OSBTreeValue<V> getValue(final OBinarySerializer<V> valueSerializer) {
+    if (getByteValue(NEXT_FREE_POSITION) == 0) {
       return null;
+    }
 
     final boolean isLink = getByteValue(NEXT_FREE_POSITION + 1) == 0;
-    if (isLink)
-      return new OSBTreeValue<V>(true, getLongValue(NEXT_FREE_POSITION + 2), null);
+    assert !isLink;
 
-    return new OSBTreeValue<V>(false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
+    return new OSBTreeValue<>(false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
   }
 
   public void removeValue() {
     setByteValue(NEXT_FREE_POSITION, (byte) 0);
   }
 
-  public byte[] getRawValue() {
+  public byte[] getRawValue(final OBinarySerializer<V> valueSerializer) {
     if (getByteValue(NEXT_FREE_POSITION) == 0)
       return null;
 
