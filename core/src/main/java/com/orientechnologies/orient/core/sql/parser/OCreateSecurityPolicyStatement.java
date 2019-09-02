@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class OCreateSecurityPolicyStatement extends OSimpleExecStatement {
 
@@ -151,6 +152,61 @@ public class OCreateSecurityPolicyStatement extends OSimpleExecStatement {
       builder.append(")");
       first = false;
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    OCreateSecurityPolicyStatement that = (OCreateSecurityPolicyStatement) o;
+    return Objects.equals(name, that.name) &&
+            Objects.equals(create, that.create) &&
+            Objects.equals(read, that.read) &&
+            Objects.equals(beforeUpdate, that.beforeUpdate) &&
+            Objects.equals(afterUpdate, that.afterUpdate) &&
+            Objects.equals(delete, that.delete) &&
+            Objects.equals(execute, that.execute);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, create, read, beforeUpdate, afterUpdate, delete, execute);
+  }
+
+  @Override
+  public OStatement copy() {
+    OCreateSecurityPolicyStatement result = new OCreateSecurityPolicyStatement(-1);
+    result.name = name.copy();
+    result.create = this.create == null ? null : this.create.copy();
+    result.read = this.read == null ? null : this.read.copy();
+    result.beforeUpdate = this.beforeUpdate == null ? null : this.beforeUpdate.copy();
+    result.afterUpdate = this.afterUpdate == null ? null : this.afterUpdate.copy();
+    result.delete = this.delete == null ? null : this.delete.copy();
+    result.execute = this.execute == null ? null : this.execute.copy();
+    return result;
+  }
+
+  @Override
+  public boolean executinPlanCanBeCached() {
+    if (create != null && !create.isCacheable()) {
+      return false;
+    }
+    if (read != null && !read.isCacheable()) {
+      return false;
+    }
+    if (beforeUpdate != null && !beforeUpdate.isCacheable()) {
+      return false;
+    }
+    if (afterUpdate != null && !afterUpdate.isCacheable()) {
+      return false;
+    }
+    if (delete != null && !delete.isCacheable()) {
+      return false;
+    }
+    if (execute != null && !execute.isCacheable()) {
+      return false;
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=f41480f6734998f6eac27242db146d09 (do not edit this line) */
