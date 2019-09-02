@@ -219,7 +219,7 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
    *
    * @see #localDirtyPages for details
    */
-  private final TreeMap<Long, TreeSet<PageKey>> localDirtyPagesBySegment = new TreeMap<>();
+  private final TreeMap<Long, Set<PageKey>> localDirtyPagesBySegment = new TreeMap<>();
 
   /**
    * This counter is need for "free space" check implementation. Once amount of added pages is reached some threshold, amount of
@@ -2325,7 +2325,7 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
       }
 
       convertSharedDirtyPagesToLocal();
-      Map.Entry<Long, TreeSet<PageKey>> firstEntry = localDirtyPagesBySegment.firstEntry();
+      Map.Entry<Long, Set<PageKey>> firstEntry = localDirtyPagesBySegment.firstEntry();
 
       if (firstEntry == null) {
         return null;
@@ -2449,7 +2449,7 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
             convertSharedDirtyPagesToLocal();
 
             if (localDirtyPagesBySegment.size() > 1) {
-              final Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
+              final Map.Entry<Long, Set<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
               final long firstSegmentIndex = firstSegment.getKey();
               flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
 
@@ -2498,9 +2498,9 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
         localDirtyPages.put(entry.getKey(), entry.getValue());
 
         final long segment = entry.getValue().getSegment();
-        TreeSet<PageKey> pages = localDirtyPagesBySegment.get(segment);
+        Set<PageKey> pages = localDirtyPagesBySegment.get(segment);
         if (pages == null) {
-          pages = new TreeSet<>();
+          pages = new HashSet<>();
           pages.add(entry.getKey());
 
           localDirtyPagesBySegment.put(segment, pages);
@@ -2521,7 +2521,7 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
     final OLogSequenceNumber lsn = localDirtyPages.remove(pageKey);
     if (lsn != null) {
       final long segment = lsn.getSegment();
-      final TreeSet<PageKey> pages = localDirtyPagesBySegment.get(segment);
+      final Set<PageKey> pages = localDirtyPagesBySegment.get(segment);
       assert pages != null;
 
       final boolean removed = pages.remove(pageKey);
@@ -2555,7 +2555,7 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
         throw new IllegalStateException("Chunk is not empty !");
       }
 
-      final TreeSet<PageKey> segmentPages = localDirtyPagesBySegment.get(currentSegment);
+      final Set<PageKey> segmentPages = localDirtyPagesBySegment.get(currentSegment);
 
       if (segmentPages == null) {
         currentSegment++;
