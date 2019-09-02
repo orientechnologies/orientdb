@@ -316,7 +316,7 @@ public class ONewDistributedTransactionManager {
           messages.add(String.format("exception (node " + node + "): '%s'", ((OTxException) result).getException().getMessage()));
           break;
         case OTxUniqueIndex.ID:
-          messages.add(String.format("unique index violation on index (node " + node + "):'$s' with key:'%s' and rid:'%s'",
+          messages.add(String.format("unique index violation on index (node " + node + "):'%s' with key:'%s' and rid:'%s'",
               ((OTxUniqueIndex) result).getIndex(), ((OTxUniqueIndex) result).getKey(), ((OTxUniqueIndex) result).getRecordId()));
           break;
 
