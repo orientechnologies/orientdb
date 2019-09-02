@@ -17,7 +17,7 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.core.storage.cache.local;
+package com.orientechnologies.orient.core.storage.cache.local.aoc;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableEntry;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLog;
 import com.orientechnologies.orient.core.storage.fs.AsyncFile;
 import com.orientechnologies.orient.core.storage.fs.IOResult;
@@ -336,6 +337,8 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
   private final List<WeakReference<OBackgroundExceptionListener>> backgroundExceptionListeners = new CopyOnWriteArrayList<>();
 
   private final boolean useAsyncIO;
+
+  private ConcurrentHashMap<Integer, FileMap> fileLogicalPhysicalPageMap = new ConcurrentHashMap<>();
 
   public AppendOnlyCompressedWriteCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
       final DoubleWriteLog doubleWriteLog, final long pagesFlushInterval, final int shutdownTimeout,
@@ -1043,30 +1046,12 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
   }
 
   @Override
-  public int allocateNewPage(final long fileId) throws IOException {
+  public int allocateNewPage(final long fileId) {
     filesLock.acquireReadLock();
     try {
-      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
-      try {
-        final OFile fileClassic = entry.get();
-        final long allocatedPosition = fileClassic.allocateSpace(pageSize);
-        final long allocationIndex = allocatedPosition / pageSize;
-
-        //we check is it enough space on disk to continue to write data on it
-        //otherwise we switch storage in read-only mode
-        freeSpaceCheckAfterNewPageAdd();
-
-        final int pageIndex = (int) allocationIndex;
-        if (pageIndex < 0) {
-          throw new IllegalStateException("Illegal page index value " + pageIndex);
-        }
-
-        return pageIndex;
-      } finally {
-        files.release(entry);
-      }
-    } catch (final InterruptedException e) {
-      throw OException.wrapException(new OStorageException("Allocation of page was interrupted"), e);
+      final int internalFileId = internalFileId(fileId);
+      final FileMap fileMap = fileLogicalPhysicalPageMap.computeIfAbsent(internalFileId, (id) -> new FileMap());
+      return fileMap.allocateNewPage();
     } finally {
       filesLock.releaseReadLock();
     }
