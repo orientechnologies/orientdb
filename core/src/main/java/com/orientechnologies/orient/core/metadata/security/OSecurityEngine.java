@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class OSecurityEngine {
+
+  static OPredicateCache cache = new OPredicateCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
 
   /**
    * Calculates a predicate for a security resource. It also takes into consideration the security and schema hierarchies.
@@ -282,8 +285,10 @@ public class OSecurityEngine {
   }
 
   private static OOrBlock parsePredicate(ODatabaseSession session, String predicateString) {
+
     try {
-      return OSQLEngine.parsePredicate(predicateString);
+
+      return cache.get(predicateString);
     } catch (Exception e) {
       System.out.println("Error parsing predicate: " + predicateString);
       throw e;
