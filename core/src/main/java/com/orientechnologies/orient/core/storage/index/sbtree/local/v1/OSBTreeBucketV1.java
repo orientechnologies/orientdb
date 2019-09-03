@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1AddLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1AddNonLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1RemoveLeafEntryPO;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -161,6 +162,8 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
       }
       currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
+
+    addPageOperation(new SBTreeBucketV1RemoveLeafEntryPO(entryIndex, oldRawKey, oldRawValue));
   }
 
   public void removeNonLeafEntry(final int entryIndex, final byte[] key, final int prevChild) {
