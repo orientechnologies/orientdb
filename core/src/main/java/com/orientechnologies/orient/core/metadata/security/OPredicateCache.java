@@ -74,7 +74,7 @@ public class OPredicateCache {
         map.put(statement, result);
       }
     }
-    return result;
+    return result.copy();
   }
 
 
