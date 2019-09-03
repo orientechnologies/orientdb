@@ -279,4 +279,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     return tracker.getTimeLine();
   }
 
+  public OMultiValueChangeTimeLine<Object, T> getTransactionTimeLine() {
+    return tracker.getTransactionTimeLine();
+  }
 }

@@ -128,7 +128,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     }
 
     ORecordInternal.clearSource(document);
-
   }
 
   public void serialize(final ODocument document, final BytesContainer bytes) {
@@ -137,7 +136,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     OVarIntSerializer.write(bytes, document.fields());
     for (Entry<String, ODocumentEntry> entry : fields) {
       ODocumentEntry docEntry = entry.getValue();
-      if (!docEntry.exist())
+      if (!docEntry.exists())
         continue;
       writeString(bytes, entry.getKey());
       final Object value = entry.getValue().value;

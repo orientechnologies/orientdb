@@ -631,4 +631,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   public void setTracker(OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker) {
     this.tracker.sourceFrom(tracker);
   }
+
+  @Override
+  public OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> getTransactionTimeLine() {
+    return tracker.getTransactionTimeLine();
+  }
 }

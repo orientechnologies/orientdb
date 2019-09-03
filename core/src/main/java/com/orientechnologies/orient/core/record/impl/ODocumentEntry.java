@@ -40,7 +40,7 @@ public class ODocumentEntry {
   public  OType     type;
   public  OProperty property;
   private boolean   changed = false;
-  private boolean   exist   = true;
+  private boolean   exists  = true;
   private boolean   created = false;
 
   public ODocumentEntry() {
@@ -52,14 +52,14 @@ public class ODocumentEntry {
   }
 
   public boolean isChangedTree() {
-    if ((changed || isTrackedModified()) && exist ) {
+    if ((changed || isTrackedModified()) && exists) {
       return true;
     }
     return false;
   }
 
   public boolean hasNonExistingTree() {
-    if (!exist) {
+    if (!exists) {
       return true;
     }
 
@@ -97,12 +97,12 @@ public class ODocumentEntry {
     this.changed = changed;
   }
 
-  public boolean exist() {
-    return exist;
+  public boolean exists() {
+    return exists;
   }
 
-  public void setExist(final boolean exist) {
-    this.exist = exist;
+  public void setExists(final boolean exists) {
+    this.exists = exists;
   }
 
   public boolean isCreated() {
@@ -116,7 +116,7 @@ public class ODocumentEntry {
     entry.value = value;
     entry.changed = changed;
     entry.created = created;
-    entry.exist = exist;
+    entry.exists = exists;
     return entry;
   }
 
@@ -204,7 +204,7 @@ public class ODocumentEntry {
       value = original;
       unmarkChanged();
       original = null;
-      exist = true;
+      exists = true;
     }
   }
 

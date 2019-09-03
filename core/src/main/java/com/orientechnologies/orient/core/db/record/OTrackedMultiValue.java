@@ -38,7 +38,6 @@ public interface OTrackedMultiValue<K, V> {
    * Reverts all operations that were performed on collection and return original collection state.
    *
    * @param changeEvents List of operations that were performed on collection.
-   *
    * @return Original collection state.
    */
   Object returnOriginalState(List<OMultiValueChangeEvent<K, V>> changeEvents);
@@ -94,4 +93,6 @@ public interface OTrackedMultiValue<K, V> {
   }
 
   void transactionClear();
+
+  OMultiValueChangeTimeLine<K, V> getTransactionTimeLine();
 }

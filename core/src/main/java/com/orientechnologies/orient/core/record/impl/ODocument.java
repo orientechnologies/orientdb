@@ -359,7 +359,7 @@ public class ODocument extends ORecordAbstract
       return Stream.empty();
 
     return fields.entrySet().stream()
-        .filter(s -> s.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(s.getKey()))).map(Entry::getKey);
+        .filter(s -> s.getValue().exists() && (propertyAccess == null || propertyAccess.isReadable(s.getKey()))).map(Entry::getKey);
   }
 
   @Override
@@ -490,7 +490,7 @@ public class ODocument extends ORecordAbstract
       oldValue = null;
       oldType = null;
     } else {
-      knownProperty = entry.exist();
+      knownProperty = entry.exists();
       oldValue = entry.value;
       oldType = entry.type;
     }
@@ -561,8 +561,8 @@ public class ODocument extends ORecordAbstract
     }
     entry.disableTracking(this, oldValue);
     entry.value = iPropertyValue;
-    if (!entry.exist()) {
-      entry.setExist(true);
+    if (!entry.exists()) {
+      entry.setExists(true);
       fieldSize++;
     }
     entry.enableTracking(this);
@@ -588,12 +588,12 @@ public class ODocument extends ORecordAbstract
     if (entry == null)
       return null;
     Object oldValue = entry.value;
-    if (entry.exist() && trackingChanges) {
+    if (entry.exists() && trackingChanges) {
       // SAVE THE OLD VALUE IN A SEPARATE MAP
       if (entry.original == null)
         entry.original = entry.value;
       entry.value = null;
-      entry.setExist(false);
+      entry.setExists(false);
       entry.markChanged();
     } else {
       fields.remove(iFieldName);
@@ -628,7 +628,7 @@ public class ODocument extends ORecordAbstract
     validateFieldSecurity(internal, iRecord, p);
     final Object fieldValue;
     ODocumentEntry entry = iRecord.fields.get(p.getName());
-    if (entry != null && entry.exist()) {
+    if (entry != null && entry.exists()) {
       // AVOID CONVERSIONS: FASTER!
       fieldValue = entry.value;
 
@@ -1129,7 +1129,7 @@ public class ODocument extends ORecordAbstract
     checkForFields();
     final List<Object> res = new ArrayList<>(fields.size());
     for (Map.Entry<String, ODocumentEntry> entry : fields.entrySet()) {
-      if (entry.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(entry.getKey())))
+      if (entry.getValue().exists() && (propertyAccess == null || propertyAccess.isReadable(entry.getKey())))
         res.add(entry.getValue().value);
     }
     return res.toArray();
@@ -1440,7 +1440,7 @@ public class ODocument extends ORecordAbstract
       oldValue = null;
       oldType = null;
     } else {
-      knownProperty = entry.exist();
+      knownProperty = entry.exists();
       oldValue = entry.value;
       oldType = entry.type;
     }
@@ -1517,8 +1517,8 @@ public class ODocument extends ORecordAbstract
     }
     entry.disableTracking(this, oldValue);
     entry.value = iPropertyValue;
-    if (!entry.exist()) {
-      entry.setExist(true);
+    if (!entry.exists()) {
+      entry.setExists(true);
       fieldSize++;
     }
     entry.enableTracking(this);
@@ -1550,12 +1550,12 @@ public class ODocument extends ORecordAbstract
     if (entry == null)
       return null;
     Object oldValue = entry.value;
-    if (entry.exist() && trackingChanges) {
+    if (entry.exists() && trackingChanges) {
       // SAVE THE OLD VALUE IN A SEPARATE MAP
       if (entry.original == null)
         entry.original = entry.value;
       entry.value = null;
-      entry.setExist(false);
+      entry.setExists(false);
       entry.markChanged();
     } else {
       fields.remove(iFieldName);
@@ -1624,7 +1624,7 @@ public class ODocument extends ORecordAbstract
       } else if (deltaType == UpdateDeltaValueType.LIST_UPDATE) {
         List deltaList = (List) deltaVal;
         List originalList = to.field(fieldName);
-        OType toLinkedType = HelperClasses.getLinkedType(to, to.fieldType(fieldName), fieldName);
+        OType toLinkedType = HelperClasses.getLinkedType(ODocumentInternal.getImmutableSchemaClass(to), to.fieldType(fieldName), fieldName);
         //we want to treat ANY as null, because elements remain of unknown type
         if (toLinkedType == OType.ANY) {
           toLinkedType = null;
@@ -1924,7 +1924,7 @@ public class ODocument extends ORecordAbstract
       public boolean hasNext() {
         while (iterator.hasNext()) {
           current = iterator.next();
-          if (current.getValue().exist() && (propertyAccess == null || propertyAccess.isReadable(current.getKey()))) {
+          if (current.getValue().exists() && (propertyAccess == null || propertyAccess.isReadable(current.getKey()))) {
             read = false;
             return true;
           }
@@ -1968,7 +1968,7 @@ public class ODocument extends ORecordAbstract
           if (current.getValue().isChanged())
             current.getValue().original = current.getValue().value;
           current.getValue().value = null;
-          current.getValue().setExist(false);
+          current.getValue().setExists(false);
           current.getValue().markChanged();
         } else
           iterator.remove();
@@ -2001,7 +2001,7 @@ public class ODocument extends ORecordAbstract
     checkForLoading();
     if (checkForFields(propertyName) && (propertyAccess == null || propertyAccess.isReadable(propertyName))) {
       ODocumentEntry entry = fields.get(propertyName);
-      return entry != null && entry.exist();
+      return entry != null && entry.exists();
     } else {
       return false;
     }
@@ -2259,7 +2259,7 @@ public class ODocument extends ORecordAbstract
       Iterator<Entry<String, ODocumentEntry>> iter = fields.entrySet().iterator();
       while (iter.hasNext()) {
         Entry<String, ODocumentEntry> cur = iter.next();
-        if (!cur.getValue().exist()) {
+        if (!cur.getValue().exists()) {
           iter.remove();
         } else {
           cur.getValue().clear();
@@ -2278,7 +2278,7 @@ public class ODocument extends ORecordAbstract
       Iterator<Entry<String, ODocumentEntry>> iter = fields.entrySet().iterator();
       while (iter.hasNext()) {
         Entry<String, ODocumentEntry> cur = iter.next();
-        if (cur.getValue().exist()) {
+        if (cur.getValue().exists()) {
           cur.getValue().clear();
           cur.getValue().enableTracking(this);
         } else {
@@ -2294,7 +2294,7 @@ public class ODocument extends ORecordAbstract
       Iterator<Entry<String, ODocumentEntry>> iter = fields.entrySet().iterator();
       while (iter.hasNext()) {
         Entry<String, ODocumentEntry> cur = iter.next();
-        if (cur.getValue().exist()) {
+        if (cur.getValue().exists()) {
           cur.getValue().transactionClear();
         } else {
           iter.remove();
@@ -2761,14 +2761,14 @@ public class ODocument extends ORecordAbstract
 
     for (String f : iOther.keySet()) {
       ODocumentEntry docEntry = iOther.get(f);
-      if (!docEntry.exist()) {
+      if (!docEntry.exists()) {
         continue;
       }
       final Object otherValue = docEntry.value;
 
       ODocumentEntry curValue = fields.get(f);
 
-      if (curValue != null && curValue.exist()) {
+      if (curValue != null && curValue.exists()) {
         final Object value = curValue.value;
         if (iMergeSingleItemsOfMultiValueFields) {
           if (value instanceof Map<?, ?>) {
@@ -2804,7 +2804,7 @@ public class ODocument extends ORecordAbstract
     if (!iUpdateOnlyMode) {
       // REMOVE PROPERTIES NOT FOUND IN OTHER DOC
       for (String f : fieldNames())
-        if (!iOther.containsKey(f) || !iOther.get(f).exist())
+        if (!iOther.containsKey(f) || !iOther.get(f).exists())
           removeField(f);
     }
 
@@ -3394,7 +3394,7 @@ public class ODocument extends ORecordAbstract
   private void convertFieldsToClass(final OClass clazz) {
     for (OProperty prop : clazz.properties()) {
       ODocumentEntry entry = fields != null ? fields.get(prop.getName()) : null;
-      if (entry != null && entry.exist()) {
+      if (entry != null && entry.exists()) {
         if (entry.type == null || entry.type != prop.getType()) {
           boolean preChanged = entry.isChanged();
           boolean preCreated = entry.isCreated();
@@ -3878,7 +3878,7 @@ public class ODocument extends ORecordAbstract
       if (val.isChangedTree()) {
         String fieldName = fieldVal.getKey();
         OType currentFieldType = val.type != null ? val.type : OType.getTypeByValue(val.value);
-        OType currentFieldLinkedType = HelperClasses.getLinkedType(this, currentFieldType, fieldName);
+        OType currentFieldLinkedType = HelperClasses.getLinkedType(getImmutableSchemaClass(), currentFieldType, fieldName);
         OType previousFieldValueType = OType.getTypeByValue(val.original);
         OType previousFieldValueLinkedType = null;
         UpdateTypeValueType deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged(), val, new ArrayList<>(),
@@ -3899,7 +3899,7 @@ public class ODocument extends ORecordAbstract
       ODocumentEntry val = fieldVal.getValue();
       if (val.hasNonExistingTree()) {
         String fieldName = fieldVal.getKey();
-        Object deltaValue = getDeleteDeltaValue(val.value, val.exist());
+        Object deltaValue = getDeleteDeltaValue(val.value, val.exists());
         delete.field(fieldName, new ValueType(deltaValue, ODeltaDocumentFieldType.getTypeByValue(deltaValue)));
       }
     }

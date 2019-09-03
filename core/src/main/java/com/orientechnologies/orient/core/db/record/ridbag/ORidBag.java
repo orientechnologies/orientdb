@@ -573,4 +573,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public boolean isTransactionModified() {
     return delegate.isTransactionModified();
   }
+
+  @Override
+  public OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> getTransactionTimeLine() {
+    return delegate.getTransactionTimeLine();
+  }
 }

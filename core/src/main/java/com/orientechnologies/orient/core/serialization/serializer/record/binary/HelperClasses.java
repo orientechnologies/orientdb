@@ -549,12 +549,11 @@ public class HelperClasses {
     return ChangeSerializationHelper.createChangeInstance(type, change);
   }
 
-  public static OType getLinkedType(ODocument document, OType type, String key) {
+  public static OType getLinkedType(OClass clazz, OType type, String key) {
     if (type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDMAP)
       return null;
-    OClass immutableClass = ODocumentInternal.getImmutableSchemaClass(document);
-    if (immutableClass != null) {
-      OProperty prop = immutableClass.getProperty(key);
+    if (clazz != null) {
+      OProperty prop = clazz.getProperty(key);
       if (prop != null) {
         return prop.getLinkedType();
       }
