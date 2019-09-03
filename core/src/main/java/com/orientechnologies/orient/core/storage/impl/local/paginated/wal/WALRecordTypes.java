@@ -114,4 +114,5 @@ public final class WALRecordTypes {
   public static final byte CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SWITCH_BUCKET_TYPE_PO = 93;
 
   public static final byte SBTREE_BUCKET_V1_INIT_PO = 94;
+  public static final byte SBTREE_BUCKET_V1_ADD_LEAF_ENTRY_PO = 95;
 }
