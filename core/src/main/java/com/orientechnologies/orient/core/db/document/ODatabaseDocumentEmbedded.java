@@ -950,7 +950,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           this.getSharedContext().getFunctionLibrary().createdFunction(doc);
           Orient.instance().getScriptManager().close(this.getName());
         }
-        if (clazz.isOuser() || clazz.isOrole()) {
+        if (clazz.isOuser() || clazz.isOrole() || clazz.isSubClassOf(OSecurityPolicy.class.getName())) {
           sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {

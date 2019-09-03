@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -61,6 +62,8 @@ public class OSecurityShared implements OSecurityInternal {
 
   public static final String RESTRICTED_CLASSNAME = "ORestricted";
   public static final String IDENTITY_CLASSNAME = "OIdentity";
+
+  protected Map<String, Map<String, OBooleanExpression>> securityPredicateCache = new ConcurrentHashMap<>();
 
   /**
    * Uses the ORestrictedOperation ENUM instead.
@@ -802,6 +805,7 @@ public class OSecurityShared implements OSecurityInternal {
   @Override
   public void incrementVersion(final ODatabaseSession session) {
     version.incrementAndGet();
+    securityPredicateCache.clear();
   }
 
   @Override
@@ -957,4 +961,28 @@ public class OSecurityShared implements OSecurityInternal {
     return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, function.getDocument());
   }
 
+
+  protected OBooleanExpression getPredicateFromCache(String roleName, String key) {
+    Map<String, OBooleanExpression> roleMap = this.securityPredicateCache.get(roleName);
+    if (roleMap == null) {
+      return null;
+    }
+    OBooleanExpression result = roleMap.get(key.toLowerCase(Locale.ENGLISH));
+    if (result != null) {
+      return result.copy();
+    }
+    return null;
+  }
+
+  protected void putPredicateInCache(String roleName, String key, OBooleanExpression predicate) {
+    if (predicate.isCacheable()) {
+      Map<String, OBooleanExpression> roleMap = this.securityPredicateCache.get(roleName);
+      if (roleMap == null) {
+        roleMap = new ConcurrentHashMap<>();
+        this.securityPredicateCache.put(roleName, roleMap);
+      }
+
+      roleMap.put(key.toLowerCase(Locale.ENGLISH), predicate);
+    }
+  }
 }

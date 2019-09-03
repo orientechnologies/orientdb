@@ -1,16 +1,10 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.parser.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -80,14 +74,6 @@ public class OPredicateCache {
 
   protected static OOrBlock parse(String statement) throws OCommandSQLParsingException {
     return OSQLEngine.parsePredicate(statement);
-  }
-
-  protected static void throwParsingException(ParseException e, String statement) {
-    throw new OCommandSQLParsingException(e, statement);
-  }
-
-  protected static void throwParsingException(TokenMgrError e, String statement) {
-    throw new OCommandSQLParsingException(e, statement);
   }
 
   public void clear() {
