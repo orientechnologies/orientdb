@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1AddLeafEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1AddNonLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1InitPO;
 
 import java.io.IOException;
@@ -486,17 +487,23 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
 
     size++;
 
+    int prevChild = -1;
     if (updateNeighbours && size > 1) {
       if (index < size - 1) {
         final int nextEntryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE);
+        prevChild = (int) getLongValue(nextEntryPosition);
         setLongValue(nextEntryPosition, rightChild);
       }
 
       if (index > 0) {
         final int prevEntryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + (index - 1) * OIntegerSerializer.INT_SIZE);
+        prevChild = (int) getLongValue(prevEntryPosition + OLongSerializer.LONG_SIZE);
         setLongValue(prevEntryPosition + OLongSerializer.LONG_SIZE, leftChild);
       }
     }
+
+    addPageOperation(
+        new SBTreeBucketV1AddNonLeafEntryPO(index, key, updateNeighbours, (int) leftChild, (int) rightChild, prevChild));
 
     return true;
   }
