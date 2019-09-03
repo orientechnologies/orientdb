@@ -436,6 +436,7 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
 
     setIntValue(SIZE_OFFSET, newSize);
 
+    addPageOperation(new SBTreeBucketV1ShrinkPO(newSize, removedEntries, isEncrypted, keySerializer, valueSerializer));
   }
 
   public boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {

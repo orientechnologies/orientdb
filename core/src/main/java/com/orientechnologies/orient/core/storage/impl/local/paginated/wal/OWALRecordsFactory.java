@@ -420,6 +420,9 @@ public final class OWALRecordsFactory {
     case SBTREE_BUCKET_V1_ADD_ALL_PO:
       walRecord = new SBTreeBucketV1AddAllPO();
       break;
+    case SBTREE_BUCKET_V1_SHRINK_PO:
+      walRecord = new SBTreeBucketV1ShrinkPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
