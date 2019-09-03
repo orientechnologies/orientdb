@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -7,28 +7,30 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeBucketV1;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class CellBTreeBucketSingleValueV1AddAllPO extends PageOperationRecord {
+public final class SBTreeBucketV1AddAllPO extends PageOperationRecord {
   private int prevSize;
 
   private List<byte[]>      rawRecords;
   private boolean           isEncrypted;
   private OBinarySerializer keySerializer;
+  private OBinarySerializer valueSerializer;
 
-  public CellBTreeBucketSingleValueV1AddAllPO() {
+  public SBTreeBucketV1AddAllPO() {
   }
 
-  public CellBTreeBucketSingleValueV1AddAllPO(int prevSize, List<byte[]> rawRecords, boolean isEncrypted,
-      OBinarySerializer keySerializer) {
+  public SBTreeBucketV1AddAllPO(int prevSize, List<byte[]> rawRecords, boolean isEncrypted, OBinarySerializer keySerializer,
+      OBinarySerializer valueSerializer) {
     this.prevSize = prevSize;
     this.rawRecords = rawRecords;
     this.isEncrypted = isEncrypted;
     this.keySerializer = keySerializer;
+    this.valueSerializer = valueSerializer;
   }
 
   public int getPrevSize() {
@@ -47,20 +49,22 @@ public final class CellBTreeBucketSingleValueV1AddAllPO extends PageOperationRec
     return keySerializer;
   }
 
-
+  public OBinarySerializer getValueSerializer() {
+    return valueSerializer;
+  }
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(cacheEntry);
+    final OSBTreeBucketV1 bucket = new OSBTreeBucketV1(cacheEntry);
     //noinspection unchecked
-    bucket.addAll(rawRecords, isEncrypted, keySerializer);
+    bucket.addAll(rawRecords, isEncrypted, keySerializer, valueSerializer);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(cacheEntry);
+    final OSBTreeBucketV1 bucket = new OSBTreeBucketV1(cacheEntry);
     //noinspection unchecked
-    bucket.shrink(prevSize, isEncrypted, keySerializer);
+    bucket.shrink(prevSize, isEncrypted, keySerializer, valueSerializer);
   }
 
   @Override
@@ -71,7 +75,7 @@ public final class CellBTreeBucketSingleValueV1AddAllPO extends PageOperationRec
   @Override
   public int serializedSize() {
     int serializedSize =
-        2 * OByteSerializer.BYTE_SIZE + 2 * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE * rawRecords.size();
+        3 * OByteSerializer.BYTE_SIZE + 2 * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE * rawRecords.size();
     for (final byte[] record : rawRecords) {
       serializedSize += record.length;
     }
@@ -87,6 +91,7 @@ public final class CellBTreeBucketSingleValueV1AddAllPO extends PageOperationRec
 
     buffer.put(isEncrypted ? (byte) 1 : 0);
     buffer.put(keySerializer.getId());
+    buffer.put(valueSerializer.getId());
 
     buffer.putInt(rawRecords.size());
     for (final byte[] record : rawRecords) {
@@ -103,6 +108,7 @@ public final class CellBTreeBucketSingleValueV1AddAllPO extends PageOperationRec
 
     isEncrypted = buffer.get() > 0;
     keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(buffer.get());
+    valueSerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(buffer.get());
 
     rawRecords = new ArrayList<>();
     final int recordsSize = buffer.getInt();

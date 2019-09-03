@@ -916,7 +916,8 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
             path.add(new PagePathItemUnit(bucketIndex, itemIndex));
 
             if (itemIndex < bucket.size()) {
-              final OSBTreeBucketV1.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex, encryption, keySerializer, valueSerializer);
+              final OSBTreeBucketV1.SBTreeEntry<K, V> entry = bucket
+                  .getEntry(itemIndex, encryption, keySerializer, valueSerializer);
               bucketIndex = entry.leftChild;
             } else {
               final OSBTreeBucketV1.SBTreeEntry<K, V> entry = bucket
@@ -984,7 +985,8 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
             path.add(new PagePathItemUnit(bucketIndex, itemIndex));
 
             if (itemIndex > -1) {
-              final OSBTreeBucketV1.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex, encryption, keySerializer, valueSerializer);
+              final OSBTreeBucketV1.SBTreeEntry<K, V> entry = bucket
+                  .getEntry(itemIndex, encryption, keySerializer, valueSerializer);
               bucketIndex = entry.rightChild;
             } else {
               final OSBTreeBucketV1.SBTreeEntry<K, V> entry = bucket.getEntry(0, encryption, keySerializer, valueSerializer);
@@ -1144,7 +1146,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
     try {
       final OSBTreeBucketV1<K, V> newRightBucket = new OSBTreeBucketV1<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, encryption != null, keySerializer, valueSerializer);
 
       bucketToSplit.shrink(indexToSplit, encryption != null, keySerializer, valueSerializer);
       if (splitLeaf) {
@@ -1230,7 +1232,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
     try {
       final OSBTreeBucketV1<K, V> newLeftBucket = new OSBTreeBucketV1<>(leftBucketEntry);
       newLeftBucket.init(splitLeaf);
-      newLeftBucket.addAll(leftEntries);
+      newLeftBucket.addAll(leftEntries, encryption != null, keySerializer, valueSerializer);
 
       if (splitLeaf) {
         newLeftBucket.setRightSibling(rightBucketEntry.getPageIndex());
@@ -1243,7 +1245,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
     try {
       final OSBTreeBucketV1<K, V> newRightBucket = new OSBTreeBucketV1<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, encryption != null, keySerializer, valueSerializer);
 
       if (splitLeaf) {
         newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());

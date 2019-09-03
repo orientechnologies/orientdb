@@ -271,7 +271,7 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
     }
   }
 
-  byte[] getRawEntry(final int entryIndex, final boolean isEncrypted, final OBinarySerializer<K> keySerializer,
+  public byte[] getRawEntry(final int entryIndex, final boolean isEncrypted, final OBinarySerializer<K> keySerializer,
       final OBinarySerializer<V> valueSerializer) {
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     final int startEntryPosition = entryPosition;
@@ -394,12 +394,16 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
     return getByteValue(IS_LEAF_OFFSET) > 0;
   }
 
-  public void addAll(final List<byte[]> rawEntries) {
+  public void addAll(final List<byte[]> rawEntries, final boolean isEncrypted, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer) {
+    final int currentSize = size();
     for (int i = 0; i < rawEntries.size(); i++) {
-      appendRawEntry(i, rawEntries.get(i));
+      appendRawEntry(i + currentSize, rawEntries.get(i));
     }
 
-    setIntValue(SIZE_OFFSET, rawEntries.size());
+    setIntValue(SIZE_OFFSET, rawEntries.size() + currentSize);
+
+    addPageOperation(new SBTreeBucketV1AddAllPO(currentSize, rawEntries, isEncrypted, keySerializer, valueSerializer));
   }
 
   public void shrink(final int newSize, final boolean isEncrypted, final OBinarySerializer<K> keySerializer,

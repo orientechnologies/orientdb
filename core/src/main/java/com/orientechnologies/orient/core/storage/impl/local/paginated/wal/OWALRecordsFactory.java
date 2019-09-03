@@ -417,6 +417,9 @@ public final class OWALRecordsFactory {
     case SBTREE_BUCKET_V1_REMOVE_NON_LEAF_ENTRY_PO:
       walRecord = new SBTreeBucketV1RemoveNonLeafEntryPO();
       break;
+    case SBTREE_BUCKET_V1_ADD_ALL_PO:
+      walRecord = new SBTreeBucketV1AddAllPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
