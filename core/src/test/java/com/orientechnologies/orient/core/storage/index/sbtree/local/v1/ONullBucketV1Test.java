@@ -25,7 +25,7 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry);
+    ONullBucketV1<String> bucket = new ONullBucketV1<>(cacheEntry);
     bucket.init();
 
     Assert.assertNull(bucket.getValue(OStringSerializer.INSTANCE));
@@ -46,7 +46,7 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry);
+    ONullBucketV1<String> bucket = new ONullBucketV1<>(cacheEntry);
     bucket.init();
 
     bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"));
@@ -70,7 +70,7 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry);
+    ONullBucketV1<String> bucket = new ONullBucketV1<>(cacheEntry);
     bucket.init();
 
     bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"));
@@ -95,7 +95,7 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry);
+    ONullBucketV1<String> bucket = new ONullBucketV1<>(cacheEntry);
     bucket.init();
 
     bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"));

@@ -28,6 +28,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1InitPO;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ import static com.orientechnologies.orient.core.storage.cluster.OClusterPage.PAG
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-public final class OSBTreeBucket<K, V> extends ODurablePage {
+public final class OSBTreeBucketV1<K, V> extends ODurablePage {
   private static final int FREE_POINTER_OFFSET  = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET          = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int IS_LEAF_OFFSET       = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -63,7 +64,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
 
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-  OSBTreeBucket(final OCacheEntry cacheEntry) {
+  public OSBTreeBucketV1(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
@@ -77,6 +78,8 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
 
     setLongValue(TREE_SIZE_OFFSET, 0);
     setLongValue(FREE_VALUES_LIST_OFFSET, -1);
+
+    addPageOperation(new SBTreeBucketV1InitPO(isLeaf));
   }
 
   public void switchBucketType() {
