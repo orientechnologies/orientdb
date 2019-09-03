@@ -170,11 +170,15 @@ public class OSecurityEngine {
   }
 
   private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, OSecurityPolicy.Scope scope) {
+    OBooleanExpression result;
     if (role != null) {
-      security.getPredicateFromCache(role.getName(), clazz.getName());
+      result = security.getPredicateFromCache(role.getName(), clazz.getName());
+      if (result != null) {
+        return result;
+      }
     }
 
-    OBooleanExpression result = getPredicateForClassHierarchy(session, security, role, clazz, scope);
+    result = getPredicateForClassHierarchy(session, security, role, clazz, scope);
     if (result != null) {
       return result;
     }
@@ -193,19 +197,25 @@ public class OSecurityEngine {
 
   private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
     String cacheKey = "$CLASS$" + clazz.getName() + "$PROP$" + propertyName;
+    OBooleanExpression result;
     if (role != null) {
-      security.getPredicateFromCache(role.getName(), cacheKey);
+      result = security.getPredicateFromCache(role.getName(), cacheKey);
+      if (result != null) {
+        return result;
+      }
     }
 
 
-    OBooleanExpression result = getPredicateForClassHierarchy(session, security, role, clazz, propertyName, scope);
+    result = getPredicateForClassHierarchy(session, security, role, clazz, propertyName, scope);
     if (result == null && role.getParentRole() != null) {
       result = getPredicateForRoleHierarchy(session, security, role.getParentRole(), clazz, propertyName, scope);
     }
     if (result == null) {
       result = OBooleanExpression.FALSE;
     }
-    security.putPredicateInCache(role.getName(), cacheKey, result);
+    if (role != null) {
+      security.putPredicateInCache(role.getName(), cacheKey, result);
+    }
     return result;
   }
 
