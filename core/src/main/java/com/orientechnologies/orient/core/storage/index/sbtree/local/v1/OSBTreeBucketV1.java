@@ -28,10 +28,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1AddLeafEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1AddNonLeafEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1InitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.SBTreeBucketV1RemoveLeafEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -174,6 +171,9 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
     final int entrySize = key.length + 2 * OLongSerializer.LONG_SIZE;
 
+    final int leftChild = (int) getLongValue(entryPosition);
+    final int rightChild = (int) getLongValue(entryPosition + OLongSerializer.LONG_SIZE);
+
     int size = getIntValue(SIZE_OFFSET);
     if (entryIndex < size - 1) {
       moveData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE,
@@ -211,6 +211,8 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
         setLongValue(nextEntryPosition, prevChild);
       }
     }
+
+    addPageOperation(new SBTreeBucketV1RemoveNonLeafEntryPO(entryIndex, prevChild, key, leftChild, rightChild));
   }
 
   public int size() {
