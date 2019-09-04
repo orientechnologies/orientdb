@@ -554,7 +554,11 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
   }
 
   public void setRightSibling(long pageIndex) {
+    final int prevRightSibling = (int) getLongValue(RIGHT_SIBLING_OFFSET);
+
     setLongValue(RIGHT_SIBLING_OFFSET, pageIndex);
+
+    addPageOperation(new SBTreeBucketV1SetRightSiblingPO(prevRightSibling, (int) pageIndex));
   }
 
   public long getRightSibling() {

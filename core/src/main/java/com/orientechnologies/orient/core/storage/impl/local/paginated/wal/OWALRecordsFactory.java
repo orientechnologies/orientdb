@@ -432,6 +432,9 @@ public final class OWALRecordsFactory {
     case SBTREE_BUCKET_V1_SET_LEFT_SIBLING_PO:
       walRecord = new SBTreeBucketV1SetLeftSiblingPO();
       break;
+    case SBTREE_BUCKET_V1_SET_RIGHT_SIBLING_PO:
+      walRecord = new SBTreeBucketV1SetRightSiblingPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
