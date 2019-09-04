@@ -13,7 +13,7 @@ import org.junit.Test;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
  */
-public class ONullBucketV1Test {
+public class OSBTreeNullBucketV1Test {
   @Test
   public void testEmptyBucket() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
@@ -25,7 +25,7 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucketV1<String> bucket = new ONullBucketV1<>(cacheEntry);
+    OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
     bucket.init();
 
     Assert.assertNull(bucket.getValue(OStringSerializer.INSTANCE));
@@ -46,7 +46,7 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucketV1<String> bucket = new ONullBucketV1<>(cacheEntry);
+    OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
     bucket.init();
 
     bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"));
@@ -70,7 +70,7 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucketV1<String> bucket = new ONullBucketV1<>(cacheEntry);
+    OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
     bucket.init();
 
     bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"));
@@ -95,7 +95,7 @@ public class ONullBucketV1Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucketV1<String> bucket = new ONullBucketV1<>(cacheEntry);
+    OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
     bucket.init();
 
     bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"));

@@ -196,7 +196,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
           final OCacheEntry nullBucketCacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
           try {
-            final ONullBucketV1<V> nullBucket = new ONullBucketV1<>(nullBucketCacheEntry);
+            final OSBTreeNullBucketV1<V> nullBucket = new OSBTreeNullBucketV1<>(nullBucketCacheEntry);
             final OSBTreeValue<V> treeValue = nullBucket.getValue(valueSerializer);
             if (treeValue == null) {
               return null;
@@ -376,7 +376,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
           int sizeDiff = 0;
 
           try {
-            final ONullBucketV1<V> nullBucket = new ONullBucketV1<>(cacheEntry);
+            final OSBTreeNullBucketV1<V> nullBucket = new OSBTreeNullBucketV1<>(cacheEntry);
             if (isNew) {
               nullBucket.init();
             }
@@ -623,7 +623,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
     V removedValue;
     final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
     try {
-      final ONullBucketV1<V> nullBucket = new ONullBucketV1<>(nullCacheEntry);
+      final OSBTreeNullBucketV1<V> nullBucket = new OSBTreeNullBucketV1<>(nullCacheEntry);
       final OSBTreeValue<V> treeValue = nullBucket.getValue(valueSerializer);
 
       if (treeValue != null) {
