@@ -1,19 +1,20 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeBucketV1;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
+public class SBTreeBucketV1SwitchBucketTypePOTest {
   @Test
   public void testRedo() {
     final int pageSize = 64 * 1024;
@@ -23,7 +24,7 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(entry);
+      OSBTreeBucketV1<Byte, OIdentifiable> bucket = new OSBTreeBucketV1<>(entry);
       bucket.init(true);
 
       entry.clearPageOperations();
@@ -45,12 +46,11 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeBucketSingleValueV1SwitchBucketTypePO);
+      Assert.assertTrue(operations.get(0) instanceof SBTreeBucketV1SwitchBucketTypePO);
 
-      final CellBTreeBucketSingleValueV1SwitchBucketTypePO pageOperation = (CellBTreeBucketSingleValueV1SwitchBucketTypePO) operations
-          .get(0);
+      final SBTreeBucketV1SwitchBucketTypePO pageOperation = (SBTreeBucketV1SwitchBucketTypePO) operations.get(0);
 
-      CellBTreeBucketSingleValueV1<Byte> restoredBucket = new CellBTreeBucketSingleValueV1<>(restoredCacheEntry);
+      OSBTreeBucketV1<Byte, OIdentifiable> restoredBucket = new OSBTreeBucketV1<>(restoredCacheEntry);
 
       Assert.assertTrue(restoredBucket.isLeaf());
 
@@ -75,7 +75,7 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
 
-      CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(entry);
+      OSBTreeBucketV1<Byte, OIdentifiable> bucket = new OSBTreeBucketV1<>(entry);
       bucket.init(true);
 
       entry.clearPageOperations();
@@ -85,12 +85,11 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeBucketSingleValueV1SwitchBucketTypePO);
+      Assert.assertTrue(operations.get(0) instanceof SBTreeBucketV1SwitchBucketTypePO);
 
-      final CellBTreeBucketSingleValueV1SwitchBucketTypePO pageOperation = (CellBTreeBucketSingleValueV1SwitchBucketTypePO) operations
-          .get(0);
+      final SBTreeBucketV1SwitchBucketTypePO pageOperation = (SBTreeBucketV1SwitchBucketTypePO) operations.get(0);
 
-      final CellBTreeBucketSingleValueV1<Byte> restoredBucket = new CellBTreeBucketSingleValueV1<>(entry);
+      final OSBTreeBucketV1<Byte, OIdentifiable> restoredBucket = new OSBTreeBucketV1<>(entry);
 
       Assert.assertFalse(restoredBucket.isLeaf());
 
