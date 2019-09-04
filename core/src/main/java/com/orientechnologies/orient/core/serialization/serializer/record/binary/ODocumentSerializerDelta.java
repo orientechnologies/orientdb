@@ -456,23 +456,23 @@ public class ODocumentSerializerDelta {
     OClass oClass = ODocumentInternal.getImmutableSchemaClass(document);
     long count = ODocumentInternal.rawEntries(document).stream().filter((e) -> {
       ODocumentEntry entry = e.getValue();
-      return entry.isCreated() || entry.isChanged() || entry.isTrackedModified() || !entry.exists();
+      return entry.isTxCreated() || entry.isTxChanged() || entry.isTxTrackedModified() || !entry.isTxExists();
     }).count();
     Set<Map.Entry<String, ODocumentEntry>> entries = ODocumentInternal.rawEntries(document);
 
     OVarIntSerializer.write(bytes, count);
     for (Map.Entry<String, ODocumentEntry> entry : entries) {
       ODocumentEntry docEntry = entry.getValue();
-      if (!docEntry.exists()) {
+      if (!docEntry.isTxExists()) {
         serializeByte(bytes, REMOVED);
         writeString(bytes, entry.getKey());
-      } else if (docEntry.isCreated()) {
+      } else if (docEntry.isTxCreated()) {
         serializeByte(bytes, CREATED);
         serializeFullEntry(bytes, oClass, entry.getKey(), docEntry);
-      } else if (docEntry.isChanged()) {
+      } else if (docEntry.isTxChanged()) {
         serializeByte(bytes, REPLACED);
         serializeFullEntry(bytes, oClass, entry.getKey(), docEntry);
-      } else if (docEntry.isTrackedModified()) {
+      } else if (docEntry.isTxTrackedModified()) {
         serializeByte(bytes, CHANGED);
         serializeDeltaEntry(bytes, oClass, entry.getKey(), docEntry);
       } else {

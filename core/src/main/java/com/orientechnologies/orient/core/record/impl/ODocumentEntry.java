@@ -39,9 +39,12 @@ public class ODocumentEntry {
   public  Object    original;
   public  OType     type;
   public  OProperty property;
-  private boolean   changed = false;
-  private boolean   exists  = true;
-  private boolean   created = false;
+  private boolean   changed   = false;
+  private boolean   exists    = true;
+  private boolean   created   = false;
+  private boolean   txChanged = false;
+  private boolean   txExists  = true;
+  private boolean   txCreated = false;
 
   public ODocumentEntry() {
 
@@ -103,6 +106,7 @@ public class ODocumentEntry {
 
   public void setExists(final boolean exists) {
     this.exists = exists;
+    this.txExists = exists;
   }
 
   public boolean isCreated() {
@@ -117,6 +121,9 @@ public class ODocumentEntry {
     entry.changed = changed;
     entry.created = created;
     entry.exists = exists;
+    entry.txChanged = changed;
+    entry.txCreated = created;
+    entry.txExists = exists;
     return entry;
   }
 
@@ -183,8 +190,19 @@ public class ODocumentEntry {
     return false;
   }
 
+  public boolean isTxTrackedModified() {
+    if (value instanceof OTrackedMultiValue) {
+      return ((OTrackedMultiValue) value).isTransactionModified();
+    }
+    if (value instanceof ODocument) {
+      return ((ODocument) value).isDirty();
+    }
+    return false;
+  }
+
   public void markChanged() {
     this.changed = true;
+    this.txChanged = true;
   }
 
   public void unmarkChanged() {
@@ -193,6 +211,7 @@ public class ODocumentEntry {
 
   public void markCreated() {
     this.created = true;
+    this.txCreated = true;
   }
 
   public void unmarkCreated() {
@@ -212,5 +231,19 @@ public class ODocumentEntry {
     if (value instanceof OTrackedMultiValue) {
       ((OTrackedMultiValue) value).transactionClear();
     }
+    this.txCreated = false;
+    this.txChanged = false;
+  }
+
+  public boolean isTxChanged() {
+    return txChanged;
+  }
+
+  public boolean isTxCreated() {
+    return txCreated;
+  }
+
+  public boolean isTxExists() {
+    return txExists;
   }
 }
