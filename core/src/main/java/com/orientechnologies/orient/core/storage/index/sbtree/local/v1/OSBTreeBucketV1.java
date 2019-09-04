@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -543,8 +542,11 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
     addPageOperation(new SBTreeBucketV1UpdateValuePO(index, keySize, prevValue, value));
   }
 
-  public void setLeftSibling(long pageIndex) throws IOException {
+  public void setLeftSibling(long pageIndex) {
+    final int prevLeftSibling = (int) getLongValue(LEFT_SIBLING_OFFSET);
+
     setLongValue(LEFT_SIBLING_OFFSET, pageIndex);
+    addPageOperation(new SBTreeBucketV1SetLeftSiblingPO(prevLeftSibling, (int) pageIndex));
   }
 
   public long getLeftSibling() {

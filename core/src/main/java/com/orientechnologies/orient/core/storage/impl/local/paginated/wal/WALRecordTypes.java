@@ -122,4 +122,5 @@ public final class WALRecordTypes {
   public static final byte SBTREE_BUCKET_V1_SHRINK_PO                = 100;
   public static final byte SBTREE_BUCKET_V1_UPDATE_VALUE_PO          = 101;
   public static final byte SBTREE_BUCKET_V1_SWITCH_BUCKET_TYPE_PO    = 102;
+  public static final byte SBTREE_BUCKET_V1_SET_LEFT_SIBLING_PO      = 103;
 }
