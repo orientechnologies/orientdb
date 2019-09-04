@@ -528,13 +528,17 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
     setBinaryValue(freePointer, rawEntry);
   }
 
-  void updateValue(final int index, final byte[] value, final int keySize) {
+  public void updateValue(final int index, final byte[] value, final int keySize) {
     int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) + keySize;
     assert getByteValue(entryPosition) == 0;
 
     entryPosition += OByteSerializer.BYTE_SIZE;
 
+    final byte[] prevValue = getBinaryValue(entryPosition, value.length);
+
     setBinaryValue(entryPosition, value);
+
+    addPageOperation(new SBTreeBucketV1UpdateValuePO(index, keySize, prevValue, value));
   }
 
   public void setLeftSibling(long pageIndex) throws IOException {
