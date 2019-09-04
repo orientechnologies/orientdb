@@ -306,8 +306,13 @@ public class OSecurityEngine {
     return OBooleanExpression.TRUE;
   }
 
-  private static OOrBlock parsePredicate(ODatabaseSession session, String predicateString) {
-
+  private static OBooleanExpression parsePredicate(ODatabaseSession session, String predicateString) {
+    if ("true".equalsIgnoreCase(predicateString)) {
+      return OBooleanExpression.TRUE;
+    }
+    if ("false".equalsIgnoreCase(predicateString)) {
+      return OBooleanExpression.FALSE;
+    }
     try {
 
       return cache.get(predicateString);

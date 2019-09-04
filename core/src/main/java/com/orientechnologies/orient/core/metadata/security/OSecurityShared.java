@@ -880,8 +880,8 @@ public class OSecurityShared implements OSecurityInternal {
     }
 
     if (record instanceof OElement) {
-      OBooleanExpression predicate = ((OElement) record).getSchemaType()
-              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName(), OSecurityPolicy.Scope.CREATE)).orElse(null);
+      String className = record instanceof ODocument ? ((ODocument) record).getClassName() : ((OElement) record).getSchemaType().map(x -> x.getName()).orElse(null);
+      OBooleanExpression predicate = className == null ? null : OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + className, OSecurityPolicy.Scope.CREATE);
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, record);
     }
     return true;

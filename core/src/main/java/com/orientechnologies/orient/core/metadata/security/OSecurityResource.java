@@ -8,10 +8,11 @@ import com.orientechnologies.orient.core.sql.parser.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class OSecurityResource {
 
-  static Map<String, OSecurityResource> cache = new HashMap<>();
+  static Map<String, OSecurityResource> cache = new ConcurrentHashMap<>();
 
   public static OSecurityResource getInstance(String resource) {
     OSecurityResource result = cache.get(resource);
