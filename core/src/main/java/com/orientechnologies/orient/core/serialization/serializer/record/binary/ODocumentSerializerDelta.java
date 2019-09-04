@@ -120,8 +120,9 @@ public class ODocumentSerializerDelta {
 
   public void deserializeDelta(BytesContainer bytes, ODocument toFill) {
     final String className = readString(bytes);
-    if (className.length() != 0)
+    if (className.length() != 0 && toFill != null) {
       ODocumentInternal.fillClassNameIfNeeded(toFill, className);
+    }
     long count = OVarIntSerializer.readAsLong(bytes);
     while (count-- > 0) {
       switch (deserializeByte(bytes)) {
@@ -136,7 +137,9 @@ public class ODocumentSerializerDelta {
         break;
       case REMOVED:
         String property = readString(bytes);
-        toFill.removeProperty(property);
+        if (toFill != null) {
+          toFill.removeProperty(property);
+        }
         break;
       }
     }
@@ -145,7 +148,12 @@ public class ODocumentSerializerDelta {
   private void deserializeDeltaEntry(BytesContainer bytes, ODocument toFill) {
     String name = readString(bytes);
     OType type = readOType(bytes, false);
-    Object toUpdate = toFill.getProperty(name);
+    Object toUpdate;
+    if (toFill != null) {
+      toUpdate = toFill.getProperty(name);
+    } else {
+      toUpdate = null;
+    }
     deserializeDeltaValue(bytes, type, toUpdate);
   }
 
@@ -188,18 +196,24 @@ public class ODocumentSerializerDelta {
       case CREATED: {
         String key = readString(bytes);
         ORecordId link = readOptimizedLink(bytes, false);
-        toUpdate.put(key, link);
+        if (toUpdate != null) {
+          toUpdate.put(key, link);
+        }
         break;
       }
       case CHANGED: {
         String key = readString(bytes);
         ORecordId link = readOptimizedLink(bytes, false);
-        toUpdate.put(key, link);
+        if (toUpdate != null) {
+          toUpdate.put(key, link);
+        }
         break;
       }
       case REMOVED: {
         String key = readString(bytes);
-        toUpdate.remove(key);
+        if (toUpdate != null) {
+          toUpdate.remove(key);
+        }
         break;
       }
       }
@@ -213,7 +227,9 @@ public class ODocumentSerializerDelta {
       switch (change) {
       case CREATED: {
         ORecordId link = readOptimizedLink(bytes, false);
-        toUpdate.add(link);
+        if (toUpdate != null) {
+          toUpdate.add(link);
+        }
         break;
       }
       case CHANGED: {
@@ -221,7 +237,9 @@ public class ODocumentSerializerDelta {
       }
       case REMOVED: {
         ORecordId link = readOptimizedLink(bytes, false);
-        toUpdate.remove(link);
+        if (toUpdate != null) {
+          toUpdate.remove(link);
+        }
         break;
       }
       }
@@ -235,18 +253,24 @@ public class ODocumentSerializerDelta {
       switch (change) {
       case CREATED: {
         ORecordId link = readOptimizedLink(bytes, false);
-        toUpdate.add(link);
+        if (toUpdate != null) {
+          toUpdate.add(link);
+        }
         break;
       }
       case CHANGED: {
         long position = OVarIntSerializer.readAsLong(bytes);
         ORecordId link = readOptimizedLink(bytes, false);
-        toUpdate.set((int) position, link);
+        if (toUpdate != null) {
+          toUpdate.set((int) position, link);
+        }
         break;
       }
       case REMOVED: {
         ORecordId link = readOptimizedLink(bytes, false);
-        toUpdate.remove(link);
+        if (toUpdate != null) {
+          toUpdate.remove(link);
+        }
         break;
       }
       }
@@ -260,7 +284,9 @@ public class ODocumentSerializerDelta {
       switch (change) {
       case CREATED: {
         ORecordId link = readOptimizedLink(bytes, false);
-        toUpdate.add(link);
+        if (toUpdate != null) {
+          toUpdate.add(link);
+        }
         break;
       }
       case CHANGED: {
@@ -268,7 +294,9 @@ public class ODocumentSerializerDelta {
       }
       case REMOVED: {
         ORecordId link = readOptimizedLink(bytes, false);
-        toUpdate.remove(link);
+        if (toUpdate != null) {
+          toUpdate.remove(link);
+        }
         break;
       }
       }
@@ -284,19 +312,25 @@ public class ODocumentSerializerDelta {
         String key = readString(bytes);
         OType type = readType(bytes);
         Object value = deserializeValue(bytes, type, toUpdate);
-        toUpdate.put(key, value);
+        if (toUpdate != null) {
+          toUpdate.put(key, value);
+        }
         break;
       }
       case REPLACED: {
         String key = readString(bytes);
         OType type = readType(bytes);
         Object value = deserializeValue(bytes, type, toUpdate);
-        toUpdate.put(key, value);
+        if (toUpdate != null) {
+          toUpdate.put(key, value);
+        }
         break;
       }
       case REMOVED:
         String key = readString(bytes);
-        toUpdate.remove(key);
+        if (toUpdate != null) {
+          toUpdate.remove(key);
+        }
         break;
       }
     }
@@ -305,7 +339,12 @@ public class ODocumentSerializerDelta {
       byte other = deserializeByte(bytes);
       assert other == CHANGED;
       String key = readString(bytes);
-      Object nested = toUpdate.get(key);
+      Object nested;
+      if (toUpdate != null) {
+        nested = toUpdate.get(key);
+      } else {
+        nested = null;
+      }
       OType type = readType(bytes);
       deserializeDeltaValue(bytes, type, nested);
     }
@@ -319,7 +358,9 @@ public class ODocumentSerializerDelta {
       case CREATED: {
         OType type = readType(bytes);
         Object value = deserializeValue(bytes, type, toUpdate);
-        toUpdate.add(value);
+        if (toUpdate != null) {
+          toUpdate.add(value);
+        }
         break;
       }
       case REPLACED:
@@ -327,7 +368,9 @@ public class ODocumentSerializerDelta {
       case REMOVED:
         OType type = readType(bytes);
         Object value = deserializeValue(bytes, type, toUpdate);
-        toUpdate.remove(value);
+        if (toUpdate != null) {
+          toUpdate.remove(value);
+        }
         break;
       }
     }
@@ -337,11 +380,17 @@ public class ODocumentSerializerDelta {
       assert other == CHANGED;
       long position = OVarIntSerializer.readAsLong(bytes);
       OType type = readType(bytes);
-      Iterator iter = toUpdate.iterator();
-      for (int i = 0; i < position; i++) {
-        iter.next();
+      Object nested;
+      if (toUpdate != null) {
+        Iterator iter = toUpdate.iterator();
+        for (int i = 0; i < position; i++) {
+          iter.next();
+        }
+        nested = iter.next();
+      } else {
+        nested = null;
       }
-      Object nested = iter.next();
+
       deserializeDeltaValue(bytes, type, nested);
     }
   }
@@ -354,19 +403,25 @@ public class ODocumentSerializerDelta {
       case CREATED: {
         OType type = readType(bytes);
         Object value = deserializeValue(bytes, type, toUpdate);
-        toUpdate.add(value);
+        if (toUpdate != null) {
+          toUpdate.add(value);
+        }
         break;
       }
       case REPLACED: {
         long pos = OVarIntSerializer.readAsLong(bytes);
         OType type = readType(bytes);
         Object value = deserializeValue(bytes, type, toUpdate);
-        toUpdate.set((int) pos, value);
+        if (toUpdate != null) {
+          toUpdate.set((int) pos, value);
+        }
         break;
       }
       case REMOVED: {
         long pos = OVarIntSerializer.readAsLong(bytes);
-        toUpdate.remove((int) pos);
+        if (toUpdate != null) {
+          toUpdate.remove((int) pos);
+        }
         break;
       }
       }
@@ -376,7 +431,12 @@ public class ODocumentSerializerDelta {
       byte other = deserializeByte(bytes);
       assert other == CHANGED;
       long position = OVarIntSerializer.readAsLong(bytes);
-      Object nested = toUpdate.get((int) position);
+      Object nested;
+      if (toUpdate != null) {
+        nested = toUpdate.get((int) position);
+      } else {
+        nested = null;
+      }
       OType type = readType(bytes);
       deserializeDeltaValue(bytes, type, nested);
     }
@@ -386,7 +446,9 @@ public class ODocumentSerializerDelta {
     String name = readString(bytes);
     OType type = readOType(bytes, false);
     Object value = deserializeValue(bytes, type, toFill);
-    toFill.setProperty(name, value, type);
+    if (toFill != null) {
+      toFill.setProperty(name, value, type);
+    }
   }
 
   public void serializeDelta(BytesContainer bytes, ODocument document) {
