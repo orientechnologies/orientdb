@@ -23,6 +23,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1RemoveValuePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1SetValuePO;
 
 /**
@@ -70,8 +71,12 @@ public final class OSBTreeNullBucketV1<V> extends ODurablePage {
     return new OSBTreeValue<>(false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
   }
 
-  public void removeValue() {
+  public void removeValue(OBinarySerializer<V> valueSerializer) {
+    final byte[] value = getRawValue(valueSerializer);
+
     setByteValue(NEXT_FREE_POSITION, (byte) 0);
+
+    addPageOperation(new SBTreeNullBucketV1RemoveValuePO(value, valueSerializer));
   }
 
   public byte[] getRawValue(final OBinarySerializer<V> valueSerializer) {

@@ -628,7 +628,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
       if (treeValue != null) {
         removedValue = treeValue.getValue();
-        nullBucket.removeValue();
+        nullBucket.removeValue(valueSerializer);
       } else {
         removedValue = null;
       }

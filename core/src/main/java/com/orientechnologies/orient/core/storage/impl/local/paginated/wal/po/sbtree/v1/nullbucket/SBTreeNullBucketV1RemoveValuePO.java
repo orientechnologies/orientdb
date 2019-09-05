@@ -11,28 +11,23 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeNu
 
 import java.nio.ByteBuffer;
 
-public class SBTreeNullBucketV1SetValuePO extends PageOperationRecord {
-  private byte[] prevValue;
-  private byte[] value;
-
+public final class SBTreeNullBucketV1RemoveValuePO extends PageOperationRecord {
+  private byte[]            value;
   private OBinarySerializer valueSerializer;
 
-  public SBTreeNullBucketV1SetValuePO() {
+  public SBTreeNullBucketV1RemoveValuePO() {
   }
 
-  public SBTreeNullBucketV1SetValuePO(byte[] prevValue, byte[] value, OBinarySerializer valueSerializer) {
-    this.prevValue = prevValue;
+  public SBTreeNullBucketV1RemoveValuePO(byte[] value, OBinarySerializer valueSerializer) {
     this.value = value;
     this.valueSerializer = valueSerializer;
-  }
-
-  public byte[] getPrevValue() {
-    return prevValue;
   }
 
   public byte[] getValue() {
     return value;
   }
+
+
 
   public OBinarySerializer getValueSerializer() {
     return valueSerializer;
@@ -42,65 +37,44 @@ public class SBTreeNullBucketV1SetValuePO extends PageOperationRecord {
   public void redo(OCacheEntry cacheEntry) {
     final OSBTreeNullBucketV1 bucket = new OSBTreeNullBucketV1(cacheEntry);
     //noinspection unchecked
-    bucket.setValue(value, valueSerializer);
+    bucket.removeValue(valueSerializer);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OSBTreeNullBucketV1 bucket = new OSBTreeNullBucketV1(cacheEntry);
-    if (prevValue == null) {
-      //noinspection unchecked
-      bucket.removeValue(valueSerializer);
-    } else {
-      //noinspection unchecked
-      bucket.setValue(prevValue, valueSerializer);
-    }
+    //noinspection unchecked
+    bucket.setValue(value, valueSerializer);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.SBTREE_NULL_BUCKET_V1_SET_VALUE_PO;
+    return WALRecordTypes.SBTREE_NULL_BUCKET_V1_REMOVE_VALUE_PO;
   }
 
   @Override
   public int serializedSize() {
-    int size = 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + value.length;
-    if (prevValue != null) {
-      size += prevValue.length + OIntegerSerializer.INT_SIZE;
-    }
-
-    return super.serializedSize() + size;
+    return super.serializedSize() + value.length + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
   }
 
   @Override
-  protected void serializeToByteBuffer(ByteBuffer buffer) {
+  protected void serializeToByteBuffer(final ByteBuffer buffer) {
     super.serializeToByteBuffer(buffer);
 
     buffer.putInt(value.length);
     buffer.put(value);
 
     buffer.put(valueSerializer.getId());
-    buffer.put(prevValue == null ? (byte) 0 : 1);
-    if (prevValue != null) {
-      buffer.putInt(prevValue.length);
-      buffer.put(prevValue);
-    }
   }
 
   @Override
-  protected void deserializeFromByteBuffer(ByteBuffer buffer) {
+  protected void deserializeFromByteBuffer(final ByteBuffer buffer) {
     super.deserializeFromByteBuffer(buffer);
 
-    final int valueLength = buffer.getInt();
-    value = new byte[valueLength];
-
+    final int valueLen = buffer.getInt();
+    value = new byte[valueLen];
     buffer.get(value);
-    valueSerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(buffer.get());
 
-    if (buffer.get() > 0) {
-      final int prevValueLen = buffer.getInt();
-      prevValue = new byte[prevValueLen];
-      buffer.get(prevValue);
-    }
+    valueSerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(buffer.get());
   }
 }
