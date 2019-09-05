@@ -134,4 +134,35 @@ public class OTraverseStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testBreadthFirst() {
+    String classPrefix = "testBreadthFirst_";
+    db.createVertexClass(classPrefix + "V");
+    db.createEdgeClass(classPrefix + "E");
+    db.command("create vertex " + classPrefix + "V set name = 'a'").close();
+    db.command("create vertex " + classPrefix + "V set name = 'b'").close();
+    db.command("create vertex " + classPrefix + "V set name = 'c'").close();
+    db.command("create vertex " + classPrefix + "V set name = 'd'").close();
+
+    db.command(
+            "create edge " + classPrefix + "E from (select from " + classPrefix + "V where name = 'a') to (select from " + classPrefix
+                    + "V where name = 'b')").close();
+    db.command(
+            "create edge " + classPrefix + "E from (select from " + classPrefix + "V where name = 'b') to (select from " + classPrefix
+                    + "V where name = 'c')").close();
+    db.command(
+            "create edge " + classPrefix + "E from (select from " + classPrefix + "V where name = 'c') to (select from " + classPrefix
+                    + "V where name = 'd')").close();
+
+    OResultSet result = db.query("traverse out() from (select from " + classPrefix + "V where name = 'a') STRATEGY BREADTH_FIRST");
+
+    for (int i = 0; i < 4; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals(i, item.getMetadata("$depth"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
 }
