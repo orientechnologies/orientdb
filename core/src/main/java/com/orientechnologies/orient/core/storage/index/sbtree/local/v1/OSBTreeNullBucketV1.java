@@ -23,6 +23,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1SetValuePO;
 
 /**
  * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
@@ -47,11 +48,15 @@ public final class OSBTreeNullBucketV1<V> extends ODurablePage {
     addPageOperation(new SBTreeNullBucketV1InitPO());
   }
 
-  public void setValue(final byte[] value) {
+  public void setValue(final byte[] value, final OBinarySerializer<V> valueSerializer) {
+    final byte[] prevValue = getRawValue(valueSerializer);
+
     setByteValue(NEXT_FREE_POSITION, (byte) 1);
 
     setByteValue(NEXT_FREE_POSITION + 1, (byte) 1);
     setBinaryValue(NEXT_FREE_POSITION + 2, value);
+
+    addPageOperation(new SBTreeNullBucketV1SetValuePO(prevValue, value, valueSerializer));
   }
 
   public OSBTreeValue<V> getValue(final OBinarySerializer<V> valueSerializer) {

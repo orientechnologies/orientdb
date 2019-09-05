@@ -403,7 +403,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
               final byte[] serializeValue = new byte[valueSize];
               valueSerializer.serializeNativeObject(value, serializeValue, 0);
 
-              nullBucket.setValue(serializeValue);
+              nullBucket.setValue(serializeValue, valueSerializer);
 
               if (indexId >= 0) {
                 operationRecord = new OSBTreePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
