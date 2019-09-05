@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
@@ -36,6 +37,58 @@ public class PredicateSecurityTest {
     orient.drop("test");
     this.db = null;
   }
+
+  @Test
+  public void testCreate() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setCreateRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+    try {
+      elem = db.newElement("Person");
+      elem.setProperty("name", "bar");
+      db.save(elem);
+      Assert.fail();
+    } catch (OSecurityException ex) {
+    }
+  }
+
+
+  @Test
+  public void testSqlCreate() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setCreateRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    db.command("insert into Person SET name = 'foo'");
+    try {
+      db.command("insert into Person SET name = 'bar'");
+      Assert.fail();
+    } catch (OSecurityException ex) {
+    }
+  }
+
 
   @Test
   public void testSqlRead() {
