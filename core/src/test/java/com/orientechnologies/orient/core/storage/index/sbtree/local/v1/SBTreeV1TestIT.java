@@ -54,8 +54,8 @@ public class SBTreeV1TestIT {
 
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
-    sbTree = new OSBTreeV1<>(42, "sbTree", ".sbt", ".nbt",
-        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
+    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    sbTree = new OSBTreeV1<>(42, "sbTree", ".sbt", ".nbt", storage);
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, null);
   }
 
