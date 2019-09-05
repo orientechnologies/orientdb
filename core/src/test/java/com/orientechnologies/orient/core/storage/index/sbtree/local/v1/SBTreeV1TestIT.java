@@ -118,22 +118,37 @@ public class SBTreeV1TestIT {
   public void testKeyPutRandomUniform() throws Exception {
     final NavigableSet<Integer> keys = new TreeSet<>();
     final Random random = new Random();
+    final int keysCount = 1_000_000;
 
-    while (keys.size() < 1_000_000) {
-      int key = random.nextInt(Integer.MAX_VALUE);
-      sbTree.put(key, new ORecordId(key % 32000, key));
-      keys.add(key);
+    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+    final int rollbackRange = 100;
+    while (keys.size() < keysCount) {
+      for (int n = 0; n < 2; n++) {
+        atomicOperationsManager.startAtomicOperation((String) null, false);
+        for (int i = 0; i < rollbackRange; i++) {
+          int key = random.nextInt(Integer.MAX_VALUE);
+          sbTree.put(key, new ORecordId(key % 32000, key));
 
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+          if (n == 1) {
+            keys.add(key);
+          }
+          Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+        }
+        atomicOperationsManager.endAtomicOperation(n == 0);
+      }
     }
 
-    Assert.assertEquals(sbTree.firstKey(), keys.first());
-    Assert.assertEquals(sbTree.lastKey(), keys.last());
+    Integer firstTreeKey = sbTree.firstKey();
+    Integer lastTreeKey = sbTree.lastKey();
+    Assert.assertNotNull(firstTreeKey);
+    Assert.assertNotNull(lastTreeKey);
 
-    for (int key : keys) {
+    Assert.assertEquals(firstTreeKey, keys.first());
+    Assert.assertEquals(lastTreeKey, keys.last());
+
+    for (Integer key : keys) {
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
     }
-
   }
 
   @Test
