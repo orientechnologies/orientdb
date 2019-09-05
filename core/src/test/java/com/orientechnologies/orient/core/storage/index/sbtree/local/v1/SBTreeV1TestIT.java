@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -49,8 +50,10 @@ public class SBTreeV1TestIT {
     final File dbDirectory = new File(buildDirectory, dbName);
     OFileUtils.deleteRecursively(dbDirectory);
 
-    orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+    OrientDBConfig orientDBConfig = OrientDBConfig.builder()
+        .addConfig(OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX, true).build();
+    orientDB = new OrientDB("plocal:" + buildDirectory, orientDBConfig);
+    orientDB.create(dbName, ODatabaseType.PLOCAL, orientDBConfig);
 
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
