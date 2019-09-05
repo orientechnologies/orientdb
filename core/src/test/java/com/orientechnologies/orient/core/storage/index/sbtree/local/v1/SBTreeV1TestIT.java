@@ -318,23 +318,28 @@ public class SBTreeV1TestIT {
       sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
-    for (int i = 0; i < keysCount; i++) {
-      if (i % 3 == 0)
-        Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, i));
+    final int rollbackInterval = 100;
+
+    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+    for (int i = 0; i < keysCount / rollbackInterval; i++) {
+      for (int n = 0; n < 2; n++) {
+        atomicOperationsManager.startAtomicOperation((String) null, false);
+        for (int j = 0; j < rollbackInterval; j++) {
+          final int key = i * rollbackInterval + j;
+          if (key % 3 == 0) {
+            Assert.assertEquals(sbTree.remove(key), new ORecordId(key % 32000, key));
+          }
+        }
+        atomicOperationsManager.endAtomicOperation(n == 0);
+      }
     }
 
-    final Integer firstKey = sbTree.firstKey();
-    Assert.assertNotNull(firstKey);
-
-    Assert.assertEquals((int) firstKey, 1);
-    //noinspection ConstantConditions
-    Assert.assertEquals((int) sbTree.lastKey(), (keysCount - 1) % 3 == 0 ? keysCount - 2 : keysCount - 1);
-
     for (int i = 0; i < keysCount; i++) {
-      if (i % 3 == 0)
+      if (i % 3 == 0) {
         Assert.assertNull(sbTree.get(i));
-      else
+      } else {
         Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+      }
     }
   }
 
