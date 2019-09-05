@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import org.junit.After;
 import org.junit.Assert;
@@ -24,9 +25,10 @@ import java.util.*;
 public class SBTreeV1TestIT {
   private int keysCount = 1_000_000;
   OSBTreeV1<Integer, OIdentifiable> sbTree;
-  protected ODatabaseSession databaseDocumentTx;
-  protected String           buildDirectory;
-  protected OrientDB         orientDB;
+  protected ODatabaseSession          databaseDocumentTx;
+  protected String                    buildDirectory;
+  protected OrientDB                  orientDB;
+  protected OAbstractPaginatedStorage storage;
 
   String dbName;
 
@@ -65,21 +67,47 @@ public class SBTreeV1TestIT {
 
   @Test
   public void testKeyPut() throws Exception {
-    for (int i = 0; i < keysCount; i++) {
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    final int rollbackInterval = 100;
+    Integer lastKey = null;
+    for (int i = 0; i < keysCount / rollbackInterval; i++) {
+      for (int n = 0; n < 2; n++) {
+        final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+        atomicOperationsManager.startAtomicOperation((String) null, false);
+        for (int j = 0; j < rollbackInterval; j++) {
+          final Integer key = i * rollbackInterval + j;
+          sbTree.put(key, new ORecordId((i * rollbackInterval + j) % 32000, i * rollbackInterval + j));
+
+          if (n == 1) {
+            if ((i * rollbackInterval + j) % 100_000 == 0) {
+              System.out.printf("%d items loaded out of %d%n", i * rollbackInterval + j, keysCount);
+            }
+
+            if (lastKey == null) {
+              lastKey = key;
+            } else if (key.compareTo(lastKey) > 0) {
+              lastKey = key;
+            }
+          }
+        }
+        atomicOperationsManager.endAtomicOperation(n == 0);
+      }
+
+      final Integer firstTreeKey = sbTree.firstKey();
+      final Integer lastTreeKey = sbTree.lastKey();
+
+      Assert.assertNotNull(firstTreeKey);
+      Assert.assertNotNull(lastTreeKey);
+
+      Assert.assertEquals(0, (int) firstTreeKey);
+      Assert.assertEquals(lastTreeKey, lastTreeKey);
     }
 
     for (int i = 0; i < keysCount; i++) {
-      Assert.assertEquals(i + " key is absent", sbTree.get(i), new ORecordId(i % 32000, i));
+      Assert.assertEquals(i + " key is absent", new ORecordId(i % 32000, i), sbTree.get(i));
+      if (i % 100_000 == 0) {
+        System.out.printf("%d items tested out of %d%n", i, keysCount);
+      }
     }
-
-    final Integer firstKey = sbTree.firstKey();
-    Assert.assertNotNull(firstKey);
-    Assert.assertEquals(0, (int) firstKey);
-
-    final Integer lastKey = sbTree.lastKey();
-    Assert.assertNotNull(lastKey);
-    Assert.assertEquals(keysCount - 1, (int) lastKey);
 
     for (int i = keysCount; i < 2 * keysCount; i++) {
       Assert.assertNull(sbTree.get(i));
