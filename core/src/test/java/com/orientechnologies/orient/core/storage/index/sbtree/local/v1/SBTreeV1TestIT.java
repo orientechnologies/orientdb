@@ -159,25 +159,42 @@ public class SBTreeV1TestIT {
     System.out.println("testKeyPutRandomGaussian seed : " + seed);
 
     Random random = new Random(seed);
+    final int keysCount = 1_000_000;
+    final int rollbackRange = 100;
 
-    while (keys.size() < 1_000_000) {
-      int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (key < 0)
-        continue;
+    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+    while (keys.size() < keysCount) {
+      for (int n = 0; n < 2; n++) {
+        atomicOperationsManager.startAtomicOperation((String) null, false);
+        for (int i = 0; i < rollbackRange; i++) {
+          int val;
+          do {
+            val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
+          } while (val < 0);
 
-      sbTree.put(key, new ORecordId(key % 32000, key));
-      keys.add(key);
+          sbTree.put(val, new ORecordId(val % 32000, val));
+          if (n == 1) {
+            keys.add(val);
+          }
 
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+          Assert.assertEquals(sbTree.get(val), new ORecordId(val % 32000, val));
+        }
+        atomicOperationsManager.endAtomicOperation(n == 0);
+      }
     }
 
-    Assert.assertEquals(sbTree.firstKey(), keys.first());
-    Assert.assertEquals(sbTree.lastKey(), keys.last());
+    Integer firstKey = sbTree.firstKey();
+    Integer lastKey = sbTree.lastKey();
+
+    Assert.assertNotNull(firstKey);
+    Assert.assertNotNull(lastKey);
+
+    Assert.assertEquals(firstKey, keys.first());
+    Assert.assertEquals(lastKey, keys.last());
 
     for (int key : keys) {
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
     }
-
   }
 
   @Test
