@@ -199,25 +199,47 @@ public class SBTreeV1TestIT {
 
   @Test
   public void testKeyDeleteRandomUniform() throws Exception {
+    final int keysCount = 1_000_000;
+
     NavigableSet<Integer> keys = new TreeSet<>();
-    for (int i = 0; i < 1_000_000; i++) {
+    for (int i = 0; i < keysCount; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
       keys.add(i);
     }
 
+    final int rollbackInterval = 10;
+    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+
     Iterator<Integer> keysIterator = keys.iterator();
     while (keysIterator.hasNext()) {
-      int key = keysIterator.next();
+      Integer key = keysIterator.next();
+
       if (key % 3 == 0) {
         sbTree.remove(key);
         keysIterator.remove();
       }
+
+      atomicOperationsManager.startAtomicOperation((String) null, false);
+      int rollbackCounter = 0;
+      final Iterator<Integer> keysDeletionIterator = keys.tailSet(key, false).iterator();
+      while (keysDeletionIterator.hasNext() && rollbackCounter < rollbackInterval) {
+        Integer keyToDelete = keysDeletionIterator.next();
+        rollbackCounter++;
+        sbTree.remove(keyToDelete);
+      }
+      atomicOperationsManager.endAtomicOperation(true);
     }
 
-    Assert.assertEquals(sbTree.firstKey(), keys.first());
-    Assert.assertEquals(sbTree.lastKey(), keys.last());
+    final Integer firstKey = sbTree.firstKey();
+    final Integer lastKey = sbTree.lastKey();
 
-    for (int key : keys) {
+    Assert.assertNotNull(firstKey);
+    Assert.assertNotNull(lastKey);
+
+    Assert.assertEquals(firstKey, keys.first());
+    Assert.assertEquals(lastKey, keys.last());
+
+    for (Integer key : keys) {
       if (key % 3 == 0) {
         Assert.assertNull(sbTree.get(key));
       } else {
