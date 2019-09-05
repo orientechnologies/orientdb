@@ -919,7 +919,7 @@ public class OSecurityShared implements OSecurityInternal {
     }
     if (record instanceof OElement) {
       OBooleanExpression beforePredicate = ((OElement) record).getSchemaType()
-              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName(), OSecurityPolicy.Scope.AFTER_UPDATE)).orElse(null);
+              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName(), OSecurityPolicy.Scope.BEFORE_UPDATE)).orElse(null);
       OResultInternal originalRecord = calculateOriginalValue(record);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, beforePredicate, originalRecord)) {
         return false;

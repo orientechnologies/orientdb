@@ -181,4 +181,119 @@ public class PredicateSecurityTest {
     Assert.assertFalse(rs.hasNext());
     rs.close();
   }
+
+
+  @Test
+  public void testBeforeUpdateCreate() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setBeforeUpdateRule("name = 'bar'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+    try {
+      elem.setProperty("name", "baz");
+      db.save(elem);
+      Assert.fail();
+    } catch (OSecurityException ex) {
+    }
+
+    elem = elem.reload(null, true, true);
+    Assert.assertEquals("foo", elem.getProperty("name"));
+  }
+
+  @Test
+  public void testBeforeUpdateCreateSQL() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setBeforeUpdateRule("name = 'bar'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+    try {
+      db.command("update Person set name = 'bar'");
+      Assert.fail();
+    } catch (OSecurityException ex) {
+    }
+
+    elem = elem.reload(null, true, true);
+    Assert.assertEquals("foo", elem.getProperty("name"));
+  }
+
+  @Test
+  public void testAfterUpdateCreate() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setAfterUpdateRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+    try {
+      elem.setProperty("name", "bar");
+      db.save(elem);
+      Assert.fail();
+    } catch (OSecurityException ex) {
+    }
+
+    elem = elem.reload(null, true, true);
+    Assert.assertEquals("foo", elem.getProperty("name"));
+  }
+
+  @Test
+  public void testAfterUpdateCreateSQL() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setAfterUpdateRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+    try {
+      db.command("update Person set name = 'bar'");
+      Assert.fail();
+    } catch (OSecurityException ex) {
+    }
+
+    elem = elem.reload(null, true, true);
+    Assert.assertEquals("foo", elem.getProperty("name"));
+  }
 }
