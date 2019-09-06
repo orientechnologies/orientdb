@@ -189,7 +189,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
     cacheEntry.acquireExclusiveLock();
 
-    cacheEntry.clearPageOperations();
+    assert cacheEntry.getPageOperations().isEmpty();
     return cacheEntry;
   }
 

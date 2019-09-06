@@ -652,10 +652,12 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
       removedValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, encryption != null, keySerializer, valueSerializer);
       keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, key, removedValue);
-      updateSize(-1, atomicOperation);
     } finally {
       releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
     }
+
+    updateSize(-1, atomicOperation);
+
     return removedValue;
   }
 
