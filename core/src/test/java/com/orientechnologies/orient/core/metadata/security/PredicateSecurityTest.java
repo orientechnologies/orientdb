@@ -241,7 +241,7 @@ public class PredicateSecurityTest {
   }
 
   @Test
-  public void testAfterUpdateCreate() {
+  public void testAfterUpdate() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     db.createClass("Person");
@@ -270,7 +270,7 @@ public class PredicateSecurityTest {
   }
 
   @Test
-  public void testAfterUpdateCreateSQL() {
+  public void testAfterUpdateSQL() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     db.createClass("Person");
@@ -295,5 +295,73 @@ public class PredicateSecurityTest {
 
     elem = elem.reload(null, true, true);
     Assert.assertEquals("foo", elem.getProperty("name"));
+  }
+
+
+  @Test
+  public void testDelete() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setDeleteRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    db.save(elem);
+    try {
+      db.delete(elem);
+      Assert.fail();
+    } catch (OSecurityException ex) {
+    }
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+    db.delete(elem);
+  }
+
+  @Test
+  public void testDeleteSQL() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setDeleteRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    db.save(elem);
+
+    db.command("delete from Person where name = 'foo'");
+    try {
+      db.command("delete from Person where name = 'bar'");
+      Assert.fail();
+    } catch (OSecurityException ex) {
+    }
+
+    OResultSet rs = db.query("select from Person");
+    Assert.assertTrue(rs.hasNext());
+    Assert.assertEquals("bar", rs.next().getProperty("name"));
+    Assert.assertFalse(rs.hasNext());
+    rs.close();
   }
 }
