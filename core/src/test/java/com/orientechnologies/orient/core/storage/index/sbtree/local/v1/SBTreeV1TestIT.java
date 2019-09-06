@@ -483,13 +483,31 @@ public class SBTreeV1TestIT {
   @Test
   public void testIterateEntriesBetween() throws Exception {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
-    Random random = new Random();
+    final Random random = new Random();
+
+    final int rollbackInterval = 100;
+    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+
+    int printCounter = 0;
 
     while (keyValues.size() < keysCount) {
-      int key = random.nextInt(Integer.MAX_VALUE);
+      for (int n = 0; n < 2; n++) {
+        atomicOperationsManager.startAtomicOperation((String) null, false);
+        for (int j = 0; j < rollbackInterval; j++) {
+          int val = random.nextInt(Integer.MAX_VALUE);
+          sbTree.put(val, new ORecordId(val % 32000, val));
+          if (n == 1) {
+            keyValues.put(val, new ORecordId(val % 32000, val));
+          }
+        }
 
-      sbTree.put(key, new ORecordId(key % 32000, key));
-      keyValues.put(key, new ORecordId(key % 32000, key));
+        atomicOperationsManager.endAtomicOperation(n == 0);
+      }
+
+      if (keyValues.size() > printCounter * 100_000) {
+        System.out.println(keyValues.size() + " entries were added.");
+        printCounter++;
+      }
     }
 
     assertIterateBetweenEntries(keyValues, random, true, true, true);
@@ -502,8 +520,14 @@ public class SBTreeV1TestIT {
     assertIterateBetweenEntries(keyValues, random, false, true, false);
     assertIterateBetweenEntries(keyValues, random, false, false, false);
 
-    Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
-    Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
+    final Integer firstKey = sbTree.firstKey();
+    final Integer lastKey = sbTree.lastKey();
+
+    Assert.assertNotNull(firstKey);
+    Assert.assertNotNull(lastKey);
+
+    Assert.assertEquals(firstKey, keyValues.firstKey());
+    Assert.assertEquals(lastKey, keyValues.lastKey());
   }
 
   @Test
