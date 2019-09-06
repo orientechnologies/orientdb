@@ -364,4 +364,34 @@ public class PredicateSecurityTest {
     Assert.assertFalse(rs.hasNext());
     rs.close();
   }
+
+
+  @Test
+  public void testSqlCount() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    OClass person = db.createClass("Person");
+    person.createProperty("name", OType.STRING);
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    db.save(elem);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "reader", "reader");
+    OResultSet rs = db.query("select count(*) as count from Person");
+    Assert.assertEquals(1L, (long)rs.next().getProperty("count"));
+    rs.close();
+  }
+
 }

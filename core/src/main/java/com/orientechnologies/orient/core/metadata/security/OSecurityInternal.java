@@ -53,8 +53,22 @@ public interface OSecurityInternal {
 
   Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, OSecurityRole role);
 
+  /**
+   * Returns the security policy policy assigned to a role for a specific resource (not recursive on superclasses, nor on role hierarchy)
+   * @param session an active DB session
+   * @param role the role
+   * @param resource the string representation of the security resource, eg. "database.class.Person"
+   * @return
+   */
   OSecurityPolicy getSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource);
 
+  /**
+   * Sets a security policy for a specific resource on a role
+   * @param session a valid db session to perform the operation (that has permissions to do it)
+   * @param role The role
+   * @param resource the string representation of the security resource, eg. "database.class.Person"
+   * @param policy The security policy
+   */
   void setSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy);
 
   /**
@@ -71,6 +85,12 @@ public interface OSecurityInternal {
 
   void deleteSecurityPolicy(ODatabaseSession session, String name);
 
+  /**
+   * Removes security policy bound to a role for a specific resource
+   * @param session A valid db session to perform the operation
+   * @param role the role
+   * @param resource the string representation of the security resource, eg. "database.class.Person"
+   */
   void removeSecurityPolicy(ODatabaseSession session, ORole role, String resource);
 
   boolean dropUser(ODatabaseSession session, String iUserName);
@@ -115,5 +135,14 @@ public interface OSecurityInternal {
   boolean canDelete(ODatabaseSession session, ORecord record);
 
   boolean canExecute(ODatabaseSession session, OFunction function);
+
+  /**
+   * checks if for current session a resource is restricted by security resources (ie. READ policies exist, with predicate different from "TRUE",
+   * to access the given resource
+   * @param session The session to check for the existece of policies
+   * @param resource a resource string, eg. "database.class.Person"
+   * @return true if a restriction of any type exists for this session and this resource. False otherwise
+   */
+  boolean isReadRestrictedBySecurityPolicy(ODatabaseSession session, String resource);
 
 }

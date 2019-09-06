@@ -229,4 +229,9 @@ public class OSecurityRemote implements OSecurityInternal {
   public boolean canExecute(ODatabaseSession session, OFunction function) {
     return true;
   }
+
+  @Override
+  public boolean isReadRestrictedBySecurityPolicy(ODatabaseSession session, String resource) {
+    return false;
+  }
 }

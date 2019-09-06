@@ -281,6 +281,11 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
+  public boolean isReadRestrictedBySecurityPolicy(ODatabaseSession session, String resource) {
+    return delegate.isReadRestrictedBySecurityPolicy(session, resource);
+  }
+
+  @Override
   public void close() {
 
   }

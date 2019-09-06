@@ -985,4 +985,17 @@ public class OSecurityShared implements OSecurityInternal {
       roleMap.put(key.toLowerCase(Locale.ENGLISH), predicate);
     }
   }
+
+  @Override
+  public boolean isReadRestrictedBySecurityPolicy(ODatabaseSession session, String resource) {
+    if (session.getUser() == null) {
+      //executeNoAuth
+      return false;
+    }
+    OBooleanExpression predicate = OSecurityEngine.getPredicateForSecurityResource(session, this, resource, OSecurityPolicy.Scope.READ);
+    if (predicate == null || OBooleanExpression.TRUE.equals(predicate)) {
+      return false;
+    }
+    return true;
+  }
 }
