@@ -76,6 +76,8 @@ import com.orientechnologies.orient.server.network.protocol.binary.*;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
+import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer37;
+import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer38;
 
 import java.io.File;
 import java.io.IOException;
@@ -1188,7 +1190,20 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeBeginTransaction(OBeginTransactionRequest request) {
-    final OTransactionOptimisticServer tx = new OTransactionOptimisticServer(connection.getDatabase(), request.getTxId(),
+    final OTransactionOptimisticServer37 tx = new OTransactionOptimisticServer37(connection.getDatabase(), request.getTxId(),
+        request.isUsingLog(), request.getOperations(), request.getIndexChanges());
+    try {
+      connection.getDatabase().rawBegin(tx);
+    } catch (final ORecordNotFoundException e) {
+      throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
+    }
+
+    return new OBeginTransactionResponse(tx.getId(), tx.getUpdatedRids());
+  }
+
+  @Override
+  public OBinaryResponse executeBeginTransaction38(OBeginTransaction38Request request) {
+    final OTransactionOptimisticServer38 tx = new OTransactionOptimisticServer38(connection.getDatabase(), request.getTxId(),
         request.isUsingLog(), request.getOperations(), request.getIndexChanges());
     try {
       connection.getDatabase().rawBegin(tx);
@@ -1204,7 +1219,57 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     ODatabaseDocumentInternal database = connection.getDatabase();
     final OTransactionOptimisticServer tx;
     if (request.isHasContent()) {
-      tx = new OTransactionOptimisticServer(database, request.getTxId(), request.isUsingLog(), request.getOperations(),
+      tx = new OTransactionOptimisticServer37(database, request.getTxId(), request.isUsingLog(), request.getOperations(),
+          request.getIndexChanges());
+      try {
+        database.rawBegin(tx);
+      } catch (final ORecordNotFoundException e) {
+        throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
+      }
+    } else {
+      if (database.getTransaction().isActive()) {
+        tx = (OTransactionOptimisticServer) database.getTransaction();
+      } else {
+        throw new ODatabaseException("No transaction active on the server, send full content");
+      }
+    }
+    tx.assignClusters();
+
+    database.commit();
+    List<OCommit37Response.OCreatedRecordResponse> createdRecords = new ArrayList<>(tx.getCreatedRecords().size());
+    for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
+      ORecord record = entry.getValue();
+      createdRecords
+          .add(new OCommit37Response.OCreatedRecordResponse(entry.getKey(), (ORecordId) record.getIdentity(), record.getVersion()));
+    }
+
+    List<OCommit37Response.OUpdatedRecordResponse> updatedRecords = new ArrayList<>(tx.getUpdatedRecords().size());
+    for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
+      updatedRecords.add(new OCommit37Response.OUpdatedRecordResponse(entry.getKey(), entry.getValue().getVersion()));
+    }
+
+    List<OCommit37Response.ODeletedRecordResponse> deletedRecords = new ArrayList<>(tx.getDeletedRecord().size());
+
+    for (ORID id : tx.getDeletedRecord()) {
+      deletedRecords.add(new OCommit37Response.ODeletedRecordResponse(id));
+    }
+
+    OSBTreeCollectionManager collectionManager = database.getSbTreeCollectionManager();
+    Map<UUID, OBonsaiCollectionPointer> changedIds = null;
+    if (collectionManager != null) {
+      changedIds = new HashMap<>(collectionManager.changedIds());
+      collectionManager.clearChangedIds();
+    }
+
+    return new OCommit37Response(createdRecords, updatedRecords, deletedRecords, changedIds);
+  }
+
+  @Override
+  public OBinaryResponse executeCommit38(OCommit38Request request) {
+    ODatabaseDocumentInternal database = connection.getDatabase();
+    final OTransactionOptimisticServer tx;
+    if (request.isHasContent()) {
+      tx = new OTransactionOptimisticServer38(database, request.getTxId(), request.isUsingLog(), request.getOperations(),
           request.getIndexChanges());
       try {
         database.rawBegin(tx);
@@ -1257,6 +1322,16 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
     return new OFetchTransactionResponse(tx.getId(), tx.getRecordOperations(), tx.getIndexOperations(), tx.getUpdatedRids());
   }
+
+  @Override
+  public OBinaryResponse executeFetchTransaction38(OFetchTransaction38Request request) {
+    ODatabaseDocumentInternal database = connection.getDatabase();
+    if (!database.getTransaction().isActive())
+      throw new ODatabaseException("No Transaction Active");
+    OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
+    return new OFetchTransaction38Response(tx.getId(), tx.getRecordOperations(), tx.getIndexOperations(), tx.getUpdatedRids());
+  }
+
 
   @Override
   public OBinaryResponse executeRollback(ORollbackTransactionRequest request) {

@@ -1,26 +1,23 @@
 package com.orientechnologies.orient.client.remote.message.tx;
 
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
-public class ORecordOperationRequest {
+public class ORecordOperation38Response {
   private byte    type;
   private byte    recordType;
   private ORID    id;
   private ORID    oldId;
   private byte[]  record;
+  private byte[]  original;
   private int     version;
   private boolean contentChanged;
 
-  public ORecordOperationRequest() {
+  public ORecordOperation38Response() {
   }
 
-  public ORecordOperationRequest(byte type, byte recordType, ORID id, ORID oldId, byte[] record, int version,
+  public ORecordOperation38Response(byte type, byte recordType, ORID id, ORID oldId, byte[] record, int version,
       boolean contentChanged) {
     this.type = type;
     this.recordType = recordType;
@@ -55,6 +52,14 @@ public class ORecordOperationRequest {
     this.record = record;
   }
 
+  public byte[] getOriginal() {
+    return original;
+  }
+
+  public void setOriginal(byte[] original) {
+    this.original = original;
+  }
+
   public byte getRecordType() {
     return recordType;
   }
@@ -85,33 +90,6 @@ public class ORecordOperationRequest {
 
   public boolean isContentChanged() {
     return contentChanged;
-  }
-
-  public void deserialize(DataInput input) throws IOException {
-    type = input.readByte();
-    recordType = input.readByte();
-    id = ORecordId.deserialize(input);
-    oldId = ORecordId.deserialize(input);
-    if (type != ORecordOperation.DELETED) {
-      int size = input.readInt();
-      record = new byte[size];
-      input.readFully(record);
-    }
-    version = input.readInt();
-    contentChanged = input.readBoolean();
-  }
-
-  public void serialize(DataOutput output) throws IOException {
-    output.writeByte(type);
-    output.writeByte(recordType);
-    ORecordId.serialize(id, output);
-    ORecordId.serialize(oldId, output);
-    if (type != ORecordOperation.DELETED) {
-      output.writeInt(record.length);
-      output.write(record);
-    }
-    output.writeInt(version);
-    output.writeBoolean(contentChanged);
   }
 
 }
