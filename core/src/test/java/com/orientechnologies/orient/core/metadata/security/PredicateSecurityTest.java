@@ -394,4 +394,37 @@ public class PredicateSecurityTest {
     rs.close();
   }
 
+  @Test
+  public void testSqlCountWithIndex() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    OClass person = db.createClass("Person");
+    person.createProperty("name", OType.STRING);
+    db.command("create index Person.name on Person (name) NOTUNIQUE");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    db.save(elem);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "reader", "reader");
+    OResultSet rs = db.query("select count(*) as count from Person where name = 'bar'");
+    Assert.assertEquals(0L, (long)rs.next().getProperty("count"));
+    rs.close();
+
+    rs = db.query("select count(*) as count from Person where name = 'foo'");
+    Assert.assertEquals(1L, (long)rs.next().getProperty("count"));
+    rs.close();
+  }
+
 }

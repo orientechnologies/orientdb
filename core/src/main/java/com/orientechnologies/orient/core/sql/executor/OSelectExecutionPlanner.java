@@ -564,6 +564,9 @@ public class OSelectExecutionPlanner {
       //this can be extended to use range operators too
       return false;
     }
+    if (securityPoliciesExistForClass(targetClass, ctx)) {
+      return false;
+    }
 
     for (OIndex<?> classIndex : clazz.getClassIndexes()) {
       List<String> fields = classIndex.getDefinition().getFields();
