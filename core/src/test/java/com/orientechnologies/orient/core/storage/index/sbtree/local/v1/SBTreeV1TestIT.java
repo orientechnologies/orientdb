@@ -702,28 +702,17 @@ public class SBTreeV1TestIT {
     nullSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true, null);
 
     try {
-      for (int i = 0; i < 10; i++)
+      for (int i = 0; i < 10; i++) {
         nullSBTree.put(i, new ORecordId(3, i));
+      }
 
-      OIdentifiable identifiable = nullSBTree.get(null);
-      Assert.assertNull(identifiable);
+      final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+      atomicOperationsManager.startAtomicOperation((String) null, false);
+      doNullTesting(nullSBTree);
+      atomicOperationsManager.endAtomicOperation(true);
 
-      nullSBTree.put(null, new ORecordId(10, 1000));
+      doNullTesting(nullSBTree);
 
-      identifiable = nullSBTree.get(null);
-      Assert.assertEquals(identifiable, new ORecordId(10, 1000));
-
-      OIdentifiable removed = nullSBTree.remove(5);
-      Assert.assertEquals(removed, new ORecordId(3, 5));
-
-      removed = nullSBTree.remove(null);
-      Assert.assertEquals(removed, new ORecordId(10, 1000));
-
-      removed = nullSBTree.remove(null);
-      Assert.assertNull(removed);
-
-      identifiable = nullSBTree.get(null);
-      Assert.assertNull(identifiable);
     } finally {
       final OSBTree.OSBTreeKeyCursor<Integer> keyCursor = nullSBTree.keyCursor();
 
@@ -736,6 +725,28 @@ public class SBTreeV1TestIT {
       nullSBTree.remove(null);
       nullSBTree.delete();
     }
+  }
+
+  private void doNullTesting(OSBTreeV1<Integer, OIdentifiable> nullSBTree) throws java.io.IOException {
+    OIdentifiable identifiable = nullSBTree.get(null);
+    Assert.assertNull(identifiable);
+
+    nullSBTree.put(null, new ORecordId(10, 1000));
+
+    identifiable = nullSBTree.get(null);
+    Assert.assertEquals(identifiable, new ORecordId(10, 1000));
+
+    OIdentifiable removed = nullSBTree.remove(5);
+    Assert.assertEquals(removed, new ORecordId(3, 5));
+
+    removed = nullSBTree.remove(null);
+    Assert.assertEquals(removed, new ORecordId(10, 1000));
+
+    removed = nullSBTree.remove(null);
+    Assert.assertNull(removed);
+
+    identifiable = nullSBTree.get(null);
+    Assert.assertNull(identifiable);
   }
 
   private void cursorToSet(Set<OIdentifiable> identifiables, OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor) {
