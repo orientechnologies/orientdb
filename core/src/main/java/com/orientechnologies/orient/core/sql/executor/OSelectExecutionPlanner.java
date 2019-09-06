@@ -1335,64 +1335,63 @@ public class OSelectExecutionPlanner {
     }
 
     switch (indexIdentifier.getType()) {
-      case INDEX:
-        OBooleanExpression keyCondition = null;
-        OBooleanExpression ridCondition = null;
-        if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
-          if (!index.supportsOrderedIterations()) {
-            throw new OCommandExecutionException("Index " + indexName + " does not allow iteration without a condition");
-          }
-        } else if (info.flattenedWhereClause.size() > 1) {
-          throw new OCommandExecutionException(
-                  "Index queries with this kind of condition are not supported yet: " + info.whereClause);
-        } else {
-          OAndBlock andBlock = info.flattenedWhereClause.get(0);
-          if (andBlock.getSubBlocks().size() == 1) {
+    case INDEX:
+      OBooleanExpression keyCondition = null;
+      OBooleanExpression ridCondition = null;
+      if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
+        if (!index.supportsOrderedIterations()) {
+          throw new OCommandExecutionException("Index " + indexName + " does not allow iteration without a condition");
+        }
+      } else if (info.flattenedWhereClause.size() > 1) {
+        throw new OCommandExecutionException(
+              "Index queries with this kind of condition are not supported yet: " + info.whereClause);
+      } else {
+        OAndBlock andBlock = info.flattenedWhereClause.get(0);
+        if (andBlock.getSubBlocks().size() == 1) {
 
-            info.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
-            info.flattenedWhereClause = null;
-            keyCondition = getKeyCondition(andBlock);
-            if (keyCondition == null) {
-              throw new OCommandExecutionException(
-                      "Index queries with this kind of condition are not supported yet: " + info.whereClause);
-            }
-          } else if (andBlock.getSubBlocks().size() == 2) {
-            info.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
-            info.flattenedWhereClause = null;
-            keyCondition = getKeyCondition(andBlock);
-            ridCondition = getRidCondition(andBlock);
-            if (keyCondition == null || ridCondition == null) {
-              throw new OCommandExecutionException(
-                      "Index queries with this kind of condition are not supported yet: " + info.whereClause);
-            }
-          } else {
+          info.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+          info.flattenedWhereClause = null;
+          keyCondition = getKeyCondition(andBlock);
+          if (keyCondition == null) {
             throw new OCommandExecutionException(
                     "Index queries with this kind of condition are not supported yet: " + info.whereClause);
           }
+        } else if (andBlock.getSubBlocks().size() == 2) {
+          info.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+          info.flattenedWhereClause = null;
+          keyCondition = getKeyCondition(andBlock);
+          ridCondition = getRidCondition(andBlock);
+          if (keyCondition == null || ridCondition == null) {
+            throw new OCommandExecutionException(
+                    "Index queries with this kind of condition are not supported yet: " + info.whereClause);
+          }
+        } else {
+          throw new OCommandExecutionException(
+                  "Index queries with this kind of condition are not supported yet: " + info.whereClause);
         }
-        result.chain(new FetchFromIndexStep(index, keyCondition, null, ctx, profilingEnabled));
-        if (ridCondition != null) {
-          OWhereClause where = new OWhereClause(-1);
-          where.setBaseExpression(ridCondition);
-          result.chain(new FilterStep(where, ctx, profilingEnabled));
-        }
-        break;
-      case VALUES:
-      case VALUESASC:
-        if (!index.supportsOrderedIterations()) {
-          throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
-        }
-        result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
-        result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
-
-        break;
-      case VALUESDESC:
-        if (!index.supportsOrderedIterations()) {
-          throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
-        }
-        result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
-        result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
-        break;
+      }
+      result.chain(new FetchFromIndexStep(index, keyCondition, null, ctx, profilingEnabled));
+      if (ridCondition != null) {
+        OWhereClause where = new OWhereClause(-1);
+        where.setBaseExpression(ridCondition);
+        result.chain(new FilterStep(where, ctx, profilingEnabled));
+      }
+      break;
+    case VALUES:
+    case VALUESASC:
+      if (!index.supportsOrderedIterations()) {
+        throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
+      }
+      result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
+      result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
+      break;
+    case VALUESDESC:
+      if (!index.supportsOrderedIterations()) {
+        throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
+      }
+      result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
+      result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
+      break;
     }
   }
 
@@ -2194,9 +2193,8 @@ public class OSelectExecutionPlanner {
             .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz)).filter(Objects::nonNull)
             .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 
-    List<IndexSearchDescriptor> fullTextIndexDescriptors = indexes.stream().filter(
-            idx -> idx.getType().equalsIgnoreCase("FULLTEXT") || idx.getType()
-                    .equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()))
+    List<IndexSearchDescriptor> fullTextIndexDescriptors = indexes.stream().filter(idx -> idx.getType().equalsIgnoreCase("FULLTEXT")
+            || idx.getType().equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()))
             .filter(idx -> !idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
             .map(idx -> buildIndexSearchDescriptorForFulltext(ctx, idx, block, clazz)).filter(Objects::nonNull)
             .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
