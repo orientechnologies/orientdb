@@ -363,11 +363,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public final void replaceFileContentWith(final long fileId, final Path newContentFile) {
-    throw new UnsupportedOperationException("replacing file content is not supported for memory storage");
-  }
-
-  @Override
   public final void truncateFile(final long fileId) {
     final int intId = extractFileId(fileId);
 

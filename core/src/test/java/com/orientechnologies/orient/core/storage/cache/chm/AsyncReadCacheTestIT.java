@@ -423,10 +423,6 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void replaceFileContentWith(final long fileId, final Path newContentFile) {
-    }
-
-    @Override
     public long[] close() {
       return new long[0];
     }

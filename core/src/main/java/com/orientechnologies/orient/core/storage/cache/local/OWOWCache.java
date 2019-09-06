@@ -827,11 +827,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   @Override
-  public void create() throws IOException {
+  public void create() {
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() {
   }
 
   @Override
@@ -1257,28 +1257,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
     } catch (final InterruptedException e) {
       throw OException.wrapException(new OStorageException("File truncation was interrupted"), e);
-    } finally {
-      filesLock.releaseWriteLock();
-    }
-  }
-
-  @Override
-  public void replaceFileContentWith(long fileId, final Path newContentFile) throws IOException {
-    final int intId = extractFileId(fileId);
-    fileId = composeFileId(id, intId);
-
-    filesLock.acquireWriteLock();
-    try {
-      removeCachedPages(intId);
-
-      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
-      try {
-        entry.get().replaceContentWith(newContentFile);
-      } finally {
-        files.release(entry);
-      }
-    } catch (final InterruptedException e) {
-      throw OException.wrapException(new OStorageException("File content replacement was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
     }

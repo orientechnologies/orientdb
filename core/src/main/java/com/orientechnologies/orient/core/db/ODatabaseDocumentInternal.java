@@ -188,15 +188,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     return false;
   }
 
-  /**
-   * synchronizes a cluster with the rest of the network (if in distributed mode).
-   *
-   * @return true if the database was synchronized, false otherwise
-   */
-  default Map<String, Object> syncCluster(String clusterName) {
-    return null;
-  }
-
   default Map<String, Object> getHaStatus(boolean servers, boolean db, boolean latency, boolean messages) {
     return null;
   }

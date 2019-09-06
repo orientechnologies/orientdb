@@ -23,6 +23,10 @@ public class FileMap {
     doSet(index, mappingEntry);
   }
 
+  public int getSize() {
+    return size.get();
+  }
+
   public int[] mappingData(final int index) {
     final int currentSize = size.get();
     if (index >= currentSize) {

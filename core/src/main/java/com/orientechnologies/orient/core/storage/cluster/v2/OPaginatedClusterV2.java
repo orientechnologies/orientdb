@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -202,52 +201,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
       fileId = openFile(atomicOperation, getFullName());
       clusterPositionMap.open(atomicOperation);
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  public void replaceFile(final File file) throws IOException {
-    acquireExclusiveLock();
-    try {
-      final String tempFileName = file.getName() + "$temp";
-      try {
-        final long tempFileId = writeCache.addFile(tempFileName);
-        writeCache.replaceFileContentWith(tempFileId, file.toPath());
-
-        readCache.deleteFile(fileId, writeCache);
-        writeCache.renameFile(tempFileId, getFullName());
-        fileId = tempFileId;
-      } finally {
-        // If, for some reason, the temp file is still exists, wipe it out.
-
-        final long tempFileId = writeCache.fileIdByName(tempFileName);
-        if (tempFileId >= 0) {
-          writeCache.deleteFile(tempFileId);
-        }
-      }
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  public void replaceClusterMapFile(final File file) throws IOException {
-    acquireExclusiveLock();
-    try {
-      final String tempFileName = file.getName() + "$temp";
-      try {
-        final long tempFileId = writeCache.addFile(tempFileName);
-        writeCache.replaceFileContentWith(tempFileId, file.toPath());
-
-        readCache.deleteFile(clusterPositionMap.getFileId(), writeCache);
-        writeCache.renameFile(tempFileId, clusterPositionMap.getFullName());
-        clusterPositionMap.replaceFileId(tempFileId);
-      } finally {
-        final long tempFileId = writeCache.fileIdByName(tempFileName);
-        if (tempFileId >= 0) {
-          writeCache.deleteFile(tempFileId);
-        }
-      }
     } finally {
       releaseExclusiveLock();
     }

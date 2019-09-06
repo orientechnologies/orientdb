@@ -2,15 +2,16 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -35,7 +36,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -45,16 +45,12 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
@@ -256,148 +252,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     // If this is changed to false, the node will be set to NOT_AVAILABLE, and then the auto-repairer will
     // re-synchronize the database on the node, and then set it to ONLINE.
     return distributedManager.removeNodeFromConfiguration(serverName, databaseName, false, true);
-  }
-
-  @Override
-  public Map<String, Object> syncCluster(String clusterName) {
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, "sync", ORole.PERMISSION_UPDATE);
-
-    if (distributedManager == null || !distributedManager.isEnabled())
-      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
-    final String databaseName = getName();
-
-    final ODistributedConfiguration cfg = distributedManager.getDatabaseConfiguration(databaseName);
-    OServer serverInstance = distributedManager.getServerInstance();
-    final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
-
-    final String nodeName = distributedManager.getLocalNodeName();
-
-    final List<String> nodesWhereClusterIsCfg = cfg.getServers(clusterName, null);
-    nodesWhereClusterIsCfg.remove(nodeName);
-
-    if (nodesWhereClusterIsCfg.isEmpty())
-      throw new OCommandExecutionException(
-          "Cannot synchronize cluster '" + clusterName + "' because is not configured on any running nodes");
-
-    final OSyncClusterTask task = new OSyncClusterTask(clusterName);
-    final ODistributedResponse response = distributedManager
-        .sendRequest(databaseName, null, nodesWhereClusterIsCfg, task, distributedManager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-
-    final Map<String, Object> results = (Map<String, Object>) response.getPayload();
-
-    File tempFile = null;
-    FileOutputStream out = null;
-    try {
-      tempFile = new File(Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + "_toInstall.zip");
-      if (tempFile.exists())
-        tempFile.delete();
-      else
-        tempFile.getParentFile().mkdirs();
-      tempFile.createNewFile();
-
-      long fileSize = 0;
-      out = new FileOutputStream(tempFile, false);
-      for (Map.Entry<String, Object> r : results.entrySet()) {
-        final Object value = r.getValue();
-
-        if (value instanceof Boolean) {
-          continue;
-        } else if (value instanceof Throwable) {
-          ODistributedServerLog
-              .error(null, nodeName, r.getKey(), ODistributedServerLog.DIRECTION.IN, "error on installing cluster %s in %s",
-                  (Exception) value, databaseName, dbPath);
-        } else if (value instanceof ODistributedDatabaseChunk) {
-          ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
-
-          // DELETE ANY PREVIOUS .COMPLETED FILE
-          final File completedFile = new File(tempFile.getAbsolutePath() + ".completed");
-          if (completedFile.exists())
-            completedFile.delete();
-
-          fileSize = writeDatabaseChunk(nodeName, 1, chunk, out);
-          for (int chunkNum = 2; !chunk.last; chunkNum++) {
-            final Object result = distributedManager.sendRequest(databaseName, null, OMultiValue.getSingletonList(r.getKey()),
-                new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, chunk.gzipCompressed),
-                distributedManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-
-            if (result instanceof Boolean)
-              continue;
-            else if (result instanceof Exception) {
-              ODistributedServerLog.error(null, nodeName, r.getKey(), ODistributedServerLog.DIRECTION.IN,
-                  "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
-            } else if (result instanceof ODistributedDatabaseChunk) {
-              chunk = (ODistributedDatabaseChunk) result;
-
-              fileSize += writeDatabaseChunk(nodeName, chunkNum, chunk, out);
-            }
-          }
-
-          out.flush();
-
-          // CREATE THE .COMPLETED FILE TO SIGNAL EOF
-          new File(tempFile.getAbsolutePath() + ".completed").createNewFile();
-        }
-      }
-
-      final String tempDirectoryPath = Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + "_toInstall";
-      final File tempDirectory = new File(tempDirectoryPath);
-      tempDirectory.mkdirs();
-
-      OZIPCompressionUtil.uncompressDirectory(new FileInputStream(tempFile), tempDirectory.getAbsolutePath(), null);
-
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      final boolean openDatabaseHere = db == null;
-      if (db == null)
-        db = serverInstance.openDatabase("plocal:" + dbPath, "", "", null, true);
-
-      try {
-
-        final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) db.getStorage().getUnderlying();
-
-        // TODO: FREEZE COULD IT NOT NEEDED
-        stg.freeze(false);
-        try {
-
-          final OPaginatedCluster cluster = (OPaginatedCluster) stg.getClusterByName(clusterName);
-
-          final File tempClusterFile = new File(tempDirectoryPath + "/" + clusterName + OPaginatedCluster.DEF_EXTENSION);
-
-          cluster.replaceFile(tempClusterFile);
-
-        } finally {
-          stg.release();
-        }
-
-        db.getLocalCache().invalidate();
-
-      } finally {
-        if (openDatabaseHere)
-          db.close();
-      }
-
-      Map<String, Object> result = new HashMap<>();
-      result.put("fileSize", fileSize);
-      result.put("message", "Cluster correctly replaced");
-      result.put("result", true);
-      return result;
-
-    } catch (Exception e) {
-      ODistributedServerLog
-          .error(null, nodeName, null, ODistributedServerLog.DIRECTION.NONE, "error on transferring database '%s' to '%s'", e,
-              databaseName, tempFile);
-      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
-    } finally {
-      try {
-        if (out != null) {
-          out.flush();
-          out.close();
-        }
-      } catch (IOException e) {
-      }
-    }
-
   }
 
   protected static long writeDatabaseChunk(final String iNodeName, final int iChunkId, final ODistributedDatabaseChunk chunk,

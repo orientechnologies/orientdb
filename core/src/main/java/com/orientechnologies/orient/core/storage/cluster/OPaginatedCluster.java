@@ -25,9 +25,13 @@ public abstract class OPaginatedCluster extends ODurableComponent implements OCl
     super(storage, name, extension, lockName);
   }
 
-  public abstract void replaceFile(File file) throws IOException;
+  public void replaceFile(File file) {
+    throw new UnsupportedOperationException();
+  }
 
-  public abstract void replaceClusterMapFile(File file) throws IOException;
+  public void replaceClusterMapFile(File file) {
+    throw new UnsupportedOperationException();
+  }
 
   public abstract RECORD_STATUS getRecordStatus(final long clusterPosition) throws IOException;
 

@@ -115,14 +115,6 @@ public interface OWriteCache {
 
   void renameFile(long fileId, String newFileName) throws IOException;
 
-  /**
-   * Replaces the file content with the content of the provided file.
-   *
-   * @param fileId         the file id of the file to replace the content of.
-   * @param newContentFile the new content file to replace the current content with.
-   */
-  void replaceFileContentWith(long fileId, Path newContentFile) throws IOException;
-
   long[] close() throws IOException;
 
   void close(long fileId, boolean flush);
