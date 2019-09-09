@@ -21,12 +21,17 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Basic interface to handle index.
@@ -330,4 +335,5 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   int getIndexId();
 
   boolean isUnique();
+
 }

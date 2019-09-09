@@ -71,7 +71,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>>
         return Collections.emptyList();
       }
 
-      return values;
+      return OIndexInternal.securityFilterOnRead(this, (Collection)values);
 
     } finally {
       releaseSharedLock();
@@ -100,7 +100,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>>
         return 0;
       }
 
-      return values.size();
+      return OIndexInternal.securityFilterOnRead(this, (Collection)values).size();
     } finally {
       releaseSharedLock();
     }
@@ -287,8 +287,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>>
     try {
       while (true) {
         try {
-          return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder,
-              MultiValuesTransformer.INSTANCE);
+          return new OIndexCursorSecurityDecorator(storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder,
+              MultiValuesTransformer.INSTANCE), this);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }

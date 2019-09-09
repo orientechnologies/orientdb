@@ -2,12 +2,15 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.*;
+
+import java.util.Collection;
 
 public class PredicateSecurityTest {
 
@@ -425,6 +428,41 @@ public class PredicateSecurityTest {
     rs = db.query("select count(*) as count from Person where name = 'foo'");
     Assert.assertEquals(1L, (long)rs.next().getProperty("count"));
     rs.close();
+  }
+
+
+  @Test
+  public void testIndexGet() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    OClass person = db.createClass("Person");
+    person.createProperty("name", OType.STRING);
+    db.command("create index Person.name on Person (name) NOTUNIQUE");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    db.save(elem);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "reader", "reader");
+
+    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Person.name");
+    Object item = index.get("bar");
+    Assert.assertTrue(((Collection)item).isEmpty());
+
+    item = index.get("foo");
+    Assert.assertEquals(1, ((Collection)item).size());
+
   }
 
 }

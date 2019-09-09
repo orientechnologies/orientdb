@@ -19,12 +19,17 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
 import java.util.Collection;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * Interface to handle index.
@@ -132,4 +137,53 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * key} and only some subset of this index was locked.
    */
   boolean acquireAtomicExclusiveLock(Object key);
+
+
+  static OIdentifiable securityFilterOnRead(OIndex idx, OIdentifiable item) {
+    if (idx.getMetadata() == null) {
+      return item;
+    }
+    String indexClass = idx.getMetadata().getClassName();
+    if (indexClass == null) {
+      return item;
+    }
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db == null) {
+      return item;
+    }
+    OSecurityInternal security = db.getSharedContext().getSecurity();
+    return securityFilter(item, "database.class." + indexClass, db, security);
+  }
+
+  static OIdentifiable securityFilter(OIdentifiable item, String resource, ODatabaseDocumentInternal db, OSecurityInternal security) {
+    if (security.isReadRestrictedBySecurityPolicy(db, resource)) {
+      return item.getRecord();
+    }
+    return item;
+  }
+
+  static Collection securityFilterOnRead(OIndex idx, Collection<OIdentifiable> items) {
+    if (idx.getMetadata() == null && idx.getDefinition() == null) {
+      return items;
+    }
+    String indexClass = idx.getMetadata() == null ? idx.getDefinition().getClassName() : idx.getMetadata().getClassName();
+    if (indexClass == null) {
+      return items;
+    }
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db == null) {
+      return items;
+    }
+    OSecurityInternal security = db.getSharedContext().getSecurity();
+    String resource = "database.class." + indexClass;
+    if (security.isReadRestrictedBySecurityPolicy(db, resource)) {
+      return items.stream()
+              .map(x -> securityFilter(x, resource, db, security))
+              .filter(x -> x != null)
+              .map(x -> x.getIdentity())
+              .collect(Collectors.toList());
+    }
+    return items;
+  }
+
 }

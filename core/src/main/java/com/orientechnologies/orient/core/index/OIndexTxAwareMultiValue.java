@@ -304,7 +304,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       if (database.getTransaction().isActive() && ((OTransactionOptimistic) database.getTransaction()).getIndexOperations().size() != 0
           && res.isEmpty())
         return null;
-      return res;
+      return OIndexInternal.securityFilterOnRead(this, res);
     }
 
     key = getCollatingValue(key);

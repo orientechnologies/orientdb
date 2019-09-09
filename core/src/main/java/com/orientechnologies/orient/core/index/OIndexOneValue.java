@@ -55,7 +55,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       while (true)
         try {
-          return (OIdentifiable) storage.getIndexValue(indexId, iKey);
+          return OIndexInternal.securityFilterOnRead(this, (OIdentifiable) storage.getIndexValue(indexId, iKey));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
