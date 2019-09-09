@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class OIndexCursorSecurityDecorator implements OIndexCursor {
+public class OIndexCursorSecurityDecorator implements OIndexCursor {
 
   OIndexCursor delegate;
   OIndexAbstract originalIndex;
@@ -15,7 +15,7 @@ class OIndexCursorSecurityDecorator implements OIndexCursor {
   OIdentifiable next;
 
 
-  OIndexCursorSecurityDecorator(OIndexCursor delegate, OIndexAbstract originalIndex) {
+  public OIndexCursorSecurityDecorator(OIndexCursor delegate, OIndexAbstract originalIndex) {
     this.delegate = delegate;
     this.originalIndex = originalIndex;
   }

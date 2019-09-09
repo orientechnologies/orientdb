@@ -69,12 +69,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      while (true)
-        try {
-          return storage.indexContainsKey(indexId, iKey) ? 1 : 0;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
+      return get(iKey) == null ? 0 : 1;
     } finally {
       releaseSharedLock();
     }
@@ -98,7 +93,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     Collections.sort(sortedKeys, comparator);
 
-    return new OIndexAbstractCursor() {
+    return new OIndexCursorSecurityDecorator(new OIndexAbstractCursor() {
       private Iterator<?> keysIterator = sortedKeys.iterator();
 
       @Override
@@ -146,7 +141,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
           }
         };
       }
-    };
+    }, this);
   }
 
   @Override
@@ -159,7 +154,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       while (true)
         try {
-          return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
+          return new OIndexCursorSecurityDecorator(storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null), this);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -175,7 +170,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       while (true)
         try {
-          return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null);
+          return new OIndexCursorSecurityDecorator(storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null), this);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -191,7 +186,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       while (true) {
         try {
-          return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null);
+          return new OIndexCursorSecurityDecorator(storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null), this);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -238,7 +233,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       while (true) {
         try {
-          return storage.getIndexCursor(indexId, null);
+          return new OIndexCursorSecurityDecorator(storage.getIndexCursor(indexId, null), this);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -254,7 +249,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       while (true) {
         try {
-          return storage.getIndexDescCursor(indexId, null);
+          return new OIndexCursorSecurityDecorator(storage.getIndexDescCursor(indexId, null), this);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
