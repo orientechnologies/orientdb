@@ -96,9 +96,6 @@ public final class AsyncReadCache implements OReadCache {
 
     if (cacheEntry != null) {
       cacheEntry.acquireExclusiveLock();
-      //we try to check that we do not load the same page for write twice, because lis of pages operations
-      //is cleared on release.
-      assert cacheEntry.getPageOperations().isEmpty();
       writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
     }
 
