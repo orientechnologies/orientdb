@@ -20,7 +20,7 @@
           ,,,    .,`                                           MULTI  MODEL
          ,,.     `,                                       GRAPH DOCUMENT DATABASE
        ``        `.                                         
-                 ``                                         COMMUNITY  EDITION
+                 ``                                         
                  `                                           www.orientdb.org
 
 *********************************************************************************
