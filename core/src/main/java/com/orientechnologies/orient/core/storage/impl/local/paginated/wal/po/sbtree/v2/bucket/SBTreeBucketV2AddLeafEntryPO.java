@@ -1,22 +1,22 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeBucketV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeBucketV2;
 
 import java.nio.ByteBuffer;
 
-public final class SBTreeBucketV1AddLeafEntryPO extends PageOperationRecord {
+public final class SBTreeBucketV2AddLeafEntryPO extends PageOperationRecord {
   private int    index;
   private byte[] key;
   private byte[] value;
 
-  public SBTreeBucketV1AddLeafEntryPO() {
+  public SBTreeBucketV2AddLeafEntryPO() {
   }
 
-  public SBTreeBucketV1AddLeafEntryPO(int index, byte[] key, byte[] value) {
+  public SBTreeBucketV2AddLeafEntryPO(int index, byte[] key, byte[] value) {
     this.index = index;
     this.key = key;
     this.value = value;
@@ -36,7 +36,7 @@ public final class SBTreeBucketV1AddLeafEntryPO extends PageOperationRecord {
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OSBTreeBucketV1 bucket = new OSBTreeBucketV1(cacheEntry);
+    final OSBTreeBucketV2 bucket = new OSBTreeBucketV2(cacheEntry);
     final boolean result = bucket.addLeafEntry(index, key, value);
     if (!result) {
       throw new IllegalStateException("Can not redo leaf entry addition");
@@ -45,13 +45,13 @@ public final class SBTreeBucketV1AddLeafEntryPO extends PageOperationRecord {
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final OSBTreeBucketV1 bucket = new OSBTreeBucketV1(cacheEntry);
+    final OSBTreeBucketV2 bucket = new OSBTreeBucketV2(cacheEntry);
     bucket.removeLeafEntry(index, key, value);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.SBTREE_BUCKET_V1_ADD_LEAF_ENTRY_PO;
+    return WALRecordTypes.SBTREE_BUCKET_V2_ADD_LEAF_ENTRY_PO;
   }
 
   @Override

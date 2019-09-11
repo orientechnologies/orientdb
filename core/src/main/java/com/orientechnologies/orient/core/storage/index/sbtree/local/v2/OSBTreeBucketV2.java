@@ -28,6 +28,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2AddAllPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2AddLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2InitPO;
 
 import java.util.ArrayList;
@@ -246,7 +247,8 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
     }
   }
 
-  public byte[] getRawEntry(final int entryIndex, final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer) {
+  public byte[] getRawEntry(final int entryIndex, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer) {
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     final int startEntryPosition = entryPosition;
 
@@ -409,6 +411,8 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
     setBinaryValue(freePointer, serializedKey);
     setByteValue(freePointer + serializedKey.length, (byte) 0);
     setBinaryValue(freePointer + serializedKey.length + OByteSerializer.BYTE_SIZE, serializedValue);
+
+    addPageOperation(new SBTreeBucketV2AddLeafEntryPO(index, serializedKey, serializedValue));
 
     return true;
   }
