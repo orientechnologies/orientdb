@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -164,7 +165,15 @@ public interface OIndexInternal<T> extends OIndex<T> {
       return true;
     }
 
-    //TODO check class hierarchy
+    OClass clazz = db.getClass(indexClass);
+    if (clazz != null) {
+      Collection<OClass> sub = clazz.getSubclasses();
+      for (OClass subClass : sub) {
+        if (isReadRestrictedBySecurityPolicy(subClass.getName(), db, security)) {
+          return true;
+        }
+      }
+    }
 
     return false;
   }
