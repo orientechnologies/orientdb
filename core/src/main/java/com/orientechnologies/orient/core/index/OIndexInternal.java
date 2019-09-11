@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
@@ -152,15 +153,22 @@ public interface OIndexInternal<T> extends OIndex<T> {
       return item;
     }
     OSecurityInternal security = db.getSharedContext().getSecurity();
-    return securityFilter(item, "database.class." + indexClass, db, security);
-  }
-
-  static OIdentifiable securityFilter(OIdentifiable item, String resource, ODatabaseDocumentInternal db, OSecurityInternal security) {
-    if (security.isReadRestrictedBySecurityPolicy(db, resource)) {
+    if (isReadRestrictedBySecurityPolicy(indexClass, db, security)) {
       return item.getRecord();
     }
     return item;
   }
+
+  static boolean isReadRestrictedBySecurityPolicy(String indexClass, ODatabaseDocumentInternal db, OSecurityInternal security) {
+    if (security.isReadRestrictedBySecurityPolicy(db, "database.class." + indexClass)) {
+      return true;
+    }
+
+    //TODO check class hierarchy
+
+    return false;
+  }
+
 
   static Collection securityFilterOnRead(OIndex idx, Collection<OIdentifiable> items) {
     if (idx.getMetadata() == null && idx.getDefinition() == null) {
@@ -175,12 +183,11 @@ public interface OIndexInternal<T> extends OIndex<T> {
       return items;
     }
     OSecurityInternal security = db.getSharedContext().getSecurity();
-    String resource = "database.class." + indexClass;
-    if (security.isReadRestrictedBySecurityPolicy(db, resource)) {
+    if (isReadRestrictedBySecurityPolicy(indexClass, db, security)) {
       return items.stream()
-              .map(x -> securityFilter(x, resource, db, security))
+              .map(x -> x.getRecord()) // force record load, that triggers security checks
               .filter(x -> x != null)
-              .map(x -> x.getIdentity())
+              .map(x -> ((ORecord) x).getIdentity())
               .collect(Collectors.toList());
     }
     return items;
