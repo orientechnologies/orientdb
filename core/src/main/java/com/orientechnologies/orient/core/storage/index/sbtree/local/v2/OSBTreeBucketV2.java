@@ -27,6 +27,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2AddAllPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2InitPO;
 
 import java.util.ArrayList;
@@ -245,7 +246,7 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
     }
   }
 
-  byte[] getRawEntry(final int entryIndex, final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer) {
+  public byte[] getRawEntry(final int entryIndex, final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer) {
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     final int startEntryPosition = entryPosition;
 
@@ -340,7 +341,8 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
     return getByteValue(IS_LEAF_OFFSET) > 0;
   }
 
-  public void addAll(final List<byte[]> rawEntries) {
+  public void addAll(final List<byte[]> rawEntries, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer) {
     final int currentSize = size();
 
     for (int i = 0; i < rawEntries.size(); i++) {
@@ -348,6 +350,8 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
     }
 
     setIntValue(SIZE_OFFSET, rawEntries.size() + currentSize);
+
+    addPageOperation(new SBTreeBucketV2AddAllPO(currentSize, rawEntries, keySerializer, valueSerializer));
   }
 
   public void shrink(final int newSize, final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer) {
@@ -380,7 +384,7 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
     setIntValue(SIZE_OFFSET, newSize);
   }
 
-  boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {
+  public boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {
     final int entrySize = serializedKey.length + serializedValue.length + OByteSerializer.BYTE_SIZE;
 
     assert isLeaf();

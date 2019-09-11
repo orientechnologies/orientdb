@@ -1120,7 +1120,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent
     try {
       final OSBTreeBucketV2<K, V> newRightBucket = new OSBTreeBucketV2<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, keySerializer, valueSerializer);
 
       bucketToSplit.shrink(indexToSplit, keySerializer, valueSerializer);
 
@@ -1208,7 +1208,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent
     try {
       final OSBTreeBucketV2<K, V> newLeftBucket = new OSBTreeBucketV2<>(leftBucketEntry);
       newLeftBucket.init(splitLeaf);
-      newLeftBucket.addAll(leftEntries);
+      newLeftBucket.addAll(leftEntries, keySerializer, valueSerializer);
 
       if (splitLeaf) {
         newLeftBucket.setRightSibling(rightBucketEntry.getPageIndex());
@@ -1221,7 +1221,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent
     try {
       final OSBTreeBucketV2<K, V> newRightBucket = new OSBTreeBucketV2<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, keySerializer, valueSerializer);
 
       if (splitLeaf) {
         newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());
