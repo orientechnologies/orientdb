@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2AddAllPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2AddLeafEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2AddNonLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2InitPO;
 
 import java.util.ArrayList;
@@ -470,6 +471,8 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
       }
     }
 
+    addPageOperation(
+        new SBTreeBucketV2AddNonLeafEntryPO(index, key, updateNeighbours, (int) leftChild, (int) rightChild, prevChild));
     return true;
   }
 
