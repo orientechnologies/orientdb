@@ -143,7 +143,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public int getQuorum() {
-    return 0;
+    return quorum;
   }
 
   @Override
