@@ -27,6 +27,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.SBTreeBucketV2InitPO;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,6 +74,8 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
 
     setLongValue(TREE_SIZE_OFFSET, 0);
     setLongValue(FREE_VALUES_LIST_OFFSET, -1);
+
+    addPageOperation(new SBTreeBucketV2InitPO(isLeaf));
   }
 
   public void switchBucketType() {

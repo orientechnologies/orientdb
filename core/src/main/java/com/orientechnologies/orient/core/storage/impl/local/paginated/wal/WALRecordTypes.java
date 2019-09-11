@@ -129,4 +129,6 @@ public final class WALRecordTypes {
   public static final byte SBTREE_NULL_BUCKET_V1_SET_VALUE_PO    = 106;
   public static final byte SBTREE_NULL_BUCKET_V1_REMOVE_VALUE_PO = 107;
 
+  public static final byte SBTREE_BUCKET_V2_INIT_PO = 108;
+
 }
