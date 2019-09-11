@@ -118,7 +118,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public int getQuorum() {
-    return 0;
+    return quorum;
   }
 
   public synchronized boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName) {
