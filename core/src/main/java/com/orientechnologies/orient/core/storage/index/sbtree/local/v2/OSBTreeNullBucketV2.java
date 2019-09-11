@@ -37,10 +37,10 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
  */
-public final class ONullBucket<V> extends ODurablePage {
+public final class OSBTreeNullBucketV2<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
-  public ONullBucket(OCacheEntry cacheEntry, OBinarySerializer<V> valueSerializer, boolean isNew) {
+  public OSBTreeNullBucketV2(OCacheEntry cacheEntry, OBinarySerializer<V> valueSerializer, boolean isNew) {
     super(cacheEntry);
     this.valueSerializer = valueSerializer;
 

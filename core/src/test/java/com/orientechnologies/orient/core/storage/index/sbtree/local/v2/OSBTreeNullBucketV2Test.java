@@ -15,7 +15,7 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
  */
-public class ONullBucketV2Test {
+public class OSBTreeNullBucketV2Test {
   @Test
   public void testEmptyBucket() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
@@ -27,7 +27,7 @@ public class ONullBucketV2Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry, OStringSerializer.INSTANCE, true);
+    OSBTreeNullBucketV2<String> bucket = new OSBTreeNullBucketV2<>(cacheEntry, OStringSerializer.INSTANCE, true);
     Assert.assertNull(bucket.getValue());
 
     cacheEntry.releaseExclusiveLock();
@@ -46,7 +46,7 @@ public class ONullBucketV2Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry, OStringSerializer.INSTANCE, true);
+    OSBTreeNullBucketV2<String> bucket = new OSBTreeNullBucketV2<>(cacheEntry, OStringSerializer.INSTANCE, true);
 
     bucket.setValue(new OSBTreeValue<>(false, -1, "test"));
     OSBTreeValue<String> treeValue = bucket.getValue();
@@ -68,7 +68,7 @@ public class ONullBucketV2Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry, OStringSerializer.INSTANCE, true);
+    OSBTreeNullBucketV2<String> bucket = new OSBTreeNullBucketV2<>(cacheEntry, OStringSerializer.INSTANCE, true);
 
     bucket.setValue(new OSBTreeValue<>(false, -1, "test"));
     bucket.removeValue();
@@ -92,7 +92,7 @@ public class ONullBucketV2Test {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ONullBucket<String> bucket = new ONullBucket<>(cacheEntry, OStringSerializer.INSTANCE, true);
+    OSBTreeNullBucketV2<String> bucket = new OSBTreeNullBucketV2<>(cacheEntry, OStringSerializer.INSTANCE, true);
 
     bucket.setValue(new OSBTreeValue<>(false, -1, "test"));
     bucket.removeValue();
