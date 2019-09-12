@@ -9,7 +9,9 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -24,11 +26,11 @@ import java.util.Map;
 
 public class OBeginTransaction38Request implements OBinaryRequest<OBeginTransactionResponse> {
 
-  private int                             txId;
-  private boolean                         usingLog;
-  private boolean                         hasContent;
+  private int                           txId;
+  private boolean                       usingLog;
+  private boolean                       hasContent;
   private List<ORecordOperationRequest> operations;
-  private List<IndexChange>               indexChanges;
+  private List<IndexChange>             indexChanges;
 
   public OBeginTransaction38Request(int txId, boolean hasContent, boolean usingLog, Iterable<ORecordOperation> operations,
       Map<String, OTransactionIndexChanges> indexChanges) {
@@ -50,8 +52,17 @@ public class OBeginTransaction38Request implements OBinaryRequest<OBeginTransact
         request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
         switch (txEntry.type) {
         case ORecordOperation.CREATED:
-        case ORecordOperation.UPDATED:
           request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
+          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+          break;
+        case ORecordOperation.UPDATED:
+          if (ODocument.RECORD_TYPE == ORecordInternal.getRecordType(txEntry.getRecord())) {
+            request.setRecordType((byte) 10);
+            ODocumentSerializerDelta delta = new ODocumentSerializerDelta();
+            request.setRecord(delta.serializeDelta((ODocument) txEntry.getRecord()));
+          } else {
+            request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
+          }
           request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
           break;
         }

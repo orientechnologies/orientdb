@@ -75,6 +75,9 @@ public class OTransactionOptimisticServer38 extends OTransactionOptimisticServer
           if (type == 10) {
             int version = operation.getVersion();
             ORecord updated = database.load(rid);
+            if (updated == null) {
+              updated = new ODocument();
+            }
             ODocumentSerializerDelta delta = new ODocumentSerializerDelta();
             delta.deserializeDelta(operation.getRecord(), (ODocument) updated);
             entry = new ORecordOperation(updated, ORecordOperation.UPDATED);

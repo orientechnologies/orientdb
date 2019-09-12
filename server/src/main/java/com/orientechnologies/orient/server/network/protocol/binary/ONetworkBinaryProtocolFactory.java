@@ -42,7 +42,7 @@ public class ONetworkBinaryProtocolFactory {
     switch (protocolVersion) {
     case 37:
       return ONetworkBinaryProtocolFactory::createRequest37;
-    case 39:
+    case 38:
       return ONetworkBinaryProtocolFactory::createRequest38;
     default:
       return ONetworkBinaryProtocolFactory::createRequest;

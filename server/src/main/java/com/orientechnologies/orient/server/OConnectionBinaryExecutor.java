@@ -1329,9 +1329,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (!database.getTransaction().isActive())
       throw new ODatabaseException("No Transaction Active");
     OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
-    return new OFetchTransaction38Response(tx.getId(), tx.getRecordOperations(), tx.getIndexOperations(), tx.getUpdatedRids());
+    return new OFetchTransaction38Response(tx.getId(), tx.getRecordOperations(), tx.getIndexOperations(), tx.getUpdatedRids(),
+        database);
   }
-
 
   @Override
   public OBinaryResponse executeRollback(ORollbackTransactionRequest request) {
@@ -1423,7 +1423,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeDistributedConnect(ODistributedConnectRequest request) {
-    HandshakeInfo handshakeInfo = new HandshakeInfo((short) OChannelBinaryProtocol.PROTOCOL_VERSION_37, "OrientDB Distributed", "",
+    HandshakeInfo handshakeInfo = new HandshakeInfo((short) OChannelBinaryProtocol.PROTOCOL_VERSION_38, "OrientDB Distributed", "",
         (byte) 0, OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
     ((ONetworkProtocolBinary) connection.getProtocol()).setHandshakeInfo(handshakeInfo);
 

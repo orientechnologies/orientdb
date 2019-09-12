@@ -8,11 +8,14 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -37,7 +40,7 @@ public class OFetchTransaction38Response implements OBinaryResponse {
   }
 
   public OFetchTransaction38Response(int txId, Iterable<ORecordOperation> operations,
-      Map<String, OTransactionIndexChanges> indexChanges, Map<ORID, ORID> updatedRids) {
+      Map<String, OTransactionIndexChanges> indexChanges, Map<ORID, ORID> updatedRids, ODatabaseDocumentInternal database) {
     //In some cases the reference are update twice is not yet possible to guess what is the id in the client
     Map<ORID, ORID> reversed = updatedRids.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
     this.txId = txId;
@@ -55,10 +58,12 @@ public class OFetchTransaction38Response implements OBinaryResponse {
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       if (txEntry.type == ORecordOperation.UPDATED && txEntry.getRecord() instanceof ODocument) {
         ODocument doc = (ODocument) txEntry.getRecord();
-        ODocument docc = doc.copy();
-        docc.undo();
-        ODocumentSerializerDelta delta = new ODocumentSerializerDelta();
+        OStorageOperationResult<ORawBuffer> result = database.getStorage()
+            .readRecord((ORecordId) doc.getIdentity(), "", false, false, null);
+        ODocument docc = new ODocument(doc.getIdentity());
+        docc.fromStream(result.getResult().getBuffer());
         request.setOriginal(ORecordSerializerNetworkV37.INSTANCE.toStream(docc));
+        ODocumentSerializerDelta delta = new ODocumentSerializerDelta();
         request.setRecord(delta.serializeDelta(doc));
       } else {
         request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));

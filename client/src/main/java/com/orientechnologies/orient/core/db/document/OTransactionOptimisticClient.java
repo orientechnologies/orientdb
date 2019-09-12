@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
-import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.client.remote.message.tx.ORecordOperation38Response;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -12,11 +12,10 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
@@ -33,12 +32,12 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
     super(iDatabase);
   }
 
-  public void replaceContent(List<ORecordOperationRequest> operations, List<IndexChange> indexChanges) {
+  public void replaceContent(List<ORecordOperation38Response> operations, List<IndexChange> indexChanges) {
 
     Map<ORID, ORecordOperation> oldEntries = this.allEntries;
     this.allEntries = new LinkedHashMap<ORID, ORecordOperation>();
     int createCount = -2;//Start from -2 because temporary rids start from -2
-    for (ORecordOperationRequest operation : operations) {
+    for (ORecordOperation38Response operation : operations) {
       if (!operation.getOldId().equals(operation.getId()))
         updatedRids.put(operation.getId().copy(), operation.getOldId());
 
@@ -56,10 +55,16 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
         record = Orient.instance().getRecordFactoryManager()
             .newInstance(operation.getRecordType(), operation.getOldId().getClusterId(), database);
       }
-      record.fromStream(operation.getRecord());
+      if (operation.getType() == ORecordOperation.UPDATED && operation.getRecordType() == ODocument.RECORD_TYPE) {
+        record.fromStream(operation.getOriginal());
+        ODocumentSerializerDelta deltaSerializer = new ODocumentSerializerDelta();
+        deltaSerializer.deserializeDelta(operation.getRecord(), (ODocument) record);
+      } else {
+        record.fromStream(operation.getRecord());
+      }
       ORecordInternal.setIdentity(record, (ORecordId) operation.getId());
       ORecordInternal.setVersion(record, operation.getVersion());
-      ORecordInternal.setContentChanged(record,operation.isContentChanged());
+      ORecordInternal.setContentChanged(record, operation.isContentChanged());
       getDatabase().getLocalCache().updateRecord(record);
       boolean callHook = checkCallHook(oldEntries, operation.getId(), operation.getType());
       addRecord(record, operation.getType(), null, callHook);

@@ -59,15 +59,14 @@ public class OCommit38Request implements OBinaryRequest<OCommit37Response> {
           request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
           break;
         case ORecordOperation.UPDATED:
-          if (txEntry.getRecord() instanceof ODocument) {
+          if (ODocument.RECORD_TYPE == ORecordInternal.getRecordType(txEntry.getRecord())) {
+            request.setRecordType((byte) 10);
             ODocumentSerializerDelta delta = new ODocumentSerializerDelta();
-            byte[] bytes = delta.serializeDelta((ODocument) txEntry.getRecord());
-            request.setRecord(bytes);
-            request.setContentChanged(false);
+            request.setRecord(delta.serializeDelta((ODocument) txEntry.getRecord()));
           } else {
             request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
-            request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
           }
+          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
           break;
         }
         netOperations.add(request);
