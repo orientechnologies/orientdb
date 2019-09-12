@@ -25,7 +25,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -230,7 +229,7 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
   }
 
   protected void throwSerializedException(final byte[] serializedException) throws IOException {
-    final OMemoryInputStream inputStream = new OMemoryInputStream(serializedException);
+    final ByteArrayInputStream inputStream = new ByteArrayInputStream(serializedException);
     final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
 
     Object throwable = null;

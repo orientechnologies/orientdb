@@ -20,9 +20,9 @@
 
 package com.orientechnologies.orient.core.compression.impl;
 
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
@@ -60,7 +60,7 @@ public class OGZIPCompression extends OAbstractCompression {
   @Override
   public byte[] uncompress(byte[] content, final int offset, final int length) {
     try {
-      final OMemoryInputStream memoryInputStream = new OMemoryInputStream(content, offset, length);
+      final ByteArrayInputStream memoryInputStream = new ByteArrayInputStream(content, offset, length);
       final GZIPInputStream gzipInputStream = new GZIPInputStream(memoryInputStream, 16384); // 16KB
 
       try {

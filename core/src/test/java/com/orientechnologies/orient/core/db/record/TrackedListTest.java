@@ -1,17 +1,12 @@
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -438,7 +433,7 @@ public class TrackedListTest {
     out.writeObject(beforeSerialization);
     out.close();
 
-    final ObjectInputStream input = new ObjectInputStream(new OMemoryInputStream(memoryStream.copy()));
+    final ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(memoryStream.copy()));
     @SuppressWarnings("unchecked")
     final List<String> afterSerialization = (List<String>) input.readObject();
 

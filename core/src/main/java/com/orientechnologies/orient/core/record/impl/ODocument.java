@@ -916,6 +916,7 @@ public class ODocument extends ORecordAbstract
    *
    * @return placeholder of this document
    */
+  @Deprecated
   public ORecord placeholder() {
     final ODocument cloned = new ODocument();
     cloned.source = null;

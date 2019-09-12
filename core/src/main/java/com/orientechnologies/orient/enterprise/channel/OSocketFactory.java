@@ -167,20 +167,4 @@ public class OSocketFactory {
     return configureSocket(getBackingFactory().createSocket());
   }
 
-  public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
-    return configureSocket(getBackingFactory().createSocket(host, port));
-  }
-
-  public Socket createSocket(InetAddress host, int port) throws IOException {
-    return configureSocket(getBackingFactory().createSocket(host, port));
-  }
-
-  public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
-    return configureSocket(getBackingFactory().createSocket(host, port, localHost, localPort));
-  }
-
-  public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
-    return configureSocket(getBackingFactory().createSocket(address, port, localAddress, localPort));
-  }
-
 }

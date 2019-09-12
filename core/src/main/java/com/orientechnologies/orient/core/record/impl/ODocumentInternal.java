@@ -108,17 +108,6 @@ public class ODocumentInternal {
     return doc.getRawProperty(propertyName);
   }
 
-  public static ODocument toRawDocument(OElement element) {
-    if (element instanceof ODocument) {
-      return (ODocument) element;
-    } else if (element instanceof OVertexDelegate) {
-      return ((OVertexDelegate) element).element;
-    } else if (element instanceof OEdgeDelegate) {
-      return ((OEdgeDelegate) element).element;
-    }
-    return null;
-  }
-
   public static void setPropertyAccess(ODocument doc, OPropertyAccess propertyAccess) {
     doc.propertyAccess = propertyAccess;
   }
