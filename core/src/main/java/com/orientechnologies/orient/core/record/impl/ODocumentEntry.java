@@ -109,10 +109,6 @@ public class ODocumentEntry {
     return created;
   }
 
-  public void setCreated(final boolean created) {
-    this.created = created;
-  }
-
   protected ODocumentEntry clone() {
     final ODocumentEntry entry = new ODocumentEntry();
     entry.type = type;
@@ -135,6 +131,11 @@ public class ODocumentEntry {
   public void clear() {
     this.created = false;
     this.changed = false;
+    original = null;
+    removeTimeline();
+  }
+
+  public void clearNotExists() {
     original = null;
     removeTimeline();
   }
@@ -167,6 +168,16 @@ public class ODocumentEntry {
       return ((OTrackedMultiValue) value).isModified();
     }
     if (value instanceof ODocument) {
+      return ((ODocument) value).isDirty();
+    }
+    return false;
+  }
+
+  public boolean isTxTrackedModified() {
+    if (value instanceof OTrackedMultiValue) {
+      return ((OTrackedMultiValue) value).isTransactionModified();
+    }
+    if (value instanceof ODocument && ((ODocument) value).isEmbedded()) {
       return ((ODocument) value).isDirty();
     }
     return false;

@@ -1071,6 +1071,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public void setDirtyNoChanged() {
     if (owner != null)
       owner.setDirtyNoChanged();
+    this.dirty = true;
+    this.transactionDirty = true;
   }
 
   @Override

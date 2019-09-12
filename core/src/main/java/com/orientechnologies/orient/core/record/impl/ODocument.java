@@ -372,7 +372,6 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFieldName The field name, it can contain any character (it's not evaluated as an expression, as in #eval()
    * @param <RET>
-   *
    * @return the field value. Null if the field does not exist.
    */
   public <RET> RET getProperty(final String iFieldName) {
@@ -416,7 +415,6 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFieldName The field name, it can contain any character (it's not evaluated as an expression, as in #eval()
    * @param <RET>
-   *
    * @return the field value. Null if the field does not exist.
    */
   protected <RET> RET getRawProperty(final String iFieldName) {
@@ -487,7 +485,7 @@ public class ODocument extends ORecordAbstract
       entry = new ODocumentEntry();
       fieldSize++;
       fields.put(iPropetyName, entry);
-      entry.setCreated(true);
+      entry.markCreated();
       knownProperty = false;
       oldValue = null;
       oldType = null;
@@ -1160,9 +1158,7 @@ public class ODocument extends ORecordAbstract
    * 100");</code>
    *
    * @param iExpression SQL expression to evaluate.
-   *
    * @return The result of expression
-   *
    * @throws OQueryParsingException in case the expression is not valid
    */
   public Object eval(final String iExpression) {
@@ -1175,9 +1171,7 @@ public class ODocument extends ORecordAbstract
    * = doc.eval("amount * (100+$vat) / 100", context); </code>
    *
    * @param iExpression SQL expression to evaluate.
-   *
    * @return The result of expression
-   *
    * @throws OQueryParsingException in case the expression is not valid
    */
   public Object eval(final String iExpression, final OCommandContext iContext) {
@@ -1188,7 +1182,6 @@ public class ODocument extends ORecordAbstract
    * Reads the field value.
    *
    * @param iFieldName field name
-   *
    * @return field value if defined, otherwise null
    */
   @Override
@@ -1224,7 +1217,6 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFieldName field name
    * @param iFieldType Forced type.
-   *
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName, final Class<?> iFieldType) {
@@ -1241,7 +1233,6 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFieldName field name
    * @param iFieldType Forced type.
-   *
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName, final OType iFieldType) {
@@ -1283,7 +1274,6 @@ public class ODocument extends ORecordAbstract
    * @param iFieldName     field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this
    *                       feature call {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue field value
-   *
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public ODocument field(final String iFieldName, Object iPropertyValue) {
@@ -1341,7 +1331,6 @@ public class ODocument extends ORecordAbstract
    *                       feature call {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue field value.
    * @param iFieldType     Forced type (not auto-determined)
-   *
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain. If the updated
    * document is another document (using the dot (.) notation) then the document returned is the changed one or NULL if no document
    * has been found in chain
@@ -1446,7 +1435,7 @@ public class ODocument extends ORecordAbstract
       entry = new ODocumentEntry();
       fieldSize++;
       fields.put(iFieldName, entry);
-      entry.setCreated(true);
+      entry.markCreated();
       knownProperty = false;
       oldValue = null;
       oldType = null;
@@ -1591,7 +1580,6 @@ public class ODocument extends ORecordAbstract
    *                                            false, the missed properties in the "other" document will be removed by original
    *                                            document
    * @param iMergeSingleItemsOfMultiValueFields If true, merges single items of multi field fields (collections, maps, arrays, etc)
-   *
    * @return
    */
   public ODocument merge(final ODocument iOther, boolean iUpdateOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
@@ -1871,7 +1859,6 @@ public class ODocument extends ORecordAbstract
    *                                            false, the missed properties in the "other" document will be removed by original
    *                                            document
    * @param iMergeSingleItemsOfMultiValueFields If true, merges single items of multi field fields (collections, maps, arrays, etc)
-   *
    * @return
    */
   public ODocument merge(final Map<String, Object> iOther, final boolean iUpdateOnlyMode,
@@ -2155,7 +2142,6 @@ public class ODocument extends ORecordAbstract
    * <p> The following code will clear all data from specified document. </p> <code> doc.clear(); doc.save(); </code>
    *
    * @return this
-   *
    * @see #reset()
    */
   @Override
@@ -2175,7 +2161,6 @@ public class ODocument extends ORecordAbstract
    * <p> IMPORTANT! This can be used only if no transactions are begun. </p>
    *
    * @return this
-   *
    * @throws IllegalStateException if transaction is begun.
    * @see #clear()
    */
@@ -2265,7 +2250,6 @@ public class ODocument extends ORecordAbstract
    * com.orientechnologies.orient.core.index.OClassIndexManager} to determine what fields are changed to update indexes.
    *
    * @param iTrackingChanges True to enable it, otherwise false
-   *
    * @return this
    */
   public ODocument setTrackingChanges(final boolean iTrackingChanges) {
@@ -2294,11 +2278,11 @@ public class ODocument extends ORecordAbstract
       Iterator<Entry<String, ODocumentEntry>> iter = fields.entrySet().iterator();
       while (iter.hasNext()) {
         Entry<String, ODocumentEntry> cur = iter.next();
-        if (!cur.getValue().exist()) {
-          iter.remove();
-        } else {
+        if (cur.getValue().exist()) {
           cur.getValue().clear();
           cur.getValue().enableTracking(this);
+        } else {
+          cur.getValue().clearNotExists();
         }
       }
     }
@@ -2312,12 +2296,13 @@ public class ODocument extends ORecordAbstract
         Entry<String, ODocumentEntry> cur = iter.next();
         if (cur.getValue().exist()) {
           cur.getValue().transactionClear();
+        } else {
+          iter.remove();
         }
       }
     }
 
   }
-
 
   public boolean isOrdered() {
     return ordered;
@@ -3215,7 +3200,7 @@ public class ODocument extends ORecordAbstract
       Object value = event.getValue();
       if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD && !(value instanceof OTrackedMultiValue)) {
         if (value instanceof List) {
-          OTrackedList newCollection = new OTrackedList<>(this) ;
+          OTrackedList newCollection = new OTrackedList<>(this);
           fillTrackedCollection(newCollection, newCollection, (Collection<Object>) value);
           origin.replace(event, newCollection);
         } else if (value instanceof Set) {
@@ -3681,7 +3666,7 @@ public class ODocument extends ORecordAbstract
         }
       } else if (currentElement instanceof OTrackedMultiValue && currentElement instanceof List) {
         List currentElementAsList = (List) currentElement;
-        if (((OTrackedMultiValue)currentElementAsList).isModified()) {
+        if (((OTrackedMultiValue) currentElementAsList).isModified()) {
           ODocumentDelta listElementDelta = new ODocumentDelta();
           listElementDelta.field("i", new ValueType(i, OType.INTEGER));
           listElementDelta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
