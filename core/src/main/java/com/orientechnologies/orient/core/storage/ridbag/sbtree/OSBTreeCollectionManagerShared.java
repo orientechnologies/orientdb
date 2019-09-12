@@ -193,7 +193,9 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     } else {
       fileName = atomicOperation.fileNameById(collectionPointer.getFileId());
     }
-
+    if (fileName == null) {
+      return null;
+    }
     OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(
         fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, storage);
 
