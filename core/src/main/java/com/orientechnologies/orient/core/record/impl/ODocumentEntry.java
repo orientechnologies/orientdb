@@ -54,48 +54,6 @@ public class ODocumentEntry {
     return changed;
   }
 
-  public boolean isChangedTree() {
-    if ((changed || isTrackedModified()) && exists) {
-      return true;
-    }
-    return false;
-  }
-
-  public boolean hasNonExistingTree() {
-    if (!exists) {
-      return true;
-    }
-
-    if (value instanceof ODocument) {
-      ODocument doc = (ODocument) value;
-      for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
-        if (field.getValue().hasNonExistingTree()) {
-          return true;
-        }
-      }
-    }
-
-    if (value instanceof List) {
-      List list = (List) value;
-      for (Object element : list) {
-        if (element instanceof ODocument) {
-          ODocument doc = (ODocument) element;
-          for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
-            if (field.getValue().hasNonExistingTree()) {
-              return true;
-            }
-          }
-        } else if (element instanceof List) {
-          if (ODocumentHelper.hasNonExistingInList((List) element)) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
   public void setChanged(final boolean changed) {
     this.changed = changed;
   }

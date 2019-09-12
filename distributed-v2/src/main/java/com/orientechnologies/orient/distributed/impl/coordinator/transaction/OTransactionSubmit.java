@@ -31,8 +31,8 @@ public class OTransactionSubmit implements OSubmitRequest {
 
   private static final String _sequencesBaseClass = "OSequence";
 
-  public OTransactionSubmit(Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes, boolean useDeltas) {
-    this.operations = genOps(ops, useDeltas);
+  public OTransactionSubmit(Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes) {
+    this.operations = genOps(ops);
     this.indexes = indexes;
   }
 
@@ -51,7 +51,7 @@ public class OTransactionSubmit implements OSubmitRequest {
     return false;
   }
 
-  public static List<ORecordOperationRequest> genOps(Collection<ORecordOperation> ops, boolean useDeltas) {
+  public static List<ORecordOperationRequest> genOps(Collection<ORecordOperation> ops) {
     List<ORecordOperationRequest> operations = new ArrayList<>();
     for (ORecordOperation txEntry : ops) {
       if (txEntry.type == ORecordOperation.LOADED)

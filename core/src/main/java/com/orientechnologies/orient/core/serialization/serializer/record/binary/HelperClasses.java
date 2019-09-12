@@ -29,38 +29,23 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
-import com.orientechnologies.orient.core.delta.ODeltaDocumentFieldType;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author mdjurovi
@@ -108,20 +93,11 @@ public class HelperClasses {
     return OType.getById(readByte(bytes));
   }
 
-  public static OTypeInterface readDeltaDocumentType(final BytesContainer bytes) {
-    return ODeltaDocumentFieldType.getFromId(readByte(bytes));
-  }
-
   public static void writeOType(BytesContainer bytes, int pos, OType type) {
     bytes.bytes[pos] = (byte) type.getId();
   }
 
-  public static void writeType(BytesContainer bytes, OTypeInterface type) {
-    int pos = bytes.alloc(1);
-    bytes.bytes[pos] = (byte) type.getId();
-  }
-
-  public static void writeType(BytesContainer bytes, ODeltaDocumentFieldType type) {
+  public static void writeType(BytesContainer bytes, OType type) {
     int pos = bytes.alloc(1);
     bytes.bytes[pos] = (byte) type.getId();
   }
@@ -249,18 +225,6 @@ public class HelperClasses {
     OType type = OType.getTypeByValue(fieldValue);
     if (type == OType.LINK && fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid())
       type = OType.EMBEDDED;
-    return type;
-  }
-
-  public static OTypeInterface getDeltaTypeFromValueEmbedded(final Object fieldValue) {
-    if (fieldValue instanceof ODocumentDelta) {
-      return ODeltaDocumentFieldType.DELTA_RECORD;
-    }
-
-    OType type = getTypeFromValueEmbedded(fieldValue);
-    if (type == null) {
-      return null;
-    }
     return type;
   }
 

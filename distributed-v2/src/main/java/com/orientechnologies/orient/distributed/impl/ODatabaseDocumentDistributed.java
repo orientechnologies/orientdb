@@ -182,7 +182,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private void distributedCommitV2(OTransactionInternal iTx) {
     OTransactionSubmit ts = new OTransactionSubmit(iTx.getRecordOperations(),
-        OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx), iTx.isUseDeltas());
+        OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx));
     if (ts.isEmpty()) {
       return;
     }
@@ -231,8 +231,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void txFirstPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
-      List<OIndexOperationRequest> indexes, boolean useDeltas) {
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>(), useDeltas);
+      List<OIndexOperationRequest> indexes) {
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>());
     tx.begin(operations, indexes);
     firstPhaseDataChecks(tx);
   }
@@ -240,7 +240,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public OTransactionOptimisticDistributed txSecondPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
       List<OIndexOperationRequest> indexes, boolean success) {
     //MAKE delta be used by default
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>(), false);
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>());
     tx.begin(operations, indexes);
     try {
       if (success) {

@@ -603,11 +603,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
   }
 
-  @Override
-  public boolean isUseDeltas() {
-    return false;
-  }
-
   public void setSentToServer(boolean sentToServer) {
     this.sentToServer = sentToServer;
   }

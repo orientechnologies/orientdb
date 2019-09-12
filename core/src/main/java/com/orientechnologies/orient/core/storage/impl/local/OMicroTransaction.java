@@ -754,8 +754,4 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     this.database = database;
   }
 
-  @Override
-  public boolean isUseDeltas() {
-    return false;
-  }
 }

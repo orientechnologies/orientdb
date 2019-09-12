@@ -25,15 +25,8 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.OElement;
@@ -47,16 +40,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Generic representation of a type.<br> allowAssignmentFrom accepts any class, but Array.class means that the type accepts generic
@@ -64,7 +48,7 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public enum OType implements OTypeInterface {
+public enum OType {
   BOOLEAN("Boolean", 0, Boolean.class, new Class<?>[] { Number.class }),
 
   INTEGER("Integer", 1, Integer.class, new Class<?>[] { Number.class }),
@@ -186,7 +170,6 @@ public enum OType implements OTypeInterface {
    * Return the type by ID.
    *
    * @param iId The id to search
-   *
    * @return The type if any, otherwise null
    */
   public static OType getById(final byte iId) {
@@ -201,7 +184,6 @@ public enum OType implements OTypeInterface {
    *
    * @return the identifier of the type.
    */
-  @Override
   public final int getId() {
     return id;
   }
@@ -210,7 +192,6 @@ public enum OType implements OTypeInterface {
    * Return the correspondent type by checking the "assignability" of the class received as parameter.
    *
    * @param iClass Class to check
-   *
    * @return OType instance if found, otherwise null
    */
   public static OType getTypeByClass(final Class<?> iClass) {
@@ -276,7 +257,8 @@ public enum OType implements OTypeInterface {
   private static boolean checkLinkCollection(Collection<?> toCheck) {
     boolean empty = true;
     for (Object object : toCheck) {
-      if (object != null && (!(object instanceof OIdentifiable) || (object instanceof ODocument && ((ODocument) object).isEmbedded()) || (object instanceof ODocumentDelta)))
+      if (object != null && (!(object instanceof OIdentifiable) || (object instanceof ODocument && ((ODocument) object)
+          .isEmbedded())))
         return false;
       else if (object != null)
         empty = false;
@@ -307,7 +289,6 @@ public enum OType implements OTypeInterface {
    *
    * @param iValue       Value to convert
    * @param iTargetClass Expected class
-   *
    * @return The converted value or the original if no conversion was applied
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -743,7 +724,6 @@ public enum OType implements OTypeInterface {
    * Convert the input object to an integer.
    *
    * @param iValue Any type supported
-   *
    * @return The integer value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public int asInt(final Object iValue) {
@@ -761,7 +741,6 @@ public enum OType implements OTypeInterface {
    * Convert the input object to a long.
    *
    * @param iValue Any type supported
-   *
    * @return The long value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public long asLong(final Object iValue) {
@@ -779,7 +758,6 @@ public enum OType implements OTypeInterface {
    * Convert the input object to a float.
    *
    * @param iValue Any type supported
-   *
    * @return The float value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public float asFloat(final Object iValue) {
@@ -795,7 +773,6 @@ public enum OType implements OTypeInterface {
    * Convert the input object to a double.
    *
    * @param iValue Any type supported
-   *
    * @return The double value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public double asDouble(final Object iValue) {
@@ -811,7 +788,6 @@ public enum OType implements OTypeInterface {
    * Convert the input object to a string.
    *
    * @param iValue Any type supported
-   *
    * @return The string if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   @Deprecated

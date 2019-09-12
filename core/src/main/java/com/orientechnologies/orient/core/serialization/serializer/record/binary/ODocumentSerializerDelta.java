@@ -17,7 +17,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEmbedded;
@@ -1378,7 +1377,7 @@ public class ODocumentSerializerDelta {
     }
   }
 
-  public static void writeNullableType(BytesContainer bytes, OTypeInterface type) {
+  public static void writeNullableType(BytesContainer bytes, OType type) {
     int pos = bytes.alloc(1);
     if (type == null) {
       bytes.bytes[pos] = -1;
