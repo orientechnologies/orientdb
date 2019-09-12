@@ -313,4 +313,8 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     return tracker.getTimeLine();
   }
 
+  public OMultiValueChangeTimeLine<Integer, T> getTransactionTimeLine() {
+    return tracker.getTransactionTimeLine();
+  }
+
 }

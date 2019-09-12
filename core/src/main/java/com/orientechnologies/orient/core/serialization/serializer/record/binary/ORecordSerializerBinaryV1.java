@@ -321,10 +321,10 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
   private void serializeValues(final BytesContainer headerBuffer, final BytesContainer valuesBuffer, final ODocument document,
       Set<Entry<String, ODocumentEntry>> fields, final Map<String, OProperty> props, OImmutableSchema schema,
       OPropertyEncryption encryption) {
-
+    OClass oClass = ODocumentInternal.getImmutableSchemaClass(document);
     for (Entry<String, ODocumentEntry> field : fields) {
       ODocumentEntry docEntry = field.getValue();
-      if (!field.getValue().exist()) {
+      if (!field.getValue().exists()) {
         continue;
       }
       if (docEntry.property == null && props != null) {
@@ -351,7 +351,7 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
         int startOffset = valuesBuffer.offset;
-        serializeValue(valuesBuffer, value, type, getLinkedType(document, type, field.getKey()), schema, encryption);
+        serializeValue(valuesBuffer, value, type, getLinkedType(oClass, type, field.getKey()), schema, encryption);
         int valueLength = valuesBuffer.offset - startOffset;
         OVarIntSerializer.write(headerBuffer, valueLength);
       } else {

@@ -194,7 +194,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     final Entry<String, ODocumentEntry>[] values = new Entry[fields.size()];
     for (Entry<String, ODocumentEntry> entry : fields) {
       ODocumentEntry docEntry = entry.getValue();
-      if (!docEntry.exist())
+      if (!docEntry.exists())
         continue;
       writeString(bytes, entry.getKey());
       pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);

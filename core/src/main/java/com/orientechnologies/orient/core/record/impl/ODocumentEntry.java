@@ -39,9 +39,12 @@ public class ODocumentEntry {
   public  Object    original;
   public  OType     type;
   public  OProperty property;
-  private boolean   changed = false;
-  private boolean   exist   = true;
-  private boolean   created = false;
+  private boolean   changed   = false;
+  private boolean   exists    = true;
+  private boolean   created   = false;
+  private boolean   txChanged = false;
+  private boolean   txExists  = true;
+  private boolean   txCreated = false;
 
   public ODocumentEntry() {
 
@@ -52,14 +55,14 @@ public class ODocumentEntry {
   }
 
   public boolean isChangedTree() {
-    if ((changed || isTrackedModified()) && exist ) {
+    if ((changed || isTrackedModified()) && exists) {
       return true;
     }
     return false;
   }
 
   public boolean hasNonExistingTree() {
-    if (!exist) {
+    if (!exists) {
       return true;
     }
 
@@ -97,12 +100,13 @@ public class ODocumentEntry {
     this.changed = changed;
   }
 
-  public boolean exist() {
-    return exist;
+  public boolean exists() {
+    return exists;
   }
 
-  public void setExist(final boolean exist) {
-    this.exist = exist;
+  public void setExists(final boolean exists) {
+    this.exists = exists;
+    this.txExists = exists;
   }
 
   public boolean isCreated() {
@@ -116,7 +120,10 @@ public class ODocumentEntry {
     entry.value = value;
     entry.changed = changed;
     entry.created = created;
-    entry.exist = exist;
+    entry.exists = exists;
+    entry.txChanged = changed;
+    entry.txCreated = created;
+    entry.txExists = exists;
     return entry;
   }
 
@@ -185,6 +192,7 @@ public class ODocumentEntry {
 
   public void markChanged() {
     this.changed = true;
+    this.txChanged = true;
   }
 
   public void unmarkChanged() {
@@ -193,6 +201,7 @@ public class ODocumentEntry {
 
   public void markCreated() {
     this.created = true;
+    this.txCreated = true;
   }
 
   public void unmarkCreated() {
@@ -204,7 +213,7 @@ public class ODocumentEntry {
       value = original;
       unmarkChanged();
       original = null;
-      exist = true;
+      exists = true;
     }
   }
 
@@ -212,5 +221,19 @@ public class ODocumentEntry {
     if (value instanceof OTrackedMultiValue) {
       ((OTrackedMultiValue) value).transactionClear();
     }
+    this.txCreated = false;
+    this.txChanged = false;
+  }
+
+  public boolean isTxChanged() {
+    return txChanged;
+  }
+
+  public boolean isTxCreated() {
+    return txCreated;
+  }
+
+  public boolean isTxExists() {
+    return txExists;
   }
 }

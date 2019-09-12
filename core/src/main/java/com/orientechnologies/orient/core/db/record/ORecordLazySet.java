@@ -458,4 +458,9 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   public String toString() {
     return ORecordMultiValueHelper.toString(this);
   }
+
+  @Override
+  public OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> getTransactionTimeLine() {
+    return tracker.getTransactionTimeLine();
+  }
 }

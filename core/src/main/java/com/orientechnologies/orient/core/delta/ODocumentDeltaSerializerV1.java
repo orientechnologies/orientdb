@@ -281,7 +281,7 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
 
     for (Map.Entry<String, ODocumentEntry> entry : fields) {
       ODocumentEntry docEntry = entry.getValue();
-      if (!docEntry.exist())
+      if (!docEntry.exists())
         continue;
       if (docEntry.property == null && props != null) {
         OProperty prop = props.get(entry.getKey());

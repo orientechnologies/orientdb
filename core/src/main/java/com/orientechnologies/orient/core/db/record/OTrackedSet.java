@@ -286,4 +286,8 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
     return tracker.getTimeLine();
   }
+
+  public OMultiValueChangeTimeLine<T, T> getTransactionTimeLine() {
+    return tracker.getTransactionTimeLine();
+  }
 }

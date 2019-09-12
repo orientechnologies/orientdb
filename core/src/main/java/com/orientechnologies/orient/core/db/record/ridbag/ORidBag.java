@@ -384,6 +384,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return uuid;
   }
 
+  public void setTemporaryId(UUID uuid) {
+    this.uuid = uuid;
+  }
+
   /**
    * Notify collection that changes has been saved. Converts to non embedded implementation if needed.
    * <p>
@@ -572,5 +576,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   @Override
   public boolean isTransactionModified() {
     return delegate.isTransactionModified();
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> getTransactionTimeLine() {
+    return delegate.getTransactionTimeLine();
   }
 }

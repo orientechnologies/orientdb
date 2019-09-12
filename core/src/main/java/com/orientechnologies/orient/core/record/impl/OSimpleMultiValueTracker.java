@@ -37,7 +37,7 @@ public final class OSimpleMultiValueTracker<K, V> {
   private final WeakReference<ORecordElement>             element;
   private       OMultiValueChangeTimeLine<Object, Object> timeLine;
   private       boolean                                   enabled;
-  private       OMultiValueChangeTimeLine<Object, Object> transactionTimeLine;
+  private       OMultiValueChangeTimeLine<K, V>           transactionTimeLine;
 
   public OSimpleMultiValueTracker(ORecordElement element) {
     this.element = new WeakReference<ORecordElement>(element);
@@ -89,10 +89,10 @@ public final class OSimpleMultiValueTracker<K, V> {
     timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
 
     if (transactionTimeLine == null) {
-      transactionTimeLine = new OMultiValueChangeTimeLine<Object, Object>();
+      transactionTimeLine = new OMultiValueChangeTimeLine<K, V>();
     }
 
-    transactionTimeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
+    transactionTimeLine.addCollectionChangeEvent(event);
   }
 
   public void enable() {
@@ -120,7 +120,7 @@ public final class OSimpleMultiValueTracker<K, V> {
     return timeLine;
   }
 
-  public OMultiValueChangeTimeLine<Object, Object> getTransactionTimeLine() {
+  public OMultiValueChangeTimeLine<K, V> getTransactionTimeLine() {
     return transactionTimeLine;
   }
 

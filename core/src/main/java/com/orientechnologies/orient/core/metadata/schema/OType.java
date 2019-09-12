@@ -255,7 +255,7 @@ public enum OType implements OTypeInterface {
 
     OType byType = getTypeByClassInherit(clazz);
     if (LINK == byType) {
-      if (value instanceof ODocument && ((ODocument) value).hasOwners())
+      if (value instanceof ODocument && ((ODocument) value).isEmbedded())
         return EMBEDDED;
     } else if (EMBEDDEDSET == byType) {
       if (checkLinkCollection(((Collection<?>) value)))
