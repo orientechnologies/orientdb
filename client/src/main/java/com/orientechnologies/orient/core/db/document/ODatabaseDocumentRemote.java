@@ -234,7 +234,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       initAtFirstOpen(ctx);
       this.user = new OImmutableUser(-1,
-          new OUser(user, password).addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
+          new OUser(user, password)); //.addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
       // WAKE UP LISTENERS
       callOnOpenListeners();
@@ -888,5 +888,36 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     }
     return this;
   }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific, int iOperation) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation, Object iResourceSpecific) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
+    return (DB) this;
+  }
+
 
 }

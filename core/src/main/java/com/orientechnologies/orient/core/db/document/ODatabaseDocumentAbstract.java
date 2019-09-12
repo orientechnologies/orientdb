@@ -362,60 +362,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific,
-      final int iOperation) {
-    if (user != null) {
-      try {
-        user.allow(resourceGeneric, resourceSpecific, iOperation);
-      } catch (OSecurityAccessException e) {
-
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(this, "User '%s' tried to access the reserved resource '%s.%s', operation '%s'", getUser(), resourceGeneric,
-                  resourceSpecific, iOperation);
-
-        throw e;
-      }
-    }
-    return (DB) this;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
-      final Object... iResourcesSpecific) {
-    if (iResourcesSpecific == null || iResourcesSpecific.length == 0) {
-      checkSecurity(iResourceGeneric, null, iOperation);
-    } else {
-      for (Object target : iResourcesSpecific) {
-        checkSecurity(iResourceGeneric, target == null ? null : target.toString(), iOperation);
-      }
-    }
-    return (DB) this;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
-      final Object iResourceSpecific) {
-    checkOpenness();
-    checkSecurity(iResourceGeneric, iResourceSpecific == null ? null : iResourceSpecific.toString(), iOperation);
-
-    return (DB) this;
-  }
-
-  public void checkClusterSecurity(final int operation, final OIdentifiable record, String cluster) {
-    if (cluster == null) {
-      cluster = getClusterNameById(record.getIdentity().getClusterId());
-    }
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, operation, cluster);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public ODatabaseInternal<?> getDatabaseOwner() {
     ODatabaseInternal<?> current = databaseOwner;
@@ -2140,35 +2086,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return getStorage().incrementalBackup(path, null);
   }
 
-  @Override
-  @Deprecated
-  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResource, final int iOperation) {
-    final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
-    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
-
-    if (resourceSpecific == null || resourceSpecific.equals("*"))
-      checkSecurity(resourceGeneric, null, iOperation);
-
-    return checkSecurity(resourceGeneric, resourceSpecific, iOperation);
-  }
-
-  @Override
-  @Deprecated
-  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
-      final Object iResourceSpecific) {
-    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
-    if (iResourceSpecific == null || iResourceSpecific.equals("*"))
-      return checkSecurity(resourceGeneric, iOperation, (Object) null);
-
-    return checkSecurity(resourceGeneric, iOperation, iResourceSpecific);
-  }
-
-  @Override
-  @Deprecated
-  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
-      final Object... iResourcesSpecific) {
-    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
-    return checkSecurity(resourceGeneric, iOperation, iResourcesSpecific);
+  public void checkClusterSecurity(final int operation, final OIdentifiable record, String cluster) {
+    if (cluster == null) {
+      cluster = getClusterNameById(record.getIdentity().getClusterId());
+    }
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, operation, cluster);
   }
 
   /**
