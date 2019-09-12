@@ -190,16 +190,6 @@ public class ODocumentEntry {
     return false;
   }
 
-  public boolean isTxTrackedModified() {
-    if (value instanceof OTrackedMultiValue) {
-      return ((OTrackedMultiValue) value).isTransactionModified();
-    }
-    if (value instanceof ODocument) {
-      return ((ODocument) value).isDirty();
-    }
-    return false;
-  }
-
   public void markChanged() {
     this.changed = true;
     this.txChanged = true;

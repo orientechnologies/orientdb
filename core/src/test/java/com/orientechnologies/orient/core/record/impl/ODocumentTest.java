@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
@@ -14,6 +15,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
@@ -22,10 +24,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -528,7 +527,7 @@ public class ODocumentTest {
       List<String> originalValue = new ArrayList<>();
       originalValue.add("one");
       originalValue.add("two");
-      List<String> copyList = new ArrayList<>(originalValue);
+      originalValue.add("toRemove");
 
       doc.field(fieldName, originalValue);
 
@@ -537,6 +536,7 @@ public class ODocumentTest {
 
       List<String> newArray = doc.field(fieldName);
       newArray.set(1, "three");
+      newArray.remove("toRemove");
 
       //test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
@@ -546,6 +546,100 @@ public class ODocumentTest {
 
       List checkList = originalDoc.field(fieldName);
       assertEquals("three", checkList.get(1));
+      assertFalse(checkList.contains("toRemove"));
+    } finally {
+      if (db != null)
+        db.close();
+      if (odb != null) {
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+
+  @Test
+  public void testSetDelta() {
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try {
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+
+      String fieldName = "testField";
+      Set<String> originalValue = new HashSet<>();
+      originalValue.add("one");
+      originalValue.add("toRemove");
+
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      Set<String> newArray = doc.field(fieldName);
+      newArray.add("three");
+      newArray.remove("toRemove");
+
+      //test serialization/deserialization
+      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+
+      byte[] bytes = serializerDelta.serializeDelta(doc);
+      serializerDelta.deserializeDelta(bytes, originalDoc);
+
+      Set<String> checkSet = originalDoc.field(fieldName);
+      assertTrue(checkSet.contains("three"));
+      assertFalse(checkSet.contains("toRemove"));
+    } finally {
+      if (db != null)
+        db.close();
+      if (odb != null) {
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+
+  @Test
+  public void testSetOfSetsDelta() {
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try {
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      String fieldName = "testField";
+      Set<Set<String>> originalValue = new HashSet<>();
+      for (int i = 0; i < 2; i++) {
+        Set<String> containedList = new HashSet<>();
+        containedList.add("one");
+        containedList.add("two");
+        originalValue.add(containedList);
+      }
+
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      Set<String> newArray = (Set<String>) ((Set) doc.field(fieldName)).iterator().next();
+      newArray.add("three");
+
+      //test serialization/deserialization
+      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+
+      byte[] bytes = serializerDelta.serializeDelta(doc);
+      serializerDelta.deserializeDelta(bytes, originalDoc);
+
+      Set<List> checkSet = originalDoc.field(fieldName);
+      assertFalse(checkSet.contains("three"));
     } finally {
       if (db != null)
         db.close();
@@ -570,15 +664,12 @@ public class ODocumentTest {
       ODocument doc = new ODocument(claz);
       String fieldName = "testField";
       List<List<String>> originalValue = new ArrayList<>();
-      List<List<String>> copyValue = new ArrayList<>();
       for (int i = 0; i < 2; i++) {
         List<String> containedList = new ArrayList<>();
         containedList.add("one");
         containedList.add("two");
 
-        List<String> copyContainedList = new ArrayList<>(containedList);
         originalValue.add(containedList);
-        copyValue.add(copyContainedList);
       }
 
       doc.field(fieldName, originalValue);
@@ -1019,7 +1110,7 @@ public class ODocumentTest {
   }
 
   @Test
-  public void testRemoveDocFieldDelta() {
+  public void testRemoveCreateDocFieldDelta() {
     ODatabaseSession db = null;
     OrientDB odb = null;
     try {
@@ -1041,6 +1132,7 @@ public class ODocumentTest {
       ODocument originalDoc = doc.copy();
 
       doc.removeField(fieldName);
+      doc.setProperty("other", "new");
 
       //test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
@@ -1049,6 +1141,7 @@ public class ODocumentTest {
       serializerDelta.deserializeDelta(bytes, originalDoc);
 
       assertFalse(originalDoc.containsField(fieldName));
+      assertEquals(originalDoc.getProperty("other"), "new");
     } finally {
       if (db != null)
         db.close();
@@ -1614,6 +1707,185 @@ public class ODocumentTest {
         odb.close();
       }
     }
+  }
+
+  @Test
+  public void testDeltaNullValues() {
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try {
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      doc.setProperty("one", "value");
+      doc.setProperty("list", Arrays.asList("test"));
+      doc.setProperty("set", new HashSet<>(Arrays.asList("test")));
+      Map<String, String> map = new HashMap<>();
+      map.put("two", "value");
+      doc.setProperty("map", map);
+      OIdentifiable link = db.save(new ODocument("testClass"));
+      doc.setProperty("linkList", Arrays.asList(link));
+      doc.setProperty("linkSet", new HashSet<>(Arrays.asList(link)));
+      Map<String, OIdentifiable> linkMap = new HashMap<>();
+      linkMap.put("two", link);
+      doc.setProperty("linkMap", linkMap);
+      doc = db.save(doc);
+
+      ODocument originalDoc = doc.copy();
+      doc.setProperty("one", null);
+      ((List<String>) doc.getProperty("list")).add(null);
+      ((Set<String>) doc.getProperty("set")).add(null);
+      ((Map<String, String>) doc.getProperty("map")).put("nullValue", null);
+      ((List<OIdentifiable>) doc.getProperty("linkList")).add(null);
+      ((Set<OIdentifiable>) doc.getProperty("linkSet")).add(null);
+      ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).put("nullValue", null);
+      //test serialization/deserialization
+      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+
+      byte[] bytes = serializerDelta.serializeDelta(doc);
+      serializerDelta.deserializeDelta(bytes, originalDoc);
+      assertTrue(((List) originalDoc.getProperty("list")).contains(null));
+      assertTrue(((Set) originalDoc.getProperty("set")).contains(null));
+      assertTrue(((Map) originalDoc.getProperty("map")).containsKey("nullValue"));
+      assertTrue(((List) originalDoc.getProperty("linkList")).contains(null));
+      assertTrue(((Set) originalDoc.getProperty("linkSet")).contains(null));
+      assertTrue(((Map) originalDoc.getProperty("linkMap")).containsKey("nullValue"));
+    } finally {
+      if (db != null)
+        db.close();
+      if (odb != null) {
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+
+  }
+
+  @Test
+  public void testDeltaLinkAllCases() {
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try {
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      OIdentifiable link = db.save(new ODocument("testClass"));
+      OIdentifiable link1 = db.save(new ODocument("testClass"));
+      doc.setProperty("linkList", Arrays.asList(link, link1, link1));
+      doc.setProperty("linkSet", new HashSet<>(Arrays.asList(link, link1)));
+      Map<String, OIdentifiable> linkMap = new HashMap<>();
+      linkMap.put("one", link);
+      linkMap.put("two", link1);
+      linkMap.put("three", link1);
+      doc.setProperty("linkMap", linkMap);
+      doc = db.save(doc);
+
+      OIdentifiable link2 = db.save(new ODocument("testClass"));
+
+      ODocument originalDoc = doc.copy();
+      ((List<OIdentifiable>) doc.getProperty("linkList")).set(1, link2);
+      ((List<OIdentifiable>) doc.getProperty("linkList")).remove(link1);
+      ((List<OIdentifiable>) doc.getProperty("linkList")).add(link2);
+      ((Set<OIdentifiable>) doc.getProperty("linkSet")).add(link2);
+      ((Set<OIdentifiable>) doc.getProperty("linkSet")).remove(link1);
+      ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).put("new", link2);
+      ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).put("three", link2);
+      ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).remove("two");
+      //test serialization/deserialization
+      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+
+      byte[] bytes = serializerDelta.serializeDelta(doc);
+      serializerDelta.deserializeDelta(bytes, originalDoc);
+      assertFalse(((List) originalDoc.getProperty("linkList")).contains(link1));
+      assertTrue(((List) originalDoc.getProperty("linkList")).contains(link2));
+      assertEquals(((List) originalDoc.getProperty("linkList")).get(1), link2);
+      assertTrue(((Set) originalDoc.getProperty("linkSet")).contains(link2));
+      assertFalse(((Set) originalDoc.getProperty("linkSet")).contains(link1));
+      assertEquals(((Map) originalDoc.getProperty("linkMap")).get("new"), link2);
+      assertEquals(((Map) originalDoc.getProperty("linkMap")).get("three"), link2);
+      assertTrue(((Map) originalDoc.getProperty("linkMap")).containsKey("one"));
+      assertFalse(((Map) originalDoc.getProperty("linkMap")).containsKey("two"));
+    } finally {
+      if (db != null)
+        db.close();
+      if (odb != null) {
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+
+  }
+
+  @Test
+  public void testDeltaAllCasesMap() {
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try {
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      Map<String, String> map = new HashMap<>();
+      map.put("two", "value");
+      doc.setProperty("map", map);
+      Map<String, String> map1 = new HashMap<>();
+      map1.put("two", "value");
+      map1.put("one", "other");
+      Map<String, Map<String, String>> mapNested = new HashMap<>();
+      Map<String, String> nested = new HashMap<>();
+      nested.put("one", "value");
+      mapNested.put("nest", nested);
+      doc.setProperty("mapNested", mapNested);
+      doc.setProperty("map1", map1);
+      Map<String, OElement> mapEmbedded = new HashMap<>();
+      OElement embedded = db.newEmbeddedElement();
+      embedded.setProperty("other", 1);
+      mapEmbedded.put("first", embedded);
+      doc.setProperty("mapEmbedded", mapEmbedded);
+      doc = db.save(doc);
+
+      ODocument originalDoc = doc.copy();
+      OElement embedded1 = db.newEmbeddedElement();
+      embedded1.setProperty("other", 1);
+      ((Map<String, OElement>) doc.getProperty("mapEmbedded")).put("newDoc", embedded1);
+      ((Map<String, String>) doc.getProperty("map")).put("value", "other");
+      ((Map<String, String>) doc.getProperty("map")).put("two", "something");
+      ((Map<String, String>) doc.getProperty("map1")).remove("one");
+      ((Map<String, String>) doc.getProperty("map1")).put("two", "something");
+      ((Map<String, Map<String, String>>) doc.getProperty("mapNested")).get("nest").put("other", "value");
+      //test serialization/deserialization
+      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+
+      byte[] bytes = serializerDelta.serializeDelta(doc);
+      serializerDelta.deserializeDelta(bytes, originalDoc);
+      assertNotNull(((Map) originalDoc.getProperty("mapEmbedded")).get("newDoc"));
+      assertEquals(((Map<String, OElement>) originalDoc.getProperty("mapEmbedded")).get("newDoc").getProperty("other"),
+          Integer.valueOf(1));
+      assertEquals(((Map) originalDoc.getProperty("map")).get("value"), "other");
+      assertEquals(((Map) originalDoc.getProperty("map")).get("two"), "something");
+      assertEquals(((Map) originalDoc.getProperty("map1")).get("two"), "something");
+      assertNull(((Map) originalDoc.getProperty("map1")).get("one"));
+      assertEquals(((Map<String, Map<String, String>>) originalDoc.getProperty("mapNested")).get("nest").get("other"), "value");
+    } finally {
+      if (db != null)
+        db.close();
+      if (odb != null) {
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+
   }
 
 }
