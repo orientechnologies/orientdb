@@ -207,6 +207,8 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
         setLongValue(nextEntryPosition, prevChild);
       }
     }
+
+    addPageOperation(new SBTreeBucketV2RemoveNonLeafEntryPO(entryIndex, prevChild, key, leftChild, rightChild));
   }
 
   public int size() {
