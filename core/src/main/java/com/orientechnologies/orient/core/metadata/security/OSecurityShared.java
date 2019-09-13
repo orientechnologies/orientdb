@@ -837,19 +837,10 @@ public class OSecurityShared implements OSecurityInternal {
       return Collections.emptySet();
     }
     for (String prop : props) {
-      OBooleanExpression predicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + schemaType.getName() + "." + prop, OSecurityPolicy.Scope.CREATE);
+      OBooleanExpression predicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + schemaType.getName() + "." + prop, OSecurityPolicy.Scope.READ);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document)) {
         result.add(prop);
-        System.out.println("CHECK!!! - " + prop + " : " + predicate);
-        System.out.println("CHECK!!! - " + prop + " : " + predicate);
       }
-    }
-    if (result.size() > 0) {
-      System.out.println("CHECK!!!! ");
-      System.out.println(props.stream().collect(Collectors.joining(",")));
-      System.out.println(document.getClassName());
-      System.out.println(document);
-
     }
     return result;
 //    return Collections.emptySet();
@@ -870,7 +861,7 @@ public class OSecurityShared implements OSecurityInternal {
     } else {
 
       OBooleanExpression beforePredicate = document.getSchemaType()
-              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName() + "." + propertyName, OSecurityPolicy.Scope.AFTER_UPDATE)).orElse(null);
+              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName() + "." + propertyName, OSecurityPolicy.Scope.BEFORE_UPDATE)).orElse(null);
       OResultInternal originalRecord = calculateOriginalValue(document);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, beforePredicate, originalRecord)) {
         return false;
