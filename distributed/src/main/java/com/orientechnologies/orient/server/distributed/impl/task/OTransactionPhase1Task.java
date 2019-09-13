@@ -266,4 +266,16 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public long getDistributedTimeout() {
     return super.getDistributedTimeout() + (operations.size() / 10);
   }
+
+  public int getRetryCount() {
+    return retryCount;
+  }
+
+  public List<ORecordOperationRequest> getOperations() {
+    return operations;
+  }
+
+  public List<ORecordOperation> getOps() {
+    return ops;
+  }
 }

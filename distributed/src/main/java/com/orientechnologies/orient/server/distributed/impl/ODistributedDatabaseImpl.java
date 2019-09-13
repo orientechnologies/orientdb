@@ -262,6 +262,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final ORemoteTask task = request.getTask();
 
+
+
+    manager.messageReceived(request);
+
     if (waitForAcceptingRequests) {
       waitIsReady(task);
 

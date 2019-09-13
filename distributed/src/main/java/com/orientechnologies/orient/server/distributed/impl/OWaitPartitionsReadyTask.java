@@ -58,4 +58,7 @@ public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
     return execute.getToRun().isUsingDatabase();
   }
 
+  public ORemoteTask getInternal() {
+    return execute.getToRun();
+  }
 }

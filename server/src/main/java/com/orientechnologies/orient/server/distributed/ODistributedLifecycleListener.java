@@ -64,4 +64,17 @@ public interface ODistributedLifecycleListener {
    *          The new status
    */
   void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus);
+
+  default void onMessageReceived(ODistributedRequest request) {
+
+  }
+
+  default void onMessageProcessStart(ODistributedRequest message) {
+
+  }
+
+  default void onMessageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
+
+  }
+
 }
