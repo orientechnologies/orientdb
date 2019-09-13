@@ -145,8 +145,9 @@ public class OChannelBinaryProtocol {
   public static final int PROTOCOL_VERSION_35 = 35;
   public static final int PROTOCOL_VERSION_36 = 36;                 //ABILITY TO CREATE DATABASE FROM INCREMENTAL BACKUP
   public static final int PROTOCOL_VERSION_37 = 37;
+  public static final int PROTOCOL_VERSION_38 = 38;
 
-  public static final int CURRENT_PROTOCOL_VERSION          = PROTOCOL_VERSION_37;
+  public static final int CURRENT_PROTOCOL_VERSION          = PROTOCOL_VERSION_38;
   public static final int OLDEST_SUPPORTED_PROTOCOL_VERSION = PROTOCOL_VERSION_26;
 
   //This are specific messages inside the subscribe message
