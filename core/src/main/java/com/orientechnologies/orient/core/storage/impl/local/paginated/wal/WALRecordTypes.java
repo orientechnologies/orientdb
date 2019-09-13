@@ -141,4 +141,5 @@ public final class WALRecordTypes {
   public static final byte SBTREE_BUCKET_V2_SWITCH_BUCKET_TYPE_PO    = 117;
   public static final byte SBTREE_BUCKET_V2_UPDATE_VALUE_PO          = 118;
 
+  public static final byte SBTREE_BUCKET_V1_SET_TREE_SIZE_PO = 119;
 }
