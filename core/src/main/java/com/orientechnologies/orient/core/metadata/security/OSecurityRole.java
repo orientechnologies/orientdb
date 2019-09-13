@@ -11,8 +11,9 @@ import java.util.Set;
  * @since 03/11/14
  */
 public interface OSecurityRole extends Serializable {
+  @Deprecated
   public enum ALLOW_MODES {
-    DENY_ALL_BUT, ALLOW_ALL_BUT
+    @Deprecated DENY_ALL_BUT, @Deprecated ALLOW_ALL_BUT
   }
 
   public boolean allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iCRUDOperation);

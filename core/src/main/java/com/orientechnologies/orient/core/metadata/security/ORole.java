@@ -74,7 +74,7 @@ public class ORole extends OIdentity implements OSecurityRole {
 
     parentRole = iParent;
     document.field("inheritedRole", iParent != null ? iParent.getDocument() : null);
-    setMode(iAllowMode);
+//    setMode(iAllowMode);
 
     updateRolesDocumentContent();
   }
@@ -194,7 +194,7 @@ public class ORole extends OIdentity implements OSecurityRole {
       // DELEGATE TO THE PARENT ROLE IF ANY
       return parentRole.allow(resourceGeneric, resourceSpecific, iCRUDOperation);
 
-    return mode == ALLOW_MODES.ALLOW_ALL_BUT;
+    return false;
   }
 
   public boolean hasRule(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
@@ -332,13 +332,15 @@ public class ORole extends OIdentity implements OSecurityRole {
     return document.field("name");
   }
 
+  @Deprecated
   public ALLOW_MODES getMode() {
     return mode;
   }
 
+  @Deprecated
   public ORole setMode(final ALLOW_MODES iMode) {
-    this.mode = iMode;
-    document.field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);
+//    this.mode = iMode;
+//    document.field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);
     return this;
   }
 
