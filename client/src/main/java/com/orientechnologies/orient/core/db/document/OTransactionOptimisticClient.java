@@ -57,7 +57,7 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
       }
       if (operation.getType() == ORecordOperation.UPDATED && operation.getRecordType() == ODocument.RECORD_TYPE) {
         record.fromStream(operation.getOriginal());
-        ODocumentSerializerDelta deltaSerializer = new ODocumentSerializerDelta();
+        ODocumentSerializerDelta deltaSerializer = ODocumentSerializerDelta.instance();
         deltaSerializer.deserializeDelta(operation.getRecord(), (ODocument) record);
       } else {
         record.fromStream(operation.getRecord());

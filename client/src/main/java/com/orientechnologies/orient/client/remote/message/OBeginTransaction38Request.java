@@ -57,8 +57,8 @@ public class OBeginTransaction38Request implements OBinaryRequest<OBeginTransact
           break;
         case ORecordOperation.UPDATED:
           if (ODocument.RECORD_TYPE == ORecordInternal.getRecordType(txEntry.getRecord())) {
-            request.setRecordType((byte) 10);
-            ODocumentSerializerDelta delta = new ODocumentSerializerDelta();
+            request.setRecordType(ODocumentSerializerDelta.DELTA_RECORD_TYPE);
+            ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
             request.setRecord(delta.serializeDelta((ODocument) txEntry.getRecord()));
           } else {
             request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));

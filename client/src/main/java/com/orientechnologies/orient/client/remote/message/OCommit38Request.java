@@ -52,21 +52,23 @@ public class OCommit38Request implements OBinaryRequest<OCommit37Response> {
         request.setType(txEntry.type);
         request.setVersion(txEntry.getRecord().getVersion());
         request.setId(txEntry.getRecord().getIdentity());
-        request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
         switch (txEntry.type) {
         case ORecordOperation.CREATED:
+          request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
           request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
           request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
           break;
         case ORecordOperation.UPDATED:
           if (ODocument.RECORD_TYPE == ORecordInternal.getRecordType(txEntry.getRecord())) {
-            request.setRecordType((byte) 10);
-            ODocumentSerializerDelta delta = new ODocumentSerializerDelta();
+            request.setRecordType(ODocumentSerializerDelta.DELTA_RECORD_TYPE);
+            ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
             request.setRecord(delta.serializeDelta((ODocument) txEntry.getRecord()));
+            request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
           } else {
+            request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
             request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
+            request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
           }
-          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
           break;
         }
         netOperations.add(request);

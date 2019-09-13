@@ -72,13 +72,13 @@ public class OTransactionOptimisticServer38 extends OTransactionOptimisticServer
 
         case ORecordOperation.UPDATED:
           byte type = operation.getRecordType();
-          if (type == 10) {
+          if (type == ODocumentSerializerDelta.DELTA_RECORD_TYPE) {
             int version = operation.getVersion();
             ORecord updated = database.load(rid);
             if (updated == null) {
               updated = new ODocument();
             }
-            ODocumentSerializerDelta delta = new ODocumentSerializerDelta();
+            ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
             delta.deserializeDelta(operation.getRecord(), (ODocument) updated);
             entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
             ORecordInternal.setIdentity(updated, rid);
