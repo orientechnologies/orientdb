@@ -23,6 +23,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.nullbucket.SBTreeNullBucketV2InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.nullbucket.SBTreeNullBucketV2RemoveValuePO;
 
 /**
  * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
@@ -47,21 +48,11 @@ public final class OSBTreeNullBucketV2<V> extends ODurablePage {
     addPageOperation(new SBTreeNullBucketV2InitPO());
   }
 
-  public void setValue(final OSBTreeValue<V> value, final OBinarySerializer<V> valueSerializer) {
+  public void setValue(final byte[] value, final OBinarySerializer<V> valueSerializer) {
     setByteValue(NEXT_FREE_POSITION, (byte) 1);
 
-    if (value.isLink()) {
-      setByteValue(NEXT_FREE_POSITION + 1, (byte) 0);
-      setLongValue(NEXT_FREE_POSITION + 2, value.getLink());
-    } else {
-      final int valueSize = valueSerializer.getObjectSize(value.getValue());
-
-      final byte[] serializedValue = new byte[valueSize];
-      valueSerializer.serializeNativeObject(value.getValue(), serializedValue, 0);
-
-      setByteValue(NEXT_FREE_POSITION + 1, (byte) 1);
-      setBinaryValue(NEXT_FREE_POSITION + 2, serializedValue);
-    }
+    setByteValue(NEXT_FREE_POSITION + 1, (byte) 1);
+    setBinaryValue(NEXT_FREE_POSITION + 2, value);
   }
 
   public OSBTreeValue<V> getValue(final OBinarySerializer<V> valueSerializer) {
@@ -85,7 +76,11 @@ public final class OSBTreeNullBucketV2<V> extends ODurablePage {
     return getBinaryValue(NEXT_FREE_POSITION + 2, getObjectSizeInDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
   }
 
-  public void removeValue() {
+  public void removeValue(final OBinarySerializer<V> valueSerializer) {
+    final byte[] prevValue = getRawValue(valueSerializer);
+
     setByteValue(NEXT_FREE_POSITION, (byte) 0);
+
+    addPageOperation(new SBTreeNullBucketV2RemoveValuePO(prevValue, valueSerializer));
   }
 }

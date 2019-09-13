@@ -71,6 +71,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1SetValuePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.nullbucket.SBTreeNullBucketV2InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.nullbucket.SBTreeNullBucketV2RemoveValuePO;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
@@ -490,6 +491,9 @@ public final class OWALRecordsFactory {
       break;
     case SBTREE_NULL_BUCKET_V2_INIT_PO:
       walRecord = new SBTreeNullBucketV2InitPO();
+      break;
+    case SBTREE_NULL_BUCKET_V2_REMOVE_VALUE_PO:
+      walRecord = new SBTreeNullBucketV2RemoveValuePO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

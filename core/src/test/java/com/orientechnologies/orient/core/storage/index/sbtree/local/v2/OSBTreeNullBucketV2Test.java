@@ -48,7 +48,7 @@ public class OSBTreeNullBucketV2Test {
     OSBTreeNullBucketV2<String> bucket = new OSBTreeNullBucketV2<>(cacheEntry);
     bucket.init();
 
-    bucket.setValue(new OSBTreeValue<>(false, -1, "test"), OStringSerializer.INSTANCE);
+    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"), OStringSerializer.INSTANCE);
     OSBTreeValue<String> treeValue = bucket.getValue(OStringSerializer.INSTANCE);
     Assert.assertNotNull(treeValue);
     Assert.assertEquals(treeValue.getValue(), "test");
@@ -72,8 +72,8 @@ public class OSBTreeNullBucketV2Test {
     OSBTreeNullBucketV2<String> bucket = new OSBTreeNullBucketV2<>(cacheEntry);
     bucket.init();
 
-    bucket.setValue(new OSBTreeValue<>(false, -1, "test"), OStringSerializer.INSTANCE);
-    bucket.removeValue();
+    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"), OStringSerializer.INSTANCE);
+    bucket.removeValue(OStringSerializer.INSTANCE);
 
     OSBTreeValue<String> treeValue = bucket.getValue(OStringSerializer.INSTANCE);
     Assert.assertNull(treeValue);
@@ -97,13 +97,13 @@ public class OSBTreeNullBucketV2Test {
     OSBTreeNullBucketV2<String> bucket = new OSBTreeNullBucketV2<>(cacheEntry);
     bucket.init();
 
-    bucket.setValue(new OSBTreeValue<>(false, -1, "test"), OStringSerializer.INSTANCE);
-    bucket.removeValue();
+    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"), OStringSerializer.INSTANCE);
+    bucket.removeValue(OStringSerializer.INSTANCE);
 
     OSBTreeValue<String> treeValue = bucket.getValue(OStringSerializer.INSTANCE);
     Assert.assertNull(treeValue);
 
-    bucket.setValue(new OSBTreeValue<>(false, -1, "testOne"), OStringSerializer.INSTANCE);
+    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("testOne"), OStringSerializer.INSTANCE);
 
     treeValue = bucket.getValue(OStringSerializer.INSTANCE);
     Assert.assertNotNull(treeValue);

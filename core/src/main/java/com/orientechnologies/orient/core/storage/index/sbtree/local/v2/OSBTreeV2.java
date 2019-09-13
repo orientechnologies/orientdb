@@ -384,27 +384,23 @@ public class OSBTreeV2<K, V> extends ODurableComponent
             if (updatedValue.isChange()) {
               final V value = updatedValue.getValue();
               final int valueSize = valueSerializer.getObjectSize(value);
-              final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
-
-              final OSBTreeValue<V> treeValue = new OSBTreeValue<>(createLinkToTheValue, -1, value);
               if (validator != null) {
                 final Object result = validator.validate(null, oldValue, value);
                 if (result == OBaseIndexEngine.Validator.IGNORE) {
                   return false;
                 }
-
               }
 
               if (oldValue != null) {
                 sizeDiff = -1;
               }
 
-              nullBucket.setValue(treeValue, valueSerializer);
+              final byte[] serializeValue = new byte[valueSize];
+              valueSerializer.serializeNativeObject(value, serializeValue, 0);
+
+              nullBucket.setValue(serializeValue, valueSerializer);
 
               if (indexId >= 0) {
-                final byte[] serializeValue = new byte[valueSize];
-                valueSerializer.serializeNativeObject(value, serializeValue, 0);
-
                 operationRecord = new OSBTreePutCO(indexId, null, keySerializer.getId(), null, valueSerializer.getId(),
                     serializeValue, oldRawValue);
               }
@@ -607,7 +603,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent
 
       if (treeValue != null) {
         removedValue = treeValue.getValue();
-        nullBucket.removeValue();
+        nullBucket.removeValue(valueSerializer);
       } else {
         removedValue = null;
       }
