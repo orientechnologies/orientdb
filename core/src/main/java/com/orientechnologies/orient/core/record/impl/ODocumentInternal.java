@@ -112,6 +112,10 @@ public class ODocumentInternal {
     doc.propertyAccess = propertyAccess;
   }
 
+  public static OPropertyAccess getPropertyAccess(ODocument doc) {
+    return doc.propertyAccess;
+  }
+
   public static void setPropertyEncryption(ODocument doc, OPropertyEncryption propertyEncryption) {
     doc.propertyEncryption = propertyEncryption;
   }
