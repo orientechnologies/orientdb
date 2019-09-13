@@ -484,6 +484,9 @@ public final class OWALRecordsFactory {
     case SBTREE_BUCKET_V1_SET_TREE_SIZE_PO:
       walRecord = new SBTreeBucketV1SetTreeSizePO();
       break;
+    case SBTREE_BUCKET_V2_SET_TREE_SIZE_PO:
+      walRecord = new SBTreeBucketV2SetTreeSizePO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {

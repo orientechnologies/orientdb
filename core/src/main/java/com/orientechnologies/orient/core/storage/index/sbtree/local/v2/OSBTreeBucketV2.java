@@ -94,7 +94,11 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
   }
 
   public void setTreeSize(long size) {
+    final long prevTreeSize = getLongValue(TREE_SIZE_OFFSET);
+
     setLongValue(TREE_SIZE_OFFSET, size);
+
+    addPageOperation(new SBTreeBucketV2SetTreeSizePO(prevTreeSize, size));
   }
 
   public long getTreeSize() {
