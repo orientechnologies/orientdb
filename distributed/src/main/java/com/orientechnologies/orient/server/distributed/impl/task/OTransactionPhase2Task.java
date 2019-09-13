@@ -57,6 +57,8 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
     int nodeId = in.readInt();
     long messageId = in.readLong();
     this.transactionId = new ODistributedRequestId(nodeId, messageId);
+
+
     int length = in.readInt();
     this.involvedClusters = new int[length];
     for (int i = 0; i < length; i++) {
@@ -129,6 +131,15 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       }
     }
     return "OK";
+
+  }
+
+  public int getRetryCount() {
+    return retryCount;
+  }
+
+  public ODistributedRequestId getTransactionId() {
+    return transactionId;
   }
 
   @Override

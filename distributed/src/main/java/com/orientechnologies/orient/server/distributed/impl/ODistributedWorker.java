@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
@@ -61,13 +61,13 @@ public class ODistributedWorker extends Thread {
 
   protected volatile ODatabaseDocumentInternal database;
   protected volatile OUser                     lastUser;
-  protected volatile boolean running = true;
+  protected volatile boolean                   running = true;
 
   private AtomicLong    processedRequests     = new AtomicLong(0);
   private AtomicBoolean waitingForNextRequest = new AtomicBoolean(true);
 
-  private static final long MAX_SHUTDOWN_TIMEOUT = 5000l;
-  private volatile ODistributedRequest currentExecuting;
+  private static final long                MAX_SHUTDOWN_TIMEOUT = 5000l;
+  private volatile     ODistributedRequest currentExecuting;
 
   public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i,
       final boolean acceptsWhileNotOnline) {
@@ -117,7 +117,10 @@ public class ODistributedWorker extends Thread {
 
         currentExecuting = message;
 
+
+
         if (message != null) {
+          manager.messageProcessStart(message);
           message.getId();
           reqId = message.getId();
           onMessage(message);
@@ -390,6 +393,8 @@ public class ODistributedWorker extends Thread {
         handleError(iRequest, responsePayload);
       }
     }
+
+    manager.messageProcessEnd(iRequest, responsePayload);
   }
 
   protected void handleError(final ODistributedRequest iRequest, final Object responsePayload) {

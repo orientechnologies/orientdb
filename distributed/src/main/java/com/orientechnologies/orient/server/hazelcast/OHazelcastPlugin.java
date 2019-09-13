@@ -1823,4 +1823,25 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     OLogManager.instance().info(this, "Distributed Lock Manager server is '%s'", lockManagerServer);
   }
 
+  @Override
+  public void messageReceived(ODistributedRequest request) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageReceived(request);
+    }
+  }
+
+  @Override
+  public void messageProcessStart(ODistributedRequest message) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageProcessStart(message);
+    }
+  }
+
+  @Override
+  public void messageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageProcessEnd(iRequest, responsePayload);
+    }
+  }
 }
