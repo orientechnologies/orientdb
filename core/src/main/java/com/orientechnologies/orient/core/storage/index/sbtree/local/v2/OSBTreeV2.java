@@ -194,8 +194,8 @@ public class OSBTreeV2<K, V> extends ODurableComponent
 
           final OCacheEntry nullBucketCacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
           try {
-            final OSBTreeNullBucketV2<V> nullBucket = new OSBTreeNullBucketV2<>(nullBucketCacheEntry, valueSerializer, false);
-            final OSBTreeValue<V> treeValue = nullBucket.getValue();
+            final OSBTreeNullBucketV2<V> nullBucket = new OSBTreeNullBucketV2<>(nullBucketCacheEntry);
+            final OSBTreeValue<V> treeValue = nullBucket.getValue(valueSerializer);
             if (treeValue == null) {
               return null;
             }
@@ -373,8 +373,11 @@ public class OSBTreeV2<K, V> extends ODurableComponent
           int sizeDiff = 0;
 
           try {
-            final OSBTreeNullBucketV2<V> nullBucket = new OSBTreeNullBucketV2<>(cacheEntry, valueSerializer, isNew);
-            final byte[] oldRawValue = nullBucket.getRawValue();
+            final OSBTreeNullBucketV2<V> nullBucket = new OSBTreeNullBucketV2<>(cacheEntry);
+            if (isNew) {
+              nullBucket.init();
+            }
+            final byte[] oldRawValue = nullBucket.getRawValue(valueSerializer);
             final V oldValue = oldRawValue == null ? null : valueSerializer.deserializeNativeObject(oldRawValue, 0);
 
             final OIndexUpdateAction<V> updatedValue = updater.update(oldValue, bonsayFileId);
@@ -396,7 +399,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent
                 sizeDiff = -1;
               }
 
-              nullBucket.setValue(treeValue);
+              nullBucket.setValue(treeValue, valueSerializer);
 
               if (indexId >= 0) {
                 final byte[] serializeValue = new byte[valueSize];
@@ -599,8 +602,8 @@ public class OSBTreeV2<K, V> extends ODurableComponent
     V removedValue;
     final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
     try {
-      final OSBTreeNullBucketV2<V> nullBucket = new OSBTreeNullBucketV2<>(nullCacheEntry, valueSerializer, false);
-      final OSBTreeValue<V> treeValue = nullBucket.getValue();
+      final OSBTreeNullBucketV2<V> nullBucket = new OSBTreeNullBucketV2<>(nullCacheEntry);
+      final OSBTreeValue<V> treeValue = nullBucket.getValue(valueSerializer);
 
       if (treeValue != null) {
         removedValue = treeValue.getValue();
