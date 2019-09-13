@@ -490,7 +490,10 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
   }
 
   public void setLeftSibling(long pageIndex) {
+    final int oldSibling = (int) getLongValue(LEFT_SIBLING_OFFSET);
     setLongValue(LEFT_SIBLING_OFFSET, pageIndex);
+
+    addPageOperation(new SBTreeBucketV2SetLeftSiblingPO(oldSibling, (int) pageIndex));
   }
 
   public long getLeftSibling() {

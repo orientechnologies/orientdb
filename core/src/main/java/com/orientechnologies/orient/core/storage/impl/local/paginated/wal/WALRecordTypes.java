@@ -135,5 +135,6 @@ public final class WALRecordTypes {
   public static final byte SBTREE_BUCKET_V2_ADD_NON_LEAF_ENTRY_PO    = 111;
   public static final byte SBTREE_BUCKET_V2_REMOVE_LEAF_ENTRY_PO     = 112;
   public static final byte SBTREE_BUCKET_V2_REMOVE_NON_LEAF_ENTRY_PO = 113;
+  public static final byte SBTREE_BUCKET_V2_SET_LEFT_SIBLING_PO      = 114;
 
 }
