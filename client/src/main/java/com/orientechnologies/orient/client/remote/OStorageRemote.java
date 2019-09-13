@@ -1005,7 +1005,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public List<ORecordOperation> commit(final OTransactionInternal iTx) {
     unstickToSession();
-    OCommit37Request request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
+    OCommit38Request request = new OCommit38Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
         iTx.getIndexOperations());
 
     OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
@@ -1992,7 +1992,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
-    OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), true, transaction.isUsingLog(),
+    OBeginTransaction38Request request = new OBeginTransaction38Request(transaction.getId(), true, transaction.isUsingLog(),
         transaction.getRecordOperations(), transaction.getIndexOperations());
     OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote transaction begin");
     for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
@@ -2002,7 +2002,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void reBeginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
-    ORebeginTransactionRequest request = new ORebeginTransactionRequest(transaction.getId(), transaction.isUsingLog(),
+    ORebeginTransaction38Request request = new ORebeginTransaction38Request(transaction.getId(), transaction.isUsingLog(),
         transaction.getRecordOperations(), transaction.getIndexOperations());
     OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote transaction begin");
     for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
@@ -2012,9 +2012,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void fetchTransaction(ODatabaseDocumentRemote remote) {
     OTransactionOptimisticClient transaction = (OTransactionOptimisticClient) remote.getTransaction();
-    OFetchTransactionRequest request = new OFetchTransactionRequest(transaction.getId());
-    OFetchTransactionResponse respose = networkOperation(request, "Error fetching transaction from server side");
-    transaction.replaceContent(respose.getOperations(), respose.getIndexChanges());
+    OFetchTransaction38Request request = new OFetchTransaction38Request(transaction.getId());
+    OFetchTransaction38Response response = networkOperation(request, "Error fetching transaction from server side");
+    transaction.replaceContent(response.getOperations(), response.getIndexChanges());
   }
 
   public OBinaryPushRequest createPush(byte type) {

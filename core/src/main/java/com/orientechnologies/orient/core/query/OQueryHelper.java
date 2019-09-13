@@ -40,7 +40,9 @@ public class OQueryHelper {
       // NOTHING TO MATCH
       return false;
 
-    if (iValue.startsWith(WILDCARD_ANY) && iValue.endsWith(WILDCARD_ANY)) {
+    if (iValue.equals(WILDCARD_ANY)) {
+      return true;
+    } else if (iValue.startsWith(WILDCARD_ANY) && iValue.endsWith(WILDCARD_ANY)) {
       // %XXXXX%
       iValue = iValue.substring(WILDCARD_ANY.length(), iValue.length() - WILDCARD_ANY.length());
       return currentValue.indexOf(iValue) > -1;

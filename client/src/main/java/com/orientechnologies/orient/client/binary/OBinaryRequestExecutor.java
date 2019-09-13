@@ -140,4 +140,10 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeLockRecord(OLockRecordRequest request);
 
   OBinaryResponse executeUnlockRecord(OUnlockRecordRequest request);
+
+  OBinaryResponse executeBeginTransaction38(OBeginTransaction38Request request);
+
+  OBinaryResponse executeCommit38(OCommit38Request request);
+
+  OBinaryResponse executeFetchTransaction38(OFetchTransaction38Request request);
 }

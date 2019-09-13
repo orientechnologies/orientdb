@@ -39,10 +39,21 @@ import static com.orientechnologies.orient.core.serialization.serializer.record.
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeType;
 
 public class ODocumentSerializerDelta {
-  private static final byte CREATED  = 1;
-  private static final byte REPLACED = 2;
-  private static final byte CHANGED  = 3;
-  private static final byte REMOVED  = 4;
+  private static final byte CREATED           = 1;
+  private static final byte REPLACED          = 2;
+  private static final byte CHANGED           = 3;
+  private static final byte REMOVED           = 4;
+  public static final  byte DELTA_RECORD_TYPE = 10;
+
+  private static ODocumentSerializerDelta INSTANCE = new ODocumentSerializerDelta();
+
+  public static ODocumentSerializerDelta instance() {
+    return INSTANCE;
+  }
+
+  protected ODocumentSerializerDelta() {
+
+  }
 
   public byte[] serializeDelta(ODocument document) {
     BytesContainer bytes = new BytesContainer();

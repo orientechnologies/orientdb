@@ -437,7 +437,7 @@ public class ODocumentTest {
       doc.field(fieldName, testValue);
       doc.removeField(removeField);
       //test serialization/deserialization
-      ODocumentSerializerDelta delta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
       byte[] bytes = delta.serializeDelta(doc);
       delta.deserializeDelta(bytes, originalDoc);
       assertEquals(testValue, originalDoc.field(fieldName));
@@ -488,7 +488,7 @@ public class ODocumentTest {
 
       doc.field(nestedDocField, nestedDoc);
 
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       //test serialization/deserialization
@@ -534,7 +534,7 @@ public class ODocumentTest {
       newArray.remove("toRemove");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -580,7 +580,7 @@ public class ODocumentTest {
       newArray.remove("toRemove");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -628,7 +628,7 @@ public class ODocumentTest {
       newArray.add("three");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -676,7 +676,7 @@ public class ODocumentTest {
       newArray.set(1, "three");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -728,7 +728,7 @@ public class ODocumentTest {
       testDoc.field(variableField, "two");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -794,7 +794,7 @@ public class ODocumentTest {
       d1.field(variableField, "two");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -848,7 +848,7 @@ public class ODocumentTest {
       innerList.set(0, "changed");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -904,7 +904,7 @@ public class ODocumentTest {
       List<String> currentList = testDoc.field(variableField);
       currentList.set(0, "changed");
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -949,7 +949,7 @@ public class ODocumentTest {
       newArray.add("three");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1000,7 +1000,7 @@ public class ODocumentTest {
       newArray.add("three");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1047,7 +1047,7 @@ public class ODocumentTest {
       newArray.remove(0);
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1089,7 +1089,7 @@ public class ODocumentTest {
       doc.field(fieldName, testValue);
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1130,7 +1130,7 @@ public class ODocumentTest {
       doc.setProperty("other", "new");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1178,7 +1178,7 @@ public class ODocumentTest {
       doc.removeField(fieldName);
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(rootDoc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1229,7 +1229,7 @@ public class ODocumentTest {
       ODocument testDoc = (ODocument) ((List) doc.field(fieldName)).get(1);
       testDoc.removeField(variableField);
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1274,7 +1274,7 @@ public class ODocumentTest {
       containedMap.put("first", "changed");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1324,7 +1324,7 @@ public class ODocumentTest {
       Map<String, String> containedMap = (Map<String, String>) ((List) doc.field(fieldName)).get(0);
       containedMap.put("first", "changed");
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1377,7 +1377,7 @@ public class ODocumentTest {
       changeDoc.field("f1", "changed");
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1432,7 +1432,7 @@ public class ODocumentTest {
       Map<String, String> containedMap = (Map<String, String>) ((List) doc.field(fieldName)).get(0);
       containedMap.put("first", "changed");
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1484,7 +1484,7 @@ public class ODocumentTest {
       ridBag.add(third);
       doc.field(fieldName, ridBag, OType.LINKBAG);
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1536,7 +1536,7 @@ public class ODocumentTest {
       doc.field(fieldName, ridBag, OType.LINKBAG);
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1585,7 +1585,7 @@ public class ODocumentTest {
       ridBag.add(third);
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1634,7 +1634,7 @@ public class ODocumentTest {
       ridBag.remove(third);
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1687,7 +1687,7 @@ public class ODocumentTest {
       doc.field(fieldName, ridBag, OType.LINKBAG);
 
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1739,7 +1739,7 @@ public class ODocumentTest {
       ((Set<OIdentifiable>) doc.getProperty("linkSet")).add(null);
       ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).put("nullValue", null);
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1795,7 +1795,7 @@ public class ODocumentTest {
       ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).put("three", link2);
       ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).remove("two");
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
@@ -1860,7 +1860,7 @@ public class ODocumentTest {
       ((Map<String, String>) doc.getProperty("map1")).put("two", "something");
       ((Map<String, Map<String, String>>) doc.getProperty("mapNested")).get("nest").put("other", "value");
       //test serialization/deserialization
-      ODocumentSerializerDelta serializerDelta = new ODocumentSerializerDelta();
+      ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
