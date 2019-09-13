@@ -89,6 +89,8 @@ public final class OSBTreeBucketV2<K, V> extends ODurablePage {
     } else {
       setByteValue(IS_LEAF_OFFSET, (byte) 1);
     }
+
+    addPageOperation(new SBTreeBucketV2SwitchBucketTypePO());
   }
 
   public void setTreeSize(long size) {
