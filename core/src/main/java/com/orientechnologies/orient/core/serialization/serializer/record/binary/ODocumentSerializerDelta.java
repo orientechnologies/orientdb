@@ -55,6 +55,12 @@ public class ODocumentSerializerDelta {
 
   }
 
+  public byte[] serialize(ODocument document) {
+    BytesContainer bytes = new BytesContainer();
+    serialize(document, bytes);
+    return bytes.fitBytes();
+  }
+
   public byte[] serializeDelta(ODocument document) {
     BytesContainer bytes = new BytesContainer();
     serializeDelta(bytes, document);
@@ -80,7 +86,7 @@ public class ODocumentSerializerDelta {
     return OVarIntSerializer.write(bytes, 0);
   }
 
-  public void serialize(final ODocument document, final BytesContainer bytes) {
+  private void serialize(final ODocument document, final BytesContainer bytes) {
     serializeClass(document, bytes);
     OClass oClass = ODocumentInternal.getImmutableSchemaClass(document);
     final Set<Map.Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
@@ -105,7 +111,12 @@ public class ODocumentSerializerDelta {
     }
   }
 
-  public void deserialize(final ODocument document, final BytesContainer bytes) {
+  public void deserialize(byte[] content, ODocument toFill) {
+    BytesContainer bytesContainer = new BytesContainer(content);
+    deserialize(toFill, bytesContainer);
+  }
+
+  private void deserialize(final ODocument document, final BytesContainer bytes) {
     final String className = readString(bytes);
     if (className.length() != 0)
       ODocumentInternal.fillClassNameIfNeeded(document, className);
