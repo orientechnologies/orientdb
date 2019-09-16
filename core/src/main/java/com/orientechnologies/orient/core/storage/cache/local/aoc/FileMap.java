@@ -4,23 +4,53 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-public class FileMap {
+public final class FileMap {
+  private static final int MAX_PAGE_SIZE    = (1 << 7) - 1;
+  private static final int MAX_PAGE_VERSION = (1 << (3 * 8)) - 1;
+
+  public static final byte DATA_PAGE  = 0;
+  public static final byte DELTA_PAGE = 1;
+
   private final AtomicReferenceArray<AtomicLongArray> container = new AtomicReferenceArray<>(32);
   private final AtomicInteger                         size      = new AtomicInteger();
 
   public int allocateNewPage() {
     final int index = size.getAndIncrement();
-    final long mappingEntry = mappingEntry(-1, 0, 0);
+    final long mappingEntry = mappingEntry(-1, 0, DATA_PAGE, 0);
     doSet(index, mappingEntry);
 
     return index;
   }
 
-  public void setMapping(final int index, final int physicalPage, final int startPosition, final int pageSize) {
+  public void setMapping(final int index, final int physicalPageIndex, final int pageSize, final byte pageType,
+      final int pageVersion) {
     checkFileSize(index);
 
-    final long mappingEntry = mappingEntry(physicalPage, startPosition, pageSize);
+    validateData(physicalPageIndex, pageSize, pageType, pageVersion);
+
+    final long mappingEntry = mappingEntry(physicalPageIndex, pageSize, pageType, pageVersion);
     doSet(index, mappingEntry);
+  }
+
+  private void validateData(int physicalPageIndex, int pageSize, byte pageType, int pageVersion) {
+    if (physicalPageIndex < 0) {
+      throw new IllegalArgumentException("Invalid value of physical page index " + physicalPageIndex);
+    }
+    if (pageSize <= 0) {
+      throw new IllegalArgumentException("Invalid value of page size " + pageSize);
+    }
+    if (pageSize > MAX_PAGE_SIZE) {
+      throw new IllegalArgumentException("Value of page size can not exceed " + MAX_PAGE_SIZE);
+    }
+    if (pageType != DATA_PAGE && pageType != DELTA_PAGE) {
+      throw new IllegalArgumentException("Invalid value of page type " + pageType);
+    }
+    if (pageVersion > MAX_PAGE_VERSION) {
+      throw new IllegalArgumentException("Value of page version can not exceed " + pageVersion);
+    }
+    if (pageVersion < 0) {
+      throw new IllegalArgumentException("Invalid value of page version " + pageVersion);
+    }
   }
 
   public int getSize() {
@@ -70,20 +100,18 @@ public class FileMap {
     return array.get(arrayIndex);
   }
 
-  private long mappingEntry(final int pageIndex, final int startPosition, final int pageSize) {
-    return (0xFF_FF_FF_FFL & pageIndex) | (((long) startPosition) << (4 * 8)) | (((long) pageSize) << (6 * 8));
-  }
-
-  private int physicalIndex(final long mappingEntry) {
-    return (int) mappingEntry;
+  private long mappingEntry(final int pageIndex, final int pageSize, final byte pageType, final int pageVersion) {
+    return (0xFF_FF_FF_FFL & pageIndex) | (((long) pageSize) << (4 * 8)) | (((long) pageType) << (4 * 8 + 7)) | (
+        ((long) pageVersion) << 5 * 8);
   }
 
   private int[] mappingData(final long mappingEntry) {
     final int pageIndex = (int) mappingEntry;
-    final int startPosition = 0xFF_FF & (int) (mappingEntry >>> (4 * 8));
-    final int pageSize = 0xFF_FF & (int) (mappingEntry >>> (6 * 8));
+    final int pageSize = (int) (0x7F & (mappingEntry >>> (4 * 8)));
+    final int pageType = (int) (1 & (mappingEntry >>> (4 * 8 + 7)));
+    final int pageVersion = (int) (mappingEntry >>> 5 * 8);
 
-    return new int[] { pageIndex, startPosition, pageSize };
+    return new int[] { pageIndex, pageSize, pageType, pageVersion };
   }
 
 }
