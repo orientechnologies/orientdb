@@ -158,8 +158,14 @@ public class OHttpGraphResponse extends OHttpResponse {
         }
       } else {
         for (ORID edgeRid : edgeRids) {
-          OEdge edge = edgeRid.getRecord();
-          printEdge(json, edge);
+          OElement elem = edgeRid.getRecord();
+          if (elem == null) {
+            continue;
+          }
+          OEdge edge = elem.asEdge().orElse(null);
+          if (edge != null) {
+            printEdge(json, edge);
+          }
         }
       }
 
