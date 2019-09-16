@@ -14,9 +14,9 @@ import java.util.Collection;
 
 public class PredicateSecurityTest {
 
-  static String DB_NAME = "test";
-  static OrientDB orient;
-  private ODatabaseSession db;
+  private static String           DB_NAME = PredicateSecurityTest.class.getSimpleName();
+  private static OrientDB         orient;
+  private        ODatabaseSession db;
 
   @BeforeClass
   public static void beforeClass() {
@@ -30,14 +30,14 @@ public class PredicateSecurityTest {
 
   @Before
   public void before() {
-    orient.create("test", ODatabaseType.MEMORY);
+    orient.create(DB_NAME, ODatabaseType.MEMORY);
     this.db = orient.open(DB_NAME, "admin", "admin");
   }
 
   @After
   public void after() {
     this.db.close();
-    orient.drop("test");
+    orient.drop(DB_NAME);
     this.db = null;
   }
 
@@ -68,7 +68,6 @@ public class PredicateSecurityTest {
     }
   }
 
-
   @Test
   public void testSqlCreate() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
@@ -91,7 +90,6 @@ public class PredicateSecurityTest {
     } catch (OSecurityException ex) {
     }
   }
-
 
   @Test
   public void testSqlRead() {
@@ -184,7 +182,6 @@ public class PredicateSecurityTest {
     Assert.assertFalse(rs.hasNext());
     rs.close();
   }
-
 
   @Test
   public void testBeforeUpdateCreate() {
@@ -300,7 +297,6 @@ public class PredicateSecurityTest {
     Assert.assertEquals("foo", elem.getProperty("name"));
   }
 
-
   @Test
   public void testDelete() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
@@ -368,7 +364,6 @@ public class PredicateSecurityTest {
     rs.close();
   }
 
-
   @Test
   public void testSqlCount() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
@@ -393,7 +388,7 @@ public class PredicateSecurityTest {
     db.close();
     this.db = orient.open(DB_NAME, "reader", "reader");
     OResultSet rs = db.query("select count(*) as count from Person");
-    Assert.assertEquals(1L, (long)rs.next().getProperty("count"));
+    Assert.assertEquals(1L, (long) rs.next().getProperty("count"));
     rs.close();
   }
 
@@ -422,14 +417,13 @@ public class PredicateSecurityTest {
     db.close();
     this.db = orient.open(DB_NAME, "reader", "reader");
     OResultSet rs = db.query("select count(*) as count from Person where name = 'bar'");
-    Assert.assertEquals(0L, (long)rs.next().getProperty("count"));
+    Assert.assertEquals(0L, (long) rs.next().getProperty("count"));
     rs.close();
 
     rs = db.query("select count(*) as count from Person where name = 'foo'");
-    Assert.assertEquals(1L, (long)rs.next().getProperty("count"));
+    Assert.assertEquals(1L, (long) rs.next().getProperty("count"));
     rs.close();
   }
-
 
   @Test
   public void testIndexGet() {
@@ -458,10 +452,10 @@ public class PredicateSecurityTest {
 
     OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Person.name");
     Object item = index.get("bar");
-    Assert.assertTrue(((Collection)item).isEmpty());
+    Assert.assertTrue(((Collection) item).isEmpty());
 
     item = index.get("foo");
-    Assert.assertEquals(1, ((Collection)item).size());
+    Assert.assertEquals(1, ((Collection) item).size());
 
   }
 

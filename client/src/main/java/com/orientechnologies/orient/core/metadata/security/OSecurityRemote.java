@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class OSecurityRemote implements OSecurityInternal {
 
-  OSecurityInternal delegate;
+  private OSecurityInternal delegate;
 
   public OSecurityRemote(OSecurityInternal delegate) {
     this.delegate = delegate;
@@ -26,22 +26,26 @@ public class OSecurityRemote implements OSecurityInternal {
   }
 
   @Override
-  public OIdentifiable allowUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
+  public OIdentifiable allowUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+      String iUserName) {
     return delegate.allowUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
-  public OIdentifiable allowRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
+  public OIdentifiable allowRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+      String iRoleName) {
     return delegate.allowRole(session, iDocument, iOperationType, iRoleName);
   }
 
   @Override
-  public OIdentifiable denyUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
+  public OIdentifiable denyUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+      String iUserName) {
     return delegate.denyUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
-  public OIdentifiable denyRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
+  public OIdentifiable denyRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+      String iRoleName) {
     return delegate.denyRole(session, iDocument, iOperationType, iRoleName);
   }
 
