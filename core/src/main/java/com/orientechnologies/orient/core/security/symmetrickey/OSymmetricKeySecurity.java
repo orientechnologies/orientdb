@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.security.symmetrickey;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -283,6 +284,11 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   @Override
   public boolean isReadRestrictedBySecurityPolicy(ODatabaseSession session, String resource) {
     return delegate.isReadRestrictedBySecurityPolicy(session, resource);
+  }
+
+  @Override
+  public Set<OSecurityResourceProperty> getAllFilteredProperties(ODatabaseDocumentInternal database) {
+    return delegate.getAllFilteredProperties(database);
   }
 
   @Override
