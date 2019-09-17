@@ -2463,6 +2463,11 @@ public class ODocument extends ORecordAbstract
       if (curValue != null && curValue.exists()) {
         final Object value = curValue.value;
         if (iMergeSingleItemsOfMultiValueFields) {
+          boolean autoConvert = false;
+          if (otherValue instanceof OAutoConvertToRecord) {
+            autoConvert = ((OAutoConvertToRecord) otherValue).isAutoConvertToRecord();
+            ((OAutoConvertToRecord) otherValue).setAutoConvertToRecord(false);
+          }
           if (value instanceof Map<?, ?>) {
             final Map<String, Object> map = (Map<String, Object>) value;
             final Map<String, Object> otherMap = (Map<String, Object>) otherValue;
@@ -2470,14 +2475,20 @@ public class ODocument extends ORecordAbstract
             for (Entry<String, Object> entry : otherMap.entrySet()) {
               map.put(entry.getKey(), entry.getValue());
             }
+            if (otherValue instanceof OAutoConvertToRecord) {
+              ((OAutoConvertToRecord) otherValue).setAutoConvertToRecord(autoConvert);
+            }
+
             continue;
           } else if (OMultiValue.isMultiValue(value) && !(value instanceof ORidBag)) {
             for (Object item : OMultiValue.getMultiValueIterable(otherValue)) {
               if (!OMultiValue.contains(value, item))
                 OMultiValue.add(value, item);
             }
-
             // JUMP RAW REPLACE
+            if (otherValue instanceof OAutoConvertToRecord) {
+              ((OAutoConvertToRecord) otherValue).setAutoConvertToRecord(autoConvert);
+            }
             continue;
           }
         }
