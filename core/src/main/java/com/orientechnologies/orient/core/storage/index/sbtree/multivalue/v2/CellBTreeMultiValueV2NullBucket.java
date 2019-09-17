@@ -47,7 +47,7 @@ import java.util.Map;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
  */
-final class ONullBucket extends ODurablePage {
+public final class CellBTreeMultiValueV2NullBucket extends ODurablePage {
   private static final int EMBEDDED_RIDS_BOUNDARY = 64;
 
   private static final int RID_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
@@ -57,9 +57,9 @@ final class ONullBucket extends ODurablePage {
   private static final int RIDS_SIZE_OFFSET          = EMBEDDED_RIDS_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int RIDS_OFFSET               = RIDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private final OSBTreeV2<OMultiValueEntry, Byte> multiContainer;
+  private final OSBTreeV2<MultiValueEntry, Byte> multiContainer;
 
-  ONullBucket(final OCacheEntry cacheEntry, final OSBTreeV2<OMultiValueEntry, Byte> multiContainer) {
+  CellBTreeMultiValueV2NullBucket(final OCacheEntry cacheEntry, final OSBTreeV2<MultiValueEntry, Byte> multiContainer) {
     super(cacheEntry);
 
     this.multiContainer = multiContainer;
@@ -83,7 +83,7 @@ final class ONullBucket extends ODurablePage {
       setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) (embeddedSize + 1));
     } else {
       final long mId = getLongValue(M_ID_OFFSET);
-      multiContainer.put(new OMultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()), (byte) 1);
+      multiContainer.put(new MultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()), (byte) 1);
     }
 
     final int size = getIntValue(RIDS_SIZE_OFFSET);
@@ -108,12 +108,12 @@ final class ONullBucket extends ODurablePage {
     if (size > embeddedSize) {
       final long mId = getLongValue(M_ID_OFFSET);
 
-      final OSBTree.OSBTreeCursor<OMultiValueEntry, Byte> cursor = multiContainer
-          .iterateEntriesBetween(new OMultiValueEntry(mId, 0, 0), true, new OMultiValueEntry(mId + 1, 0, 0), false, true);
+      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
+          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
 
-      Map.Entry<OMultiValueEntry, Byte> mapEntry = cursor.next(-1);
+      Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
       while (mapEntry != null) {
-        final OMultiValueEntry entry = mapEntry.getKey();
+        final MultiValueEntry entry = mapEntry.getKey();
         rids.add(new ORecordId(entry.clusterId, entry.clusterPosition));
 
         mapEntry = cursor.next(-1);
@@ -152,7 +152,7 @@ final class ONullBucket extends ODurablePage {
 
     if (size > embeddedSize) {
       final long mId = getLongValue(M_ID_OFFSET);
-      final Byte result = multiContainer.remove(new OMultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()));
+      final Byte result = multiContainer.remove(new MultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()));
       if (result != null) {
         setIntValue(RIDS_SIZE_OFFSET, size - 1);
         return true;
@@ -168,20 +168,20 @@ final class ONullBucket extends ODurablePage {
     final int size = getIntValue(RIDS_SIZE_OFFSET);
 
     if (size > embeddedSize) {
-      final List<OMultiValueEntry> entriesToRemove = new ArrayList<>(size - embeddedSize);
+      final List<MultiValueEntry> entriesToRemove = new ArrayList<>(size - embeddedSize);
 
-      final OSBTree.OSBTreeCursor<OMultiValueEntry, Byte> cursor = multiContainer
-          .iterateEntriesBetween(new OMultiValueEntry(mId, 0, 0), true, new OMultiValueEntry(mId + 1, 0, 0), false, true);
+      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
+          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
 
-      Map.Entry<OMultiValueEntry, Byte> mapEntry = cursor.next(-1);
+      Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
       while (mapEntry != null) {
-        final OMultiValueEntry entry = mapEntry.getKey();
+        final MultiValueEntry entry = mapEntry.getKey();
         entriesToRemove.add(entry);
 
         mapEntry = cursor.next(-1);
       }
 
-      for (final OMultiValueEntry entry : entriesToRemove) {
+      for (final MultiValueEntry entry : entriesToRemove) {
         multiContainer.remove(entry);
       }
     }

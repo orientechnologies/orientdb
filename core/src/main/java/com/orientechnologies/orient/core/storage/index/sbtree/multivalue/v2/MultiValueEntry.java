@@ -1,18 +1,18 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2;
 
-final class OMultiValueEntry implements Comparable<OMultiValueEntry> {
+final class MultiValueEntry implements Comparable<MultiValueEntry> {
   public final long id;
   public final int  clusterId;
   public final long clusterPosition;
 
-  public OMultiValueEntry(final long id, final int clusterId, final long clusterPosition) {
+  public MultiValueEntry(final long id, final int clusterId, final long clusterPosition) {
     this.id = id;
     this.clusterId = clusterId;
     this.clusterPosition = clusterPosition;
   }
 
   @Override
-  public int compareTo(final OMultiValueEntry o) {
+  public int compareTo(final MultiValueEntry o) {
     int result = Long.compare(id, o.id);
     if (result != 0) {
       return result;

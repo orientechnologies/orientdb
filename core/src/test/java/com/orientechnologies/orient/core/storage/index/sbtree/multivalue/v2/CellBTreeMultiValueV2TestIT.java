@@ -16,16 +16,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class OCellBTreeMultiValueV2TestIT {
-  private OCellBTreeMultiValueV2<String> multiValueTree;
-  private OrientDB                       orientDB;
+public class CellBTreeMultiValueV2TestIT {
+  private CellBTreeMultiValueV2<String> multiValueTree;
+  private OrientDB                      orientDB;
 
   private final String DB_NAME = "localMultiBTreeTest";
 
   @Before
   public void before() throws IOException {
     final String buildDirectory =
-        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeMultiValueV2TestIT.class.getSimpleName();
+        System.getProperty("buildDirectory", ".") + File.separator + CellBTreeMultiValueV2TestIT.class.getSimpleName();
 
     final File dbDirectory = new File(buildDirectory, DB_NAME);
     OFileUtils.deleteRecursively(dbDirectory);
@@ -35,7 +35,7 @@ public class OCellBTreeMultiValueV2TestIT {
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
-    multiValueTree = new OCellBTreeMultiValueV2<>("multiBTree", 42, ".sbt", ".nbt", ".mdt",
+    multiValueTree = new CellBTreeMultiValueV2<>("multiBTree", 42, ".sbt", ".nbt", ".mdt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
