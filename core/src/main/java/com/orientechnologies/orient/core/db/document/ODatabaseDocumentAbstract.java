@@ -1502,22 +1502,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           outDocument.reload();
         else if (inDocument != null)
           inDocument.reload();
-      } catch (RuntimeException e) {
-        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
-        try {
-          edge.delete();
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "Error during edge deletion", ex);
-        }
-        throw e;
-      } catch (Exception e) {
-        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
-        try {
-          edge.delete();
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "Error during edge deletion", ex);
-        }
-        throw new IllegalStateException("Error on addEdge in non tx environment", e);
       }
     }
     return edge;
