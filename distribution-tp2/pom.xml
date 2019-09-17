@@ -174,7 +174,7 @@
                                 <filter></filter>
                             </filters>
                             <ignoreDirFormatExtensions>false</ignoreDirFormatExtensions>
-                            <tarLongFileMode>gnu</tarLongFileMode>
+                            <tarLongFileMode>posix</tarLongFileMode>
                         </configuration>
                     </execution>
                 </executions>
