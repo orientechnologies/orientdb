@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.security;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -30,6 +31,7 @@ public class ORemoteSecurityTests {
   @Before
   public void before() throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
     server = OServer.startFromClasspathConfig("abstract-orientdb-server-config.xml");
+    OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.setValue(true);
 
     orient = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orient.create(DB_NAME, ODatabaseType.MEMORY);
