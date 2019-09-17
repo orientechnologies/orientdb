@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
-import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1.OCellBTreeMultiValueV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.OCellBTreeMultiValueV2;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v3.OCellBTreeMultiValueV3;
 
@@ -35,7 +34,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     this.name = name;
 
     if (version == 1) {
-      this.sbTree = new OCellBTreeMultiValueV1<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      throw new IllegalArgumentException("Unsupported version of index : " + version);
     } else if (version == 2) {
       this.sbTree = new OCellBTreeMultiValueV2<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
           storage);
