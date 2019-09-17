@@ -90,4 +90,60 @@ public class ColumnSecurityTest {
 
     db.command("create index Person.name on Person (name) NOTUNIQUE");
   }
+
+  @Test
+  public void testIndexWithPolicy4() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    OClass person = db.createClass("Person");
+    person.createProperty("name", OType.STRING);
+    person.createProperty("address", OType.STRING);
+
+    db.command("create index Person.name_address on Person (name, address) NOTUNIQUE");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.surname", policy);
+  }
+
+  @Test
+  public void testIndexWithPolicy5() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    OClass person = db.createClass("Person");
+    person.createProperty("name", OType.STRING);
+    person.createProperty("surname", OType.STRING);
+
+    db.command("create index Person.name_surname on Person (name, surname) NOTUNIQUE");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+
+    try {
+      security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+      Assert.fail();
+    } catch (Exception e) {
+    }
+  }
+
+  @Test
+  public void testIndexWithPolicy6() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    OClass person = db.createClass("Person");
+    person.createProperty("name", OType.STRING);
+
+    db.command("create index Person.name on Person (name) NOTUNIQUE");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+  }
+
 }
