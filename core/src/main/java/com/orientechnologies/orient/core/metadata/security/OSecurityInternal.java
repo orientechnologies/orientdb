@@ -147,7 +147,7 @@ public interface OSecurityInternal {
   boolean isReadRestrictedBySecurityPolicy(ODatabaseSession session, String resource);
 
   /**
-   * returns the list of all the filtered (for all the roles defined in the db)
+   * returns the list of all the filtered properties (for any role defined in the db)
    * @param database
    * @return
    */
