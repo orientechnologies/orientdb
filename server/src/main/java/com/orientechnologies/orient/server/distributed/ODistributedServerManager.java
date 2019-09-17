@@ -303,6 +303,10 @@ public interface ODistributedServerManager {
 
   }
 
+  default void messagePartitionCalculate(ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
+
+  }
+
   default void messageProcessStart(ODistributedRequest message) {
 
   }

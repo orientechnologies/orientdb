@@ -262,8 +262,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final ORemoteTask task = request.getTask();
 
-
-
     manager.messageReceived(request);
 
     if (waitForAcceptingRequests) {
@@ -308,6 +306,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       else
         // LOCK ALL THE QUEUES
         involvedWorkerQueues = ALL_QUEUES;
+
+      manager.messagePartitionCalculate(request, involvedWorkerQueues);
 
       // if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog
@@ -413,6 +413,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       throw new ODistributedException("There are no worker threads to process request " + request);
 
     final int partition = partitionKey % workerThreads.size();
+
+    Set<Integer> partitions = new HashSet<>();
+    partitions.add(partition);
+
+    manager.messagePartitionCalculate(request, partitions);
 
     ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
         "Request %s on database '%s' dispatched to the worker %d", request, databaseName, partition);
