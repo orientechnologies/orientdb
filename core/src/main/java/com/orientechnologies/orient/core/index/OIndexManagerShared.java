@@ -188,18 +188,32 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     String indexClass = indexDefinition.getClassName();
     List<String> indexedFields = indexDefinition.getFields();
 
-    Set<OSecurityResourceProperty> indexedAndFilteredProperties = security.getAllFilteredProperties(database).stream()
-            .filter(x -> x.getClassName().equalsIgnoreCase(indexClass))
-            .filter(x -> indexedFields.contains(x.getPropertyName()))
-            .collect(Collectors.toSet());
+    Set<String> classesToCheck = new HashSet<>();
+    classesToCheck.add(indexClass);
+    OClass clazz = database.getClass(indexClass);
+    if (clazz == null) {
+      return;
+    }
+    clazz.getAllSubclasses()
+            .forEach(x -> classesToCheck.add(x.getName()));
+    clazz.getAllSuperClasses()
+            .forEach(x -> classesToCheck.add(x.getName()));
+    Set<OSecurityResourceProperty> allFilteredProperties = security.getAllFilteredProperties(database);
 
-    if (indexedAndFilteredProperties.size() > 0) {
-      throw new OIndexException("Cannot create index on " + indexClass + "["
-              + (indexedAndFilteredProperties.stream()
-                      .map(x -> x.getPropertyName())
-                      .collect(Collectors.joining(", ")))
-              + " because of existing column security rules"
-      );
+    for (String className : classesToCheck) {
+      Set<OSecurityResourceProperty> indexedAndFilteredProperties = allFilteredProperties.stream()
+              .filter(x -> x.getClassName().equalsIgnoreCase(className))
+              .filter(x -> indexedFields.contains(x.getPropertyName()))
+              .collect(Collectors.toSet());
+
+      if (indexedAndFilteredProperties.size() > 0) {
+        throw new OIndexException("Cannot create index on " + indexClass + "["
+                + (indexedAndFilteredProperties.stream()
+                .map(x -> x.getPropertyName())
+                .collect(Collectors.joining(", ")))
+                + " because of existing column security rules"
+        );
+      }
     }
   }
 
