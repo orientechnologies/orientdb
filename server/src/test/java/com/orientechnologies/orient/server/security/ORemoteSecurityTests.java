@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
@@ -19,7 +18,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Collection;
 
 public class ORemoteSecurityTests {
 
@@ -354,13 +352,13 @@ public class ORemoteSecurityTests {
     db.save(elem);
 
     try (ODatabaseSession filteredSession = orient.open(DB_NAME, "reader", "reader")) {
+      try (final OResultSet resultSet = filteredSession.query("SELECT from Person where name = ?", "bar")) {
+        Assert.assertEquals(0, resultSet.stream().count());
+      }
 
-      OIndex<?> index = filteredSession.getMetadata().getIndexManager().getIndex("Person.name");
-      Object item = index.get("bar");
-      Assert.assertTrue(((Collection) item).isEmpty());
-
-      item = index.get("foo");
-      Assert.assertEquals(1, ((Collection) item).size());
+      try (final OResultSet resultSet = filteredSession.query("SELECT from Person where name = ?", "foo")) {
+        Assert.assertEquals(1, resultSet.stream().count());
+      }
     }
   }
 
