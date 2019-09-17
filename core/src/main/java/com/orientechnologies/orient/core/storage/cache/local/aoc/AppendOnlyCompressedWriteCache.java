@@ -115,8 +115,14 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
     LZ_4_DECOMPRESSOR = lz4Factory.fastDecompressor();
   }
 
-  private static final int LOGICAL_PAGE_INDEX_OFFSET = 0;
-  private static final int PAGE_SIZE_OFFSET          = LOGICAL_PAGE_INDEX_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final long PREALOCATED_SIZE   = 100 * 1024 * 1024 * 1024L;
+  private static final int  SEGMENT_SIZE       = 64 * 1024 * 1024;
+  private static final int  PHYSICAL_PAGE_SIZE = 4 * 1024;
+  private static final int  PAGES_IN_SEGMENT   = SEGMENT_SIZE / PHYSICAL_PAGE_SIZE;
+
+  private static final int PAGE_LOGICAL_INDEX_OFFSET = 0;
+  private static final int PAGE_VERSION_OFFSET       = PAGE_LOGICAL_INDEX_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int PAGE_SIZE_OFFSET          = PAGE_VERSION_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int PAGE_CONTENT_SIZE_OFFSET  = PAGE_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int PAGE_FLAGS_OFFSET         = PAGE_CONTENT_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int PAGE_IV_OFFSET            = PAGE_FLAGS_OFFSET + 4;
@@ -125,20 +131,7 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
   private static final int IS_COMPRESSED_FLAG = 1;
 
   private static final String DATA_EXTENSION = ".dat";
-  private static final String ALGORITHM_NAME = "AES";
   private static final String TRANSFORMATION = "AES/CTR/NoPadding";
-
-  private static final ThreadLocal<Cipher> CIPHER = ThreadLocal.withInitial(AppendOnlyCompressedWriteCache::getCipherInstance);
-
-  /**
-   * Extension for the file which contains mapping between file name and file id
-   */
-  private static final String NAME_ID_MAP_EXTENSION = ".cma";
-
-  /**
-   * Name for file which contains first version of binary format
-   */
-  private static final String NAME_ID_MAP_V1 = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
   private static final int CHUNK_SIZE = 64 * 1024 * 1024;
 
@@ -368,15 +361,19 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
   private ConcurrentHashMap<Integer, FileMap> fileLogicalPhysicalPageMap = new ConcurrentHashMap<>();
 
   /**
-   * Set of pages which are locked for read. Those pages can not be overwritten during data flush otherwise we will get incorrect
-   * pages.
-   */
-  private final OPartitionedLockManager<Integer> readIOLockManager = new OPartitionedLockManager<>(false, true);
-
-  /**
    * Path to the file where all data will be stored.
    */
   private final Path dataFilePath;
+
+  private List<FileSegment> segmentsByIndex;
+  private List<FileSegment> segmentsByFreeSpace;
+  private BitSet            fileHoles;
+
+  private long fileSize;
+  private long freeSpace;
+
+  private long dataSize;
+  private long compressedDataSize;
 
   private AsynchronousFileChannel dataFileChannel;
 
@@ -411,6 +408,13 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
       this.pageSize = pageSize;
       this.writeAheadLog = writeAheadLog;
       this.bufferPool = bufferPool;
+
+      final int preAllocatedSegments = (int) (PREALOCATED_SIZE / SEGMENT_SIZE);
+      segmentsByIndex = new ArrayList<>(preAllocatedSegments);
+      segmentsByFreeSpace = new ArrayList<>(preAllocatedSegments);
+
+      final int preAllocatedPages = (int) (preAllocatedSegments * (long) SEGMENT_SIZE / PHYSICAL_PAGE_SIZE);
+      fileHoles = new BitSet(preAllocatedPages);
 
       this.checksumMode = checksumMode;
       this.exclusiveWriteCacheMaxSize = normalizeMemory(exclusiveWriteCacheMaxSize, pageSize);
@@ -1087,33 +1091,19 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
         }
 
         final int startPageIndex = mappingData[0];
-        final int offsetInsidePage = mappingData[1];
         final int pagesToRead = mappingData[2];
 
         if (startPageIndex < 0) {
           throw new IllegalStateException("Page with index " + pageIndex + " is absent in memory and in file");
         }
 
-        final int[] physicalPagesToLock = new int[pagesToRead];
-        for (int i = 0; i < pagesToRead; i++) {
-          physicalPagesToLock[i] = startPageIndex + i;
-        }
+        //load requested page form file, single logical page can be stored in several physical pages
+        final OCachePointer filePagePointer = loadFileContent(internalFileId, fileId, startPageIndex, pagesToRead);
 
-        final Lock[] pageLocks = readIOLockManager.acquireExclusiveLocksInBatch(physicalPagesToLock);
-        try {
-          //load requested page form file, single logical page can be stored in several physical pages
-          final OCachePointer filePagePointer = loadFileContent(internalFileId, fileId, startPageIndex, pagesToRead,
-              offsetInsidePage);
+        assert filePagePointer.getPageIndex() == pageIndex;
+        filePagePointer.incrementReadersReferrer();
 
-          assert filePagePointer.getPageIndex() == pageIndex;
-          filePagePointer.incrementReadersReferrer();
-
-          return filePagePointer;
-        } finally {
-          for (final Lock lock : pageLocks) {
-            lock.unlock();
-          }
-        }
+        return filePagePointer;
       }
 
       pagePointer.incrementReadersReferrer();
@@ -1987,8 +1977,8 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
     }
   }
 
-  private OCachePointer loadFileContent(final int internalFileId, final long fileId, final long pageIndex, final int pagesToRead,
-      final int offsetInsidePage) throws IOException {
+  private OCachePointer loadFileContent(final int internalFileId, final long fileId, final long pageIndex, final int pagesToRead)
+      throws IOException {
     final OPointer pointer = ODirectMemoryAllocator.instance().allocate(pagesToRead * pagesToRead, -1, false);
     try {
       final ByteBuffer buffer = pointer.getNativeByteBuffer();
@@ -2017,21 +2007,16 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
 
       buffer.rewind();
 
-      buffer.position(offsetInsidePage);
-
-      final int logicalPageIndex = buffer.getInt();
-      //ignore for a while
-      final int sizeOfPageInChunks = buffer.get();
+      final int logicalPageIndex = buffer.getInt(PAGE_LOGICAL_INDEX_OFFSET);
+      final int contentSize = buffer.getInt(PAGE_CONTENT_SIZE_OFFSET);
+      final long flags = 0xFF_FF_FF_FFL & buffer.getInt(PAGE_FLAGS_OFFSET);
 
       final OPointer bufferPointer = bufferPool.acquireDirect(true);
       final ByteBuffer pageBuffer = bufferPointer.getNativeByteBuffer();
 
-      final int contentSize = buffer.getInt();
-      final long flags = 0xFF_FF_FF_FFL & buffer.getInt();
+      buffer.limit(PAGE_CONTENT_OFFSET + contentSize);
 
-      buffer.position(PAGE_CONTENT_OFFSET + offsetInsidePage);
-      buffer.limit(PAGE_CONTENT_OFFSET + contentSize + offsetInsidePage);
-
+      buffer.rewind();
       if ((flags & IS_COMPRESSED_FLAG) != 0) {
         LZ_4_DECOMPRESSOR.decompress(buffer, pageBuffer);
       } else {
@@ -2284,6 +2269,8 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
     private final int  fileId;
     private final long pageIndex;
 
+    private int hash;
+
     private PageKey(final int fileId, final long pageIndex) {
       this.fileId = fileId;
       this.pageIndex = pageIndex;
@@ -2321,18 +2308,31 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
 
     @Override
     public int hashCode() {
+      if (hash != 0) {
+        return hash;
+      }
+
       int result = fileId;
       result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
-      return result;
+
+      hash = result;
+
+      return hash;
     }
 
     @Override
     public String toString() {
       return "PageKey{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + '}';
     }
+  }
 
-    public PageKey previous() {
-      return pageIndex == -1 ? this : new PageKey(fileId, pageIndex - 1);
+  private static final class CompressedPage {
+    private final int        version;
+    private final ByteBuffer compressedPage;
+
+    private CompressedPage(int version, ByteBuffer compressedPage) {
+      this.version = version;
+      this.compressedPage = compressedPage;
     }
   }
 
@@ -2382,7 +2382,7 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
       assert ewcSize >= 0;
 
       if (ewcSize >= 0.8 * exclusiveWriteCacheMaxSize) {
-        flushExclusiveWriteCache(null, ewcSize);
+        fetchExclusiveWriteCache((int) ewcSize, null);
       }
     }
   }
@@ -2422,7 +2422,7 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
         }
 
         if (ewcSize > exclusiveWriteCacheMaxSize) {
-          flushExclusiveWriteCache(cacheBoundaryLatch, chunkSize);
+          fetchExclusiveWriteCache(chunkSize, null);
         }
 
       } catch (final Error | Exception t) {
@@ -2446,13 +2446,11 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
 
     @Override
     public void run() {
-      //TODO: start from here
       if (stopFlush) {
         return;
       }
 
       long flushInterval = pagesFlushInterval;
-
       try {
         if (flushError != null) {
           OLogManager.instance()
@@ -2460,14 +2458,11 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
           return;
         }
 
+        final Map<PageKey, CompressedPage> compressedPages = new HashMap<>();
         try {
-          if (writeCachePages.isEmpty()) {
-            return;
-          }
-
           long ewcSize = exclusiveWriteCacheSize.get();
-          if (ewcSize >= chunkSize || ewcSize > exclusiveWriteCacheMaxSize / 2) {
-            flushExclusiveWriteCache(null, Math.min(ewcSize, 4 * chunkSize));
+          if (ewcSize >= PAGES_IN_SEGMENT || ewcSize >= 0.8 * exclusiveWriteCacheMaxSize) {
+            fetchExclusiveWriteCache((int) Math.min(ewcSize, 4 * PAGES_IN_SEGMENT), compressedPages);
 
             if (exclusiveWriteCacheSize.get() > 0) {
               flushInterval = 1;
@@ -2485,6 +2480,9 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
               flushInterval = 1;
             }
           }
+
+          final int freeSpacePercent = (int) (100 * freeSpace / fileSize);
+          final int compressionRatio = (int) (100 * dataSize / compressedDataSize);
         } catch (final Error | Exception t) {
           OLogManager.instance().error(this, "Exception during data flush", t);
           AppendOnlyCompressedWriteCache.this.fireBackgroundDataFlushExceptionEvent(t);
@@ -2874,153 +2872,53 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
     return flushedPages;
   }
 
-  private void flushExclusiveWriteCache(final CountDownLatch latch, long pagesToFlush) throws InterruptedException, IOException {
-    final Iterator<PageKey> iterator = exclusiveWritePages.iterator();
-
-    int flushedPages = 0;
-    int copiedPages = 0;
-
-    final long ewcSize = exclusiveWriteCacheSize.get();
-    pagesToFlush = Math.min(Math.max(pagesToFlush, chunkSize), ewcSize);
-
-    List<List<OQuarto<Long, ByteBuffer, OPointer, OCachePointer>>> chunks = new ArrayList<>(16);
-    List<OQuarto<Long, ByteBuffer, OPointer, OCachePointer>> chunk = new ArrayList<>(16);
-
-    if (latch != null && ewcSize <= exclusiveWriteCacheMaxSize) {
-      latch.countDown();
-    }
-
+  private OLogSequenceNumber fetchExclusiveWriteCache(final int pagesToFlush, final Map<PageKey, CompressedPage> pageMap) {
     OLogSequenceNumber maxFullLogLSN = null;
+    final Iterator<PageKey> iterator = exclusiveWritePages.iterator();
+    int compressedPages = 0;
 
-    int chunksSize = 0;
-    flushCycle:
-    while (chunksSize < pagesToFlush) {
-      long lastFileId = -1;
-      long lastPageIndex = -1;
+    while (iterator.hasNext() && compressedPages < pagesToFlush) {
+      final PageKey pageKey = iterator.next();
 
-      while (chunksSize + chunk.size() < pagesToFlush) {
-        if (!iterator.hasNext()) {
-          if (!chunk.isEmpty()) {
-            chunks.add(chunk);
-          }
+      final OCachePointer pointer = writeCachePages.get(pageKey);
+      final long version;
 
-          break flushCycle;
-        }
+      if (pointer == null) {
+        iterator.remove();
+      } else {
+        if (pointer.tryAcquireSharedLock()) {
+          final OLogSequenceNumber fullLSN;
 
-        final PageKey pageKey = iterator.next();
+          final OPointer directPointer = bufferPool.acquireDirect(false);
+          final ByteBuffer copy = directPointer.getNativeByteBuffer();
+          assert copy.position() == 0;
+          try {
+            version = pointer.getVersion();
+            final ByteBuffer buffer = pointer.getBufferDuplicate();
 
-        final OCachePointer pointer = writeCachePages.get(pageKey);
-        final long version;
+            fullLSN = pointer.getEndLSN();
 
-        if (pointer == null) {
-          iterator.remove();
-        } else {
-          if (pointer.tryAcquireSharedLock()) {
-            final OLogSequenceNumber fullLSN;
-
-            final OPointer directPointer = bufferPool.acquireDirect(false);
-            final ByteBuffer copy = directPointer.getNativeByteBuffer();
-            assert copy.position() == 0;
-            try {
-              version = pointer.getVersion();
-              final ByteBuffer buffer = pointer.getBufferDuplicate();
-
-              fullLSN = pointer.getEndLSN();
-
-              assert buffer != null;
-              buffer.position(0);
-              copy.position(0);
-
-              copy.put(buffer);
-
-              removeFromDirtyPages(pageKey);
-
-              copiedPages++;
-            } finally {
-              pointer.releaseSharedLock();
-            }
-
-            if (fullLSN != null && (maxFullLogLSN == null || maxFullLogLSN.compareTo(fullLSN) < 0)) {
-              maxFullLogLSN = fullLSN;
-            }
-
+            assert buffer != null;
+            buffer.position(0);
             copy.position(0);
 
-            if (chunk.isEmpty()) {
-              chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
-            } else {
-              if (lastFileId != pointer.getFileId() || lastPageIndex != pointer.getPageIndex() - 1) {
-                chunks.add(chunk);
-                chunksSize += chunk.size();
-                chunk = new ArrayList<>();
+            copy.put(buffer);
 
-                if (chunksSize - flushedPages >= this.chunkSize) {
-                  flushedPages += flushPages(chunks, maxFullLogLSN);
-                  chunks.clear();
+            removeFromDirtyPages(pageKey);
 
-                  if (latch != null && exclusiveWriteCacheSize.get() <= exclusiveWriteCacheMaxSize) {
-                    latch.countDown();
-                  }
-
-                  maxFullLogLSN = null;
-                }
-
-                chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
-              } else {
-                chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
-              }
-            }
-
-            lastFileId = pointer.getFileId();
-            lastPageIndex = pointer.getPageIndex();
-          } else {
-            if (!chunk.isEmpty()) {
-              chunks.add(chunk);
-              chunksSize += chunk.size();
-              chunk = new ArrayList<>();
-            }
-
-            if (chunksSize - flushedPages >= this.chunkSize) {
-              flushedPages += flushPages(chunks, maxFullLogLSN);
-              chunks.clear();
-
-              if (latch != null && exclusiveWriteCacheSize.get() <= exclusiveWriteCacheMaxSize) {
-                latch.countDown();
-              }
-
-              maxFullLogLSN = null;
-            }
-
-            lastFileId = -1;
-            lastPageIndex = -1;
+            compressedPages++;
+          } finally {
+            pointer.releaseSharedLock();
           }
-        }
-      }
 
-      if (!chunk.isEmpty()) {
-        chunks.add(chunk);
-        chunksSize += chunk.size();
-        chunk = new ArrayList<>();
-
-        if (chunksSize - flushedPages >= this.chunkSize) {
-          flushedPages += flushPages(chunks, maxFullLogLSN);
-          chunks.clear();
-
-          maxFullLogLSN = null;
-
-          if (latch != null && exclusiveWriteCacheSize.get() <= exclusiveWriteCacheMaxSize) {
-            latch.countDown();
+          if (fullLSN != null && (maxFullLogLSN == null || maxFullLogLSN.compareTo(fullLSN) < 0)) {
+            maxFullLogLSN = fullLSN;
           }
         }
       }
     }
 
-    flushedPages += flushPages(chunks, maxFullLogLSN);
-
-    if (copiedPages != flushedPages) {
-      throw new IllegalStateException("Copied pages (" + copiedPages + " ) != flushed pages (" + flushedPages + ")");
-    }
-
+    return maxFullLogLSN;
   }
 
   private final class FileFlushTask implements Callable<Void> {
