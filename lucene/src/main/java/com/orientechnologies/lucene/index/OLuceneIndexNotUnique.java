@@ -291,6 +291,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
             return null;
           }
           return result;
+          // TODO filter these results based on security
 //          return new HashSet(OIndexInternal.securityFilterOnRead(this, result));
         } catch (OInvalidIndexEngineIdException e) {
           doReloadIndexEngine();
