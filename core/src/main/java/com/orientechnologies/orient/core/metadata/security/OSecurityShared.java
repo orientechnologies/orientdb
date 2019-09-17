@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -418,6 +419,7 @@ public class OSecurityShared implements OSecurityInternal {
     if (roleDoc == null) {
       return;
     }
+    validatePolicyWithIndexes(session, resource);
     Map<String, OIdentifiable> policies = roleDoc.getProperty("policies");
     if (policies == null) {
       policies = new HashMap<>();
@@ -427,6 +429,29 @@ public class OSecurityShared implements OSecurityInternal {
     roleDoc = session.save(roleDoc);
     if (role instanceof ORole) {
       ((ORole) role).reload();
+    }
+  }
+
+  private void validatePolicyWithIndexes(ODatabaseSession session, String resource) throws IllegalArgumentException {
+    OSecurityResource res = OSecurityResource.getInstance(resource);
+    if (res instanceof OSecurityResourceProperty) {
+      String clazzName = ((OSecurityResourceProperty) res).getClassName();
+      OClass clazz = session.getClass(clazzName);
+      if (clazz == null) {
+        return;
+      }
+      Set<OClass> allClasses = new HashSet<>();
+      allClasses.add(clazz);
+      allClasses.addAll(clazz.getAllSubclasses());
+      allClasses.addAll(clazz.getAllSuperClasses());
+      for (OClass c : allClasses) {
+        for (OIndex<?> index : c.getIndexes()) {
+          List<String> indexFields = index.getDefinition().getFields();
+          if (indexFields.size() > 1 && indexFields.contains(((OSecurityResourceProperty) res).getPropertyName())) {
+            throw new IllegalArgumentException("Cannot bind security policy on " + resource + " because of existing composite indexes: " + index.getName());
+          }
+        }
+      }
     }
   }
 
