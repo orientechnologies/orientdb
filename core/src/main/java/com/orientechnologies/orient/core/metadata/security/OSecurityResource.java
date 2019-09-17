@@ -115,6 +115,13 @@ public abstract class OSecurityResource {
           throw new OSecurityException("Invalid resource: " + resource);
         }
         return new OSecurityResourceFunction(resource, functionName);
+      } else if (resource.startsWith("database.systemclusters.")) {
+        OSecurityResourceSegment clusterElement = parsed.getNext().getNext();
+        String clusterName = clusterElement.getIdentifier().getStringValue();
+        if (clusterElement.getNext() != null) {
+          throw new OSecurityException("Invalid resource: " + resource);
+        }
+        return new OSecurityResourceCluster(resource, clusterName);
       }
 
       throw new OSecurityException("Invalid resource: " + resource);

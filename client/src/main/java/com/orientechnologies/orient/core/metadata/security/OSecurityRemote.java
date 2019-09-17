@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -237,5 +238,10 @@ public class OSecurityRemote implements OSecurityInternal {
   @Override
   public boolean isReadRestrictedBySecurityPolicy(ODatabaseSession session, String resource) {
     return false;
+  }
+
+  @Override
+  public Set<OSecurityResourceProperty> getAllFilteredProperties(ODatabaseDocumentInternal database) {
+    return Collections.EMPTY_SET;
   }
 }

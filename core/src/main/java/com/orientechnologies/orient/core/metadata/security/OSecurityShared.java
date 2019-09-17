@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -41,10 +42,12 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
+import com.orientechnologies.orient.core.sql.parser.OSecurityResourceSegment;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.*;
@@ -64,6 +67,11 @@ public class OSecurityShared implements OSecurityInternal {
   public static final String IDENTITY_CLASSNAME = "OIdentity";
 
   protected Map<String, Map<String, OBooleanExpression>> securityPredicateCache = new ConcurrentHashMap<>();
+
+  /**
+   * set of all the security resources defined on properties (used for optimizations)
+   */
+  protected Set<OSecurityResourceProperty> filteredProperties;
 
   /**
    * Uses the ORestrictedOperation ENUM instead.
@@ -501,7 +509,7 @@ public class OSecurityShared implements OSecurityInternal {
     setSecurityPolicyWithBitmask(session, readerRole, ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".orole", ORole.PERMISSION_READ);
     setSecurityPolicyWithBitmask(session, readerRole, ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".ouser", ORole.PERMISSION_READ);
     setSecurityPolicyWithBitmask(session, readerRole, ORule.ResourceGeneric.CLASS.getLegacyName() + ".*", ORole.PERMISSION_READ);
-    setSecurityPolicyWithBitmask(session, readerRole, ORule.ResourceGeneric.CLASS.getLegacyName() + "OUser", ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(session, readerRole, ORule.ResourceGeneric.CLASS.getLegacyName() + ".OUser", ORole.PERMISSION_READ);
     setSecurityPolicyWithBitmask(session, readerRole, ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".*", ORole.PERMISSION_READ);
     setSecurityPolicyWithBitmask(session, readerRole, ORule.ResourceGeneric.COMMAND.getLegacyName(), ORole.PERMISSION_READ);
     setSecurityPolicyWithBitmask(session, readerRole, ORule.ResourceGeneric.RECORD_HOOK.getLegacyName(), ORole.PERMISSION_READ);
@@ -817,6 +825,7 @@ public class OSecurityShared implements OSecurityInternal {
   public void incrementVersion(final ODatabaseSession session) {
     version.incrementAndGet();
     securityPredicateCache.clear();
+    updateAllFilteredProperties((ODatabaseDocumentInternal) session);
   }
 
   @Override
@@ -999,5 +1008,53 @@ public class OSecurityShared implements OSecurityInternal {
       return false;
     }
     return true;
+  }
+
+  @Override
+  public synchronized Set<OSecurityResourceProperty> getAllFilteredProperties(ODatabaseDocumentInternal database) {
+    if (filteredProperties == null) {
+      updateAllFilteredProperties(database);
+    }
+    if (filteredProperties == null) {
+      return Collections.emptySet();
+    }
+    return new HashSet<>(filteredProperties);
+  }
+
+  protected void updateAllFilteredProperties(ODatabaseDocumentInternal session) {
+    try {
+      Set<OSecurityResourceProperty> result = new HashSet<>();
+//      session.getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {
+
+      if (session.getClass("ORole") == null) {
+        return;
+      }
+      OResultSet rs = session.query("select policies from ORole");
+      while (rs.hasNext()) {
+        OResult item = rs.next();
+        Map<String, OIdentifiable> policies = item.getProperty("policies");
+        for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
+          try {
+            OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
+            if (res instanceof OSecurityResourceProperty) {
+              OSecurityPolicy policy = new OSecurityPolicy(policyEntry.getValue().getRecord());
+              String readRule = policy.getReadRule();
+              if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
+                result.add((OSecurityResourceProperty) res);
+              }
+            }
+          } catch (Exception e) {
+          }
+        }
+      }
+      rs.close();
+//        return null;
+//      })).get();
+      synchronized (this) {
+        filteredProperties = result;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }
