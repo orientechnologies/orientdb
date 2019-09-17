@@ -1832,6 +1832,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
+  public void messagePartitionCalculate(ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessagePartitionCalculated(request, involvedWorkerQueues);
+    }
+
+  }
+
+  @Override
   public void messageProcessStart(ODistributedRequest message) {
     for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageProcessStart(message);
