@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -42,6 +44,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 /**
  * Manages stored functions.
@@ -49,9 +52,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunctionLibraryImpl {
-  public static final String                 CLASSNAME  = "OFunction";
-  protected final     Map<String, OFunction> functions  = new ConcurrentHashMap<String, OFunction>();
-  private             AtomicBoolean          needReload = new AtomicBoolean(false);
+  public static final String CLASSNAME = "OFunction";
+  protected final Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
+  private AtomicBoolean needReload = new AtomicBoolean(false);
 
   static {
     OCommandManager.instance().registerExecutor(OCommandFunction.class, OCommandExecutorFunction.class);
@@ -80,7 +83,7 @@ public class OFunctionLibraryImpl {
 
     // LOAD ALL THE FUNCTIONS IN MEMORY
     if (db.getMetadata().getImmutableSchemaSnapshot().existsClass("OFunction")) {
-      try(OResultSet result = db.query("select from OFunction order by name")) {
+      try (OResultSet result = db.query("select from OFunction order by name")) {
         while (result.hasNext()) {
           OResult res = result.next();
           ODocument d = (ODocument) res.getElement().get();
@@ -184,7 +187,7 @@ public class OFunctionLibraryImpl {
     try {
       String oldName = (String) function.getOriginalValue("name");
       functions.remove(oldName.toUpperCase(Locale.ENGLISH));
-    }catch (Exception e){
+    } catch (Exception e) {
 
     }
     ODocument metadataCopy = function.copy();
@@ -215,5 +218,12 @@ public class OFunctionLibraryImpl {
 
   public synchronized void update() {
     needReload.set(true);
+  }
+
+  public static void validateFunctionRecord(ODocument doc) throws ODatabaseException {
+    String name = doc.getProperty("name");
+    if (!Pattern.compile("[A-Za-z][A-Za-z0-9_]*").matcher(name).matches()) {
+      throw new ODatabaseException("Invalid function name: " + name);
+    }
   }
 }
