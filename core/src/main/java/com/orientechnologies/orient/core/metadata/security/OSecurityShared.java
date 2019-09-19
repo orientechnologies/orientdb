@@ -1058,17 +1058,19 @@ public class OSecurityShared implements OSecurityInternal {
       while (rs.hasNext()) {
         OResult item = rs.next();
         Map<String, OIdentifiable> policies = item.getProperty("policies");
-        for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
-          try {
-            OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
-            if (res instanceof OSecurityResourceProperty) {
-              OSecurityPolicy policy = new OSecurityPolicy(policyEntry.getValue().getRecord());
-              String readRule = policy.getReadRule();
-              if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
-                result.add((OSecurityResourceProperty) res);
+        if (policies != null) {
+          for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
+            try {
+              OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
+              if (res instanceof OSecurityResourceProperty) {
+                OSecurityPolicy policy = new OSecurityPolicy(policyEntry.getValue().getRecord());
+                String readRule = policy.getReadRule();
+                if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
+                  result.add((OSecurityResourceProperty) res);
+                }
               }
+            } catch (Exception e) {
             }
-          } catch (Exception e) {
           }
         }
       }
