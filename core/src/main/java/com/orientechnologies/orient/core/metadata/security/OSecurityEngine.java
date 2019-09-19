@@ -199,7 +199,7 @@ public class OSecurityEngine {
   }
 
   private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
-    String cacheKey = "$CLASS$" + clazz.getName() + "$PROP$" + propertyName;
+    String cacheKey = "$CLASS$" + clazz.getName() + "$PROP$" + propertyName + "$" + scope;
     OBooleanExpression result;
     if (role != null) {
       result = security.getPredicateFromCache(role.getName(), cacheKey);
