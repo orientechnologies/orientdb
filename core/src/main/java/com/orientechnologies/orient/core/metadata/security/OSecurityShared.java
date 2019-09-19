@@ -32,11 +32,8 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
@@ -888,21 +885,24 @@ public class OSecurityShared implements OSecurityInternal {
       //executeNoAuth
       return true;
     }
+
+    OClass clazz = ((OElement) document).getSchemaType().orElse(null);
+    if (clazz == null) {
+      return true;
+    }
+
     if (document.getIdentity().isNew()) {
-      OBooleanExpression predicate = ((OElement) document).getSchemaType()
-              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName() + "." + propertyName, OSecurityPolicy.Scope.CREATE)).orElse(null);
+      OBooleanExpression predicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + clazz.getName() + "." + propertyName, OSecurityPolicy.Scope.CREATE);
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document);
     } else {
 
-      OBooleanExpression beforePredicate = document.getSchemaType()
-              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName() + "." + propertyName, OSecurityPolicy.Scope.BEFORE_UPDATE)).orElse(null);
+      OBooleanExpression beforePredicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + clazz.getName() + "." + propertyName, OSecurityPolicy.Scope.BEFORE_UPDATE);
       OResultInternal originalRecord = calculateOriginalValue(document);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, beforePredicate, originalRecord)) {
         return false;
       }
 
-      OBooleanExpression predicate = document.getSchemaType()
-              .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + x.getName() + "." + propertyName, OSecurityPolicy.Scope.AFTER_UPDATE)).orElse(null);
+      OBooleanExpression predicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class." + clazz.getName() + "." + propertyName, OSecurityPolicy.Scope.AFTER_UPDATE);
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document);
     }
 
@@ -1058,17 +1058,19 @@ public class OSecurityShared implements OSecurityInternal {
       while (rs.hasNext()) {
         OResult item = rs.next();
         Map<String, OIdentifiable> policies = item.getProperty("policies");
-        for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
-          try {
-            OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
-            if (res instanceof OSecurityResourceProperty) {
-              OSecurityPolicy policy = new OSecurityPolicy(policyEntry.getValue().getRecord());
-              String readRule = policy.getReadRule();
-              if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
-                result.add((OSecurityResourceProperty) res);
+        if (policies != null) {
+          for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
+            try {
+              OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
+              if (res instanceof OSecurityResourceProperty) {
+                OSecurityPolicy policy = new OSecurityPolicy(policyEntry.getValue().getRecord());
+                String readRule = policy.getReadRule();
+                if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
+                  result.add((OSecurityResourceProperty) res);
+                }
               }
+            } catch (Exception e) {
             }
-          } catch (Exception e) {
           }
         }
       }

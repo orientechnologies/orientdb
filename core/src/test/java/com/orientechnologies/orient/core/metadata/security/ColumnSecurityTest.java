@@ -1,9 +1,13 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.*;
 
 public class ColumnSecurityTest {
@@ -144,6 +148,260 @@ public class ColumnSecurityTest {
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+  }
+
+
+  @Test
+  public void testReadFilterOneProperty() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    db.save(elem);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "reader", "reader");
+    OResultSet rs = db.query("select from Person");
+    boolean fooFound = false;
+    boolean nullFound = false;
+
+    for (int i = 0; i < 2; i++) {
+      OResult item = rs.next();
+      if ("foo".equals(item.getProperty("name"))) {
+        fooFound = true;
+      }
+      if (item.getProperty("name") == null) {
+        nullFound = true;
+      }
+    }
+
+    Assert.assertFalse(rs.hasNext());
+    rs.close();
+
+    Assert.assertTrue(fooFound);
+    Assert.assertTrue(nullFound);
+  }
+
+  @Test
+  public void testReadWithPredicateAndQuery() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name IN (select 'foo' as foo)");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    db.save(elem);
+
+    OResultSet rs = db.query("select from Person");
+    boolean fooFound = false;
+    boolean barFound = false;
+
+    for (int i = 0; i < 2; i++) {
+      OResult item = rs.next();
+      if ("foo".equals(item.getProperty("name"))) {
+        fooFound = true;
+      }
+      if ("bar".equals(item.getProperty("name"))) {
+        barFound = true;
+      }
+    }
+
+    Assert.assertFalse(rs.hasNext());
+    rs.close();
+
+    Assert.assertTrue(fooFound);
+    Assert.assertTrue(barFound);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "reader", "reader");
+    rs = db.query("select from Person");
+    fooFound = false;
+    boolean nullFound = false;
+
+    for (int i = 0; i < 2; i++) {
+      OResult item = rs.next();
+      if ("foo".equals(item.getProperty("name"))) {
+        fooFound = true;
+      }
+      if (item.getProperty("name") == null) {
+        nullFound = true;
+      }
+    }
+
+    Assert.assertFalse(rs.hasNext());
+    rs.close();
+
+    Assert.assertTrue(fooFound);
+    Assert.assertTrue(nullFound);
+  }
+
+  @Test
+  public void testReadFilterOnePropertyWithQuery() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    elem.setProperty("surname", "bar");
+    db.save(elem);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "reader", "reader");
+    OResultSet rs = db.query("select from Person where name = 'foo' OR name = 'bar'");
+
+    OResult item = rs.next();
+    Assert.assertEquals("foo", item.getProperty("name"));
+
+
+    Assert.assertFalse(rs.hasNext());
+    rs.close();
+  }
+
+
+  @Test
+  public void testCreate() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setCreateRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person.name", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    elem.setProperty("surname", "bar");
+    try {
+      db.save(elem);
+      Assert.fail();
+    } catch (OSecurityException e) {
+
+    }
+  }
+
+
+  @Test
+  public void testBeforeUpdate() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setBeforeUpdateRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person.name", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    elem.setProperty("surname", "bar");
+    db.save(elem);
+
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    db.command("UPDATE Person SET name = 'foo1' WHERE name = 'foo'");
+
+    try (OResultSet rs = db.query("SELECT FROM Person WHERE name = 'foo1'")) {
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertFalse(rs.hasNext());
+    }
+
+
+    try {
+      db.command("UPDATE Person SET name = 'bar1' WHERE name = 'bar'");
+      Assert.fail();
+    } catch (OSecurityException e) {
+
+    }
+  }
+
+  @Test
+  public void testAfterUpdate() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setAfterUpdateRule("name <> 'invalid'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person.name", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    db.command("UPDATE Person SET name = 'foo1' WHERE name = 'foo'");
+
+    try (OResultSet rs = db.query("SELECT FROM Person WHERE name = 'foo1'")) {
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertFalse(rs.hasNext());
+    }
+
+
+    try {
+      db.command("UPDATE Person SET name = 'invalid'");
+      Assert.fail();
+    } catch (OSecurityException e) {
+
+    }
   }
 
 }

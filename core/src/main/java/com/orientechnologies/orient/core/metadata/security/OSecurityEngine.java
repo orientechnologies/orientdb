@@ -87,6 +87,9 @@ public class OSecurityEngine {
 
   private static OBooleanExpression getPredicateForProperty(ODatabaseSession session, OSecurityShared security, OSecurityResourceProperty resource, OSecurityPolicy.Scope scope) {
     OClass clazz = session.getClass(resource.getClassName());
+    if (clazz == null) {
+      clazz = session.getMetadata().getSchema().getView(resource.getClassName());
+    }
     String propertyName = resource.getPropertyName();
     Set<? extends OSecurityRole> roles = session.getUser().getRoles();
     if (roles == null || roles.size() == 0) {
@@ -196,7 +199,7 @@ public class OSecurityEngine {
   }
 
   private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
-    String cacheKey = "$CLASS$" + clazz.getName() + "$PROP$" + propertyName;
+    String cacheKey = "$CLASS$" + clazz.getName() + "$PROP$" + propertyName + "$" + scope;
     OBooleanExpression result;
     if (role != null) {
       result = security.getPredicateFromCache(role.getName(), cacheKey);

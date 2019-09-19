@@ -5350,6 +5350,8 @@ OSecurityResourceSegment SecurityResourceSegment():
             token = <CONTAINSKEY> { jjtThis.identifier = new OIdentifier(token.image); }
             |
             token = <CONTAINSVALUE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <FROM> { jjtThis.identifier = new OIdentifier(token.image); }
         )
         [
           <DOT>
