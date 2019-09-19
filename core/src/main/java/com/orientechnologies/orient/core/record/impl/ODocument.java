@@ -557,24 +557,24 @@ public class ODocument extends ORecordAbstract
     return (RET) oldValue;
   }
 
-  protected static void validateFieldSecurity(ODatabaseDocumentInternal internal, ODocument iRecord, OImmutableProperty p)
-      throws OValidationException {
+  protected static void validateFieldsSecurity(ODatabaseDocumentInternal internal, ODocument iRecord) throws OValidationException {
     if (internal == null) {
       return;
     }
-    ODocumentEntry entry = iRecord.fields.get(p.getName());
-    if (entry != null && (entry.isChanged() || entry.isTrackedModified())) {
-      OSecurityInternal security = internal.getSharedContext().getSecurity();
-      if (!security.isAllowedWrite(internal, iRecord, p.getName())) {
-        throw new OSecurityException(
-            String.format("Change of field '%s' is not allowed for user '%s'", p.getFullName(), internal.getUser().getName()));
+    OSecurityInternal security = internal.getSharedContext().getSecurity();
+    for (Entry<String, ODocumentEntry> mapEntry : iRecord.fields.entrySet()) {
+      ODocumentEntry entry = mapEntry.getValue();
+      if (entry != null && (entry.isChanged() || entry.isTrackedModified())) {
+        if (!security.isAllowedWrite(internal, iRecord, mapEntry.getKey())) {
+          throw new OSecurityException(String
+              .format("Change of field '%s' is not allowed for user '%s'", iRecord.getClassName() + "." + mapEntry.getKey(),
+                  internal.getUser().getName()));
+        }
       }
     }
   }
 
-  protected static void validateField(ODatabaseDocumentInternal internal, ODocument iRecord, OImmutableProperty p)
-      throws OValidationException {
-    validateFieldSecurity(internal, iRecord, p);
+  protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord.fields.get(p.getName());
     if (entry != null && entry.exists()) {
@@ -2345,13 +2345,10 @@ public class ODocument extends ORecordAbstract
     autoConvertValues();
 
     ODatabaseDocumentInternal internal = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (internal != null) {
+      validateFieldsSecurity(internal, this);
+    }
     if (internal != null && !internal.isValidationEnabled()) {
-      final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
-      if (immutableSchemaClass != null) {
-        for (OProperty p : immutableSchemaClass.properties()) {
-          validateFieldSecurity(internal, this, (OImmutableProperty) p);
-        }
-      }
       return;
     }
 
@@ -2368,7 +2365,7 @@ public class ODocument extends ORecordAbstract
       }
 
       for (OProperty p : immutableSchemaClass.properties()) {
-        validateField(internal, this, (OImmutableProperty) p);
+        validateField(this, (OImmutableProperty) p);
       }
     }
   }
