@@ -197,7 +197,7 @@ public class OCreateViewStatementExecutionTest {
 
     db.command(statement);
 
-    Thread.sleep(1000);
+    Thread.sleep(5000);
 
     OResultSet result = db.query("SELECT FROM " + viewName);
     Assert.assertEquals(10, result.stream().count());
