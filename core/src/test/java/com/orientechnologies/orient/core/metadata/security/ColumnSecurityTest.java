@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -151,7 +152,7 @@ public class ColumnSecurityTest {
 
 
   @Test
-  public void testFilterOneProperty() {
+  public void testReadFilterOneProperty() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     db.createClass("Person");
@@ -194,7 +195,7 @@ public class ColumnSecurityTest {
   }
 
   @Test
-  public void testPredicateWithQuery() {
+  public void testReadWithPredicateAndQuery() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     db.createClass("Person");
@@ -257,7 +258,7 @@ public class ColumnSecurityTest {
   }
 
   @Test
-  public void testFilterOnePropertyWithQuery() {
+  public void testReadFilterOnePropertyWithQuery() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     db.createClass("Person");
@@ -291,6 +292,36 @@ public class ColumnSecurityTest {
   }
 
 
+  @Test
+  public void testCreate() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setCreateRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person.name", policy);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    elem.setProperty("surname", "bar");
+    try {
+      db.save(elem);
+      Assert.fail();
+    } catch (OSecurityException e) {
+
+    }
+  }
+  
 
 }
