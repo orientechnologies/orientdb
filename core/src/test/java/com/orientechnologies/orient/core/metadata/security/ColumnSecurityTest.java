@@ -367,5 +367,41 @@ public class ColumnSecurityTest {
     }
   }
 
+  @Test
+  public void testAfterUpdate() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setAfterUpdateRule("name <> 'invalid'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person.name", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "writer", "writer");
+
+    db.command("UPDATE Person SET name = 'foo1' WHERE name = 'foo'");
+
+    try (OResultSet rs = db.query("SELECT FROM Person WHERE name = 'foo1'")) {
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertFalse(rs.hasNext());
+    }
+
+
+    try {
+      db.command("UPDATE Person SET name = 'invalid'");
+      Assert.fail();
+    } catch (OSecurityException e) {
+
+    }
+  }
 
 }
