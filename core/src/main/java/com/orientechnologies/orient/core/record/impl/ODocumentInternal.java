@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
 import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.record.OElement;
 
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -87,6 +88,10 @@ public class ODocumentInternal {
 
   public static Set<Entry<String, ODocumentEntry>> rawEntries(final ODocument document) {
     return document.getRawEntries();
+  }
+
+  public static List<Entry<String, ODocumentEntry>> filteredEntries(final ODocument document) {
+    return document.getFilteredEntries();
   }
 
   public static void clearTrackData(final ODocument document) {

@@ -3040,6 +3040,21 @@ public class ODocument extends ORecordAbstract
     return fields == null ? new HashSet<>() : fields.entrySet();
   }
 
+  protected List<Entry<String, ODocumentEntry>> getFilteredEntries() {
+    checkForFields();
+    if (fields == null) {
+      return Collections.emptyList();
+    } else if (propertyAccess == null) {
+      return fields.entrySet().stream().filter((x) -> {
+        return x.getValue().exists();
+      }).collect(Collectors.toList());
+    } else {
+      return fields.entrySet().stream().filter((x) -> {
+        return x.getValue().exists() && propertyAccess.isReadable(x.getKey());
+      }).collect(Collectors.toList());
+    }
+  }
+
   private void fetchSchemaIfCan() {
     if (schema == null) {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();

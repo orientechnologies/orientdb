@@ -132,16 +132,14 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
   public void serialize(final ODocument document, final BytesContainer bytes) {
     serializeClass(document, bytes);
-    final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
-    OVarIntSerializer.write(bytes, document.fields());
+    final List<Entry<String, ODocumentEntry>> fields = ODocumentInternal.filteredEntries(document);
+    OVarIntSerializer.write(bytes, fields.size());
     for (Entry<String, ODocumentEntry> entry : fields) {
       ODocumentEntry docEntry = entry.getValue();
-      if (!docEntry.exists())
-        continue;
       writeString(bytes, entry.getKey());
-      final Object value = entry.getValue().value;
+      final Object value = docEntry.value;
       if (value != null) {
-        final OType type = getFieldType(entry.getValue());
+        final OType type = getFieldType(docEntry);
         if (type == null) {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the Result binary serializer");

@@ -933,7 +933,6 @@ public class ODocumentSchemalessBinarySerializationTest {
   public void testPartialNotFound() {
     //this test want to do only for ORecordSerializerNetworkV37
     if (serializer instanceof ORecordSerializerNetworkV37) {
-      System.out.println("ISIDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
       ODocument document = new ODocument();
       document.field("name", "name");
       document.field("age", 20);

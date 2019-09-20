@@ -387,7 +387,6 @@ public class ORemoteSecurityTests {
 
 
   @Test
-  @Ignore
   public void testReadHiddenColumn() {
 
     db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'bar')");
