@@ -410,10 +410,10 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       txCursor = new PureTxBetweenIndexBackwardCursor(firstKey, true, toKey, toInclusive, indexChanges);
 
     if (indexChanges.cleared)
-      return txCursor;
+      return new OIndexCursorSecurityDecorator(txCursor, this);
 
     final OIndexCursor backedCursor = super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
-    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override

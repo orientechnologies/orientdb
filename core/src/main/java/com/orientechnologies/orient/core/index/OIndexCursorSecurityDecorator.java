@@ -10,12 +10,12 @@ import java.util.stream.Collectors;
 public class OIndexCursorSecurityDecorator implements OIndexCursor {
 
   OIndexCursor delegate;
-  OIndexAbstract originalIndex;
+  OIndex originalIndex;
 
   OIdentifiable next;
 
 
-  public OIndexCursorSecurityDecorator(OIndexCursor delegate, OIndexAbstract originalIndex) {
+  public OIndexCursorSecurityDecorator(OIndexCursor delegate, OIndex originalIndex) {
     this.delegate = delegate;
     this.originalIndex = originalIndex;
   }

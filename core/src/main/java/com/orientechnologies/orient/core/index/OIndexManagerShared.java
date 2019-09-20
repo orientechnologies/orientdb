@@ -187,6 +187,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     String indexClass = indexDefinition.getClassName();
     List<String> indexedFields = indexDefinition.getFields();
+    if (indexedFields.size() == 1) {
+      return;
+    }
 
     Set<String> classesToCheck = new HashSet<>();
     classesToCheck.add(indexClass);
