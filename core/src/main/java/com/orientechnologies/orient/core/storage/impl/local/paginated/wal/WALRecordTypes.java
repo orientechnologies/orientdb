@@ -148,5 +148,6 @@ public final class WALRecordTypes {
   public static final byte SBTREE_NULL_BUCKET_V2_REMOVE_VALUE_PO = 122;
   public static final byte SBTREE_NULL_BUCKET_V2_SET_VALUE_PO    = 123;
 
-  public static final byte CELL_BTREE_BUCKET_MULTI_VALUE_V2_INIT_PO = 124;
+  public static final byte CELL_BTREE_BUCKET_MULTI_VALUE_V2_INIT_PO                   = 124;
+  public static final byte CELL_BTREE_BUCKET_MULTI_VALUE_V2_CREATE_MAIN_LEAF_ENTRY_PO = 125;
 }

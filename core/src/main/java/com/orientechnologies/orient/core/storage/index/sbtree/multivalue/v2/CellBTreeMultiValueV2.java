@@ -303,8 +303,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  private void fetchMapEntries(@SuppressWarnings("SameParameterValue") final int itemIndex, final K key, final List<Map.Entry<K, ORID>> result,
-      final CellBTreeMultiValueV2Bucket<K> bucket) {
+  private void fetchMapEntries(@SuppressWarnings("SameParameterValue") final int itemIndex, final K key,
+      final List<Map.Entry<K, ORID>> result, final CellBTreeMultiValueV2Bucket<K> bucket) {
     final CellBTreeMultiValueV2Bucket.LeafEntry entry = bucket.getLeafEntry(itemIndex, keySerializer, encryption);
     fetchMapEntriesFromLeafEntry(key, result, entry);
   }
@@ -716,7 +716,9 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       final long mId = bucket.getMid(itemIndex);
       removed = multiContainer.remove(new MultiValueEntry(mId, value.getClusterId(), value.getClusterPosition())) != null;
       if (removed) {
-        bucket.decreaseEntriesCountAndRemoveIfNeeded(itemIndex, keySize);
+        if (bucket.decrementEntriesCount(itemIndex)) {
+          bucket.removeMainEntry(itemIndex, keySize);
+        }
       }
     }
 
