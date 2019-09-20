@@ -801,7 +801,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isRestricted()) {
           changed = ORestrictedAccessHook.onRecordBeforeCreate(doc, this);
         }
-        if(clazz.isFunction()){
+        if (clazz.isFunction()) {
           OFunctionLibraryImpl.validateFunctionRecord(doc);
         }
         ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
@@ -848,7 +848,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_UPDATE, true))
             throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access");
         }
-        if(clazz.isFunction()){
+        if (clazz.isFunction()) {
           OFunctionLibraryImpl.validateFunctionRecord(doc);
         }
         if (!getSharedContext().getSecurity().canUpdate(this, doc)) {
