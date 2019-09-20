@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -53,13 +54,13 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       switch (type) {
       case ORecordOperation.CREATED: {
         addUpdatedRid(req.getOldId(), req.getId());
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
+        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
         createdRecords.put(req.getOldId(), record);
       }
       break;
       case ORecordOperation.UPDATED: {
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
+        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
       }
       break;
