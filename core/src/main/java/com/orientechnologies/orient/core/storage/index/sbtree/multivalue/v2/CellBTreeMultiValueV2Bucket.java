@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.CellBTreeMultiValueV2BucketCreateMainLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.CellBTreeMultiValueV2BucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.CellBTreeMultiValueV2BucketRemoveMainLeafEntryPO;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,6 +41,14 @@ import java.util.List;
  * @since 8/7/13
  */
 public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
+  private static final int NEXT_ITEM_POINTER_OFFSET      = 0;
+  private static final int EMBEDDED_ENTRIES_COUNT_OFFSET = NEXT_ITEM_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int ENTRIES_COUNT_OFFSET          = EMBEDDED_ENTRIES_COUNT_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int M_ID_OFFSET                   = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int CLUSTER_ID_OFFSET             = M_ID_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int CLUSTER_POSITION_OFFSET       = CLUSTER_ID_OFFSET + OShortSerializer.SHORT_SIZE;
+  private static final int KEY_OFFSET                    = CLUSTER_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+
   private static final int EMBEDDED_ITEMS_THRESHOLD        = 64;
   private static final int RID_SIZE                        = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
   private static final int SINGLE_ELEMENT_LINKED_ITEM_SIZE = OIntegerSerializer.INT_SIZE + RID_SIZE + OByteSerializer.BYTE_SIZE;
@@ -93,7 +102,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     return -(low + 1); // key not found.
   }
 
-  private void removeMainEntry(final int entryIndex, final int entryPosition, final int keySize) {
+  private void removeMainLeafEntry(final int entryIndex, final int entryPosition, final int keySize) {
     int nextItem;
     int size = getIntValue(SIZE_OFFSET);
 
@@ -184,7 +193,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
           setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
           setIntValue(entriesCountPosition, entriesCount - 1);
         } else {
-          removeMainEntry(entryIndex, entryPosition, keySize);
+          removeMainLeafEntry(entryIndex, entryPosition, keySize);
         }
 
         return true;
@@ -382,9 +391,25 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     return entriesCount == 1;
   }
 
-  public void removeMainEntry(final int entryIndex, final int keySize) {
+  public void removeMainLeafEntry(final int entryIndex, final int keySize) {
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
-    removeMainEntry(entryIndex, entryPosition, keySize);
+    final int entriesCount = getIntValue(entryPosition + ENTRIES_COUNT_OFFSET);
+    final long mId = getLongValue(entryPosition + M_ID_OFFSET);
+
+    final ORID value;
+    if (entriesCount == 0) {
+      value = null;
+    } else {
+      final int clusterId = getShortValue(entryPosition + CLUSTER_ID_OFFSET);
+      final long clusterPosition = getLongValue(entryPosition + CLUSTER_POSITION_OFFSET);
+      value = new ORecordId(clusterId, clusterPosition);
+    }
+
+    final byte[] key = getBinaryValue(entryPosition + KEY_OFFSET, keySize);
+
+    removeMainLeafEntry(entryIndex, entryPosition, keySize);
+
+    addPageOperation(new CellBTreeMultiValueV2BucketRemoveMainLeafEntryPO(entryIndex, key, value, mId));
   }
 
   public void incrementEntriesCount(final int entryIndex) {

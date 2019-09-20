@@ -13,16 +13,16 @@ import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.Cell
 
 import java.nio.ByteBuffer;
 
-public final class CellBTreeMultiValueV2BucketCreateMainLeafEntryPO extends PageOperationRecord {
+public final class CellBTreeMultiValueV2BucketRemoveMainLeafEntryPO extends PageOperationRecord {
   private int    index;
   private byte[] key;
   private ORID   value;
   private long   mId;
 
-  public CellBTreeMultiValueV2BucketCreateMainLeafEntryPO() {
+  public CellBTreeMultiValueV2BucketRemoveMainLeafEntryPO() {
   }
 
-  public CellBTreeMultiValueV2BucketCreateMainLeafEntryPO(int index, byte[] key, ORID value, long mId) {
+  public CellBTreeMultiValueV2BucketRemoveMainLeafEntryPO(int index, byte[] key, ORID value, long mId) {
     this.index = index;
     this.key = key;
     this.value = value;
@@ -48,18 +48,18 @@ public final class CellBTreeMultiValueV2BucketCreateMainLeafEntryPO extends Page
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final CellBTreeMultiValueV2Bucket bucket = new CellBTreeMultiValueV2Bucket(cacheEntry);
-    bucket.createMainLeafEntry(index, key, value, mId);
+    bucket.removeMainLeafEntry(index, key.length);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final CellBTreeMultiValueV2Bucket bucket = new CellBTreeMultiValueV2Bucket(cacheEntry);
-    bucket.removeMainLeafEntry(index, key.length);
+    bucket.createMainLeafEntry(index, key, value, mId);
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V2_CREATE_MAIN_LEAF_ENTRY_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_MAIN_LEAF_ENTRY_PO;
   }
 
   @Override

@@ -717,7 +717,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       removed = multiContainer.remove(new MultiValueEntry(mId, value.getClusterId(), value.getClusterPosition())) != null;
       if (removed) {
         if (bucket.decrementEntriesCount(itemIndex)) {
-          bucket.removeMainEntry(itemIndex, keySize);
+          bucket.removeMainLeafEntry(itemIndex, keySize);
         }
       }
     }

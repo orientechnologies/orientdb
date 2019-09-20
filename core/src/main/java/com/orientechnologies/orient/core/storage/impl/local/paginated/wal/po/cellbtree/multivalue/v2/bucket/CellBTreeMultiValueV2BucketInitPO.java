@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.Cell
 
 import java.nio.ByteBuffer;
 
-public class CellBTreeMultiValueV2BucketInitPO extends PageOperationRecord {
+public final class CellBTreeMultiValueV2BucketInitPO extends PageOperationRecord {
   private boolean isLeaf;
 
   public CellBTreeMultiValueV2BucketInitPO() {
