@@ -54,7 +54,10 @@ public final class CellBTreeMultiValueV2BucketRemoveMainLeafEntryPO extends Page
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final CellBTreeMultiValueV2Bucket bucket = new CellBTreeMultiValueV2Bucket(cacheEntry);
-    bucket.createMainLeafEntry(index, key, value, mId);
+    final boolean result = bucket.createMainLeafEntry(index, key, value, mId);
+    if (!result) {
+      throw new IllegalStateException("Can not undo main leaf entry creation");
+    }
   }
 
   @Override

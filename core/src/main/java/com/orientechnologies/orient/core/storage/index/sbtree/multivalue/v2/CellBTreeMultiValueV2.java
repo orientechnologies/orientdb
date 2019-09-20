@@ -711,7 +711,12 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
   private boolean removeEntry(final int itemIndex, final int keySize, final ORID value, final CellBTreeMultiValueV2Bucket<K> bucket)
       throws IOException {
-    boolean removed = bucket.removeLeafEntry(itemIndex, value, keySize);
+    final int entriesCount = bucket.removeLeafEntry(itemIndex, value);
+    if (entriesCount == 0) {
+      bucket.removeMainLeafEntry(itemIndex, keySize);
+    }
+
+    boolean removed = entriesCount >= 0;
     if (!removed && bucket.hasExternalEntries(itemIndex)) {
       final long mId = bucket.getMid(itemIndex);
       removed = multiContainer.remove(new MultiValueEntry(mId, value.getClusterId(), value.getClusterPosition())) != null;
