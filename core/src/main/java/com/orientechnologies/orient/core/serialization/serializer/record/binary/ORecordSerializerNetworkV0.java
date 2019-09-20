@@ -185,7 +185,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
     serializeClass(document, bytes);
 
-    final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
+    final List<Entry<String, ODocumentEntry>> fields = ODocumentInternal.filteredEntries(document);
 
     final int[] pos = new int[fields.size()];
 
