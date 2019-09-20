@@ -245,7 +245,7 @@ public class ColumnSecurityTest {
 
     rs = db.query("select from Person where name = 'bar'");
     Assert.assertFalse(rs.hasNext());
-    Assert.assertTrue(rs.getExecutionPlan().get().getSteps().stream().anyMatch(x->x instanceof FetchFromIndexStep));
+    Assert.assertTrue(rs.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
     rs.close();
 
   }
@@ -459,5 +459,57 @@ public class ColumnSecurityTest {
 
     }
   }
+
+
+  @Test
+  public void testReadHiddenColumn() {
+
+    db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'bar')");
+    db.command("ALTER ROLE reader SET POLICY testPolicy ON database.class.Person.name");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    db.close();
+
+    db = orient.open(DB_NAME, "reader", "reader");
+    try (final OResultSet resultSet = db.query("SELECT from Person")) {
+      OResult item = resultSet.next();
+      Assert.assertNull(item.getProperty("name"));
+    }
+  }
+
+
+  @Test
+  public void testUpdateHiddenColumn() {
+
+    db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'bar')");
+    db.command("ALTER ROLE reader SET POLICY testPolicy ON database.class.Person.name");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    db.close();
+
+    db = orient.open(DB_NAME, "reader", "reader");
+    try (final OResultSet resultSet = db.query("SELECT from Person")) {
+      OResult item = resultSet.next();
+      Assert.assertNull(item.getProperty("name"));
+      OElement doc = item.getElement().get();
+      doc.setProperty("name", "bar");
+      try {
+        doc.save();
+        Assert.fail();
+      } catch (Exception e){
+
+      }
+
+    }
+  }
+
 
 }

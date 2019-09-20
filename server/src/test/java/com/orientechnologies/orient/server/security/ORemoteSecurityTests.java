@@ -12,10 +12,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 
@@ -362,4 +359,81 @@ public class ORemoteSecurityTests {
     }
   }
 
+  @Test
+  public void testIndexGetAndColumnSecurity() {
+    db.command("create index Person.name on Person (name) NOTUNIQUE");
+    db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'foo')");
+    db.command("ALTER ROLE reader SET POLICY testPolicy ON database.class.Person.name");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    db.save(elem);
+
+    try (ODatabaseSession filteredSession = orient.open(DB_NAME, "reader", "reader")) {
+      try (final OResultSet resultSet = filteredSession.query("SELECT from Person where name = ?", "bar")) {
+        Assert.assertEquals(0, resultSet.stream().count());
+      }
+
+      try (final OResultSet resultSet = filteredSession.query("SELECT from Person where name = ?", "foo")) {
+        Assert.assertEquals(1, resultSet.stream().count());
+      }
+    }
+  }
+
+
+
+  @Test
+  @Ignore
+  public void testReadHiddenColumn() {
+
+    db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'bar')");
+    db.command("ALTER ROLE reader SET POLICY testPolicy ON database.class.Person.name");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    db.close();
+
+    db = orient.open(DB_NAME, "reader", "reader");
+    try (final OResultSet resultSet = db.query("SELECT from Person")) {
+      OResult item = resultSet.next();
+      Assert.assertNull(item.getProperty("name"));
+    }
+
+  }
+
+
+  @Test
+  public void testUpdateHiddenColumn() {
+
+    db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'bar')");
+    db.command("ALTER ROLE reader SET POLICY testPolicy ON database.class.Person.name");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    db.close();
+
+    db = orient.open(DB_NAME, "reader", "reader");
+    try (final OResultSet resultSet = db.query("SELECT from Person")) {
+      OResult item = resultSet.next();
+      OElement doc = item.getElement().get();
+      doc.setProperty("name", "bar");
+      try {
+        doc.save();
+        Assert.fail();
+      } catch (Exception e){
+
+      }
+
+    }
+  }
 }
