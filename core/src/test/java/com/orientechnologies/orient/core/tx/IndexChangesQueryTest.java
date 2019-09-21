@@ -1,42 +1,43 @@
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Collection;
 
 /**
  * Created by tglman on 28/05/17.
  */
 public class IndexChangesQueryTest {
 
-  private OrientDB          orientDB;
-  private ODatabaseDocument database;
+  public static final  String                    CLASS_NAME = "idxTxAwareMultiValueGetEntriesTest";
+  private static final String                    FIELD_NAME = "value";
+  private static final String                    INDEX_NAME = "idxTxAwareMultiValueGetEntriesTestIndex";
+  private              OrientDB                  orientDB;
+  private              ODatabaseDocumentInternal database;
 
   @Before
   public void before() {
     orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.create("test", ODatabaseType.MEMORY);
-    database = orientDB.open("test", "admin", "admin");
-    database.getMetadata().getIndexManager()
-        .createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null,
-            null, null);
+    database = (ODatabaseDocumentInternal) orientDB.open("test", "admin", "admin");
+
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass cls = schema.createClass(CLASS_NAME);
+    cls.createProperty(FIELD_NAME, OType.INTEGER);
+    cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.NOTUNIQUE, FIELD_NAME);
   }
 
   @After
@@ -45,101 +46,80 @@ public class IndexChangesQueryTest {
     orientDB.close();
   }
 
-  private void cursorToSet(OIndexCursor cursor, Set<OIdentifiable> result) {
-    result.clear();
-    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
-    while (entry != null) {
-      result.add(entry.getValue());
-      entry = cursor.nextEntry();
-    }
-  }
-
   @Test
   public void testMultiplePut() {
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-    final int clusterId = database.getDefaultClusterId();
-    ODocument doc = new ODocument();
-    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
-    ODocument doc1 = new ODocument();
-    database.save(doc1, database.getClusterNameById(database.getDefaultClusterId()));
-    index.put(1, doc.getIdentity());
-    index.put(1, doc.getIdentity());
-    index.put(2, doc1.getIdentity());
+    ODocument doc = new ODocument(CLASS_NAME);
+    doc.field(FIELD_NAME, 1);
+    doc.save();
 
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    ODocument doc1 = new ODocument(CLASS_NAME);
+    doc1.field(FIELD_NAME, 2);
+    doc1.save();
+    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    OResultSet res = database
-        .query("select from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1, 2);
-    Assert.assertEquals(res.stream().count(), 2);
-    res.close();
+    Assert.assertTrue(index.contains(1));
+    Assert.assertTrue(index.contains(2));
+
     database.commit();
+
+    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertTrue(index.contains(1));
+    Assert.assertTrue(index.contains(2));
   }
 
   @Test
   public void testClearAndPut() {
-
-    OIdentifiable id1 = database.save(new ODocument(), database.getClusterNameById(database.getDefaultClusterId()));
-    OIdentifiable id2 = database.save(new ODocument(), database.getClusterNameById(database.getDefaultClusterId()));
-    OIdentifiable id3 = database.save(new ODocument(), database.getClusterNameById(database.getDefaultClusterId()));
-
     database.begin();
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+
+    ODocument doc1 = new ODocument(CLASS_NAME);
+    doc1.field(FIELD_NAME, 1);
+    doc1.save();
+
+    ODocument doc2 = new ODocument(CLASS_NAME);
+    doc2.field(FIELD_NAME, 1);
+    doc2.save();
+
+    ODocument doc3 = new ODocument(CLASS_NAME);
+    doc3.field(FIELD_NAME, 2);
+    doc3.save();
+
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-    index.put(1, id1.getIdentity());
-    index.put(1, id2.getIdentity());
-
-    index.put(2, id3.getIdentity());
-
     database.commit();
-    OResultSet res = database
-        .query("select from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1, 2);
-    Assert.assertEquals(res.stream().count(), 3);
-    res = database
-        .query("select count(*)  as count from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1,
-            2);
-    Assert.assertEquals((long) res.next().getProperty("count"), 3);
-    res.close();
+
+    Assert.assertEquals(3, index.getSize());
+    Assert.assertEquals(2, ((Collection) index.get(1)).size());
+    Assert.assertEquals(1, ((Collection) index.get(2)).size());
 
     database.begin();
 
-    index.clear();
-    index.put(2, id3.getIdentity());
-    ODocument doc = new ODocument();
-    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
-    index.put(2, doc.getIdentity());
+    doc1.delete();
+    doc2.delete();
+    doc3.delete();
 
-    res = database.query("select from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1, 2);
-    Assert.assertEquals(res.stream().count(), 2);
-    res.close();
-    res = database.query("select expand(rid) from index:idxTxAwareMultiValueGetEntriesTest where key = ?", 2);
-    Assert.assertEquals(res.stream().count(), 2);
-    res.close();
+    doc3 = new ODocument(CLASS_NAME);
+    doc3.field(FIELD_NAME, 1);
+    doc3.save();
 
-    res = database.query("select expand(rid) from index:idxTxAwareMultiValueGetEntriesTest where key = ?", 2);
-    Assert.assertEquals(res.stream().map((aa) -> aa.getIdentity().orElse(null)).collect(Collectors.toSet()).size(), 2);
+    ODocument doc = new ODocument(CLASS_NAME);
+    doc.field(FIELD_NAME, 2);
+    doc.save();
 
-    res.close();
-    res = database
-        .query("select count(*)  as count from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1,
-            2);
-    Assert.assertEquals((long) res.next().getProperty("count"), 2);
-    res.close();
+    Assert.assertEquals(1, ((Collection) index.get(1)).size());
+    Assert.assertEquals(1, ((Collection) index.get(2)).size());
+
     database.rollback();
 
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    res = database.query("select from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1, 2);
-    Assert.assertEquals(res.stream().count(), 3);
-    res.close();
-    res = database
-        .query("select count(*)  as count  from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1,
-            2);
-    Assert.assertEquals((long) res.next().getProperty("count"), 3);
-    res.close();
+    Assert.assertEquals(3, index.getSize());
+    Assert.assertEquals(2, ((Collection) index.get(1)).size());
+    Assert.assertEquals(1, ((Collection) index.get(2)).size());
   }
 }

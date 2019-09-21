@@ -1,15 +1,8 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.parser.OCluster;
-import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OInsertBody;
-import com.orientechnologies.orient.core.sql.parser.OInsertSetExpression;
-import com.orientechnologies.orient.core.sql.parser.OInsertStatement;
-import com.orientechnologies.orient.core.sql.parser.OProjection;
-import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
-import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +38,7 @@ public class OInsertExecutionPlanner {
     OInsertExecutionPlan result = new OInsertExecutionPlan(ctx);
 
     if (targetIndex != null) {
+      OIndexAbstract.manualIndexesWarning();
       result.chain(new InsertIntoIndexStep(targetIndex, insertBody, ctx, enableProfiling));
     } else {
       if (selectStatement != null) {

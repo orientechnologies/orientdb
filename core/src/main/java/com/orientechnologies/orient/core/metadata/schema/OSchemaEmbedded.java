@@ -7,7 +7,8 @@ import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -151,7 +152,7 @@ public class OSchemaEmbedded extends OSchemaShared {
           for (OIndex<?> index : superClass.getIndexes())
             for (String clusterName : clusterNames)
               if (clusterName != null)
-                database.getMetadata().getIndexManager().addClusterToIndex(clusterName, index.getName());
+                database.getMetadata().getIndexManagerInternal().addClusterToIndex(clusterName, index.getName());
         }
       }
 
@@ -665,14 +666,27 @@ public class OSchemaEmbedded extends OSchemaShared {
   }
 
   private void dropClassIndexes(ODatabaseDocumentInternal database, final OClass cls) {
-    final OIndexManager indexManager = database.getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    for (final OIndex<?> index : indexManager.getClassIndexes(cls.getName()))
-      indexManager.dropIndex(index.getName());
+    for (final OIndex<?> index : indexManager.getClassIndexes(database, cls.getName()))
+      indexManager.dropIndex(database, index.getName());
   }
 
   private void deleteCluster(final ODatabaseDocumentInternal db, final int clusterId) {
-    db.getStorage().dropCluster(clusterId, false);
+    final String clusterName = db.getClusterNameById(clusterId);
+    if (clusterName != null) {
+      final ORecordIteratorCluster<ODocument> iteratorCluster = db.browseCluster(clusterName);
+
+      if (iteratorCluster != null) {
+        while (iteratorCluster.hasNext()) {
+          final ODocument document = iteratorCluster.next();
+          document.delete();
+        }
+
+        db.getStorage().dropCluster(clusterId);
+      }
+    }
+
     db.getLocalCache().freeCluster(clusterId);
   }
 

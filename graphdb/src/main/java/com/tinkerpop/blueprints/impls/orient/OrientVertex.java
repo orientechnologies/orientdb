@@ -33,14 +33,11 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ODirection;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.*;
@@ -514,13 +511,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         final Index<? extends Element> index = it.next();
 
         if (Vertex.class.isAssignableFrom(index.getIndexClass())) {
-          OrientIndex<OrientVertex> idx = (OrientIndex<OrientVertex>) index;
+          final OrientIndex<OrientVertex> idx = (OrientIndex<OrientVertex>) index;
           idx.removeElement(this);
         }
 
         if (Edge.class.isAssignableFrom(index.getIndexClass())) {
-          OrientIndex<OrientEdge> idx = (OrientIndex<OrientEdge>) index;
-          for (Edge e : allEdges)
+          final OrientIndex<OrientEdge> idx = (OrientIndex<OrientEdge>) index;
+          for (final Edge e : allEdges)
             idx.removeElement((OrientEdge) e);
         }
       }
@@ -578,116 +575,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * @see #moveToCluster(String)
    */
   public ORID moveTo(final String iClassName, final String iClusterName) {
-    final OrientBaseGraph graph = getGraph();
-
-    if (checkDeletedInTx())
-      graph.throwRecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
-
-    final ORID oldIdentity = getIdentity().copy();
-
-    final ORecord oldRecord = oldIdentity.getRecord();
-    if (oldRecord == null)
-      graph.throwRecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
-
-    final ODocument doc = ((ODocument) rawElement.getRecord()).copy();
-
-    final Iterable<Edge> outEdges = getEdges(Direction.OUT);
-    final Iterable<Edge> inEdges = getEdges(Direction.IN);
-
-    // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
-    copyRidBags(oldRecord, doc);
-    removeEdgeLinks(oldRecord);
-    oldRecord.delete();
-
-    if (iClassName != null)
-      // OVERWRITE CLASS
-      doc.setClassName(iClassName);
-
-    // SAVE THE NEW VERTEX
-    doc.setDirty();
-
-    // RESET IDENTITY
-    ORecordInternal.setIdentity(doc, new ORecordId());
-
-    if (iClusterName != null)
-      doc.save(iClusterName);
-    else
-      doc.save();
-
-    final ORID newIdentity = doc.getIdentity();
-
-    // CONVERT OUT EDGES
-    for (Edge e : outEdges) {
-      final OrientEdge oe = (OrientEdge) e;
-      if (oe.isLightweight()) {
-        // REPLACE ALL REFS IN inVertex
-        final OrientVertex inV = oe.getVertex(Direction.IN);
-
-        final String inFieldName = OrientVertex
-            .getConnectionFieldName(Direction.IN, oe.getLabel(), graph.isUseVertexFieldsForEdgeLabels());
-
-        replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity);
-      } else {
-        // REPLACE WITH NEW VERTEX
-        oe.vOut = newIdentity;
-        oe.getRecord().field(OrientBaseGraph.CONNECTION_OUT, newIdentity);
-        oe.save();
-      }
-    }
-
-    for (Edge e : inEdges) {
-      final OrientEdge oe = (OrientEdge) e;
-      if (oe.isLightweight()) {
-        // REPLACE ALL REFS IN outVertex
-        final OrientVertex outV = oe.getVertex(Direction.OUT);
-
-        final String outFieldName = OrientVertex
-            .getConnectionFieldName(Direction.OUT, oe.getLabel(), graph.isUseVertexFieldsForEdgeLabels());
-
-        replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity);
-      } else {
-        // REPLACE WITH NEW VERTEX
-        oe.vIn = newIdentity;
-        oe.getRecord().field(OrientBaseGraph.CONNECTION_IN, newIdentity);
-        oe.save();
-      }
-    }
-
-    // FINAL SAVE
-    doc.save();
-
-    return newIdentity;
-  }
-
-  private void removeEdgeLinks(ORecord oldRecord) {
-    ODocument doc = oldRecord.getRecord();
-    for (String propertyName : doc.getPropertyNames()) {
-      Object val = doc.getProperty(propertyName);
-      if (val instanceof ORidBag) {
-        doc.setProperty(propertyName, null);
-      }
-    }
-  }
-
-  private void copyRidBags(ORecord oldRecord, ODocument newDoc) {
-    ODocument oldDoc = (ODocument) oldRecord;
-    for (String field : oldDoc.fieldNames()) {
-      if (field.equalsIgnoreCase("out") || field.equalsIgnoreCase("in") || field.startsWith("out_") || field.startsWith("in_")
-          || field.startsWith("OUT_") || field.startsWith("IN_")) {
-        Object val = oldDoc.rawField(field);
-        if (val instanceof ORidBag) {
-          ORidBag bag = (ORidBag) val;
-          if (!bag.isEmbedded()) {
-            ORidBag newBag = new ORidBag();
-            Iterator<OIdentifiable> rawIter = bag.rawIterator();
-            while (rawIter.hasNext()) {
-              newBag.add(rawIter.next());
-            }
-            newDoc.field(field, newBag);
-          }
-        }
-      }
-    }
+    return getRecord().asVertex().get().moveTo(iClassName,iClusterName);
   }
 
   /**

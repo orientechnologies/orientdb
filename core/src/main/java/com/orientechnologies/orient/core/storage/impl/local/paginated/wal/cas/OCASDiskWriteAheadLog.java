@@ -5,7 +5,6 @@ import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -25,7 +24,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
-import com.sun.jna.Platform;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
@@ -248,7 +246,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     this.storageName = storageName;
 
     if (allowDirectIO) {
-      blockSize = calculateBlockSize(walLocation.toAbsolutePath().toString());
+      blockSize = OIOUtils.calculateBlockSize(walLocation.toAbsolutePath().toString());
     } else {
       blockSize = -1;
     }
@@ -310,11 +308,13 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     this.commitDelay = commitDelay;
 
-    writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize);
+    writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize, false);
     writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
+    assert writeBufferOne.position() == 0;
 
-    writeBufferPointerTwo = allocator.allocate(bufferSize1, blockSize);
+    writeBufferPointerTwo = allocator.allocate(bufferSize1, blockSize, false);
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
+    assert writeBufferTwo.position() == 0;
 
     this.recordsWriterFuture = commitExecutor.schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
 
@@ -323,63 +323,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   public int pageSize() {
     return pageSize;
-  }
-
-  private static int calculateBlockSize(String path) {
-    if (!Platform.isLinux()) {
-      return -1;
-    }
-
-    final int linuxVersion = 0;
-    final int majorRev = 1;
-    final int minorRev = 2;
-
-    List<Integer> versionNumbers = new ArrayList<>();
-    for (String v : System.getProperty("os.version").split("[.\\-]")) {
-      if (v.matches("\\d")) {
-        versionNumbers.add(Integer.parseInt(v));
-      }
-    }
-
-    if (versionNumbers.get(linuxVersion) < 2) {
-      return -1;
-    } else if (versionNumbers.get(linuxVersion) == 2) {
-      if (versionNumbers.get(majorRev) < 4) {
-        return -1;
-      } else if (versionNumbers.get(majorRev) == 4 && versionNumbers.get(minorRev) < 10) {
-        return -1;
-      }
-    }
-
-    final int _PC_REC_XFER_ALIGN = 0x11;
-
-    int fsBlockSize = ONative.instance().pathconf(path, _PC_REC_XFER_ALIGN);
-    int pageSize = ONative.instance().getpagesize();
-    fsBlockSize = lcm(fsBlockSize, pageSize);
-
-    // just being completely paranoid:
-    // (512 is the rule for 2.6+ kernels)
-    fsBlockSize = lcm(fsBlockSize, 512);
-
-    if (fsBlockSize <= 0 || ((fsBlockSize & (fsBlockSize - 1)) != 0)) {
-      return -1;
-    }
-
-    return fsBlockSize;
-  }
-
-  private static int lcm(long x, long y) {
-    long g = x; // will hold gcd
-    long yc = y;
-
-    // get the gcd first
-    while (yc != 0) {
-      long t = g;
-      g = yc;
-      yc = t % yc;
-    }
-
-    return (int) (x * y / g);
   }
 
   private void readLastCheckpointInfo() throws IOException {
@@ -492,12 +435,13 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     final Stream<Path> walFiles;
 
     final OModifiableLong walSize = new OModifiableLong();
-    if (filterWALFiles)
+    if (filterWALFiles) {
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attributes) -> validateName(path.getFileName().toString(), storageName, locale));
-    else
+    } else {
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attrs) -> validateSimpleName(path.getFileName().toString(), locale));
+    }
 
     if (walFiles == null)
       throw new IllegalStateException(
@@ -725,9 +669,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             while (pageIndex * pageSize < chSize) {
               file.position(pageIndex * pageSize);
 
-              final OPointer ptr = allocator.allocate(pageSize, blockSize);
+              final OPointer ptr = allocator.allocate(pageSize, blockSize, false);
               try {
                 final ByteBuffer buffer = ptr.getNativeByteBuffer().order(ByteOrder.nativeOrder());
+                assert buffer.position() == 0;
                 file.readBuffer(buffer);
                 pagesRead++;
 
@@ -2200,11 +2145,16 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
           assert buffer.position() == 0;
           assert file.position() % pageSize == 0;
           assert buffer.limit() == limit;
+          assert file.position() == expectedPosition - buffer.limit();
 
           while (buffer.remaining() > 0) {
             final int initialPos = buffer.position();
             final int written = file.write(buffer);
             assert buffer.position() == initialPos + written;
+            assert
+                file.position() == expectedPosition - buffer.limit() + initialPos + written :
+                "File position " + file.position() + " buffer limit " + buffer.limit() + " initial pos " + initialPos + " written "
+                    + written;
           }
 
           assert file.position() == expectedPosition;

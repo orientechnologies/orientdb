@@ -111,7 +111,7 @@ public abstract class ORecordAbstract implements ORecord {
 
   public byte[] toStream() {
     if (source == null)
-      source = recordFormat.toStream(this, false);
+      source = recordFormat.toStream(this);
 
     return source;
   }

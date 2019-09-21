@@ -134,69 +134,74 @@ public interface OrientSqlTreeConstants
   public int JJTJSON = 128;
   public int JJTMATCHEXPRESSION = 129;
   public int JJTMATCHPATHITEM = 130;
-  public int JJTMATCHPATHITEMFIRST = 131;
-  public int JJTMULTIMATCHPATHITEM = 132;
-  public int JJTMULTIMATCHPATHITEMARROWS = 133;
-  public int JJTMATCHFILTER = 134;
-  public int JJTMATCHFILTERITEM = 135;
-  public int JJTOUTPATHITEM = 136;
-  public int JJTINPATHITEM = 137;
-  public int JJTBOTHPATHITEM = 138;
-  public int JJTOUTPATHITEMOPT = 139;
-  public int JJTINPATHITEMOPT = 140;
-  public int JJTBOTHPATHITEMOPT = 141;
-  public int JJTPROFILESTORAGESTATEMENT = 142;
-  public int JJTTRUNCATECLASSSTATEMENT = 143;
-  public int JJTTRUNCATECLUSTERSTATEMENT = 144;
-  public int JJTTRUNCATERECORDSTATEMENT = 145;
-  public int JJTFINDREFERENCESSTATEMENT = 146;
-  public int JJTCREATECLASSSTATEMENT = 147;
-  public int JJTCREATEVIEWSTATEMENT = 148;
-  public int JJTALTERCLASSSTATEMENT = 149;
-  public int JJTDROPCLASSSTATEMENT = 150;
-  public int JJTDROPVIEWSTATEMENT = 151;
-  public int JJTIFNOTEXISTS = 152;
-  public int JJTCREATEPROPERTYSTATEMENT = 153;
-  public int JJTCREATEPROPERTYATTRIBUTESTATEMENT = 154;
-  public int JJTALTERPROPERTYSTATEMENT = 155;
-  public int JJTDROPPROPERTYSTATEMENT = 156;
-  public int JJTCREATEINDEXSTATEMENT = 157;
-  public int JJTREBUILDINDEXSTATEMENT = 158;
-  public int JJTDROPINDEXSTATEMENT = 159;
-  public int JJTCREATECLUSTERSTATEMENT = 160;
-  public int JJTALTERCLUSTERSTATEMENT = 161;
-  public int JJTDROPCLUSTERSTATEMENT = 162;
-  public int JJTALTERDATABASESTATEMENT = 163;
-  public int JJTCOMMANDLINEOPTION = 164;
-  public int JJTOPTIMIZEDATABASESTATEMENT = 165;
-  public int JJTCREATELINKSTATEMENT = 166;
-  public int JJTEXPLAINSTATEMENT = 167;
-  public int JJTPROFILESTATEMENT = 168;
-  public int JJTPERMISSION = 169;
-  public int JJTRESOURCEPATHITEM = 170;
-  public int JJTGRANTSTATEMENT = 171;
-  public int JJTREVOKESTATEMENT = 172;
-  public int JJTCREATEFUNCTIONSTATEMENT = 173;
-  public int JJTCREATEUSERSTATEMENT = 174;
-  public int JJTDROPUSERSTATEMENT = 175;
-  public int JJTLETSTATEMENT = 176;
-  public int JJTBEGINSTATEMENT = 177;
-  public int JJTCOMMITSTATEMENT = 178;
-  public int JJTROLLBACKSTATEMENT = 179;
-  public int JJTRETURNSTATEMENT = 180;
-  public int JJTIFSTATEMENT = 181;
-  public int JJTSLEEPSTATEMENT = 182;
-  public int JJTCONSOLESTATEMENT = 183;
-  public int JJTCREATESEQUENCESTATEMENT = 184;
-  public int JJTALTERSEQUENCESTATEMENT = 185;
-  public int JJTDROPSEQUENCESTATEMENT = 186;
-  public int JJTHASTATUSSTATEMENT = 187;
-  public int JJTHAREMOVESERVERSTATEMENT = 188;
-  public int JJTHASYNCDATABASESTATEMENT = 189;
-  public int JJTHASYNCCLUSTERSTATEMENT = 190;
-  public int JJTHASETSTATEMENT = 191;
-  public int JJTFOREACHBLOCK = 192;
-  public int JJTWHILEBLOCK = 193;
+  public int JJTFIELDMATCHPATHITEM = 131;
+  public int JJTMATCHPATHITEMFIRST = 132;
+  public int JJTMULTIMATCHPATHITEM = 133;
+  public int JJTMULTIMATCHPATHITEMARROWS = 134;
+  public int JJTMATCHFILTER = 135;
+  public int JJTMATCHFILTERITEM = 136;
+  public int JJTOUTPATHITEM = 137;
+  public int JJTINPATHITEM = 138;
+  public int JJTBOTHPATHITEM = 139;
+  public int JJTOUTPATHITEMOPT = 140;
+  public int JJTINPATHITEMOPT = 141;
+  public int JJTBOTHPATHITEMOPT = 142;
+  public int JJTPROFILESTORAGESTATEMENT = 143;
+  public int JJTTRUNCATECLASSSTATEMENT = 144;
+  public int JJTTRUNCATECLUSTERSTATEMENT = 145;
+  public int JJTTRUNCATERECORDSTATEMENT = 146;
+  public int JJTFINDREFERENCESSTATEMENT = 147;
+  public int JJTCREATECLASSSTATEMENT = 148;
+  public int JJTCREATEVIEWSTATEMENT = 149;
+  public int JJTALTERCLASSSTATEMENT = 150;
+  public int JJTDROPCLASSSTATEMENT = 151;
+  public int JJTDROPVIEWSTATEMENT = 152;
+  public int JJTIFNOTEXISTS = 153;
+  public int JJTCREATEPROPERTYSTATEMENT = 154;
+  public int JJTCREATEPROPERTYATTRIBUTESTATEMENT = 155;
+  public int JJTALTERPROPERTYSTATEMENT = 156;
+  public int JJTDROPPROPERTYSTATEMENT = 157;
+  public int JJTCREATEINDEXSTATEMENT = 158;
+  public int JJTREBUILDINDEXSTATEMENT = 159;
+  public int JJTDROPINDEXSTATEMENT = 160;
+  public int JJTCREATECLUSTERSTATEMENT = 161;
+  public int JJTALTERCLUSTERSTATEMENT = 162;
+  public int JJTDROPCLUSTERSTATEMENT = 163;
+  public int JJTALTERDATABASESTATEMENT = 164;
+  public int JJTCOMMANDLINEOPTION = 165;
+  public int JJTOPTIMIZEDATABASESTATEMENT = 166;
+  public int JJTCREATELINKSTATEMENT = 167;
+  public int JJTEXPLAINSTATEMENT = 168;
+  public int JJTPROFILESTATEMENT = 169;
+  public int JJTPERMISSION = 170;
+  public int JJTRESOURCEPATHITEM = 171;
+  public int JJTGRANTSTATEMENT = 172;
+  public int JJTREVOKESTATEMENT = 173;
+  public int JJTCREATEFUNCTIONSTATEMENT = 174;
+  public int JJTCREATEUSERSTATEMENT = 175;
+  public int JJTDROPUSERSTATEMENT = 176;
+  public int JJTALTERROLESTATEMENT = 177;
+  public int JJTLETSTATEMENT = 178;
+  public int JJTBEGINSTATEMENT = 179;
+  public int JJTCOMMITSTATEMENT = 180;
+  public int JJTROLLBACKSTATEMENT = 181;
+  public int JJTRETURNSTATEMENT = 182;
+  public int JJTIFSTATEMENT = 183;
+  public int JJTSLEEPSTATEMENT = 184;
+  public int JJTCONSOLESTATEMENT = 185;
+  public int JJTCREATESEQUENCESTATEMENT = 186;
+  public int JJTALTERSEQUENCESTATEMENT = 187;
+  public int JJTDROPSEQUENCESTATEMENT = 188;
+  public int JJTHASTATUSSTATEMENT = 189;
+  public int JJTHAREMOVESERVERSTATEMENT = 190;
+  public int JJTHASYNCDATABASESTATEMENT = 191;
+  public int JJTHASYNCCLUSTERSTATEMENT = 192;
+  public int JJTHASETSTATEMENT = 193;
+  public int JJTFOREACHBLOCK = 194;
+  public int JJTWHILEBLOCK = 195;
+  public int JJTSECURITYRESOURCESEGMENT = 196;
+  public int JJTCREATESECURITYPOLICYSTATEMENT = 197;
+  public int JJTALTERSECURITYPOLICYSTATEMENT = 198;
 
 
   public String[] jjtNodeName = {
@@ -331,6 +336,7 @@ public interface OrientSqlTreeConstants
     "Json",
     "MatchExpression",
     "MatchPathItem",
+    "FieldMatchPathItem",
     "MatchPathItemFirst",
     "MultiMatchPathItem",
     "MultiMatchPathItemArrows",
@@ -376,6 +382,7 @@ public interface OrientSqlTreeConstants
     "CreateFunctionStatement",
     "CreateUserStatement",
     "DropUserStatement",
+    "AlterRoleStatement",
     "LetStatement",
     "BeginStatement",
     "CommitStatement",
@@ -394,6 +401,9 @@ public interface OrientSqlTreeConstants
     "HaSetStatement",
     "ForEachBlock",
     "WhileBlock",
+    "SecurityResourceSegment",
+    "CreateSecurityPolicyStatement",
+    "AlterSecurityPolicyStatement",
   };
 }
-/* JavaCC - OriginalChecksum=218d1315e0d6ce9deb236fb8679291d8 (do not edit this line) */
+/* JavaCC - OriginalChecksum=47e5a111b7a0143a92a5ebaaf267a110 (do not edit this line) */

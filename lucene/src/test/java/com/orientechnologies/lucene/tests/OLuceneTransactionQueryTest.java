@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
@@ -78,7 +78,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     ODocument doc = new ODocument("c1");
     doc.field("p1", "abc");
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
     db.save(doc);
 
@@ -87,7 +87,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     OResultSet vertices = db.command(query);
 
     assertThat(vertices).hasSize(1);
-    assertThat(index.getSize()).isEqualTo(2);
+    assertThat(index.getSize()).isEqualTo(1);
 
     db.commit();
 
@@ -95,7 +95,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     List<OResult> results = vertices.stream().collect(Collectors.toList());
     assertThat(results).hasSize(1);
-    assertThat(index.getSize()).isEqualTo(2);
+    assertThat(index.getSize()).isEqualTo(1);
 
     db.begin();
 
@@ -118,7 +118,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
       i++;
     }
     Assert.assertEquals(i, 0);
-    assertThat(index.getSize()).isEqualTo(1);
+    assertThat(index.getSize()).isEqualTo(0);
     vertices.close();
     db.rollback();
 
@@ -127,7 +127,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     vertices = db.command(query);
 
     assertThat(vertices).hasSize(1);
-    assertThat(index.getSize()).isEqualTo(2);
+    assertThat(index.getSize()).isEqualTo(1);
     vertices.close();
 
   }
@@ -135,7 +135,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
   @Test
   public void txUpdateTest() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
     OClass c1 = db.getMetadata().getSchema().getClass("C1");
     try {
       c1.truncate();
@@ -206,7 +206,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
     OClass c1 = db.getMetadata().getSchema().getClass("C1");
     try {
       c1.truncate();

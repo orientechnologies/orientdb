@@ -20,20 +20,19 @@
 package com.orientechnologies.orient.core.security.symmetrickey;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
-import com.orientechnologies.orient.core.security.symmetrickey.OUserSymmetricKeyConfig;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -181,6 +180,46 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
     return delegate.getAllRoles(session);
   }
 
+  @Override
+  public Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, OSecurityRole role) {
+    return delegate.getSecurityPolicies(session, role);
+  }
+
+  @Override
+  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource) {
+    return delegate.getSecurityPolicy(session, role, resource);
+  }
+
+  @Override
+  public void setSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
+    delegate.setSecurityPolicy(session, role, resource, policy);
+  }
+
+  @Override
+  public OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name) {
+    return delegate.createSecurityPolicy(session, name);
+  }
+
+  @Override
+  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, String name) {
+    return delegate.getSecurityPolicy(session, name);
+  }
+
+  @Override
+  public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy) {
+    delegate.saveSecurityPolicy(session, policy);
+  }
+
+  @Override
+  public void deleteSecurityPolicy(ODatabaseSession session, String name) {
+    delegate.deleteSecurityPolicy(session, name);
+  }
+
+  @Override
+  public void removeSecurityPolicy(ODatabaseSession session, ORole role, String resource) {
+    delegate.removeSecurityPolicy(session, role, resource);
+  }
+
   public String toString() {
     return delegate.toString();
   }
@@ -208,13 +247,48 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
-  public Set<String> getFilteredProperties(ODocument document) {
-    return delegate.getFilteredProperties(document);
+  public Set<String> getFilteredProperties(ODatabaseSession session, ODocument document) {
+    return delegate.getFilteredProperties(session, document);
   }
 
   @Override
-  public boolean isAllowedWrite(ODocument document, String name) {
-    return delegate.isAllowedWrite(document, name);
+  public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String propertyName) {
+    return delegate.isAllowedWrite(session, document, propertyName);
+  }
+
+  @Override
+  public boolean canCreate(ODatabaseSession session, ORecord record) {
+    return delegate.canCreate(session, record);
+  }
+
+  @Override
+  public boolean canRead(ODatabaseSession session, ORecord record) {
+    return delegate.canRead(session, record);
+  }
+
+  @Override
+  public boolean canUpdate(ODatabaseSession session, ORecord record) {
+    return delegate.canUpdate(session, record);
+  }
+
+  @Override
+  public boolean canDelete(ODatabaseSession session, ORecord record) {
+    return delegate.canDelete(session, record);
+  }
+
+  @Override
+  public boolean canExecute(ODatabaseSession session, OFunction function) {
+    return delegate.canExecute(session, function);
+  }
+
+  @Override
+  public boolean isReadRestrictedBySecurityPolicy(ODatabaseSession session, String resource) {
+    return delegate.isReadRestrictedBySecurityPolicy(session, resource);
+  }
+
+  @Override
+  public Set<OSecurityResourceProperty> getAllFilteredProperties(ODatabaseDocumentInternal database) {
+    return delegate.getAllFilteredProperties(database);
   }
 
   @Override

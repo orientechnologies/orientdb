@@ -31,17 +31,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -54,6 +44,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
@@ -64,16 +55,15 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -88,15 +78,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSer
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -504,8 +487,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   public void rebuildIndexes() {
-    if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
-      metadata.getIndexManager().recreateIndexes();
+    if (metadata.getIndexManagerInternal().autoRecreateIndexesAfterCrash(this)) {
+      metadata.getIndexManagerInternal().recreateIndexes(this);
     }
   }
 
@@ -721,12 +704,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    *
    * @Internal
    */
-  public void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
-      boolean prohibitTombstones) {
+  public void executeDeleteRecord(OIdentifiable identifiable, final int iVersion, final boolean iRequired,
+      final OPERATION_MODE iMode, boolean prohibitTombstones) {
     checkOpenness();
     checkIfActive();
 
-    final ORecordId rid = (ORecordId) record.getIdentity();
+    final ORecordId rid = (ORecordId) identifiable.getIdentity();
 
     if (rid == null)
       throw new ODatabaseException(
@@ -735,13 +718,26 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     if (!rid.isValid())
       return;
 
-    record = record.getRecord();
+    ORecord record = identifiable.getRecord();
     if (record == null)
       return;
 
     final OMicroTransaction microTx = beginMicroTransaction();
     try {
-      microTx.deleteRecord(record.getRecord(), iMode);
+      Set<ORecord> records = ORecordInternal.getDirtyManager(record).getUpdateRecords();
+      if (records != null) {
+        for (ORecord rec : records) {
+          microTx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+        }
+      }
+
+      Set<ORecord> newRecords = ORecordInternal.getDirtyManager(record).getNewRecords();
+      if (newRecords != null) {
+        for (ORecord rec : newRecords) {
+          microTx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+        }
+      }
+      microTx.deleteRecord(record, iMode);
     } catch (Exception e) {
       endMicroTransaction(false);
       throw e;
@@ -780,10 +776,16 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
     checkClusterSecurity(ORole.PERMISSION_CREATE, id, iClusterName);
 
+
     ORecordHook.RESULT triggerChanged = null;
     boolean changed = false;
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
+
+      if (!getSharedContext().getSecurity().canCreate(this, doc)) {
+        throw new OSecurityException("Cannot update record " + doc + ": the resource has restricted access due to security policies");
+      }
+
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isScheduler()) {
@@ -799,6 +801,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isRestricted()) {
           changed = ORestrictedAccessHook.onRecordBeforeCreate(doc, this);
         }
+        if (clazz.isFunction()) {
+          OFunctionLibraryImpl.validateFunctionRecord(doc);
+        }
+        ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
       }
     }
 
@@ -842,6 +848,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_UPDATE, true))
             throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access");
         }
+        if (clazz.isFunction()) {
+          OFunctionLibraryImpl.validateFunctionRecord(doc);
+        }
+        if (!getSharedContext().getSecurity().canUpdate(this, doc)) {
+          throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access due to security policies");
+        }
+        ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
       }
     }
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
@@ -880,14 +893,18 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    *
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  public ODatabaseDocumentAbstract delete(final ORecord record) {
+  public ODatabaseDocumentAbstract delete(ORecord record) {
     checkOpenness();
+
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
-    if (record instanceof OVertex) {
-      OVertexDelegate.deleteLinks((OVertex) record);
-    } else if (record instanceof OEdge) {
-      OEdgeDelegate.deleteLinks((OEdge) record);
+
+    if (record instanceof OElement) {
+      if (((OElement) record).isVertex()) {
+        OVertexDelegate.deleteLinks(((OElement) record).asVertex().get());
+      } else if (((OElement) record).isEdge()) {
+        OEdgeDelegate.deleteLinks(((OElement) record).asEdge().get());
+      }
     }
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
@@ -922,6 +939,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_DELETE, true))
             throw new OSecurityException("Cannot delete record " + doc.getIdentity() + ": the resource has restricted access");
         }
+        if (!getSharedContext().getSecurity().canDelete(this, doc)) {
+          throw new OSecurityException("Cannot delete record " + doc.getIdentity() + ": the resource has restricted access due to security policies");
+        }
       }
     }
     callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, id);
@@ -937,7 +957,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           this.getSharedContext().getFunctionLibrary().createdFunction(doc);
           Orient.instance().getScriptManager().close(this.getName());
         }
-        if (clazz.isOuser() || clazz.isOrole()) {
+        if (clazz.isOuser() || clazz.isOrole() || clazz.isSubClassOf(OSecurityPolicy.class.getName())) {
           sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
@@ -1050,8 +1070,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
             return true;
           }
         }
-        ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(doc, getSharedContext().getSecurity()));
-        ODocumentInternal.setPropertyEncryption(doc, new OPropertyEncryption());
+
+        if (!getSharedContext().getSecurity().canRead(this, doc)) {
+          return true;
+        }
+
+        ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(this, doc, getSharedContext().getSecurity()));
+        ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
       }
     }
     return callbackHooks(ORecordHook.TYPE.BEFORE_READ, identifiable) == ORecordHook.RESULT.SKIP;
@@ -1340,4 +1365,85 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific,
+                                                         final int iOperation) {
+    if (user != null) {
+      try {
+        user.allow(resourceGeneric, resourceSpecific, iOperation);
+      } catch (OSecurityAccessException e) {
+
+        if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance()
+                  .debug(this, "User '%s' tried to access the reserved resource '%s.%s', operation '%s'", getUser(), resourceGeneric,
+                          resourceSpecific, iOperation);
+
+        throw e;
+      }
+    }
+    return (DB) this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
+                                                         final Object... iResourcesSpecific) {
+    if (iResourcesSpecific == null || iResourcesSpecific.length == 0) {
+      checkSecurity(iResourceGeneric, null, iOperation);
+    } else {
+      for (Object target : iResourcesSpecific) {
+        checkSecurity(iResourceGeneric, target == null ? null : target.toString(), iOperation);
+      }
+    }
+    return (DB) this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
+                                                         final Object iResourceSpecific) {
+    checkOpenness();
+    checkSecurity(iResourceGeneric, iResourceSpecific == null ? null : iResourceSpecific.toString(), iOperation);
+
+    return (DB) this;
+  }
+
+  @Override
+  @Deprecated
+  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResource, final int iOperation) {
+    final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+    if (resourceSpecific == null || resourceSpecific.equals("*"))
+      checkSecurity(resourceGeneric, null, iOperation);
+
+    return checkSecurity(resourceGeneric, resourceSpecific, iOperation);
+  }
+
+  @Override
+  @Deprecated
+  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
+                                                         final Object iResourceSpecific) {
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
+    if (iResourceSpecific == null || iResourceSpecific.equals("*"))
+      return checkSecurity(resourceGeneric, iOperation, (Object) null);
+
+    return checkSecurity(resourceGeneric, iOperation, iResourceSpecific);
+  }
+
+  @Override
+  @Deprecated
+  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
+                                                         final Object... iResourcesSpecific) {
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
+    return checkSecurity(resourceGeneric, iOperation, iResourcesSpecific);
+  }
+
+
 }
+
+

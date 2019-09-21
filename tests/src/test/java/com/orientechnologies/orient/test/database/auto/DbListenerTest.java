@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -30,12 +30,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,7 +66,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
       this(g.getRawGraph());
     }
 
-    public DocumentChangeListener(final ODatabaseDocumentTx db) {
+    public DocumentChangeListener(final ODatabaseDocument db) {
       db.registerHook(new ODocumentHookAbstract(db) {
 
         @Override
@@ -210,7 +205,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, baseOnBeforeTxBegin + 1);
 
-    database.newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.<ODocument>newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
     Assert.assertEquals(onBeforeTxCommit, baseOnBeforeTxCommit + 1);
     Assert.assertEquals(onAfterTxCommit, baseOnAfterTxCommit + 1);
@@ -218,7 +213,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, baseOnBeforeTxBegin + 2);
 
-    database.newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.<ODocument>newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
     database.rollback();
     Assert.assertEquals(onBeforeTxRollback, 1);
     Assert.assertEquals(onAfterTxRollback, 1);
@@ -246,7 +241,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, 1);
 
-    database.newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.<ODocument>newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
     Assert.assertEquals(onBeforeTxCommit, 1);
     Assert.assertEquals(onAfterTxCommit, 1);
@@ -254,7 +249,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, 2);
 
-    database.newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.<ODocument>newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
     database.rollback();
     Assert.assertEquals(onBeforeTxRollback, 1);
     Assert.assertEquals(onAfterTxRollback, 1);
@@ -277,7 +272,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
 
     database.begin(TXTYPE.OPTIMISTIC);
-    ODocument rec = database.newInstance().field("name", "Jay").save(database.getClusterNameById(database.getDefaultClusterId()));
+    ODocument rec = database.<ODocument>newInstance().field("name", "Jay").save(database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
 
     final DocumentChangeListener cl = new DocumentChangeListener(database);

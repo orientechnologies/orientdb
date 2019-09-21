@@ -32,13 +32,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -216,7 +210,7 @@ public class LuceneAutomaticBackupRestoreTest {
 
     assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.name");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
@@ -288,7 +282,7 @@ public class LuceneAutomaticBackupRestoreTest {
 
     assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.name");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());

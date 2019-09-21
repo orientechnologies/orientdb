@@ -395,7 +395,7 @@ public class OClientConnectionManager {
       if (ser == null)
         return;
 
-      final byte[] content = ser.toStream(iConfig, false);
+      final byte[] content = ser.toStream(iConfig);
 
       try {
         // TRY ACQUIRING THE LOCK FOR MAXIMUM 3 SECS TO AVOID TO FREEZE CURRENT THREAD

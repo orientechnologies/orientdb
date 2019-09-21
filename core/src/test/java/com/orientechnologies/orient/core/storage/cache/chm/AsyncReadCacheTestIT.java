@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
@@ -181,8 +182,8 @@ public class AsyncReadCacheTestIT {
         final int fileId = random.nextInt(fileLimit);
         final int pageIndex = random.nextInt(pageLimit);
 
-        final OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, true, null);
-        readCache.releaseFromWrite(cacheEntry, writeCache);
+        final OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, true, null);
+        readCache.releaseFromWrite(cacheEntry, writeCache, true);
         pageCounter++;
       }
 
@@ -216,7 +217,7 @@ public class AsyncReadCacheTestIT {
         final int fileId = random.nextInt(fileLimit);
         final int pageIndex = random.nextInt(pageLimit);
 
-        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, 1, true);
+        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, true);
         readCache.releaseFromRead(cacheEntry, writeCache);
         pageCounter++;
       }
@@ -248,8 +249,8 @@ public class AsyncReadCacheTestIT {
       while (pageCounter < pageCount) {
         final int pageIndex = random.nextInt();
         assert pageIndex < pageLimit;
-        final OCacheEntry cacheEntry = readCache.loadForWrite(0, pageIndex, true, writeCache, 1, true, null);
-        readCache.releaseFromWrite(cacheEntry, writeCache);
+        final OCacheEntry cacheEntry = readCache.loadForWrite(0, pageIndex, true, writeCache, true, null);
+        readCache.releaseFromWrite(cacheEntry, writeCache, true);
         pageCounter++;
       }
 
@@ -280,7 +281,7 @@ public class AsyncReadCacheTestIT {
       while (pageCounter < pageCount) {
         final int pageIndex = random.nextInt();
         assert pageIndex < pageLimit;
-        final OCacheEntry cacheEntry = readCache.loadForRead(0, pageIndex, true, writeCache, 1, true);
+        final OCacheEntry cacheEntry = readCache.loadForRead(0, pageIndex, true, writeCache, true);
         readCache.releaseFromRead(cacheEntry, writeCache);
         pageCounter++;
       }
@@ -361,6 +362,14 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
+    public void restoreModeOn() {
+    }
+
+    @Override
+    public void restoreModeOff() {
+    }
+
+    @Override
     public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     }
 
@@ -375,12 +384,12 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public OCachePointer[] load(final long fileId, final long startPageIndex, final int pageCount,
-        final OModifiableBoolean cacheHit, final boolean verifyChecksums) {
+    public OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit,
+        final boolean verifyChecksums) {
       final OPointer pointer = byteBufferPool.acquireDirect(true);
-      final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, fileId, startPageIndex);
+      final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, fileId, (int) startPageIndex);
       cachePointer.incrementReadersReferrer();
-      return new OCachePointer[] { cachePointer };
+      return cachePointer;
     }
 
     @Override
@@ -411,10 +420,6 @@ public class AsyncReadCacheTestIT {
 
     @Override
     public void renameFile(final long fileId, final String newFileName) {
-    }
-
-    @Override
-    public void replaceFileContentWith(final long fileId, final Path newContentFile) {
     }
 
     @Override
@@ -501,6 +506,14 @@ public class AsyncReadCacheTestIT {
 
     @Override
     public void updateDirtyPagesTable(final OCachePointer pointer, final OLogSequenceNumber startLSN) {
+    }
+
+    @Override
+    public void create() throws IOException {
+    }
+
+    @Override
+    public void open() throws IOException {
     }
   }
 

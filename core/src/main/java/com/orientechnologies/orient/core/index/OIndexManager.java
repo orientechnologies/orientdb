@@ -33,7 +33,9 @@ import java.util.Set;
  * Manager of indexes.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @deprecated Manual indexes are deprecated and will be removed
  */
+@Deprecated
 public interface OIndexManager {
 
   /**
@@ -52,18 +54,25 @@ public interface OIndexManager {
   @Deprecated
   void create();
 
+  @Deprecated
   OIndexManager reload();
 
   /**
    * Drops all indexes and creates them from scratch.
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   void recreateIndexes();
 
   /**
    * Returns all indexes registered in database.
    *
    * @return list of registered indexes.
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   Collection<? extends OIndex<?>> getIndexes();
 
   /**
@@ -72,14 +81,20 @@ public interface OIndexManager {
    * @param iName name of index
    *
    * @return index if one registered in database or null otherwise.
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   OIndex<?> getIndex(final String iName);
 
   /**
    * Returns the auto-sharding index defined for the class, if any.
    *
    * @param className Class name
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   OIndex<?> getClassAutoShardingIndex(String className);
 
   /**
@@ -88,7 +103,10 @@ public interface OIndexManager {
    * @param iName name of index.
    *
    * @return true if index with specified name exists, false otherwise.
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   boolean existsIndex(final String iName);
 
   /**
@@ -102,7 +120,10 @@ public interface OIndexManager {
    * @param metadata          document with additional properties that can be used by index engine.
    *
    * @return a newly created index instance
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition indexDefinition, final int[] clusterIdsToIndex,
       final OProgressListener progressListener, ODocument metadata);
 
@@ -120,7 +141,10 @@ public interface OIndexManager {
    * @param algorithm         tip to an index factory what algorithm to use
    *
    * @return a newly created index instance
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition indexDefinition, final int[] clusterIdsToIndex,
       final OProgressListener progressListener, ODocument metadata, String algorithm);
 
@@ -130,7 +154,10 @@ public interface OIndexManager {
    * @param iIndexName the name of index to drop
    *
    * @return this
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   @OApi(maturity = OApi.MATURITY.STABLE)
   OIndexManager dropIndex(final String iIndexName);
 
@@ -156,13 +183,19 @@ public interface OIndexManager {
    * Return a dictionary index. Could be helpful to store different kinds of configurations.
    *
    * @return a dictionary
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   ODictionary<ORecord> getDictionary();
 
   /**
    * Flushes all indexes that is registered in this manager. There might be some changes stored in memory, this method ensures that
    * all this changed are stored to the disk.
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   void flush();
 
   /**
@@ -185,7 +218,10 @@ public interface OIndexManager {
    * @param fields    Field names.
    *
    * @return list of indexes that contain passed in fields names as their first keys.
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   Set<OIndex<?>> getClassInvolvedIndexes(String className, Collection<String> fields);
 
   /**
@@ -198,7 +234,9 @@ public interface OIndexManager {
    * @param fields    Field names.
    *
    * @return list of indexes that contain passed in fields names as their first keys.
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   Set<OIndex<?>> getClassInvolvedIndexes(String className, String... fields);
 
   /**
@@ -209,7 +247,9 @@ public interface OIndexManager {
    * @param fields    Field names.
    *
    * @return <code>true</code> if given fields are contained as first key fields in class indexes.
+   * @deprecated
    */
+  @Deprecated
   boolean areIndexed(String className, Collection<String> fields);
 
   /**
@@ -219,7 +259,9 @@ public interface OIndexManager {
    * @return <code>true</code> if given fields are contained as first key fields in class indexes.
    *
    * @see #areIndexed(String, java.util.Collection)
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   boolean areIndexed(String className, String... fields);
 
   /**
@@ -228,7 +270,9 @@ public interface OIndexManager {
    * @param className name of class which is indexed.
    *
    * @return a set of indexes related to specified class
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   Set<OIndex<?>> getClassIndexes(String className);
 
   /**
@@ -236,12 +280,16 @@ public interface OIndexManager {
    *
    * @param className name of class which is indexed.
    * @param indexes   Collection of indexes where to add all the indexes
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   void getClassIndexes(String className, Collection<OIndex<?>> indexes);
 
   /**
    * Returns the unique index for a class, if any.
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   OIndexUnique getClassUniqueIndex(String className);
 
   /**
@@ -251,12 +299,16 @@ public interface OIndexManager {
    * @param indexName name of index.
    *
    * @return an index instance or null if such does not exist.
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   OIndex<?> getClassIndex(String className, String indexName);
 
   /**
    * Blocks current thread till indexes will be restored.
+   * @deprecated Manual indexes are deprecated and will be removed
    */
+  @Deprecated
   void waitTillIndexRestore();
 
   /**

@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.db.record;
 
 public interface OAutoConvertToRecord {
-  public boolean isAutoConvertToRecord();
+  boolean isAutoConvertToRecord();
 
-  public void setAutoConvertToRecord(boolean convertToRecord);
+  void setAutoConvertToRecord(boolean convertToRecord);
 }

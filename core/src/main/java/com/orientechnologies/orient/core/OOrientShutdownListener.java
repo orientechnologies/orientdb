@@ -5,5 +5,5 @@ package com.orientechnologies.orient.core;
  * @since 09/01/15
  */
 public interface OOrientShutdownListener {
-	void onShutdown();
+  void onShutdown();
 }

@@ -117,7 +117,6 @@
         <module>etl</module>
         <module>distribution</module>
         <module>distribution-tp2</module>
-        <module>crashtests</module>
     </modules>
 
     <scm>
@@ -309,7 +308,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
 
                 <plugin>
@@ -522,6 +521,13 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.7.6.201602180812</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -542,10 +548,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.0</version>
                 <configuration>
                     <excludes>com/orientechnologies/orient/core/sql/parser/*.java</excludes>
-			        <configLocation>${project.rootdir}/_base/orient_checks.xml</configLocation>
+                    <configLocation>${project.rootdir}/_base/orient_checks.xml</configLocation>
                 </configuration>
                 <executions>
                     <execution>

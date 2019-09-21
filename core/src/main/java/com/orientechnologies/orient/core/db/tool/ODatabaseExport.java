@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -48,15 +48,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
@@ -393,16 +385,16 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nExporting index info...");
     writer.beginCollection(1, true, "indexes");
 
-    final OIndexManager indexManager = database.getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
-    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes();
+    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes(database);
 
     for (OIndex<?> index : indexes) {
-      if (index.getName().equals(ODatabaseImport.EXPORT_IMPORT_MAP_NAME))
-        continue;
-
       final String clsName = index.getDefinition() != null ? index.getDefinition().getClassName() : null;
+      if (ODatabaseImport.EXPORT_IMPORT_CLASS_NAME.equals(clsName)) {
+        continue;
+      }
 
       // CHECK TO FILTER CLASS
       if (includeClasses != null) {
@@ -452,20 +444,20 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   private void exportManualIndexes() throws IOException {
     listener.onMessage("\nExporting manual indexes content...");
 
-    final OIndexManager indexManager = database.getMetadata().getIndexManager();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
-    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes();
+    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes(database);
 
     ODocument exportEntry = new ODocument();
 
     int manualIndexes = 0;
-    writer.beginCollection(1, true, "manualIndexes");
     for (OIndex<?> index : indexes) {
-      if (index.getName().equals(ODatabaseImport.EXPORT_IMPORT_MAP_NAME))
-        continue;
-
       if (!index.isAutomatic()) {
+        if (manualIndexes == 0) {
+          writer.beginCollection(1, true, "manualIndexes");
+        }
+
         listener.onMessage("\n- Exporting index " + index.getName() + " ...");
 
         writer.beginObject(2, true, null);
@@ -518,7 +510,11 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         manualIndexes++;
       }
     }
-    writer.endCollection(1, true);
+
+    if (manualIndexes > 0) {
+      writer.endCollection(1, true);
+    }
+
     listener.onMessage("\nOK (" + manualIndexes + " manual indexes)");
   }
 

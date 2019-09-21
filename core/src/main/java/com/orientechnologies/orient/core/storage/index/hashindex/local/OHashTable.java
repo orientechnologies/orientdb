@@ -54,16 +54,12 @@ public interface OHashTable<K, V> {
 
   V remove(K key) throws IOException;
 
-  void clear() throws IOException;
-
   Entry<K, V>[] higherEntries(K key);
 
   Entry<K, V>[] higherEntries(K key, int limit);
 
   void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption, OHashFunction<K> keyHashFunction,
       final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer);
-
-  void deleteWithoutLoad(String name) throws IOException;
 
   Entry<K, V>[] ceilingEntries(K key);
 

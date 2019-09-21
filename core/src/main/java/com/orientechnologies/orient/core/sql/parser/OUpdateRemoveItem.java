@@ -7,8 +7,10 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OUpdateRemoveItem extends SimpleNode {
 
@@ -73,6 +75,12 @@ public class OUpdateRemoveItem extends SimpleNode {
     if (right != null) {
       Object leftVal = left.execute(result, ctx);
       Object rightVal = right.execute(result, ctx);
+      if(rightVal instanceof OResult && ((OResult) rightVal).isElement()){
+        rightVal = ((OResult) rightVal).getElement().get();
+      }
+      if(rightVal instanceof Collection && ((Collection) rightVal).stream().allMatch(x->x instanceof OResult && ((OResult) x).isElement())){
+        rightVal = ((Collection) rightVal).stream().map(OResult.class::cast).map(x->((OResult) x).getElement().get()).collect(Collectors.toList());
+      }
       if (OMultiValue.isMultiValue(leftVal)) {
         OMultiValue.remove(leftVal, rightVal, false);
         if (OMultiValue.isMultiValue(rightVal)) {

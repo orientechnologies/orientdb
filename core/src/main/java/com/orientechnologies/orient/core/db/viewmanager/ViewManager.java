@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OElement;
@@ -104,7 +103,7 @@ public class ViewManager {
         if (closed)
           return;
         lastTask = orientDB.executeNoAuthorization(dbName, (db) -> {
-          ViewManager.this.updateViews(db);
+          ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
           return null;
         });
       }
@@ -112,7 +111,7 @@ public class ViewManager {
     this.orientDB.scheduleOnce(timerTask, 1000);
   }
 
-  private void updateViews(ODatabaseSession db) {
+  private void updateViews(ODatabaseDocumentInternal db) {
     try {
       cleanUnusedViewClusters(db);
       cleanUnusedViewIndexes(db);
@@ -163,11 +162,11 @@ public class ViewManager {
       viewCluserVisitors.remove(cluster);
       clustersToDrop.remove(cluster);
       oldClustersPerViews.remove(cluster);
-      db.dropCluster(cluster, false);
+      db.dropCluster(cluster);
     }
   }
 
-  public synchronized void cleanUnusedViewIndexes(ODatabaseDocument db) {
+  public synchronized void cleanUnusedViewIndexes(ODatabaseDocumentInternal db) {
     List<String> toRemove = new ArrayList<>();
     for (String index : indexesToDrop) {
       AtomicInteger visitors = viewIndexVisitors.get(index);
@@ -179,7 +178,7 @@ public class ViewManager {
       viewIndexVisitors.remove(index);
       indexesToDrop.remove(index);
       oldIndexesPerViews.remove(index);
-      db.getMetadata().getIndexManager().dropIndex(index);
+      db.getMetadata().getIndexManagerInternal().dropIndex(db, index);
     }
   }
 
@@ -270,7 +269,7 @@ public class ViewManager {
     return lastUpdate + (updateInterval * 1000) < System.currentTimeMillis();
   }
 
-  public synchronized void updateView(OView view, ODatabaseDocument db) {
+  public synchronized void updateView(OView view, ODatabaseDocumentInternal db) {
     lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
 
     int cluster = db.addCluster(getNextClusterNameFor(view, db));
@@ -300,7 +299,7 @@ public class ViewManager {
     view = db.getMetadata().getSchema().getView(view.getName());
     if (view == null) {
       //the view was dropped in the meantime
-      db.dropCluster(clusterName, false);
+      db.dropCluster(clusterName);
       indexes.forEach(x -> x.delete());
       return;
     }
@@ -354,16 +353,16 @@ public class ViewManager {
     return idx.getDefinition().createValue(vals);
   }
 
-  private List<OIndex> createNewIndexesForView(OView view, int cluster, ODatabaseDocument db) {
+  private List<OIndex> createNewIndexesForView(OView view, int cluster, ODatabaseDocumentInternal db) {
     try {
       List<OIndex> result = new ArrayList<>();
-      OIndexManager idxMgr = db.getMetadata().getIndexManager();
+      OIndexManagerAbstract idxMgr = db.getMetadata().getIndexManagerInternal();
       for (OViewConfig.OViewIndexConfig cfg : view.getRequiredIndexesInfo()) {
         OIndexDefinition definition = createIndexDefinition(view.getName(), cfg.getProperties());
         String indexName = view.getName() + "_" + UUID.randomUUID().toString().replaceAll("-", "_");
         String type = cfg.getType();
         String engine = cfg.getEngine();
-        OIndex<?> idx = idxMgr.createIndex(indexName, type, definition, new int[] { cluster }, null, null, engine);
+        OIndex<?> idx = idxMgr.createIndex(db, indexName, type, definition, new int[] { cluster }, null, null, engine);
         result.add(idx);
       }
       return result;
@@ -377,7 +376,7 @@ public class ViewManager {
     if (requiredIndexesInfo.size() == 1) {
       return new OPropertyIndexDefinition(viewName, requiredIndexesInfo.get(0).getKey(), requiredIndexesInfo.get(0).getValue());
     }
-    OCompositeIndexDefinition result = new OCompositeIndexDefinition();
+    OCompositeIndexDefinition result = new OCompositeIndexDefinition(viewName);
     for (OPair<String, OType> pair : requiredIndexesInfo) {
       result.addIndex(new OPropertyIndexDefinition(viewName, pair.getKey(), pair.getValue()));
     }
@@ -420,7 +419,7 @@ public class ViewManager {
       }
       try {
         OView view = databaseSession.getMetadata().getSchema().getView(name);
-        updateView(view, databaseSession);
+        updateView(view, (ODatabaseDocumentInternal) databaseSession);
         if (listener != null) {
           listener.afterCreate(databaseSession, name);
         }

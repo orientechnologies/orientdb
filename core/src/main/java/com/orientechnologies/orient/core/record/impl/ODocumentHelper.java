@@ -143,10 +143,8 @@ public class ODocumentHelper {
 
         if (iValue instanceof Collection<?>) {
           ((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
-          return (RET) newValue;
         } else if (iValue instanceof Map) {
           ((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
-          return (RET) newValue;
         } else if (iValue instanceof String) {
           final String stringValue = (String) iValue;
 
@@ -156,14 +154,16 @@ public class ODocumentHelper {
               ((Collection<Object>) newValue).add(s);
             }
           }
-          return (RET) newValue;
         } else if (OMultiValue.isMultiValue(iValue)) {
           // GENERIC MULTI VALUE
           for (Object s : OMultiValue.getMultiValueIterable(iValue, false)) {
             ((Collection<Object>) newValue).add(s);
           }
-          return (RET) newValue;
         }
+        if (type.isLink()) {
+          ((ORecordLazyMultiValue) newValue).convertLinks2Records();
+        }
+        return (RET) newValue;
       } else {
         return (RET) iValue;
       }
@@ -179,10 +179,8 @@ public class ODocumentHelper {
 
         if (iValue instanceof Collection) {
           ((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
-          return (RET) newValue;
         } else if (iValue instanceof Map) {
           ((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
-          return (RET) newValue;
         } else if (iValue instanceof String) {
           final String stringValue = (String) iValue;
 
@@ -192,14 +190,16 @@ public class ODocumentHelper {
               ((Collection<Object>) newValue).add(s);
             }
           }
-          return (RET) newValue;
         } else if (OMultiValue.isMultiValue(iValue)) {
           // GENERIC MULTI VALUE
           for (Object s : OMultiValue.getMultiValueIterable(iValue)) {
             ((Collection<Object>) newValue).add(s);
           }
-          return (RET) newValue;
         }
+        if (type.isLink()) {
+          ((ORecordLazyMultiValue) newValue).convertLinks2Records();
+        }
+        return (RET) newValue;
       } else {
         return (RET) iValue;
       }
@@ -787,7 +787,7 @@ public class ODocumentHelper {
       return null;
 
     final ODocument doc = ((ODocument) iCurrent.getRecord());
-    if (doc == null) {// broken link
+    if (doc == null) { // broken link
       return null;
     }
     return doc.accessProperty(iFieldName);
@@ -924,11 +924,6 @@ public class ODocumentHelper {
       } else if (fieldValue instanceof ORecordLazyList) {
         return ((ORecordLazyList) fieldValue).copy(iCloned);
 
-      } else if (fieldValue instanceof ORecordTrackedList) {
-        final ORecordTrackedList newList = new ORecordTrackedList(iCloned);
-        newList.addAll((ORecordTrackedList) fieldValue);
-        return newList;
-
       } else if (fieldValue instanceof OTrackedList<?>) {
         final OTrackedList<Object> newList = new OTrackedList<Object>(iCloned);
         newList.addAll((OTrackedList<Object>) fieldValue);
@@ -941,11 +936,6 @@ public class ODocumentHelper {
       } else if (fieldValue instanceof ORecordLazySet) {
         final ORecordLazySet newList = new ORecordLazySet(iCloned);
         newList.addAll((ORecordLazySet) fieldValue);
-        return newList;
-
-      } else if (fieldValue instanceof ORecordTrackedSet) {
-        final ORecordTrackedSet newList = new ORecordTrackedSet(iCloned);
-        newList.addAll((ORecordTrackedSet) fieldValue);
         return newList;
 
       } else if (fieldValue instanceof OTrackedSet<?>) {
@@ -1526,220 +1516,10 @@ public class ODocumentHelper {
     return value instanceof Float || value instanceof Double;
   }
 
-  public static void deleteCrossRefs(final ORID iRid, final ODocument iContent) {
-    for (String fieldName : iContent.fieldNames()) {
-      final Object fieldValue = iContent.field(fieldName);
-      if (fieldValue != null) {
-        if (fieldValue.equals(iRid)) {
-          // REMOVE THE LINK
-          iContent.field(fieldName, (ORID) null);
-          iContent.save();
-        } else if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
-          // EMBEDDED DOCUMENT: GO RECURSIVELY
-          deleteCrossRefs(iRid, (ODocument) fieldValue);
-        } else if (OMultiValue.isMultiValue(fieldValue)) {
-          // MULTI-VALUE (COLLECTION, ARRAY OR MAP), CHECK THE CONTENT
-          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext(); ) {
-            final Object item = it.next();
-
-            if (fieldValue.equals(iRid)) {
-              // DELETE ITEM
-              it.remove();
-            } else if (item instanceof ODocument && ((ODocument) item).isEmbedded()) {
-              // EMBEDDED DOCUMENT: GO RECURSIVELY
-              deleteCrossRefs(iRid, (ODocument) item);
-            }
-          }
-        }
-      }
-    }
-  }
 
   public static <T> T makeDbCall(final ODatabaseDocumentInternal databaseRecord, final ODbRelatedCall<T> function) {
     databaseRecord.activateOnCurrentThread();
     return function.call(databaseRecord);
   }
 
-  private static OMultiValueChangeEvent.OChangeType isNestedValueChanged(ONestedMultiValueChangeEvent event, Object value,
-      List<Object> ownersTrace, int ownersTraceOffset, Object valueIdentifier) {
-    if (event.getTimeLine() != null) {
-      List<OMultiValueChangeEvent<Object, Object>> events = event.getTimeLine().getMultiValueChangeEvents();
-      if (events != null) {
-        for (OMultiValueChangeEvent<Object, Object> nestedEvent : events) {
-          if (ownersTraceOffset < ownersTrace.size() && nestedEvent.getKey() == ownersTrace.get(ownersTraceOffset)
-              && nestedEvent instanceof ONestedMultiValueChangeEvent) {
-            ONestedMultiValueChangeEvent ne = (ONestedMultiValueChangeEvent) nestedEvent;
-            OMultiValueChangeEvent.OChangeType ret = isNestedValueChanged(ne, value, ownersTrace, ownersTraceOffset + 1,
-                valueIdentifier);
-            if (ret != null) {
-              return ret;
-            }
-          } else {
-            if (nestedEvent.getKey().equals(valueIdentifier) && nestedEvent.getValue() == value && ownersTraceOffset == ownersTrace
-                .size()) {
-              return nestedEvent.getChangeType();
-            }
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
-  public static OMultiValueChangeEvent.OChangeType isNestedValueChanged(ODocumentEntry entry, Object value,
-      List<Object> ownersTrace, int ownersTraceOffset, Object valueIdentifier) {
-    if (entry.timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
-      if (timeline != null) {
-        for (OMultiValueChangeEvent<Object, Object> event : timeline) {
-          if (ownersTraceOffset < ownersTrace.size() && event.getKey() == ownersTrace.get(ownersTraceOffset)
-              && event instanceof ONestedMultiValueChangeEvent) {
-            ONestedMultiValueChangeEvent nestedEvent = (ONestedMultiValueChangeEvent) event;
-            OMultiValueChangeEvent.OChangeType ret = isNestedValueChanged(nestedEvent, value, ownersTrace, ownersTraceOffset + 1,
-                valueIdentifier);
-            if (ret != null) {
-              return ret;
-            }
-          } else if ((event.getKey().equals(valueIdentifier) || event.getKey() == value) && event.getValue() == value
-              && ownersTraceOffset == ownersTrace.size()) {
-            return event.getChangeType();
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private static boolean isInNestedEvent(ONestedMultiValueChangeEvent event, Object checkObject, List<Object> ownersTrace,
-      int ownersTraceOffset) {
-    if (event.getKey() == checkObject) {
-      return true;
-    }
-    if (event.getTimeLine() != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = event.getTimeLine().getMultiValueChangeEvents();
-      for (OMultiValueChangeEvent<Object, Object> nestedEvent : timeline) {
-        if (nestedEvent.getKey() == checkObject) {
-          return true;
-        } else {
-          if (nestedEvent instanceof ONestedMultiValueChangeEvent && isInNestedEvent((ONestedMultiValueChangeEvent) nestedEvent,
-              checkObject, ownersTrace, ownersTraceOffset + 1)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  public static boolean isChangedCollection(Collection list, ODocumentEntry entry, List<Object> ownersTrace,
-      int ownersTraceOffset) {
-    ownersTrace.add(list);
-
-    //We can't use same logic as in isNestedValueChanged, because
-    //change of ODocument contained in list will not fire adequate change event
-    for (Object element : list) {
-      if (element instanceof ODocument) {
-        if (((ODocument) element).isChangedInDepth()) {
-          return true;
-        }
-      } else if (element instanceof Collection) {
-        if (isChangedCollection((Collection) element, entry, ownersTrace, ownersTraceOffset + 1)) {
-          return true;
-        }
-      } else if (element instanceof Map) {
-        if (isChangedMap((Map) element, entry, ownersTrace, ownersTraceOffset + 1)) {
-          return true;
-        }
-      }
-    }
-
-    if (entry.timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
-      if (timeline != null) {
-        for (OMultiValueChangeEvent<Object, Object> event : timeline) {
-          Object key = event.getKey();
-          if (key == list) {
-            return true;
-          }
-          if (event instanceof ONestedMultiValueChangeEvent && isInNestedEvent((ONestedMultiValueChangeEvent) event, list,
-              ownersTrace, ownersTraceOffset + 1)) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
-  public static boolean isChangedRidbag(ORidBag ridbag, ODocumentEntry entry) {
-
-    if (entry.timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
-      if (timeline != null) {
-        return !timeline.isEmpty();
-      }
-    }
-
-    return false;
-  }
-
-  public static boolean isChangedMap(Map<Object, Object> map, ODocumentEntry entry, List<Object> ownersTrace,
-      int ownersTraceOffset) {
-    ownersTrace.add(map);
-
-    //We can't use same logic as in isNestedValueChanged, because
-    //change of ODocument contained in list will not fire adequate change event
-    for (Map.Entry<Object, Object> mapEntry : map.entrySet()) {
-      Object element = mapEntry.getValue();
-      if (element instanceof ODocument) {
-        if (((ODocument) element).isChangedInDepth()) {
-          return true;
-        }
-      } else if (element instanceof Collection) {
-        if (isChangedCollection((Collection) element, entry, ownersTrace, ownersTraceOffset + 1)) {
-          return true;
-        }
-      } else if (element instanceof Map) {
-        if (isChangedMap((Map) element, entry, ownersTrace, ownersTraceOffset + 1)) {
-          return true;
-        }
-      }
-    }
-
-    if (entry.timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
-      if (timeline != null) {
-        for (OMultiValueChangeEvent<Object, Object> event : timeline) {
-          Object key = event.getKey();
-          if (key == map) {
-            return true;
-          }
-          if (event instanceof ONestedMultiValueChangeEvent && isInNestedEvent((ONestedMultiValueChangeEvent) event, map,
-              ownersTrace, ownersTraceOffset + 1)) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
-  protected static boolean hasNonExistingInList(List list) {
-    for (Object element : list) {
-      if (element instanceof ODocument) {
-        if (((ODocument) element).hasNonExistingInDepth()) {
-          return true;
-        }
-      } else if (element instanceof List) {
-        if (hasNonExistingInList((List) element)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
 }

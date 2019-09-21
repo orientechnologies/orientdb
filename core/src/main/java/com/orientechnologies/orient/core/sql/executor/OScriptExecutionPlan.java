@@ -28,6 +28,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   OExecutionStepInternal lastStep = null;
 
   OResultSet finalResult = null;
+  private String statement;
 
   public OScriptExecutionPlan(OCommandContext ctx) {
     this.ctx = ctx;
@@ -222,6 +223,16 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     }
 
     return null;
+  }
+
+  @Override
+  public String getStatement() {
+    return statement;
+  }
+
+  @Override
+  public void setStatement(String statement) {
+    this.statement = statement;
   }
 }
 

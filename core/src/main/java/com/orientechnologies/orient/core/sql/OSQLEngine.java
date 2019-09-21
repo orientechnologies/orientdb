@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.OSecurityResource;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -44,10 +45,7 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.sql.parser.OStatementCache;
-import com.orientechnologies.orient.core.sql.parser.OrientSql;
-import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.io.ByteArrayInputStream;
@@ -80,6 +78,28 @@ public class OSQLEngine {
     try {
       final OrientSql osql = new OrientSql(script);
       List<OStatement> result = osql.parseScript();
+      return result;
+    } catch (ParseException e) {
+      throw new OCommandSQLParsingException(e, "");
+    }
+  }
+
+  public static OOrBlock parsePredicate(String predicate) throws OCommandSQLParsingException {
+    final InputStream is = new ByteArrayInputStream(predicate.getBytes());
+    try {
+      final OrientSql osql = new OrientSql(is);
+      OOrBlock result = osql.OrBlock();
+      return result;
+    } catch (ParseException e) {
+      throw new OCommandSQLParsingException(e, "");
+    }
+  }
+
+  public static OSecurityResourceSegment parseSecurityResource(String exp) {
+    final InputStream is = new ByteArrayInputStream(exp.getBytes());
+    try {
+      final OrientSql osql = new OrientSql(is);
+      OSecurityResourceSegment result = osql.SecurityResourceSegment();
       return result;
     } catch (ParseException e) {
       throw new OCommandSQLParsingException(e, "");

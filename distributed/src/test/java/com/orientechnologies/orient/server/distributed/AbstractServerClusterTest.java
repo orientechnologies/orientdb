@@ -22,10 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
@@ -41,7 +38,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.OFixUpdateRecor
 import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
 import org.junit.Assert;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
@@ -224,14 +220,14 @@ public abstract class AbstractServerClusterTest {
     return getDatabase(0);
   }
 
-  protected ODatabaseDocument getDatabase(final int serverNum) {
+  protected ODatabaseDocumentInternal getDatabase(final int serverNum) {
     if (serverInstance.size() > serverNum)
       return getDatabase(serverInstance.get(serverNum));
 
     return null;
   }
 
-  protected ODatabaseDocument getDatabase(final ServerRun serverRun) {
+  protected ODatabaseDocumentInternal getDatabase(final ServerRun serverRun) {
     if (serverRun != null) {
       return serverRun.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     }

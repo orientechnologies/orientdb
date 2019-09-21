@@ -17,4 +17,6 @@ public interface OV1IndexEngine extends OBaseIndexEngine {
 
   void load(final String name, final int keySize, final OType[] keyTypes, final OBinarySerializer keySerializer,
       final OEncryption encryption);
+
+  boolean isMultiValue();
 }

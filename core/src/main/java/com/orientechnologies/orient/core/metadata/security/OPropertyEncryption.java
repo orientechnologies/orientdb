@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-public class OPropertyEncryption {
+public interface OPropertyEncryption {
 
-  public byte[] decrypt(byte[] values) {
-    return values;
-  }
+  boolean isEncrypted(String name);
+
+  byte[] encrypt(String name, byte[] values);
+
+  byte[] decrypt(String name, byte[] values);
 }

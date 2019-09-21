@@ -30,11 +30,7 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 
 public class ORecordId implements ORID {
@@ -49,10 +45,10 @@ public class ORecordId implements ORID {
   public ORecordId() {
   }
 
-  public ORecordId(final int iClusterId, final long iPosition) {
-    clusterId = iClusterId;
+  public ORecordId(final int clusterId, final long position) {
+    this.clusterId = clusterId;
     checkClusterLimits();
-    clusterPosition = iPosition;
+    clusterPosition = position;
   }
 
   public ORecordId(final int iClusterIdId) {

@@ -2,13 +2,18 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import org.testng.SkipException;
 import org.testng.annotations.*;
 
 import java.io.IOException;
@@ -40,11 +45,11 @@ public abstract class BaseTest<T extends ODatabase> {
     }
   }
 
-  protected T      database;
-  protected String url;
-  private boolean  dropDb             = false;
-  private String   storageType;
-  private boolean  autoManageDatabase = true;
+  protected T       database;
+  protected String  url;
+  private   boolean dropDb             = false;
+  private   String  storageType;
+  private   boolean autoManageDatabase = true;
 
   protected BaseTest() {
   }
@@ -177,7 +182,7 @@ public abstract class BaseTest<T extends ODatabase> {
     ODatabaseHelper.createDatabase(database, database.getURL());
   }
 
-  protected String getTestEnv(){
+  protected String getTestEnv() {
     return System.getProperty("orientdb.test.env");
   }
 
@@ -198,7 +203,6 @@ public abstract class BaseTest<T extends ODatabase> {
     database.addCluster("binary");
 //    database.addBlobCluster("blobCluster");
 
-
     OClass account = database.getMetadata().getSchema().createClass("Account", 1, null);
     account.createProperty("id", OType.INTEGER);
     account.createProperty("birthDate", OType.DATE);
@@ -207,7 +211,8 @@ public abstract class BaseTest<T extends ODatabase> {
     database.getMetadata().getSchema().createClass("Company", account);
 
     OClass profile = database.getMetadata().getSchema().createClass("Profile", 1, null);
-    profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.UNIQUE, new ODocument().field("ignoreNullValues", true));
+    profile.createProperty("nick", OType.STRING).setMin("3").setMax("30")
+        .createIndex(OClass.INDEX_TYPE.UNIQUE, new ODocument().field("ignoreNullValues", true));
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
     profile.createProperty("registeredOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
@@ -258,4 +263,21 @@ public abstract class BaseTest<T extends ODatabase> {
       return true;
     return false;
   }
+
+  protected void checkEmbeddedDB() {
+    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+      throw new SkipException("Test is running only in embedded database");
+    }
+  }
+
+  protected OIndex getIndex(final String indexName) {
+    final ODatabaseDocumentInternal db;
+    if (database instanceof ODatabaseWrapperAbstract) {
+      db = (ODatabaseDocumentInternal) ((ODatabaseWrapperAbstract) database).getUnderlying();
+    } else {
+      db = (ODatabaseDocumentInternal) database;
+    }
+    return (db.getMetadata()).getIndexManagerInternal().getIndex(db, indexName);
+  }
+
 }

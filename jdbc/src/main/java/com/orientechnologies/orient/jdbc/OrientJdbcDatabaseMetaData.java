@@ -15,9 +15,8 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
@@ -26,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -39,15 +37,13 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (OrientDB - l.garulli--at--orientdb.com)
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
-  protected static final List<String> TABLE_TYPES = Arrays.asList("TABLE", "SYSTEM TABLE");
-  private final OrientJdbcConnection connection;
-  private final ODatabaseDocument    database;
-  private final OMetadata            metadata;
+  protected static final List<String>              TABLE_TYPES = Arrays.asList("TABLE", "SYSTEM TABLE");
+  private final          OrientJdbcConnection      connection;
+  private final          ODatabaseDocumentInternal database;
 
-  public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseDocument iDatabase) {
+  public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseDocumentInternal iDatabase) {
     connection = iConnection;
     database = iDatabase;
-    metadata = database.getMetadata();
   }
 
   public boolean allProceduresAreCallable() throws SQLException {
@@ -821,7 +817,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   @Override
   public ResultSet getPrimaryKeys(final String catalog, final String schema, final String table) throws SQLException {
     database.activateOnCurrentThread();
-    final Set<OIndex<?>> classIndexes = database.getMetadata().getIndexManager().getClassIndexes(table);
+    final Set<OIndex<?>> classIndexes = database.getMetadata().getIndexManagerInternal().getClassIndexes(database, table);
 
     final Set<OIndex<?>> uniqueIndexes = new HashSet<>();
 
@@ -1018,12 +1014,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate)
       throws SQLException {
     database.activateOnCurrentThread();
-    OMetadata metadata = database.getMetadata();
+    OMetadataInternal metadata = database.getMetadata();
     if (!approximate) {
-      metadata.getIndexManager().reload();
+      metadata.getIndexManagerInternal().reload();
     }
 
-    final Set<OIndex<?>> classIndexes = metadata.getIndexManager().getClassIndexes(table);
+    final Set<OIndex<?>> classIndexes = metadata.getIndexManagerInternal().getClassIndexes(database, table);
 
     final Set<OIndex<?>> indexes = new HashSet<>();
 

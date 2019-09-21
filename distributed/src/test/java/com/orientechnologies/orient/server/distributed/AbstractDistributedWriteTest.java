@@ -18,29 +18,26 @@ package com.orientechnologies.orient.server.distributed;
 
 //import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
-import junit.framework.Assert;
+import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractDistributedWriteTest extends AbstractServerClusterTest {
-  protected final    int delayWriter = 0;
-  protected          int writerCount = 5;
-  protected volatile int count       = 100;
-  protected CountDownLatch runningWriters;
+  protected final    int            delayWriter = 0;
+  protected          int            writerCount = 5;
+  protected volatile int            count       = 100;
+  protected          CountDownLatch runningWriters;
 //  protected final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   class Writer implements Callable<Void> {
@@ -56,7 +53,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     public Void call() throws Exception {
       String name = Integer.toString(threadId);
       for (int i = 0; i < count; i++) {
-        final ODatabaseDocument database = getDatabase(serverId);
+        final ODatabaseDocumentInternal database = getDatabase(serverId);
 
         try {
           if ((i + 1) % 100 == 0)
@@ -113,13 +110,17 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
-    private void checkIndex(ODatabaseDocument database, final String key, final ORID rid) {
-      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
-          .execute(key);
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.size(), 1);
-      Assert.assertNotNull(result.get(0).getRecord());
-      Assert.assertEquals(((ODocument) result.get(0)).field("rid"), rid);
+    private void checkIndex(ODatabaseDocumentInternal database, final String key, final ORID rid) {
+      final OIndex index = database.getSharedContext().getIndexManager().getIndex(database, "Person.name");
+      final Object value = index.get(key);
+
+      if (value instanceof Collection) {
+        final Collection result = (Collection) value;
+        Assert.assertEquals(1, result.size());
+        Assert.assertTrue(result.contains(rid));
+      } else {
+        Assert.assertEquals(rid, value);
+      }
     }
 
     private ODocument loadRecord(ODatabaseDocument database, int i) {

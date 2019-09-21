@@ -74,7 +74,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createTree(final int clusterId) {
+  protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createEdgeTree(final int clusterId) {
     if (remoteCreationAllowed) {
       final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
       OSBTCreateTreeRequest request = new OSBTCreateTreeRequest(clusterId);

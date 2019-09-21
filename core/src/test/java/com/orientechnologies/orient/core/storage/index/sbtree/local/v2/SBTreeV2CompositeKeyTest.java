@@ -31,7 +31,7 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Before
   public void beforeMethod() throws Exception {
-    localSBTree = new OSBTreeV2<>("localSBTreeCompositeKeyTest", ".sbt", ".nbt",
+    localSBTree = new OSBTreeV2<>(42, "localSBTreeCompositeKeyTest", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) database.getStorage().getUnderlying());
     localSBTree.create(OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 2, false, null);
 
@@ -48,8 +48,18 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @After
   public void afterClass() throws Exception {
-    localSBTree.clear();
-    localSBTree.clear();
+    final OSBTree.OSBTreeKeyCursor<OCompositeKey> keyCursor = localSBTree.keyCursor();
+    OCompositeKey key = keyCursor.next(-1);
+
+    while (key != null) {
+      localSBTree.remove(key);
+      key = keyCursor.next(-1);
+    }
+
+    if (localSBTree.isNullPointerSupport()) {
+      localSBTree.remove(null);
+    }
+
     localSBTree.delete();
 
   }

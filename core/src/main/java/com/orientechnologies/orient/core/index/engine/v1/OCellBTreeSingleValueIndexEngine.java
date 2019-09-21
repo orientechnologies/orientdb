@@ -12,30 +12,37 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueV1;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.OCellBTreeSingleValueV3;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
   private static final String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OCellBTreeSingleValue<Object> sbTree;
-  private final String                          name;
+  private final String                        name;
+  private final int                           id;
 
-  public OCellBTreeSingleValueIndexEngine(String name, OAbstractPaginatedStorage storage, int version) {
+  public OCellBTreeSingleValueIndexEngine(int id, String name, OAbstractPaginatedStorage storage, int version) {
     this.name = name;
+    this.id = id;
+
     if (version < 3) {
-      this.sbTree = new OCellBTreeSingleValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      this.sbTree = new CellBTreeSingleValueV1<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 3) {
-      this.sbTree = new OCellBTreeSingleValueV3<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      this.sbTree = new CellBTreeSingleValueV3<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
@@ -53,8 +60,7 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
     try {
       //noinspection unchecked
       sbTree.create(keySerializer, keyTypes, keySize, encryption);
@@ -66,19 +72,23 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   @Override
   public void delete() {
     try {
+      doClearTree();
+
       sbTree.delete();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
     }
   }
 
-  @Override
-  public void deleteWithoutLoad(String indexName) {
-    try {
-      sbTree.deleteWithoutLoad();
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
+  private void doClearTree() throws IOException {
+    final OCellBTreeSingleValue.OCellBTreeKeyCursor keyCursor = sbTree.keyCursor();
+    Object key = keyCursor.next(-1);
+    while (key != null) {
+      sbTree.remove(key);
+      key = keyCursor.next(-1);
     }
+
+    sbTree.remove(null);
   }
 
   @Override
@@ -105,7 +115,7 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   @Override
   public void clear() {
     try {
-      sbTree.clear();
+      doClearTree();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during clear of index " + name), e);
     }
@@ -253,7 +263,8 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
     private Iterator<ORID> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
     private Object         currentKey      = null;
 
-    private OSBTreeIndexCursor(OCellBTreeSingleValue.OCellBTreeCursor<Object, ORID> treeCursor, ValuesTransformer valuesTransformer) {
+    private OSBTreeIndexCursor(OCellBTreeSingleValue.OCellBTreeCursor<Object, ORID> treeCursor,
+        ValuesTransformer valuesTransformer) {
       this.treeCursor = treeCursor;
       this.valuesTransformer = valuesTransformer;
     }

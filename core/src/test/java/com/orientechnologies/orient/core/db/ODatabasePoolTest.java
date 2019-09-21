@@ -39,7 +39,7 @@ public class ODatabasePoolTest {
     db.close();
     db = pool.acquire();
     assertEquals(db.countClass("Test"), 0);
-
+    db.close();
     pool.close();
     orientDb.close();
   }

@@ -335,6 +335,11 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
 
   OElement newElement(final String className);
 
+  OElement newEmbeddedElement();
+
+  OElement newEmbeddedElement(final String className);
+
+
   /**
    * Creates a new Edge of type E
    *

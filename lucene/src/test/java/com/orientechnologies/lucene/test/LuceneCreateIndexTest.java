@@ -69,7 +69,7 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
   }
 
   protected void testMetadata() {
-    final ODocument index = db.getMetadata().getIndexManager().getIndex("Song.title").getMetadata();
+    final ODocument index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title").getMetadata();
 
     Assert.assertEquals(index.field("analyzer"), StandardAnalyzer.class.getName());
   }

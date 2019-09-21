@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
@@ -58,13 +58,11 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
 
     db.save(doc);
 
-
   }
-
 
   @Test
   public void testMetadata() {
-    final ODocument index = db.getMetadata().getIndexManager().getIndex("Song.title").getMetadata();
+    final ODocument index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title").getMetadata();
 
     Assert.assertEquals(index.field("analyzer"), StandardAnalyzer.class.getName());
   }

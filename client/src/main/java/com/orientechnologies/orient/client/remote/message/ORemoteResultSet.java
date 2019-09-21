@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -63,7 +64,16 @@ public class ORemoteResultSet implements OResultSet {
     if (currentPage.isEmpty()) {
       throw new IllegalStateException();
     }
-    return currentPage.remove(0);
+    OResultInternal internal = currentPage.remove(0);
+
+    if (internal.isRecord() && db.getTransaction().isActive()) {
+      ORecord record = db.getTransaction().getRecord(internal.getRecord().get().getIdentity());
+      if (record != null) {
+        internal = new OResultInternal(record);
+      }
+    }
+    return internal;
+
   }
 
   @Override

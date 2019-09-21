@@ -61,7 +61,7 @@ public class OCheckIndexTool extends ODatabaseTool {
 
   @Override
   public void run() {
-    for (OIndex index : database.getMetadata().getIndexManager().getIndexes()) {
+    for (OIndex index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
       if (!canCheck(index)) {
         continue;
       }
@@ -103,7 +103,7 @@ public class OCheckIndexTool extends ODatabaseTool {
     String clusterName = database.getClusterNameById(clusterId);
 
     int totSteps = 20;
-    message("Checking cluster " + clusterName + "  for index " + index.getName()+"\n");
+    message("Checking cluster " + clusterName + "  for index " + index.getName() + "\n");
     ORecordIteratorCluster<ORecord> iter = database.browseCluster(clusterName);
     long count = 0;
     long step = -1;
@@ -157,7 +157,7 @@ public class OCheckIndexTool extends ODatabaseTool {
       if (!indexRid.equals(docId)) {
 //        errors.add(new Error(docId, index.getName(), true, false));
         totalErrors++;
-        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity()+"\n");
+        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
       }
     } else if (values instanceof Iterable) {
       Iterator<OIdentifiable> valuesOnIndex = ((Iterable) values).iterator();
@@ -172,7 +172,7 @@ public class OCheckIndexTool extends ODatabaseTool {
       if (!found) {
 //        errors.add(new Error(docId, index.getName(), true, false));
         totalErrors++;
-        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity()+"\n");
+        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
       }
     }
   }

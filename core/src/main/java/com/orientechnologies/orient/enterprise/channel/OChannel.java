@@ -138,10 +138,6 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
       outStream.flush();
   }
 
-  public OAdaptiveLock getLockRead() {
-    return lockRead;
-  }
-
   public OAdaptiveLock getLockWrite() {
     return lockWrite;
   }
@@ -194,8 +190,8 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   public void connected() {
     final String dictProfilerMetric = PROFILER.getProcessMetric("network.channel.binary.*");
 
-    profilerMetric = PROFILER.getProcessMetric(
-        "network.channel.binary." + socket.getRemoteSocketAddress().toString() +":"+ socket.getLocalPort() + "".replace('.', '_'));
+    profilerMetric = PROFILER
+        .getProcessMetric("network.channel.binary." + socket.getRemoteSocketAddress().toString() + ":" + socket.getLocalPort() + "".replace('.', '_'));
 
     PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", "Bytes transmitted to a network channel", METRIC_TYPE.SIZE,
         new OProfilerHookValue() {
@@ -220,10 +216,6 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   @Override
   public String toString() {
     return socket != null ? socket.getRemoteSocketAddress().toString() : "Not connected";
-  }
-
-  public String getLocalSocketAddress() {
-    return socket != null ? socket.getLocalSocketAddress().toString() : "?";
   }
 
   protected void updateMetricTransmittedBytes(final int iDelta) {

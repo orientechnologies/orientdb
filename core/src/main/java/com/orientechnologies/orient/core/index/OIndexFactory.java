@@ -53,6 +53,6 @@ public interface OIndexFactory {
   OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException;
 
-  OBaseIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
+  OBaseIndexEngine createIndexEngine(int indexId, String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
       int apiVersion, boolean multiValue, Map<String, String> engineProperties);
 }

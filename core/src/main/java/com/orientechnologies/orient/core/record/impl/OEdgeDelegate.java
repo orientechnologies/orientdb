@@ -120,9 +120,10 @@ public class OEdgeDelegate implements OEdge {
   }
 
   public OEdge delete() {
-    deleteLinks(this);
     if (element != null) {
       element.delete();
+    } else {
+      deleteLinks(this);
     }
     return this;
   }
@@ -135,12 +136,6 @@ public class OEdgeDelegate implements OEdge {
     OVertex to = delegate.getTo();
     if (to != null) {
       OVertexDelegate.detachIncomingEdge(to, delegate);
-    }
-    if (from != null) {
-      from.save();
-    }
-    if (to != null) {
-      to.save();
     }
   }
 

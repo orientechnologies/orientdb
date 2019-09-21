@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -44,8 +45,8 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
   public static final String KEYWORD_DROP     = "DROP";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
-  private String className;
-  private String fieldName;
+  private String  className;
+  private String  fieldName;
   private boolean ifExists;
   private boolean force = false;
 
@@ -93,7 +94,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
           pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
           if ("EXISTS".equals(word.toString())) {
             this.ifExists = true;
-          }else{
+          } else {
             throw new OCommandSQLParsingException("Wrong query parameter, expecting EXISTS after IF", parserText, pos);
           }
         } else {
@@ -119,7 +120,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-    if(ifExists && !sourceClass.existsProperty(fieldName)){
+    if (ifExists && !sourceClass.existsProperty(fieldName)) {
       return null;
     }
 
@@ -171,8 +172,8 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
   private List<OIndex<?>> relatedIndexes(final String fieldName) {
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>();
 
-    final ODatabaseDocument database = getDatabase();
-    for (final OIndex<?> oIndex : database.getMetadata().getIndexManager().getClassIndexes(className)) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    for (final OIndex<?> oIndex : database.getMetadata().getIndexManagerInternal().getClassIndexes(database, className)) {
       if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseInsentiveComparator()) > -1) {
         result.add(oIndex);
       }

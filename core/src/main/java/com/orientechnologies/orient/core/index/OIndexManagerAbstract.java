@@ -45,16 +45,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -179,9 +170,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         }
       }
       database.getStorage().setIndexMgrRecordId(document.getIdentity().toString());
-
-      createIndex(database, DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING),
-          null, null, null);
     } finally {
       releaseExclusiveLock();
     }
@@ -201,10 +189,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     for (final OIndex<?> index : rawResult)
       result.add(preProcessBeforeReturn(database, index));
     return result;
-  }
-
-  public Collection<? extends OIndex<?>> getIndexes() {
-    throw new UnsupportedOperationException();
   }
 
   public OIndex<?> getRawIndex(final String iName) {
@@ -568,11 +552,13 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  public abstract OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType, OIndexDefinition indexDefinition,
-      final int[] clusterIdsToIndex, final OProgressListener progressListener, ODocument metadata);
+  public abstract OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+      OIndexDefinition indexDefinition, final int[] clusterIdsToIndex, final OProgressListener progressListener,
+      ODocument metadata);
 
-  public abstract OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType, OIndexDefinition indexDefinition,
-      final int[] clusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String algorithm);
+  public abstract OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+      OIndexDefinition indexDefinition, final int[] clusterIdsToIndex, final OProgressListener progressListener, ODocument metadata,
+      String algorithm);
 
   public abstract void waitTillIndexRestore();
 

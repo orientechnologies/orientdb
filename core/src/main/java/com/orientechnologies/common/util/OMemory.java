@@ -19,7 +19,7 @@
 
 package com.orientechnologies.common.util;
 
-import com.orientechnologies.common.jna.ONative;
+import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 

@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -43,21 +43,21 @@ public class LuceneDropClusterTest extends BaseLuceneTest {
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
     db.command(new OCommandSQL(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class
-            .getName() + "\"}")).execute();
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class.getName()
+            + "\"}")).execute();
     db.command(new OCommandSQL(
         "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class
             .getName() + "\"}")).execute();
 
     OMetadataInternal metadata = db.getMetadata();
 
-    long initialIndexSize = metadata.getIndexManager().getIndex("Song.title").getSize();
+    long initialIndexSize = metadata.getIndexManagerInternal().getIndex(db, "Song.title").getSize();
 
     int[] clusterIds = metadata.getSchema().getClass("Song").getClusterIds();
 
-    db.dropCluster(clusterIds[1], true);
+    db.dropCluster(clusterIds[1]);
 
-    long afterDropIndexSize = metadata.getIndexManager().getIndex("Song.title").getSize();
+    long afterDropIndexSize = metadata.getIndexManagerInternal().getIndex(db, "Song.title").getSize();
 
     Assertions.assertThat(afterDropIndexSize).isLessThan(initialIndexSize);
 

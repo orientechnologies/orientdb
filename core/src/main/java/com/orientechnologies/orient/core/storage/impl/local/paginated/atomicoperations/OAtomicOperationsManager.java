@@ -24,7 +24,6 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -41,7 +40,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -60,10 +58,7 @@ import java.util.concurrent.locks.LockSupport;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12/3/13
  */
-public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
-
-  private volatile boolean trackAtomicOperations = OGlobalConfiguration.TX_TRACK_ATOMIC_OPERATIONS.getValueAsBoolean();
-
+public class OAtomicOperationsManager {
   private final LongAdder atomicOperationsCount = new LongAdder();
 
   private final AtomicInteger freezeRequests = new AtomicInteger();
@@ -75,6 +70,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<>();
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
+
+  private final boolean trackPageOperations;
+  private final int     operationsCacheLimit;
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -99,13 +97,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final OReadCache                         readCache;
   private final OWriteCache                        writeCache;
 
-  private final Map<OOperationUnitId, OPair<String, StackTraceElement[]>> activeAtomicOperations = new ConcurrentHashMap<>();
-
-  public OAtomicOperationsManager(OAbstractPaginatedStorage storage) {
+  public OAtomicOperationsManager(OAbstractPaginatedStorage storage, boolean trackPageOperations, int operationsCacheLimit) {
     this.storage = storage;
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
+
+    this.trackPageOperations = trackPageOperations;
+    this.operationsCacheLimit = operationsCacheLimit;
   }
 
   /**
@@ -179,13 +178,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
-    currentOperation.set(operation);
-
-    if (trackAtomicOperations) {
-      final Thread thread = Thread.currentThread();
-      activeAtomicOperations.put(unitId, new OPair<>(thread.getName(), thread.getStackTrace()));
+    if (!trackPageOperations) {
+      operation = new OAtomicOperationBinaryTracking(lsn, unitId, readCache, writeCache, storage.getId());
+    } else {
+      operation = new OAtomicOperationPageOperationsTracking(readCache, writeCache, useWal ? writeAheadLog : null, unitId,
+          operationsCacheLimit, lsn);
     }
+
+    currentOperation.set(operation);
 
     if (useWal && trackNonTxOperations && storage.getStorageTransaction() == null) {
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
@@ -377,21 +377,18 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OLogSequenceNumber lsn;
     try {
       if (rollback) {
-        operation.rollback();
+        operation.rollbackInProgress();
       }
 
       if (counter == 1) {
         try {
           final boolean useWal = useWal();
-
-          if (!operation.isRollback()) {
+          if (trackPageOperations) {
+            lsn = operation.commitChanges(useWal ? writeAheadLog : null);
+          } else if (!operation.isRollbackInProgress()) {
             lsn = operation.commitChanges(useWal ? writeAheadLog : null);
           } else {
             lsn = null;
-          }
-
-          if (trackAtomicOperations) {
-            activeAtomicOperations.remove(operation.getOperationUnitId());
           }
         } finally {
           final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
@@ -474,44 +471,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert durableComponent.getLockName() != null;
 
     lockManager.releaseLock(this, durableComponent.getLockName(), OOneEntryPerKeyLockManager.LOCK.SHARED);
-  }
-
-  @Override
-  public void trackAtomicOperations() {
-    activeAtomicOperations.clear();
-    trackAtomicOperations = true;
-  }
-
-  @Override
-  public void doNotTrackAtomicOperations() {
-    trackAtomicOperations = false;
-    activeAtomicOperations.clear();
-  }
-
-  @Override
-  public String dumpActiveAtomicOperations() {
-    if (!trackAtomicOperations) {
-      activeAtomicOperations.clear();
-    }
-
-    @SuppressWarnings("resource")
-    final StringWriter writer = new StringWriter();
-    writer.append("List of active atomic operations: \r\n");
-    writer.append("------------------------------------------------------------------------------------------------\r\n");
-    for (Map.Entry<OOperationUnitId, OPair<String, StackTraceElement[]>> entry : activeAtomicOperations.entrySet()) {
-      writer.append("Operation unit id :").append(entry.getKey().toString()).append("\r\n");
-      writer.append("Started at thread : ").append(entry.getValue().getKey()).append("\r\n");
-      writer.append("Stack trace of method which started this operation : \r\n");
-
-      StackTraceElement[] stackTraceElements = entry.getValue().getValue();
-      for (int i = 1; i < stackTraceElements.length; i++) {
-        writer.append("\tat ").append(stackTraceElements[i].toString()).append("\r\n");
-      }
-
-      writer.append("\r\n\r\n");
-    }
-    writer.append("-------------------------------------------------------------------------------------------------\r\n");
-    return writer.toString();
   }
 
   private static final class FreezeParameters {

@@ -112,4 +112,8 @@ public class CountFromClassStep extends AbstractExecutionStep {
     return cost;
   }
 
+  @Override
+  public boolean canBeCached() {
+    return false; //explicit: in case of active security policies, the COUNT has to be manual
+  }
 }

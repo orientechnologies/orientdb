@@ -3,7 +3,6 @@ package com.orientechnologies.orient.client.remote.message.tx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 
 import java.io.DataInput;
 import java.io.DataOutput;

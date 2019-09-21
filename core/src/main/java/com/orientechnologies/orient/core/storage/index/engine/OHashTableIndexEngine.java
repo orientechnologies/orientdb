@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -63,21 +62,29 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   private final String name;
 
-  public OHashTableIndexEngine(String name, OAbstractPaginatedStorage storage, int version) {
+  private final int id;
+
+  public OHashTableIndexEngine(String name, int id, OAbstractPaginatedStorage storage, int version) {
+    this.id = id;
     this.version = version;
     if (version < 2) {
       throw new IllegalStateException("Unsupported version of hash index");
     } else if (version == 2) {
-      hashTable = new OLocalHashTableV2<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTableV2<>(id, name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 3) {
-      hashTable = new OLocalHashTableV3<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTableV3<>(id, name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid value of the index version , version = " + version);
     }
 
     this.name = name;
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
@@ -91,8 +98,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) throws IOException {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption)
+      throws IOException {
     final OHashFunction<Object> hashFunction;
 
     if (encryption != null) {
@@ -112,18 +119,34 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) throws IOException {
-    hashTable.deleteWithoutLoad(indexName);
-  }
-
-  @Override
   public String getIndexNameByKey(final Object key) {
     return name;
   }
 
   @Override
   public void delete() throws IOException {
+    doClearTable();
+
     hashTable.delete();
+  }
+
+  private void doClearTable() throws IOException {
+    final OHashTable.Entry<Object, Object> firstEntry = hashTable.firstEntry();
+
+    if (firstEntry != null) {
+      OHashTable.Entry<Object, Object>[] entries = hashTable.ceilingEntries(firstEntry.key);
+      while (entries.length > 0) {
+        for (final OHashTable.Entry<Object, Object> entry : entries) {
+          hashTable.remove(entry.key);
+        }
+
+        entries = hashTable.higherEntries(entries[entries.length - 1].key);
+      }
+    }
+
+    if (hashTable.isNullKeyIsSupported()) {
+      hashTable.remove(null);
+    }
   }
 
   @Override
@@ -155,7 +178,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void clear() throws IOException {
-    hashTable.clear();
+    doClearTable();
   }
 
   @Override

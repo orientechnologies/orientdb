@@ -19,14 +19,13 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base class for tools related to databases.
@@ -34,9 +33,9 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class ODatabaseTool implements Runnable {
-  protected OCommandOutputListener output;
-  protected ODatabaseDocument      database;
-  protected boolean verbose = false;
+  protected OCommandOutputListener    output;
+  protected ODatabaseDocumentInternal database;
+  protected boolean                   verbose = false;
 
   protected abstract void parseSetting(final String option, final List<String> items);
 
@@ -68,8 +67,8 @@ public abstract class ODatabaseTool implements Runnable {
     return this;
   }
 
-  public ODatabaseTool setDatabase(final ODatabaseDocument iDatabase) {
-    database = iDatabase;
+  public ODatabaseTool setDatabase(final ODatabaseDocumentInternal database) {
+    this.database = database;
     return this;
   }
 

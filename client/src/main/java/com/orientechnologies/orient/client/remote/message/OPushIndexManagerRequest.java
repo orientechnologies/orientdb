@@ -9,7 +9,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput
 import java.io.IOException;
 
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.REQUEST_PUSH_INDEX_MANAGER;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.REQUEST_PUSH_SCHEMA;
 
 public class OPushIndexManagerRequest implements OBinaryPushRequest<OBinaryPushResponse> {
 
@@ -25,13 +24,13 @@ public class OPushIndexManagerRequest implements OBinaryPushRequest<OBinaryPushR
 
   @Override
   public void write(OChannelDataOutput channel) throws IOException {
-    channel.writeBytes(ORecordSerializerNetworkV37.INSTANCE.toStream(indexManager, false));
+    channel.writeBytes(ORecordSerializerNetworkV37.INSTANCE.toStream(indexManager));
   }
 
   @Override
   public void read(OChannelDataInput network) throws IOException {
     byte[] bytes = network.readBytes();
-    this.indexManager = (ODocument) ORecordSerializerNetworkV37.INSTANCE.fromStream(bytes, null, null);
+    this.indexManager = (ODocument) ORecordSerializerNetworkV37.INSTANCE.fromStream(bytes, null);
   }
 
   @Override

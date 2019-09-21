@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/14/14
  */
-public class ODirectoryFirstPage extends ODirectoryPage {
+public final class ODirectoryFirstPage extends ODirectoryPage {
   private static final int TREE_SIZE_OFFSET = NEXT_FREE_POSITION;
   private static final int TOMBSTONE_OFFSET = TREE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 

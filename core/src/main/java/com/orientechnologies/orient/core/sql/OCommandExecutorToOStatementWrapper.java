@@ -78,64 +78,79 @@ public class OCommandExecutorToOStatementWrapper implements OCommandExecutor {
     return statement.execute(request, context, this.progressListener);
   }
 
-  @Override public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
+  @Override
+  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
     this.progressListener = progressListener;
     return (RET) this;
   }
 
-  @Override public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
+  @Override
+  public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
     return (RET) this;
   }
 
-  @Override public String getFetchPlan() {
+  @Override
+  public String getFetchPlan() {
     return null;
   }
 
-  @Override public Map<Object, Object> getParameters() {
+  @Override
+  public Map<Object, Object> getParameters() {
     return null;
   }
 
-  @Override public OCommandContext getContext() {
+  @Override
+  public OCommandContext getContext() {
     return this.context;
   }
 
-  @Override public void setContext(OCommandContext context) {
+  @Override
+  public void setContext(OCommandContext context) {
     this.context = context;
   }
 
-  @Override public boolean isIdempotent() {
+  @Override
+  public boolean isIdempotent() {
     return false;
   }
 
-  @Override public Set<String> getInvolvedClusters() {
+  @Override
+  public Set<String> getInvolvedClusters() {
     return Collections.EMPTY_SET;
   }
 
-  @Override public int getSecurityOperationType() {
+  @Override
+  public int getSecurityOperationType() {
     return ORole.PERMISSION_READ;
   }
 
-  @Override public boolean involveSchema() {
+  @Override
+  public boolean involveSchema() {
     return false;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "PROFILE STORAGE [ON | OFF]";
   }
 
-  @Override public boolean isLocalExecution() {
+  @Override
+  public boolean isLocalExecution() {
     return true;
   }
 
-  @Override public boolean isCacheable() {
+  @Override
+  public boolean isCacheable() {
     return false;
   }
 
-  @Override public long getDistributedTimeout() {
+  @Override
+  public long getDistributedTimeout() {
     return 0;
   }
 
-  @Override public Object mergeResults(Map<String, Object> results) throws Exception {
+  @Override
+  public Object mergeResults(Map<String, Object> results) throws Exception {
     return null;
   }
 

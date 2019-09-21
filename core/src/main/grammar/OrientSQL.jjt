@@ -395,6 +395,10 @@ TOKEN:
 	|
 	< RID: ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) >
 	|
+	< SECURITY: ( "s" | "S" ) ( "e" | "E" ) ( "c" | "C" ) ( "u" | "U" ) ( "r" | "R" ) ( "i" | "I" ) ( "t" | "T" ) ( "y" | "Y" ) >
+	|
+	< POLICY: ( "p" | "P" ) ( "o" | "O" ) ( "l" | "L" ) ( "i" | "I" ) ( "c" | "C" ) ( "y" | "Y" ) >
+	|
 	< DEFAULTCLUSTER: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
@@ -935,6 +939,10 @@ OIdentifier Identifier():
     |
     token = <DEFAULTCLUSTER>
     |
+    token = <SECURITY>
+    |
+    token = <POLICY>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -1067,6 +1075,15 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(2)
                 result = DropUserStatement()
+                |
+                LOOKAHEAD(2)
+                result = AlterRoleStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateSecurityPolicyStatement()
+                |
+                LOOKAHEAD(2)
+                result = AlterSecurityPolicyStatement()
                 |
                 LOOKAHEAD(2)
                 result = CreateSequenceStatement()
@@ -3660,6 +3677,8 @@ OMatchExpression MatchExpression():
                 |
                 LOOKAHEAD(BothPathItem())
                 nextItem = BothPathItem()
+                |
+                nextItem = FieldMatchPathItem()
             )
             { jjtThis.items.add(nextItem); }
         )*
@@ -3672,6 +3691,16 @@ OMatchPathItem MatchPathItem():
 {
     (
         jjtThis.method = MethodCall()
+        [ jjtThis.filter = MatchFilter() ]
+    ){ return jjtThis; }
+}
+
+OMatchPathItem FieldMatchPathItem():
+{}
+{
+    (
+        <DOT>
+        jjtThis.field = Identifier()
         [ jjtThis.filter = MatchFilter() ]
     ){ return jjtThis; }
 }
@@ -4881,6 +4910,36 @@ ODropUserStatement DropUserStatement():
     { return jjtThis; }
 }
 
+OAlterRoleStatement AlterRoleStatement():
+{
+  OSecurityResourceSegment lastSecurityResource;
+  OIdentifier lastPolicy;
+}
+{
+  (
+    <ALTER> <ROLE>
+    jjtThis.name = Identifier()
+    (
+      ( <SET> <POLICY> lastPolicy = Identifier() <ON> lastSecurityResource = SecurityResourceSegment()
+
+        {
+        jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+          com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_ADD,
+          lastSecurityResource, lastPolicy));
+        }
+      )
+      |
+      ( <REMOVE> <POLICY> <ON> lastSecurityResource = SecurityResourceSegment()  )
+        {
+          jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+            com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_REMOVE,
+            lastSecurityResource, null));
+        }
+    )+
+  ) { return jjtThis; }
+}
+
+
 
 OLetStatement LetStatement():
 { }
@@ -5129,11 +5188,14 @@ OHaStatusStatement HaStatusStatement():
             |
             token = "-messages" { jjtThis.messages = true; }
             |
+            token = "-locks" { jjtThis.locks = true; }
+            |
             token = "-all" {
                 jjtThis.servers = true;
                 jjtThis.db = true;
                 jjtThis.latency = true;
                 jjtThis.messages = true;
+                jjtThis.locks = true;
             }
             |
             token = "-output=text" { jjtThis.outputText = true; }
@@ -5251,4 +5313,170 @@ OWhileBlock WhileBlock():
     )*
     <RBRACE>
     { return jjtThis; }
+}
+
+
+OSecurityResourceSegment SecurityResourceSegment():
+{}
+{
+    (
+        (
+            <STAR> { jjtThis.star = true; }
+            |
+            jjtThis.identifier = Identifier()
+            |
+            token = <CLUSTER> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CREATE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <DELETE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <INSERT> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <SELECT> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <LIKE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <VERTEX> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <EDGE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINS> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINSALL> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINSANY> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINSKEY> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <CONTAINSVALUE> { jjtThis.identifier = new OIdentifier(token.image); }
+            |
+            token = <FROM> { jjtThis.identifier = new OIdentifier(token.image); }
+        )
+        [
+          <DOT>
+          jjtThis.next = SecurityResourceSegment()
+        ]
+    )
+    { return jjtThis; }
+}
+
+
+OCreateSecurityPolicyStatement CreateSecurityPolicyStatement():
+{}
+{
+  (
+    <CREATE> <SECURITY> <POLICY>
+    jjtThis.name = Identifier()
+    [
+    <SET>
+    (
+        ( <CREATE> <EQ> <LPAREN> jjtThis.create = OrBlock() <RPAREN> )
+        |
+        ( <READ> <EQ> <LPAREN> jjtThis.read = OrBlock() <RPAREN> )
+        |
+        ( <BEFORE> <UPDATE> <EQ> <LPAREN> jjtThis.beforeUpdate = OrBlock() <RPAREN> )
+        |
+        ( <AFTER> <UPDATE> <EQ> <LPAREN> jjtThis.afterUpdate = OrBlock() <RPAREN> )
+        |
+        ( <DELETE> <EQ> <LPAREN> jjtThis.delete = OrBlock() <RPAREN> )
+        |
+        ( <EXECUTE> <EQ> <LPAREN> jjtThis.execute = OrBlock() <RPAREN> )
+    )
+    ( <COMMA>
+          (
+             ( <CREATE> <EQ> <LPAREN> jjtThis.create = OrBlock() <RPAREN> )
+             |
+             ( <READ> <EQ> <LPAREN> jjtThis.read = OrBlock() <RPAREN> )
+             |
+             ( <BEFORE> <UPDATE> <EQ> <LPAREN> jjtThis.beforeUpdate = OrBlock() <RPAREN> )
+             |
+             ( <AFTER> <UPDATE> <EQ> <LPAREN> jjtThis.afterUpdate = OrBlock() <RPAREN> )
+             |
+             ( <DELETE> <EQ> <LPAREN> jjtThis.delete = OrBlock() <RPAREN> )
+             |
+             ( <EXECUTE> <EQ> <LPAREN> jjtThis.execute = OrBlock() <RPAREN> )
+         )
+    )*
+
+    ]
+
+  ) {return jjtThis; }
+}
+
+
+OAlterSecurityPolicyStatement AlterSecurityPolicyStatement():
+{}
+{
+  (
+    <ALTER> <SECURITY> <POLICY>
+    jjtThis.name = Identifier()
+    (
+      (
+        <SET>
+        (
+            ( <CREATE> <EQ> <LPAREN> jjtThis.create = OrBlock() <RPAREN> )
+            |
+            ( <READ> <EQ> <LPAREN> jjtThis.read = OrBlock() <RPAREN> )
+            |
+            ( <BEFORE> <UPDATE> <EQ> <LPAREN> jjtThis.beforeUpdate = OrBlock() <RPAREN> )
+            |
+            ( <AFTER> <UPDATE> <EQ> <LPAREN> jjtThis.afterUpdate = OrBlock() <RPAREN> )
+            |
+            ( <DELETE> <EQ> <LPAREN> jjtThis.delete = OrBlock() <RPAREN> )
+            |
+            ( <EXECUTE> <EQ> <LPAREN> jjtThis.execute = OrBlock() <RPAREN> )
+        )
+        ( <COMMA>
+              (
+                 ( <CREATE> <EQ> <LPAREN> jjtThis.create = OrBlock() <RPAREN> )
+                 |
+                 ( <READ> <EQ> <LPAREN> jjtThis.read = OrBlock() <RPAREN> )
+                 |
+                 ( <BEFORE> <UPDATE> <EQ> <LPAREN> jjtThis.beforeUpdate = OrBlock() <RPAREN> )
+                 |
+                 ( <AFTER> <UPDATE> <EQ> <LPAREN> jjtThis.afterUpdate = OrBlock() <RPAREN> )
+                 |
+                 ( <DELETE> <EQ> <LPAREN> jjtThis.delete = OrBlock() <RPAREN> )
+                 |
+                 ( <EXECUTE> <EQ> <LPAREN> jjtThis.execute = OrBlock() <RPAREN> )
+             )
+        )*
+      )
+      |
+      (
+        <REMOVE>
+        (
+          ( <CREATE> { jjtThis.removeCreate = true; } )
+          |
+          ( <READ>{ jjtThis.removeRead = true; } )
+          |
+          ( <BEFORE> <UPDATE> { jjtThis.removeBeforeUpdate = true; } )
+          |
+          ( <AFTER> <UPDATE> { jjtThis.removeAfterUpdate = true; } )
+          |
+          ( <DELETE> { jjtThis.removeDelete = true; } )
+          |
+          ( <EXECUTE> { jjtThis.removeExecute = true; } )
+        )
+        (
+          <COMMA>
+          (
+              ( <CREATE> { jjtThis.removeCreate = true; } )
+              |
+              ( <READ>{ jjtThis.removeRead = true; } )
+              |
+              ( <BEFORE> <UPDATE> { jjtThis.removeBeforeUpdate = true; } )
+              |
+              ( <AFTER> <UPDATE> { jjtThis.removeAfterUpdate = true; } )
+              |
+              ( <DELETE> { jjtThis.removeDelete = true; } )
+              |
+              ( <EXECUTE> { jjtThis.removeExecute = true; } )
+          )
+        )*
+      )
+    )+
+
+  ) {return jjtThis; }
 }

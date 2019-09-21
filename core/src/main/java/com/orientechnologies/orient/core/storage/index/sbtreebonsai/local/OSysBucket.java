@@ -38,19 +38,20 @@ import java.io.IOException;
  * <li>length of free list</li>
  * <li>pointer to free space</li>
  * </ul>
- * 
+ *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSysBucket extends OBonsaiBucketAbstract {
-  private static final int  SYS_MAGIC_OFFSET        = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int  FREE_SPACE_OFFSET       = SYS_MAGIC_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int  FREE_LIST_HEAD_OFFSET   = FREE_SPACE_OFFSET + OBonsaiBucketPointer.SIZE;
-  private static final int  FREE_LIST_LENGTH_OFFSET = FREE_LIST_HEAD_OFFSET + OBonsaiBucketPointer.SIZE;
+public final class OSysBucket extends OBonsaiBucketAbstract {
+  private static final int SYS_MAGIC_OFFSET        = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int FREE_SPACE_OFFSET       = SYS_MAGIC_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int FREE_LIST_HEAD_OFFSET   = FREE_SPACE_OFFSET + OBonsaiBucketPointer.SIZE;
+  private static final int FREE_LIST_LENGTH_OFFSET = FREE_LIST_HEAD_OFFSET + OBonsaiBucketPointer.SIZE;
+  private static final int TREES_COUNT_OFFSET      = FREE_LIST_LENGTH_OFFSET + OLongSerializer.LONG_SIZE;
 
   /**
    * Magic number to check if the sys bucket is initialized.
    */
-  private static final byte SYS_MAGIC               = (byte) 41;
+  private static final byte SYS_MAGIC = (byte) 41;
 
   public OSysBucket(OCacheEntry cacheEntry) {
     super(cacheEntry);
@@ -61,9 +62,10 @@ public class OSysBucket extends OBonsaiBucketAbstract {
     setBucketPointer(FREE_SPACE_OFFSET, new OBonsaiBucketPointer(0, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
     setBucketPointer(FREE_LIST_HEAD_OFFSET, OBonsaiBucketPointer.NULL);
     setLongValue(FREE_LIST_LENGTH_OFFSET, 0L);
+    setIntValue(TREES_COUNT_OFFSET, 0);
   }
 
-  public boolean isInitialized() {
+  public boolean isNotInitialized() {
     return getByteValue(SYS_MAGIC_OFFSET) != 41;
   }
 
@@ -89,5 +91,23 @@ public class OSysBucket extends OBonsaiBucketAbstract {
 
   public void setFreeListHead(OBonsaiBucketPointer pointer) throws IOException {
     setBucketPointer(FREE_LIST_HEAD_OFFSET, pointer);
+  }
+
+  void incrementTreesCount() {
+    final int count = getIntValue(TREES_COUNT_OFFSET);
+    assert count >= 0;
+
+    setIntValue(TREES_COUNT_OFFSET, count + 1);
+  }
+
+  void decrementTreesCount() {
+    final int count = getIntValue(TREES_COUNT_OFFSET);
+    assert count > 0;
+
+    setIntValue(TREES_COUNT_OFFSET, count - 1);
+  }
+
+  int getTreesCount() {
+    return getIntValue(TREES_COUNT_OFFSET);
   }
 }

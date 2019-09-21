@@ -19,11 +19,13 @@ public class ORidSetIterator implements Iterator<ORID> {
     fetchNext();
   }
 
-  @Override public boolean hasNext() {
+  @Override
+  public boolean hasNext() {
     return currentCluster >= 0;
   }
 
-  @Override public ORID next() {
+  @Override
+  public ORID next() {
     if (!hasNext()) {
       throw new IllegalStateException();
     }

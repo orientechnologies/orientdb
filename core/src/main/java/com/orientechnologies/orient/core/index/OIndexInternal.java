@@ -19,12 +19,23 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityResourceProperty;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * Interface to handle index.
@@ -33,16 +44,16 @@ import java.util.concurrent.locks.Lock;
  */
 public interface OIndexInternal<T> extends OIndex<T> {
 
-  String CONFIG_KEYTYPE            = "keyType";
-  String CONFIG_AUTOMATIC          = "automatic";
-  String CONFIG_TYPE               = "type";
-  String ALGORITHM                 = "algorithm";
+  String CONFIG_KEYTYPE = "keyType";
+  String CONFIG_AUTOMATIC = "automatic";
+  String CONFIG_TYPE = "type";
+  String ALGORITHM = "algorithm";
   String VALUE_CONTAINER_ALGORITHM = "valueContainerAlgorithm";
-  String CONFIG_NAME               = "name";
-  String INDEX_DEFINITION          = "indexDefinition";
-  String INDEX_DEFINITION_CLASS    = "indexDefinitionClass";
-  String INDEX_VERSION             = "indexVersion";
-  String METADATA                  = "metadata";
+  String CONFIG_NAME = "name";
+  String INDEX_DEFINITION = "indexDefinition";
+  String INDEX_DEFINITION_CLASS = "indexDefinitionClass";
+  String INDEX_VERSION = "indexVersion";
+  String METADATA = "metadata";
 
   Object getCollatingValue(final Object key);
 
@@ -57,7 +68,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * Saves the index configuration to disk.
    *
    * @return The configuration as ODocument instance
-   *
    * @see #getConfiguration()
    */
   ODocument updateConfiguration();
@@ -66,7 +76,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * Add given cluster to the list of clusters that should be automatically indexed.
    *
    * @param iClusterName Cluster to add.
-   *
    * @return Current index instance.
    */
   OIndex<T> addCluster(final String iClusterName);
@@ -75,7 +84,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * Remove given cluster from the list of clusters that should be automatically indexed.
    *
    * @param iClusterName Cluster to remove.
-   *
    * @return Current index instance.
    */
   OIndex<T> removeCluster(final String iClusterName);
@@ -113,7 +121,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * sharding.
    *
    * @param key the index key.
-   *
    * @return The index name involved
    */
   String getIndexNameByKey(Object key);
@@ -127,9 +134,130 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * more narrow lock scope, but that is not a requirement.
    *
    * @param key the index key to lock.
-   *
    * @return {@code true} if this index was locked entirely, {@code false} if this index locking is sensitive to the provided {@code
    * key} and only some subset of this index was locked.
    */
   boolean acquireAtomicExclusiveLock(Object key);
+
+
+  static OIdentifiable securityFilterOnRead(OIndex idx, OIdentifiable item) {
+    if (idx.getDefinition() == null) {
+      return item;
+    }
+    String indexClass = idx.getDefinition().getClassName();
+    if (indexClass == null) {
+      return item;
+    }
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db == null) {
+      return item;
+    }
+    OSecurityInternal security = db.getSharedContext().getSecurity();
+    if (isReadRestrictedBySecurityPolicy(indexClass, db, security)) {
+      item = item.getRecord();
+    }
+    if (item == null) {
+      return null;
+    }
+    if (idx.getDefinition().getFields().size() == 1) {
+      String indexProp = idx.getDefinition().getFields().get(0);
+      if (isLabelSecurityDefined(db, security, indexClass, indexProp)) {
+        item = item.getRecord();
+        if (item == null) {
+          return null;
+        }
+        if (!(item instanceof ODocument)) {
+          return item;
+        }
+        OPropertyAccess access = ODocumentInternal.getPropertyAccess((ODocument) item);
+        if (access != null && !access.isReadable(indexProp)) {
+          return null;
+        }
+      }
+    }
+    return item;
+  }
+
+  static boolean isLabelSecurityDefined(ODatabaseDocumentInternal database, OSecurityInternal security, String indexClass, String propertyName) {
+    Set<String> classesToCheck = new HashSet<>();
+    classesToCheck.add(indexClass);
+    OClass clazz = database.getClass(indexClass);
+    if (clazz == null) {
+      return false;
+    }
+    clazz.getAllSubclasses()
+            .forEach(x -> classesToCheck.add(x.getName()));
+    clazz.getAllSuperClasses()
+            .forEach(x -> classesToCheck.add(x.getName()));
+    Set<OSecurityResourceProperty> allFilteredProperties = security.getAllFilteredProperties(database);
+
+    for (String className : classesToCheck) {
+      Optional<OSecurityResourceProperty> item = allFilteredProperties.stream()
+              .filter(x -> x.getClassName().equalsIgnoreCase(className))
+              .filter(x -> x.getPropertyName().equals(propertyName))
+              .findFirst();
+
+      if (item.isPresent()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  static boolean isReadRestrictedBySecurityPolicy(String indexClass, ODatabaseDocumentInternal db, OSecurityInternal security) {
+    if (security.isReadRestrictedBySecurityPolicy(db, "database.class." + indexClass)) {
+      return true;
+    }
+
+    OClass clazz = db.getClass(indexClass);
+    if (clazz != null) {
+      Collection<OClass> sub = clazz.getSubclasses();
+      for (OClass subClass : sub) {
+        if (isReadRestrictedBySecurityPolicy(subClass.getName(), db, security)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+
+  static Collection securityFilterOnRead(OIndex idx, Collection<OIdentifiable> items) {
+    if (idx.getMetadata() == null && idx.getDefinition() == null) {
+      return items;
+    }
+    String indexClass = idx.getMetadata() == null ? idx.getDefinition().getClassName() : idx.getMetadata().getClassName();
+    if (indexClass == null) {
+      return items;
+    }
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db == null) {
+      return items;
+    }
+    OSecurityInternal security = db.getSharedContext().getSecurity();
+    if (isReadRestrictedBySecurityPolicy(indexClass, db, security)) {
+      items = items.stream()
+              .map(x -> x.getRecord()) // force record load, that triggers security checks
+              .filter(x -> x != null)
+              .map(x -> ((ORecord) x).getIdentity())
+              .collect(Collectors.toList());
+    }
+
+    if (idx.getDefinition().getFields().size() == 1) {
+      String indexProp = idx.getDefinition().getFields().get(0);
+      if (isLabelSecurityDefined(db, security, indexClass, indexProp)) {
+
+        items = items.stream()
+                .map(x -> x.getRecord())
+                .filter(x -> x != null)
+                .filter(x -> !(x instanceof ODocument) || ODocumentInternal.getPropertyAccess((ODocument) x) == null || ODocumentInternal.getPropertyAccess((ODocument) x).isReadable(indexProp))
+                .map(x -> ((ORecord) x).getIdentity())
+                .collect(Collectors.toList());
+      }
+    }
+    return items;
+  }
+
 }

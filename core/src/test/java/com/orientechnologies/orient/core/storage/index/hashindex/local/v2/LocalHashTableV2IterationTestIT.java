@@ -38,7 +38,7 @@ public class LocalHashTableV2IterationTestIT {
 
     OHashFunction<Integer> hashFunction = value -> Long.MAX_VALUE / 2 + value;
 
-    localHashTable = new OLocalHashTableV2<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTableV2<Integer, String>(42, "localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     localHashTable
@@ -48,14 +48,34 @@ public class LocalHashTableV2IterationTestIT {
 
   @After
   public void afterClass() throws Exception {
-    localHashTable.clear();
+    doClearTable();
+
     localHashTable.delete();
     databaseDocumentTx.drop();
   }
 
   @After
   public void afterMethod() throws Exception {
-    localHashTable.clear();
+    doClearTable();
+  }
+
+  private void doClearTable() throws java.io.IOException {
+    final OHashTable.Entry<Integer, String> firstEntry = localHashTable.firstEntry();
+
+    if (firstEntry != null) {
+      OHashTable.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(firstEntry.key);
+      while (entries.length > 0) {
+        for (final OHashTable.Entry<Integer, String> entry : entries) {
+          localHashTable.remove(entry.key);
+        }
+
+        entries = localHashTable.higherEntries(entries[entries.length - 1].key);
+      }
+    }
+
+    if (localHashTable.isNullKeyIsSupported()) {
+      localHashTable.remove(null);
+    }
   }
 
   @Test

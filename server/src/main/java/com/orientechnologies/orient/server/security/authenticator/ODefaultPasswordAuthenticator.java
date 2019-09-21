@@ -33,9 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides a default password authenticator.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstract {
   // Holds a map of the users specified in the security.json file.
@@ -56,15 +55,16 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
         List<ODocument> usersList = jsonConfig.field("users");
 
         for (ODocument userDoc : usersList) {
-        	
+
           OServerUserConfiguration userCfg = createServerUser(userDoc);
-         
+
           if (userCfg != null) {
             String checkName = userCfg.name;
-    
-            if (!isCaseSensitive()) checkName = checkName.toLowerCase(Locale.ENGLISH);
-          	
-          	usersMap.put(checkName, userCfg);
+
+            if (!isCaseSensitive())
+              checkName = checkName.toLowerCase(Locale.ENGLISH);
+
+            usersMap.put(checkName, userCfg);
           }
         }
       }
@@ -72,21 +72,22 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
       OLogManager.instance().error(this, "config()", ex);
     }
   }
-  
+
   // Derived implementations can override this method to provide new server user implementations.
   protected OServerUserConfiguration createServerUser(final ODocument userDoc) {
     OServerUserConfiguration userCfg = null;
-    
+
     if (userDoc.containsField("username") && userDoc.containsField("resources")) {
       final String user = userDoc.field("username");
       final String resources = userDoc.field("resources");
-      String password = userDoc.field("password");    
-    
-      if (password == null) password = "";
-    
+      String password = userDoc.field("password");
+
+      if (password == null)
+        password = "";
+
       userCfg = new OServerUserConfiguration(user, password, resources);
     }
-   
+
     return userCfg;
   }
 

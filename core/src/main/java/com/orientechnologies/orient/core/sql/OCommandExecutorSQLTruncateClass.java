@@ -123,7 +123,7 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
     }
 
     Collection<OClass> subclasses = schemaClass.getAllSubclasses();
-    if (deep && !unsafe) {// for multiple inheritance
+    if (deep && !unsafe) { // for multiple inheritance
       for (OClass subclass : subclasses) {
         long subclassRecs = schemaClass.count();
         if (subclassRecs > 0) {

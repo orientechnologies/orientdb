@@ -15,7 +15,7 @@ public class ODatabaseCreateDropClusterTest {
     try {
       db.addCluster("test");
       Assert.assertNotEquals(db.getClusterIdByName("test"), -1);
-      db.dropCluster("test", false);
+      db.dropCluster("test");
       Assert.assertEquals(db.getClusterIdByName("test"), -1);
     } finally {
       db.drop();
@@ -31,7 +31,7 @@ public class ODatabaseCreateDropClusterTest {
       test.addCluster("aTest");
       Assert.assertNotEquals(db.getClusterIdByName("aTest"), -1);
       Assert.assertEquals(test.getClusterIds().length, 2);
-      db.dropCluster("aTest", false);
+      db.dropCluster("aTest");
       Assert.assertEquals(db.getClusterIdByName("aTest"), -1);
       test = db.getMetadata().getSchema().getClass("test");
       Assert.assertEquals(test.getClusterIds().length, 1);

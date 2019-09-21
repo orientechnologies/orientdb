@@ -52,7 +52,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException {
+  public void configure(int iId, String iClusterName) throws IOException {
   }
 
   @Override
@@ -61,7 +61,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void create(int iStartSize) throws IOException {
+  public void create() throws IOException {
   }
 
   @Override
@@ -81,25 +81,20 @@ public class OOfflineCluster implements OCluster {
   public void delete() throws IOException {
   }
 
+
   @Override
-  public Object set(ATTRIBUTES attribute, Object value) throws IOException {
-    if (attribute == null)
-      throw new IllegalArgumentException("attribute is null");
+  public void setClusterName(final String name) {
+    throw new OOfflineClusterException("Cannot set cluster name on offline cluster '" + name + "'");
+  }
 
-    final String stringValue = value != null ? value.toString() : null;
+  @Override
+  public void setRecordConflictStrategy(final String conflictStrategy) {
+    throw new OOfflineClusterException("Cannot set record conflict strategy on offline cluster '" + name + "'");
+  }
 
-    switch (attribute) {
-    case STATUS: {
-      if (stringValue == null)
-        throw new IllegalStateException("Value of attribute is null.");
-
-      return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS
-          .valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
-    }
-    default:
-      throw new IllegalArgumentException(
-          "Runtime change of attribute '" + attribute + " is not supported on Offline cluster " + getName());
-    }
+  @Override
+  public void setEncryption(final String encryptionName, final String encryptionKey) {
+    throw new OOfflineClusterException("Cannot set encryption on offline cluster '" + name + "'");
   }
 
   @Override
@@ -110,11 +105,6 @@ public class OOfflineCluster implements OCluster {
   @Override
   public long getTombstonesCount() {
     return 0;
-  }
-
-  @Override
-  public void truncate() throws IOException {
-    throw new OOfflineClusterException("Cannot truncate an offline cluster '" + name + "'");
   }
 
   @Override
@@ -136,11 +126,6 @@ public class OOfflineCluster implements OCluster {
   @Override
   public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
-  }
-
-  @Override
-  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
-    throw new OOfflineClusterException("Cannot resurrect a record on offline cluster '" + name + "'");
   }
 
   @Override
@@ -214,16 +199,6 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public float recordGrowFactor() {
-    return 0;
-  }
-
-  @Override
-  public float recordOverflowGrowFactor() {
-    return 0;
-  }
-
-  @Override
   public String compression() {
     return null;
   }
@@ -256,11 +231,6 @@ public class OOfflineCluster implements OCluster {
   @Override
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
     return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
-  }
-
-  @Override
-  public boolean hideRecord(long position) throws IOException {
-    return false;
   }
 
   @Override

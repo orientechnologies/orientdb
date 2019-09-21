@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
+import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 
 import java.io.PrintStream;
 import java.util.Locale;
@@ -45,7 +46,7 @@ import java.util.logging.Level;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public enum OGlobalConfiguration {// ENVIRONMENT
+public enum OGlobalConfiguration { // ENVIRONMENT
   ENVIRONMENT_DUMP_CFG_AT_STARTUP("environment.dumpCfgAtStartup", "Dumps the configuration during application startup",
       Boolean.class, Boolean.FALSE),
 
@@ -127,22 +128,13 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes, disk size may be changed at runtime, "
       + "but if does not enough to contain all pinned pages exception will be thrown", Integer.class, 4 * 1024,
-      new OConfigurationChangeCallback() {
-
-        @Override
-        public void change(Object currentValue, Object newValue) {
-          final Orient orient = Orient.instance();
-          if (orient != null) {
-            final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) orient
-                .getEngineIfRunning(OEngineLocalPaginated.NAME);
-            if (engineLocalPaginated != null)
-              engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
-          }
-        }
-      }),
+      new OCacheSizeChangeCallback()),
 
   DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percentage of disk cache, which is used as write cache", Integer.class,
       5),
+
+  DISK_WRITE_CACHE_USE_ASYNC_IO("storage.diskCache.useAsyncIO",
+      "Use asynchronous IO API to facilitate abilities of SSD to parallelize IO requests", Boolean.class, true),
 
   DISK_WRITE_CACHE_SHUTDOWN_TIMEOUT("storage.diskCache.writeCacheShutdownTimeout",
       "Timeout of shutdown of write cache for single task in min.", Integer.class, 30),
@@ -202,8 +194,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method used in storage"
       + " Possible values : gzip, nothing. Default is 'nothing' that means no compression", String.class, "nothing"),
 
-  @Deprecated
-  STORAGE_ENCRYPTION_METHOD("storage.encryptionMethod",
+  @Deprecated STORAGE_ENCRYPTION_METHOD("storage.encryptionMethod",
       "Record encryption method used in storage" + " Possible values : 'aes' and 'des'. Default is 'nothing' for no encryption",
       String.class, "nothing"),
 
@@ -228,6 +219,31 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   STORAGE_CALL_FSYNC("storage.callFsync", "Call fsync during fuzzy checkpoints or WAL writes, true by default", Boolean.class,
       true),
 
+  STORAGE_USE_DOUBLE_WRITE_LOG("storage.useDoubleWriteLog", "Allows usage of double write log in storage. "
+      + "This log prevents pages to be teared apart so it is not recommended to switch it off.", Boolean.class, true),
+
+  STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE("storage.doubleWriteLog.maxSegSize",
+      "Maximum size of double write log segment in megabytes, -1 means that size will be calculated automatically", Integer.class,
+      -1),
+
+  STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT("storage.doubleWriteLog.maxSegSizePercent",
+      "Maximum size of segment of double write log in percents, should be set to value bigger than 0", Integer.class, 5),
+
+  STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE("storage.doubleWriteLog.minSegSize",
+      "Minimum size of segment of double write log in megabytes, should be set to value bigger than 0. "
+          + "If both set maximum and minimum size of segments. Minimum size always will have priority over maximum size.",
+      Integer.class, 256),
+
+  STORAGE_TRACK_PAGE_OPERATIONS_IN_TX("storage.trackOperationsInTx",
+      "If this flag switched on, transaction features will be implemented "
+          + "not by tracking of binary changes, but by tracking of operations on page level.", Boolean.class, false),
+
+  STORAGE_PAGE_OPERATIONS_CACHE_SIZE("storage.pageOperationsCacheSize", "Size of page operations cache in MB per transaction. "
+      + "If operations are cached, they are not read from WAL during rollback.", Integer.class, 16),
+
+  STORAGE_CLUSTER_VERSION("storage.cluster.version", "Binary version of cluster which will be used inside of storage",
+      Integer.class, OPaginatedCluster.getLatestBinaryVersion()),
+
   STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS("storage.printWALPerformanceStatistics",
       "Periodically prints statistics about WAL performance", Boolean.class, false),
 
@@ -247,7 +263,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
-  USE_CHM_CACHE("storage.useCHMCache",
+  @Deprecated USE_CHM_CACHE("storage.useCHMCache",
       "Whether to use new disk cache implementation based on CHM or old one based on cuncurrent queues", Boolean.class, true),
 
   WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Indicates whether a force sync should be performed during WAL page flush",
@@ -261,7 +277,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       "Size of the direct memory WAL buffer which is used inside of " + "the background write thread (in MB)", Integer.class, 64),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
-      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
+      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 5),
 
   WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
       "Interval in seconds after which WAL file will be closed if there is no "
@@ -311,12 +327,6 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
-
-  DISK_CACHE_PRINT_CACHE_STATISTICS("storage.diskCache.printCacheStatistics",
-      "Print information about write cache performance metrics", Boolean.class, false),
-
-  DISK_CACHE_STATISTICS_INTERVAL("storage.diskCache.cacheStatisticsInterval",
-      "Period in sec. after which information about write cache performance metrics will be printed", Integer.class, 10),
 
   DISK_CACHE_PRINT_FLUSH_TILL_SEGMENT_STATISTICS("storage.diskCache.printFlushTillSegmentStatistics",
       "Print information about write cache state when it is requested to flush all data operations on which are logged "
@@ -396,8 +406,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
-
-  TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
+  @Deprecated TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
       "This setting is used only for debug purposes. It creates a stack trace of methods, when an atomic operation is started",
       Boolean.class, false),
 
@@ -433,6 +442,15 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   INDEX_DURABLE_IN_NON_TX_MODE("index.durableInNonTxMode",
       "Indicates whether index implementation for plocal storage will be durable in non-Tx mode (true by default)", Boolean.class,
       true),
+
+  INDEX_ALLOW_MANUAL_INDEXES("index.allowManualIndexes", "Switch which allows usage of manual indexes inside OrientDB. "
+      + "It is not recommended to switch it on, because manual indexes are deprecated, not supported and will be removed in next versions",
+      Boolean.class, true),
+
+  INDEX_ALLOW_MANUAL_INDEXES_WARNING("index.allowManualIndexesWarning",
+      "Switch which triggers printing of waring message any time when "
+          + "manual indexes are used. It is not recommended to switch it off, because manual indexes are deprecated, "
+          + "not supported and will be removed in next versions", Boolean.class, true),
 
   /**
    * @see OIndexDefinition#isNullValuesIgnored()
@@ -485,6 +503,9 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
       "Amount of values, after which a LINKBAG implementation will use an embedded values container (disabled by default)",
       Integer.class, -1, true),
+
+  RID_BAG_SBTREEBONSAI_DELETE_DALAY("ridBag.sbtreeBonsaiDeleteDelay",
+      "How long should pass from last access before delete an already converted ridbag", Integer.class, 30000),
 
   // FILE
   @Deprecated TRACK_FILE_CLOSE("file.trackFileClose",
@@ -593,33 +614,13 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   // PROFILER
 
   PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
-      new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          Orient instance = Orient.instance();
-          if (instance != null) {
-            final OProfiler prof = instance.getProfiler();
-            if (prof != null)
-              if ((Boolean) iNewValue)
-                prof.startRecording();
-              else
-                prof.stopRecording();
-          }
-        }
-      }),
+      new OProfileEnabledChangeCallbac()),
 
   PROFILER_CONFIG("profiler.config", "Configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>",
-      String.class, null, new OConfigurationChangeCallback() {
-    public void change(final Object iCurrentValue, final Object iNewValue) {
-      Orient.instance().getProfiler().configure(iNewValue.toString());
-    }
-  }),
+      String.class, null, new OProfileConfigChangeCallback()),
 
   PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval", "Dumps the profiler values at regular intervals (in seconds)",
-      Integer.class, 0, new OConfigurationChangeCallback() {
-    public void change(final Object iCurrentValue, final Object iNewValue) {
-      Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
-    }
-  }),
+      Integer.class, 0, new OProfileDumpIntervalChangeCallback()),
 
   /**
    * @Since 2.2.27
@@ -721,9 +722,15 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   QUERY_LIMIT_THRESHOLD_TIP("query.limitThresholdTip",
       "If the total number of returned records exceeds this value, then a warning is given. (Use 0 to disable)", Long.class, 10000),
 
+  QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP("query.maxHeapElementsAllowedPerOp",
+      "Maximum number of elements (records) allowed in a single query for memory-intensive operations (eg. ORDER BY in heap). "
+          + "If exceeded, the query fails with an OCommandExecutionException. Negative number means no limit."
+          + "This setting is intended as a safety measure against excessive resource consumption from a single query (eg. prevent OutOfMemory)",
+      Long.class, 500_000),
+
   QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 
-  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache", Integer.class, 100),
+  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache. Zero means cache disabled", Integer.class, 100),
 
   // GRAPH
   SQL_GRAPH_CONSISTENCY_MODE("sql.graphConsistencyMode",
@@ -846,7 +853,7 @@ public enum OGlobalConfiguration {// ENVIRONMENT
    */
   DISTRIBUTED_TX_EXPIRE_TIMEOUT("distributed.txAliveTimeout",
       "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback pending transactions after a while",
-      Long.class, 30000l, true),
+      Long.class, 1800000l, true),
 
   /**
    * @Since 2.2.6
@@ -1056,7 +1063,9 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   @Deprecated TX_LOG_SYNCH("tx.log.synch",
       "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
-      Boolean.class, Boolean.FALSE), @Deprecated TX_USE_LOG("tx.useLog",
+      Boolean.class, Boolean.FALSE),
+
+  @Deprecated TX_USE_LOG("tx.useLog",
       "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class, true),
 
   @Deprecated INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
@@ -1329,5 +1338,45 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   public String getDescription() {
     return description;
+  }
+
+  private static class OCacheSizeChangeCallback implements OConfigurationChangeCallback {
+
+    @Override
+    public void change(Object currentValue, Object newValue) {
+      final Orient orient = Orient.instance();
+      if (orient != null) {
+        final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) orient
+            .getEngineIfRunning(OEngineLocalPaginated.NAME);
+        if (engineLocalPaginated != null)
+          engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
+      }
+    }
+  }
+
+  private static class OProfileEnabledChangeCallbac implements OConfigurationChangeCallback {
+    public void change(final Object iCurrentValue, final Object iNewValue) {
+      Orient instance = Orient.instance();
+      if (instance != null) {
+        final OProfiler prof = instance.getProfiler();
+        if (prof != null)
+          if ((Boolean) iNewValue)
+            prof.startRecording();
+          else
+            prof.stopRecording();
+      }
+    }
+  }
+
+  private static class OProfileConfigChangeCallback implements OConfigurationChangeCallback {
+    public void change(final Object iCurrentValue, final Object iNewValue) {
+      Orient.instance().getProfiler().configure(iNewValue.toString());
+    }
+  }
+
+  private static class OProfileDumpIntervalChangeCallback implements OConfigurationChangeCallback {
+    public void change(final Object iCurrentValue, final Object iNewValue) {
+      Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
+    }
   }
 }

@@ -19,7 +19,7 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -38,12 +38,12 @@ import java.util.Locale;
  * Merges two records. Useful when a record needs to be updated rather than created.
  */
 public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransformer {
-  protected String joinFieldName;
-  protected Object joinValue;
-  protected String lookup;
-  protected ACTION unresolvedLinkAction = ACTION.NOTHING;
-  private OSQLQuery<ODocument> sqlQuery;
-  private OIndex<?>            index;
+  protected String               joinFieldName;
+  protected Object               joinValue;
+  protected String               lookup;
+  protected ACTION               unresolvedLinkAction = ACTION.NOTHING;
+  private   OSQLQuery<ODocument> sqlQuery;
+  private   OIndex<?>            index;
 
   @Override
   public void configure(final ODocument iConfiguration, OCommandContext iContext) {
@@ -61,19 +61,19 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
       unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase(Locale.ENGLISH));
   }
 
-  protected Object lookup(ODatabaseDocument db, Object joinValue, final boolean iReturnRIDS) {
+  protected Object lookup(ODatabaseDocumentInternal db, Object joinValue, final boolean iReturnRIDS) {
     Object result = null;
 
     if (joinValue != null) {
       if (sqlQuery == null && index == null) {
         // ONLY THE FIRST TIME
         if (lookup.toUpperCase(Locale.ENGLISH).startsWith("SELECT"))
-          sqlQuery = new OSQLSynchQuery<ODocument>(lookup);
+          sqlQuery = new OSQLSynchQuery<>(lookup);
         else {
-          index = db.getMetadata().getIndexManager().getIndex(lookup);
+          index = db.getMetadata().getIndexManagerInternal().getIndex(db, lookup);
           if (index == null) {
-            OETLContextWrapper
-                .getInstance().getMessageHandler().warn(this, "WARNING: index %s not found. Lookups could be really slow", lookup);
+            OETLContextWrapper.getInstance().getMessageHandler()
+                .warn(this, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
             sqlQuery = new OSQLSynchQuery<ODocument>("SELECT FROM " + parts[0] + " WHERE " + parts[1] + " = ?");
           }

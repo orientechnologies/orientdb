@@ -1,24 +1,22 @@
 package com.orientechnologies.orient.core.metadata.security.jwt;
 
-
 /**
  * Created by emrul on 28/09/2014.
  *
- * @author Emrul Islam <emrul@emrul.com>
- *         Copyright 2014 Emrul Islam
+ * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public interface OJwtHeader {
 
-    public String getAlgorithm();
+  String getAlgorithm();
 
-    public void setAlgorithm(String alg);
+  void setAlgorithm(String alg);
 
-    public String getType();
+  String getType();
 
-    public void setType(String typ);
+  void setType(String typ);
 
-    public String getKeyId();
+  String getKeyId();
 
-    public void setKeyId(String kid);
+  void setKeyId(String kid);
 
 }

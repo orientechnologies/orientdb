@@ -319,12 +319,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         // if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
             "Request %s on database '%s' waiting for all the previous requests to be completed", request, databaseName);
-        CyclicBarrier started = new CyclicBarrier(involvedWorkerQueues.size());
-        CyclicBarrier finished = new CyclicBarrier(involvedWorkerQueues.size());
+        CountDownLatch started = new CountDownLatch(involvedWorkerQueues.size());
+        OExecuteOnce once = new OExecuteOnce(started, task);
         // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHRONIZED
         for (int queue : involvedWorkerQueues) {
           ODistributedWorker worker = workerThreads.get(queue);
-          OWaitPartitionsReadyTask waitRequest = new OWaitPartitionsReadyTask(started, task, finished);
+          OWaitPartitionsReadyTask waitRequest = new OWaitPartitionsReadyTask(once);
 
           final ODistributedRequest syncRequest = new ODistributedRequest(null, request.getId().getNodeId(),
               request.getId().getMessageId(), databaseName, waitRequest);
@@ -684,7 +684,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     if (currentLock != null)
-      throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, null, timeout);
+      throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, timeout);
 
     return newLock;
   }
@@ -1371,6 +1371,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     return buffer.toString();
+  }
+
+  public ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> getActiveTxContexts() {
+    return activeTxContexts;
   }
 
 }

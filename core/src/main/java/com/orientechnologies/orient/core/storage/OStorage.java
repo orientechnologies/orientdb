@@ -88,11 +88,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
       int recordVersion) throws ORecordNotFoundException;
 
-  /**
-   * Resurrects a record that was previously deleted, with a new content.
-   */
-  OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType);
-
   OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
 
   ORecordMetadata getRecordMetadata(final ORID rid);
@@ -129,9 +124,13 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * @param iClusterName name of the cluster
    * @param iRequestedId requested id of the cluster
    */
-  int addCluster(String iClusterName, int iRequestedId, Object... iParameters);
+  int addCluster(String iClusterName, int iRequestedId);
 
-  boolean dropCluster(String iClusterName, final boolean iTruncate);
+  boolean dropCluster(String iClusterName);
+
+  String getClusterName(final int clusterId);
+
+  boolean setClusterAttribute(final int id, OCluster.ATTRIBUTES attribute, Object value);
 
   /**
    * Drops a cluster.
@@ -140,7 +139,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
    *
    * @return true if has been removed, otherwise false
    */
-  boolean dropCluster(int iId, final boolean iTruncate);
+  boolean dropCluster(int iId);
 
   long count(int iClusterId);
 
@@ -227,8 +226,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   OSBTreeCollectionManager getSBtreeCollectionManager();
 
   OCurrentStorageComponentsFactory getComponentsFactory();
-
-  OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
 
   OCluster getClusterByName(String clusterName);
 

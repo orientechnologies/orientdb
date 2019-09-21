@@ -19,14 +19,13 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryProxy;
@@ -55,8 +54,8 @@ public class OMetadataDefault implements OMetadataInternal {
   protected OSchedulerProxy       scheduler;
   protected OSequenceLibraryProxy sequenceLibrary;
 
-  protected OCommandCache          commandCache;
-  protected static final OProfiler PROFILER = Orient.instance().getProfiler();
+  protected              OCommandCache commandCache;
+  protected static final OProfiler     PROFILER = Orient.instance().getProfiler();
 
   private OImmutableSchema          immutableSchema = null;
   private int                       immutableCount  = 0;
@@ -118,8 +117,17 @@ public class OMetadataDefault implements OMetadataInternal {
     return security;
   }
 
-  public OIndexManagerProxy getIndexManager() {
+  /**
+   * {@inheritDoc}
+   */
+  @Deprecated
+  public OIndexManager getIndexManager() {
     return indexManager;
+  }
+
+  @Override
+  public OIndexManagerAbstract getIndexManagerInternal() {
+    return indexManager.delegate();
   }
 
   public int getSchemaClusterId() {

@@ -44,8 +44,8 @@ import static org.junit.Assert.assertTrue;
 public class FreezeAndRecordInsertAtomicityTest {
 
   private static final String URL;
-  private static final int THREADS    = Runtime.getRuntime().availableProcessors() * 2;
-  private static final int ITERATIONS = 100;
+  private static final int    THREADS    = Runtime.getRuntime().availableProcessors() * 2;
+  private static final int    ITERATIONS = 100;
 
   static {
     String buildDirectory = System.getProperty("buildDirectory");
@@ -96,19 +96,19 @@ public class FreezeAndRecordInsertAtomicityTest {
 
       futures.add(executorService.submit(() -> {
         try {
-          final ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
+          final ODatabaseDocumentInternal db = new ODatabaseDocumentTx(URL);
           db.open("admin", "admin");
-          final OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Person.name");
+          final OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.name");
 
           for (int i1 = 0; i1 < ITERATIONS; ++i1)
             switch (random.nextInt(3)) {
             case 0:
-              db.newInstance("Person").field("name", "name-" + thread + "-" + i1).save();
+              db.<ODocument>newInstance("Person").field("name", "name-" + thread + "-" + i1).save();
               break;
 
             case 1:
               db.begin();
-              db.newInstance("Person").field("name", "name-" + thread + "-" + i1).save();
+              db.<ODocument>newInstance("Person").field("name", "name-" + thread + "-" + i1).save();
               db.commit();
               break;
 

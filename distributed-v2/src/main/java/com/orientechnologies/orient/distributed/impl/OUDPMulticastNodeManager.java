@@ -38,7 +38,7 @@ public class OUDPMulticastNodeManager extends ONodeManager {
   }
 
   public void stop() {
-    if(running) {
+    if (running) {
       socket.close();
       super.stop();
     }

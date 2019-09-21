@@ -1,17 +1,12 @@
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,21 +18,12 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        Assert.assertEquals(event.getChangeType(), OMultiValueChangeEvent.OChangeType.ADD);
-        Assert.assertNull(event.getOldValue());
-        Assert.assertEquals(event.getKey().intValue(), 0);
-        Assert.assertEquals(event.getValue(), "value1");
-
-        changed.value = true;
-      }
-    });
-
+    trackedList.enableTracking(doc);
+    OMultiValueChangeEvent<Object, Object> event = new OMultiValueChangeEvent<Object, Object>(OMultiValueChangeEvent.OChangeType.ADD, 0, "value1", null);
     trackedList.add("value1");
-    Assert.assertTrue(changed.value);
+
+    Assert.assertEquals(event, trackedList.getTimeLine().getMultiValueChangeEvents().get(0));
+    Assert.assertTrue(trackedList.isModified());
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -51,20 +37,13 @@ public class TrackedListTest {
     trackedList.add("value1");
     trackedList.add("value2");
 
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        Assert.assertEquals(event.getChangeType(), OMultiValueChangeEvent.OChangeType.ADD);
-        Assert.assertNull(event.getOldValue());
-        Assert.assertEquals(event.getKey().intValue(), 2);
-        Assert.assertEquals(event.getValue(), "value3");
-        changed.value = true;
-      }
-    });
+    trackedList.disableTracking(doc);
+    trackedList.enableTracking(doc);
+    OMultiValueChangeEvent<Object, Object> event = new OMultiValueChangeEvent<Object, Object>(OMultiValueChangeEvent.OChangeType.ADD, 2, "value3", null);
 
     trackedList.add("value3");
-    Assert.assertTrue(changed.value);
+    Assert.assertEquals(event, trackedList.getTimeLine().getMultiValueChangeEvents().get(0));
+    Assert.assertTrue(trackedList.isModified());
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -75,6 +54,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     trackedList.add("value1");
     Assert.assertTrue(doc.isDirty());
   }
@@ -91,18 +71,12 @@ public class TrackedListTest {
 
     ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
-    trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    trackedList.disableTracking(doc);
+    Assert.assertFalse(trackedList.isModified());
+    trackedList.enableTracking(doc);
 
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        changed.value = true;
-      }
-    });
-
-    trackedList.add("value3");
-    Assert.assertEquals(changed.value, Boolean.FALSE);
+    trackedList.addInternal("value3");
+    Assert.assertFalse(trackedList.isModified());
     Assert.assertFalse(doc.isDirty());
   }
 
@@ -123,19 +97,10 @@ public class TrackedListTest {
     final List<OMultiValueChangeEvent<Integer, String>> firedEvents = new ArrayList<OMultiValueChangeEvent<Integer, String>>();
     firedEvents.add(new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.ADD, 0, "value1"));
     firedEvents.add(new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.ADD, 1, "value3"));
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        if (firedEvents.get(0).equals(event))
-          firedEvents.remove(0);
-        else
-          Assert.fail();
-      }
-    });
-
+    trackedList.enableTracking(doc);
     trackedList.addAll(valuesToAdd);
 
-    Assert.assertEquals(firedEvents.size(), 0);
+    Assert.assertEquals(firedEvents, trackedList.getTimeLine().getMultiValueChangeEvents());
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -146,6 +111,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     final List<String> valuesToAdd = new ArrayList<String>();
     valuesToAdd.add("value1");
     valuesToAdd.add("value3");
@@ -169,18 +135,13 @@ public class TrackedListTest {
     ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
-    trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
+    trackedList.disableTracking(doc);
+    trackedList.enableTracking(doc);
+    for (String e : valuesToAdd) {
+      trackedList.addInternal(e);
+    }
 
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        changed.value = true;
-      }
-    });
-
-    trackedList.addAll(valuesToAdd);
-
-    Assert.assertFalse(changed.value);
+    Assert.assertFalse(trackedList.isModified());
     Assert.assertFalse(doc.isDirty());
   }
 
@@ -196,22 +157,14 @@ public class TrackedListTest {
 
     ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
+    trackedList.disableTracking(doc);
+    trackedList.enableTracking(doc);
 
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        Assert.assertEquals(event.getChangeType(), OMultiValueChangeEvent.OChangeType.ADD);
-        Assert.assertNull(event.getOldValue());
-        Assert.assertEquals(event.getKey().intValue(), 1);
-        Assert.assertEquals(event.getValue(), "value3");
-
-        changed.value = true;
-      }
-    });
+    OMultiValueChangeEvent<Integer, String> event = new OMultiValueChangeEvent<>(OMultiValueChangeEvent.OChangeType.ADD, 1, "value3", null);
 
     trackedList.add(1, "value3");
-    Assert.assertEquals(changed.value, Boolean.TRUE);
+    Assert.assertEquals(event,trackedList.getTimeLine().getMultiValueChangeEvents().get(0));
+    Assert.assertTrue(trackedList.isModified());
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -222,6 +175,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("aa", trackedList);
     trackedList.add("value1");
     trackedList.add("value2");
 
@@ -229,34 +183,6 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
     trackedList.add(1, "value3");
     Assert.assertTrue(doc.isDirty());
-  }
-
-  @Test
-  public void testAddIndexNotificationThree() {
-    final ODocument doc = new ODocument();
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
-    trackedList.add("value1");
-    trackedList.add("value2");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        changed.value = true;
-      }
-    });
-
-    trackedList.add(1, "value3");
-    Assert.assertEquals(changed.value, Boolean.FALSE);
-    Assert.assertFalse(doc.isDirty());
   }
 
   @Test
@@ -272,22 +198,11 @@ public class TrackedListTest {
 
     ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
-
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        Assert.assertEquals(event.getChangeType(), OMultiValueChangeEvent.OChangeType.UPDATE);
-        Assert.assertEquals(event.getOldValue(), "value2");
-        Assert.assertEquals(event.getKey().intValue(), 1);
-        Assert.assertEquals(event.getValue(), "value4");
-
-        changed.value = true;
-      }
-    });
-
+    trackedList.enableTracking(doc);
+    OMultiValueChangeEvent<Object, Object> event = new OMultiValueChangeEvent<Object, Object>(OMultiValueChangeEvent.OChangeType.UPDATE, 1, "value4", "value2");
     trackedList.set(1, "value4");
-    Assert.assertEquals(changed.value, Boolean.TRUE);
+    Assert.assertEquals(event, trackedList.getTimeLine().getMultiValueChangeEvents().get(0));
+    Assert.assertTrue(trackedList.isModified());
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -298,6 +213,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     trackedList.add("value1");
     trackedList.add("value2");
     trackedList.add("value3");
@@ -307,34 +223,6 @@ public class TrackedListTest {
 
     trackedList.set(1, "value4");
     Assert.assertTrue(doc.isDirty());
-  }
-
-  @Test
-  public void testSetNotificationThree() {
-    final ODocument doc = new ODocument();
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
-    trackedList.add("value1");
-    trackedList.add("value2");
-    trackedList.add("value3");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        changed.value = true;
-      }
-    });
-
-    trackedList.set(1, "value4");
-    Assert.assertFalse(changed.value);
-    Assert.assertFalse(doc.isDirty());
   }
 
   @Test
@@ -351,21 +239,10 @@ public class TrackedListTest {
     ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        Assert.assertEquals(event.getChangeType(), OMultiValueChangeEvent.OChangeType.REMOVE);
-        Assert.assertEquals(event.getOldValue(), "value2");
-        Assert.assertEquals(event.getKey().intValue(), 1);
-        Assert.assertNull(event.getValue());
-
-        changed.value = true;
-      }
-    });
-
+    trackedList.enableTracking(doc);
     trackedList.remove("value2");
-    Assert.assertTrue(changed.value);
+    OMultiValueChangeEvent<Integer, String> event = new OMultiValueChangeEvent<>(OMultiValueChangeEvent.OChangeType.REMOVE, 1, null, "value2");
+    Assert.assertEquals(event, trackedList.getTimeLine().getMultiValueChangeEvents().get(0));
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -376,6 +253,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     trackedList.add("value1");
     trackedList.add("value2");
     trackedList.add("value3");
@@ -385,35 +263,6 @@ public class TrackedListTest {
 
     trackedList.remove("value2");
     Assert.assertTrue(doc.isDirty());
-  }
-
-  @Test
-  public void testRemoveNotificationThree() {
-    final ODocument doc = new ODocument();
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
-    trackedList.add("value1");
-    trackedList.add("value2");
-    trackedList.add("value3");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        changed.value = true;
-      }
-    });
-
-    trackedList.remove("value2");
-    Assert.assertFalse(changed.value);
-    Assert.assertFalse(doc.isDirty());
   }
 
   @Test
@@ -429,17 +278,10 @@ public class TrackedListTest {
 
     ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
-
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        changed.value = true;
-      }
-    });
+    trackedList.disableTracking(doc);
 
     trackedList.remove("value4");
-    Assert.assertFalse(changed.value);
+    Assert.assertFalse(trackedList.isModified());
     Assert.assertFalse(doc.isDirty());
   }
 
@@ -456,70 +298,13 @@ public class TrackedListTest {
 
     ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
-
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        Assert.assertEquals(event.getChangeType(), OMultiValueChangeEvent.OChangeType.REMOVE);
-        Assert.assertEquals(event.getOldValue(), "value2");
-        Assert.assertEquals(event.getKey().intValue(), 1);
-        Assert.assertNull(event.getValue());
-
-        changed.value = true;
-      }
-    });
+    trackedList.enableTracking(doc);
 
     trackedList.remove(1);
-    Assert.assertTrue(changed.value);
+    OMultiValueChangeEvent<Object, Object> event = new OMultiValueChangeEvent<Object, Object>(OMultiValueChangeEvent.OChangeType.REMOVE, 1, null, "value2");
+    Assert.assertTrue(trackedList.isModified());
+    Assert.assertEquals(event, trackedList.getTimeLine().getMultiValueChangeEvents().get(0));
     Assert.assertTrue(doc.isDirty());
-  }
-
-  @Test
-  public void testRemoveIndexTwo() {
-    final ODocument doc = new ODocument();
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
-    trackedList.add("value1");
-    trackedList.add("value2");
-    trackedList.add("value3");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    trackedList.remove(1);
-    Assert.assertTrue(doc.isDirty());
-  }
-
-  @Test
-  public void testRemoveIndexThree() {
-    final ODocument doc = new ODocument();
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
-    trackedList.add("value1");
-    trackedList.add("value2");
-    trackedList.add("value3");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        changed.value = true;
-      }
-    });
-
-    trackedList.remove(1);
-    Assert.assertFalse(changed.value);
-    Assert.assertFalse(doc.isDirty());
   }
 
   @Test
@@ -540,18 +325,10 @@ public class TrackedListTest {
     firedEvents.add(new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.REMOVE, 2, null, "value3"));
     firedEvents.add(new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.REMOVE, 1, null, "value2"));
     firedEvents.add(new OMultiValueChangeEvent<Integer, String>(OMultiValueChangeEvent.OChangeType.REMOVE, 0, null, "value1"));
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        if (firedEvents.get(0).equals(event))
-          firedEvents.remove(0);
-        else
-          Assert.fail();
-      }
-    });
+    trackedList.enableTracking(doc);
 
     trackedList.clear();
-    Assert.assertEquals(0, firedEvents.size());
+    Assert.assertEquals(firedEvents, trackedList.getTimeLine().getMultiValueChangeEvents());
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -562,6 +339,7 @@ public class TrackedListTest {
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
+    doc.setProperty("tracked", trackedList);
     trackedList.add("value1");
     trackedList.add("value2");
     trackedList.add("value3");
@@ -571,35 +349,6 @@ public class TrackedListTest {
 
     trackedList.clear();
     Assert.assertTrue(doc.isDirty());
-  }
-
-  @Test
-  public void testClearThree() {
-    final ODocument doc = new ODocument();
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
-    trackedList.add("value1");
-    trackedList.add("value2");
-    trackedList.add("value3");
-
-    ORecordInternal.unsetDirty(doc);
-    Assert.assertFalse(doc.isDirty());
-
-    final ORef<Boolean> changed = new ORef<Boolean>(false);
-
-    trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        changed.value = true;
-      }
-    });
-
-    trackedList.clear();
-    Assert.assertFalse(changed.value);
-    Assert.assertFalse(doc.isDirty());
   }
 
   @Test
@@ -614,14 +363,7 @@ public class TrackedListTest {
     trackedList.add("value5");
 
     final List<String> original = new ArrayList<String>(trackedList);
-    final List<OMultiValueChangeEvent<Integer, String>> firedEvents = new ArrayList<OMultiValueChangeEvent<Integer, String>>();
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        firedEvents.add(event);
-      }
-    });
-
+    trackedList.enableTracking(doc);
     trackedList.add("value6");
     trackedList.add("value7");
     trackedList.set(2, "value10");
@@ -637,7 +379,7 @@ public class TrackedListTest {
     trackedList.remove("value9");
     trackedList.add(4, "value11");
 
-    Assert.assertEquals(original, trackedList.returnOriginalState(firedEvents));
+    Assert.assertEquals(original, trackedList.returnOriginalState((List) trackedList.getTimeLine().getMultiValueChangeEvents()));
   }
 
   @Test
@@ -652,14 +394,7 @@ public class TrackedListTest {
     trackedList.add("value5");
 
     final List<String> original = new ArrayList<String>(trackedList);
-    final List<OMultiValueChangeEvent<Integer, String>> firedEvents = new ArrayList<OMultiValueChangeEvent<Integer, String>>();
-
-    trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
-      public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        firedEvents.add(event);
-      }
-    });
-
+    trackedList.enableTracking(doc);
     trackedList.add("value6");
     trackedList.add("value7");
     trackedList.set(2, "value10");
@@ -672,7 +407,7 @@ public class TrackedListTest {
     trackedList.add(0, "value12");
     trackedList.add("value12");
 
-    Assert.assertEquals(original, trackedList.returnOriginalState(firedEvents));
+    Assert.assertEquals(original, trackedList.returnOriginalState((List) trackedList.getTimeLine().getMultiValueChangeEvents()));
   }
 
   /**
@@ -698,7 +433,7 @@ public class TrackedListTest {
     out.writeObject(beforeSerialization);
     out.close();
 
-    final ObjectInputStream input = new ObjectInputStream(new OMemoryInputStream(memoryStream.copy()));
+    final ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(memoryStream.copy()));
     @SuppressWarnings("unchecked")
     final List<String> afterSerialization = (List<String>) input.readObject();
 

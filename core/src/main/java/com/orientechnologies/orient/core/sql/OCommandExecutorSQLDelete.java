@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -33,7 +34,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -49,25 +49,24 @@ import java.util.Map;
 
 /**
  * SQL UPDATE command.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final String   NAME            = "DELETE FROM";
-  public static final String   KEYWORD_DELETE  = "DELETE";
-  private static final String  VALUE_NOT_FOUND = "_not_found_";
+  public static final  String NAME            = "DELETE FROM";
+  public static final  String KEYWORD_DELETE  = "DELETE";
+  private static final String VALUE_NOT_FOUND = "_not_found_";
 
   private OSQLQuery<ODocument> query;
-  private String               indexName       = null;
-  private int                  recordCount     = 0;
-  private String               lockStrategy    = "NONE";
-  private String               returning       = "COUNT";
+  private String               indexName    = null;
+  private int                  recordCount  = 0;
+  private String               lockStrategy = "NONE";
+  private String               returning    = "COUNT";
   private List<ORecord>        allDeletedRecords;
 
-  private OSQLFilter           compiledFilter;
-  private boolean              unsafe          = false;
+  private OSQLFilter compiledFilter;
+  private boolean    unsafe = false;
 
   public OCommandExecutorSQLDelete() {
   }
@@ -116,8 +115,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
             else if (word.equals(KEYWORD_UNSAFE))
               unsafe = true;
             else if (word.equalsIgnoreCase(KEYWORD_WHERE))
-              compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()),
-                  getContext(), KEYWORD_WHERE);
+              compiledFilter = OSQLEngine.getInstance()
+                  .parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(), KEYWORD_WHERE);
 
             parserNextWord(true);
           }
@@ -140,8 +139,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
             else if (word.equals(KEYWORD_UNSAFE))
               unsafe = true;
             else if (word.equalsIgnoreCase(KEYWORD_WHERE))
-              compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()),
-                  getContext(), KEYWORD_WHERE);
+              compiledFilter = OSQLEngine.getInstance()
+                  .parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(), KEYWORD_WHERE);
 
             parserNextWord(true);
           }
@@ -213,9 +212,12 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
       if (compiledFilter != null)
         compiledFilter.bindParameters(iArgs);
 
-      final OIndex index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
+
+      OIndexAbstract.manualIndexesWarning();
 
       Object key = null;
       Object value = VALUE_NOT_FOUND;
@@ -291,8 +293,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
   public boolean result(final Object iRecord) {
     final ORecordAbstract record = ((OIdentifiable) iRecord).getRecord();
 
-    if (record instanceof ODocument && compiledFilter != null
-        && !Boolean.TRUE.equals(this.compiledFilter.evaluate(record, (ODocument) record, getContext()))) {
+    if (record instanceof ODocument && compiledFilter != null && !Boolean.TRUE
+        .equals(this.compiledFilter.evaluate(record, (ODocument) record, getContext()))) {
       return true;
     }
     try {
@@ -350,8 +352,9 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
     final String returning = parserNextWord(true);
 
     if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
-      throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
-          + "' but it should be COUNT (default), BEFORE. Example: " + KEYWORD_RETURN + " BEFORE");
+      throwParsingException(
+          "Invalid " + KEYWORD_RETURN + " value set to '" + returning + "' but it should be COUNT (default), BEFORE. Example: "
+              + KEYWORD_RETURN + " BEFORE");
 
     return returning;
   }

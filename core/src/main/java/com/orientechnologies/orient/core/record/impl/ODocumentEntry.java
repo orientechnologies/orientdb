@@ -19,13 +19,11 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -37,15 +35,16 @@ import java.util.Map;
  */
 public class ODocumentEntry {
 
-  public Object                                          value;
-  public Object                                          original;
-  public OType                                           type;
-  public OProperty                                       property;
-  public OSimpleMultiValueChangeListener<Object, Object> changeListener;
-  public OMultiValueChangeTimeLine<Object, Object>       timeLine;
-  public boolean                                         changed = false;
-  public boolean                                         exist   = true;
-  public boolean                                         created = false;
+  public  Object    value;
+  public  Object    original;
+  public  OType     type;
+  public  OProperty property;
+  private boolean   changed   = false;
+  private boolean   exists    = true;
+  private boolean   created   = false;
+  private boolean   txChanged = false;
+  private boolean   txExists  = true;
+  private boolean   txCreated = false;
 
   public ODocumentEntry() {
 
@@ -55,133 +54,21 @@ public class ODocumentEntry {
     return changed;
   }
 
-  public boolean isChangedTree(List<Object> ownersTrace) {
-    if (changed && exist) {
-      return true;
-    }
-
-    ownersTrace.add(value);
-
-    if (value instanceof ODocument) {
-      ODocument doc = (ODocument) value;
-      return doc.isChangedInDepth();
-    }
-
-    if (value instanceof Collection) {
-      Collection list = (Collection) value;
-      for (Object element : list) {
-        if (element instanceof ODocument) {
-          ODocument doc = (ODocument) element;
-          for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
-            if (field.getValue().isChangedTree(new ArrayList<>())) {
-              return true;
-            }
-          }
-        } else if (element instanceof Collection) {
-          if (ODocumentHelper.isChangedCollection((Collection) element, this, ownersTrace, 1)) {
-            return true;
-          }
-        } else if (element instanceof Map) {
-          if (ODocumentHelper.isChangedMap((Map<Object, Object>) element, this, ownersTrace, 1)) {
-            return true;
-          }
-        }
-      }
-    }
-
-    if (value instanceof Map) {
-      Map<Object, Object> map = (Map) value;
-      for (Map.Entry<Object, Object> entry : map.entrySet()) {
-        Object element = entry.getValue();
-        if (element instanceof ODocument) {
-          ODocument doc = (ODocument) element;
-          for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
-            if (field.getValue().isChangedTree(new ArrayList<>())) {
-              return true;
-            }
-          }
-        } else if (element instanceof Collection) {
-          if (ODocumentHelper.isChangedCollection((List) element, this, ownersTrace, 1)) {
-            return true;
-          }
-        } else if (element instanceof Map) {
-          if (ODocumentHelper.isChangedMap((Map<Object, Object>) element, this, ownersTrace, 1)) {
-            return true;
-          }
-        }
-      }
-    }
-
-    if (timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = timeLine.getMultiValueChangeEvents();
-      if (timeline != null) {
-        for (OMultiValueChangeEvent<Object, Object> event : timeline) {
-          if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD
-              || event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED
-              || event.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE
-              || event.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
-  public boolean hasNonExistingTree() {
-    if (!exist) {
-      return true;
-    }
-
-    if (value instanceof ODocument) {
-      ODocument doc = (ODocument) value;
-      for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
-        if (field.getValue().hasNonExistingTree()) {
-          return true;
-        }
-      }
-    }
-
-    if (value instanceof List) {
-      List list = (List) value;
-      for (Object element : list) {
-        if (element instanceof ODocument) {
-          ODocument doc = (ODocument) element;
-          for (Map.Entry<String, ODocumentEntry> field : doc.fields.entrySet()) {
-            if (field.getValue().hasNonExistingTree()) {
-              return true;
-            }
-          }
-        } else if (element instanceof List) {
-          if (ODocumentHelper.hasNonExistingInList((List) element)) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
   public void setChanged(final boolean changed) {
     this.changed = changed;
   }
 
-  public boolean exist() {
-    return exist;
+  public boolean exists() {
+    return exists;
   }
 
-  public void setExist(final boolean exist) {
-    this.exist = exist;
+  public void setExists(final boolean exists) {
+    this.exists = exists;
+    this.txExists = exists;
   }
 
   public boolean isCreated() {
     return created;
-  }
-
-  public void setCreated(final boolean created) {
-    this.created = created;
   }
 
   protected ODocumentEntry clone() {
@@ -191,8 +78,120 @@ public class ODocumentEntry {
     entry.value = value;
     entry.changed = changed;
     entry.created = created;
-    entry.exist = exist;
+    entry.exists = exists;
+    entry.txChanged = changed;
+    entry.txCreated = created;
+    entry.txExists = exists;
     return entry;
   }
 
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    if (!isChanged() && value instanceof OTrackedMultiValue) {
+      return ((OTrackedMultiValue) value).getTimeLine();
+    } else {
+      return null;
+    }
+  }
+
+  public void clear() {
+    this.created = false;
+    this.changed = false;
+    original = null;
+    removeTimeline();
+  }
+
+  public void clearNotExists() {
+    original = null;
+    removeTimeline();
+  }
+
+  public void removeTimeline() {
+    if (!(value instanceof OTrackedMultiValue))
+      return;
+    ((OTrackedMultiValue) value).disableTracking(null);
+  }
+
+  public void replaceListener(ODocument document, Object oldValue) {
+    enableTracking(document);
+  }
+
+  public boolean enableTracking(ODocument document) {
+    if (!(value instanceof OTrackedMultiValue))
+      return false;
+    ((OTrackedMultiValue) value).enableTracking(document);
+    return true;
+  }
+
+  public void disableTracking(ODocument document, Object fieldValue) {
+    if (!(fieldValue instanceof OTrackedMultiValue))
+      return;
+    ((OTrackedMultiValue) fieldValue).disableTracking(document);
+  }
+
+  public boolean isTrackedModified() {
+    if (value instanceof OTrackedMultiValue) {
+      return ((OTrackedMultiValue) value).isModified();
+    }
+    if (value instanceof ODocument) {
+      return ((ODocument) value).isDirty();
+    }
+    return false;
+  }
+
+  public boolean isTxTrackedModified() {
+    if (value instanceof OTrackedMultiValue) {
+      return ((OTrackedMultiValue) value).isTransactionModified();
+    }
+    if (value instanceof ODocument && ((ODocument) value).isEmbedded()) {
+      return ((ODocument) value).isDirty();
+    }
+    return false;
+  }
+
+  public void markChanged() {
+    this.changed = true;
+    this.txChanged = true;
+  }
+
+  public void unmarkChanged() {
+    this.changed = false;
+  }
+
+  public void markCreated() {
+    this.created = true;
+    this.txCreated = true;
+  }
+
+  public void unmarkCreated() {
+    this.created = false;
+  }
+
+  public void undo() {
+    if (isChanged()) {
+      value = original;
+      unmarkChanged();
+      original = null;
+      exists = true;
+    }
+  }
+
+  public void transactionClear() {
+    if (value instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) value).transactionClear();
+    }
+    this.txCreated = false;
+    this.txChanged = false;
+  }
+
+  public boolean isTxChanged() {
+    return txChanged;
+  }
+
+  public boolean isTxCreated() {
+    return txCreated;
+  }
+
+  public boolean isTxExists() {
+    return txExists;
+  }
 }

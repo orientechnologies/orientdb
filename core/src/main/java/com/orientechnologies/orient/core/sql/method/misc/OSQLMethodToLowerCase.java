@@ -20,21 +20,20 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
- *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodToLowerCase extends OAbstractSQLMethod {
 
-    public static final String NAME = "tolowercase";
+  public static final String NAME = "tolowercase";
 
-    public OSQLMethodToLowerCase() {
-        super(NAME);
-    }
+  public OSQLMethodToLowerCase() {
+    super(NAME);
+  }
 
-    @Override
-    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-        ioResult = ioResult != null ? ioResult.toString().toLowerCase() : null;
-        return ioResult;
-    }
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    ioResult = ioResult != null ? ioResult.toString().toLowerCase() : null;
+    return ioResult;
+  }
 }

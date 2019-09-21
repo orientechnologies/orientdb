@@ -3,22 +3,15 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
-import com.orientechnologies.orient.core.sql.parser.OExpression;
-import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OInsertBody;
-import com.orientechnologies.orient.core.sql.parser.OInsertSetExpression;
+import com.orientechnologies.orient.core.sql.parser.*;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 20/03/17.
@@ -50,7 +43,8 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
           throw new IllegalStateException();
         }
         //TODO
-        OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(targetIndex.getIndexName());
+        final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+        OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, targetIndex.getIndexName());
         if (index == null) {
           throw new OCommandExecutionException("Index not found: " + targetIndex);
         }

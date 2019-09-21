@@ -68,8 +68,8 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   @Override
   public boolean hasNext() {
-    while(skipped < skip){
-      if(!hasNextInternal()){
+    while (skipped < skip) {
+      if (!hasNextInternal()) {
         return false;
       }
       partialIterator.next();

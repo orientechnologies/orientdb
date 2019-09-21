@@ -63,7 +63,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
   protected Object v2v(final ODatabase graph, final OIdentifiable iRecord, final ODirection iDirection, final String[] iLabels) {
     OElement rec = iRecord.getRecord();
-    if (rec.isVertex()) {
+    if (rec != null && rec.isVertex()) {
       return rec.asVertex().get().getVertices(iDirection, iLabels);
     } else {
       return null;
@@ -72,7 +72,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
   protected Object v2e(final ODatabase graph, final OIdentifiable iRecord, final ODirection iDirection, final String[] iLabels) {
     OElement rec = iRecord.getRecord();
-    if (rec.isVertex()) {
+    if (rec != null && rec.isVertex()) {
       return rec.asVertex().get().getEdges(iDirection, iLabels);
     } else {
       return null;

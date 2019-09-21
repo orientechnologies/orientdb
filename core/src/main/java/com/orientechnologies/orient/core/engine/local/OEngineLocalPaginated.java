@@ -25,7 +25,7 @@ import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.jna.ONative;
+import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
@@ -34,9 +34,8 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.chm.AsyncReadCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +50,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   private volatile OReadCache readCache;
 
-  protected final OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(getOpenFilesLimit());
+  protected final OClosableLinkedContainer<Long, OFile> files = new OClosableLinkedContainer<>(getOpenFilesLimit());
 
   public OEngineLocalPaginated() {
   }
@@ -98,14 +97,8 @@ public class OEngineLocalPaginated extends OEngineAbstract {
       pages.clear();
     }
 
-    if (OGlobalConfiguration.USE_CHM_CACHE.getValueAsBoolean()) {
-      readCache = new AsyncReadCache(OByteBufferPool.instance(null), diskCacheSize, pageSize,
-          OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean());
-    } else {
-      readCache = new O2QCache(diskCacheSize, pageSize, true, OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger(),
-          OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean(),
-          OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL.getValueAsInteger());
-    }
+    readCache = new AsyncReadCache(OByteBufferPool.instance(null), diskCacheSize, pageSize, false);
+
   }
 
   private static long calculateReadCacheMaxMemory(final long cacheSize) {
@@ -115,7 +108,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   /**
    * @param cacheSize Cache size in bytes.
    *
-   * @see O2QCache#changeMaximumAmountOfMemory(long)
+   * @see OReadCache#changeMaximumAmountOfMemory(long)
    */
   public void changeCacheSize(final long cacheSize) {
     if (readCache != null)
@@ -124,11 +117,12 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     //otherwise memory size will be set during cache initialization.
   }
 
-  public OStorage createStorage(final String dbName, final Map<String, String> configuration, long maxWalSegSize) {
+  public OStorage createStorage(final String dbName, final Map<String, String> configuration, long maxWalSegSize,
+      long doubleWriteLogMaxSegSize) {
     try {
 
       return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache, files,
-          maxWalSegSize);
+          maxWalSegSize, doubleWriteLogMaxSegSize);
     } catch (Exception e) {
       final String message =
           "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath();

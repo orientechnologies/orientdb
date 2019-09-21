@@ -26,30 +26,33 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 
 /**
  * Implementation of LinkedHashMap bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
  * hand when the map is changed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 @SuppressWarnings("serial")
-public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
-  protected final ORecord                            sourceRecord;
-  private STATUS                                     status          = STATUS.NOT_LOADED;
-  private List<OMultiValueChangeListener<Object, T>> changeListeners = null;
-  protected Class<?>                                 genericClass;
-  private final boolean                              embeddedCollection;
+public class OTrackedMap<T> extends LinkedHashMap<Object, T>
+    implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
+  protected final ORecordElement sourceRecord;
+  protected       Class<?>       genericClass;
+  private final   boolean        embeddedCollection;
+  private         boolean        dirty            = false;
+  private         boolean        transactionDirty = false;
 
-  public OTrackedMap(final ORecord iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
+  private OSimpleMultiValueTracker<Object, T> tracker = new OSimpleMultiValueTracker<>(this);
+
+  public OTrackedMap(final ORecordElement iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
     if (iOrigin != null && !iOrigin.isEmpty())
       putAll(iOrigin);
   }
 
-  public OTrackedMap(final ORecord iSourceRecord) {
+  public OTrackedMap(final ORecordElement iSourceRecord) {
     this.sourceRecord = iSourceRecord;
     embeddedCollection = this.getClass().equals(OTrackedMap.class);
   }
@@ -59,8 +62,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     return sourceRecord;
   }
 
-  @Override
-  public T put(final Object key, final T value) {
+  public T putInternal(final Object key, final T value) {
     if (key == null)
       throw new IllegalArgumentException("null key not supported by embedded map");
     boolean containsKey = containsKey(key);
@@ -75,20 +77,25 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
     addOwnerToEmbeddedDoc(value);
 
-    if (containsKey)
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, key, value,
-          oldValue));
-    else
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
-    addNested(value);
     return oldValue;
   }
 
-  private void addNested(T element) {
-    if (element instanceof OTrackedMultiValue) {
-      ((OTrackedMultiValue) element)
-          .addChangeListener(new ONestedValueChangeListener((ODocument) sourceRecord, this, (OTrackedMultiValue) element));
+  @Override
+  public T put(final Object key, final T value) {
+    if (key == null)
+      throw new IllegalArgumentException("null key not supported by embedded map");
+    boolean containsKey = containsKey(key);
+
+    T oldValue = super.put(key, value);
+
+    if (containsKey && oldValue == value)
+      return oldValue;
+    if (containsKey) {
+      updateEvent(key, oldValue, value);
+    } else {
+      addEvent(key, value);
     }
+    return oldValue;
   }
 
   private void addOwnerToEmbeddedDoc(T e) {
@@ -101,103 +108,60 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   @Override
   public T remove(final Object iKey) {
     boolean containsKey = containsKey(iKey);
-    final T oldValue = super.remove(iKey);
-
-    if (oldValue instanceof ODocument)
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
-
     if (containsKey) {
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null, oldValue));
-      removeNested(oldValue);
+      final T oldValue = super.remove(iKey);
+      removeEvent(iKey, oldValue);
+      return oldValue;
+    } else {
+      return null;
     }
-
-
-
-    return oldValue;
   }
 
   @Override
   public void clear() {
-    final Map<Object, T> origValues;
-    if (changeListeners == null)
-      origValues = null;
-    else
-      origValues = new HashMap<Object, T>(this);
-
-    if (origValues == null) {
-      for (T value : super.values())
-        if (value instanceof ODocument) {
-          ODocumentInternal.removeOwner((ODocument) value, this);
-        }
+    for (Map.Entry<Object, T> entry : super.entrySet()) {
+      removeEvent(entry.getKey(), entry.getValue());
     }
-
     super.clear();
-
-    if (origValues != null) {
-      for (Map.Entry<Object, T> entry : origValues.entrySet()) {
-        if (entry.getValue() instanceof ODocument) {
-          ODocumentInternal.removeOwner((ODocument) entry.getValue(), this);
-        }
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(),
-            null, entry.getValue()));
-        removeNested(entry.getValue());
-      }
-    } else
-      setDirty();
-  }
-
-  private void removeNested(Object element){
-    if(element instanceof OTrackedMultiValue){
-      //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
-    }
   }
 
   @Override
   public void putAll(Map<?, ? extends T> m) {
+    boolean convert = false;
+    if (m instanceof OAutoConvertToRecord) {
+      convert = ((OAutoConvertToRecord) m).isAutoConvertToRecord();
+      ((OAutoConvertToRecord) m).setAutoConvertToRecord(false);
+    }
     for (Map.Entry<?, ? extends T> entry : m.entrySet()) {
       put(entry.getKey(), entry.getValue());
+    }
+
+    if (m instanceof OAutoConvertToRecord) {
+      ((OAutoConvertToRecord) m).setAutoConvertToRecord(convert);
     }
   }
 
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
+    if (sourceRecord != null) {
       sourceRecord.setDirty();
+    }
+    this.dirty = true;
+    this.transactionDirty = true;
     return this;
   }
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+    if (sourceRecord != null)
       sourceRecord.setDirtyNoChanged();
-  }
-
-  public STATUS getInternalStatus() {
-    return status;
-  }
-
-  public void setInternalStatus(final STATUS iStatus) {
-    status = iStatus;
-  }
-
-  public void addChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
-    if(changeListeners == null)
-      changeListeners = new LinkedList<OMultiValueChangeListener<Object, T>>();
-    changeListeners.add(changeListener);
-  }
-
-  public void removeRecordChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
-    if (changeListeners != null)
-      changeListeners.remove(changeListener);
   }
 
   public Map<Object, T> returnOriginalState(final List<OMultiValueChangeEvent<Object, T>> multiValueChangeEvents) {
     final Map<Object, T> reverted = new HashMap<Object, T>(this);
 
-    final ListIterator<OMultiValueChangeEvent<Object, T>> listIterator = multiValueChangeEvents.listIterator(multiValueChangeEvents
-        .size());
+    final ListIterator<OMultiValueChangeEvent<Object, T>> listIterator = multiValueChangeEvents
+        .listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<Object, T> event = listIterator.previous();
@@ -219,19 +183,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     return reverted;
   }
 
-  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, T> event) {
-    if (status == STATUS.UNMARSHALLING)
-      return;
-
-    setDirty();
-    if (changeListeners != null) {
-      for (final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
-        if (changeListener != null)
-          changeListener.onAfterRecordChanged(event);
-      }
-    }
-  }
-
   public Class<?> getGenericClass() {
     return genericClass;
   }
@@ -243,6 +194,92 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     super.put(event.getKey(), (T) newValue);
-    addNested((T) newValue);
+  }
+
+  private void addEvent(Object key, T value) {
+    addOwnerToEmbeddedDoc(value);
+
+    if (tracker.isEnabled()) {
+      tracker.add(key, value);
+    } else {
+      setDirty();
+    }
+  }
+
+  private void updateEvent(Object key, T oldValue, T newValue) {
+    if (oldValue instanceof ODocument)
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+
+    addOwnerToEmbeddedDoc(newValue);
+
+    if (tracker.isEnabled()) {
+      tracker.updated(key, newValue, oldValue);
+    } else {
+      setDirty();
+    }
+  }
+
+  private void removeEvent(Object iKey, T removed) {
+    if (removed instanceof ODocument) {
+      ODocumentInternal.removeOwner((ODocument) removed, this);
+    }
+    if (tracker.isEnabled()) {
+      tracker.remove(iKey, removed);
+    } else {
+      setDirty();
+    }
+  }
+
+  public void enableTracking(ORecordElement parent) {
+    if (!tracker.isEnabled()) {
+      tracker.enable();
+      if (this instanceof ORecordLazyMultiValue) {
+        OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
+      } else {
+        OTrackedMultiValue.nestedEnabled(this.values().iterator(), this);
+      }
+    }
+  }
+
+  public void disableTracking(ORecordElement document) {
+    if (tracker.isEnabled()) {
+      this.tracker.disable();
+      if (this instanceof ORecordLazyMultiValue) {
+        OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
+      } else {
+        OTrackedMultiValue.nestedDisable(this.values().iterator(), this);
+      }
+    }
+    this.dirty = false;
+  }
+
+  @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    if (this instanceof ORecordLazyMultiValue) {
+      OTrackedMultiValue.nestedTransactionClear(((ORecordLazyMultiValue) this).rawIterator());
+    } else {
+      OTrackedMultiValue.nestedTransactionClear(this.values().iterator());
+    }
+    this.transactionDirty = false;
+  }
+
+  @Override
+  public boolean isModified() {
+    return dirty;
+  }
+
+  @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    return tracker.getTimeLine();
+  }
+
+  public OMultiValueChangeTimeLine<Object, T> getTransactionTimeLine() {
+    return tracker.getTransactionTimeLine();
   }
 }

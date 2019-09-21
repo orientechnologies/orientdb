@@ -24,11 +24,13 @@ public class OFuncitonAggregationContext implements AggregationContext {
     }
   }
 
-  @Override public Object getFinalValue() {
+  @Override
+  public Object getFinalValue() {
     return aggregateFunction.getResult();
   }
 
-  @Override public void apply(OResult next, OCommandContext ctx) {
+  @Override
+  public void apply(OResult next, OCommandContext ctx) {
     List<Object> paramValues = new ArrayList<>();
     for (OExpression expr : params) {
       paramValues.add(expr.execute(next, ctx));

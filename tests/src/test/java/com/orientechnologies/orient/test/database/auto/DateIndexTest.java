@@ -1,36 +1,37 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/21/13
  */
 @Test(groups = { "index" })
-public class DateIndexTest  extends DocumentDBBaseTest {
+public class DateIndexTest extends DocumentDBBaseTest {
 
-	@Parameters(value = "url")
-	public DateIndexTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public DateIndexTest(@Optional String url) {
+    super(url);
+  }
 
-	@BeforeClass
+  @BeforeClass
   public void beforeClass() throws Exception {
-		super.beforeClass();
+    super.beforeClass();
 
     final OSchema schema = database.getMetadata().getSchema();
 
@@ -60,12 +61,14 @@ public class DateIndexTest  extends DocumentDBBaseTest {
     dateIndexTest.createIndex("DateIndexTestValueDateTimeHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "value", "dateTimeField");
 
     dateIndexTest.createIndex("DateIndexTestValueDateListHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "value", "dateList");
-    dateIndexTest.createIndex("DateIndexTestValueDateTimeListHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "value",
-        "dateTimeList");
+    dateIndexTest
+        .createIndex("DateIndexTestValueDateTimeListHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "value", "dateTimeList");
 
   }
 
   public void testDateIndexes() {
+    checkEmbeddedDB();
+
     final Date dateOne = new Date();
 
     final Date dateTwo = new Date(dateOne.getTime() + 24 * 60 * 60 * 1000 + 100);
@@ -95,73 +98,75 @@ public class DateIndexTest  extends DocumentDBBaseTest {
 
     dateDoc.save();
 
-    final OIndex dateIndexTestDateIndex = database.getMetadata().getIndexManager().getIndex("DateIndexTestDateIndex");
+    final OIndex dateIndexTestDateIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestDateIndex");
     Assert.assertEquals(((OIdentifiable) dateIndexTestDateIndex.get(dateOne)).getIdentity(), dateDoc.getIdentity());
     Assert.assertNull(dateIndexTestDateIndex.get(dateTwo));
 
-    final OIndex dateIndexTestDateTimeIndex = database.getMetadata().getIndexManager().getIndex("DateIndexTestDateTimeIndex");
+    final OIndex dateIndexTestDateTimeIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestDateTimeIndex");
     Assert.assertEquals(((OIdentifiable) dateIndexTestDateTimeIndex.get(dateTwo)).getIdentity(), dateDoc.getIdentity());
     Assert.assertNull(dateIndexTestDateTimeIndex.get(dateOne));
 
-    final OIndex dateIndexTestValueDateIndex = database.getMetadata().getIndexManager().getIndex("DateIndexTestValueDateIndex");
+    final OIndex dateIndexTestValueDateIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestValueDateIndex");
     Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateIndex.get(new OCompositeKey("v1", dateOne))).getIdentity(),
         dateDoc.getIdentity());
     Assert.assertNull(dateIndexTestValueDateIndex.get(new OCompositeKey("v1", dateTwo)));
 
-    final OIndex dateIndexTestValueDateTimeIndex = database.getMetadata().getIndexManager()
-        .getIndex("DateIndexTestValueDateTimeIndex");
+    final OIndex dateIndexTestValueDateTimeIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestValueDateTimeIndex");
     Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateTimeIndex.get(new OCompositeKey("v1", dateTwo))).getIdentity(),
         dateDoc.getIdentity());
     Assert.assertNull(dateIndexTestValueDateTimeIndex.get(new OCompositeKey("v1", dateOne)));
 
-    final OIndex dateIndexTestValueDateListIndex = database.getMetadata().getIndexManager()
-        .getIndex("DateIndexTestValueDateListIndex");
+    final OIndex dateIndexTestValueDateListIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestValueDateListIndex");
 
     Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateListIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
         dateDoc.getIdentity());
     Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateListIndex.get(new OCompositeKey("v1", dateFour))).getIdentity(),
         dateDoc.getIdentity());
 
-    final OIndex dateIndexTestValueDateTimeListIndex = database.getMetadata().getIndexManager()
-        .getIndex("DateIndexTestValueDateListIndex");
-    Assert.assertEquals(
-        ((OIdentifiable) dateIndexTestValueDateTimeListIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
+    final OIndex dateIndexTestValueDateTimeListIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestValueDateListIndex");
+    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateTimeListIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
         dateDoc.getIdentity());
     Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateTimeListIndex.get(new OCompositeKey("v1", dateFour))).getIdentity(),
         dateDoc.getIdentity());
 
-    final OIndex dateIndexTestDateHashIndexIndex = database.getMetadata().getIndexManager().getIndex("DateIndexTestDateHashIndex");
+    final OIndex dateIndexTestDateHashIndexIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestDateHashIndex");
     Assert.assertEquals(((OIdentifiable) dateIndexTestDateHashIndexIndex.get(dateOne)).getIdentity(), dateDoc.getIdentity());
     Assert.assertNull(dateIndexTestDateHashIndexIndex.get(dateTwo));
 
-    final OIndex dateIndexTestDateTimeHashIndex = database.getMetadata().getIndexManager()
-        .getIndex("DateIndexTestDateTimeHashIndex");
+    final OIndex dateIndexTestDateTimeHashIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestDateTimeHashIndex");
     Assert.assertEquals(((OIdentifiable) dateIndexTestDateTimeHashIndex.get(dateTwo)).getIdentity(), dateDoc.getIdentity());
     Assert.assertNull(dateIndexTestDateTimeHashIndex.get(dateOne));
 
-    final OIndex dateIndexTestValueDateHashIndex = database.getMetadata().getIndexManager()
-        .getIndex("DateIndexTestValueDateHashIndex");
+    final OIndex dateIndexTestValueDateHashIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestValueDateHashIndex");
     Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateHashIndex.get(new OCompositeKey("v1", dateOne))).getIdentity(),
         dateDoc.getIdentity());
     Assert.assertNull(dateIndexTestValueDateHashIndex.get(new OCompositeKey("v1", dateTwo)));
 
-    final OIndex dateIndexTestValueDateTimeHashIndex = database.getMetadata().getIndexManager()
-        .getIndex("DateIndexTestValueDateTimeHashIndex");
+    final OIndex dateIndexTestValueDateTimeHashIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestValueDateTimeHashIndex");
     Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateTimeHashIndex.get(new OCompositeKey("v1", dateTwo))).getIdentity(),
         dateDoc.getIdentity());
     Assert.assertNull(dateIndexTestValueDateTimeHashIndex.get(new OCompositeKey("v1", dateOne)));
 
-    final OIndex dateIndexTestValueDateListHashIndex = database.getMetadata().getIndexManager()
-        .getIndex("DateIndexTestValueDateListHashIndex");
+    final OIndex dateIndexTestValueDateListHashIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestValueDateListHashIndex");
 
-    Assert.assertEquals(
-        ((OIdentifiable) dateIndexTestValueDateListHashIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
+    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateListHashIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
         dateDoc.getIdentity());
     Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateListHashIndex.get(new OCompositeKey("v1", dateFour))).getIdentity(),
         dateDoc.getIdentity());
 
-    final OIndex dateIndexTestValueDateTimeListHashIndex = database.getMetadata().getIndexManager()
-        .getIndex("DateIndexTestValueDateListHashIndex");
+    final OIndex dateIndexTestValueDateTimeListHashIndex = database.getMetadata().getIndexManagerInternal()
+        .getIndex(database, "DateIndexTestValueDateListHashIndex");
     Assert.assertEquals(
         ((OIdentifiable) dateIndexTestValueDateTimeListHashIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
         dateDoc.getIdentity());

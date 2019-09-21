@@ -5,6 +5,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OLocalHashTableV2Exception;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -16,6 +17,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTablePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTableRemoveCO;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 
@@ -27,17 +30,14 @@ import java.util.List;
 
 /**
  * Implementation of hash index which is based on <a href="http://en.wikipedia.org/wiki/Extendible_hashing">extendible hashing
- * algorithm</a>. The directory for extindible hashing is implemented in
- * {@link OHashTableDirectory} class. Directory is not implemented
- * according
- * to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead it is implemented
- * according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002". Which has much less
- * memory consumption in case of nonuniform data distribution.
- * Index itself uses so called "multilevel schema" when first level contains 256 buckets, when bucket is split it is put at the
- * end of other file which represents second level. So if data which are put has distribution close to uniform (this index was
- * designed to be use as rid index for DHT storage) buckets split will be preformed in append only manner to speed up index write
- * speed.
- * So hash index bucket itself has following structure:
+ * algorithm</a>. The directory for extindible hashing is implemented in {@link OHashTableDirectory} class. Directory is not
+ * implemented according to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead
+ * it is implemented according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002".
+ * Which has much less memory consumption in case of nonuniform data distribution. Index itself uses so called "multilevel schema"
+ * when first level contains 256 buckets, when bucket is split it is put at the end of other file which represents second level. So
+ * if data which are put has distribution close to uniform (this index was designed to be use as rid index for DHT storage) buckets
+ * split will be preformed in append only manner to speed up index write speed. So hash index bucket itself has following
+ * structure:
  * <ol>
  * <li>Bucket depth - 1 byte.</li>
  * <li>Bucket's size - amount of entities (key, value) in one bucket, 4 bytes</li>
@@ -45,11 +45,9 @@ import java.util.List;
  * <li>Offsets of entities stored in this bucket relatively to it's beginning. It is array of int values of undefined size.</li>
  * <li>Entities itself</li>
  * </ol>
- * So if 1-st and 2-nd fields are clear. We should discuss the last ones.
- * Entities in bucket are sorted by key's hash code so each entity has following storage format in bucket: key's hash code (8
- * bytes), key, value. Because entities are stored in sorted order it means that every time when we insert new entity old ones
- * should be moved.
- * There are 2 reasons why it is bad:
+ * So if 1-st and 2-nd fields are clear. We should discuss the last ones. Entities in bucket are sorted by key's hash code so each
+ * entity has following storage format in bucket: key's hash code (8 bytes), key, value. Because entities are stored in sorted order
+ * it means that every time when we insert new entity old ones should be moved. There are 2 reasons why it is bad:
  * <ol>
  * <li>It will generate write ahead log of enormous size.</li>
  * <li>The more amount of memory is affected in operation the less speed we will have. In worst case 60 kb of memory should be
@@ -57,14 +55,12 @@ import java.util.List;
  * </ol>
  * To avoid disadvantages listed above entries ara appended to the end of bucket, but their offsets are stored at the beginning of
  * bucket. Offsets are stored in sorted order (ordered by hash code of entity's key) so we need to move only small amount of memory
- * to store entities in sorted order.
- * About indexes of parents of current bucket. When item is removed from bucket we check space which is needed to store all
- * entities
- * of this bucket, it's buddy bucket (bucket which was also created from parent bucket during split) and if space of single bucket
- * is enough to save all entities from both buckets we remove these buckets and put all content in parent bucket. That is why we
- * need indexes of parents of current bucket.
- * Also hash index has special file of one page long which contains information about state of each level of buckets in index. This
- * information is stored as array index of which equals to file level. All array item has following structure:
+ * to store entities in sorted order. About indexes of parents of current bucket. When item is removed from bucket we check space
+ * which is needed to store all entities of this bucket, it's buddy bucket (bucket which was also created from parent bucket during
+ * split) and if space of single bucket is enough to save all entities from both buckets we remove these buckets and put all content
+ * in parent bucket. That is why we need indexes of parents of current bucket. Also hash index has special file of one page long
+ * which contains information about state of each level of buckets in index. This information is stored as array index of which
+ * equals to file level. All array item has following structure:
  * <ol>
  * <li>Is level removed (in case all buckets are empty or level was not created yet) - 1 byte</li>
  * <li>File's level id - 8 bytes</li>
@@ -112,10 +108,13 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
 
   private OEncryption encryption;
 
-  public OLocalHashTableV2(final String name, final String metadataConfigurationFileExtension, final String treeStateFileExtension,
-      final String bucketFileExtension, final String nullBucketFileExtension,
+  private final int indexId;
+
+  public OLocalHashTableV2(int indexId, final String name, final String metadataConfigurationFileExtension,
+      final String treeStateFileExtension, final String bucketFileExtension, final String nullBucketFileExtension,
       final OAbstractPaginatedStorage abstractPaginatedStorage) {
     super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);
+    this.indexId = indexId;
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -149,8 +148,6 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
         directory.create(atomicOperation);
 
         final OCacheEntry hashStateEntry = addPage(atomicOperation, fileStateId);
-        pinPage(atomicOperation, hashStateEntry);
-
         try {
           @SuppressWarnings("unused")
           final OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, true);
@@ -318,6 +315,14 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
             }
 
             changeSize(sizeDiff, atomicOperation);
+
+          }
+
+          if (removed != null) {
+            atomicOperation.addComponentOperation(
+                new OLocalHashTableRemoveCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
+                    keySerializer.serializeNativeAsWhole(key), valueSerializer.serializeNativeAsWhole(removed),
+                    valueSerializer.getId()));
           }
 
           return removed;
@@ -347,6 +352,12 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
 
           changeSize(sizeDiff, atomicOperation);
 
+          if (removed != null) {
+            atomicOperation.addComponentOperation(
+                new OLocalHashTableRemoveCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), null,
+                    valueSerializer.serializeNativeAsWhole(removed), valueSerializer.getId()));
+          }
+
           return removed;
         }
       } finally {
@@ -371,29 +382,6 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
       } finally {
         releasePageFromWrite(atomicOperation, hashStateEntry);
       }
-    }
-  }
-
-  @Override
-  public void clear() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
-      acquireExclusiveLock();
-      try {
-        if (nullKeyIsSupported) {
-          truncateFile(atomicOperation, nullBucketFileId);
-        }
-
-        initHashTreeState(atomicOperation);
-      } finally {
-        releaseExclusiveLock();
-      }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
     }
   }
 
@@ -501,7 +489,6 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
       final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, 0, true);
       try {
         hashStateEntryIndex = hashStateEntry.getPageIndex();
-        pinPage(atomicOperation, hashStateEntry);
       } finally {
         releasePageFromRead(atomicOperation, hashStateEntry);
       }
@@ -518,43 +505,7 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
     }
   }
 
-  @Override
-  public void deleteWithoutLoad(final String name) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
-      acquireExclusiveLock();
-      try {
-        if (isFileExists(atomicOperation, name + metadataConfigurationFileExtension)) {
-          fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
-          deleteFile(atomicOperation, fileStateId);
-        }
-
-        directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
-        directory.deleteWithoutOpen(atomicOperation);
-
-        if (isFileExists(atomicOperation, name + nullBucketFileExtension)) {
-          final long nullBucketId = openFile(atomicOperation, name + nullBucketFileExtension);
-          deleteFile(atomicOperation, nullBucketId);
-        }
-
-        if (isFileExists(atomicOperation, getFullName())) {
-          final long fileId = openFile(atomicOperation, getFullName());
-          deleteFile(atomicOperation, fileId);
-        }
-      } finally {
-        releaseExclusiveLock();
-      }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-  }
-
-  private Entry<K, V>[] convertBucketToEntries(final OHashIndexBucket<K, V> bucket, final int startIndex,
-      final int endIndex) {
+  private Entry<K, V>[] convertBucketToEntries(final OHashIndexBucket<K, V> bucket, final int startIndex, final int endIndex) {
     @SuppressWarnings("unchecked")
     final Entry<K, V>[] entries = new Entry[endIndex - startIndex];
     final Iterator<Entry<K, V>> iterator = bucket.iterator(startIndex);
@@ -1109,6 +1060,12 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
     try {
       acquireExclusiveLock();
       try {
+        final long size = size();
+        if (size > 0) {
+          throw new NotEmptyComponentCanNotBeRemovedException(
+              getName() + " : Not empty index can not be deleted. Index has " + size + " records");
+        }
+
         directory.delete(atomicOperation);
         deleteFile(atomicOperation, fileStateId);
         deleteFile(atomicOperation, fileId);
@@ -1222,10 +1179,11 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
         isNew = false;
       }
 
+      final V oldValue;
       try {
         final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, isNew);
 
-        final V oldValue = nullBucket.getValue();
+        oldValue = nullBucket.getValue();
 
         if (validator != null) {
           final Object result = validator.validate(null, oldValue, value);
@@ -1247,6 +1205,12 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
       }
 
       changeSize(sizeDiff, atomicOperation);
+
+      atomicOperation.addComponentOperation(
+          new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), null,
+              valueSerializer.getId(), valueSerializer.serializeNativeAsWhole(value),
+              oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
+
       return true;
     } else {
       final long hashCode = keyHashFunction.hashCode(key);
@@ -1266,8 +1230,8 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
             encryption);
         final int index = bucket.getIndex(hashCode, key);
 
+        final V oldValue = index > -1 ? bucket.getValue(index) : null;
         if (validator != null) {
-          final V oldValue = index > -1 ? bucket.getValue(index) : null;
           final Object result = validator.validate(key, oldValue, value);
           if (result == OBaseIndexEngine.Validator.IGNORE) {
             return false;
@@ -1279,12 +1243,19 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
         if (index > -1) {
           final int updateResult = bucket.updateEntry(index, value);
           if (updateResult == 0) {
-            changeSize(sizeDiff, atomicOperation);
+            //we already keep entry with given key-value.
             return true;
           }
 
           if (updateResult == 1) {
             changeSize(sizeDiff, atomicOperation);
+
+            atomicOperation.addComponentOperation(
+                new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
+                    keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes), valueSerializer.getId(),
+                    valueSerializer.serializeNativeAsWhole(value),
+                    oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
+
             return true;
           }
 
@@ -1298,6 +1269,12 @@ public class OLocalHashTableV2<K, V> extends ODurableComponent implements OHashT
           sizeDiff++;
 
           changeSize(sizeDiff, atomicOperation);
+
+          atomicOperation.addComponentOperation(
+              new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
+                  keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes), valueSerializer.getId(),
+                  valueSerializer.serializeNativeAsWhole(value),
+                  oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
           return true;
         }
 

@@ -234,7 +234,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       initAtFirstOpen(ctx);
       this.user = new OImmutableUser(-1,
-          new OUser(user, password).addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
+          new OUser(user, password)); //.addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
       // WAKE UP LISTENERS
       callOnOpenListeners();
@@ -545,9 +545,20 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       }
     };
     tx.begin();
+    Set<ORecord> records = ORecordInternal.getDirtyManager((ORecord) record).getUpdateRecords();
+    if (records != null) {
+      for (ORecord rec : records) {
+        tx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      }
+    }
+    Set<ORecord> newRecords = ORecordInternal.getDirtyManager((ORecord) record).getNewRecords();
+    if (newRecords != null) {
+      for (ORecord rec : newRecords) {
+        tx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      }
+    }
     tx.deleteRecord((ORecord) record, iMode);
     tx.commit();
-
   }
 
   @Override
@@ -853,10 +864,10 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
     if (record instanceof OVertex) {
-      reload(record,"in*:2 out*:2");
+      reload(record, "in*:2 out*:2");
       OVertexDelegate.deleteLinks((OVertex) record);
     } else if (record instanceof OEdge) {
-      reload(record,"in:1 out:1");
+      reload(record, "in:1 out:1");
       OEdgeDelegate.deleteLinks((OEdge) record);
     }
 
@@ -877,5 +888,36 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     }
     return this;
   }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific, int iOperation) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation, Object iResourceSpecific) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific) {
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
+    return (DB) this;
+  }
+
 
 }

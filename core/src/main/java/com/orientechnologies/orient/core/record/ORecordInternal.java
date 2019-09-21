@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
@@ -146,12 +147,20 @@ public class ORecordInternal {
     ((ORecordAbstract) record).setDirtyManager(dirtyManager);
   }
 
-  public static void track(final ORecord pointer, final OIdentifiable pointed) {
-    ((ORecordAbstract) pointer).track(pointed);
+  public static void track(final ORecordElement pointer, final OIdentifiable pointed) {
+    ORecordElement firstRecord = pointer;
+    while (!(firstRecord instanceof ORecord)) {
+      firstRecord = pointer.getOwner();
+    }
+    ((ORecordAbstract) firstRecord).track(pointed);
   }
 
-  public static void unTrack(final ORecord pointer, final OIdentifiable pointed) {
-    ((ORecordAbstract) pointer).unTrack(pointed);
+  public static void unTrack(final ORecordElement pointer, final OIdentifiable pointed) {
+    ORecordElement firstRecord = pointer;
+    while (!(firstRecord instanceof ORecord)) {
+      firstRecord = pointer.getOwner();
+    }
+    ((ORecordAbstract) firstRecord).unTrack(pointed);
   }
 
   public static ORecordSerializer getRecordSerializer(ORecord iRecord) {

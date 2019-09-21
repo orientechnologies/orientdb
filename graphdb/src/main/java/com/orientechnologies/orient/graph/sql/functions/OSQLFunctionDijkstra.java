@@ -60,7 +60,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     result[2] = iParams[2];
     Map<String, Object> options = new HashMap<String, Object>();
     options.put("emptyIfMaxDepth", true);
-    if(iParams.length > 3) {
+    if (iParams.length > 3) {
       options.put("direction", iParams[3]);
     }
     result[3] = options;

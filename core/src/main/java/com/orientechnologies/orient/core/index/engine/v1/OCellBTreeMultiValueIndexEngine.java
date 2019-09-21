@@ -11,17 +11,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
-import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1.OCellBTreeMultiValueV1;
-import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.OCellBTreeMultiValueV2;
+import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v3.OCellBTreeMultiValueV3;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine {
-  private static final int    BINARY_VERSION             = 3;
+  private static final int BINARY_VERSION = 3;
 
   public static final  String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
@@ -29,21 +27,28 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
   private final OCellBTreeMultiValue<Object> sbTree;
   private final String                       name;
+  private final int                          id;
 
-  public OCellBTreeMultiValueIndexEngine(String name, OAbstractPaginatedStorage storage, final int version) {
+  public OCellBTreeMultiValueIndexEngine(int id, String name, OAbstractPaginatedStorage storage, final int version) {
+    this.id = id;
     this.name = name;
 
     if (version == 1) {
-      this.sbTree = new OCellBTreeMultiValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      throw new IllegalArgumentException("Unsupported version of index : " + version);
     } else if (version == 2) {
-      this.sbTree = new OCellBTreeMultiValueV2<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
+      this.sbTree = new CellBTreeMultiValueV2<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
           storage);
     } else if (version == 3) {
-      this.sbTree = new OCellBTreeMultiValueV3<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
+      this.sbTree = new OCellBTreeMultiValueV3<>(id, name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
           storage);
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
@@ -61,8 +66,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
     try {
       //noinspection unchecked
       sbTree.create(keySerializer, keyTypes, keySize, encryption);
@@ -74,18 +78,30 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   @Override
   public void delete() {
     try {
+      doClearTree();
+
       sbTree.delete();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
     }
   }
 
-  @Override
-  public void deleteWithoutLoad(String indexName) {
-    try {
-      sbTree.deleteWithoutLoad();
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
+  private void doClearTree() throws IOException {
+    final Object firstKey = sbTree.firstKey();
+    final Object lastKey = sbTree.lastKey();
+
+    final OCellBTreeMultiValue.OCellBTreeCursor<Object, ORID> cursor = sbTree
+        .iterateEntriesBetween(firstKey, true, lastKey, true, true);
+
+    Map.Entry<Object, ORID> entry = cursor.next(-1);
+    while (entry != null) {
+      sbTree.remove(entry.getKey(), entry.getValue());
+      entry = cursor.next(-1);
+    }
+
+    final List<ORID> rids = sbTree.get(null);
+    for (final ORID rid : rids) {
+      sbTree.remove(null, rid);
     }
   }
 
@@ -102,15 +118,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public boolean remove(Object key) {
-    try {
-      return sbTree.remove(key);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during removal of key " + key + " from index " + name), e);
-    }
-  }
-
-  @Override
   public boolean remove(Object key, ORID value) {
     try {
       return sbTree.remove(key, value);
@@ -123,7 +130,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   @Override
   public void clear() {
     try {
-      sbTree.clear();
+      doClearTree();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during clearing of index " + name), e);
     }

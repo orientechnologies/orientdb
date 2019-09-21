@@ -141,8 +141,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
   /**
    * (Blueprints Extension) Sets multiple properties in one shot against Vertices and Edges. This improves performance avoiding to
-   * save the graph element at every property set.<br>
-   * Example:
+   * save the graph element at every property set.<br> Example:
    * <p>
    * <code>
    * vertex.setProperties( "name", "Jill", "age", 33, "city", "Rome", "born", "Victoria, TX" );
@@ -150,17 +149,12 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * properties:
    * <p>
    * <code>
-   * Map<String,Object> props = new HashMap<String,Object>();
-   * props.put("name", "Jill");
-   * props.put("age", 33);
-   * props.put("city", "Rome");
-   * props.put("born", "Victoria, TX");
-   * vertex.setProperties(props);
+   * Map<String,Object> props = new HashMap<String,Object>(); props.put("name", "Jill"); props.put("age", 33); props.put("city",
+   * "Rome"); props.put("born", "Victoria, TX"); vertex.setProperties(props);
    * </code>
    *
    * @param fields Odd number of fields to set as repeating pairs of key, value, or if one parameter is received and it's a Map, the
-   *               Map
-   *               entries are used as field key/value pairs.
+   *               Map entries are used as field key/value pairs.
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
     if (checkDeletedInTx())
@@ -629,13 +623,11 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       // CREATE A NEW CLASS AT THE FLY
       try {
         graph.executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
-
-                                 @Override
-                                 public OClass call(final OrientBaseGraph g) {
-                                   return schema.createClass(className, schema.getClass(getBaseClassName()));
-
-                                 }
-                               }, "Committing the active transaction to create the new type '", className, "' as subclass of '", getBaseClassName(),
+            @Override
+            public OClass call(final OrientBaseGraph g) {
+              return schema.createClass(className, schema.getClass(getBaseClassName()));
+            }
+          }, "Committing the active transaction to create the new type '", className, "' as subclass of '", getBaseClassName(),
             "'. The transaction will be reopen right after that. To avoid this behavior create the classes outside the transaction");
 
       } catch (OSchemaException e) {
@@ -682,17 +674,12 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * properties:
    * <p>
    * <code>
-   * Map<String,Object> props = new HashMap<String,Object>();
-   * props.put("name", "Jill");
-   * props.put("age", 33);
-   * props.put("city", "Rome");
-   * props.put("born", "Victoria, TX");
-   * vertex.setProperties(props);
+   * Map<String,Object> props = new HashMap<String,Object>(); props.put("name", "Jill"); props.put("age", 33); props.put("city",
+   * "Rome"); props.put("born", "Victoria, TX"); vertex.setProperties(props);
    * </code>
    *
    * @param fields Odd number of fields to set as repeating pairs of key, value, or if one parameter is received and it's a Map, the
-   *               Map
-   *               entries are used as field key/value pairs.
+   *               Map entries are used as field key/value pairs.
    */
   protected <T extends OrientElement> T setPropertiesInternal(final Object... fields) {
     OrientBaseGraph graph = getGraph();

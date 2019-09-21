@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -59,17 +61,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal.closeAllOnShutdown;
-
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
-
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by tglman on 20/07/16.
@@ -388,6 +383,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
+  @Deprecated
   public OStorage getStorage() {
     if (internal == null)
       return delegateStorage;
@@ -532,6 +528,18 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.newElement(className);
   }
 
+  @Override
+  public OElement newEmbeddedElement() {
+    checkOpenness();
+    return internal.newEmbeddedElement();
+  }
+
+  @Override
+  public OElement newEmbeddedElement(String className) {
+    checkOpenness();
+    return internal.newEmbeddedElement(className);
+  }
+
   public boolean isUseLightweightEdges() {
     return internal.isUseLightweightEdges();
   }
@@ -546,7 +554,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.newInstance();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
+  @Deprecated
   public ODictionary<ORecord> getDictionary() {
     checkOpenness();
     return internal.getDictionary();
@@ -652,12 +664,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     checkOpenness();
     internal.delete(iRID, iVersion);
     return this;
-  }
-
-  @Override
-  public boolean hide(ORID rid) {
-    checkOpenness();
-    return internal.hide(rid);
   }
 
   @Override
@@ -1187,21 +1193,21 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId) {
     checkOpenness();
-    return internal.addCluster(iClusterName, iRequestedId, iParameters);
+    return internal.addCluster(iClusterName, iRequestedId);
   }
 
   @Override
-  public boolean dropCluster(String iClusterName, boolean iTruncate) {
+  public boolean dropCluster(String iClusterName) {
     checkOpenness();
-    return internal.dropCluster(iClusterName, iTruncate);
+    return internal.dropCluster(iClusterName);
   }
 
   @Override
-  public boolean dropCluster(int iClusterId, boolean iTruncate) {
+  public boolean dropCluster(int iClusterId) {
     checkOpenness();
-    return internal.dropCluster(iClusterId, iTruncate);
+    return internal.dropCluster(iClusterId);
   }
 
   @Override
@@ -1566,5 +1572,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges() {
+    return internal.getCollectionsChanges();
   }
 }

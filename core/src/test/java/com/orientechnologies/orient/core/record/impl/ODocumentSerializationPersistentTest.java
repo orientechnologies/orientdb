@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -81,7 +82,7 @@ public class ODocumentSerializationPersistentTest {
     }
   }
 
-  @Test
+  @Test(expected = ODatabaseException.class)
   public void testRidBagInEmbeddedDocument() {
     ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument();
@@ -100,14 +101,8 @@ public class ODocumentSerializationPersistentTest {
     doc.field("emb", docs, OType.EMBEDDEDLIST);
     doc.field("some", "test");
 
-    byte[] res = db.getSerializer().toStream(doc, false);
-    ODocument extr = (ODocument) db.getSerializer().fromStream(res, new ODocument(), new String[] {});
-
-    List<ODocument> emb = extr.field("emb");
-    assertNotNull(emb);
-    assertEquals(((ORidBag) emb.get(0).field("rids")).size(), rids.size());
-    assertEquals(emb.get(1).<String>field("text"), doc2.field("text"));
-    assertEquals(extr.<String>field("name"), doc.field("name"));
+    byte[] res = db.getSerializer().toStream(doc);
+    db.getSerializer().fromStream(res, new ODocument(), new String[] {});
 
   }
 }

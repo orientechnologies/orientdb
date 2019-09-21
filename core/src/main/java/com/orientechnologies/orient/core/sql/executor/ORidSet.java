@@ -43,15 +43,18 @@ public class ORidSet implements Set<ORID> {
     maxArraySize = bucketSize;
   }
 
-  @Override public int size() {
+  @Override
+  public int size() {
     return size <= Integer.MAX_VALUE ? (int) size : Integer.MAX_VALUE;
   }
 
-  @Override public boolean isEmpty() {
+  @Override
+  public boolean isEmpty() {
     return size == 0L;
   }
 
-  @Override public boolean contains(Object o) {
+  @Override
+  public boolean contains(Object o) {
     if (size == 0L) {
       return false;
     }
@@ -94,19 +97,23 @@ public class ORidSet implements Set<ORID> {
     return existed > 0L;
   }
 
-  @Override public Iterator<ORID> iterator() {
+  @Override
+  public Iterator<ORID> iterator() {
     return new ORidSetIterator(this);
   }
 
-  @Override public Object[] toArray() {
+  @Override
+  public Object[] toArray() {
     return new Object[0];
   }
 
-  @Override public <T> T[] toArray(T[] a) {
+  @Override
+  public <T> T[] toArray(T[] a) {
     return null;
   }
 
-  @Override public boolean add(ORID identifiable) {
+  @Override
+  public boolean add(ORID identifiable) {
     if (identifiable == null) {
       throw new IllegalArgumentException();
     }
@@ -184,7 +191,8 @@ public class ORidSet implements Set<ORID> {
     return result;
   }
 
-  @Override public boolean remove(Object o) {
+  @Override
+  public boolean remove(Object o) {
     if (!(o instanceof ORID)) {
       throw new IllegalArgumentException();
     }
@@ -227,7 +235,8 @@ public class ORidSet implements Set<ORID> {
 
   }
 
-  @Override public boolean containsAll(Collection<?> c) {
+  @Override
+  public boolean containsAll(Collection<?> c) {
     for (Object o : c) {
       if (!contains(o)) {
         return false;
@@ -236,7 +245,8 @@ public class ORidSet implements Set<ORID> {
     return true;
   }
 
-  @Override public boolean addAll(Collection<? extends ORID> c) {
+  @Override
+  public boolean addAll(Collection<? extends ORID> c) {
     boolean added = false;
     for (ORID o : c) {
       added = added && add(o);
@@ -244,18 +254,21 @@ public class ORidSet implements Set<ORID> {
     return added;
   }
 
-  @Override public boolean retainAll(Collection<?> c) {
+  @Override
+  public boolean retainAll(Collection<?> c) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public boolean removeAll(Collection<?> c) {
+  @Override
+  public boolean removeAll(Collection<?> c) {
     for (Object o : c) {
       remove(o);
     }
     return true;
   }
 
-  @Override public void clear() {
+  @Override
+  public void clear() {
     content = new long[8][][];
     size = 0;
   }

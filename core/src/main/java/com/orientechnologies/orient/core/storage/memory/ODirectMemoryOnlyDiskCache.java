@@ -26,13 +26,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
@@ -40,6 +34,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -184,7 +179,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
   @Override
   public final OCacheEntry loadForWrite(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums, final OLogSequenceNumber startLSN) {
+      final OWriteCache writeCache, final boolean verifyChecksums, final OLogSequenceNumber startLSN) {
 
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
 
@@ -193,13 +188,12 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
     }
 
     cacheEntry.acquireExclusiveLock();
-
     return cacheEntry;
   }
 
   @Override
   public final OCacheEntry loadForRead(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums) {
+      final OWriteCache writeCache, final boolean verifyChecksums) {
 
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
 
@@ -240,10 +234,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
         sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
       }
     }
-  }
-
-  @Override
-  public final void pinPage(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
   }
 
   @Override
@@ -291,7 +281,8 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public final void releaseFromWrite(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
+  public final void releaseFromWrite(final OCacheEntry cacheEntry, final OWriteCache writeCache, boolean changed) {
+    cacheEntry.clearPageOperations();
     cacheEntry.releaseExclusiveLock();
 
     doRelease(cacheEntry);
@@ -370,11 +361,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public final void replaceFileContentWith(final long fileId, final Path newContentFile) {
-    throw new UnsupportedOperationException("replacing file content is not supported for memory storage");
-  }
-
-  @Override
   public final void truncateFile(final long fileId) {
     final int intId = extractFileId(fileId);
 
@@ -428,20 +414,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
     close();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public final void loadCacheState(final OWriteCache writeCache) {
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public final void storeCacheState(final OWriteCache writeCache) {
-  }
-
   @Override
   public void changeMaximumAmountOfMemory(final long calculateReadCacheMaxMemory) {
   }
@@ -478,6 +450,14 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
     } finally {
       metadataLock.unlock();
     }
+  }
+
+  @Override
+  public void restoreModeOn() {
+  }
+
+  @Override
+  public void restoreModeOff() {
   }
 
   @Override
@@ -536,10 +516,10 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
           final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
           final OPointer pointer = bufferPool.acquireDirect(true);
 
-          final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, id, index);
+          final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, id, (int) index);
           cachePointer.incrementReferrer();
 
-          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), index, cachePointer);
+          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), (int) index, cachePointer);
 
           final OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
 
@@ -687,8 +667,18 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public final OCachePointer[] load(final long fileId, final long startPageIndex, final int pageCount,
-      final OModifiableBoolean cacheHit, final boolean verifyChecksums) {
+  public void create() throws IOException {
+
+  }
+
+  @Override
+  public void open() throws IOException {
+
+  }
+
+  @Override
+  public final OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit,
+      final boolean verifyChecksums) {
     throw new UnsupportedOperationException();
   }
 

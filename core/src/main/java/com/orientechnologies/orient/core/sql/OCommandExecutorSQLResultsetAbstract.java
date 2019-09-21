@@ -61,7 +61,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>
  * In the command context you've access to the variable $depth containing the depth level from the root node. This is useful to
  * limit the traverse up to a level. For example to consider from the first depth level (0 is root node) to the third use:
- * <code>TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3</code>. To filter traversed records use it combined with a SELECT
+ * <code>TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3</code>. To filter traversed records use it combined with a
+ * SELECT
  * statement:
  * </p>
  * <p>
@@ -71,21 +72,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements
-    OCommandDistributedReplicateRequest, Iterable<OIdentifiable>, OIterableRecordSource {
-  protected static final String               KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
-  protected static final String               KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
+public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest, Iterable<OIdentifiable>, OIterableRecordSource {
+  protected static final String KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
+  protected static final String KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
   protected OSQLAsynchQuery<ODocument>        request;
   protected OSQLTarget                        parsedTarget;
   protected OSQLFilter                        compiledFilter;
-  protected Map<String, Object>               let                = null;
+  protected Map<String, Object>               let           = null;
   protected Iterator<? extends OIdentifiable> target;
   protected Iterable<OIdentifiable>           tempResult;
   protected int                               resultCount;
-  protected AtomicInteger                     serialTempRID      = new AtomicInteger(0);
-  protected int                               skip               = 0;
-  protected boolean                           lazyIteration      = true;
+  protected AtomicInteger                     serialTempRID = new AtomicInteger(0);
+  protected int                               skip          = 0;
+  protected boolean                           lazyIteration = true;
 
   private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
     private OIndexCursor  indexCursor;
@@ -93,10 +94,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     private boolean       noItems;
 
     private IndexValuesIterator(String indexName, boolean ascOrder) {
+      final ODatabaseDocumentInternal database = getDatabase();
       if (ascOrder)
-        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).cursor();
+        indexCursor = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).cursor();
       else
-        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).descCursor();
+        indexCursor = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).descCursor();
     }
 
     @Override
@@ -181,8 +183,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   /**
    * Assign the right TARGET if found.
    *
-   * @param iArgs
-   *          Parameters to bind
+   * @param iArgs Parameters to bind
+   *
    * @return true if the target has been recognized, otherwise false
    */
   protected boolean assignTarget(final Map<Object, Object> iArgs) {
@@ -328,9 +330,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Parses the limit keyword if found.
    *
    * @param w
+   *
    * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
-   * @throws OCommandSQLParsingException
-   *           if no valid limit has been found
+   *
+   * @throws OCommandSQLParsingException if no valid limit has been found
    */
   protected int parseLimit(final String w) throws OCommandSQLParsingException {
     if (!w.equals(KEYWORD_LIMIT))
@@ -345,7 +348,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
 
     if (limit == 0)
-      throwParsingException("Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
+      throwParsingException(
+          "Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
 
     return limit;
   }
@@ -354,9 +358,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Parses the skip keyword if found.
    *
    * @param w
+   *
    * @return the skip found as integer, or -1 if no skip is found. -1 means no skip.
-   * @throws OCommandSQLParsingException
-   *           if no valid skip has been found
+   *
+   * @throws OCommandSQLParsingException if no valid skip has been found
    */
   protected int parseSkip(final String w) throws OCommandSQLParsingException {
     if (!w.equals(KEYWORD_SKIP) && !w.equals(KEYWORD_OFFSET))
@@ -368,13 +373,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       skip = Integer.parseInt(word);
 
     } catch (NumberFormatException ignore) {
-      throwParsingException("Invalid SKIP value setted to '" + word
-          + "' but it should be a valid positive integer. Example: SKIP 10");
+      throwParsingException(
+          "Invalid SKIP value setted to '" + word + "' but it should be a valid positive integer. Example: SKIP 10");
     }
 
     if (skip < 0)
-      throwParsingException("Invalid SKIP value setted to the negative number '" + word
-          + "'. Only positive numbers are valid. Example: SKIP 10");
+      throwParsingException(
+          "Invalid SKIP value setted to the negative number '" + word + "'. Only positive numbers are valid. Example: SKIP 10");
 
     return skip;
   }
@@ -441,7 +446,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
             varValue = f.execute(iRecord, iRecord, null, context);
         } else if (letValue instanceof String) {
           OSQLPredicate pred = new OSQLPredicate(((String) letValue).trim());
-          varValue = pred.evaluate(iRecord, (ODocument)iRecord, context);
+          varValue = pred.evaluate(iRecord, (ODocument) iRecord, context);
         } else
           varValue = letValue;
 
@@ -467,11 +472,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
     if (iAscendentOrder)
-      return new ORecordIteratorClass<ORecord>(database, iCls.getName(), iPolymorphic, false).setRange(range[0],
-          range[1]);
+      return new ORecordIteratorClass<ORecord>(database, iCls.getName(), iPolymorphic, false).setRange(range[0], range[1]);
     else
-      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic).setRange(range[0],
-          range[1]);
+      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic)
+          .setRange(range[0], range[1]);
   }
 
   protected boolean isUseCache() {
@@ -551,6 +555,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Check function arguments and pre calculate it if possible
    *
    * @param function
+   *
    * @return optimized function, same function if no change
    */
   protected Object optimizeFunction(OSQLFunctionRuntime function) {

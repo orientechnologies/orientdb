@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -485,7 +486,7 @@ public class OVertexDelegate implements OVertex {
     final OType propType = prop != null && prop.getType() != OType.ANY ? prop.getType() : null;
 
     if (found == null) {
-      if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) {//TODO constant
+      if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) { //TODO constant
         final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(iTo);
         out = coll;
@@ -506,7 +507,7 @@ public class OVertexDelegate implements OVertex {
         throw new ODatabaseException(
             "Type of field provided in schema '" + prop.getType() + "' cannot be used for creation to hold several links.");
 
-      if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {//TODO constant
+      if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) { //TODO constant
         final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(found);
         coll.add(iTo);
@@ -704,119 +705,7 @@ public class OVertexDelegate implements OVertex {
   }
 
   public ORID moveTo(final String iClassName, final String iClusterName) {
-
-    if (checkDeletedInTx())
-      throw new ORecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
-
-    final ORID oldIdentity = getIdentity().copy();
-
-    final ORecord oldRecord = oldIdentity.getRecord();
-    if (oldRecord == null)
-      throw new ORecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
-
-    final ODocument doc = ((ODocument) getRecord()).copy();
-
-    final Iterable<OEdge> outEdges = getEdges(ODirection.OUT);
-    final Iterable<OEdge> inEdges = getEdges(ODirection.IN);
-
-    // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
-    copyRidBags(oldRecord, doc);//TODO! check this!!!
-    oldRecord.delete();
-
-    if (iClassName != null)
-      // OVERWRITE CLASS
-      doc.setClassName(iClassName);
-
-    // SAVE THE NEW VERTEX
-    doc.setDirty();
-
-    // RESET IDENTITY
-    ORecordInternal.setIdentity(doc, new ORecordId());
-
-    if (iClusterName != null)
-      doc.save(iClusterName);
-    else
-      doc.save();
-
-    final ORID newIdentity = doc.getIdentity();
-
-    // CONVERT OUT EDGES
-    for (OEdge oe : outEdges) {
-      if (oe.isLightweight()) {
-        // REPLACE ALL REFS IN inVertex
-        final OVertex inV = oe.getVertex(ODirection.IN);
-
-        final String inFieldName = getConnectionFieldName(ODirection.IN, oe.getSchemaType().map(x -> x.getName()).orElse(null),
-            true);
-
-        replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity);
-      } else {
-        // REPLACE WITH NEW VERTEX
-        oe.setProperty("out", newIdentity);
-        oe.save();
-      }
-    }
-
-    for (OEdge oe : inEdges) {
-      if (oe.isLightweight()) {
-        // REPLACE ALL REFS IN outVertex
-        final OVertex outV = oe.getVertex(ODirection.OUT);
-
-        final String outFieldName = getConnectionFieldName(ODirection.OUT, oe.getSchemaType().map(x -> x.getName()).orElse(null),
-            true);
-
-        replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity);
-      } else {
-        // REPLACE WITH NEW VERTEX
-        oe.setProperty("in", newIdentity);
-        oe.save();
-      }
-    }
-
-    // FINAL SAVE
-    doc.save();
-
-    return newIdentity;
-  }
-
-  protected boolean checkDeletedInTx() {
-
-    ODatabaseDocument db = getDatabase();
-    if (db == null)
-      return false;
-
-    ORID id;
-    if (getRecord() != null)
-      id = getRecord().getIdentity();
-    else
-      return false;
-
-    final ORecordOperation oper = db.getTransaction().getRecordEntry(id);
-    if (oper == null)
-      return id.isTemporary();
-    else
-      return oper.type == ORecordOperation.DELETED;
-  }
-
-  private void copyRidBags(ORecord oldRecord, ODocument newDoc) {
-    ODocument oldDoc = (ODocument) oldRecord;
-    for (String field : oldDoc.fieldNames()) {
-      if (field.equalsIgnoreCase("out") || field.equalsIgnoreCase("in") || field.startsWith("out_") || field.startsWith("in_")
-          || field.startsWith("OUT_") || field.startsWith("IN_")) {
-        Object val = oldDoc.rawField(field);
-        if (val instanceof ORidBag) {
-          ORidBag bag = (ORidBag) val;
-          if (!bag.isEmbedded()) {
-            ORidBag newBag = new ORidBag();
-            Iterator<OIdentifiable> rawIter = bag.rawIterator();
-            while (rawIter.hasNext()) {
-              newBag.add(rawIter.next());
-            }
-            newDoc.field(field, newBag);
-          }
-        }
-      }
-    }
+    return OVertexDocument.moveTo(iClassName, iClusterName, this, (ODatabaseSession) getDatabase());
   }
 
   public static String getConnectionFieldName(final ODirection iDirection, final String iClassName,

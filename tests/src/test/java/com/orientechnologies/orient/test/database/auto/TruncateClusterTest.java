@@ -33,7 +33,7 @@ public class TruncateClusterTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(database.countClusterElements(clusterId), 0);
 
-    database.dropCluster(clusterId, false);
+    database.dropCluster(clusterId);
   }
 
   public void testClusterWithIndex() {
@@ -88,7 +88,7 @@ public class TruncateClusterTest extends DocumentDBBaseTest {
     }
 
     Assert.assertEquals(database.countClusterElements(clusterId), 1);
-    database.dropCluster(clusterId, false);
+    database.dropCluster(clusterId);
   }
 
   public void testClusterInClassIsAbsent() {
@@ -118,6 +118,6 @@ public class TruncateClusterTest extends DocumentDBBaseTest {
     Assert.assertEquals(database.countClusterElements(clusterId), 1);
     Assert.assertEquals(database.countClass(className), 1);
 
-    database.dropCluster(clusterId, false);
+    database.dropCluster(clusterId);
   }
 }

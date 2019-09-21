@@ -136,6 +136,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   @Override
   public void shutdown() {
+
     sendShutdown();
     channel.close();
 
@@ -316,7 +317,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             }
             exception = t;
           } catch (Error err) {
-            if(connection!=null) {
+            if (connection != null) {
               connection.release();
             }
             throw err;
@@ -382,7 +383,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           // THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR COMPATIBILITY IT'S ONLY IF THERE
           // IS NO CONNECTION
           shutdown();
-          throw new OIOException("Found unknown session " + clientTxId);
+          throw new ONetworkProtocolException("Found unknown session " + clientTxId);
         }
         connection = server.getClientConnectionManager().connect(this);
         connection.getData().sessionId = clientTxId;
@@ -623,7 +624,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         byte[] renewedToken = null;
         if (connection != null && connection.getToken() != null) {
           renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-          if(renewedToken.length > 0) {
+          if (renewedToken.length > 0) {
             connection.setTokenBytes(renewedToken);
           }
         }
@@ -739,7 +740,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       byte[] renewedToken = null;
       if (connection != null && connection.getToken() != null) {
         renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-        if(renewedToken.length > 0) {
+        if (renewedToken.length > 0) {
           connection.setTokenBytes(renewedToken);
         }
       }
@@ -824,7 +825,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         .equals(name))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      stream = ser.toStream(iRecord, false);
+      stream = ser.toStream(iRecord);
     } else
       stream = iRecord.toStream();
 

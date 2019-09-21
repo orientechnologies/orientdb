@@ -75,6 +75,7 @@ public interface ODatabaseListener {
   default void onCommandStart(ODatabase database,OResultSet resultSet) {
 
   }
+
   default void onCommandEnd(ODatabase database,OResultSet resultSet) {
 
   }

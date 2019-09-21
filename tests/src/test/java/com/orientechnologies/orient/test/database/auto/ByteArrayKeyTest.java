@@ -2,19 +2,14 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -23,15 +18,9 @@ import java.util.Collection;
 
 @Test
 public class ByteArrayKeyTest extends DocumentDBBaseTest {
-  private OIndex<?> manualIndex;
-
   @Parameters(value = "url")
   public ByteArrayKeyTest(@Optional String url) {
     super(url);
-  }
-
-  protected OIndex<?> getManualIndex() {
-    return database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");
   }
 
   @BeforeClass
@@ -48,47 +37,11 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     compositeByteArrayKeyTest.createProperty("intKey", OType.INTEGER);
 
     compositeByteArrayKeyTest.createIndex("compositeByteArrayKey", OClass.INDEX_TYPE.UNIQUE, "byteArrayKey", "intKey");
-
-    database
-        .getMetadata()
-        .getIndexManager()
-        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null,
-            null);
-  }
-
-  @BeforeMethod
-  public void beforeMethod() throws Exception {
-    super.beforeMethod();
-
-    OIndex<?> index = getManualIndex();
-
-    if (index == null) {
-      index = database.getMetadata().getIndexManager()
-          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
-      this.manualIndex = index;
-    } else {
-      index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");
-      this.manualIndex = index;
-    }
-  }
-
-  public void testUsage() {
-    OIndex<?> index = getManualIndex();
-    byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
-    ODocument doc1 = new ODocument().field("k", "key1");
-    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
-    index.put(key1, doc1);
-
-    byte[] key2 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2 };
-    ODocument doc2 = new ODocument().field("k", "key1");
-    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
-    index.put(key2, doc2);
-
-    Assert.assertEquals(index.get(key1), doc1);
-    Assert.assertEquals(index.get(key2), doc2);
   }
 
   public void testAutomaticUsage() {
+    checkEmbeddedDB();
+
     byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
 
     ODocument doc1 = new ODocument("ByteArrayKeyTest");
@@ -100,12 +53,14 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     doc2.field("byteArrayKey", key2);
     doc2.save();
 
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byteArrayKeyIndex");
+    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "byteArrayKeyIndex");
     Assert.assertEquals(index.get(key1), doc1);
     Assert.assertEquals(index.get(key2), doc2);
   }
 
   public void testAutomaticCompositeUsage() {
+    checkEmbeddedDB();
+
     byte[] key1 = new byte[] { 1, 2, 3 };
     byte[] key2 = new byte[] { 4, 5, 6 };
 
@@ -119,12 +74,14 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     doc2.field("intKey", 2);
     doc2.save();
 
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("compositeByteArrayKey");
+    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "compositeByteArrayKey");
     Assert.assertEquals(index.get(new OCompositeKey(key1, 1)), doc1);
     Assert.assertEquals(index.get(new OCompositeKey(key2, 2)), doc2);
   }
 
   public void testAutomaticCompositeUsageInTX() {
+    checkEmbeddedDB();
+
     byte[] key1 = new byte[] { 7, 8, 9 };
     byte[] key2 = new byte[] { 10, 11, 12 };
 
@@ -140,132 +97,18 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     doc2.save();
     database.commit();
 
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("compositeByteArrayKey");
+    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "compositeByteArrayKey");
     Assert.assertEquals(index.get(new OCompositeKey(key1, 1)), doc1);
     Assert.assertEquals(index.get(new OCompositeKey(key2, 2)), doc2);
   }
 
-  @Test(dependsOnMethods = { "testUsage" })
-  public void testRemove() {
-    byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
-    byte[] key2 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2 };
-
-    OIndex<?> index = getManualIndex();
-    Assert.assertTrue(index.remove(key1));
-
-    Assert.assertNull(index.get(key1));
-    Assert.assertNotNull(index.get(key2));
-  }
-
-  public void testRemoveKeyValue() {
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex-notunique");
-
-    byte[] key1 = new byte[] { 0, 1, 2, 3 };
-    byte[] key2 = new byte[] { 4, 5, 6, 7 };
-
-    final ODocument doc1 = new ODocument().field("k", "key1");
-    final ODocument doc2 = new ODocument().field("k", "key1");
-    final ODocument doc3 = new ODocument().field("k", "key2");
-    final ODocument doc4 = new ODocument().field("k", "key2");
-
-    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
-    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
-    doc3.save(database.getClusterNameById(database.getDefaultClusterId()));
-    doc4.save(database.getClusterNameById(database.getDefaultClusterId()));
-
-    index.put(key1, doc1);
-    index.put(key1, doc2);
-    index.put(key2, doc3);
-    index.put(key2, doc4);
-
-    Assert.assertTrue(index.remove(key1, doc2));
-
-    Assert.assertEquals(((Collection<?>) index.get(key1)).size(), 1);
-    Assert.assertEquals(((Collection<?>) index.get(key2)).size(), 2);
-  }
-
-  @Test(dependsOnMethods = { "testAutomaticUsage", "testRemoveKeyValue" })
+  @Test(dependsOnMethods = { "testAutomaticUsage" })
   public void testContains() {
     byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
     byte[] key2 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2 };
 
-    OIndex<?> autoIndex = database.getMetadata().getIndexManager().getIndex("byteArrayKeyIndex");
+    OIndex<?> autoIndex = database.getMetadata().getIndexManagerInternal().getIndex(database, "byteArrayKeyIndex");
     Assert.assertTrue(autoIndex.contains(key1));
     Assert.assertTrue(autoIndex.contains(key2));
-
-    byte[] key3 = new byte[] { 0, 1, 2, 3 };
-    byte[] key4 = new byte[] { 4, 5, 6, 7 };
-
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex-notunique");
-
-    Assert.assertTrue(index.contains(key3));
-    Assert.assertTrue(index.contains(key4));
-  }
-
-  public void testTransactionalUsageWorks() {
-    if (database.getURL().startsWith("remote:"))
-      return;
-
-    database.begin(OTransaction.TXTYPE.OPTIMISTIC);
-    byte[] key3 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 3 };
-    ODocument doc1 = new ODocument().field("k", "key3");
-    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
-    manualIndex.put(key3, doc1);
-
-    byte[] key4 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 4 };
-    ODocument doc2 = new ODocument().field("k", "key4");
-    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
-    manualIndex.put(key4, doc2);
-
-    database.commit();
-
-    Assert.assertEquals(manualIndex.get(key3), doc1);
-    Assert.assertEquals(manualIndex.get(key4), doc2);
-  }
-
-  @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
-  public void testTransactionalUsageBreaks1() {
-    if (database.getURL().startsWith("remote:"))
-      return;
-
-    database.begin(OTransaction.TXTYPE.OPTIMISTIC);
-    OIndex<?> index = getManualIndex();
-    byte[] key5 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 5 };
-    ODocument doc1 = new ODocument().field("k", "key5");
-    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
-    index.put(key5, doc1);
-
-    byte[] key6 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 6 };
-    ODocument doc2 = new ODocument().field("k", "key6");
-    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
-    index.put(key6, doc2);
-
-    database.commit();
-
-    Assert.assertEquals(index.get(key5), doc1);
-    Assert.assertEquals(index.get(key6), doc2);
-  }
-
-  @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
-  public void testTransactionalUsageBreaks2() {
-    if (database.getURL().startsWith("remote:"))
-      return;
-
-    OIndex<?> index = getManualIndex();
-    database.begin(OTransaction.TXTYPE.OPTIMISTIC);
-    byte[] key7 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 7 };
-    ODocument doc1 = new ODocument().field("k", "key7");
-    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
-    index.put(key7, doc1);
-
-    byte[] key8 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 8 };
-    ODocument doc2 = new ODocument().field("k", "key8");
-    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
-    index.put(key8, doc2);
-
-    database.commit();
-
-    Assert.assertEquals(index.get(key7), doc1);
-    Assert.assertEquals(index.get(key8), doc2);
   }
 }

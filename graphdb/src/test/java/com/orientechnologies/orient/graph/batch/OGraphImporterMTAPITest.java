@@ -4,15 +4,12 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import com.tinkerpop.blueprints.impls.orient.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,9 +21,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Simple Multi-threads graph importer. Source file downloaded from
- * http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv.
- * 
+ * Simple Multi-threads graph importer. Source file downloaded from http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv.
+ *
  * @author Luca Garulli
  */
 
@@ -53,14 +49,12 @@ public class OGraphImporterMTAPITest {
     OrientVertexType user = graph.createVertexType("User", 64);
     user.createProperty("uid", OType.STRING);
 
-    user.createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, "AUTOSHARDING",
-        new String[] { "uid" });
+    user.createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, "AUTOSHARDING", new String[] { "uid" });
 
     OrientVertexType product = graph.createVertexType("Product", 64);
     product.createProperty("uid", OType.STRING);
 
-    product.createIndex("Product.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null,
-        "AUTOSHARDING", new String[] { "uid" });
+    product.createIndex("Product.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, "AUTOSHARDING", new String[] { "uid" });
 
     graph.createEdgeType("Reviewed");
 
@@ -90,11 +84,12 @@ public class OGraphImporterMTAPITest {
         public void run() {
           final OrientGraph localGraph = new OrientGraph(dbUrl, "admin", "admin", false);
 
-          final OIndex<?> userIndex = localGraph.getRawGraph().getMetadata().getIndexManager().getIndex("User.uid");
-          final OIndex<?> productIndex = localGraph.getRawGraph().getMetadata().getIndexManager().getIndex("Product.uid");
+          final ODatabaseDocumentInternal db = localGraph.getRawGraph();
+          final OIndex<?> userIndex = db.getMetadata().getIndexManagerInternal().getIndex(db, "User.uid");
+          final OIndex<?> productIndex = db.getMetadata().getIndexManagerInternal().getIndex(db, "Product.uid");
 
           localGraph.begin();
-          for (int i = 0;; ++i) {
+          for (int i = 0; ; ++i) {
             final String line;
 
             try {
@@ -159,7 +154,7 @@ public class OGraphImporterMTAPITest {
       threads[i].start();
 
     try {
-      for (String line; (line = br.readLine()) != null;) {
+      for (String line; (line = br.readLine()) != null; ) {
         row++;
         queue.put(line);
       }

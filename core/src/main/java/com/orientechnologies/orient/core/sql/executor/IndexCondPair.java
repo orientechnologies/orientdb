@@ -18,7 +18,8 @@ class IndexCondPair {
     this.additionalRange = additionalRangeCondition;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -34,7 +35,8 @@ class IndexCondPair {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = mainCondition != null ? mainCondition.hashCode() : 0;
     result = 31 * result + (additionalRange != null ? additionalRange.hashCode() : 0);
     return result;

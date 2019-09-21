@@ -27,14 +27,13 @@ import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 
@@ -49,9 +48,12 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   private boolean convertToRecord = true;
   private int     size            = 0;
 
-  private transient ORecord owner;
+  private transient ORecordElement owner;
 
-  private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
+  private boolean dirty            = false;
+  private boolean transactionDirty = false;
+
+  private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker = new OSimpleMultiValueTracker<>(this);
 
   @Override
   public void setSize(int size) {
@@ -140,12 +142,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
       size--;
       contentWasChanged = true;
-      if (OEmbeddedRidBag.this.owner != null)
-        ORecordInternal.unTrack(OEmbeddedRidBag.this.owner, nextValue);
-
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null,
-              nextValue));
+      removeEvent(nextValue);
     }
 
     protected void swapValueOnCurrent(OIdentifiable newValue) {
@@ -160,8 +157,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
       contentWasChanged = true;
 
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<>(OMultiValueChangeEvent.OChangeType.UPDATE, oldValue, oldValue, newValue));
+      updateEvent(oldValue, oldValue, newValue);
     }
 
     @Override
@@ -190,7 +186,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public ORecord getOwner() {
+  public ORecordElement getOwner() {
     return owner;
   }
 
@@ -208,7 +204,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public void setOwner(ORecord owner) {
+  public void setOwner(ORecordElement owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
@@ -249,9 +245,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     size++;
     contentWasChanged = true;
 
-    fireCollectionChangedEvent(
-        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, identifiable,
-            identifiable));
+    addEvent(identifiable, identifiable);
   }
 
   public OEmbeddedRidBag copy() {
@@ -262,9 +256,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     copy.convertToRecord = convertToRecord;
     copy.size = size;
     copy.owner = owner;
-    if (changeListeners != null) {
-      copy.changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>(changeListeners);
-    }
+    copy.tracker = this.tracker;
     return copy;
   }
 
@@ -275,12 +267,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       size--;
       contentWasChanged = true;
 
-      if (this.owner != null)
-        ORecordInternal.unTrack(this.owner, identifiable);
-
-      fireCollectionChangedEvent(
-          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null,
-              identifiable));
+      removeEvent(identifiable);
     }
   }
 
@@ -383,7 +370,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     if (size < 10) {
       final StringBuilder sb = new StringBuilder(256);
       sb.append('[');
-      for (final Iterator<OIdentifiable> it = this.iterator(); it.hasNext(); ) {
+      for (final Iterator<OIdentifiable> it = this.rawIterator(); it.hasNext(); ) {
         try {
           OIdentifiable e = it.next();
           if (e != null) {
@@ -400,19 +387,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
     } else
       return "[size=" + size + "]";
-  }
-
-  @Override
-  public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
-    if (changeListeners == null)
-      changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>();
-    changeListeners.add(changeListener);
-  }
-
-  @Override
-  public void removeRecordChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
-    if (changeListeners != null)
-      changeListeners.remove(changeListener);
   }
 
   @Override
@@ -506,7 +480,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (identifiable == null)
         OLogManager.instance().warn(this, "Found null reference during ridbag deserialization (rid=%s)", rid);
       else
-        addEntry(identifiable);
+        addInternal(identifiable);
     }
 
     return offset;
@@ -521,21 +495,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     return OIdentifiable.class;
   }
 
-  @Override
-  public List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners() {
-    if (changeListeners == null)
-      return Collections.emptyList();
-    return Collections.unmodifiableList(changeListeners);
-  }
-
-  @Override
-  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    if (changeListeners != null) {
-      for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-        if (changeListener != null)
-          changeListener.onAfterRecordChanged(event);
-      }
-    }
+  public void addInternal(final OIdentifiable identifiable) {
+    addEntry(identifiable);
+    if (this.owner != null)
+      ORecordInternal.track(this.owner, identifiable);
   }
 
   public void addEntry(final OIdentifiable identifiable) {
@@ -549,9 +512,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         System.arraycopy(oldEntries, 0, entries, 0, oldEntries.length);
       }
     }
-    if (this.owner != null)
-      ORecordInternal.track(this.owner, identifiable);
-
     entries[entriesLength] = identifiable;
     entriesLength++;
   }
@@ -577,5 +537,103 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     // do nothing not needed
+  }
+
+  private void addEvent(OIdentifiable key, OIdentifiable identifiable) {
+    if (this.owner != null)
+      ORecordInternal.track(this.owner, identifiable);
+
+    if (tracker.isEnabled()) {
+      tracker.add(key, identifiable);
+    } else {
+      setDirty();
+    }
+  }
+
+  private void updateEvent(OIdentifiable key, OIdentifiable oldValue, OIdentifiable newValue) {
+    if (this.owner != null)
+      ORecordInternal.unTrack(this.owner, oldValue);
+
+    if (tracker.isEnabled()) {
+      tracker.updated(key, oldValue, newValue);
+    } else {
+      setDirty();
+    }
+  }
+
+  private void removeEvent(OIdentifiable removed) {
+    if (this.owner != null)
+      ORecordInternal.unTrack(this.owner, removed);
+
+    if (tracker.isEnabled()) {
+      tracker.remove(removed, removed);
+    } else {
+      setDirty();
+    }
+  }
+
+  public void enableTracking(ORecordElement parent) {
+    if (!tracker.isEnabled()) {
+      tracker.enable();
+    }
+  }
+
+  public void disableTracking(ORecordElement document) {
+    if (tracker.isEnabled()) {
+      tracker.disable();
+      this.dirty = false;
+    }
+  }
+
+  @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    this.transactionDirty = false;
+  }
+
+  @Override
+  public boolean isModified() {
+    return dirty;
+  }
+
+  @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    return tracker.getTimeLine();
+  }
+
+  @Override
+  public <RET> RET setDirty() {
+    if (owner != null) {
+      owner.setDirty();
+    }
+    this.dirty = true;
+    this.transactionDirty = true;
+    return (RET) this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (owner != null)
+      owner.setDirtyNoChanged();
+  }
+
+  @Override
+  public OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> getTracker() {
+    return tracker;
+  }
+
+  @Override
+  public void setTracker(OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker) {
+    this.tracker.sourceFrom(tracker);
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> getTransactionTimeLine() {
+    return tracker.getTransactionTimeLine();
   }
 }

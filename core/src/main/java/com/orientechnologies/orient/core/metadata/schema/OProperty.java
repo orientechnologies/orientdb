@@ -133,7 +133,7 @@ public interface OProperty extends Comparable<OProperty> {
    *
    * @return String, can be null
    */
-   public String getDefaultValue();
+  public String getDefaultValue();
 
   /**
    * @see OProperty#getDefaultValue()
@@ -207,7 +207,7 @@ public interface OProperty extends Comparable<OProperty> {
    * Remove the index on property
    * 
    * @return
-   * @deprecated Use {@link com.orientechnologies.orient.core.index.OIndexManager#dropIndex(String)} instead.
+   * @deprecated Use SQL command instead.
    */
   @Deprecated
   public OProperty dropIndexes();

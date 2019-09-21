@@ -29,14 +29,14 @@ import java.io.IOException;
 public interface OCluster {
 
   enum ATTRIBUTES {
-    NAME, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, CONFLICTSTRATEGY, STATUS, ENCRYPTION
+    NAME, CONFLICTSTRATEGY, STATUS, ENCRYPTION
   }
 
-  void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
+  void configure(int iId, String iClusterName) throws IOException;
 
   void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
 
-  void create(int iStartSize) throws IOException;
+  void create() throws IOException;
 
   void open() throws IOException;
 
@@ -46,16 +46,15 @@ public interface OCluster {
 
   void delete() throws IOException;
 
-  Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+  void setClusterName(String name);
+
+  void setRecordConflictStrategy(String conflictStrategy);
+
+  void setEncryption(String encryptionName, String encryptionKey);
 
   String encryption();
 
   long getTombstonesCount();
-
-  /**
-   * Truncates the cluster content. All the entries will be removed.
-   */
-  void truncate() throws IOException;
 
   /**
    * Allocates a physical position pointer on the storage for generate an id without a content.
@@ -82,11 +81,6 @@ public interface OCluster {
   boolean deleteRecord(long clusterPosition) throws IOException;
 
   void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
-
-  /**
-   * Recycling a record position that was deleted.
-   */
-  void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
 
   ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException;
 
@@ -126,11 +120,7 @@ public interface OCluster {
    */
   long getRecordsSize() throws IOException;
 
-  float recordGrowFactor();
-
   String compression();
-
-  float recordOverflowGrowFactor();
 
   boolean isSystemCluster();
 
@@ -141,18 +131,6 @@ public interface OCluster {
   OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException;
 
   OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException;
-
-  /**
-   * Hides records content by putting tombstone on the records position but does not delete record itself.
-   * <p>This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method.
-   *
-   * @param position Position of record in cluster
-   *
-   * @return false if record does not exist.
-   *
-   * @throws java.lang.UnsupportedOperationException In case current version of cluster does not support given operation.
-   */
-  boolean hideRecord(long position) throws IOException;
 
   ORecordConflictStrategy getRecordConflictStrategy();
 

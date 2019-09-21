@@ -79,7 +79,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public long getSynchTimeout() {
-    return 0;
+    return timeout;
   }
 
   @Override
@@ -112,8 +112,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return null;
   }
 
-
-  public String getNodeNameFromPayload(OTransactionResultPayload payload){
+  public String getNodeNameFromPayload(OTransactionResultPayload payload) {
     return this.payloadToNode.get(payload);
   }
 

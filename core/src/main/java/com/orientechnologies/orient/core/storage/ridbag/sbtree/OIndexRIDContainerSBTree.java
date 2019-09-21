@@ -45,7 +45,7 @@ import java.util.Set;
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
-  private static final String INDEX_FILE_EXTENSION = ".irs";
+  public static final String INDEX_FILE_EXTENSION = ".irs";
 
   /**
    * Generates a lock name for the given index name.

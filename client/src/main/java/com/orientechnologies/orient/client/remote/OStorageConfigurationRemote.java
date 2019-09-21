@@ -7,13 +7,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 
 public class OStorageConfigurationRemote implements OStorageConfiguration {
 
@@ -168,7 +162,7 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   }
 
   @Override
-  public OStorageConfiguration.IndexEngineData getIndexEngine(String name) {
+  public OStorageConfiguration.IndexEngineData getIndexEngine(String name, int defaultIndexId) {
     throw new UnsupportedOperationException();
   }
 

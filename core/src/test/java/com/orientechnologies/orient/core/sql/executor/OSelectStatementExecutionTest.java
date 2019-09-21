@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -8,11 +9,7 @@ import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -23,16 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
@@ -1011,330 +999,6 @@ public class OSelectStatementExecutionTest {
     Assert.assertNotNull(result.next());
     Assert.assertTrue(result.hasNext());
     Assert.assertNotNull(result.next());
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndex() {
-    String className = "testFetchFromIndex";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from index:" + className + ".name where key = 'name1'");
-    printExecutionPlan(result);
-    Assert.assertTrue(result.hasNext());
-    Assert.assertNotNull(result.next());
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexMajor() {
-    String className = "testFetchFromIndexMajor";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from index:" + className + ".name where key > 'name1'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 8; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-    }
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexMajorEqual() {
-    String className = "testFetchFromIndexMajorEqual";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from index:" + className + ".name where key >= 'name1'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 9; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-    }
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexMinor() {
-    String className = "testFetchFromIndexMinor";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from index:" + className + ".name where key < 'name3'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 3; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-    }
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexLessOrEqual() {
-    String className = "testFetchFromIndexLessOrEqual";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from index:" + className + ".name where key <= 'name3'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 4; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-    }
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexBetween() {
-    String className = "testFetchFromIndexBetween";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from index:" + className + ".name where key between 'name1' and 'name5'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 5; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-    }
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexWithoutConditions1() {
-    String className = "testFetchFromIndexWithoutConditions1";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from index:" + className + ".name");
-    printExecutionPlan(result);
-    for (int i = 0; i < 10; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-    }
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexWithoutConditions2() {
-    String className = "testFetchFromIndexWithoutConditions2";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "name");
-
-    ODocument doc = db.newInstance(className);
-    doc.setProperty("name", "name1");
-    doc.save();
-
-    try {
-      db.query("select from index:" + className + ".name").close();
-      Assert.fail();
-    } catch (OCommandExecutionException ex) {
-
-    } catch (Exception x) {
-      Assert.fail();
-    }
-  }
-
-  @Test
-  public void testFetchFromIndexValues() {
-    String className = "testFetchFromIndexValues";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i % 3);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from indexvalues:" + className + ".name");
-    printExecutionPlan(result);
-    Set<String> expectedValues = new HashSet<>();
-    expectedValues.add("name0");
-    expectedValues.add("name1");
-    expectedValues.add("name2");
-    Object lastValue = null;
-    for (int i = 0; i < 10; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-      String currentValue = next.getProperty("name");
-      Assert.assertNotNull(currentValue);
-      if (lastValue != null) {
-        Assert.assertTrue(currentValue.compareTo(lastValue.toString()) >= 0);
-      }
-      expectedValues.remove(lastValue);
-      lastValue = currentValue;
-    }
-    Assert.assertTrue(expectedValues.isEmpty());
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexValuesAsc() {
-    String className = "testFetchFromIndexValuesAsc";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i % 3);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from indexvaluesasc:" + className + ".name");
-    printExecutionPlan(result);
-    Set<String> expectedValues = new HashSet<>();
-    expectedValues.add("name0");
-    expectedValues.add("name1");
-    expectedValues.add("name2");
-    Object lastValue = null;
-    for (int i = 0; i < 10; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-      String currentValue = next.getProperty("name");
-      Assert.assertNotNull(currentValue);
-      if (lastValue != null) {
-        Assert.assertTrue(currentValue.compareTo(lastValue.toString()) >= 0);
-      }
-      expectedValues.remove(lastValue);
-      lastValue = currentValue;
-    }
-    Assert.assertTrue(expectedValues.isEmpty());
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexValuesDesc() {
-    String className = "testFetchFromIndexValuesDesc";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i % 3);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from indexvaluesdesc:" + className + ".name");
-    printExecutionPlan(result);
-    Set<String> expectedValues = new HashSet<>();
-    expectedValues.add("name0");
-    expectedValues.add("name1");
-    expectedValues.add("name2");
-    Object lastValue = null;
-    for (int i = 0; i < 10; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-      String currentValue = next.getProperty("name");
-      Assert.assertNotNull(currentValue);
-      if (lastValue != null) {
-        Assert.assertTrue(currentValue.compareTo(lastValue.toString()) <= 0);
-      }
-      expectedValues.remove(lastValue);
-      lastValue = currentValue;
-    }
-    Assert.assertTrue(expectedValues.isEmpty());
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testFetchFromIndexValuesDescWithCondition() {
-    String className = "testFetchFromIndexValuesDescWithCondition";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i % 3);
-      doc.save();
-    }
-
-    OResultSet result = db.query("select from indexvaluesdesc:" + className + ".name where name = 'name0'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 4; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult next = result.next();
-      Assert.assertNotNull(next);
-      String currentValue = next.getProperty("name");
-      Assert.assertNotNull(currentValue);
-      Assert.assertEquals("name0", currentValue);
-    }
     Assert.assertFalse(result.hasNext());
     result.close();
   }
@@ -3335,29 +2999,6 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
-  public void testFromIndexWithoutNullValues() {
-    // issue #7624
-    String className = "testFromIndexWithoutNullValues";
-    db.command("create class " + className).close();
-    db.command("create property " + className + ".name STRING").close();
-    db.command("create index " + className + ".name on " + className + "(name) NOTUNIQUE METADATA {ignoreNullValues:true}").close();
-
-    OElement elem1 = db.newElement(className);
-    elem1.setProperty("name", "foo");
-    elem1.save();
-
-    OElement elem2 = db.newElement(className);
-    elem2.setProperty("name", null);
-    elem2.save();
-
-    OResultSet result = db.query("select from index: " + className + ".name ");
-    Assert.assertTrue(result.hasNext());
-    result.next();
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
   public void testIndexPrefixUsage() {
     // issue #7636
     String className = "testIndexPrefixUsage";
@@ -3910,4 +3551,30 @@ public class OSelectStatementExecutionTest {
     }
   }
 
+  @Test
+  public void testHeapLimitForOrderBy() {
+    Long oldValue = OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
+    try {
+      OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.setValue(3);
+
+      String className = "testHeapLimitForOrderBy";
+
+      db.createClassIfNotExist(className);
+
+      db.command("INSERT INTO " + className + " set name = 'a'").close();
+      db.command("INSERT INTO " + className + " set name = 'b'").close();
+      db.command("INSERT INTO " + className + " set name = 'c'").close();
+      db.command("INSERT INTO " + className + " set name = 'd'").close();
+
+      try {
+        try (OResultSet result = db.query("select from " + className + " ORDER BY name")) {
+          result.forEachRemaining(x -> x.getProperty("name"));
+        }
+        Assert.fail();
+      } catch (OCommandExecutionException ex) {
+      }
+    } finally {
+      OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.setValue(oldValue);
+    }
+  }
 }

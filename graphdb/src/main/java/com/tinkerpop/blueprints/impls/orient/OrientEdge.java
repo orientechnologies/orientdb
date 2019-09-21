@@ -373,7 +373,7 @@ public class OrientEdge extends OrientElement implements Edge {
 
     for (final Index<? extends Element> index : graph.getIndices()) {
       if (Edge.class.isAssignableFrom(index.getIndexClass())) {
-        OrientIndex<OrientEdge> idx = (OrientIndex<OrientEdge>) index;
+        final OrientIndex<OrientEdge> idx = (OrientIndex<OrientEdge>) index;
         idx.removeElement(this);
       }
     }

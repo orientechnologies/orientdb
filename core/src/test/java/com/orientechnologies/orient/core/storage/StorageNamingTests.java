@@ -40,11 +40,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -126,6 +122,16 @@ public class StorageNamingTests {
     }
 
     @Override
+    public String getClusterName(final int clusterId) {
+      return null;
+    }
+
+    @Override
+    public boolean setClusterAttribute(final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
+      return false;
+    }
+
+    @Override
     public boolean exists() {
       return false;
     }
@@ -140,7 +146,6 @@ public class StorageNamingTests {
 
     }
 
-
     @Override
     public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
         boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {
@@ -150,11 +155,6 @@ public class StorageNamingTests {
     @Override
     public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
         int recordVersion) throws ORecordNotFoundException {
-      return null;
-    }
-
-    @Override
-    public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
       return null;
     }
 
@@ -210,12 +210,12 @@ public class StorageNamingTests {
     }
 
     @Override
-    public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    public int addCluster(String iClusterName, int iRequestedId) {
       return 0;
     }
 
     @Override
-    public boolean dropCluster(int iId, boolean iTruncate) {
+    public boolean dropCluster(int iId) {
       return false;
     }
 
@@ -316,11 +316,6 @@ public class StorageNamingTests {
 
     @Override
     public OSBTreeCollectionManager getSBtreeCollectionManager() {
-      return null;
-    }
-
-    @Override
-    public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
       return null;
     }
 

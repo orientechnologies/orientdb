@@ -45,7 +45,7 @@ public class ODistributedStatusResponse implements OBinaryResponse {
   }
 
   public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    byte[] bytes = serializer.toStream(clusterConfig, false);
+    byte[] bytes = serializer.toStream(clusterConfig);
     channel.writeBytes(bytes);
   }
 

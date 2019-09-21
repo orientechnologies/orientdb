@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollection
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class ORemoteTransactionMessagesTest {
-  
+
   @Test
   public void testBeginTransactionEmptyWriteRead() throws IOException {
     MockChannel channel = new MockChannel();
@@ -155,7 +156,6 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(readResponse.getDeleted().get(0).getRid(), new ORecordId(10, 50));
     assertEquals(readResponse.getDeleted().get(1).getRid(), new ORecordId(10, 51));
 
-
     assertEquals(readResponse.getCollectionChanges().size(), 1);
     assertNotNull(readResponse.getCollectionChanges().get(val));
     assertEquals(readResponse.getCollectionChanges().get(val).getFileId(), 10);
@@ -203,7 +203,56 @@ public class ORemoteTransactionMessagesTest {
 
     channel.close();
 
-    OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
+    OFetchTransactionResponse readResponse = new OFetchTransactionResponse();
+    readResponse.read(channel, null);
+
+    assertEquals(readResponse.getOperations().size(), 3);
+    assertEquals(readResponse.getOperations().get(0).getType(), ORecordOperation.CREATED);
+    assertNotNull(readResponse.getOperations().get(0).getRecord());
+    assertEquals(readResponse.getOperations().get(1).getType(), ORecordOperation.UPDATED);
+    assertNotNull(readResponse.getOperations().get(1).getRecord());
+    assertEquals(readResponse.getOperations().get(2).getType(), ORecordOperation.DELETED);
+    assertNotNull(readResponse.getOperations().get(2).getRecord());
+    assertEquals(readResponse.getTxId(), 10);
+    assertEquals(readResponse.getIndexChanges().size(), 1);
+    assertEquals(readResponse.getIndexChanges().get(0).getName(), "some");
+    OTransactionIndexChanges val = readResponse.getIndexChanges().get(0).getKeyChanges();
+    assertEquals(val.cleared, false);
+    assertEquals(val.changesPerKey.size(), 1);
+    OTransactionIndexChangesPerKey entryChange = val.changesPerKey.firstEntry().getValue();
+    assertEquals(entryChange.key, "key");
+    assertEquals(entryChange.entries.size(), 2);
+    assertEquals(entryChange.entries.get(0).value, new ORecordId(1, 2));
+    assertEquals(entryChange.entries.get(0).operation, OPERATION.PUT);
+    assertEquals(entryChange.entries.get(1).value, new ORecordId(2, 2));
+    assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
+  }
+
+  @Test
+  @Ignore
+  public void testTransactionFetchResponse38WriteRead() throws IOException {
+
+    List<ORecordOperation> operations = new ArrayList<>();
+    operations.add(new ORecordOperation(new ODocument(), ORecordOperation.CREATED));
+    operations.add(new ORecordOperation(new ODocument(new ORecordId(10, 2)), ORecordOperation.UPDATED));
+    operations.add(new ORecordOperation(new ODocument(new ORecordId(10, 1)), ORecordOperation.DELETED));
+    Map<String, OTransactionIndexChanges> changes = new HashMap<>();
+    OTransactionIndexChanges change = new OTransactionIndexChanges();
+    change.cleared = false;
+    change.changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
+    OTransactionIndexChangesPerKey keyChange = new OTransactionIndexChangesPerKey("key");
+    keyChange.add(new ORecordId(1, 2), OPERATION.PUT);
+    keyChange.add(new ORecordId(2, 2), OPERATION.REMOVE);
+    change.changesPerKey.put(keyChange.key, keyChange);
+    changes.put("some", change);
+
+    MockChannel channel = new MockChannel();
+    OFetchTransaction38Response response = new OFetchTransaction38Response(10, operations, changes, new HashMap<>(), null);
+    response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
+
+    channel.close();
+
+    OFetchTransaction38Response readResponse = new OFetchTransaction38Response();
     readResponse.read(channel, null);
 
     assertEquals(readResponse.getOperations().size(), 3);

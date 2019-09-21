@@ -88,16 +88,16 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         }
       } else {
         // CHECK AGAINST A SINGLE VALUE
-        OType type =null;
+        OType type = null;
 
-        if(iCondition.getLeft() instanceof OSQLFilterItemField && ((OSQLFilterItemField) iCondition.getLeft()).isFieldChain() && ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemCount()==1){
+        if (iCondition.getLeft() instanceof OSQLFilterItemField && ((OSQLFilterItemField) iCondition.getLeft()).isFieldChain()
+            && ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemCount() == 1) {
           String fieldName = ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemName(0);
-          if(fieldName!=null) {
+          if (fieldName != null) {
             Object record = iRecord.getRecord();
             if (record instanceof ODocument) {
-              OProperty property = ((ODocument) record).getSchemaClass()
-                  .getProperty(fieldName);
-              if(property!=null && property.getType().isMultiValue()){
+              OProperty property = ((ODocument) record).getSchemaClass().getProperty(fieldName);
+              if (property != null && property.getType().isMultiValue()) {
                 type = property.getLinkedType();
               }
             }

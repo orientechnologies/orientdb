@@ -15,15 +15,18 @@ public class OInfoExecutionPlan implements OExecutionPlan {
   Integer cost;
   String  stmText;
 
-  @Override public List<OExecutionStep> getSteps() {
+  @Override
+  public List<OExecutionStep> getSteps() {
     return steps;
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return prettyPrint;
   }
 
-  @Override public OResult toResult() {
+  @Override
+  public OResult toResult() {
     return null;
   }
 
@@ -71,7 +74,8 @@ public class OInfoExecutionPlan implements OExecutionPlan {
     this.stmText = stmText;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return prettyPrint;
   }
 }

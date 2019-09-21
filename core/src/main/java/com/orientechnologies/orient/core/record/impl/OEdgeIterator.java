@@ -116,7 +116,8 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
     return iObject.isLabeled(labels);
   }
 
-  @Override public boolean canUseMultiValueDirectly() {
+  @Override
+  public boolean canUseMultiValueDirectly() {
     return true;
   }
 }

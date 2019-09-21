@@ -20,56 +20,57 @@ import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Default operator factory.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  */
-public class ODefaultQueryOperatorFactory implements OQueryOperatorFactory{
-    
-    private static final Set<OQueryOperator> OPERATORS;
+public class ODefaultQueryOperatorFactory implements OQueryOperatorFactory {
 
-    static {
-        final Set<OQueryOperator> operators = new HashSet<OQueryOperator>();
-        operators.add(new OQueryOperatorEquals());
-        operators.add(new OQueryOperatorAnd()); 
-        operators.add(new OQueryOperatorOr()); 
-        operators.add(new OQueryOperatorNotEquals());
-        operators.add(new OQueryOperatorNotEquals2());
-        operators.add(new OQueryOperatorNot());
-        operators.add(new OQueryOperatorMinorEquals()); 
-        operators.add(new OQueryOperatorMinor()); 
-        operators.add(new OQueryOperatorMajorEquals());
-        operators.add(new OQueryOperatorContainsAll());
-        operators.add(new OQueryOperatorMajor()); 
-        operators.add(new OQueryOperatorLike()); 
-        operators.add(new OQueryOperatorMatches()); 
-        operators.add(new OQueryOperatorInstanceof());
-        operators.add(new OQueryOperatorIs()); 
-        operators.add(new OQueryOperatorIn()); 
-        operators.add(new OQueryOperatorContainsKey()); 
-        operators.add(new OQueryOperatorContainsValue());
-        operators.add(new OQueryOperatorContainsText()); 
-        operators.add(new OQueryOperatorContains());
-        operators.add(new OQueryOperatorTraverse()); 
-        operators.add(new OQueryOperatorBetween()); 
-        operators.add(new OQueryOperatorPlus()); 
-        operators.add(new OQueryOperatorMinus());
-        operators.add(new OQueryOperatorMultiply()); 
-        operators.add(new OQueryOperatorDivide()); 
-        operators.add(new OQueryOperatorMod());
-        OPERATORS = Collections.unmodifiableSet(operators);
-    }
+  private static final Set<OQueryOperator> OPERATORS;
 
-    /**
-     * {@inheritDoc}
-     */
-    public Set<OQueryOperator> getOperators() {
-        return OPERATORS;
-    }
-    
+  static {
+    final Set<OQueryOperator> operators = new HashSet<OQueryOperator>();
+    operators.add(new OQueryOperatorEquals());
+    operators.add(new OQueryOperatorAnd());
+    operators.add(new OQueryOperatorOr());
+    operators.add(new OQueryOperatorNotEquals());
+    operators.add(new OQueryOperatorNotEquals2());
+    operators.add(new OQueryOperatorNot());
+    operators.add(new OQueryOperatorMinorEquals());
+    operators.add(new OQueryOperatorMinor());
+    operators.add(new OQueryOperatorMajorEquals());
+    operators.add(new OQueryOperatorContainsAll());
+    operators.add(new OQueryOperatorMajor());
+    operators.add(new OQueryOperatorLike());
+    operators.add(new OQueryOperatorMatches());
+    operators.add(new OQueryOperatorInstanceof());
+    operators.add(new OQueryOperatorIs());
+    operators.add(new OQueryOperatorIn());
+    operators.add(new OQueryOperatorContainsKey());
+    operators.add(new OQueryOperatorContainsValue());
+    operators.add(new OQueryOperatorContainsText());
+    operators.add(new OQueryOperatorContains());
+    operators.add(new OQueryOperatorTraverse());
+    operators.add(new OQueryOperatorBetween());
+    operators.add(new OQueryOperatorPlus());
+    operators.add(new OQueryOperatorMinus());
+    operators.add(new OQueryOperatorMultiply());
+    operators.add(new OQueryOperatorDivide());
+    operators.add(new OQueryOperatorMod());
+    OPERATORS = Collections.unmodifiableSet(operators);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public Set<OQueryOperator> getOperators() {
+    return OPERATORS;
+  }
+
 }

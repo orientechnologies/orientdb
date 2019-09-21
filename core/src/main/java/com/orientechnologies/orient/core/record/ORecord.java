@@ -198,4 +198,19 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * @return the size in bytes
    */
   int getSize();
+
+  /**
+   * Returns the current status of the record.
+   *
+   * @return Current status as value between the defined values in the enum {@link STATUS}
+   */
+  STATUS getInternalStatus();
+
+  /**
+   * Changes the current internal status.
+   *
+   * @param iStatus status between the values defined in the enum {@link STATUS}
+   */
+  void setInternalStatus(STATUS iStatus);
+
 }

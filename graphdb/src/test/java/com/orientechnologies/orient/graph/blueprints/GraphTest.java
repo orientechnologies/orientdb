@@ -18,7 +18,10 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -380,74 +383,22 @@ public class GraphTest {
     OrientGraphNoTx graph = new OrientGraphNoTx("memory:testComposite");
 
     try {
-      graph.createVertexType("Account");
+      if (!((ODatabaseInternal) graph.getRawGraph()).getStorage().isRemote()) {
+        graph.createVertexType("Account");
 
-      graph.command(new OCommandSQL("create property account.description STRING")).execute();
-      graph.command(new OCommandSQL("create property account.namespace STRING")).execute();
-      graph.command(new OCommandSQL("create property account.name STRING")).execute();
-      graph.command(new OCommandSQL("create index account.composite on account (name, namespace) unique")).execute();
+        graph.command(new OCommandSQL("create property account.description STRING")).execute();
+        graph.command(new OCommandSQL("create property account.namespace STRING")).execute();
+        graph.command(new OCommandSQL("create property account.name STRING")).execute();
+        graph.command(new OCommandSQL("create index account.composite on account (name, namespace) unique")).execute();
 
-      graph.addVertex("class:account", new Object[] { "name", "foo", "namespace", "bar", "description", "foobar" });
-      graph.addVertex("class:account", new Object[] { "name", "foo", "namespace", "baz", "description", "foobaz" });
+        graph.addVertex("class:account", new Object[] { "name", "foo", "namespace", "bar", "description", "foobar" });
+        final OrientVertex vertex = graph
+            .addVertex("class:account", new Object[] { "name", "foo", "namespace", "baz", "description", "foobaz" });
 
-      Iterable<Vertex> vertices = graph.command(new OCommandSQL("select from index:account.composite where key = [ 'foo', 'baz' ]"))
-          .execute();
-
-      List<Vertex> list = new ArrayList<>();
-
-      vertices.forEach(list::add);
-
-      Assert.assertEquals(1, list.size());
-
-      vertices = graph.getVertices("account.composite", new Object[] { "foo", "baz" });
-
-      list = new ArrayList<>();
-
-      vertices.forEach(list::add);
-
-      Assert.assertEquals(1, list.size());
-
-      vertices = graph.getVertices("account.composite", new OCompositeKey("foo", "baz"));
-
-      list = new ArrayList<>();
-
-      vertices.forEach(list::add);
-
-      Assert.assertEquals(1, list.size());
-
-      graph.getVertices("account.composite", new OCompositeKey("foo", "baz"));
-
-    } finally {
-      graph.drop();
-    }
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testCompositeExceptionKey() {
-
-    OrientGraphNoTx graph = new OrientGraphNoTx("memory:testComposite");
-
-    try {
-      graph.createVertexType("Account");
-
-      graph.command(new OCommandSQL("create property account.description STRING")).execute();
-      graph.command(new OCommandSQL("create property account.namespace STRING")).execute();
-      graph.command(new OCommandSQL("create property account.name STRING")).execute();
-      graph.command(new OCommandSQL("create index account.composite on account (name, namespace) unique")).execute();
-
-      graph.addVertex("class:account", new Object[] { "name", "foo", "namespace", "bar", "description", "foobar" });
-      graph.addVertex("class:account", new Object[] { "name", "foo", "namespace", "baz", "description", "foobaz" });
-
-      Iterable<Vertex> vertices = graph.command(new OCommandSQL("select from index:account.composite where key = [ 'foo', 'baz' ]"))
-          .execute();
-
-      List<Vertex> list = new ArrayList<>();
-      vertices.forEach(list::add);
-
-      Assert.assertEquals(1, list.size());
-
-      graph.getVertices("account.composite", new Object[] { "foo", "baz", "bar" });
-
+        final OIndex index = graph.getRawGraph().getMetadata().getIndexManagerInternal()
+            .getIndex(graph.getRawGraph(), "account.composite");
+        Assert.assertEquals(vertex.getIdentity(), ((OIdentifiable) index.get(new OCompositeKey("foo", "baz"))).getIdentity());
+      }
     } finally {
       graph.drop();
     }

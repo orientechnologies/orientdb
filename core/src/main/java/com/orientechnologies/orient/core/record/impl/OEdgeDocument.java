@@ -12,6 +12,10 @@ public class OEdgeDocument extends ODocument implements OEdge {
     super(cl);
   }
 
+  public OEdgeDocument(ODatabaseSession session, String cl) {
+    super(session, cl);
+  }
+
   public OEdgeDocument() {
     super();
   }
@@ -58,4 +62,8 @@ public class OEdgeDocument extends ODocument implements OEdge {
     return this;
   }
 
+  @Override
+  public OEdgeDocument copy() {
+    return (OEdgeDocument) super.copyTo(new OEdgeDocument());
+  }
 }

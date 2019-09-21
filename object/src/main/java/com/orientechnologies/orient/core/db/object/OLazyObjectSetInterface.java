@@ -20,12 +20,11 @@ import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
  */
 public interface OLazyObjectSetInterface<T> extends Set<T> {
 
-	public void setConvertToRecord(boolean convertToRecord);
+  public void setConvertToRecord(boolean convertToRecord);
 
-	public boolean isConverted();
+  public boolean isConverted();
 
 }

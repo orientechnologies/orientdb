@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -12,12 +13,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 28/11/16.
@@ -167,7 +163,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     currentFrom = fromIter != null && fromIter.hasNext() ? asVertex(fromIter.next()) : null;
 
     if (uniqueIndexName != null) {
-      uniqueIndex = ctx.getDatabase().getMetadata().getIndexManager().getIndex(uniqueIndexName);
+      final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+      uniqueIndex = database.getMetadata().getIndexManagerInternal().getIndex(database, uniqueIndexName);
       if (uniqueIndex == null) {
         throw new OCommandExecutionException("Index not found for upsert: " + uniqueIndexName);
       }
@@ -256,7 +253,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       return ((OElement) currentFrom).asVertex()
           .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
     }
-    throw new OCommandExecutionException("Invalid vertex for edge creation: " + currentFrom.toString());
+    throw new OCommandExecutionException("Invalid vertex for edge creation: " + (currentFrom == null ? "null" : currentFrom.toString()));
   }
 
   @Override

@@ -49,7 +49,7 @@ import java.util.List;
  */
 public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
 
-  private boolean binaryEvaluate=false;
+  private boolean binaryEvaluate = false;
 
   public OQueryOperatorMinor() {
     super("<", 5, false);

@@ -52,13 +52,23 @@ public final class OCachePointer {
   private long version;
 
   private final long fileId;
-  private final long pageIndex;
+  private final int  pageIndex;
 
   private OLogSequenceNumber endLSN;
 
-  public OCachePointer(final OPointer pointer, final OByteBufferPool bufferPool, final long fileId, final long pageIndex) {
+  private int hash;
+
+  public OCachePointer(final OPointer pointer, final OByteBufferPool bufferPool, final long fileId, final int pageIndex) {
     this.pointer = pointer;
     this.bufferPool = bufferPool;
+
+    if (fileId < 0) {
+      throw new IllegalStateException("File id has invalid value " + fileId);
+    }
+
+    if (pageIndex < 0) {
+      throw new IllegalStateException("Page index has invalid value " + pageIndex);
+    }
 
     this.fileId = fileId;
     this.pageIndex = pageIndex;
@@ -72,7 +82,7 @@ public final class OCachePointer {
     return fileId;
   }
 
-  public long getPageIndex() {
+  public int getPageIndex() {
     return pageIndex;
   }
 
@@ -210,7 +220,10 @@ public final class OCachePointer {
       return null;
     }
 
-    return pointer.getNativeByteBuffer().duplicate().order(ByteOrder.nativeOrder());
+    final ByteBuffer duplicate = pointer.getNativeByteBuffer().duplicate().order(ByteOrder.nativeOrder());
+    duplicate.rewind();
+
+    return duplicate;
   }
 
   public void acquireExclusiveLock() {
@@ -240,25 +253,31 @@ public final class OCachePointer {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
+    if (this == o)
       return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
+    if (o == null || getClass() != o.getClass())
       return false;
-    }
 
     OCachePointer that = (OCachePointer) o;
 
-    if (!pointer.equals(that.pointer)) {
+    if (fileId != that.fileId) {
       return false;
     }
-
-    return true;
+    return pageIndex == that.pageIndex;
   }
 
   @Override
   public int hashCode() {
-    return pointer != null ? pointer.hashCode() : 0;
+    if (hash != 0) {
+      return hash;
+    }
+
+    int result = (int) (fileId ^ (fileId >>> 32));
+    result = 31 * result + pageIndex;
+
+    hash = result;
+
+    return hash;
   }
 
   @Override

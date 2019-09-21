@@ -45,31 +45,24 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
 
   private final ReadWriteLock[]          locks;
   private final OReadersWriterSpinLock[] spinLocks;
+  private final ScalableRWLock[]         scalableRWLocks;
 
-  private final boolean useSpinLock;
-  private final Comparator comparator = new Comparator() {
-    @Override
-    public int compare(final Object one, final Object two) {
-      final int indexOne;
-      if (one == null)
-        indexOne = 0;
-      else
-        indexOne = index(one.hashCode());
+  private final boolean    useSpinLock;
+  private final boolean    useScalableRWLock;
+  private final Comparator comparator = (one, two) -> {
+    final int indexOne;
+    if (one == null)
+      indexOne = 0;
+    else
+      indexOne = index(one.hashCode());
 
-      final int indexTwo;
-      if (two == null)
-        indexTwo = 0;
-      else
-        indexTwo = index(two.hashCode());
+    final int indexTwo;
+    if (two == null)
+      indexTwo = 0;
+    else
+      indexTwo = index(two.hashCode());
 
-      if (indexOne > indexTwo)
-        return 1;
-
-      if (indexOne < indexTwo)
-        return -1;
-
-      return 0;
-    }
+    return Integer.compare(indexOne, indexTwo);
   };
 
   private static final class SpinLockWrapper implements Lock {
@@ -87,7 +80,7 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     }
 
     @Override
-    public void lockInterruptibly() throws InterruptedException {
+    public void lockInterruptibly() {
       throw new UnsupportedOperationException();
     }
 
@@ -97,7 +90,7 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     }
 
     @Override
-    public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
+    public boolean tryLock(long time, TimeUnit unit) {
       throw new UnsupportedOperationException();
     }
 
@@ -116,11 +109,16 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
   }
 
   public OPartitionedLockManager() {
-    this(false);
+    this(false, false);
   }
 
-  public OPartitionedLockManager(boolean useSpinLock) {
+  public OPartitionedLockManager(boolean useSpinLock, boolean useScalableRWLock) {
     this.useSpinLock = useSpinLock;
+    this.useScalableRWLock = useScalableRWLock;
+
+    if (this.useScalableRWLock && this.useSpinLock) {
+      throw new IllegalArgumentException("Spinlock and scalable RW lock can not be used simultaneously");
+    }
 
     if (useSpinLock) {
       OReadersWriterSpinLock[] lcks = new OReadersWriterSpinLock[concurrencyLevel];
@@ -130,6 +128,16 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
 
       spinLocks = lcks;
       locks = null;
+      scalableRWLocks = null;
+    } else if (useScalableRWLock) {
+      ScalableRWLock[] lcks = new ScalableRWLock[concurrencyLevel];
+      for (int i = 0; i < lcks.length; i++) {
+        lcks[i] = new ScalableRWLock();
+      }
+
+      spinLocks = null;
+      locks = null;
+      scalableRWLocks = lcks;
     } else {
       ReadWriteLock[] lcks = new ReadWriteLock[concurrencyLevel];
       for (int i = 0; i < lcks.length; i++)
@@ -137,6 +145,7 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
 
       locks = lcks;
       spinLocks = null;
+      scalableRWLocks = null;
     }
   }
 
@@ -152,7 +161,7 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     return shuffleHashCode(hashCode) & mask;
   }
 
-  public static int shuffleHashCode(int h) {
+  private static int shuffleHashCode(int h) {
     return (h ^ (h >>> 16)) & HASH_BITS;
   }
 
@@ -161,11 +170,17 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     final int index = index(hashCode);
 
     if (useSpinLock) {
+      assert spinLocks != null;
       OReadersWriterSpinLock spinLock = spinLocks[index];
       spinLock.acquireWriteLock();
       return new SpinLockWrapper(false, spinLock);
     }
 
+    if (useScalableRWLock) {
+      return scalableExclusiveLock(index);
+    }
+
+    assert locks != null;
     final ReadWriteLock rwLock = locks[index];
 
     final Lock lock = rwLock.writeLock();
@@ -174,16 +189,38 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     return lock;
   }
 
+  private Lock scalableExclusiveLock(int index) {
+    assert scalableRWLocks != null;
+    final ScalableRWLock scalableRWLock = scalableRWLocks[index];
+    final Lock lock = scalableRWLock.writeLock();
+    lock.lock();
+    return lock;
+  }
+
+  private Lock scalableSharedLock(int index) {
+    assert scalableRWLocks != null;
+    final ScalableRWLock scalableRWLock = scalableRWLocks[index];
+    final Lock lock = scalableRWLock.readLock();
+    lock.lock();
+    return lock;
+  }
+
   public Lock acquireExclusiveLock(int value) {
     final int index = index(value);
 
     if (useSpinLock) {
-      OReadersWriterSpinLock spinLock = spinLocks[index];
+      assert spinLocks != null;
+      final OReadersWriterSpinLock spinLock = spinLocks[index];
       spinLock.acquireWriteLock();
 
       return new SpinLockWrapper(false, spinLock);
     }
 
+    if (useScalableRWLock) {
+      return scalableExclusiveLock(index);
+    }
+
+    assert locks != null;
     final ReadWriteLock rwLock = locks[index];
 
     final Lock lock = rwLock.writeLock();
@@ -200,12 +237,19 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
       index = index(value.hashCode());
 
     if (useSpinLock) {
+      assert spinLocks != null;
+
       OReadersWriterSpinLock spinLock = spinLocks[index];
       spinLock.acquireWriteLock();
 
       return new SpinLockWrapper(false, spinLock);
     }
 
+    if (useScalableRWLock) {
+      return scalableExclusiveLock(index);
+    }
+
+    assert locks != null;
     final ReadWriteLock rwLock = locks[index];
 
     final Lock lock = rwLock.writeLock();
@@ -214,48 +258,29 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     return lock;
   }
 
-  public void lockAllExclusive() {
-    if (useSpinLock) {
-      for (OReadersWriterSpinLock spinLock : spinLocks) {
-        spinLock.acquireWriteLock();
-      }
-    } else {
-      for (ReadWriteLock readWriteLock : locks) {
-        readWriteLock.writeLock().lock();
-      }
-    }
-  }
-
-  public void unlockAllExclusive() {
-    if (useSpinLock) {
-      for (OReadersWriterSpinLock spinLock : spinLocks) {
-        spinLock.releaseWriteLock();
-      }
-    } else {
-      for (ReadWriteLock readWriteLock : locks) {
-        readWriteLock.writeLock().unlock();
-      }
-    }
-  }
-
-  public boolean tryAcquireExclusiveLock(final T value, final long timeout) throws InterruptedException {
+  public boolean tryAcquireExclusiveLock(final int value, final long timeout) throws InterruptedException {
     if (useSpinLock)
       throw new IllegalStateException("Spin lock does not support try lock mode");
 
-    final int index;
-    if (value == null)
-      index = 0;
-    else
-      index = index(value.hashCode());
+    final int index = index(value);
 
+    if (useScalableRWLock) {
+      assert scalableRWLocks != null;
+
+      final ScalableRWLock scalableRWLock = scalableRWLocks[index];
+      return scalableRWLock.exclusiveTryLock();
+    }
+
+    assert locks != null;
     final ReadWriteLock rwLock = locks[index];
 
     final Lock lock = rwLock.writeLock();
     return lock.tryLock(timeout, TimeUnit.MILLISECONDS);
   }
 
+  @SafeVarargs
   @Override
-  public Lock[] acquireExclusiveLocksInBatch(final T... value) {
+  public final Lock[] acquireExclusiveLocksInBatch(final T... value) {
     if (value == null)
       return new Lock[0];
 
@@ -269,7 +294,8 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     return locks;
   }
 
-  public Lock[] acquireSharedLocksInBatch(final T... value) {
+  @SafeVarargs
+  public final Lock[] acquireSharedLocksInBatch(final T... value) {
     if (value == null)
       return new Lock[0];
 
@@ -297,57 +323,57 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     return locks;
   }
 
+  public Lock[] acquireExclusiveLocksInBatch(int[] values) {
+    if (values == null || values.length == 0) {
+      return new Lock[0];
+    }
+
+    final int[] orderedValues = new int[values.length];
+    Arrays.sort(orderedValues);
+
+    final Lock[] locks = new Lock[orderedValues.length];
+    int i = 0;
+    for (int val : orderedValues) {
+      locks[i++] = acquireExclusiveLock(val);
+    }
+
+    return locks;
+  }
+
   public Lock acquireSharedLock(long value) {
     final int hashCode = longHashCode(value);
     final int index = index(hashCode);
 
+    return sharedLock(index);
+
+  }
+
+  private Lock sharedLock(int index) {
     if (useSpinLock) {
+      assert spinLocks != null;
+
       OReadersWriterSpinLock spinLock = spinLocks[index];
       spinLock.acquireReadLock();
 
       return new SpinLockWrapper(true, spinLock);
     }
 
+    if (useScalableRWLock) {
+      return scalableSharedLock(index);
+    }
+
+    assert locks != null;
     final ReadWriteLock rwLock = locks[index];
 
     final Lock lock = rwLock.readLock();
     lock.lock();
 
     return lock;
-
-  }
-
-  public boolean tryAcquireSharedLock(T value, long timeout) throws InterruptedException {
-    if (useSpinLock)
-      throw new IllegalStateException("Spin lock does not support try lock mode");
-
-    final int index;
-    if (value == null)
-      index = 0;
-    else
-      index = index(value.hashCode());
-
-    final ReadWriteLock rwLock = locks[index];
-
-    final Lock lock = rwLock.readLock();
-    return lock.tryLock(timeout, TimeUnit.MILLISECONDS);
   }
 
   public Lock acquireSharedLock(int value) {
     final int index = index(value);
-
-    if (useSpinLock) {
-      OReadersWriterSpinLock spinLock = spinLocks[index];
-      spinLock.acquireReadLock();
-
-      return new SpinLockWrapper(true, spinLock);
-    }
-
-    final ReadWriteLock rwLock = locks[index];
-
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    return lock;
+    return sharedLock(index);
   }
 
   @Override
@@ -358,29 +384,32 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     else
       index = index(value.hashCode());
 
-    if (useSpinLock) {
-      OReadersWriterSpinLock spinLock = spinLocks[index];
-      spinLock.acquireReadLock();
-
-      return new SpinLockWrapper(true, spinLock);
-    }
-
-    final ReadWriteLock rwLock = locks[index];
-
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    return lock;
+    return sharedLock(index);
   }
 
   public void releaseSharedLock(final int value) {
     final int index = index(value);
 
+    releaseSLock(index);
+  }
+
+  private void releaseSLock(int index) {
     if (useSpinLock) {
+      assert spinLocks != null;
       OReadersWriterSpinLock spinLock = spinLocks[index];
       spinLock.releaseReadLock();
       return;
     }
 
+    if (useScalableRWLock) {
+      assert scalableRWLocks != null;
+
+      final ScalableRWLock scalableRWLock = scalableRWLocks[index];
+      scalableRWLock.sharedLock();
+      return;
+    }
+
+    assert locks != null;
     final ReadWriteLock rwLock = locks[index];
     rwLock.readLock().unlock();
   }
@@ -389,16 +418,7 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     final int hashCode = longHashCode(value);
     final int index = index(hashCode);
 
-    if (useSpinLock) {
-      final OReadersWriterSpinLock spinLock = spinLocks[index];
-      spinLock.releaseReadLock();
-      return;
-    }
-
-    final ReadWriteLock rwLock = locks[index];
-
-    final Lock lock = rwLock.readLock();
-    lock.unlock();
+    releaseSLock(index);
   }
 
   public void releaseSharedLock(final T value) {
@@ -408,26 +428,31 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     else
       index = index(value.hashCode());
 
-    if (useSpinLock) {
-      OReadersWriterSpinLock spinLock = spinLocks[index];
-      spinLock.releaseReadLock();
-      return;
-    }
-
-    final ReadWriteLock rwLock = locks[index];
-
-    final Lock lock = rwLock.readLock();
-    lock.unlock();
+    releaseSLock(index);
   }
 
   public void releaseExclusiveLock(final int value) {
     final int index = index(value);
+    releaseWLock(index);
+  }
+
+  private void releaseWLock(int index) {
     if (useSpinLock) {
+      assert spinLocks != null;
       OReadersWriterSpinLock spinLock = spinLocks[index];
       spinLock.releaseWriteLock();
       return;
     }
 
+    if (useScalableRWLock) {
+      assert scalableRWLocks != null;
+
+      final ScalableRWLock scalableRWLock = scalableRWLocks[index];
+      scalableRWLock.exclusiveUnlock();
+      return;
+    }
+
+    assert locks != null;
     final ReadWriteLock rwLock = locks[index];
     rwLock.writeLock().unlock();
   }
@@ -436,16 +461,7 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     final int hashCode = longHashCode(value);
     final int index = index(hashCode);
 
-    if (useSpinLock) {
-      OReadersWriterSpinLock spinLock = spinLocks[index];
-      spinLock.releaseWriteLock();
-      return;
-    }
-
-    final ReadWriteLock rwLock = locks[index];
-
-    final Lock lock = rwLock.writeLock();
-    lock.unlock();
+    releaseWLock(index);
   }
 
   public void releaseExclusiveLock(final T value) {
@@ -455,23 +471,10 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     else
       index = index(value.hashCode());
 
-    if (useSpinLock) {
-      OReadersWriterSpinLock spinLock = spinLocks[index];
-      spinLock.releaseWriteLock();
-      return;
-    }
-
-    final ReadWriteLock rwLock = locks[index];
-
-    final Lock lock = rwLock.writeLock();
-    lock.unlock();
+    releaseWLock(index);
   }
 
-  public void releaseLock(final Lock lock) {
-    lock.unlock();
-  }
-
-  private <T> T[] getOrderedValues(final T[] values) {
+  private T[] getOrderedValues(final T[] values) {
     if (values.length < 2) {
       // OPTIMIZED VERSION WITH JUST 1 ITEM (THE MOST COMMON)
       return values;
@@ -479,19 +482,21 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
 
     final T[] copy = Arrays.copyOf(values, values.length);
 
+    //noinspection unchecked
     Arrays.sort(copy, 0, copy.length, comparator);
 
     return copy;
   }
 
-  private <T> Collection<T> getOrderedValues(final Collection<T> values) {
+  private Collection<T> getOrderedValues(final Collection<T> values) {
     if (values.size() < 2) {
       // OPTIMIZED VERSION WITH JUST 1 ITEM (THE MOST COMMON)
       return values;
     }
 
     final List<T> valCopy = new ArrayList<T>(values);
-    Collections.sort(valCopy, comparator);
+    //noinspection unchecked
+    valCopy.sort(comparator);
 
     return valCopy;
   }

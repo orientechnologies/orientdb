@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -19,7 +20,7 @@ public class OCheckIndexToolTest {
 
   @Test
   public void test() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCheckIndexToolTest");
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:OCheckIndexToolTest");
     db.create();
     try {
       db.command(new OCommandSQL("create class Foo")).execute();
@@ -39,7 +40,7 @@ public class OCheckIndexToolTest {
         doc.save();
       }
 
-      OIndex<?> idx = db.getMetadata().getIndexManager().getIndex("Foo.name");
+      OIndex<?> idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.name");
       Object key = idx.getDefinition().createValue("a");
       boolean a = idx.remove(key, rid);
 

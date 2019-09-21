@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -23,7 +23,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Paths;
@@ -61,7 +60,7 @@ public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
 
     buildDirectory += "/" + this.getClass().getSimpleName();
 
-    final File buildDir = new File(buildDirectory);
+    final java.io.File buildDir = new java.io.File(buildDirectory);
     OFileUtils.deleteRecursively(buildDir);
 
     orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
@@ -99,7 +98,7 @@ public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
   private void createActualHashTable() throws IOException {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<>(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTableV2<>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTableV2<>(42, "actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
@@ -221,8 +220,8 @@ public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
         .getReadCache();
 
     OCASDiskWriteAheadLog log = new OCASDiskWriteAheadLog(ACTUAL_DB_NAME, Paths.get(actualStorageDir), Paths.get(actualStorageDir),
-        10_000, 128, null, null, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false, true, false,
-        0);
+        10_000, 128, null, null, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false,
+        true, false, 0);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<>();
@@ -267,11 +266,11 @@ public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
                 continue;
               }
 
-              OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false, null);
+              OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, false, null);
               if (cacheEntry == null) {
                 do {
                   if (cacheEntry != null) {
-                    expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+                    expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
                   }
 
                   cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, null);
@@ -283,7 +282,7 @@ public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
                 durablePage.restoreChanges(updatePageRecord.getChanges());
                 durablePage.setLsn(new OLogSequenceNumber(0, 0));
               } finally {
-                expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+                expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
               }
             }
 
@@ -308,28 +307,28 @@ public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
       String actualTSCFile, String expectedNBHFile, String actualNBHFile, String expectedOBFFile, String actualOBFFile)
       throws IOException {
 
-    assertFileContentIsTheSame(new File(expectedStorageDir, expectedIMCFile).getAbsolutePath(),
-        new File(actualStorageDir, actualIMCFile).getAbsolutePath());
-    assertFileContentIsTheSame(new File(expectedStorageDir, expectedTSCFile).getAbsolutePath(),
-        new File(actualStorageDir, actualTSCFile).getAbsolutePath());
-    assertFileContentIsTheSame(new File(expectedStorageDir, expectedNBHFile).getAbsolutePath(),
-        new File(actualStorageDir, actualNBHFile).getAbsolutePath());
-    assertFileContentIsTheSame(new File(expectedStorageDir, expectedOBFFile).getAbsolutePath(),
-        new File(actualStorageDir, actualOBFFile).getAbsolutePath());
+    assertFileContentIsTheSame(new java.io.File(expectedStorageDir, expectedIMCFile).getAbsolutePath(),
+        new java.io.File(actualStorageDir, actualIMCFile).getAbsolutePath());
+    assertFileContentIsTheSame(new java.io.File(expectedStorageDir, expectedTSCFile).getAbsolutePath(),
+        new java.io.File(actualStorageDir, actualTSCFile).getAbsolutePath());
+    assertFileContentIsTheSame(new java.io.File(expectedStorageDir, expectedNBHFile).getAbsolutePath(),
+        new java.io.File(actualStorageDir, actualNBHFile).getAbsolutePath());
+    assertFileContentIsTheSame(new java.io.File(expectedStorageDir, expectedOBFFile).getAbsolutePath(),
+        new java.io.File(actualStorageDir, actualOBFFile).getAbsolutePath());
   }
 
   private void assertFileContentIsTheSame(String expectedBTreeFileName, String actualBTreeFileName) throws IOException {
-    File expectedFile = new File(expectedBTreeFileName);
+    java.io.File expectedFile = new java.io.File(expectedBTreeFileName);
     try (RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r")) {
-      try (RandomAccessFile fileTwo = new RandomAccessFile(new File(actualBTreeFileName), "r")) {
+      try (RandomAccessFile fileTwo = new RandomAccessFile(new java.io.File(actualBTreeFileName), "r")) {
 
         Assert.assertEquals(fileOne.length(), fileTwo.length());
 
         byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
         byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-        fileOne.seek(OFileClassic.HEADER_SIZE);
-        fileTwo.seek(OFileClassic.HEADER_SIZE);
+        fileOne.seek(OFile.HEADER_SIZE);
+        fileTwo.seek(OFile.HEADER_SIZE);
 
         int bytesRead = fileOne.read(expectedContent);
         while (bytesRead >= 0) {

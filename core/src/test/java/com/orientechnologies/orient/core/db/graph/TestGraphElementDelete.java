@@ -4,16 +4,14 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.ODirection;
-import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.record.*;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * Created by tglman on 20/02/17.
@@ -63,6 +61,31 @@ public class TestGraphElementDelete {
 
     assertFalse(vertex.getEdges(ODirection.OUT, "E").iterator().hasNext());
 
+  }
+
+  @Test
+  public void testDeleteEdgeConcurrentModification() {
+
+    OVertex vertex = database.newVertex("V");
+    OVertex vertex1 = database.newVertex("V");
+    OEdge edge = vertex.addEdge(vertex1, "E");
+    database.save(edge);
+    database.getLocalCache().clear();
+    OElement instance = database.load(edge.getIdentity());
+    instance.setProperty("one", "two");
+    database.save(instance);
+    try {
+      database.delete(edge);
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+
+    }
+
+    assertNotNull(database.load(edge.getIdentity()));
+    assertNotNull(database.load(vertex.getIdentity()));
+    assertNotNull(database.load(vertex1.getIdentity()));
+    assertTrue(((OVertex) database.load(vertex.getIdentity())).getEdges(ODirection.OUT, "E").iterator().hasNext());
+    assertTrue(((OVertex) database.load(vertex1.getIdentity())).getEdges(ODirection.IN, "E").iterator().hasNext());
   }
 
 }

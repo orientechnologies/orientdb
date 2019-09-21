@@ -13,16 +13,15 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
 import org.junit.Test;
@@ -54,7 +53,7 @@ public class LuceneInheritanceQueryTest extends BaseLuceneTest {
 
   }
 
-  protected void createSchema(ODatabaseDocumentTx db) {
+  protected void createSchema(ODatabaseDocumentInternal db) {
     final OClass c1 = db.createVertexClass("C1");
     c1.createProperty("name", OType.STRING);
     c1.createIndex("C1.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });

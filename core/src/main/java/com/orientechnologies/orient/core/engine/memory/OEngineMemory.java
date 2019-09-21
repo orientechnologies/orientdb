@@ -36,7 +36,7 @@ public class OEngineMemory extends OEngineAbstract {
   public OEngineMemory() {
   }
 
-  public OStorage createStorage(String url, Map<String, String> configuration, long maxWalSegSize) {
+  public OStorage createStorage(String url, Map<String, String> configuration, long maxWalSegSize, long doubleWriteLogMaxSegSize) {
     try {
       return new ODirectMemoryStorage(url, url, getMode(configuration), generateStorageId());
     } catch (Exception e) {

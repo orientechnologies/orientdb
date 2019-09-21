@@ -32,13 +32,7 @@ import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -48,11 +42,7 @@ import org.junit.Test;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -147,7 +137,7 @@ public class PostponedEngineStartTest {
     OEngine engine = ORIENT.getEngineIfRunning(ENGINE2.getName());
     Assert.assertNull(engine);
 
-    final OStorage storage = ENGINE2.createStorage(ENGINE2.getName() + ":storage", null, 125 * 1024 * 1024);
+    final OStorage storage = ENGINE2.createStorage(ENGINE2.getName() + ":storage", null, 125 * 1024 * 1024, 25 * 1024 * 1024);
     Assert.assertNotNull(storage);
 
     engine = ORIENT.getRunningEngine(ENGINE2.getName());
@@ -209,7 +199,7 @@ public class PostponedEngineStartTest {
     }
 
     @Override
-    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize) {
+    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize, long doubleWriteLogMaxSegSize) {
       return new OStorage() {
 
         @Override
@@ -222,6 +212,16 @@ public class PostponedEngineStartTest {
         public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable,
             OCommandOutputListener iListener) {
 
+        }
+
+        @Override
+        public String getClusterName(int clusterId) {
+          return null;
+        }
+
+        @Override
+        public boolean setClusterAttribute(int id, OCluster.ATTRIBUTES attribute, Object value) {
+          return false;
         }
 
         @Override
@@ -297,12 +297,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion,
-            byte iRecordType) {
-          return null;
-        }
-
-        @Override
         public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode,
             ORecordCallback<Boolean> iCallback) {
           return null;
@@ -359,17 +353,17 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+        public int addCluster(String iClusterName, int iRequestedId) {
           return 0;
         }
 
         @Override
-        public boolean dropCluster(String iClusterName, boolean iTruncate) {
+        public boolean dropCluster(String iClusterName) {
           return false;
         }
 
         @Override
-        public boolean dropCluster(int iId, boolean iTruncate) {
+        public boolean dropCluster(int iId) {
           return false;
         }
 
@@ -524,11 +518,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
-          return null;
-        }
-
-        @Override
         public OCluster getClusterByName(String clusterName) {
           return null;
         }
@@ -669,7 +658,7 @@ public class PostponedEngineStartTest {
     }
 
     @Override
-    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize) {
+    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize, long doubleWriteLogMaxSegSize) {
       throw new UnsupportedOperationException();
     }
 

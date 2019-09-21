@@ -22,10 +22,8 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -94,7 +92,7 @@ public class OClassIndexManager {
   }
 
   private static OIndex getTransactionalIndex(ODatabaseDocumentInternal database, OIndex<?> index) {
-    return ((OIndexManagerProxy) database.getMetadata().getIndexManager()).preProcessBeforeReturn(database, index);
+    return (database.getMetadata().getIndexManagerInternal()).preProcessBeforeReturn(database, index);
   }
 
   public static void checkIndexesAfterDelete(ODocument iDocument, ODatabaseDocumentInternal database) {

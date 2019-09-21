@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,12 +19,10 @@ public class OLuceneNullTest extends OLuceneBaseTest {
 
     db.command("create index Test.names on Test(names) FULLTEXT ENGINE LUCENE");
 
-
   }
 
   @Test
   public void testNullChangeToNotNullWithLists() {
-
 
     db.begin();
     ODocument doc = new ODocument("Test");
@@ -37,15 +34,14 @@ public class OLuceneNullTest extends OLuceneBaseTest {
     db.save(doc);
     db.commit();
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Test.names");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Test.names");
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
 
   }
 
   @Test
   public void testNotNullChangeToNullWithLists() {
-
 
     ODocument doc = new ODocument("Test");
 
@@ -61,8 +57,8 @@ public class OLuceneNullTest extends OLuceneBaseTest {
     db.save(doc);
     db.commit();
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Test.names");
-    Assert.assertEquals(1, index.getSize());
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Test.names");
+    Assert.assertEquals(0, index.getSize());
 
   }
 }

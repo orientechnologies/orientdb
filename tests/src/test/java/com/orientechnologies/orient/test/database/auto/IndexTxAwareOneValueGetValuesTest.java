@@ -1,26 +1,29 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.*;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-
 @Test
 public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
+  private static final String CLASS_NAME = "IndexTxAwareOneValueGetValuesTest";
+  private static final String FIELD_NAME = "value";
+  private static final String INDEX_NAME = "IndexTxAwareOneValueGetValuesTest";
+
   @Parameters(value = "url")
   public IndexTxAwareOneValueGetValuesTest(@Optional String url) {
     super(url);
@@ -30,168 +33,97 @@ public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
 
-    database.command(new OCommandSQL("create index idxTxAwareOneValueGetValuesTest unique INTEGER")).execute();
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass cls = schema.createClass(CLASS_NAME);
+    cls.createProperty(FIELD_NAME, OType.INTEGER);
+    cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE, FIELD_NAME);
   }
 
-  @AfterMethod
-  public void afterMethod() throws Exception {
-    database.command(new OCommandSQL("delete from index:idxTxAwareOneValueGetValuesTest")).execute();
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {
+    super.beforeMethod();
 
-    super.afterMethod();
+    final OClass cls = database.getMetadata().getSchema().getClass(CLASS_NAME);
+    cls.truncate();
   }
 
   @Test
   public void testPut() {
-    database.getMetadata().getIndexManager().reload();
+    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+      throw new SkipException("Test is enabled only for embedded database");
+    }
+
     database.begin();
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
     database.commit();
 
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
+    Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
+    Set<OIdentifiable> resultOne = new HashSet<>();
     OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
     database.begin();
 
-    index.put(3, new ORecordId(clusterId, 3));
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 3).save();
 
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
+    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
+    Set<OIdentifiable> resultTwo = new HashSet<>();
     cursor = index.iterateEntries(Arrays.asList(1, 2, 3), true);
     cursorToSet(cursor, resultTwo);
     Assert.assertEquals(resultTwo.size(), 3);
 
     database.rollback();
 
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> resultThree = new HashSet<OIdentifiable>();
+    Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
+    Set<OIdentifiable> resultThree = new HashSet<>();
     cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, resultThree);
-    Assert.assertEquals(resultThree.size(), 2);
-  }
-
-  @Test
-  public void testClear() {
-    database.getMetadata().getIndexManager().reload();
-    database.begin();
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
-    Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
-
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
-    database.commit();
-
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultOne);
-    Assert.assertEquals(resultOne.size(), 2);
-
-    database.begin();
-
-    index.clear();
-
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
-    cursorToSet(cursor, resultTwo);
-    Assert.assertEquals(resultTwo.size(), 0);
-
-    database.rollback();
-
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> resultThree = new HashSet<OIdentifiable>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultThree);
-
-    Assert.assertEquals(resultThree.size(), 2);
-  }
-
-  @Test
-  public void testClearAndPut() {
-    database.getMetadata().getIndexManager().reload();
-    database.begin();
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
-    Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
-
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
-    database.commit();
-
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultOne);
-
-    Assert.assertEquals(resultOne.size(), 2);
-
-    database.begin();
-
-    index.clear();
-    index.put(2, new ORecordId(clusterId, 2));
-
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultTwo);
-
-    Assert.assertEquals(resultTwo.size(), 1);
-
-    database.rollback();
-
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-
-    Set<OIdentifiable> resultThree = new HashSet<OIdentifiable>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultThree);
-
     Assert.assertEquals(resultThree.size(), 2);
   }
 
   @Test
   public void testRemove() {
-    database.getMetadata().getIndexManager().reload();
+    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+      throw new SkipException("Test is enabled only for embedded database");
+    }
+
     database.begin();
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
 
     database.commit();
 
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
+    Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
+    Set<OIdentifiable> resultOne = new HashSet<>();
     cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
     database.begin();
 
-    index.remove(1);
+    ((OIdentifiable) index.get(1)).getRecord().delete();
 
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
+    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
+    Set<OIdentifiable> resultTwo = new HashSet<>();
     cursorToSet(cursor, resultTwo);
     Assert.assertEquals(resultTwo.size(), 1);
 
     database.rollback();
 
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> resultThree = new HashSet<OIdentifiable>();
+    Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
+    Set<OIdentifiable> resultThree = new HashSet<>();
     cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, resultThree);
     Assert.assertEquals(resultThree.size(), 2);
@@ -199,30 +131,32 @@ public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
 
   @Test
   public void testRemoveAndPut() {
-    database.getMetadata().getIndexManager().reload();
+    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+      throw new SkipException("Test is enabled only for embedded database");
+    }
+
     database.begin();
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
 
     database.commit();
 
-    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
+    Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
+    Set<OIdentifiable> resultOne = new HashSet<>();
     OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
     database.begin();
 
-    index.remove(1);
-    index.put(1, new ORecordId(clusterId, 1));
+    ((OIdentifiable) index.get(1)).getRecord().delete();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
 
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
+    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
+    Set<OIdentifiable> resultTwo = new HashSet<>();
     cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, resultTwo);
     Assert.assertEquals(resultTwo.size(), 2);
@@ -232,19 +166,24 @@ public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
 
   @Test
   public void testMultiPut() {
-    database.getMetadata().getIndexManager().reload();
+    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+      throw new SkipException("Test is enabled only for embedded database");
+    }
+
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    final ODocument document = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    document.field(FIELD_NAME, 0);
+    document.field(FIELD_NAME, 1);
+    document.save();
 
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
+
+    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
+    Set<OIdentifiable> result = new HashSet<>();
     OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, result);
 
@@ -259,26 +198,28 @@ public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
 
   @Test
   public void testPutAfterTransaction() {
-    database.getMetadata().getIndexManager().reload();
+    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+      throw new SkipException("Test is enabled only for embedded database");
+    }
+
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
 
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
+    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    Set<OIdentifiable> result = new HashSet<>();
     OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, result);
 
     Assert.assertEquals(result.size(), 2);
     database.commit();
 
-    index.put(3, new ORecordId(clusterId, 3));
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 3).save();
 
     cursor = index.iterateEntries(Arrays.asList(1, 2, 3), true);
     cursorToSet(cursor, result);
@@ -288,20 +229,22 @@ public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
 
   @Test
   public void testRemoveOneWithinTransaction() {
-    database.getMetadata().getIndexManager().reload();
+    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+      throw new SkipException("Test is enabled only for embedded database");
+    }
+
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
 
-    index.remove(1);
+    ((OIdentifiable) index.get(1)).getRecord().delete();
 
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
+    Set<OIdentifiable> result = new HashSet<>();
     OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, result);
     Assert.assertEquals(result.size(), 1);
@@ -315,20 +258,22 @@ public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
 
   @Test
   public void testRemoveAllWithinTransaction() {
-    database.getMetadata().getIndexManager().reload();
+    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+      throw new SkipException("Test is enabled only for embedded database");
+    }
+
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
 
-    index.remove(1, null);
+    ((OIdentifiable) index.get(1)).getRecord().delete();
 
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
+    Set<OIdentifiable> result = new HashSet<>();
     OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, result);
     Assert.assertEquals(result.size(), 1);
@@ -342,21 +287,23 @@ public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
 
   @Test
   public void testPutAfterRemove() {
-    database.getMetadata().getIndexManager().reload();
+    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+      throw new SkipException("Test is enabled only for embedded database");
+    }
+
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetValuesTest");
+    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
-    final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
 
-    index.remove(1, new ORecordId(clusterId, 1));
-    index.put(1, new ORecordId(clusterId, 1));
+    ((OIdentifiable) index.get(1)).getRecord().delete();
+    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
 
-    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
+    Set<OIdentifiable> result = new HashSet<>();
     OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, result);
 

@@ -50,6 +50,7 @@ public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordRe
     this.updateContent = updateContent;
     this.recordType = iRecordType;
   }
+
   public OUpdateRecordRequest(ORecordId iRid, ORecord iContent, int iVersion, boolean updateContent, byte iRecordType) {
     this.rid = iRid;
     this.version = iVersion;
@@ -79,8 +80,9 @@ public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordRe
     version = channel.readVersion();
     recordType = channel.readByte();
     mode = channel.readByte();
- 
-    content = Orient.instance().getRecordFactoryManager().newInstance(recordType, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().getIfDefined());
+
+    content = Orient.instance().getRecordFactoryManager()
+        .newInstance(recordType, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().getIfDefined());
     serializer.fromStream(bts, content, null);
 
   }

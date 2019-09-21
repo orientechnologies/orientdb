@@ -1,0 +1,170 @@
+package com.orientechnologies.orient.core.metadata.security;
+
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.junit.*;
+
+import java.util.Map;
+
+public class OSecurityPolicyTest {
+  static OrientDB orientDB;
+  ODatabaseSession db;
+
+
+  @BeforeClass
+  public static void beforeClass() {
+    orientDB = new OrientDB("plocal:.", OrientDBConfig.defaultConfig());
+  }
+
+  @Before
+  public void before() {
+    orientDB.create(getClass().getSimpleName(), ODatabaseType.MEMORY);
+    db = orientDB.open(getClass().getSimpleName(), "admin", "admin");
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    orientDB.close();
+    orientDB = null;
+  }
+
+  @After
+  public void after() {
+    db.close();
+    orientDB.drop(getClass().getSimpleName());
+  }
+
+  @Test
+  public void testSecurityPolicyCreate() {
+    OResultSet rs = db.query("select from " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", "test");
+    Assert.assertFalse(rs.hasNext());
+    rs.close();
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+
+    rs = db.query("select from " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", "test");
+    Assert.assertTrue(rs.hasNext());
+    OResult item = rs.next();
+    Assert.assertEquals("test", item.getProperty("name"));
+    Assert.assertFalse(rs.hasNext());
+    rs.close();
+  }
+
+  @Test
+  public void testSecurityPolicyGet() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+    Assert.assertNull(security.getSecurityPolicy(db, "test"));
+    security.createSecurityPolicy(db, "test");
+    Assert.assertNotNull(security.getSecurityPolicy(db, "test"));
+  }
+
+  @Test
+  public void testValidPredicates() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+    Assert.assertNull(security.getSecurityPolicy(db, "test"));
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    policy.setCreateRule("name = 'create'");
+    policy.setReadRule("name = 'read'");
+    policy.setBeforeUpdateRule("name = 'beforeUpdate'");
+    policy.setAfterUpdateRule("name = 'afterUpdate'");
+    policy.setDeleteRule("name = 'delete'");
+    policy.setExecuteRule("name = 'execute'");
+
+
+    security.saveSecurityPolicy(db, policy);
+    policy = security.getSecurityPolicy(db, "test");
+    Assert.assertNotNull(policy);
+    Assert.assertEquals("name = 'create'", policy.getCreateRule());
+    Assert.assertEquals("name = 'read'", policy.getReadRule());
+    Assert.assertEquals("name = 'beforeUpdate'", policy.getBeforeUpdateRule());
+    Assert.assertEquals("name = 'afterUpdate'", policy.getAfterUpdateRule());
+    Assert.assertEquals("name = 'delete'", policy.getDeleteRule());
+    Assert.assertEquals("name = 'execute'", policy.getExecuteRule());
+  }
+
+
+  @Test
+  public void testInvalidPredicates() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+    Assert.assertNull(security.getSecurityPolicy(db, "test"));
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    try {
+      policy.setCreateRule("foo bar");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+    }
+    try {
+      policy.setReadRule("foo bar");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+    }
+    try {
+      policy.setBeforeUpdateRule("foo bar");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+    }
+    try {
+      policy.setAfterUpdateRule("foo bar");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+    }
+    try {
+      policy.setDeleteRule("foo bar");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+    }
+    try {
+      policy.setExecuteRule("foo bar");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+    }
+  }
+
+  @Test
+  public void testAddPolicyToRole() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+    Assert.assertNull(security.getSecurityPolicy(db, "test"));
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    policy.setCreateRule("1 = 1");
+    policy.setBeforeUpdateRule("1 = 2");
+    policy.setActive(true);
+    security.saveSecurityPolicy(db, policy);
+
+    ORole reader = security.getRole(db, "reader");
+    String resource = "database.class.Person";
+    security.setSecurityPolicy(db, reader, resource, policy);
+
+    ORID policyRid = policy.getElement().getIdentity();
+    try (OResultSet rs = db.query("select from ORole where name = 'reader'")) {
+      Map<String, OIdentifiable> rolePolicies = rs.next().getProperty("policies");
+      OIdentifiable id = rolePolicies.get(resource);
+      Assert.assertEquals(id.getIdentity(), policyRid);
+    }
+
+    OSecurityPolicy policy2 = security.getSecurityPolicy(db, reader, resource);
+    Assert.assertNotNull(policy2);
+    Assert.assertEquals(policy2.getElement().getIdentity(), policyRid);
+  }
+
+  @Test
+  public void testRemovePolicyToRole() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+    Assert.assertNull(security.getSecurityPolicy(db, "test"));
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    policy.setCreateRule("1 = 1");
+    policy.setBeforeUpdateRule("1 = 2");
+    policy.setActive(true);
+    security.saveSecurityPolicy(db, policy);
+
+    ORole reader = security.getRole(db, "reader");
+    String resource = "database.class.Person";
+    security.setSecurityPolicy(db, reader, resource, policy);
+
+    security.removeSecurityPolicy(db, reader, resource);
+    Assert.assertNull(security.getSecurityPolicy(db, reader, resource));
+
+  }
+}

@@ -17,15 +17,17 @@ public class OUpdatableResult extends OResultInternal {
     this.element = element;
   }
 
-  @Override public <T> T getProperty(String name) {
+  @Override
+  public <T> T getProperty(String name) {
     return element.getProperty(name);
   }
 
-  @Override public Set<String> getPropertyNames() {
+  @Override
+  public Set<String> getPropertyNames() {
     return element.getPropertyNames();
   }
 
-  public boolean hasProperty(String propName){
+  public boolean hasProperty(String propName) {
     if (element != null && ((ODocument) element.getRecord()).containsField(propName)) {
       return true;
     }
@@ -33,19 +35,23 @@ public class OUpdatableResult extends OResultInternal {
   }
 
 
-  @Override public boolean isElement() {
+  @Override
+  public boolean isElement() {
     return true;
   }
 
-  @Override public Optional<OElement> getElement() {
+  @Override
+  public Optional<OElement> getElement() {
     return Optional.of(element);
   }
 
-  @Override public OElement toElement() {
+  @Override
+  public OElement toElement() {
     return element;
   }
 
-  @Override public void setProperty(String name, Object value) {
+  @Override
+  public void setProperty(String name, Object value) {
     element.setProperty(name, value);
   }
 

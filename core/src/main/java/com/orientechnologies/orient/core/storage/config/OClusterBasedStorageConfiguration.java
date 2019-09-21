@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.OCellBTreeSingleValueV1;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -82,8 +82,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private OContextConfiguration configuration;
   private boolean               validation;
 
-  private final OCellBTreeSingleValueV1<String> btree;
-  private final OPaginatedCluster               cluster;
+  private final CellBTreeSingleValueV1<String> btree;
+  private final OPaginatedCluster              cluster;
 
   private final OAbstractPaginatedStorage storage;
   private final OAtomicOperationsManager  atomicOperationsManager;
@@ -103,7 +103,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     cluster = OPaginatedClusterFactory
         .createCluster(COMPONENT_NAME, OPaginatedCluster.getLatestBinaryVersion(), storage, DATA_FILE_EXTENSION,
             MAP_FILE_EXTENSION);
-    btree = new OCellBTreeSingleValueV1<>(COMPONENT_NAME, TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
+    btree = new CellBTreeSingleValueV1<>(COMPONENT_NAME, OAbstractPaginatedStorage.STORAGE_CONFIGURATION_INDEX_ID,
+        TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
 
     this.storage = storage;
@@ -112,7 +113,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void create(final OContextConfiguration contextConfiguration) throws IOException {
     lock.acquireWriteLock();
     try {
-      cluster.create(-1);
+      cluster.create();
       btree.create(OStringSerializer.INSTANCE, null, 1, null);
 
       this.configuration = contextConfiguration;
@@ -145,7 +146,25 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     try {
       updateListener = null;
 
+      final long firstPosition = cluster.getFirstPosition();
+      OPhysicalPosition[] positions = cluster.ceilingPositions(new OPhysicalPosition(firstPosition));
+      while (positions.length > 0) {
+        for (OPhysicalPosition position : positions) {
+          cluster.deleteRecord(position.clusterPosition);
+        }
+
+        positions = cluster.higherPositions(positions[positions.length - 1]);
+      }
+
       cluster.delete();
+
+      final OCellBTreeSingleValue.OCellBTreeKeyCursor<String> keyCursor = btree.keyCursor();
+      String treeKey = keyCursor.next(-1);
+      while (treeKey != null) {
+        btree.remove(treeKey);
+        treeKey = keyCursor.next(-1);
+      }
+
       btree.delete();
 
       cache.clear();
@@ -1184,7 +1203,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
         final String name = entry.getKey().substring(ENGINE_PREFIX_PROPERTY.length());
         final ORawBuffer buffer = cluster.readRecord(entry.getValue().getClusterPosition(), false);
-        final IndexEngineData engine = deserializeIndexEngineProperty(name, buffer.buffer);
+        final IndexEngineData engine = deserializeIndexEngineProperty(name, buffer.buffer, Integer.MIN_VALUE);
         result.add(engine);
 
         entry = cursor.next(-1);
@@ -1197,7 +1216,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   }
 
   @Override
-  public IndexEngineData getIndexEngine(final String name) {
+  public IndexEngineData getIndexEngine(final String name, int defaultIndexId) {
     lock.acquireReadLock();
     try {
       final byte[] property = readProperty(ENGINE_PREFIX_PROPERTY + name);
@@ -1205,7 +1224,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         return null;
       }
 
-      return deserializeIndexEngineProperty(name, property);
+      return deserializeIndexEngineProperty(name, property, defaultIndexId);
     } finally {
       lock.releaseReadLock();
     }
@@ -1328,7 +1347,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     int totalSize = 0;
     final List<byte[]> entries = new ArrayList<>(16);
 
-    final byte[] numericProperties = new byte[3 * OIntegerSerializer.INT_SIZE + 5 * OByteSerializer.BYTE_SIZE];
+    final byte[] numericProperties = new byte[4 * OIntegerSerializer.INT_SIZE + 5 * OByteSerializer.BYTE_SIZE];
     totalSize += numericProperties.length;
     entries.add(numericProperties);
 
@@ -1351,6 +1370,9 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       pos++;
 
       OIntegerSerializer.INSTANCE.serializeNative(indexEngineData.getKeySize(), numericProperties, pos);
+      pos += OIntegerSerializer.INT_SIZE;
+
+      OIntegerSerializer.INSTANCE.serializeNative(indexEngineData.getIndexId(), numericProperties, pos);
     }
 
     final byte[] algorithm = serializeStringValue(indexEngineData.getAlgorithm());
@@ -1399,7 +1421,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     return mergeBinaryEntries(totalSize, entries);
   }
 
-  private IndexEngineData deserializeIndexEngineProperty(final String name, final byte[] property) {
+  private IndexEngineData deserializeIndexEngineProperty(final String name, final byte[] property, final int defaultIndexId) {
     int pos = 0;
 
     final int version = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
@@ -1425,6 +1447,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
     final int keySize = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
     pos += OIntegerSerializer.INT_SIZE;
+
+    final int indexId;
+    if (getVersion() >= 23) {
+      indexId = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
+      pos += OIntegerSerializer.INT_SIZE;
+    } else {
+      indexId = defaultIndexId;
+    }
 
     final String algorithm = deserializeStringValue(property, pos);
     pos += getSerializedStringSize(property, pos);
@@ -1460,7 +1490,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       engineProperties.put(key, value);
     }
 
-    return new IndexEngineData(name, algorithm, indexType, true, version, apiVersion, isMultiValue, valueSerializerId,
+    return new IndexEngineData(indexId, name, algorithm, indexType, true, version, apiVersion, isMultiValue, valueSerializerId,
         keySerializerId, isAutomatic, keyTypes, isNullValueSupport, keySize, encryption,
         configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY), engineProperties);
   }
@@ -1536,7 +1566,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
     final String compression = deserializeStringValue(property, pos);
 
-    return new OStoragePaginatedClusterConfiguration(this, id, name, null, useWal, 0, 0, compression, encryption,
+    return new OStoragePaginatedClusterConfiguration(id, name, null, useWal, 0, 0, compression, encryption,
         configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY), conflictStrategy,
         OStorageClusterConfiguration.STATUS.valueOf(status), binaryVersion);
   }
@@ -1776,9 +1806,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     setConflictStrategy(storageConfiguration.getConflictStrategy());
     setValidation(storageConfiguration.isValidationEnabled());
 
+    int counter = 0;
     final Set<String> indexEngines = storageConfiguration.indexEngines();
+
     for (final String engine : indexEngines) {
-      addIndexEngine(engine, storageConfiguration.getIndexEngine(engine));
+      addIndexEngine(engine, storageConfiguration.getIndexEngine(engine, counter));
+      counter++;
     }
 
     setRecordSerializer(storageConfiguration.getRecordSerializer());

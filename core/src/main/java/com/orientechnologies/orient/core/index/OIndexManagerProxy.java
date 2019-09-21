@@ -181,4 +181,8 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex<?> index) {
     return delegate.preProcessBeforeReturn(database, index);
   }
+
+  public OIndexManagerAbstract delegate() {
+    return delegate;
+  }
 }

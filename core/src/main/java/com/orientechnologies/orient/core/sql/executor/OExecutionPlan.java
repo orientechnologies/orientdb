@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Created by luigidellaquila on 06/07/16.
  */
-public interface OExecutionPlan extends Serializable{
+public interface OExecutionPlan extends Serializable {
 
   List<OExecutionStep> getSteps();
 

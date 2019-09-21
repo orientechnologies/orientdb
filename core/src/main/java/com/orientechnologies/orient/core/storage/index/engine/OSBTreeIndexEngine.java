@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -53,18 +52,25 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   private final OSBTree<Object, Object> sbTree;
   private final int                     version;
   private final String                  name;
+  private final int                     id;
 
-  public OSBTreeIndexEngine(String name, OAbstractPaginatedStorage storage, int version) {
+  public OSBTreeIndexEngine(final int id, String name, OAbstractPaginatedStorage storage, int version) {
+    this.id = id;
     this.name = name;
     this.version = version;
 
     if (version == 1) {
-      sbTree = new OSBTreeV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      sbTree = new OSBTreeV1<>(id, name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 2) {
-      sbTree = new OSBTreeV2<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      sbTree = new OSBTreeV2<>(id, name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid version of index, version = " + version);
     }
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
@@ -82,8 +88,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
     try {
       //noinspection unchecked
       sbTree.create(keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport, encryption);
@@ -95,18 +100,25 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   @Override
   public void delete() {
     try {
+      doClearTree();
+
       sbTree.delete();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
     }
   }
 
-  @Override
-  public void deleteWithoutLoad(String indexName) {
-    try {
-      sbTree.deleteWithoutLoad();
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
+  private void doClearTree() throws IOException {
+    final OSBTree.OSBTreeKeyCursor<Object> keyCursor = sbTree.keyCursor();
+    Object key = keyCursor.next(-1);
+
+    while (key != null) {
+      sbTree.remove(key);
+      key = keyCursor.next(-1);
+    }
+
+    if (sbTree.isNullPointerSupport()) {
+      sbTree.remove(null);
     }
   }
 
@@ -139,7 +151,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   @Override
   public void clear() {
     try {
-      sbTree.clear();
+      doClearTree();
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during clear index " + name), e);
     }

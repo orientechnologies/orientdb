@@ -371,7 +371,7 @@ public class TTYConsoleReader implements OConsoleReader {
         } else if (bufferComponents.length == 1) {
           bufferPart.add(suggestionComponents[0]);
           if (bufferPart.size() > 1) {
-            suggestionPart=new StringBuilder(bufferComponents[0]);
+            suggestionPart = new StringBuilder(bufferComponents[0]);
             appendSpace = false;
           } else {
             suggestionPart = new StringBuilder(suggestionComponents[0]);

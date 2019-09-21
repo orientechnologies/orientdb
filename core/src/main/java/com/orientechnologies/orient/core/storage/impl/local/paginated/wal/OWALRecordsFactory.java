@@ -24,6 +24,56 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBTreeMultiValuePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBtreeMultiValueRemoveEntryCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValuePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValueRemoveCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineCreateCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineDeleteCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTablePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTableRemoveCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtree.OSBTreePutCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtree.OSBTreeRemoveCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.CellBTreeMultiValueV2BucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1SetPagesSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1SetTreeSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.nullbucket.CellBTreeNullBucketSingleValueV1InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.nullbucket.CellBTreeNullBucketSingleValueV1RemoveValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.nullbucket.CellBTreeNullBucketSingleValueV1SetValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.bucket.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.entrypoint.CellBTreeEntryPointSingleValueV3InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.entrypoint.CellBTreeEntryPointSingleValueV3SetPagesSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.entrypoint.CellBTreeEntryPointSingleValueV3SetTreeSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3RemoveValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3SetValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetFreeListPagePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetRecordsSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v0.paginatedclusterstate.PaginatedClusterStateV0SetSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetFileSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetFreeListPagePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetRecordsSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetFileSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetFreeListPagePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetRecordsSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1RemoveValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1SetValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.bucket.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.nullbucket.SBTreeNullBucketV2InitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.nullbucket.SBTreeNullBucketV2RemoveValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v2.nullbucket.SBTreeNullBucketV2SetValuePO;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
@@ -33,18 +83,7 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CHECKPOINT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.EMPTY_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_CREATED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_DELETED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_TRUNCATED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FULL_CHECKPOINT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.NON_TX_OPERATION_PERFORMED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.UPDATE_PAGE_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -134,11 +173,335 @@ public final class OWALRecordsFactory {
     case FILE_DELETED_WAL_RECORD:
       walRecord = new OFileDeletedWALRecord();
       break;
-    case FILE_TRUNCATED_WAL_RECORD:
-      walRecord = new OFileTruncatedWALRecord();
-      break;
     case EMPTY_WAL_RECORD:
       walRecord = new OEmptyWALRecord();
+      break;
+    case CREATE_CLUSTER_CO:
+      walRecord = new OPaginatedClusterCreateCO();
+      break;
+    case DELETE_CLUSTER_CO:
+      walRecord = new OPaginatedClusterDeleteCO();
+      break;
+    case CLUSTER_CREATE_RECORD_CO:
+      walRecord = new OPaginatedClusterCreateRecordCO();
+      break;
+    case CLUSTER_DELETE_RECORD_CO:
+      walRecord = new OPaginatedClusterDeleteRecordCO();
+      break;
+    case CLUSTER_ALLOCATE_RECORD_POSITION_CO:
+      walRecord = new OPaginatedClusterAllocatePositionCO();
+      break;
+    case CLUSTER_UPDATE_RECORD_CO:
+      walRecord = new OPaginatedClusterUpdateRecordCO();
+      break;
+    case INDEX_ENGINE_CREATE_CO:
+      walRecord = new OIndexEngineCreateCO();
+      break;
+    case INDEX_ENGINE_DELETE_CO:
+      walRecord = new OIndexEngineDeleteCO();
+      break;
+    case CELL_BTREE_SINGLE_VALUE_PUT_CO:
+      walRecord = new OCellBTreeSingleValuePutCO();
+      break;
+    case CELL_BTREE_SINGLE_VALUE_REMOVE_CO:
+      walRecord = new OCellBTreeSingleValueRemoveCO();
+      break;
+    case CELL_BTREE_MULTI_VALUE_PUT_CO:
+      walRecord = new OCellBTreeMultiValuePutCO();
+      break;
+    case CELL_BTREE_MULTI_VALUE_REMOVE_ENTRY_CO:
+      walRecord = new OCellBtreeMultiValueRemoveEntryCO();
+      break;
+    case SBTREE_PUT_CO:
+      walRecord = new OSBTreePutCO();
+      break;
+    case SBTREE_REMOVE_CO:
+      walRecord = new OSBTreeRemoveCO();
+      break;
+    case LOCAL_HASHTABLE_PUT_CO:
+      walRecord = new OLocalHashTablePutCO();
+      break;
+    case LOCAL_HASHTABLE_REMOVE_CO:
+      walRecord = new OLocalHashTableRemoveCO();
+      break;
+    case SBTREE_BONSAI_CREATE_COMPONENT_CO:
+      walRecord = new OSBTreeBonsaiCreateComponentCO();
+      break;
+    case SBTREE_BONSAI_CREATE_CO:
+      walRecord = new OSBTreeBonsaiCreateCO();
+      break;
+    case SBTREE_BONSAI_DELETE_COMPONENT_CO:
+      walRecord = new com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbteebonsai.OSBTreeBonsaiDeleteComponentCO();
+      break;
+    case SBTREE_BONSAI_DELETE_CO:
+      walRecord = new OSBTreeBonsaiDeleteCO();
+      break;
+    case CLUSTER_POSITION_MAP_INIT_PO:
+      walRecord = new ClusterPositionMapBucketInitPO();
+      break;
+    case CLUSTER_POSITION_MAP_ADD_PO:
+      walRecord = new ClusterPositionMapBucketAddPO();
+      break;
+    case CLUSTER_POSITION_MAP_ALLOCATE_PO:
+      walRecord = new ClusterPositionMapBucketAllocatePO();
+      break;
+    case CLUSTER_POSITION_MAP_TRUNCATE_LAST_ENTRY_PO:
+      walRecord = new ClusterPositionMapBucketTruncateLastEntryPO();
+      break;
+    case CLUSTER_POSITION_MAP_UPDATE_ENTRY_PO:
+      walRecord = new ClusterPositionMapBucketUpdateEntryPO();
+      break;
+    case CLUSTER_POSITION_MAP_UPDATE_STATUS_PO:
+      walRecord = new ClusterPositionMapBucketUpdateStatusPO();
+      break;
+    case CLUSTER_PAGE_INIT_PO:
+      walRecord = new ClusterPageInitPO();
+      break;
+    case CLUSTER_PAGE_APPEND_RECORD_PO:
+      walRecord = new ClusterPageAppendRecordPO();
+      break;
+    case CLUSTER_PAGE_REPLACE_RECORD_PO:
+      walRecord = new ClusterPageReplaceRecordPO();
+      break;
+    case CLUSTER_PAGE_DELETE_RECORD_PO:
+      walRecord = new ClusterPageDeleteRecordPO();
+      break;
+    case CLUSTER_PAGE_SET_NEXT_PAGE_PO:
+      walRecord = new ClusterPageSetNextPagePO();
+      break;
+    case CLUSTER_PAGE_SET_PREV_PAGE_PO:
+      walRecord = new ClusterPageSetPrevPagePO();
+      break;
+    case CLUSTER_PAGE_SET_RECORD_LONG_VALUE_PO:
+      walRecord = new ClusterPageSetRecordLongValuePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V0_SET_SIZE_PO:
+      walRecord = new PaginatedClusterStateV0SetSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V0_SET_RECORDS_SIZE_PO:
+      walRecord = new PaginatedClusterStateV0SetRecordsSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V0_SET_FREE_LIST_PAGE_PO:
+      walRecord = new PaginatedClusterStateV0SetFreeListPagePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V1_SET_SIZE_PO:
+      walRecord = new PaginatedClusterStateV1SetSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V1_SET_RECORDS_SIZE_PO:
+      walRecord = new PaginatedClusterStateV1SetRecordsSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V1_SET_FREE_LIST_PAGE_PO:
+      walRecord = new PaginatedClusterStateV1SetFreeListPagePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V1_SET_FILE_SIZE_PO:
+      walRecord = new PaginatedClusterStateV1SetFileSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V2_SET_SIZE_PO:
+      walRecord = new PaginatedClusterStateV2SetSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V2_SET_RECORDS_SIZE_PO:
+      walRecord = new PaginatedClusterStateV2SetRecordsSizePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V2_SET_FREE_LIST_PAGE_PO:
+      walRecord = new PaginatedClusterStateV2SetFreeListPagePO();
+      break;
+    case PAGINATED_CLUSTER_STATE_V2_SET_FILE_SIZE_PO:
+      walRecord = new PaginatedClusterStateV2SetFileSizePO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_INIT_PO:
+      walRecord = new CellBTreeBucketSingleValueV1InitPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV1AddLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_NON_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV1AddNonLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_REMOVE_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV1RemoveLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_REMOVE_NON_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV1RemoveNonLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_ALL_PO:
+      walRecord = new CellBTreeBucketSingleValueV1AddAllPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SHRINK_PO:
+      walRecord = new CellBTreeBucketSingleValueV1ShrinkPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_UPDATE_VALUE_PO:
+      walRecord = new CellBTreeBucketSingleValueV1UpdateValuePO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SET_LEFT_SIBLING_PO:
+      walRecord = new CellBTreeBucketSingleValueV1SetLeftSiblingPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SET_RIGHT_SIBLING_PO:
+      walRecord = new CellBTreeBucketSingleValueV1SetRightSiblingPO();
+      break;
+    case CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V1_INIT_PO:
+      walRecord = new CellBTreeNullBucketSingleValueV1InitPO();
+      break;
+    case CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V1_SET_VALUE_PO:
+      walRecord = new CellBTreeNullBucketSingleValueV1SetValuePO();
+      break;
+    case CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V1_REMOVE_VALUE_PO:
+      walRecord = new CellBTreeNullBucketSingleValueV1RemoveValuePO();
+      break;
+    case CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V1_INIT_PO:
+      walRecord = new CellBTreeEntryPointSingleValueV1InitPO();
+      break;
+    case CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V1_SET_TREE_SIZE_PO:
+      walRecord = new CellBTreeEntryPointSingleValueV1SetTreeSizePO();
+      break;
+    case CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V1_SET_PAGES_SIZE_PO:
+      walRecord = new CellBTreeEntryPointSingleValueV1SetPagesSizePO();
+      break;
+    case WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SWITCH_BUCKET_TYPE_PO:
+      walRecord = new CellBTreeBucketSingleValueV1SwitchBucketTypePO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_INIT_PO:
+      walRecord = new CellBTreeBucketSingleValueV3InitPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV3AddLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_NON_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV3AddNonLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_REMOVE_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV3RemoveLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_ALL_PO:
+      walRecord = new CellBTreeBucketSingleValueV3AddAllPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SHRINK_PO:
+      walRecord = new CellBTreeBucketSingleValueV3ShrinkPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_UPDATE_VALUE_PO:
+      walRecord = new CellBTreeBucketSingleValueV3UpdateValuePO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_REMOVE_NON_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SET_LEFT_SIBLING_PO:
+      walRecord = new CellBTreeBucketSingleValueV3SetLeftSiblingPO();
+      break;
+    case CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SET_RIGHT_SIBLING_PO:
+      walRecord = new CellBTreeBucketSingleValueV3SetRightSiblingPO();
+      break;
+    case CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V3_INIT_PO:
+      walRecord = new CellBTreeEntryPointSingleValueV3InitPO();
+      break;
+    case CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V3_SET_PAGES_SIZE_PO:
+      walRecord = new CellBTreeEntryPointSingleValueV3SetPagesSizePO();
+      break;
+    case CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V3_SET_TREE_SIZE_PO:
+      walRecord = new CellBTreeEntryPointSingleValueV3SetTreeSizePO();
+      break;
+    case CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_INIT_PO:
+      walRecord = new CellBTreeNullBucketSingleValueV3InitPO();
+      break;
+    case CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_SET_VALUE_PO:
+      walRecord = new CellBTreeNullBucketSingleValueV3SetValuePO();
+      break;
+    case CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_REMOVE_VALUE_PO:
+      walRecord = new CellBTreeNullBucketSingleValueV3RemoveValuePO();
+      break;
+    case WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SWITCH_BUCKET_TYPE_PO:
+      walRecord = new CellBTreeBucketSingleValueV3SwitchBucketTypePO();
+      break;
+    case SBTREE_BUCKET_V1_INIT_PO:
+      walRecord = new SBTreeBucketV1InitPO();
+      break;
+    case SBTREE_BUCKET_V1_ADD_LEAF_ENTRY_PO:
+      walRecord = new SBTreeBucketV1AddLeafEntryPO();
+      break;
+    case WALRecordTypes.SBTREE_BUCKET_V1_ADD_NON_LEAF_ENTRY_PO:
+      walRecord = new SBTreeBucketV1AddNonLeafEntryPO();
+      break;
+    case SBTREE_BUCKET_V1_REMOVE_LEAF_ENTRY_PO:
+      walRecord = new SBTreeBucketV1RemoveLeafEntryPO();
+      break;
+    case SBTREE_BUCKET_V1_REMOVE_NON_LEAF_ENTRY_PO:
+      walRecord = new SBTreeBucketV1RemoveNonLeafEntryPO();
+      break;
+    case SBTREE_BUCKET_V1_ADD_ALL_PO:
+      walRecord = new SBTreeBucketV1AddAllPO();
+      break;
+    case SBTREE_BUCKET_V1_SHRINK_PO:
+      walRecord = new SBTreeBucketV1ShrinkPO();
+      break;
+    case SBTREE_BUCKET_V1_UPDATE_VALUE_PO:
+      walRecord = new SBTreeBucketV1UpdateValuePO();
+      break;
+    case SBTREE_BUCKET_V1_SWITCH_BUCKET_TYPE_PO:
+      walRecord = new SBTreeBucketV1SwitchBucketTypePO();
+      break;
+    case SBTREE_BUCKET_V1_SET_LEFT_SIBLING_PO:
+      walRecord = new SBTreeBucketV1SetLeftSiblingPO();
+      break;
+    case SBTREE_BUCKET_V1_SET_RIGHT_SIBLING_PO:
+      walRecord = new SBTreeBucketV1SetRightSiblingPO();
+      break;
+    case SBTREE_NULL_BUCKET_V1_INIT_PO:
+      walRecord = new SBTreeNullBucketV1InitPO();
+      break;
+    case SBTREE_NULL_BUCKET_V1_SET_VALUE_PO:
+      walRecord = new SBTreeNullBucketV1SetValuePO();
+      break;
+    case SBTREE_NULL_BUCKET_V1_REMOVE_VALUE_PO:
+      walRecord = new SBTreeNullBucketV1RemoveValuePO();
+      break;
+    case SBTREE_BUCKET_V2_INIT_PO:
+      walRecord = new SBTreeBucketV2InitPO();
+      break;
+    case SBTREE_BUCKET_V2_ADD_ALL_PO:
+      walRecord = new SBTreeBucketV2AddAllPO();
+      break;
+    case SBTREE_BUCKET_V2_ADD_LEAF_ENTRY_PO:
+      walRecord = new SBTreeBucketV2AddLeafEntryPO();
+      break;
+    case WALRecordTypes.SBTREE_BUCKET_V2_ADD_NON_LEAF_ENTRY_PO:
+      walRecord = new SBTreeBucketV2AddNonLeafEntryPO();
+      break;
+    case SBTREE_BUCKET_V2_REMOVE_LEAF_ENTRY_PO:
+      walRecord = new SBTreeBucketV2RemoveLeafEntryPO();
+      break;
+    case SBTREE_BUCKET_V2_REMOVE_NON_LEAF_ENTRY_PO:
+      walRecord = new SBTreeBucketV2RemoveNonLeafEntryPO();
+      break;
+    case SBTREE_BUCKET_V2_SET_LEFT_SIBLING_PO:
+      walRecord = new SBTreeBucketV2SetLeftSiblingPO();
+      break;
+    case SBTREE_BUCKET_V2_SET_RIGHT_SIBLING_PO:
+      walRecord = new SBTreeBucketV2SetRightSiblingPO();
+      break;
+    case SBTREE_BUCKET_V2_SHRINK_PO:
+      walRecord = new SBTreeBucketV2ShrinkPO();
+      break;
+    case SBTREE_BUCKET_V2_SWITCH_BUCKET_TYPE_PO:
+      walRecord = new SBTreeBucketV2SwitchBucketTypePO();
+      break;
+    case SBTREE_BUCKET_V2_UPDATE_VALUE_PO:
+      walRecord = new SBTreeBucketV2UpdateValuePO();
+      break;
+    case SBTREE_BUCKET_V1_SET_TREE_SIZE_PO:
+      walRecord = new SBTreeBucketV1SetTreeSizePO();
+      break;
+    case SBTREE_BUCKET_V2_SET_TREE_SIZE_PO:
+      walRecord = new SBTreeBucketV2SetTreeSizePO();
+      break;
+    case SBTREE_NULL_BUCKET_V2_INIT_PO:
+      walRecord = new SBTreeNullBucketV2InitPO();
+      break;
+    case SBTREE_NULL_BUCKET_V2_REMOVE_VALUE_PO:
+      walRecord = new SBTreeNullBucketV2RemoveValuePO();
+      break;
+    case SBTREE_NULL_BUCKET_V2_SET_VALUE_PO:
+      walRecord = new SBTreeNullBucketV2SetValuePO();
+      break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_INIT_PO:
+      walRecord = new CellBTreeMultiValueV2BucketInitPO();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))
@@ -152,6 +515,11 @@ public final class OWALRecordsFactory {
     }
 
     walRecord.fromStream(content, 1);
+
+    if (walRecord.getId() != content[0]) {
+      throw new IllegalStateException(
+          "Deserialized WAL record id does not match to the serialized record id " + walRecord.getId() + " - " + content[0]);
+    }
 
     return walRecord;
   }

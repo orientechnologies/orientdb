@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -74,7 +74,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
     ODocument doc = new ODocument("c1");
     doc.field("p1", "abc");
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
     db.save(doc);
 
@@ -83,14 +83,14 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(1, vertices.size());
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
     db.commit();
 
     query = "select from C1 where p1 lucene \"abc\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(1, vertices.size());
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
 
     db.begin();
 
@@ -114,7 +114,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
       i++;
     }
     Assert.assertEquals(0, i);
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(0, index.getSize());
 
     db.rollback();
 
@@ -123,14 +123,14 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(1, vertices.size());
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
 
   }
 
   @Test
   public void txUpdateTest() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
     OClass c1 = db.getMetadata().getSchema().getClass("C1");
     try {
       c1.truncate();
@@ -209,7 +209,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
     OClass c1 = db.getMetadata().getSchema().getClass("C1");
     try {
       c1.truncate();

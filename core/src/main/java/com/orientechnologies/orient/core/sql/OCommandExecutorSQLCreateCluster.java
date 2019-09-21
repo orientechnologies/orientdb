@@ -124,7 +124,7 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
       if (requestedId == -1) {
         return database.addCluster(clusterName);
       } else {
-        return database.addCluster(clusterName, requestedId, null);
+        return database.addCluster(clusterName, requestedId);
       }
     }
   }

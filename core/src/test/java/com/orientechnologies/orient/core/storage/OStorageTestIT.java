@@ -2,13 +2,7 @@ package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OPageIsBrokenException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -17,7 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.junit.After;
 import org.junit.Assert;
@@ -138,7 +132,7 @@ public class OStorageTestIT {
     storage.close(true, false);
     ctx.close();
 
-    int position = OFileClassic.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
+    int position = OFile.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
 
     RandomAccessFile file = new RandomAccessFile(storagePath.resolve(nativeFileName).toFile(), "rw");
     file.seek(position);
@@ -197,7 +191,7 @@ public class OStorageTestIT {
     storage.close(true, false);
     ctx.close();
 
-    int position = OFileClassic.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
+    int position = OFile.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
 
     RandomAccessFile file = new RandomAccessFile(storagePath.resolve(nativeFileName).toFile(), "rw");
     file.seek(position);

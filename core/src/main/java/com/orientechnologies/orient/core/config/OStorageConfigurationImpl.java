@@ -476,8 +476,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
             clusterBinaryVersion = 0;
           }
 
-          currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
-              clusterCompression, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+          currentCluster = new OStoragePaginatedClusterConfiguration(clusterId, clusterName, null, cc, bb, aa, clusterCompression,
+              clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
               clusterConflictStrategy, status, clusterBinaryVersion);
 
           break;
@@ -593,7 +593,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
             mulitvalue = false;
           }
 
-          final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, indexType, durableInNonTxMode, version,
+          final IndexEngineData indexEngineData = new IndexEngineData(Integer.MIN_VALUE, name, algorithm, indexType, durableInNonTxMode, version,
               apiVersion, mulitvalue, valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize,
               encryption, encryptionOptions, engineProperties);
 
@@ -890,7 +890,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   @Override
-  public IndexEngineData getIndexEngine(String name) {
+  public IndexEngineData getIndexEngine(String name, int defaultIndexId) {
     lock.acquireReadLock();
     try {
       return indexEngines.get(name);
@@ -1342,7 +1342,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   @Override
   public String getUuid() {
-    throw  new UnsupportedOperationException();
+    throw new UnsupportedOperationException();
   }
 
   @Override

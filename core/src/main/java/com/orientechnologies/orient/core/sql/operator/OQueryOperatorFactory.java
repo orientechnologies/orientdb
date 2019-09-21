@@ -19,14 +19,14 @@ import java.util.Set;
 
 /**
  * Factory to register new OqueryOperators.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  */
 public interface OQueryOperatorFactory {
-    
-    /**
-     * @return set of operators
-     */
-    Set<OQueryOperator> getOperators();
-    
+
+  /**
+   * @return set of operators
+   */
+  Set<OQueryOperator> getOperators();
+
 }

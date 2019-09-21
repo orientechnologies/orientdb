@@ -147,7 +147,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements OBef
   public void setDatabaseStatus(final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
   }
 
-    @Override
+  @Override
   public void removeServer(final String nodeLeftName, final boolean removeOnlyDynamicServers) {
     throw new UnsupportedOperationException("not yet implemented");
   }

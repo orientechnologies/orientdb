@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.List;
@@ -29,7 +31,7 @@ public class ODeleteExecutionPlanner {
   public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteExecutionPlan result = new ODeleteExecutionPlan(ctx);
 
-    if (handleIndexAsTarget(result, fromClause.getItem().getIndex(), whereClause, ctx,enableProfiling)) {
+    if (handleIndexAsTarget(result, fromClause.getItem().getIndex(), whereClause, ctx, enableProfiling)) {
       if (limit != null) {
         throw new OCommandExecutionException("Cannot apply a LIMIT on a delete from index");
       }
@@ -57,7 +59,8 @@ public class ODeleteExecutionPlanner {
       return false;
     }
     String indexName = indexIdentifier.getIndexName();
-    OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (index == null) {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
@@ -65,6 +68,8 @@ public class ODeleteExecutionPlanner {
 
     switch (indexIdentifier.getType()) {
     case INDEX:
+      OIndexAbstract.manualIndexesWarning();
+
       OBooleanExpression keyCondition = null;
       OBooleanExpression ridCondition = null;
       if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
@@ -143,7 +148,8 @@ public class ODeleteExecutionPlanner {
     }
   }
 
-  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause, boolean profilingEnabled) {
+  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause,
+      boolean profilingEnabled) {
     OSelectStatement sourceStatement = new OSelectStatement(-1);
     sourceStatement.setTarget(target);
     sourceStatement.setWhereClause(whereClause);

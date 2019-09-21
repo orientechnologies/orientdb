@@ -728,11 +728,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return new OStorageOperationResult<Integer>(resVersion);
   }
 
-  @Override
-  public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte recordType) {
-    throw new UnsupportedOperationException("recyclePosition");
-  }
-
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     ORecordCallback<ODeleteRecordResponse> realCallback = null;
@@ -746,23 +741,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     if (response != null)
       resDelete = response.getResult();
     return new OStorageOperationResult<Boolean>(resDelete);
-  }
-
-  @Override
-  public OStorageOperationResult<Boolean> hideRecord(final ORecordId recordId, final int mode,
-      final ORecordCallback<Boolean> callback) {
-
-    ORecordCallback<OHideRecordResponse> realCallback = null;
-    if (callback != null)
-      realCallback = (iRID, response) -> callback.call(iRID, response.getResult());
-
-    final OHideRecordRequest request = new OHideRecordRequest(recordId);
-    final OHideRecordResponse response = asyncNetworkOperationNoRetry(request, mode, recordId, realCallback,
-        "Error on hide record " + recordId);
-    Boolean resHide = null;
-    if (response != null)
-      resHide = response.getResult();
-    return new OStorageOperationResult<Boolean>(resHide);
   }
 
   @Override
@@ -1027,7 +1005,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public List<ORecordOperation> commit(final OTransactionInternal iTx) {
     unstickToSession();
-    OCommit37Request request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
+    OCommit38Request request = new OCommit38Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
         iTx.getIndexOperations());
 
     OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
@@ -1102,17 +1080,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int addCluster(final String iClusterName, final Object... iArguments) {
-    return addCluster(iClusterName, -1, iArguments);
+    return addCluster(iClusterName, -1);
   }
 
-  public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
+  public int addCluster(final String iClusterName, final int iRequestedId) {
     OAddClusterRequest request = new OAddClusterRequest(iRequestedId, iClusterName);
     OAddClusterResponse response = networkOperationNoRetry(request, "Error on add new cluster");
     addNewClusterToConfiguration(response.getClusterId(), iClusterName);
     return response.getClusterId();
   }
 
-  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+  public boolean dropCluster(final int iClusterId) {
 
     ODropClusterRequest request = new ODropClusterRequest(iClusterId);
 
@@ -1120,6 +1098,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     if (response.getResult())
       removeClusterFromConfiguration(iClusterId);
     return response.getResult();
+  }
+
+  @Override
+  public String getClusterName(final int clusterId) {
+    final OCluster cluster = getClusterById(clusterId);
+    if (cluster != null) {
+      return cluster.getName();
+    }
+
+    throw new OStorageException("Cluster " + clusterId + " is absent in storage.");
+  }
+
+  @Override
+  public boolean setClusterAttribute(int id, OCluster.ATTRIBUTES attribute, Object value) {
+    return false;
   }
 
   public void removeClusterFromConfiguration(int iClusterId) {
@@ -1892,7 +1885,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           final int clusterId = clusterConfig.getId();
           if (clusterName != null) {
             clusterName = clusterName.toLowerCase(Locale.ENGLISH);
-            cluster.configure(null, clusterId, clusterName);
+            cluster.configure(clusterId, clusterName);
             if (clusterId >= clusters.length)
               clusters = Arrays.copyOf(clusters, clusterId + 1);
             clusters[clusterId] = cluster;
@@ -1986,7 +1979,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       if (clusters.length <= clusterId || clusters[clusterId] == null) {
         //Adding the cluster waiting for the push
         final OClusterRemote cluster = new OClusterRemote();
-        cluster.configure(this, clusterId, iClusterName.toLowerCase(Locale.ENGLISH));
+        cluster.configure(clusterId, iClusterName.toLowerCase(Locale.ENGLISH));
 
         if (clusters.length <= clusterId)
           clusters = Arrays.copyOf(clusters, clusterId + 1);
@@ -1999,7 +1992,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
-    OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), true, transaction.isUsingLog(),
+    OBeginTransaction38Request request = new OBeginTransaction38Request(transaction.getId(), true, transaction.isUsingLog(),
         transaction.getRecordOperations(), transaction.getIndexOperations());
     OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote transaction begin");
     for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
@@ -2009,7 +2002,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void reBeginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
-    ORebeginTransactionRequest request = new ORebeginTransactionRequest(transaction.getId(), transaction.isUsingLog(),
+    ORebeginTransaction38Request request = new ORebeginTransaction38Request(transaction.getId(), transaction.isUsingLog(),
         transaction.getRecordOperations(), transaction.getIndexOperations());
     OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote transaction begin");
     for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
@@ -2019,9 +2012,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void fetchTransaction(ODatabaseDocumentRemote remote) {
     OTransactionOptimisticClient transaction = (OTransactionOptimisticClient) remote.getTransaction();
-    OFetchTransactionRequest request = new OFetchTransactionRequest(transaction.getId());
-    OFetchTransactionResponse respose = networkOperation(request, "Error fetching transaction from server side");
-    transaction.replaceContent(respose.getOperations(), respose.getIndexChanges());
+    OFetchTransaction38Request request = new OFetchTransaction38Request(transaction.getId());
+    OFetchTransaction38Response response = networkOperation(request, "Error fetching transaction from server side");
+    transaction.replaceContent(response.getOperations(), response.getIndexChanges());
   }
 
   public OBinaryPushRequest createPush(byte type) {

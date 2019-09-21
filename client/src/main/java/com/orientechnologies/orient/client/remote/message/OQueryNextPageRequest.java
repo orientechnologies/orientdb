@@ -43,7 +43,8 @@ public final class OQueryNextPageRequest implements OBinaryRequest<OQueryRespons
   public OQueryNextPageRequest() {
   }
 
-  @Override public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
+  @Override
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     network.writeString(queryId);
     network.writeInt(recordsPerPage);
   }
@@ -53,19 +54,23 @@ public final class OQueryNextPageRequest implements OBinaryRequest<OQueryRespons
     this.recordsPerPage = channel.readInt();
   }
 
-  @Override public byte getCommand() {
+  @Override
+  public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE;
   }
 
-  @Override public String getDescription() {
+  @Override
+  public String getDescription() {
     return "Execute remote query";
   }
 
-  @Override public OQueryResponse createResponse() {
+  @Override
+  public OQueryResponse createResponse() {
     return new OQueryResponse();
   }
 
-  @Override public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeQueryNextPage(this);
   }
 

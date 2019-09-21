@@ -51,7 +51,7 @@ public class OImmutableRole implements OSecurityRole {
       // DELEGATE TO THE PARENT ROLE IF ANY
       return parentRole.allow(resourceGeneric, resourceSpecific, iCRUDOperation);
 
-    return mode == ALLOW_MODES.ALLOW_ALL_BUT;
+    return false;
   }
 
   public boolean hasRule(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {

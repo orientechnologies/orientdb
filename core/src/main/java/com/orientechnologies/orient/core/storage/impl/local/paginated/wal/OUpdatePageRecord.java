@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
  * @since 26.04.13
  */
 public class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private OWALChanges        changes;
+  private OWALChanges changes;
 
   @SuppressWarnings("WeakerAccess")
   public OUpdatePageRecord() {
@@ -56,27 +56,18 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public int toStream(final byte[] content, int offset) {
-    offset = super.toStream(content, offset);
-    offset = changes.toStream(offset, content);
+  protected void serializeToByteBuffer(ByteBuffer buffer) {
+    super.serializeToByteBuffer(buffer);
 
-    return offset;
-  }
-
-  @Override
-  public void toStream(final ByteBuffer buffer) {
-    super.toStream(buffer);
     changes.toStream(buffer);
   }
 
   @Override
-  public int fromStream(final byte[] content, int offset) {
-    offset = super.fromStream(content, offset);
+  protected void deserializeFromByteBuffer(ByteBuffer buffer) {
+    super.deserializeFromByteBuffer(buffer);
 
     changes = new OWALPageChangesPortion();
-    offset = changes.fromStream(offset, content);
-
-    return offset;
+    changes.fromStream(buffer);
   }
 
   @Override

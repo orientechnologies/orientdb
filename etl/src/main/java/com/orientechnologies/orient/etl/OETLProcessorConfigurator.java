@@ -115,16 +115,11 @@ public class OETLProcessorConfigurator {
       OETLExtractor extractor = configureExtractor(cfg, context);
 
       //copy  the skipDuplicates flag from vertex transformer to Loader
-      Optional.ofNullable(cfg.<Collection<ODocument>>field("transformers"))
-          .map(c -> c.stream()
-              .filter(d -> d.containsField("vertex"))
-              .map(d -> d.<ODocument>field("vertex"))
-              .filter(d -> d.containsField("skipDuplicates"))
-              .map(d -> d.field("skipDuplicates"))
-              .map(skip -> cfg.<ODocument>field("loader")
-                  .<ODocument>field(cfg.<ODocument>field("loader").fieldNames()[0])
-                  .field("skipDuplicates", skip))
-              .count());
+      Optional.ofNullable(cfg.<Collection<ODocument>>field("transformers")).map(
+          c -> c.stream().filter(d -> d.containsField("vertex")).map(d -> d.<ODocument>field("vertex"))
+              .filter(d -> d.containsField("skipDuplicates")).map(d -> d.field("skipDuplicates")).map(
+                  skip -> cfg.<ODocument>field("loader").<ODocument>field(cfg.<ODocument>field("loader").fieldNames()[0])
+                      .field("skipDuplicates", skip)).count());
 
       OETLLoader loader = configureLoader(cfg, context);
 
@@ -137,15 +132,15 @@ public class OETLProcessorConfigurator {
 
       OETLProcessor processor = new OETLProcessor(beginBlocks, source, extractor, transformers, loader, endBlocks, context);
 
-      List<OETLComponent> components = new ArrayList<OETLComponent>() {{
-        add(source);
-        addAll(transformers);
-        addAll(beginBlocks);
-        addAll(endBlocks);
-        add(loader);
-        add(extractor);
-      }
-      };
+      List<OETLComponent> components = new ArrayList<OETLComponent>() {
+        {
+          add(source);
+          addAll(transformers);
+          addAll(beginBlocks);
+          addAll(endBlocks);
+          add(loader);
+          add(extractor);
+        }};
 
       components.stream().forEach(c -> c.setProcessor(processor));
 

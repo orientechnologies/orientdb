@@ -17,7 +17,7 @@ import java.util.Random;
 public class HashIndexSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
   private OIndex              hashIndex;
-  private Random random = new Random();
+  private Random              random = new Random();
 
   public HashIndexSpeedTest() {
     super(5000000);
@@ -38,8 +38,9 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
 
     databaseDocumentTx.create();
 
-    hashIndex = databaseDocumentTx.getMetadata().getIndexManager()
-        .createIndex("hashIndex", "UNIQUE_HASH_INDEX", new OSimpleKeyIndexDefinition(OType.STRING), new int[0], null, null);
+    hashIndex = databaseDocumentTx.getMetadata().getIndexManagerInternal()
+        .createIndex(databaseDocumentTx, "hashIndex", "UNIQUE_HASH_INDEX", new OSimpleKeyIndexDefinition(OType.STRING), new int[0],
+            null, null);
   }
 
   @Override

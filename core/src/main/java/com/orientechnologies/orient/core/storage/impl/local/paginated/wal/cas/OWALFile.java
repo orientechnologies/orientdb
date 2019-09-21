@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
-import com.orientechnologies.common.jna.ONative;
+import com.orientechnologies.common.jnr.LastErrorException;
+import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
-import com.sun.jna.LastErrorException;
 
 import java.io.Closeable;
 import java.io.IOException;

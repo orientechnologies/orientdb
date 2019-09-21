@@ -15,7 +15,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -91,7 +90,7 @@ public class OBinaryProtocolHelper {
         .equals(recordSerializer))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(recordSerializer);
-      stream = ser.toStream(iRecord, false);
+      stream = ser.toStream(iRecord);
     } else
       stream = iRecord.toStream();
 
@@ -167,7 +166,7 @@ public class OBinaryProtocolHelper {
       final int clusterId = network.readShort();
       if (clusterName != null) {
         clusterName = clusterName.toLowerCase(Locale.ENGLISH);
-        cluster.configure(null, clusterId, clusterName);
+        cluster.configure(clusterId, clusterName);
         if (clusterId >= clusters.length)
           clusters = Arrays.copyOf(clusters, clusterId + 1);
         clusters[clusterId] = cluster;

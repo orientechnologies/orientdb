@@ -45,7 +45,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 
@@ -357,11 +356,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @param iClusterName Cluster name
    * @param iRequestedId requested id of the cluster
-   * @param iParameters  Additional parameters to pass to the factories
-   *
    * @return Cluster id
    */
-  int addCluster(String iClusterName, int iRequestedId, Object... iParameters);
+  int addCluster(String iClusterName, int iRequestedId);
 
   /**
    * Drops a cluster by its name. Physical clusters will be completely deleted
@@ -370,7 +367,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return true if has been removed, otherwise false
    */
-  boolean dropCluster(String iClusterName, final boolean iTruncate);
+  boolean dropCluster(String iClusterName);
 
   /**
    * Drops a cluster by its id. Physical clusters will be completely deleted.
@@ -379,7 +376,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return true if has been removed, otherwise false
    */
-  boolean dropCluster(int iClusterId, final boolean iTruncate);
+  boolean dropCluster(int iClusterId);
 
   /**
    * Sets a property value
@@ -506,7 +503,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Returns the Dictionary manual index.
    *
    * @return ODictionary instance
+   *
+   * @deprecated Manual indexes are prohibited and will be removed
    */
+  @Deprecated
   ODictionary<T> getDictionary();
 
   /**

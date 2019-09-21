@@ -29,5 +29,6 @@ public class ODatabaseDocumentSTUsageTest {
     } catch (Exception e) {
       Assert.assertTrue(e.getCause() instanceof IllegalStateException);
     }
+    db.close();
   }
 }

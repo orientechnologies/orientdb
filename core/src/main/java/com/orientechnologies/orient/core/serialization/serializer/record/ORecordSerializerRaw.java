@@ -45,7 +45,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   }
 
   @Override
-  public String[] getFieldNamesRoot(ODocument reference, byte[] iSource) {
+  public String[] getFieldNames(ODocument reference, byte[] iSource) {
     return null;
   }
 
@@ -64,12 +64,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   }
 
   @Override
-  public byte[] writeClassOnly(ORecord iSource) {
-    return new byte[] {};
-  }
-
-  @Override
-  public byte[] toStream(final ORecord iSource, boolean iOnlyDelta) {
+  public byte[] toStream(final ORecord iSource) {
     try {
       return iSource.toStream();
     } catch (Exception e) {
@@ -89,19 +84,4 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     return NAME;
   }
 
-  @Override
-  public <RET> RET deserializeFieldFromRoot(byte[]record, String iFieldName){
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-  
-  @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[]record, int offset, String iFieldName, int serializerVersion){
-    throw new UnsupportedOperationException("Not supported yet."); 
-  }
-  
-  @Override
-  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion) {
-    return getFieldNamesRoot(reference, iSource);
-  }
-    
 }

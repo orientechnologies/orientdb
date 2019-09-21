@@ -13,13 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.assertj.core.api.Assertions;
@@ -42,21 +41,20 @@ public class OLuceneDropClusterTest extends OLuceneBaseTest {
     db.execute("sql", getScriptFromStream(stream));
 
     db.command(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class
-            .getName() + "\"}");
-    db.command(
-        "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class
-            .getName() + "\"}");
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class.getName()
+            + "\"}");
+    db.command("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class
+        .getName() + "\"}");
 
-    OMetadata metadata = db.getMetadata();
+    OMetadataInternal metadata = db.getMetadata();
 
-    long initialIndexSize = metadata.getIndexManager().getIndex("Song.title").getSize();
+    long initialIndexSize = metadata.getIndexManagerInternal().getIndex(db, "Song.title").getSize();
 
     int[] clusterIds = metadata.getSchema().getClass("Song").getClusterIds();
 
-    db.dropCluster(clusterIds[1], true);
+    db.dropCluster(clusterIds[1]);
 
-    long afterDropIndexSize = metadata.getIndexManager().getIndex("Song.title").getSize();
+    long afterDropIndexSize = metadata.getIndexManagerInternal().getIndex(db, "Song.title").getSize();
 
     Assertions.assertThat(afterDropIndexSize).isLessThan(initialIndexSize);
 

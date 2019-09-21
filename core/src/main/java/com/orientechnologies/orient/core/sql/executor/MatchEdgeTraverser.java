@@ -127,7 +127,7 @@ public class MatchEdgeTraverser {
 
     Iterable<OResultInternal> result;
 
-    if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
+    if (whileCondition == null && maxDepth == null) { // in this case starting point is not returned and only one level depth is
       // evaluated
 
       Iterable<OResultInternal> queryResult = traversePatternEdge(startingPoint, iCommandContext);
@@ -180,7 +180,7 @@ public class MatchEdgeTraverser {
         };
       };
 
-    } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
+    } else { // in this case also zero level (starting point) is considered and traversal depth is given by the while condition
       result = new ArrayList<>();
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");

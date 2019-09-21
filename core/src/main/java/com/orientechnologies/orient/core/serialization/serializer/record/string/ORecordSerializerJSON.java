@@ -43,10 +43,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
@@ -70,16 +67,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private static final Long                 MIN_INT               = (long) Integer.MIN_VALUE;
   private static final Double               MAX_FLOAT             = (double) Float.MAX_VALUE;
   private static final Double               MIN_FLOAT             = (double) Float.MIN_VALUE;
-
-  @Override
-  public <RET> RET deserializeFieldFromRoot(byte[]record, String iFieldName){
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[] record, int offset, String iFieldName, int serializerVersion) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }  
 
   private interface CollectionItemVisitor {
     void visitItem(Object item);
@@ -332,13 +319,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   @Override
-  public byte[] writeClassOnly(ORecord iSource) {
-    return new byte[] {};
-  }
-
-  @Override
-  public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat, boolean iOnlyDelta,
-      boolean autoDetectCollectionType) {
+  public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat, boolean autoDetectCollectionType) {
     try {
       final StringWriter buffer = new StringWriter(INITIAL_SIZE);
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);
@@ -513,7 +494,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
 
       case EMBEDDED:
-        return fromString(iFieldValueAsString);
+        return fromString(iFieldValueAsString, new ODocumentEmbedded(), null);
 
       case DATE:
         if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
@@ -782,9 +763,5 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   public String getName() {
     return NAME;
   }
-  
-  @Override
-  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion) {
-    return getFieldNamesRoot(reference, iSource);
-  }
+
 }

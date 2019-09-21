@@ -1,17 +1,14 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
@@ -20,6 +17,7 @@ package com.orientechnologies.spatial;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -115,10 +113,10 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
   }
 
   @Override
-  public OBaseIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage,
-      int version, int apiVersion, boolean multiValue, Map<String, String> engineProperties) {
+  public OBaseIndexEngine createIndexEngine(int indexId, String algorithm, String name, Boolean durableInNonTxMode,
+      OStorage storage, int version, int apiVersion, boolean multiValue, Map<String, String> engineProperties) {
 
-    return new OLuceneSpatialIndexEngineDelegator(name, durableInNonTxMode, storage, version);
+    return new OLuceneSpatialIndexEngineDelegator(indexId, name, durableInNonTxMode, storage, version);
 
   }
 
@@ -148,7 +146,8 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
         return;
 
       OLogManager.instance().debug(this, "Dropping spatial indexes...");
-      for (OIndex idx : db.getMetadata().getIndexManager().getIndexes()) {
+      final ODatabaseDocumentInternal internalDb = (ODatabaseDocumentInternal) db;
+      for (OIndex idx : internalDb.getMetadata().getIndexManagerInternal().getIndexes(internalDb)) {
 
         if (idx.getInternal() instanceof OLuceneSpatialIndex) {
           OLogManager.instance().debug(this, "- index '%s'", idx.getName());

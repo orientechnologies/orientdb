@@ -1,17 +1,14 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
@@ -26,11 +23,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -57,8 +50,10 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   private final int                               version;
   private final String                            indexName;
   private       OLuceneSpatialIndexEngineAbstract delegate;
+  private final int                               id;
 
-  public OLuceneSpatialIndexEngineDelegator(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
+  public OLuceneSpatialIndexEngineDelegator(int id, String name, Boolean durableInNonTxMode, OStorage storage, int version) {
+    this.id = id;
 
     this.indexName = name;
     this.durableInNonTxMode = durableInNonTxMode;
@@ -67,13 +62,18 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
+  public int getId() {
+    return id;
+  }
+
+  @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
     if (delegate == null) {
       if (OClass.INDEX_TYPE.SPATIAL.name().equalsIgnoreCase(indexType)) {
         if (indexDefinition.getFields().size() > 1) {
-          delegate = new OLuceneLegacySpatialIndexEngine(storage, indexName, OShapeFactory.INSTANCE);
+          delegate = new OLuceneLegacySpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
         } else {
-          delegate = new OLuceneGeoSpatialIndexEngine(storage, indexName, OShapeFactory.INSTANCE);
+          delegate = new OLuceneGeoSpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
         }
       }
       delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
@@ -88,8 +88,7 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
 
   }
 
@@ -97,12 +96,6 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   public void delete() {
     if (delegate != null)
       delegate.delete();
-  }
-
-  @Override
-  public void deleteWithoutLoad(String indexName) {
-    if (delegate != null)
-      delegate.deleteWithoutLoad(indexName);
   }
 
   @Override

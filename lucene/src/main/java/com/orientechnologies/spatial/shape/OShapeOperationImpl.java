@@ -57,7 +57,7 @@ public class OShapeOperationImpl implements OShapeOperation {
   @Override
   public boolean contains(Shape shape, Shape shape1) {
 
-    if(shape instanceof ShapeCollection || shape1 instanceof ShapeCollection){
+    if (shape instanceof ShapeCollection || shape1 instanceof ShapeCollection) {
       return shape.relate(shape1).equals(SpatialRelation.CONTAINS);
     }
     Geometry geometry = factory.toGeometry(shape);
@@ -70,7 +70,7 @@ public class OShapeOperationImpl implements OShapeOperation {
   @Override
   public boolean within(Shape shape, Shape shape1) {
 
-    if(shape instanceof ShapeCollection || shape1 instanceof ShapeCollection){
+    if (shape instanceof ShapeCollection || shape1 instanceof ShapeCollection) {
       return shape.relate(shape1).equals(SpatialRelation.WITHIN);
     }
     Geometry geometry = factory.toGeometry(shape);

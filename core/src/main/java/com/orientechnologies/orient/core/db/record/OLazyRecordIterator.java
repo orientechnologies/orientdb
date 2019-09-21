@@ -32,14 +32,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 /**
  * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
  * avoiding to call setDirty() by hand.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OResettable {
-  private final ORecord                           sourceRecord;
+  private final ORecordElement                    sourceRecord;
   private final Iterable<? extends OIdentifiable> source;
-  private Iterator<? extends OIdentifiable>       underlying;
+  private       Iterator<? extends OIdentifiable> underlying;
   private final boolean                           autoConvert2Record;
 
   public OLazyRecordIterator(final Iterator<? extends OIdentifiable> iIterator, final boolean iConvertToRecord) {
@@ -49,7 +48,7 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
     this.source = null;
   }
 
-  public OLazyRecordIterator(final ORecord iSourceRecord, final Iterator<? extends OIdentifiable> iIterator,
+  public OLazyRecordIterator(final ORecordElement iSourceRecord, final Iterator<? extends OIdentifiable> iIterator,
       final boolean iConvertToRecord) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iIterator;

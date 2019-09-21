@@ -42,4 +42,4 @@ public enum SequenceOrderType {
       return ORDER_POSITIVE;
     }
   }
-};
+}

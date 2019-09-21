@@ -224,7 +224,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
             Set<OIdentifiable> toIds = null;
             if (toExpr != null)
               toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr, context, iArgs);
-            if(label == null )
+            if (label == null )
               label = OrientEdgeType.CLASS_NAME;
             
             if (fromIds != null && toIds != null) {

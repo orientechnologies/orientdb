@@ -38,12 +38,12 @@ import java.io.File;
  */
 public class NonDurableTxTest {
 
-  private ODatabaseDocumentTx       db;
-  private OAtomicOperationsManager  atomicOperationsManager;
-  private OWriteAheadLog            wal;
+  private ODatabaseDocumentTx      db;
+  private OAtomicOperationsManager atomicOperationsManager;
+  private OWriteAheadLog           wal;
 
   @Before
-  public void before() {
+  public void before() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
@@ -84,7 +84,7 @@ public class NonDurableTxTest {
   }
 
   @Test
-  public void testChangesStoredWhileWalDisabledInConfiguration() {
+  public void testChangesStoredWhileWalDisabledInConfiguration() throws Exception {
     OGlobalConfiguration.USE_WAL.setValue(false);
     before(); // reopen DB with new configuration settings
 

@@ -13,12 +13,14 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
@@ -27,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,12 +45,11 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    db.command(
-        "create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE METADATA {" + "\"title_index\":\""
-            + EnglishAnalyzer.class.getName() + "\" , " + "\"title_query\":\"" + EnglishAnalyzer.class.getName() + "\" , "
-            + "\"author_index\":\"" + StandardAnalyzer.class.getName() + "\"}");
+    db.command("create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE METADATA {" + "\"title_index\":\""
+        + EnglishAnalyzer.class.getName() + "\" , " + "\"title_query\":\"" + EnglishAnalyzer.class.getName() + "\" , "
+        + "\"author_index\":\"" + StandardAnalyzer.class.getName() + "\"}");
 
-    final ODocument index = db.getMetadata().getIndexManager().getIndex("Song.title_author").getMetadata();
+    final ODocument index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title_author").getMetadata();
 
     assertThat(index.<Object>field("author_index")).isEqualTo(StandardAnalyzer.class.getName());
     assertThat(index.<Object>field("title_index")).isEqualTo(EnglishAnalyzer.class.getName());
@@ -57,8 +59,8 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   @Test
   public void testSelectSingleDocumentWithAndOperator() {
 
-    OResultSet docs = db.query(
-        "select * from Song where  search_fields(['title','author'] ,'title:mountain AND author:Fabbio')=true");
+    OResultSet docs = db
+        .query("select * from Song where  search_fields(['title','author'] ,'title:mountain AND author:Fabbio')=true");
 
     assertThat(docs).hasSize(1);
     docs.close();
@@ -68,8 +70,8 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   @Test
   public void testSelectMultipleDocumentsWithOrOperator() {
 
-    OResultSet docs = db.query(
-        "select * from Song where  search_fields(['title','author'] ,'title:mountain OR author:Fabbio')=true");
+    OResultSet docs = db
+        .query("select * from Song where  search_fields(['title','author'] ,'title:mountain OR author:Fabbio')=true");
 
     assertThat(docs).hasSize(91);
     docs.close();
@@ -87,13 +89,11 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnAuthor() {
 
-    OResultSet docs = db
-        .query("select * from Song where search_class('author:fabbio')=true");
+    OResultSet docs = db.query("select * from Song where search_class('author:fabbio')=true");
 
     assertThat(docs).hasSize(87);
     docs.close();
-    docs = db
-        .query("select * from Song where search_class('fabbio')=true");
+    docs = db.query("select * from Song where search_class('fabbio')=true");
 
     assertThat(docs).hasSize(87);
     docs.close();
@@ -102,9 +102,7 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   @Test
   public void testSelectOnIndexWithIgnoreNullValuesToFalse() {
     //#5579
-    String script = "create class Item;\n"
-        + "create property Item.title string;\n"
-        + "create property Item.summary string;\n"
+    String script = "create class Item;\n" + "create property Item.title string;\n" + "create property Item.summary string;\n"
         + "create property Item.content string;\n"
         + "create index Item.fulltext on Item(title, summary, content) FULLTEXT ENGINE LUCENE METADATA {'ignoreNullValues':false};\n"
         + "insert into Item set title = 'wrong', content = 'not me please';\n"
@@ -127,10 +125,9 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
     assertThat(docs).hasSize(1);
     docs.close();
     //index
-    docs = db.query(
-        " SELECT expand(rid) FROM index:Item.fulltext where key = 'title:test'");
-
-    assertThat(docs).hasSize(1);
+    OIndex index = ((ODatabaseDocumentInternal) db).getMetadata().getIndexManagerInternal()
+        .getIndex((ODatabaseDocumentInternal) db, "Item.fulltext");
+    assertThat((Collection) index.get("title:test")).hasSize(1);
     docs.close();
   }
 

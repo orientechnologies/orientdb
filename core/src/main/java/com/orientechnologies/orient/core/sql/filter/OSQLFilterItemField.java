@@ -24,12 +24,15 @@ import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
@@ -50,8 +53,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   protected String[]    preLoadedFieldsArray;
   protected String      name;
   protected OCollate    collate;
-  private boolean       collatePreset = false;
-  private String        stringValue;
+  private   boolean     collatePreset = false;
+  private   String      stringValue;
 
   /**
    * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
@@ -147,20 +150,17 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       // CANNOT USE BINARY FIELDS
       return null;
 
-    final ORecord rec = iRecord.getRecord();
+    final ODocument rec = iRecord.getRecord();
+    OPropertyEncryption encryption = ODocumentInternal.getPropertyEncryption(rec);
     BytesContainer serialized = new BytesContainer(rec.toStream());
     byte version = serialized.bytes[serialized.offset++];
     ODocumentSerializer serializer = ORecordSerializerBinary.INSTANCE.getSerializer(version);
-    
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+
     //check for embedded objects, they have invalid ID and they are serialized with class name
-    if (!serializer.isSerializingClassNameByDefault()){
-      return ORecordSerializerBinary.INSTANCE.getSerializer(version).deserializeField(serialized,
-          rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
-    }
-    else{
-      return serializer.deserializeFieldWithClassName(serialized,
-          rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
-    }
+    return serializer
+        .deserializeField(serialized, rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name, rec.isEmbedded(),
+            db.getMetadata().getImmutableSchemaSnapshot(), encryption);
   }
 
   public String getRoot() {
@@ -210,6 +210,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
    * Creates {@code FieldChain} in case when filter item can have such representation.
    *
    * @return {@code FieldChain} representation of this filter item.
+   *
    * @throws IllegalStateException if this filter item cannot be represented as {@code FieldChain}.
    */
   public FieldChain getFieldChain() {
@@ -232,6 +233,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
    * get the collate of this expression, based on the fully evaluated field chain starting from the passed object.
    *
    * @param doc the root element (document?) of this field chain
+   *
    * @return the collate, null if no collate is defined
    */
   public OCollate getCollate(Object doc) {

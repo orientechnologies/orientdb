@@ -2,25 +2,25 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.io.IOException;
 import java.util.Map;
 
 public class OTruncateClusterStatement extends ODDLStatement {
 
   public OIdentifier clusterName;
   public OInteger    clusterNumber;
-  public boolean unsafe = false;
+  public boolean     unsafe = false;
 
   public OTruncateClusterStatement(int id) {
     super(id);
@@ -30,7 +30,8 @@ public class OTruncateClusterStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     ODatabaseDocumentAbstract database = (ODatabaseDocumentAbstract) ctx.getDatabase();
     OInternalResultSet rs = new OInternalResultSet();
 
@@ -48,18 +49,16 @@ public class OTruncateClusterStatement extends ODDLStatement {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass clazz = schema.getClassByClusterId(clusterId);
     if (clazz == null) {
-      final OStorage storage = database.getStorage();
-      final com.orientechnologies.orient.core.storage.OCluster cluster = storage.getClusterById(clusterId);
+      final String clusterName = database.getClusterNameById(clusterId);
+      database.checkForClusterPermissions(clusterName);
 
-      if (cluster == null) {
+      final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(clusterName);
+      if (iteratorCluster == null) {
         throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
       }
-
-      try {
-        database.checkForClusterPermissions(cluster.getName());
-        cluster.truncate();
-      } catch (IOException ioe) {
-        throw OException.wrapException(new ODatabaseException("Error during truncation of cluster with name " + clusterName), ioe);
+      while (iteratorCluster.hasNext()) {
+        final ORecord record = iteratorCluster.next();
+        record.delete();
       }
     } else {
       String name = database.getClusterNameById(clusterId);
@@ -84,7 +83,8 @@ public class OTruncateClusterStatement extends ODDLStatement {
     return visitor.visit(this, data);
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("TRUNCATE CLUSTER ");
     if (clusterName != null) {
       clusterName.toString(params, builder);
@@ -96,7 +96,8 @@ public class OTruncateClusterStatement extends ODDLStatement {
     }
   }
 
-  @Override public OTruncateClusterStatement copy() {
+  @Override
+  public OTruncateClusterStatement copy() {
     OTruncateClusterStatement result = new OTruncateClusterStatement(-1);
     result.clusterName = clusterName == null ? null : clusterName.copy();
     result.clusterNumber = clusterNumber == null ? null : clusterNumber.copy();
@@ -104,7 +105,8 @@ public class OTruncateClusterStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -122,7 +124,8 @@ public class OTruncateClusterStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = clusterName != null ? clusterName.hashCode() : 0;
     result = 31 * result + (clusterNumber != null ? clusterNumber.hashCode() : 0);
     result = 31 * result + (unsafe ? 1 : 0);

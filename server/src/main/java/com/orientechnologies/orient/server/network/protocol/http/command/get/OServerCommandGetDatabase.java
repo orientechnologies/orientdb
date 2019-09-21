@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -233,8 +233,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
           }
 
           try {
-            final String conflictStrategy = cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy()
-                .getName() : null;
+            final String conflictStrategy =
+                cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : null;
 
             json.beginObject();
             json.writeAttribute("id", cluster.getId());
@@ -258,9 +258,9 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
         // exportSecurityInfo(db, json);
       }
-      final OIndexManager idxManager = db.getMetadata().getIndexManager();
+      final OIndexManagerAbstract idxManager = db.getMetadata().getIndexManagerInternal();
       json.beginCollection("indexes");
-      for (OIndex<?> index : idxManager.getIndexes()) {
+      for (OIndex<?> index : idxManager.getIndexes(db)) {
         json.beginObject();
         try {
           json.writeAttribute("name", index.getName());
@@ -277,16 +277,16 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.beginObject("config");
 
       json.beginCollection("values");
-      json.writeObjects(null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat()},
-          new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat() }, new Object[] {
-              "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() }, new Object[] { "name",
-              "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
-              "charSet", "value", db.getStorage().getConfiguration().getCharset() }, new Object[] { "name", "timezone", "value",
-              db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name", "definitionVersion", "value",
-              db.getStorage().getConfiguration().getVersion() }, new Object[] { "name", "clusterSelection", "value",
-              db.getStorage().getConfiguration().getClusterSelection() }, new Object[] { "name", "minimumClusters", "value",
-              db.getStorage().getConfiguration().getMinimumClusters() }, new Object[] { "name", "conflictStrategy", "value",
-              db.getStorage().getConfiguration().getConflictStrategy() });
+      json.writeObjects(null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat() },
+          new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat() },
+          new Object[] { "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() },
+          new Object[] { "name", "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() },
+          new Object[] { "name", "charSet", "value", db.getStorage().getConfiguration().getCharset() },
+          new Object[] { "name", "timezone", "value", db.getStorage().getConfiguration().getTimeZone().getID() },
+          new Object[] { "name", "definitionVersion", "value", db.getStorage().getConfiguration().getVersion() },
+          new Object[] { "name", "clusterSelection", "value", db.getStorage().getConfiguration().getClusterSelection() },
+          new Object[] { "name", "minimumClusters", "value", db.getStorage().getConfiguration().getMinimumClusters() },
+          new Object[] { "name", "conflictStrategy", "value", db.getStorage().getConfiguration().getConflictStrategy() });
       json.endCollection();
 
       json.beginCollection("properties");

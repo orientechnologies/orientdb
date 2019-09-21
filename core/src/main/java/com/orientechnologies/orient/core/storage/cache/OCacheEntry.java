@@ -23,6 +23,9 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
+
+import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -37,7 +40,7 @@ public interface OCacheEntry {
 
   long getFileId();
 
-  long getPageIndex();
+  int getPageIndex();
 
   void acquireExclusiveLock();
 
@@ -93,4 +96,16 @@ public interface OCacheEntry {
   void setContainer(LRUList lruList);
 
   LRUList getContainer();
+
+  boolean isNewlyAllocatedPage();
+
+  void markAllocated();
+
+  void clearAllocationFlag();
+
+  List<PageOperationRecord> getPageOperations();
+
+  void clearPageOperations();
+
+  void addPageOperationRecord(PageOperationRecord pageOperationRecord);
 }
