@@ -20,7 +20,7 @@ public class SBTreeNullBucketV2InitPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_NULL_BUCKET_V2_INIT_PO;
   }
 }

@@ -5261,7 +5261,7 @@ public class OCASDiskWriteAheadLogIT {
     }
 
     @Override
-    public byte getId() {
+    public int getId() {
       return 127;
     }
   }

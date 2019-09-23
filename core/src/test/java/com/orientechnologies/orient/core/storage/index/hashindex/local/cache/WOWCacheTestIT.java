@@ -824,7 +824,7 @@ public class WOWCacheTestIT {
     }
 
     @Override
-    public byte getId() {
+    public int getId() {
       return (byte) 128;
     }
   }

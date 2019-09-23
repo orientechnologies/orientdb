@@ -22,7 +22,7 @@ public class SBTreeBucketV2SwitchBucketTypePO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V2_SWITCH_BUCKET_TYPE_PO;
   }
 }

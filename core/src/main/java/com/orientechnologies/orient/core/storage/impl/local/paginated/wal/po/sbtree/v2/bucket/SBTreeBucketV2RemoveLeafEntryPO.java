@@ -47,7 +47,7 @@ public final class SBTreeBucketV2RemoveLeafEntryPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V2_REMOVE_LEAF_ENTRY_PO;
   }
 
