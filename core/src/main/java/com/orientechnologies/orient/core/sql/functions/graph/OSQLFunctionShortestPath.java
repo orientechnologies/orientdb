@@ -33,30 +33,30 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   private class OShortestPathContext {
-    OVertex sourceVertex;
-    OVertex destinationVertex;
-    ODirection directionLeft  = ODirection.BOTH;
-    ODirection directionRight = ODirection.BOTH;
+    private OVertex    sourceVertex;
+    private OVertex    destinationVertex;
+    private ODirection directionLeft  = ODirection.BOTH;
+    private ODirection directionRight = ODirection.BOTH;
 
-    String   edgeType;
-    String[] edgeTypeParam;
+    private String   edgeType;
+    private String[] edgeTypeParam;
 
-    ArrayDeque<OVertex> queueLeft  = new ArrayDeque<>();
-    ArrayDeque<OVertex> queueRight = new ArrayDeque<>();
+    private ArrayDeque<OVertex> queueLeft  = new ArrayDeque<>();
+    private ArrayDeque<OVertex> queueRight = new ArrayDeque<>();
 
-    final Set<ORID> leftVisited  = new HashSet<ORID>();
-    final Set<ORID> rightVisited = new HashSet<ORID>();
+    private final Set<ORID> leftVisited  = new HashSet<ORID>();
+    private final Set<ORID> rightVisited = new HashSet<ORID>();
 
-    final Map<ORID, ORID> previouses = new HashMap<ORID, ORID>();
-    final Map<ORID, ORID> nexts      = new HashMap<ORID, ORID>();
+    private final Map<ORID, ORID> previouses = new HashMap<ORID, ORID>();
+    private final Map<ORID, ORID> nexts      = new HashMap<ORID, ORID>();
 
-    OVertex current;
-    OVertex currentRight;
-    public Integer maxDepth;
+    private OVertex current;
+    private OVertex currentRight;
+    public  Integer maxDepth;
     /**
      * option that decides whether or not to return the edge information
      */
-    public Boolean edge;
+    public  Boolean edge;
   }
 
   public List<ORID> execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
@@ -231,7 +231,6 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
   /**
    * @return
-   *
    * @author Thomas Young (YJJThomasYoung@hotmail.com)
    */
   private Boolean toBoolean(Object fromObject) {
@@ -256,9 +255,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
    * @param srcVertex
    * @param direction
    * @param types
-   *
    * @return
-   *
    * @author Thomas Young (YJJThomasYoung@hotmail.com)
    */
   private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction,
@@ -285,9 +282,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
    *
    * @param srcVertex
    * @param direction
-   *
    * @return
-   *
    * @author Thomas Young (YJJThomasYoung@hotmail.com)
    */
   private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction) {

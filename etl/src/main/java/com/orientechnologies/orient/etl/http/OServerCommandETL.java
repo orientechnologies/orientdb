@@ -13,8 +13,8 @@ import java.io.IOException;
  */
 public class OServerCommandETL extends OServerCommandAuthenticatedServerAbstract {
 
-  OETLHandler handler = new OETLHandler();
-  private static final String[] NAMES = { "GET|etl/*", "POST|etl/*" };
+  private              OETLHandler handler = new OETLHandler();
+  private static final String[]    NAMES   = { "GET|etl/*", "POST|etl/*" };
 
   public OServerCommandETL() {
     super("server.profiler");

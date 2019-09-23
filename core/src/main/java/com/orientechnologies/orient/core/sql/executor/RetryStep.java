@@ -20,7 +20,7 @@ public class RetryStep extends AbstractExecutionStep {
   public        boolean          elseFail;
   private final int              retries;
 
-  Iterator iterator;
+  private Iterator               iterator;
   private OExecutionStepInternal finalResult = null;
 
   public RetryStep(List<OStatement> statements, int retries, List<OStatement> elseStatements, Boolean elseFail, OCommandContext ctx,

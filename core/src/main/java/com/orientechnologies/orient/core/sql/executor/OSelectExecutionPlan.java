@@ -19,7 +19,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   protected List<OExecutionStepInternal> steps = new ArrayList<>();
 
-  OExecutionStepInternal lastStep = null;
+  private OExecutionStepInternal lastStep = null;
 
   private String statement;
 

@@ -63,13 +63,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public static final String DICTIONARY_NAME = "dictionary";
 
   // values of this Map should be IMMUTABLE !! for thread safety reasons.
-  final     Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new ConcurrentHashMap<>();
-  protected Map<String, OIndex<?>>                      indexes            = new ConcurrentHashMap<>();
-  String defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
-  String manualClusterName  = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
-
-  private AtomicInteger writeLockNesting = new AtomicInteger();
-  private ReadWriteLock lock             = new ReentrantReadWriteLock();
+  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new ConcurrentHashMap<>();
+  protected       Map<String, OIndex<?>>                      indexes            = new ConcurrentHashMap<>();
+  protected       String                                      defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
+  protected       String                                      manualClusterName  = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
+  private         AtomicInteger                               writeLockNesting   = new AtomicInteger();
+  private         ReadWriteLock                               lock               = new ReentrantReadWriteLock();
 
   @SuppressWarnings("WeakerAccess")
   public OIndexManagerAbstract() {

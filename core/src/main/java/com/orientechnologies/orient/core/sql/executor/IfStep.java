@@ -12,13 +12,13 @@ import java.util.List;
  * Created by luigidellaquila on 19/09/16.
  */
 public class IfStep extends AbstractExecutionStep {
-  OBooleanExpression   condition;
-  OScriptExecutionPlan positivePlan;
-  OScriptExecutionPlan negativePlan;
+  protected OBooleanExpression   condition;
+  protected OScriptExecutionPlan positivePlan;
+  protected OScriptExecutionPlan negativePlan;
 
-  Boolean conditionMet = null;
-  public List<OStatement> positiveStatements;
-  public List<OStatement> negativeStatements;
+  private Boolean          conditionMet = null;
+  public  List<OStatement> positiveStatements;
+  public  List<OStatement> negativeStatements;
 
   public IfStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

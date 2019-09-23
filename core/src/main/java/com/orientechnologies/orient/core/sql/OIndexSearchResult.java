@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 
 package com.orientechnologies.orient.core.sql;
 
@@ -41,7 +41,7 @@ public class OIndexSearchResult {
   public final OQueryOperator                 lastOperator;
   public final OSQLFilterItemField.FieldChain lastField;
   public final Object                         lastValue;
-  boolean                                     containsNullValues;
+  protected    boolean                        containsNullValues;
 
   public OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
     this.lastOperator = lastOperator;
@@ -60,8 +60,7 @@ public class OIndexSearchResult {
    * Combines two queries subset into one. This operation will be valid only if {@link #canBeMerged(OIndexSearchResult)} method will
    * return <code>true</code> for the same passed in parameter.
    *
-   * @param searchResult
-   *          Query subset to merge.
+   * @param searchResult Query subset to merge.
    * @return New instance that presents merged query.
    */
   public OIndexSearchResult merge(final OIndexSearchResult searchResult) {
@@ -89,8 +88,7 @@ public class OIndexSearchResult {
   }
 
   /**
-   * @param searchResult
-   *          Query subset is going to be merged with given one.
+   * @param searchResult Query subset is going to be merged with given one.
    * @return <code>true</code> if two query subsets can be merged.
    */
   boolean canBeMerged(final OIndexSearchResult searchResult) {

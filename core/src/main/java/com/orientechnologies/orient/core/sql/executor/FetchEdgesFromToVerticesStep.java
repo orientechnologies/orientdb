@@ -25,13 +25,13 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
   //operation stuff
 
   //iterator of FROM vertices
-  Iterator        fromIter;
+  private Iterator        fromIter;
   //iterator of edges on current from
-  Iterator<OEdge> currentFromEdgesIter;
-  Iterator        toIterator;
+  private Iterator<OEdge> currentFromEdgesIter;
+  private Iterator        toIterator;
 
-  Set<ORID> toList = new HashSet<>();
-  private boolean inited = false;
+  private Set<ORID> toList = new HashSet<>();
+  private boolean   inited = false;
 
   private OEdge nextEdge = null;
 
@@ -49,7 +49,7 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
     return new OResultSet() {
-      int currentBatch = 0;
+      private int currentBatch = 0;
 
       @Override
       public boolean hasNext() {

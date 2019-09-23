@@ -20,9 +20,9 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   private final   OBooleanExpression ridCondition;
   private final   boolean            orderAsc;
 
-  Map.Entry<Object, OIdentifiable> nextEntry = null;
+  private Map.Entry<Object, OIdentifiable> nextEntry = null;
 
-  OBooleanExpression condition;
+  private OBooleanExpression condition;
 
   private boolean      inited = false;
   private OIndexCursor cursor;
@@ -50,7 +50,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     init();
 
     return new OResultSet() {
-      int localCount = 0;
+      private int localCount = 0;
 
       @Override
       public boolean hasNext() {

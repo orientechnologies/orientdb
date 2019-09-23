@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.sql.parser.OSimpleExecStatement;
  */
 public class ReturnStep extends AbstractExecutionStep {
   private final OSimpleExecStatement statement;
-  boolean executed = false;
+  private       boolean              executed = false;
 
   public ReturnStep(OSimpleExecStatement statement, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

@@ -16,8 +16,8 @@ import java.util.Map;
  */
 public class OPredicateCache {
 
-  Map<String, OOrBlock> map;
-  int mapSize;
+  private Map<String, OOrBlock> map;
+  private int                   mapSize;
 
   /**
    * @param size the size of the cache
@@ -70,7 +70,6 @@ public class OPredicateCache {
     }
     return result.copy();
   }
-
 
   protected static OOrBlock parse(String statement) throws OCommandSQLParsingException {
     return OSQLEngine.parsePredicate(statement);

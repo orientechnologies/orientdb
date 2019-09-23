@@ -110,8 +110,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private static final String NULL_VALUE                    = "null";
 
   private static class AsyncResult {
-    final OIdentifiable   record;
-    final OCommandContext context;
+    private final OIdentifiable   record;
+    private final OCommandContext context;
 
     public AsyncResult(final ORecord iRecord, final OCommandContext iContext) {
       record = iRecord;
@@ -160,9 +160,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private static final class IndexUsageLog {
-    OIndex<?>        index;
-    List<Object>     keyParams;
-    OIndexDefinition indexDefinition;
+    private OIndex<?>        index;
+    private List<Object>     keyParams;
+    private OIndexDefinition indexDefinition;
 
     IndexUsageLog(OIndex<?> index, List<Object> keyParams, OIndexDefinition indexDefinition) {
       this.index = index;

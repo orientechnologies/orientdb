@@ -15,14 +15,14 @@ import java.util.List;
  */
 public class OCacheEntryChanges implements OCacheEntry {
 
-  OCacheEntry delegate;
-  final OWALChanges changes = new OWALPageChangesPortion();
+  protected       OCacheEntry delegate;
+  protected final OWALChanges changes = new OWALPageChangesPortion();
 
-  boolean isNew;
+  protected boolean isNew;
 
   private OLogSequenceNumber changeLSN;
 
-  boolean verifyCheckSum;
+  protected boolean verifyCheckSum;
 
   public OCacheEntryChanges(final OCacheEntry entry) {
     delegate = entry;

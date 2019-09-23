@@ -1143,7 +1143,7 @@ final class Bucket<K> extends ODurablePage {
   }
 
   static class Entry {
-    final byte[] key;
+    protected final byte[] key;
 
     Entry(final byte[] key) {
       this.key = key;
@@ -1151,7 +1151,7 @@ final class Bucket<K> extends ODurablePage {
   }
 
   static final class LeafEntry extends Entry {
-    final List<ORID> values;
+    protected final List<ORID> values;
 
     LeafEntry(final byte[] key, final List<ORID> values) {
       super(key);
@@ -1160,8 +1160,8 @@ final class Bucket<K> extends ODurablePage {
   }
 
   static final class NonLeafEntry extends Entry {
-    final int leftChild;
-    final int rightChild;
+    protected final int leftChild;
+    protected final int rightChild;
 
     NonLeafEntry(final byte[] key, final int leftChild, final int rightChild) {
       super(key);

@@ -57,7 +57,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
       }
       OResultSet rs = new OResultSet() {
 
-        int nFetched = 0;
+        private int nFetched = 0;
 
         @Override
         public boolean hasNext() {

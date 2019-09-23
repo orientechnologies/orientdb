@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
  */
 public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
-  protected String className;
+  protected String               className;
   protected boolean              orderByRidAsc  = false;
   protected boolean              orderByRidDesc = false;
   protected List<OExecutionStep> subSteps       = new ArrayList<>();
 
-  OResultSet currentResultSet;
-  int currentStep = 0;
+  private OResultSet currentResultSet;
+  private int        currentStep = 0;
 
   protected FetchFromClassExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -116,7 +116,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
 
-      int totDispatched = 0;
+      private int totDispatched = 0;
 
       @Override
       public boolean hasNext() {

@@ -51,7 +51,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
   public static final String KEYWORD_HA     = "HA";
   public static final String KEYWORD_STATUS = "STATUS";
 
-  OHaStatusStatement parsedStatement;
+  private OHaStatusStatement parsedStatement;
 
   public OCommandExecutorSQLHAStatus parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);

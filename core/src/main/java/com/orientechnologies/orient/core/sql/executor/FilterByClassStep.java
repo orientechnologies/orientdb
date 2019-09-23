@@ -14,13 +14,10 @@ import java.util.Optional;
  * Created by luigidellaquila on 01/03/17.
  */
 public class FilterByClassStep extends AbstractExecutionStep {
+
   private OIdentifier identifier;
-
-  //runtime
-
-  OResultSet prevResult = null;
-
-  private long cost;
+  private OResultSet  prevResult = null;
+  private long        cost;
 
   public FilterByClassStep(OIdentifier identifier, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -37,8 +34,8 @@ public class FilterByClassStep extends AbstractExecutionStep {
     return new OResultSet() {
       public boolean finished = false;
 
-      OResult nextItem = null;
-      int fetched = 0;
+      private OResult nextItem = null;
+      private int fetched = 0;
 
       private void fetchNextItem() {
         nextItem = null;

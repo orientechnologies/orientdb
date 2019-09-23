@@ -52,7 +52,7 @@ public class OCheckIndexTool extends ODatabaseTool {
 //  }
 //
 //  List<Error> errors = new ArrayList<Error>();
-  long totalErrors = 0;
+  private long totalErrors = 0;
 
   @Override
   protected void parseSetting(String option, List<String> items) {

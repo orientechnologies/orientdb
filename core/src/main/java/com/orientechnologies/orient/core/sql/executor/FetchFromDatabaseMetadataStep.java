@@ -14,8 +14,8 @@ import java.util.Optional;
  */
 public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
 
-  boolean served = false;
-  long    cost   = 0;
+  private boolean served = false;
+  private long    cost   = 0;
 
   public FetchFromDatabaseMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

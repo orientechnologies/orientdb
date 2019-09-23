@@ -18,14 +18,14 @@ public class OProxyChannel extends Thread {
   private final int                  remotePort;
   private final InetSocketAddress    sourceAddress;
 
-  Thread       responseThread;
-  ServerSocket localSocket;
-  Socket       targetSocket;
-  InputStream  sourceInput;
-  OutputStream sourceOutput;
-  InputStream  targetInput;
-  OutputStream targetOutput;
-  boolean running = true;
+  private Thread       responseThread;
+  private ServerSocket localSocket;
+  private Socket       targetSocket;
+  private InputStream  sourceInput;
+  private OutputStream sourceOutput;
+  private InputStream  targetInput;
+  private OutputStream targetOutput;
+  private boolean running = true;
   protected long requestCount  = 0;
   protected long responseCount = 0;
 

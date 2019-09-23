@@ -301,7 +301,6 @@ public final class CellBTreeBucketSingleValueV1<K> extends ODurablePage {
    * Obtains the value stored under the given entry index in this bucket.
    *
    * @param entryIndex the value entry index.
-   *
    * @return the obtained value.
    */
   public ORID getValue(final int entryIndex, OEncryption encryption, OBinarySerializer<K> keySerializer) {
@@ -535,10 +534,10 @@ public final class CellBTreeBucketSingleValueV1<K> extends ODurablePage {
   public static final class SBTreeEntry<K> implements Comparable<SBTreeEntry<K>> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-    final        int  leftChild;
-    final        int  rightChild;
-    public final K    key;
-    public final ORID value;
+    protected final int  leftChild;
+    protected final int  rightChild;
+    public final    K    key;
+    public final    ORID value;
 
     public SBTreeEntry(final int leftChild, final int rightChild, final K key, final ORID value) {
       this.leftChild = leftChild;

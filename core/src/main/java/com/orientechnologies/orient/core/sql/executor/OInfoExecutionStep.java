@@ -8,13 +8,13 @@ import java.util.List;
  */
 public class OInfoExecutionStep implements OExecutionStep {
 
-  String name;
-  String type;
-  String javaType;
-  String targetNode;
-  String description;
-  long   cost;
-  List<OExecutionStep> subSteps = new ArrayList<>();
+  private String               name;
+  private String               type;
+  private String               javaType;
+  private String               targetNode;
+  private String               description;
+  private long                 cost;
+  private List<OExecutionStep> subSteps = new ArrayList<>();
 
   @Override
   public String getName() {

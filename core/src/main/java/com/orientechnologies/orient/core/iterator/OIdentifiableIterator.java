@@ -69,7 +69,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * Set of RIDs of records which were indicated as broken during cluster iteration. Mainly used during JSON export/import procedure
    * to fix links on broken records.
    */
-  final Set<ORID> brokenRIDs = new HashSet<>();
+  protected final Set<ORID> brokenRIDs = new HashSet<>();
 
   public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase) {
     this(iDatabase, OStorage.LOCKING_STRATEGY.NONE);

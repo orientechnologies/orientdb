@@ -37,9 +37,9 @@ import java.util.concurrent.TimeUnit;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedLockManagerExecutor implements ODistributedLockManager {
-  private final ODistributedServerManager manager;
+  private final ODistributedServerManager                   manager;
   private final ConcurrentHashMap<String, ODistributedLock> lockManager = new ConcurrentHashMap<String, ODistributedLock>(256);
-  private String localNodeName;
+  private       String                                      localNodeName;
 
   public ODistributedLockManagerExecutor(final ODistributedServerManager manager) {
     this.manager = manager;
@@ -47,9 +47,9 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
   }
 
   private class ODistributedLock {
-    final String         server;
-    final CountDownLatch lock;
-    final long           acquiredOn;
+    private final String         server;
+    private final CountDownLatch lock;
+    private final long           acquiredOn;
 
     private ODistributedLock(final String server) {
       this.server = server;

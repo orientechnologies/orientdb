@@ -14,8 +14,8 @@ public class CreateRecordStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  int created = 0;
-  int total   = 0;
+  private int created = 0;
+  private int total   = 0;
 
   public CreateRecordStep(OCommandContext ctx, int total, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -26,7 +26,7 @@ public class CreateRecordStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
-      int locallyCreated = 0;
+      private int locallyCreated = 0;
 
       @Override
       public boolean hasNext() {

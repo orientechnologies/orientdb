@@ -14,11 +14,11 @@ import java.util.Optional;
  * Created by luigidellaquila on 20/09/16.
  */
 public class MatchFirstStep extends AbstractExecutionStep {
-  private final PatternNode node;
-  OInternalExecutionPlan executionPlan;
+  private final PatternNode            node;
+  private       OInternalExecutionPlan executionPlan;
 
-  Iterator<OResult> iterator;
-  OResultSet        subResultSet;
+  private Iterator<OResult> iterator;
+  private OResultSet        subResultSet;
 
   public MatchFirstStep(OCommandContext context, PatternNode node, boolean profilingEnabled) {
     this(context, node, null, profilingEnabled);
@@ -45,7 +45,7 @@ public class MatchFirstStep extends AbstractExecutionStep {
     init(ctx);
     return new OResultSet() {
 
-      int currentCount = 0;
+      private int currentCount = 0;
 
       @Override
       public boolean hasNext() {

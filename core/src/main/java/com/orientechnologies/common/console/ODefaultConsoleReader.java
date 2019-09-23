@@ -30,7 +30,7 @@ import java.io.InputStreamReader;
  * Console reader implementation that uses the Java System.in.
  */
 public class ODefaultConsoleReader implements OConsoleReader {
-  final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+  private final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
   private static class EraserThread extends OSoftThread {
     @Override

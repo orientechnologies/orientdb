@@ -82,8 +82,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   public static class EdgeTraversal {
-    boolean     out = true;
-    PatternEdge edge;
+    private boolean     out = true;
+    private PatternEdge edge;
 
     public EdgeTraversal(PatternEdge edge, boolean out) {
       this.edge = edge;

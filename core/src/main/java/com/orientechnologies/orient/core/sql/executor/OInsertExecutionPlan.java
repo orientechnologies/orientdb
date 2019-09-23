@@ -15,8 +15,8 @@ import java.util.List;
  */
 public class OInsertExecutionPlan extends OSelectExecutionPlan {
 
-  List<OResult> result = new ArrayList<>();
-  int           next   = 0;
+  private List<OResult> result = new ArrayList<>();
+  private int           next   = 0;
 
   public OInsertExecutionPlan(OCommandContext ctx) {
     super(ctx);

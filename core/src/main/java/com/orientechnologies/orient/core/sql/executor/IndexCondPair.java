@@ -4,14 +4,13 @@ import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 
 /**
- * For internal use.
- * It is used to keep info about an index range search,
- * where the main condition has the lower bound and the additional condition has the upper bound on last field only
+ * For internal use. It is used to keep info about an index range search, where the main condition has the lower bound and the
+ * additional condition has the upper bound on last field only
  */
 class IndexCondPair {
 
-  OAndBlock        mainCondition;
-  OBinaryCondition additionalRange;
+  protected OAndBlock        mainCondition;
+  protected OBinaryCondition additionalRange;
 
   public IndexCondPair(OAndBlock keyCondition, OBinaryCondition additionalRangeCondition) {
     this.mainCondition = keyCondition;

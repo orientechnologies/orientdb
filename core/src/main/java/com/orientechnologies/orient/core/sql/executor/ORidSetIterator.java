@@ -11,10 +11,10 @@ import java.util.Iterator;
 public class ORidSetIterator implements Iterator<ORID> {
 
   private ORidSet set;
-  int  currentCluster = -1;
-  long currentId      = -1;
+  private int     currentCluster = -1;
+  private long    currentId      = -1;
 
-  ORidSetIterator(ORidSet set) {
+  protected ORidSetIterator(ORidSet set) {
     this.set = set;
     fetchNext();
   }

@@ -19,11 +19,10 @@ import java.util.Optional;
  * Created by luigidellaquila on 23/09/16.
  */
 public class MatchEdgeTraverser {
-  protected OResult        sourceRecord;
-  protected EdgeTraversal  edge;
-  protected OMatchPathItem item;
-
-  Iterator<OResultInternal> downstream;
+  protected OResult                   sourceRecord;
+  protected EdgeTraversal             edge;
+  protected OMatchPathItem            item;
+  protected Iterator<OResultInternal> downstream;
 
   public MatchEdgeTraverser(OResult lastUpstreamRecord, EdgeTraversal edge) {
     this.sourceRecord = lastUpstreamRecord;
@@ -140,7 +139,7 @@ public class MatchEdgeTraverser {
 
         return new Iterator() {
 
-          OResultInternal nextElement = null;
+          private OResultInternal nextElement = null;
 
           @Override
           public boolean hasNext() {

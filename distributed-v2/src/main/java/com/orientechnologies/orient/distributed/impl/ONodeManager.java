@@ -34,7 +34,7 @@ public abstract class ONodeManager {
    */
   protected long maxInactiveServerTimeMillis = 5000;
 
-  OLeaderElectionStateMachine leaderStatus;
+  private OLeaderElectionStateMachine leaderStatus;
   private TimerTask discoveryTimer;
   private TimerTask disconnectTimer;
   private TimerTask checkerTimer;

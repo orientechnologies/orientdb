@@ -111,8 +111,8 @@ public class OSQLEngine {
    */
   private static final class Pair {
 
-    final OQueryOperator before;
-    final OQueryOperator after;
+    private final OQueryOperator before;
+    private final OQueryOperator after;
 
     public Pair(final OQueryOperator before, final OQueryOperator after) {
       this.before = before;

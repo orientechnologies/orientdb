@@ -12,16 +12,15 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Expands a result-set.
- * The pre-requisite is that the input element contains only one field (no matter the name)
+ * Expands a result-set. The pre-requisite is that the input element contains only one field (no matter the name)
  */
 public class ExpandStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  OResultSet lastResult      = null;
-  Iterator   nextSubsequence = null;
-  OResult    nextElement     = null;
+  private OResultSet lastResult      = null;
+  private Iterator   nextSubsequence = null;
+  private OResult    nextElement     = null;
 
   public ExpandStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -33,7 +32,7 @@ public class ExpandStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
     return new OResultSet() {
-      long localCount = 0;
+      private long localCount = 0;
 
       @Override
       public boolean hasNext() {

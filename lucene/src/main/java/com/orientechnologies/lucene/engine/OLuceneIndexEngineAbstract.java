@@ -76,25 +76,25 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   public static final String RID = "RID";
   public static final String KEY = "KEY";
 
-  private final AtomicLong      lastAccess;
-  private       SearcherManager searcherManager;
-  OIndexDefinition indexDefinition;
-  protected String                                        name;
-  private   ControlledRealTimeReopenThread<IndexSearcher> nrt;
-  protected ODocument                                     metadata;
-  protected Version                                       version;
-  Map<String, Boolean> collectionFields = new HashMap<>();
-  private          TimerTask        commitTask;
-  private          AtomicBoolean    closed;
-  private          OStorage         storage;
-  private volatile long             reopenToken;
-  private          Analyzer         indexAnalyzer;
-  private          Analyzer         queryAnalyzer;
-  private volatile OLuceneDirectory directory;
-  private          IndexWriter      indexWriter;
-  private          long             flushIndexInterval;
-  private          long             closeAfterInterval;
-  private          long             firstFlushAfter;
+  private final    AtomicLong                                    lastAccess;
+  private          SearcherManager                               searcherManager;
+  protected        OIndexDefinition                              indexDefinition;
+  protected        String                                        name;
+  private          ControlledRealTimeReopenThread<IndexSearcher> nrt;
+  protected        ODocument                                     metadata;
+  protected        Version                                       version;
+  protected        Map<String, Boolean>                          collectionFields = new HashMap<>();
+  private          TimerTask                                     commitTask;
+  private          AtomicBoolean                                 closed;
+  private          OStorage                                      storage;
+  private volatile long                                          reopenToken;
+  private          Analyzer                                      indexAnalyzer;
+  private          Analyzer                                      queryAnalyzer;
+  private volatile OLuceneDirectory                              directory;
+  private          IndexWriter                                   indexWriter;
+  private          long                                          flushIndexInterval;
+  private          long                                          closeAfterInterval;
+  private          long                                          firstFlushAfter;
 
   private Lock openCloseLock;
 

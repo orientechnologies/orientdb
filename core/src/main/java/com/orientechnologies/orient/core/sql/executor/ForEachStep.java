@@ -19,7 +19,7 @@ public class ForEachStep extends AbstractExecutionStep {
   private final OExpression      source;
   public        List<OStatement> body;
 
-  Iterator iterator;
+  private Iterator               iterator;
   private OExecutionStepInternal finalResult = null;
   private boolean                inited      = false;
 

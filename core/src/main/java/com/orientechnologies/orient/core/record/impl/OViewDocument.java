@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.record.OElement;
 
 public class OViewDocument extends ODocument {
 
-  OView view;
+  private OView view;
 
   public OViewDocument(OView view) {
     this.view = view;

@@ -9,11 +9,9 @@ import java.util.stream.Collectors;
 
 public class OIndexCursorSecurityDecorator implements OIndexCursor {
 
-  OIndexCursor delegate;
-  OIndex originalIndex;
-
-  OIdentifiable next;
-
+  private OIndexCursor  delegate;
+  private OIndex        originalIndex;
+  private OIdentifiable next;
 
   public OIndexCursorSecurityDecorator(OIndexCursor delegate, OIndex originalIndex) {
     this.delegate = delegate;
@@ -42,9 +40,8 @@ public class OIndexCursorSecurityDecorator implements OIndexCursor {
 
   @Override
   public Set<Map.Entry<Object, OIdentifiable>> toEntries() {
-    return delegate.toEntries().stream()
-            .filter(x -> OIndexInternal.securityFilterOnRead(originalIndex, x.getValue()) != null)
-            .collect(Collectors.toSet());
+    return delegate.toEntries().stream().filter(x -> OIndexInternal.securityFilterOnRead(originalIndex, x.getValue()) != null)
+        .collect(Collectors.toSet());
   }
 
   @Override

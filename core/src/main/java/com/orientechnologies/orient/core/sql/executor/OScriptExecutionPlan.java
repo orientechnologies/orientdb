@@ -17,18 +17,13 @@ import java.util.stream.Collectors;
  */
 public class OScriptExecutionPlan implements OInternalExecutionPlan {
 
-  private String location;
-
-  private final OCommandContext ctx;
-
-  boolean executed = false;
-
-  protected List<ScriptLineStep> steps = new ArrayList<>();
-
-  OExecutionStepInternal lastStep = null;
-
-  OResultSet finalResult = null;
-  private String statement;
+  private       String                 location;
+  private final OCommandContext        ctx;
+  private       boolean                executed    = false;
+  protected     List<ScriptLineStep>   steps       = new ArrayList<>();
+  private       OExecutionStepInternal lastStep    = null;
+  private       OResultSet             finalResult = null;
+  private       String                 statement;
 
   public OScriptExecutionPlan(OCommandContext ctx) {
     this.ctx = ctx;
@@ -49,7 +44,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   public OResultSet fetchNext(int n) {
     doExecute(n);
     return new OResultSet() {
-      int totalFetched = 0;
+      private int totalFetched = 0;
 
       @Override
       public boolean hasNext() {

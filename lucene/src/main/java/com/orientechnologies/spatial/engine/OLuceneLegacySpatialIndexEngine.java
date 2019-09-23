@@ -57,7 +57,7 @@ import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_MET
  */
 public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAbstract {
 
-  OShapeBuilderLegacy legacyBuilder = OShapeBuilderLegacyImpl.INSTANCE;
+  private OShapeBuilderLegacy legacyBuilder = OShapeBuilderLegacyImpl.INSTANCE;
 
   public OLuceneLegacySpatialIndexEngine(OStorage storage, String indexName, int id, OShapeBuilder factory) {
     super(storage, indexName, id, factory);

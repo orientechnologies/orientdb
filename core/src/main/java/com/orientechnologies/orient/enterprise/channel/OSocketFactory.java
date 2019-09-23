@@ -34,17 +34,17 @@ import java.security.KeyStore;
 
 public class OSocketFactory {
 
-  SocketFactory         socketFactory;
-  boolean               useSSL             = false;
-  SSLContext            context            = null;
-  OContextConfiguration config;
+  private SocketFactory         socketFactory;
+  private boolean               useSSL  = false;
+  private SSLContext            context = null;
+  private OContextConfiguration config;
 
-  private String        keyStorePath       = null;
-  private String        keyStorePassword   = null;
-  private String        keyStoreType       = KeyStore.getDefaultType();
-  private String        trustStorePath     = null;
-  private String        trustStorePassword = null;
-  private String        trustStoreType     = KeyStore.getDefaultType();
+  private String keyStorePath       = null;
+  private String keyStorePassword   = null;
+  private String keyStoreType       = KeyStore.getDefaultType();
+  private String trustStorePath     = null;
+  private String trustStorePassword = null;
+  private String trustStoreType     = KeyStore.getDefaultType();
 
   private OSocketFactory(final OContextConfiguration iConfig) {
     config = iConfig;
@@ -122,7 +122,7 @@ public class OSocketFactory {
   protected InputStream getAsStream(String path) throws IOException {
 
     InputStream input = null;
-    
+
     path = OSystemVariableResolver.resolveSystemVariables(path);
 
     try {
@@ -143,7 +143,7 @@ public class OSocketFactory {
     if (input == null) {
       try {
         // This resolves an issue on Windows with relative paths not working correctly.
-        path = new java.io.File(path).getAbsolutePath();      	
+        path = new java.io.File(path).getAbsolutePath();
         input = new FileInputStream(path);
       } catch (FileNotFoundException ignore) {
         input = null;

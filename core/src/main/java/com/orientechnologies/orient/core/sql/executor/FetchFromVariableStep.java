@@ -15,10 +15,10 @@ import java.util.Optional;
  */
 public class FetchFromVariableStep extends AbstractExecutionStep {
 
-  private String variableName;
-  OResultSet source;
-  private OResult nextResult = null;
-  private boolean inited     = false;
+  private String     variableName;
+  private OResultSet source;
+  private OResult    nextResult = null;
+  private boolean    inited     = false;
 
   public FetchFromVariableStep(String variableName, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -35,7 +35,7 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
     return new OResultSet() {
-      int internalNext = 0;
+      private int internalNext = 0;
 
       private void fetchNext() {
         if (nextResult != null) {

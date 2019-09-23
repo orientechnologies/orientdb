@@ -18,7 +18,7 @@ public class FilterByClustersStep extends AbstractExecutionStep {
   private Set<String>  clusters;
   private Set<Integer> clusterIds;
 
-  OResultSet prevResult = null;
+  private OResultSet prevResult = null;
 
   public FilterByClustersStep(Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -45,8 +45,8 @@ public class FilterByClustersStep extends AbstractExecutionStep {
     return new OResultSet() {
       public boolean finished = false;
 
-      OResult nextItem = null;
-      int fetched = 0;
+      private OResult nextItem = null;
+      private int fetched = 0;
 
       private void fetchNextItem() {
         nextItem = null;

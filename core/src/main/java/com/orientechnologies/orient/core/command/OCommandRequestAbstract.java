@@ -118,7 +118,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   public OCommandRequestAbstract onAsyncReplicationError(final OAsyncReplicationError iCallback) {
     if (iCallback != null) {
       onAsyncReplicationError = new OAsyncReplicationError() {
-        int retry = 0;
+        private int retry = 0;
 
         @Override
         public ACTION onAsyncReplicationError(Throwable iException, final int iRetry) {

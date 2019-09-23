@@ -719,8 +719,8 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   }
 
   private static class KeyChangesUpdateRecord {
-    final OTransactionIndexChangesPerKey keyChanges;
-    final OTransactionIndexChanges       indexChanges;
+    private final OTransactionIndexChangesPerKey keyChanges;
+    private final OTransactionIndexChanges       indexChanges;
 
     public KeyChangesUpdateRecord(OTransactionIndexChangesPerKey keyChanges, OTransactionIndexChanges indexChanges) {
       this.keyChanges = keyChanges;

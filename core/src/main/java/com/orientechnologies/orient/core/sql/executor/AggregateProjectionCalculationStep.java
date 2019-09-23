@@ -37,7 +37,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     }
 
     return new OResultSet() {
-      int localNext = 0;
+      private int localNext = 0;
 
       @Override
       public boolean hasNext() {

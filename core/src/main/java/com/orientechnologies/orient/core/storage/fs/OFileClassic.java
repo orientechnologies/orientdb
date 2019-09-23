@@ -660,7 +660,7 @@ public final class OFileClassic implements OFile {
   }
 
   private static final class SyncIOResult implements IOResult {
-    static SyncIOResult INSTANCE = new SyncIOResult();
+    private static SyncIOResult INSTANCE = new SyncIOResult();
 
     @Override
     public void await() {

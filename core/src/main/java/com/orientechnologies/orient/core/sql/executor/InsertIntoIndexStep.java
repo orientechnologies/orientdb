@@ -20,7 +20,7 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
   private final OIndexIdentifier targetIndex;
   private final OInsertBody      body;
 
-  boolean executed = false;
+  private boolean executed = false;
 
   public InsertIntoIndexStep(OIndexIdentifier targetIndex, OInsertBody insertBody, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

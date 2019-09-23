@@ -31,7 +31,7 @@ public class OSTGeomFromGeoJSONFunction extends OSQLFunctionAbstract {
 
   public static final String NAME = "ST_GeomFromGeoJSON";
 
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  private OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSTGeomFromGeoJSONFunction() {
     super(NAME, 1, 1);

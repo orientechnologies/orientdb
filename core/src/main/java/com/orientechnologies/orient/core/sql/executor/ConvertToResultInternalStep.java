@@ -20,7 +20,7 @@ import java.util.Optional;
 public class ConvertToResultInternalStep extends AbstractExecutionStep {
   private long cost = 0;
 
-  OResultSet prevResult = null;
+  private OResultSet prevResult = null;
 
   public ConvertToResultInternalStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -36,8 +36,8 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
     return new OResultSet() {
       public boolean finished = false;
 
-      OResult nextItem = null;
-      int fetched = 0;
+      private OResult nextItem = null;
+      private int fetched = 0;
 
       private void fetchNextItem() {
         nextItem = null;

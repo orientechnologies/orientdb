@@ -105,7 +105,7 @@ public class OLuceneDateTools {
      */
     MILLISECOND(17);
 
-    final int formatLen;
+    private final int formatLen;
 
     Resolution(int formatLen) {
       this.formatLen = formatLen;

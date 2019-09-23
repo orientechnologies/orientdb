@@ -36,9 +36,9 @@ import com.tinkerpop.blueprints.impls.orient.*;
  */
 public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheckWorkload {
   public class OWorkLoadContext extends OBaseWorkload.OBaseWorkLoadContext {
-    OrientBaseGraph graph;
-    OrientVertex    lastVertexToConnect;
-    int             lastVertexEdges;
+    protected OrientBaseGraph graph;
+    protected OrientVertex    lastVertexToConnect;
+    protected int             lastVertexEdges;
 
     @Override
     public void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction) {

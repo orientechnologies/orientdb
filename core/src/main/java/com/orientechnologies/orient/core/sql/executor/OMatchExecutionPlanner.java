@@ -20,21 +20,21 @@ public class OMatchExecutionPlanner {
 
   static final String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
 
-  protected List<OMatchExpression>  matchExpressions;
-  protected List<OMatchExpression>  notMatchExpressions;
-  protected List<OExpression>       returnItems;
-  protected List<OIdentifier>       returnAliases;
-  protected List<ONestedProjection> returnNestedProjections;
-  boolean returnElements     = false;
-  boolean returnPaths        = false;
-  boolean returnPatterns     = false;
-  boolean returnPathElements = false;
-  boolean returnDistinct     = false;
-  protected     OSkip    skip;
-  private final OGroupBy groupBy;
-  private final OOrderBy orderBy;
-  private final OUnwind  unwind;
-  protected     OLimit   limit;
+  protected     List<OMatchExpression>  matchExpressions;
+  protected     List<OMatchExpression>  notMatchExpressions;
+  protected     List<OExpression>       returnItems;
+  protected     List<OIdentifier>       returnAliases;
+  protected     List<ONestedProjection> returnNestedProjections;
+  private       boolean                 returnElements     = false;
+  private       boolean                 returnPaths        = false;
+  private       boolean                 returnPatterns     = false;
+  private       boolean                 returnPathElements = false;
+  private       boolean                 returnDistinct     = false;
+  protected     OSkip                   skip;
+  private final OGroupBy                groupBy;
+  private final OOrderBy                orderBy;
+  private final OUnwind                 unwind;
+  protected     OLimit                  limit;
 
   //post-parsing
   private Pattern                   pattern;
@@ -43,8 +43,8 @@ public class OMatchExecutionPlanner {
   private Map<String, String>       aliasClasses;
   private Map<String, String>       aliasClusters;
   private Map<String, ORid>         aliasRids;
-  boolean foundOptional = false;
-  private long threshold = 100;
+  private boolean                   foundOptional = false;
+  private long                      threshold     = 100;
 
   public OMatchExecutionPlanner(OMatchStatement stm) {
     this.matchExpressions = stm.getMatchExpressions().stream().map(x -> x.copy()).collect(Collectors.toList());
@@ -444,7 +444,6 @@ public class OMatchExecutionPlanner {
    * Calculate the set of dependency aliases for each alias in the pattern.
    *
    * @param pattern
-   *
    * @return map of alias to the set of aliases it depends on
    */
   private Map<String, Set<String>> getDependencies(Pattern pattern) {

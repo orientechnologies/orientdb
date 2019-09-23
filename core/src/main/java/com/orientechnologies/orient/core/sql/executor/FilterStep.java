@@ -15,7 +15,7 @@ import java.util.Optional;
 public class FilterStep extends AbstractExecutionStep {
   private OWhereClause whereClause;
 
-  OResultSet prevResult = null;
+  private OResultSet prevResult = null;
 
   private long cost;
 
@@ -34,8 +34,8 @@ public class FilterStep extends AbstractExecutionStep {
     return new OResultSet() {
       public boolean finished = false;
 
-      OResult nextItem = null;
-      int fetched = 0;
+      private OResult nextItem = null;
+      private int fetched = 0;
 
       private void fetchNextItem() {
         nextItem = null;

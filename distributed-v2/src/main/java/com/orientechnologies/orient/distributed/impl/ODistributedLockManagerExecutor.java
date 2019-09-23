@@ -47,9 +47,9 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
   }
 
   private class ODistributedLock {
-    final String         server;
-    final CountDownLatch lock;
-    final long           acquiredOn;
+    private final String         server;
+    private final CountDownLatch lock;
+    private final long           acquiredOn;
 
     private ODistributedLock(final String server) {
       this.server = server;

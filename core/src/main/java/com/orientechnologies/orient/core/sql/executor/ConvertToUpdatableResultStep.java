@@ -10,8 +10,8 @@ import java.util.Optional;
 
 /**
  * <p>
- * takes a normal result set and transforms it in another result set made of OUpdatableRecord instances.
- * Records that are not identifiable are discarded.
+ * takes a normal result set and transforms it in another result set made of OUpdatableRecord instances. Records that are not
+ * identifiable are discarded.
  * </p>
  * <p>This is the opposite of ConvertToResultInternalStep</p>
  *
@@ -21,7 +21,7 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  OResultSet prevResult = null;
+  private OResultSet prevResult = null;
 
   public ConvertToUpdatableResultStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -37,8 +37,8 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
     return new OResultSet() {
       public boolean finished = false;
 
-      OResult nextItem = null;
-      int fetched = 0;
+      private OResult nextItem = null;
+      private int fetched = 0;
 
       private void fetchNextItem() {
         nextItem = null;

@@ -30,13 +30,13 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   private final OBatch      batch;
 
   //operation stuff
-  Iterator fromIter;
-  Iterator toIterator;
-  OVertex  currentFrom;
-  OVertex  currentTo;
-  OEdge    edgeToUpdate;//for upsert
-  boolean  finished = false;
-  List     toList   = new ArrayList<>();
+  private Iterator  fromIter;
+  private Iterator  toIterator;
+  private OVertex   currentFrom;
+  private OVertex   currentTo;
+  private OEdge     edgeToUpdate;//for upsert
+  private boolean   finished = false;
+  private List      toList   = new ArrayList<>();
   private OIndex<?> uniqueIndex;
 
   private boolean inited = false;
@@ -61,7 +61,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
     return new OResultSet() {
-      int currentBatch = 0;
+      private int currentBatch = 0;
 
       @Override
       public boolean hasNext() {
@@ -253,7 +253,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       return ((OElement) currentFrom).asVertex()
           .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
     }
-    throw new OCommandExecutionException("Invalid vertex for edge creation: " + (currentFrom == null ? "null" : currentFrom.toString()));
+    throw new OCommandExecutionException(
+        "Invalid vertex for edge creation: " + (currentFrom == null ? "null" : currentFrom.toString()));
   }
 
   @Override

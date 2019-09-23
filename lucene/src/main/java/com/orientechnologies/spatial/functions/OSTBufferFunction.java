@@ -32,7 +32,7 @@ public class OSTBufferFunction extends OSQLFunctionAbstract {
 
   public static final String NAME = "ST_Buffer";
 
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  private OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSTBufferFunction() {
     super(NAME, 2, 3);

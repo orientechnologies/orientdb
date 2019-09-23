@@ -40,9 +40,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private OIndexCursor       cursor;
   private List<OIndexCursor> nextCursors = new ArrayList<>();
 
-  OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
-  private Iterator                         nullKeyIterator;
-  private Map.Entry<Object, OIdentifiable> nextEntry = null;
+  private OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
+  private Iterator                                                   nullKeyIterator;
+  private Map.Entry<Object, OIdentifiable>                           nextEntry = null;
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OCommandContext ctx, boolean profilingEnabled) {
@@ -81,7 +81,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init(ctx.getDatabase());
     return new OResultSet() {
-      int localCount = 0;
+      private int localCount = 0;
 
       @Override
       public boolean hasNext() {
@@ -430,7 +430,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
     OIndexCursor cursor = new OIndexCursor() {
 
-      final Iterator iter = ((Iterable) r).iterator();
+      private final Iterator iter = ((Iterable) r).iterator();
 
       @Override
       public boolean hasNext() {
@@ -501,7 +501,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
    * <li>if it's a document, the RID is returned</li> </ul>
    *
    * @param value
-   *
    * @return
    */
   private Object unboxOResult(Object value) {
