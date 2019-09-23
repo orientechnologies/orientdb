@@ -18,7 +18,7 @@ public final class ClusterPageInitPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_PAGE_INIT_PO;
   }
 }

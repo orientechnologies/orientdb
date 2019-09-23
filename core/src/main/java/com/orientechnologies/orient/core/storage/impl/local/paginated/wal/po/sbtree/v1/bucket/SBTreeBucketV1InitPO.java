@@ -30,7 +30,7 @@ public class SBTreeBucketV1InitPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V1_INIT_PO;
   }
 

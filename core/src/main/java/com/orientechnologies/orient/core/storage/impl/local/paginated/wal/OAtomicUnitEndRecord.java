@@ -151,7 +151,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.ATOMIC_UNIT_END_RECORD;
   }
 }

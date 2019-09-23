@@ -77,7 +77,7 @@ public final class ClusterPositionMapBucketUpdateEntryPO extends PageOperationRe
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_POSITION_MAP_UPDATE_ENTRY_PO;
   }
 

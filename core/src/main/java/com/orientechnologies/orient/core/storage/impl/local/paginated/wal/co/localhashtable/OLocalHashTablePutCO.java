@@ -123,7 +123,7 @@ public class OLocalHashTablePutCO extends OAbstractIndexCO {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.LOCAL_HASHTABLE_PUT_CO;
   }
 }

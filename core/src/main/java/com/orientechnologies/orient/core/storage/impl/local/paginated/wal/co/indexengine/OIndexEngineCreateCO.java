@@ -237,7 +237,7 @@ public class OIndexEngineCreateCO extends OComponentOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.INDEX_ENGINE_CREATE_CO;
   }
 }

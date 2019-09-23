@@ -61,7 +61,7 @@ public final class CellBTreeMultiValueV2BucketCreateMainLeafEntryPO extends Page
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V2_CREATE_MAIN_LEAF_ENTRY_PO;
   }
 

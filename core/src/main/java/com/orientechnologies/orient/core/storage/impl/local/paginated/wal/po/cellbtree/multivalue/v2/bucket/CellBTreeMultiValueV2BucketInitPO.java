@@ -29,7 +29,7 @@ public final class CellBTreeMultiValueV2BucketInitPO extends PageOperationRecord
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V2_INIT_PO;
   }
 

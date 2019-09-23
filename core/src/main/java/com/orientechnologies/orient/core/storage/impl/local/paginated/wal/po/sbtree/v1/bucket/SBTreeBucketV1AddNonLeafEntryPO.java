@@ -72,7 +72,7 @@ public final class SBTreeBucketV1AddNonLeafEntryPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V1_ADD_NON_LEAF_ENTRY_PO;
   }
 

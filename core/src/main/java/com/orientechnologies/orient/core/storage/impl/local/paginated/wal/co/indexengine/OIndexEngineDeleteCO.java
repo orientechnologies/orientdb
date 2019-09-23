@@ -236,7 +236,7 @@ public class OIndexEngineDeleteCO extends OComponentOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.INDEX_ENGINE_DELETE_CO;
   }
 }

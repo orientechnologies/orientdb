@@ -41,7 +41,7 @@ public final class ClusterPageSetNextPagePO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_PAGE_SET_NEXT_PAGE_PO;
   }
 

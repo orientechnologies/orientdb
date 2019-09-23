@@ -47,7 +47,7 @@ public final class CellBTreeBucketSingleValueV3RemoveLeafEntryPO extends PageOpe
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V3_REMOVE_LEAF_ENTRY_PO;
   }
 

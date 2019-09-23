@@ -38,7 +38,7 @@ public final class CellBTreeNullBucketSingleValueV3RemoveValuePO extends PageOpe
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_REMOVE_VALUE_PO;
   }
 

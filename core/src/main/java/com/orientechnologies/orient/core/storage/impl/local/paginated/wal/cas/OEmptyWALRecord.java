@@ -34,7 +34,7 @@ public final class OEmptyWALRecord extends OAbstractWALRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.EMPTY_WAL_RECORD;
   }
 }

@@ -49,7 +49,7 @@ public class OSBTreeBonsaiDeleteComponentCO extends OComponentOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BONSAI_DELETE_COMPONENT_CO;
   }
 }

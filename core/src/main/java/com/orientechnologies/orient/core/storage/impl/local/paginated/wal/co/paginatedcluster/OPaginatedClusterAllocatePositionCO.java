@@ -57,7 +57,7 @@ public class OPaginatedClusterAllocatePositionCO extends OComponentOperationReco
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_ALLOCATE_RECORD_POSITION_CO;
   }
 }

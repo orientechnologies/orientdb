@@ -73,7 +73,7 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.FILE_CREATED_WAL_RECORD;
   }
 }

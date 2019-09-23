@@ -17,7 +17,7 @@ public final class CellBTreeNullBucketSingleValueV1InitPO extends PageOperationR
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V1_INIT_PO;
   }
 }

@@ -124,7 +124,7 @@ public class OSBTreePutCO extends OAbstractIndexCO {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_PUT_CO;
   }
 }

@@ -97,7 +97,7 @@ public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord 
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.FUZZY_CHECKPOINT_START_RECORD;
   }
 

@@ -54,7 +54,7 @@ public class OCheckpointEndRecord extends OAbstractWALRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CHECKPOINT_END_RECORD;
   }
 }

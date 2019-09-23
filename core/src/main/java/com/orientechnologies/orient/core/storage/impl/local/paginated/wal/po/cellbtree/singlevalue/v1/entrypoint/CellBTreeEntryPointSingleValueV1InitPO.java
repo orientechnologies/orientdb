@@ -17,7 +17,7 @@ public final class CellBTreeEntryPointSingleValueV1InitPO extends PageOperationR
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V1_INIT_PO;
   }
 }

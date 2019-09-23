@@ -41,7 +41,7 @@ public final class SBTreeBucketV1SetTreeSizePO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V1_SET_TREE_SIZE_PO;
   }
 

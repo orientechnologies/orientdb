@@ -55,7 +55,7 @@ public final class ClusterPageSetRecordLongValuePO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_PAGE_SET_RECORD_LONG_VALUE_PO;
   }
 

@@ -29,7 +29,7 @@ public final class CellBTreeBucketSingleValueV3InitPO extends PageOperationRecor
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V3_INIT_PO;
   }
 

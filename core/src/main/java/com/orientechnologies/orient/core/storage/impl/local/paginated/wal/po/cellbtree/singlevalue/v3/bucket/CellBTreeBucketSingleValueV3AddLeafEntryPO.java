@@ -50,7 +50,7 @@ public final class CellBTreeBucketSingleValueV3AddLeafEntryPO extends PageOperat
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V3_ADD_LEAF_ENTRY_PO;
   }
 

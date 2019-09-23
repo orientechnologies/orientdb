@@ -18,7 +18,7 @@ public final class ClusterPositionMapBucketInitPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_POSITION_MAP_INIT_PO;
   }
 }

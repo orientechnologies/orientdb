@@ -55,7 +55,7 @@ public final class CellBTreeBucketSingleValueV3ShrinkPO extends PageOperationRec
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SHRINK_PO;
   }
 
