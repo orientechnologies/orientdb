@@ -388,6 +388,8 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     final int entriesCount = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE);
 
     setIntValue(entryPosition + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, entriesCount - 1);
+
+    addPageOperation(new CellBTreeMultiValueV2BucketDecrementEntriesCountPO(entryIndex));
     return entriesCount == 1;
   }
 
