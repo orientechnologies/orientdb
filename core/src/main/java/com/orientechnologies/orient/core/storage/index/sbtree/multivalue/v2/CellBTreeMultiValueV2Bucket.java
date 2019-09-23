@@ -416,6 +416,8 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
     final int entriesCount = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE);
     setIntValue(entryPosition + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, entriesCount + 1);
+
+    addPageOperation(new CellBTreeMultiValueV2BucketIncrementEntriesCountPO(entryIndex));
   }
 
   private void updateAllLinkedListReferences(final int firstItem, final int boundary, final int diffSize) {
