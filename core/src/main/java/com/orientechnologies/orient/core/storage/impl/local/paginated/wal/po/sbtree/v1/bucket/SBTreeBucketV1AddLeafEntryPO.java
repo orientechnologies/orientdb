@@ -50,7 +50,7 @@ public final class SBTreeBucketV1AddLeafEntryPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V1_ADD_LEAF_ENTRY_PO;
   }
 

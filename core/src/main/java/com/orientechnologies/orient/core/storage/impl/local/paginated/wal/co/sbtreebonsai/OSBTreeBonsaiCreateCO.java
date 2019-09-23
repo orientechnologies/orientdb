@@ -63,7 +63,7 @@ public class OSBTreeBonsaiCreateCO extends OComponentOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BONSAI_CREATE_CO;
   }
 }

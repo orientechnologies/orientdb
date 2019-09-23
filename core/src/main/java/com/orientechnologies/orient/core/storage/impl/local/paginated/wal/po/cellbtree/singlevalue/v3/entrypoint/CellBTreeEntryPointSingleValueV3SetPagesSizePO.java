@@ -41,7 +41,7 @@ public final class CellBTreeEntryPointSingleValueV3SetPagesSizePO extends PageOp
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V3_SET_PAGES_SIZE_PO;
   }
 

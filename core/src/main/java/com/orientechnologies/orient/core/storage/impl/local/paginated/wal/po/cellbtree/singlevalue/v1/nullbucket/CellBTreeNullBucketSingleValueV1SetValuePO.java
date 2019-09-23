@@ -49,7 +49,7 @@ public final class CellBTreeNullBucketSingleValueV1SetValuePO extends PageOperat
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V1_SET_VALUE_PO;
   }
 

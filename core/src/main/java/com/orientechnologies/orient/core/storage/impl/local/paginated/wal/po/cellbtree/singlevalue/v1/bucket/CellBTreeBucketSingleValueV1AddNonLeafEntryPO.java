@@ -72,7 +72,7 @@ public final class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOpe
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_ADD_NON_LEAF_ENTRY_PO;
   }
 

@@ -41,7 +41,7 @@ public class OFileDeletedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.FILE_DELETED_WAL_RECORD;
   }
 }

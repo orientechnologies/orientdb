@@ -32,7 +32,7 @@ public class ONonTxOperationPerformedWALRecord extends OAbstractWALRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.NON_TX_OPERATION_PERFORMED_WAL_RECORD;
   }
 }

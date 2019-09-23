@@ -40,7 +40,7 @@ public class OFileTruncatedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.FILE_TRUNCATED_WAL_RECORD;
   }
 }

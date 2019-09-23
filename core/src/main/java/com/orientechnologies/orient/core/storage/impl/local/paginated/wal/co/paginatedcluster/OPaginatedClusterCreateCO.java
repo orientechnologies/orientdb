@@ -52,7 +52,7 @@ public class OPaginatedClusterCreateCO extends OComponentOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CREATE_CLUSTER_CO;
   }
 

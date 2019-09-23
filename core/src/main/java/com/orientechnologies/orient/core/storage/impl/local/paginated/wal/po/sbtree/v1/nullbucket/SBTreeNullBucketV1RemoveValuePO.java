@@ -48,7 +48,7 @@ public final class SBTreeNullBucketV1RemoveValuePO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_NULL_BUCKET_V1_REMOVE_VALUE_PO;
   }
 

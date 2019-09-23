@@ -109,7 +109,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.UPDATE_PAGE_RECORD;
   }
 }

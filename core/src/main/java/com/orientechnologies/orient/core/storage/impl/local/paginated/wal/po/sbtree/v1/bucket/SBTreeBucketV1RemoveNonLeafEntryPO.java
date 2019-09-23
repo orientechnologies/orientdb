@@ -60,7 +60,7 @@ public final class SBTreeBucketV1RemoveNonLeafEntryPO extends PageOperationRecor
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V1_REMOVE_NON_LEAF_ENTRY_PO;
   }
 

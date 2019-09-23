@@ -125,7 +125,7 @@ public final class OPaginatedClusterUpdateRecordCO extends OComponentOperationRe
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_UPDATE_RECORD_CO;
   }
 }

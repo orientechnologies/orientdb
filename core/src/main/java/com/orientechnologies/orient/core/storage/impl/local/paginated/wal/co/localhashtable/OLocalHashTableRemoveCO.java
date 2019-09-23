@@ -90,7 +90,7 @@ public class OLocalHashTableRemoveCO extends OAbstractIndexCO {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.LOCAL_HASHTABLE_REMOVE_CO;
   }
 }

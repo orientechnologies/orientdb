@@ -32,7 +32,7 @@ public class OFullCheckpointStartRecord extends OAbstractCheckPointStartRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.FULL_CHECKPOINT_START_RECORD;
   }
 }

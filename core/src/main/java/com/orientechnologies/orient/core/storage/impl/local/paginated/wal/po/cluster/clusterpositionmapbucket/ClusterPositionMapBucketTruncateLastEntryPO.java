@@ -48,7 +48,7 @@ public final class ClusterPositionMapBucketTruncateLastEntryPO extends PageOpera
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_POSITION_MAP_TRUNCATE_LAST_ENTRY_PO;
   }
 

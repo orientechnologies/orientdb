@@ -70,7 +70,7 @@ public class OCellBTreeMultiValuePutCO extends OAbstractIndexCO {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_MULTI_VALUE_PUT_CO;
   }
 

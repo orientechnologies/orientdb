@@ -27,6 +27,6 @@ public interface OWriteableWALRecord extends OWALRecord {
 
   boolean isWritten();
 
-  byte getId();
+  int getId();
 }
 

@@ -41,7 +41,7 @@ public final class PaginatedClusterStateV2SetRecordsSizePO extends PageOperation
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.PAGINATED_CLUSTER_STATE_V2_SET_RECORDS_SIZE_PO;
   }
 

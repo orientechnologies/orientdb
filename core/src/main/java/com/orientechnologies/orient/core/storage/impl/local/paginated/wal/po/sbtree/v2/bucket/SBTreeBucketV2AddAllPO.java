@@ -62,7 +62,7 @@ public final class SBTreeBucketV2AddAllPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V2_ADD_ALL_PO;
   }
 

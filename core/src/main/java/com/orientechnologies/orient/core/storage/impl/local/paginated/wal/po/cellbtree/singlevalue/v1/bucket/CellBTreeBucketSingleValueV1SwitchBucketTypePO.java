@@ -22,7 +22,7 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePO extends PageOperatio
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CELL_BTREE_BUCKET_SINGLE_VALUE_V1_SWITCH_BUCKET_TYPE_PO;
   }
 }

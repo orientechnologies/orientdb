@@ -48,7 +48,7 @@ public final class PaginatedClusterStateV0SetFreeListPagePO extends PageOperatio
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.PAGINATED_CLUSTER_STATE_V0_SET_FREE_LIST_PAGE_PO;
   }
 

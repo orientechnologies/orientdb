@@ -54,7 +54,7 @@ public final class SBTreeBucketV1UpdateValuePO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V1_UPDATE_VALUE_PO;
   }
 

@@ -64,7 +64,7 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.ATOMIC_UNIT_START_RECORD;
   }
 

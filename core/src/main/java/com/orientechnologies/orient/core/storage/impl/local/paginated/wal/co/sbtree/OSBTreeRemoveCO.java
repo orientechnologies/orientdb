@@ -91,7 +91,7 @@ public class OSBTreeRemoveCO extends OAbstractIndexCO {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_REMOVE_CO;
   }
 }

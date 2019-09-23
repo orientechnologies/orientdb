@@ -58,7 +58,7 @@ public class SBTreeNullBucketV1SetValuePO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_NULL_BUCKET_V1_SET_VALUE_PO;
   }
 

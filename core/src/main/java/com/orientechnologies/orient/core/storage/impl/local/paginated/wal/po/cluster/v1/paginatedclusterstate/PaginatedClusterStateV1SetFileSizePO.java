@@ -41,7 +41,7 @@ public final class PaginatedClusterStateV1SetFileSizePO extends PageOperationRec
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.PAGINATED_CLUSTER_STATE_V1_SET_FILE_SIZE_PO;
   }
 

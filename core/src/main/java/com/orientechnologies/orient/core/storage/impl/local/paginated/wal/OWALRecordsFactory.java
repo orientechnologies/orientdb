@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
@@ -38,7 +39,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.CellBTreeMultiValueV2BucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1InitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1SetPagesSizePO;
@@ -98,12 +99,12 @@ public final class OWALRecordsFactory {
   private static final int        MIN_COMPRESSED_RECORD_SIZE = 8 * 1024;
 
   public static OPair<ByteBuffer, Long> toStream(final OWriteableWALRecord walRecord) {
-    final int contentSize = walRecord.serializedSize() + 1;
+    final int contentSize = walRecord.serializedSize() + 2;
 
     final ByteBuffer content = ByteBuffer.allocate(contentSize).order(ByteOrder.nativeOrder());
 
-    final byte recordId = walRecord.getId();
-    content.put(recordId);
+    final int recordId = walRecord.getId();
+    content.putShort((short) recordId);
     walRecord.toStream(content);
 
     if (MIN_COMPRESSED_RECORD_SIZE <= 0 || contentSize < MIN_COMPRESSED_RECORD_SIZE) {
@@ -113,16 +114,16 @@ public final class OWALRecordsFactory {
     final LZ4Compressor compressor = factory.fastCompressor();
     final int maxCompressedLength = compressor.maxCompressedLength(contentSize - 1);
 
-    final ByteBuffer compressedContent = ByteBuffer.allocate(maxCompressedLength + 5).order(ByteOrder.nativeOrder());
+    final ByteBuffer compressedContent = ByteBuffer.allocate(maxCompressedLength + 6).order(ByteOrder.nativeOrder());
 
-    content.position(1);
-    compressedContent.position(5);
-    final int compressedLength = compressor.compress(content, 1, contentSize - 1, compressedContent, 5, maxCompressedLength);
+    content.position(2);
+    compressedContent.position(6);
+    final int compressedLength = compressor.compress(content, 2, contentSize - 2, compressedContent, 6, maxCompressedLength);
 
-    if (compressedLength + 5 < contentSize) {
-      compressedContent.limit(compressedLength + 5);
-      compressedContent.put(0, (byte) (-(recordId + 1)));
-      compressedContent.putInt(1, contentSize);
+    if (compressedLength + 6 < contentSize) {
+      compressedContent.limit(compressedLength + 6);
+      compressedContent.putShort(0, (short) (-(recordId + 1)));
+      compressedContent.putInt(2, contentSize);
 
       return new OPair<>(compressedContent, 0L);
     } else {
@@ -131,18 +132,19 @@ public final class OWALRecordsFactory {
   }
 
   public OWriteableWALRecord fromStream(byte[] content) {
-    if (content[0] < 0) {
-      final int originalLen = OIntegerSerializer.INSTANCE.deserializeNative(content, 1);
+    int recordId = OShortSerializer.INSTANCE.deserializeNative(content, 0);
+    if (recordId < 0) {
+      final int originalLen = OIntegerSerializer.INSTANCE.deserializeNative(content, 2);
       final byte[] restored = new byte[originalLen];
 
       final LZ4FastDecompressor decompressor = factory.fastDecompressor();
-      decompressor.decompress(content, 5, restored, 1, restored.length - 1);
-      restored[0] = (byte) (-content[0] - 1);
+      decompressor.decompress(content, 6, restored, 2, restored.length - 2);
+      recordId = -recordId - 1;
       content = restored;
     }
 
     final OWriteableWALRecord walRecord;
-    switch (content[0]) {
+    switch (recordId) {
     case UPDATE_PAGE_RECORD:
       walRecord = new OUpdatePageRecord();
       break;
@@ -503,6 +505,18 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_MULTI_VALUE_V2_INIT_PO:
       walRecord = new CellBTreeMultiValueV2BucketInitPO();
       break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_CREATE_MAIN_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeMultiValueV2BucketCreateMainLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_MAIN_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeMultiValueV2BucketRemoveMainLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_APPEND_NEW_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeMultiValueV2BucketAppendNewLeafEntryPO();
+      break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeMultiValueV2BucketRemoveLeafEntryPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
@@ -514,9 +528,9 @@ public final class OWALRecordsFactory {
         throw new IllegalStateException("Cannot deserialize passed in wal record.");
     }
 
-    walRecord.fromStream(content, 1);
+    walRecord.fromStream(content, 2);
 
-    if (walRecord.getId() != content[0]) {
+    if (walRecord.getId() != recordId) {
       throw new IllegalStateException(
           "Deserialized WAL record id does not match to the serialized record id " + walRecord.getId() + " - " + content[0]);
     }

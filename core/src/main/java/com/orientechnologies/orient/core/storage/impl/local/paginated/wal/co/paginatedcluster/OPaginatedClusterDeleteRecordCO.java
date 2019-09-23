@@ -77,7 +77,7 @@ public class OPaginatedClusterDeleteRecordCO extends OComponentOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_DELETE_RECORD_CO;
   }
 }

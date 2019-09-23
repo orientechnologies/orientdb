@@ -41,7 +41,7 @@ public final class SBTreeBucketV2SetLeftSiblingPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V2_SET_LEFT_SIBLING_PO;
   }
 

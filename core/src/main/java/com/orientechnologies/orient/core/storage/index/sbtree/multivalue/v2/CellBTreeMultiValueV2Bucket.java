@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.CellBTreeMultiValueV2BucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +39,14 @@ import java.util.List;
  * @since 8/7/13
  */
 public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
+  private static final int NEXT_ITEM_POINTER_OFFSET      = 0;
+  private static final int EMBEDDED_ENTRIES_COUNT_OFFSET = NEXT_ITEM_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int ENTRIES_COUNT_OFFSET          = EMBEDDED_ENTRIES_COUNT_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int M_ID_OFFSET                   = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int CLUSTER_ID_OFFSET             = M_ID_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int CLUSTER_POSITION_OFFSET       = CLUSTER_ID_OFFSET + OShortSerializer.SHORT_SIZE;
+  private static final int KEY_OFFSET                    = CLUSTER_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+
   private static final int EMBEDDED_ITEMS_THRESHOLD        = 64;
   private static final int RID_SIZE                        = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
   private static final int SINGLE_ELEMENT_LINKED_ITEM_SIZE = OIntegerSerializer.INT_SIZE + RID_SIZE + OByteSerializer.BYTE_SIZE;
@@ -92,7 +100,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     return -(low + 1); // key not found.
   }
 
-  private void removeMainEntry(final int entryIndex, final int entryPosition, final int keySize) {
+  private void removeMainLeafEntry(final int entryIndex, final int entryPosition, final int keySize) {
     int nextItem;
     int size = getIntValue(SIZE_OFFSET);
 
@@ -144,7 +152,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     }
   }
 
-  boolean removeLeafEntry(final int entryIndex, final ORID value, final int keySize) {
+  public int removeLeafEntry(final int entryIndex, final ORID value) {
     assert isLeaf();
 
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
@@ -171,22 +179,19 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
       final long clusterPosition = getLongValue(position);
 
       if (clusterId != value.getClusterId()) {
-        return false;
+        return -1;
       }
 
       if (clusterPosition == value.getClusterPosition()) {
-        if (entriesCount > 1) {
-          setShortValue(clusterIdPosition, (short) -1);
+        setShortValue(clusterIdPosition, (short) -1);
 
-          assert embeddedEntriesCount == 1;
+        assert embeddedEntriesCount == 1;
 
-          setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
-          setIntValue(entriesCountPosition, entriesCount - 1);
-        } else {
-          removeMainEntry(entryIndex, entryPosition, keySize);
-        }
+        setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
+        setIntValue(entriesCountPosition, entriesCount - 1);
 
-        return true;
+        addPageOperation(new CellBTreeMultiValueV2BucketRemoveLeafEntryPO(entryIndex, value));
+        return entriesCount - 1;
       }
     } else {
       int clusterId = getShortValue(position);
@@ -251,7 +256,8 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
         setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
         setIntValue(entriesCountPosition, entriesCount - 1);
 
-        return true;
+        addPageOperation(new CellBTreeMultiValueV2BucketRemoveLeafEntryPO(entryIndex, value));
+        return entriesCount - 1;
       } else {
         int prevItem = entryPosition;
 
@@ -301,7 +307,9 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
 
               setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
               setIntValue(entriesCountPosition, entriesCount - 1);
-              return true;
+
+              addPageOperation(new CellBTreeMultiValueV2BucketRemoveLeafEntryPO(entryIndex, value));
+              return entriesCount - 1;
             }
           } else {
             for (int i = 0; i < nextItemSize; i++) {
@@ -345,7 +353,9 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
 
                 setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
                 setIntValue(entriesCountPosition, entriesCount - 1);
-                return true;
+
+                addPageOperation(new CellBTreeMultiValueV2BucketRemoveLeafEntryPO(entryIndex, value));
+                return entriesCount - 1;
               }
             }
           }
@@ -356,7 +366,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
       }
     }
 
-    return false;
+    return -1;
   }
 
   boolean hasExternalEntries(final int entryIndex) {
@@ -373,16 +383,33 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     return getLongValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE);
   }
 
-  public void decreaseEntriesCountAndRemoveIfNeeded(final int entryIndex, final int keySize) {
+  public boolean decrementEntriesCount(final int entryIndex) {
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
     final int entriesCount = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE);
 
-    assert entriesCount >= 1;
-    if (entriesCount == 1) {
-      removeMainEntry(entryIndex, entryPosition, keySize);
+    setIntValue(entryPosition + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, entriesCount - 1);
+    return entriesCount == 1;
+  }
+
+  public void removeMainLeafEntry(final int entryIndex, final int keySize) {
+    final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
+    final int entriesCount = getIntValue(entryPosition + ENTRIES_COUNT_OFFSET);
+    final long mId = getLongValue(entryPosition + M_ID_OFFSET);
+
+    final ORID value;
+    if (entriesCount == 0) {
+      value = null;
     } else {
-      setIntValue(entryPosition + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, entriesCount - 1);
+      final int clusterId = getShortValue(entryPosition + CLUSTER_ID_OFFSET);
+      final long clusterPosition = getLongValue(entryPosition + CLUSTER_POSITION_OFFSET);
+      value = new ORecordId(clusterId, clusterPosition);
     }
+
+    final byte[] key = getBinaryValue(entryPosition + KEY_OFFSET, keySize);
+
+    removeMainLeafEntry(entryIndex, entryPosition, keySize);
+
+    addPageOperation(new CellBTreeMultiValueV2BucketRemoveMainLeafEntryPO(entryIndex, key, value, mId));
   }
 
   public void incrementEntriesCount(final int entryIndex) {
@@ -410,7 +437,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     return getIntValue(SIZE_OFFSET);
   }
 
-  LeafEntry getLeafEntry(final int entryIndex, final OBinarySerializer<K> keySerializer, final OEncryption encryption) {
+  public LeafEntry getLeafEntry(final int entryIndex, final OBinarySerializer<K> keySerializer, final OEncryption encryption) {
     assert isLeaf();
 
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
@@ -554,10 +581,12 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
   }
 
   public void addAll(final List<Entry> entries) {
+    final int currentSize = size();
+
     if (!isLeaf()) {
       for (int i = 0; i < entries.size(); i++) {
         final NonLeafEntry entry = (NonLeafEntry) entries.get(i);
-        addNonLeafEntry(i, entry.key, entry.leftChild, entry.rightChild, false);
+        addNonLeafEntry(i + currentSize, entry.key, entry.leftChild, entry.rightChild, false);
       }
     } else {
       for (int i = 0; i < entries.size(); i++) {
@@ -566,18 +595,18 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
         final List<ORID> values = entry.values;
 
         if (!values.isEmpty()) {
-          createMainLeafEntry(i, key, values.get(0), entry.mId);
+          createMainLeafEntry(i + currentSize, key, values.get(0), entry.mId);
         } else {
-          createMainLeafEntry(i, key, null, entry.mId);
+          createMainLeafEntry(i + currentSize, key, null, entry.mId);
         }
 
         if (values.size() > 1) {
-          appendNewLeafEntries(i, values.subList(1, values.size()), entry.entriesCount);
+          appendNewLeafEntries(i + currentSize, values.subList(1, values.size()), entry.entriesCount);
         }
       }
     }
 
-    setIntValue(SIZE_OFFSET, entries.size());
+    setIntValue(SIZE_OFFSET, currentSize + entries.size());
   }
 
   public void shrink(final int newSize, final OBinarySerializer<K> keySerializer, final OEncryption encryption) throws IOException {
@@ -675,6 +704,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
 
     setBinaryValue(freePointer, serializedKey);//key
 
+    addPageOperation(new CellBTreeMultiValueV2BucketCreateMainLeafEntryPO(index, serializedKey, value, mId));
     return true;
   }
 
@@ -709,9 +739,8 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
         freePointer -= itemSize;
         setIntValue(FREE_POINTER_OFFSET, freePointer);
       } else {
-        setShortValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, (short) value.getClusterId());
-        setLongValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE + OShortSerializer.SHORT_SIZE,
-            value.getClusterPosition());
+        setShortValue(entryPosition + CLUSTER_ID_OFFSET, (short) value.getClusterId());
+        setLongValue(entryPosition + CLUSTER_POSITION_OFFSET, value.getClusterPosition());
       }
 
       setByteValue(entryPosition + OIntegerSerializer.INT_SIZE, (byte) (embeddedEntriesCount + 1));
@@ -721,6 +750,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
 
     setIntValue(entryPosition + OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE, entriesCount + 1);
 
+    addPageOperation(new CellBTreeMultiValueV2BucketAppendNewLeafEntryPO(index, value));
     return -1;
   }
 
@@ -842,12 +872,12 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     }
   }
 
-  static final class LeafEntry extends Entry {
-    final long       mId;
-    final List<ORID> values;
-    final int        entriesCount;
+  public static final class LeafEntry extends Entry {
+    public final long       mId;
+    public final List<ORID> values;
+    public final int        entriesCount;
 
-    LeafEntry(final byte[] key, final long mId, final List<ORID> values, int entriesCount) {
+    public LeafEntry(final byte[] key, final long mId, final List<ORID> values, int entriesCount) {
       super(key);
       this.mId = mId;
       this.values = values;

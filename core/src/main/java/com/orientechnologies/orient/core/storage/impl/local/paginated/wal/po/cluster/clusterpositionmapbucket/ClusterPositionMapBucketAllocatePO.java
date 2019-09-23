@@ -19,7 +19,7 @@ public final class ClusterPositionMapBucketAllocatePO extends PageOperationRecor
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.CLUSTER_POSITION_MAP_ALLOCATE_PO;
   }
 }

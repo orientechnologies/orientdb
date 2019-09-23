@@ -63,7 +63,7 @@ public final class SBTreeBucketV1ShrinkPO extends PageOperationRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.SBTREE_BUCKET_V1_SHRINK_PO;
   }
 
