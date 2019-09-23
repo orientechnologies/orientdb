@@ -34,10 +34,10 @@ public abstract class ONodeManager {
    */
   protected long maxInactiveServerTimeMillis = 5000;
 
-  private OLeaderElectionStateMachine leaderStatus;
-  private TimerTask discoveryTimer;
-  private TimerTask disconnectTimer;
-  private TimerTask checkerTimer;
+  protected OLeaderElectionStateMachine leaderStatus;
+  private   TimerTask                   discoveryTimer;
+  private   TimerTask                   disconnectTimer;
+  private   TimerTask                   checkerTimer;
 
   public ONodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration, int term,
       OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener) {
@@ -71,7 +71,6 @@ public abstract class ONodeManager {
    * sends messages to all the members of the network (current group)
    *
    * @param msg
-   *
    * @throws IOException
    */
   protected abstract void sendMessageToGroup(byte[] msg) throws IOException;
