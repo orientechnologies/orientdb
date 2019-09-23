@@ -19,7 +19,7 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
   private final OIdentifier            varName;
   private final OInternalExecutionPlan subExecutionPlan;
 
-  boolean executed = false;
+  private boolean executed = false;
 
   public GlobalLetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

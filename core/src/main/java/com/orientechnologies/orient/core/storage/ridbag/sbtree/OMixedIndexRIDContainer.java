@@ -115,7 +115,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   public Iterator<OIdentifiable> iterator() {
     if (tree == null) {
       return new Iterator<OIdentifiable>() {
-        final Iterator<ORID> embeddedIterator = embeddedSet.iterator();
+        private final Iterator<ORID> embeddedIterator = embeddedSet.iterator();
 
         @Override
         public boolean hasNext() {

@@ -12,10 +12,9 @@ public class OPersistentOperationalLogIterator implements Iterator<OOperationLog
   private final OLogId                      to;
   private final OPersistentOperationalLogV1 opLog;
 
-  long nextIdToLoad;
-
-  OOperationLogEntry nextEntry;
-  private DataInputStream stream;
+  private long               nextIdToLoad;
+  private OOperationLogEntry nextEntry;
+  private DataInputStream    stream;
 
   public OPersistentOperationalLogIterator(OPersistentOperationalLogV1 opLog, OLogId from, OLogId to) {
     this.opLog = opLog;

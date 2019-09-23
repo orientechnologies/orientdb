@@ -56,25 +56,25 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   private class OShortestPathContext {
-    OrientVertex sourceVertex;
-    OrientVertex destinationVertex;
-    Direction directionLeft  = Direction.BOTH;
-    Direction directionRight = Direction.BOTH;
+    private OrientVertex sourceVertex;
+    private OrientVertex destinationVertex;
+    private Direction    directionLeft  = Direction.BOTH;
+    private Direction    directionRight = Direction.BOTH;
 
-    String   edgeType;
-    String[] edgeTypeParam;
+    private String   edgeType;
+    private String[] edgeTypeParam;
 
-    ArrayDeque<OrientVertex> queueLeft  = new ArrayDeque<OrientVertex>();
-    ArrayDeque<OrientVertex> queueRight = new ArrayDeque<OrientVertex>();
+    private ArrayDeque<OrientVertex> queueLeft  = new ArrayDeque<OrientVertex>();
+    private ArrayDeque<OrientVertex> queueRight = new ArrayDeque<OrientVertex>();
 
-    final Set<ORID> leftVisited  = new HashSet<ORID>();
-    final Set<ORID> rightVisited = new HashSet<ORID>();
+    private final Set<ORID> leftVisited  = new HashSet<ORID>();
+    private final Set<ORID> rightVisited = new HashSet<ORID>();
 
-    final Map<ORID, ORID> previouses = new HashMap<ORID, ORID>();
-    final Map<ORID, ORID> nexts      = new HashMap<ORID, ORID>();
+    private final Map<ORID, ORID> previouses = new HashMap<ORID, ORID>();
+    private final Map<ORID, ORID> nexts      = new HashMap<ORID, ORID>();
 
-    OrientVertex current;
-    OrientVertex currentRight;
+    private OrientVertex current;
+    private OrientVertex currentRight;
     public Integer maxDepth;
   }
 

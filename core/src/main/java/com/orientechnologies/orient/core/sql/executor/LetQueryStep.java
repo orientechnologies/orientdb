@@ -33,7 +33,7 @@ public class LetQueryStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("Cannot execute a local LET on a query without a target");
     }
     return new OResultSet() {
-      OResultSet source = getPrev().get().syncPull(ctx, nRecords);
+      private OResultSet source = getPrev().get().syncPull(ctx, nRecords);
 
       @Override
       public boolean hasNext() {

@@ -48,7 +48,7 @@ public class OrientDataSource implements DataSource {
   private Properties  info;
 
   private OrientDB orientDB;
-  String dbName;
+  private String   dbName;
 
   private ODatabasePool pool;
 

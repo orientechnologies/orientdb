@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
@@ -77,12 +77,12 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
       ORecord record = null;
       switch (type) {
       case ORecordOperation.CREATED:
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
+        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
         break;
       case ORecordOperation.UPDATED: {
         OIdentifiable updateRecord;
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null);
+        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
       }
       break;

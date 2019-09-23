@@ -9,9 +9,9 @@ import java.util.Optional;
 
 public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
-  List<AbstractExecutionStep> subSteps;
+  private List<AbstractExecutionStep> subSteps;
 
-  OResultSet prevResult = null;
+  private OResultSet prevResult = null;
 
   private long cost;
 
@@ -30,8 +30,8 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
     return new OResultSet() {
       public boolean finished = false;
 
-      OResult nextItem = null;
-      int fetched = 0;
+      private OResult nextItem = null;
+      private int fetched = 0;
 
       private void fetchNextItem() {
         nextItem = null;
@@ -130,7 +130,7 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
   private OSelectExecutionPlan createExecutionPlan(OResult nextItem, OCommandContext ctx) {
     OSelectExecutionPlan plan = new OSelectExecutionPlan(ctx);
     plan.chain(new AbstractExecutionStep(ctx, profilingEnabled) {
-      boolean executed = false;
+      private boolean executed = false;
 
       @Override
       public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

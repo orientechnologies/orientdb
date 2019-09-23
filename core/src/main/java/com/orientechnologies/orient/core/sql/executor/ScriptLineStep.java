@@ -15,7 +15,7 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
 public class ScriptLineStep extends AbstractExecutionStep {
   protected final OInternalExecutionPlan plan;
 
-  boolean executed = false;
+  private boolean executed = false;
 
   public ScriptLineStep(OInternalExecutionPlan nextPlan, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

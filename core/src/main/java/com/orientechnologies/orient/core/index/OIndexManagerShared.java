@@ -42,7 +42,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -187,6 +186,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     String indexClass = indexDefinition.getClassName();
     List<String> indexedFields = indexDefinition.getFields();
+    if (indexedFields.size() == 1) {
+      return;
+    }
 
     Set<String> classesToCheck = new HashSet<>();
     classesToCheck.add(indexClass);

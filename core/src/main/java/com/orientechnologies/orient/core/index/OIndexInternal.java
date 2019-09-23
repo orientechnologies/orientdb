@@ -24,13 +24,18 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityResourceProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
 import java.util.Collection;
-import java.util.concurrent.locks.Lock;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -64,7 +69,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * Saves the index configuration to disk.
    *
    * @return The configuration as ODocument instance
-   *
    * @see #getConfiguration()
    */
   ODocument updateConfiguration();
@@ -73,7 +77,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * Add given cluster to the list of clusters that should be automatically indexed.
    *
    * @param iClusterName Cluster to add.
-   *
    * @return Current index instance.
    */
   OIndex<T> addCluster(final String iClusterName);
@@ -82,7 +85,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * Remove given cluster from the list of clusters that should be automatically indexed.
    *
    * @param iClusterName Cluster to remove.
-   *
    * @return Current index instance.
    */
   OIndex<T> removeCluster(final String iClusterName);
@@ -120,7 +122,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * sharding.
    *
    * @param key the index key.
-   *
    * @return The index name involved
    */
   String getIndexNameByKey(Object key);
@@ -134,7 +135,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * more narrow lock scope, but that is not a requirement.
    *
    * @param key the index key to lock.
-   *
    * @return {@code true} if this index was locked entirely, {@code false} if this index locking is sensitive to the provided {@code
    * key} and only some subset of this index was locked.
    */
@@ -142,10 +142,10 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
 
   static OIdentifiable securityFilterOnRead(OIndex idx, OIdentifiable item) {
-    if (idx.getMetadata() == null) {
+    if (idx.getDefinition() == null) {
       return item;
     }
-    String indexClass = idx.getMetadata().getClassName();
+    String indexClass = idx.getDefinition().getClassName();
     if (indexClass == null) {
       return item;
     }
@@ -155,10 +155,54 @@ public interface OIndexInternal<T> extends OIndex<T> {
     }
     OSecurityInternal security = db.getSharedContext().getSecurity();
     if (isReadRestrictedBySecurityPolicy(indexClass, db, security)) {
-      return item.getRecord();
+      item = item.getRecord();
+    }
+    if (item == null) {
+      return null;
+    }
+    if (idx.getDefinition().getFields().size() == 1) {
+      String indexProp = idx.getDefinition().getFields().get(0);
+      if (isLabelSecurityDefined(db, security, indexClass, indexProp)) {
+        item = item.getRecord();
+        if (item == null) {
+          return null;
+        }
+        if (!(item instanceof ODocument)) {
+          return item;
+        }
+        OPropertyAccess access = ODocumentInternal.getPropertyAccess((ODocument) item);
+        if (access != null && !access.isReadable(indexProp)) {
+          return null;
+        }
+      }
     }
     return item;
   }
+
+  static boolean isLabelSecurityDefined(ODatabaseDocumentInternal database, OSecurityInternal security, String indexClass,
+      String propertyName) {
+    Set<String> classesToCheck = new HashSet<>();
+    classesToCheck.add(indexClass);
+    OClass clazz = database.getClass(indexClass);
+    if (clazz == null) {
+      return false;
+    }
+    clazz.getAllSubclasses().forEach(x -> classesToCheck.add(x.getName()));
+    clazz.getAllSuperClasses().forEach(x -> classesToCheck.add(x.getName()));
+    Set<OSecurityResourceProperty> allFilteredProperties = security.getAllFilteredProperties(database);
+
+    for (String className : classesToCheck) {
+      Optional<OSecurityResourceProperty> item = allFilteredProperties.stream()
+          .filter(x -> x.getClassName().equalsIgnoreCase(className)).filter(x -> x.getPropertyName().equals(propertyName))
+          .findFirst();
+
+      if (item.isPresent()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   static boolean isReadRestrictedBySecurityPolicy(String indexClass, ODatabaseDocumentInternal db, OSecurityInternal security) {
     if (security.isReadRestrictedBySecurityPolicy(db, "database.class." + indexClass)) {
@@ -193,11 +237,22 @@ public interface OIndexInternal<T> extends OIndex<T> {
     }
     OSecurityInternal security = db.getSharedContext().getSecurity();
     if (isReadRestrictedBySecurityPolicy(indexClass, db, security)) {
-      return items.stream()
+      items = items.stream()
               .map(x -> x.getRecord()) // force record load, that triggers security checks
               .filter(x -> x != null)
               .map(x -> ((ORecord) x).getIdentity())
               .collect(Collectors.toList());
+    }
+
+    if (idx.getDefinition().getFields().size() == 1) {
+      String indexProp = idx.getDefinition().getFields().get(0);
+      if (isLabelSecurityDefined(db, security, indexClass, indexProp)) {
+
+        items = items.stream().map(x -> x.getRecord()).filter(x -> x != null).filter(
+            x -> !(x instanceof ODocument) || ODocumentInternal.getPropertyAccess((ODocument) x) == null || ODocumentInternal
+                .getPropertyAccess((ODocument) x).isReadable(indexProp)).map(x -> ((ORecord) x).getIdentity())
+            .collect(Collectors.toList());
+      }
     }
     return items;
   }

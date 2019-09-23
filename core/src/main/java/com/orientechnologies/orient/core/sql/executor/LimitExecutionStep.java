@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.sql.parser.OLimit;
 public class LimitExecutionStep extends AbstractExecutionStep {
   private final OLimit limit;
 
-  int loaded = 0;
+  private int loaded = 0;
 
   public LimitExecutionStep(OLimit limit, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

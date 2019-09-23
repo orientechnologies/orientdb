@@ -12,9 +12,11 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
  * This step is used just as a gate check for classes (eg. for CREATE VERTEX to make sure that the passed class is a vertex class).
  * </p>
  * <p>
- * It accepts two values: a target class and a parent class. If the two classes are the same or if the parent class is indeed
- * a parent class of the target class, then the syncPool() returns an empty result set, otherwise it throws an OCommandExecutionException
+ * It accepts two values: a target class and a parent class. If the two classes are the same or if the parent class is indeed a
+ * parent class of the target class, then the syncPool() returns an empty result set, otherwise it throws an
+ * OCommandExecutionException
  * </p>
+ *
  * @author Luigi Dell'Aquila (luigi.dellaquila - at - orientdb.com)
  */
 public class CheckClassTypeStep extends AbstractExecutionStep {
@@ -24,13 +26,12 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  boolean found = false;
+  private boolean found = false;
 
   /**
-   *
-   * @param targetClass a class to be checked
-   * @param parentClass a class that is supposed to be the same or a parent class of the target class
-   * @param ctx execuiton context
+   * @param targetClass      a class to be checked
+   * @param parentClass      a class that is supposed to be the same or a parent class of the target class
+   * @param ctx              execuiton context
    * @param profilingEnabled true to collect execution stats
    */
   public CheckClassTypeStep(String targetClass, String parentClass, OCommandContext ctx, boolean profilingEnabled) {

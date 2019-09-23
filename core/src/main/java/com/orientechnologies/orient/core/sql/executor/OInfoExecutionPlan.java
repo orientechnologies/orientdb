@@ -8,12 +8,12 @@ import java.util.List;
  */
 public class OInfoExecutionPlan implements OExecutionPlan {
 
-  List<OExecutionStep> steps = new ArrayList<>();
-  String  prettyPrint;
-  String  type;
-  String  javaType;
-  Integer cost;
-  String  stmText;
+  private List<OExecutionStep> steps = new ArrayList<>();
+  private String               prettyPrint;
+  private String               type;
+  private String               javaType;
+  private Integer              cost;
+  private String               stmText;
 
   @Override
   public List<OExecutionStep> getSteps() {

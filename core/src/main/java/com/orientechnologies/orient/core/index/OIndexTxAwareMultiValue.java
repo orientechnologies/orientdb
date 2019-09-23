@@ -29,14 +29,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -330,7 +323,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       processed.addAll(txChanges);
 
     if (!processed.isEmpty())
-      return processed;
+      return OIndexInternal.securityFilterOnRead(this, processed);
 
     return null;
   }
@@ -360,11 +353,11 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       txCursor = new PureTxBetweenIndexBackwardCursor(fromKey, fromInclusive, toKey, toInclusive, indexChanges);
 
     if (indexChanges.cleared)
-      return txCursor;
+      return new OIndexCursorSecurityDecorator(txCursor, this);
 
     final OIndexCursor backedCursor = super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
 
-    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override
@@ -385,11 +378,11 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       txCursor = new PureTxBetweenIndexBackwardCursor(fromKey, fromInclusive, lastKey, true, indexChanges);
 
     if (indexChanges.cleared)
-      return txCursor;
+      return new OIndexCursorSecurityDecorator(txCursor, this);
 
     final OIndexCursor backedCursor = super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
 
-    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override
@@ -410,10 +403,10 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       txCursor = new PureTxBetweenIndexBackwardCursor(firstKey, true, toKey, toInclusive, indexChanges);
 
     if (indexChanges.cleared)
-      return txCursor;
+      return new OIndexCursorSecurityDecorator(txCursor, this);
 
     final OIndexCursor backedCursor = super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
-    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override
@@ -486,7 +479,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     };
 
     if (indexChanges.cleared)
-      return txCursor;
+      return new OIndexCursorSecurityDecorator(txCursor, this);
 
     final OIndexCursor backedCursor = super.iterateEntries(keys, ascSortOrder);
     return new OIndexTxCursor(txCursor, backedCursor, ascSortOrder, indexChanges);

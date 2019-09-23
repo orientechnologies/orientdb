@@ -15,8 +15,8 @@ public class OUDPMulticastNodeManager extends ONodeManager {
   private final String multicastIp;
   private       int    listeningPort;
 
-  MulticastSocket socket;
-  private final int[] discoveryPorts;
+  private       MulticastSocket socket;
+  private final int[]           discoveryPorts;
 
   /**
    * @param config

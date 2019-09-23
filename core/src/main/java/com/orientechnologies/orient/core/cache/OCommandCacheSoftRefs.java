@@ -56,8 +56,8 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   private ODocument configuration;
 
   public static class OCachedResult {
-    Object      result;
-    Set<String> involvedClusters;
+    private Object      result;
+    private Set<String> involvedClusters;
 
     public OCachedResult(final Object result, final Set<String> involvedClusters) {
       this.involvedClusters = involvedClusters;

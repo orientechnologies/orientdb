@@ -4,8 +4,8 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 
 /**
- * Counts the records from the previous steps.
- * Returns a record with a single property, called "count" containing the count of records received from pervious steps
+ * Counts the records from the previous steps. Returns a record with a single property, called "count" containing the count of
+ * records received from pervious steps
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -13,11 +13,10 @@ public class CountStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  boolean executed = false;
+  private boolean executed = false;
 
   /**
-   *
-   * @param ctx the query context
+   * @param ctx              the query context
    * @param profilingEnabled true to enable the profiling of the execution (for SQL PROFILE)
    */
   public CountStep(OCommandContext ctx, boolean profilingEnabled) {

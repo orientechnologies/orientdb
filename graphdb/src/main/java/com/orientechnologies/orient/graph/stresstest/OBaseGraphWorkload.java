@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.graph.stresstest;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -36,9 +35,9 @@ import com.tinkerpop.blueprints.impls.orient.*;
  */
 public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheckWorkload {
   public class OWorkLoadContext extends OBaseWorkload.OBaseWorkLoadContext {
-    OrientBaseGraph graph;
-    OrientVertex    lastVertexToConnect;
-    int             lastVertexEdges;
+    protected OrientBaseGraph graph;
+    protected OrientVertex    lastVertexToConnect;
+    protected int             lastVertexEdges;
 
     @Override
     public void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction) {

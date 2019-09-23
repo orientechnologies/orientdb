@@ -21,9 +21,9 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   private OBinaryCondition functionCondition;
   private OFromClause      queryTarget;
 
-  private long cost = 0;
+  private long                    cost       = 0;
   //runtime
-  Iterator<OIdentifiable> fullResult = null;
+  private Iterator<OIdentifiable> fullResult = null;
 
   public FetchFromIndexedFunctionStep(OBinaryCondition functionCondition, OFromClause queryTarget, OCommandContext ctx,
       boolean profilingEnabled) {
@@ -38,7 +38,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
     init(ctx);
 
     return new OResultSet() {
-      int localCount = 0;
+      private int localCount = 0;
 
       @Override
       public boolean hasNext() {

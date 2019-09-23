@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.sql.parser.OSkip;
 public class SkipExecutionStep extends AbstractExecutionStep {
   private final OSkip skip;
 
-  int skipped = 0;
+  private int skipped = 0;
 
   private boolean finished;
 

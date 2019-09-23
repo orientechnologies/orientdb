@@ -33,7 +33,7 @@ public class OSTContainsFunction extends OSpatialFunctionAbstractIndexable {
 
   public static final String NAME = "st_contains";
 
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  private OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSTContainsFunction() {
     super(NAME, 2, 2);

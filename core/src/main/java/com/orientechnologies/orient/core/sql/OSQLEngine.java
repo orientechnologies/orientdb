@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.OSecurityResource;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -111,8 +110,8 @@ public class OSQLEngine {
    */
   private static final class Pair {
 
-    final OQueryOperator before;
-    final OQueryOperator after;
+    private final OQueryOperator before;
+    private final OQueryOperator after;
 
     public Pair(final OQueryOperator before, final OQueryOperator after) {
       this.before = before;

@@ -12,9 +12,9 @@ import java.util.Optional;
  * Created by luigidellaquila on 14/02/17.
  */
 public class BatchStep extends AbstractExecutionStep {
-  Integer batchSize;
 
-  int count = 0;
+  private Integer batchSize;
+  private int     count = 0;
 
   public BatchStep(OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

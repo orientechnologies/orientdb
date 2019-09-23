@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.parser.OHaRemoveServerStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -45,7 +44,7 @@ import java.util.Map;
 public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String NAME = "HA REMOVE SERVER";
 
-  OHaRemoveServerStatement parsedStatement;
+  private OHaRemoveServerStatement parsedStatement;
 
   public OCommandExecutorSQLHARemoveServer parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);

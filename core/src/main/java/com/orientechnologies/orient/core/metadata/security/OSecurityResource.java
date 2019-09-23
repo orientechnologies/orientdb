@@ -1,18 +1,16 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OSecurityResourceSegment;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class OSecurityResource {
 
-  static Map<String, OSecurityResource> cache = new ConcurrentHashMap<>();
+  private static Map<String, OSecurityResource> cache = new ConcurrentHashMap<>();
 
   public static OSecurityResource getInstance(String resource) {
     OSecurityResource result = cache.get(resource);

@@ -16,14 +16,14 @@ public class CartesianProductStep extends AbstractExecutionStep {
 
   private List<OInternalExecutionPlan> subPlans = new ArrayList<>();
 
-  private boolean inited = false;
-  List<Boolean>            completedPrefetch = new ArrayList<>();
-  List<OInternalResultSet> preFetches        = new ArrayList<>();//consider using resultset.reset() instead of buffering
+  private boolean                  inited            = false;
+  private List<Boolean>            completedPrefetch = new ArrayList<>();
+  private List<OInternalResultSet> preFetches        = new ArrayList<>();//consider using resultset.reset() instead of buffering
 
-  List<OResultSet> resultSets   = new ArrayList<>();
-  List<OResult>    currentTuple = new ArrayList<>();
+  private List<OResultSet> resultSets   = new ArrayList<>();
+  private List<OResult>    currentTuple = new ArrayList<>();
 
-  OResultInternal nextRecord;
+  private OResultInternal nextRecord;
 
   private long cost = 0;
 
@@ -37,7 +37,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
     init(ctx);
     //    return new OInternalResultSet();
     return new OResultSet() {
-      int currentCount = 0;
+      private int currentCount = 0;
 
       @Override
       public boolean hasNext() {

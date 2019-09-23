@@ -12,45 +12,45 @@ import java.util.Set;
  */
 public class QueryPlanningInfo {
 
-  boolean distinct = false;
-  boolean expand   = false;
+  protected boolean distinct = false;
+  protected boolean expand   = false;
 
-  OProjection preAggregateProjection;
-  OProjection aggregateProjection;
-  OProjection projection             = null;
-  OProjection projectionAfterOrderBy = null;
+  protected OProjection preAggregateProjection;
+  protected OProjection aggregateProjection;
+  protected OProjection projection             = null;
+  protected OProjection projectionAfterOrderBy = null;
 
-  OLetClause globalLetClause  = null;
-  boolean    globalLetPresent = false;
+  protected OLetClause globalLetClause  = null;
+  protected boolean    globalLetPresent = false;
 
-  OLetClause perRecordLetClause = null;
+  protected OLetClause perRecordLetClause = null;
 
   /**
    * in a sharded execution plan, this maps the single server to the clusters it will be queried for to execute the query.
    */
-  Map<String, Set<String>> serverToClusters;
+  protected Map<String, Set<String>> serverToClusters;
 
-  Map<String, OSelectExecutionPlan> distributedFetchExecutionPlans;
+  protected Map<String, OSelectExecutionPlan> distributedFetchExecutionPlans;
 
   /**
    * set to true when the distributedFetchExecutionPlans are aggregated in the main execution plan
    */
   public boolean distributedPlanCreated = false;
 
-  OFromClause     target;
-  OWhereClause    whereClause;
-  List<OAndBlock> flattenedWhereClause;
-  OGroupBy        groupBy;
-  OOrderBy        orderBy;
-  OUnwind         unwind;
-  OSkip           skip;
-  OLimit          limit;
+  protected OFromClause     target;
+  protected OWhereClause    whereClause;
+  protected List<OAndBlock> flattenedWhereClause;
+  protected OGroupBy        groupBy;
+  protected OOrderBy        orderBy;
+  protected OUnwind         unwind;
+  protected OSkip           skip;
+  protected OLimit          limit;
 
-  boolean orderApplied          = false;
-  boolean projectionsCalculated = false;
+  protected boolean orderApplied          = false;
+  protected boolean projectionsCalculated = false;
 
-  OAndBlock ridRangeConditions;
-  OStorage.LOCKING_STRATEGY lockRecord;
+  protected OAndBlock                 ridRangeConditions;
+  protected OStorage.LOCKING_STRATEGY lockRecord;
 
   public QueryPlanningInfo copy() {
     //TODO check what has to be copied and what can be just referenced as it is

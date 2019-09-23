@@ -19,8 +19,8 @@ import java.util.*;
 
 public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
 
-  boolean served = false;
-  long    cost   = 0;
+  private boolean served = false;
+  private long    cost   = 0;
 
   public FetchFromStorageMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

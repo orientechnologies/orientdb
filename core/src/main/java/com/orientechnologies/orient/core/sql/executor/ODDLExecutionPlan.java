@@ -13,10 +13,10 @@ import java.util.List;
  */
 public class ODDLExecutionPlan implements OInternalExecutionPlan {
 
-  private final ODDLStatement statement;
-  OCommandContext ctx;
+  private final ODDLStatement   statement;
+  private       OCommandContext ctx;
 
-  boolean executed = false;
+  private boolean executed = false;
 
   public ODDLExecutionPlan(OCommandContext ctx, ODDLStatement stm) {
     this.ctx = ctx;

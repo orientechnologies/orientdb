@@ -41,9 +41,8 @@ import java.util.List;
  */
 public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsResponse> {
 
-
-  ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
-  private int txId;
+  private ORecordSerializerNetworkV37   serializer = ORecordSerializerNetworkV37.INSTANCE;
+  private int                           txId;
   private List<ORecordOperationRequest> operations;
 
   public OBatchOperationsRequest(int txId, Iterable<ORecordOperation> operations) {

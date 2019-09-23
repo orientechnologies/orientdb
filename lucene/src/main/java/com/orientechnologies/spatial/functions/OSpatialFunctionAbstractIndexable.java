@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunctionAbstract implements OIndexableSQLFunction {
 
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  protected OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSpatialFunctionAbstractIndexable(String iName, int iMinParams, int iMaxParams) {
     super(iName, iMinParams, iMaxParams);

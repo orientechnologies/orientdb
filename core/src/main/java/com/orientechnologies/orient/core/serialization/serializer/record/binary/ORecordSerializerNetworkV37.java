@@ -132,16 +132,14 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
   public void serialize(final ODocument document, final BytesContainer bytes) {
     serializeClass(document, bytes);
-    final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
-    OVarIntSerializer.write(bytes, document.fields());
+    final Collection<Entry<String, ODocumentEntry>> fields = fetchEntries(document);
+    OVarIntSerializer.write(bytes, fields.size());
     for (Entry<String, ODocumentEntry> entry : fields) {
       ODocumentEntry docEntry = entry.getValue();
-      if (!docEntry.exists())
-        continue;
       writeString(bytes, entry.getKey());
-      final Object value = entry.getValue().value;
+      final Object value = docEntry.value;
       if (value != null) {
-        final OType type = getFieldType(entry.getValue());
+        final OType type = getFieldType(docEntry);
         if (type == null) {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the Result binary serializer");
@@ -152,6 +150,10 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
         writeOType(bytes, bytes.alloc(1), null);
       }
     }
+  }
+
+  protected Collection<Entry<String, ODocumentEntry>> fetchEntries(ODocument document) {
+    return ODocumentInternal.filteredEntries(document);
   }
 
   public String[] getFieldNames(ODocument reference, final BytesContainer bytes) {

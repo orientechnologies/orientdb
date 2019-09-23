@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.serialization.OStreamableHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 
 import java.io.DataInput;
@@ -95,7 +95,7 @@ public class OTransactionPhase1TaskResult implements OStreamable {
       } else {
         OType type = OType.getTypeByValue(pl3.getKey());
         out.writeInt(type.getId());
-        byte[] keyBytes = ORecordSerializerNetworkV37.INSTANCE.serializeValue(pl3.getKey(), type);
+        byte[] keyBytes = ORecordSerializerNetworkDistributed.INSTANCE.serializeValue(pl3.getKey(), type);
         out.writeInt(keyBytes.length);
         out.write(keyBytes);
       }
@@ -153,7 +153,7 @@ public class OTransactionPhase1TaskResult implements OStreamable {
         int keySize = in.readInt();
         byte[] keyBytes = new byte[keySize];
         in.readFully(keyBytes);
-        keyValue = ORecordSerializerNetworkV37.INSTANCE.deserializeValue(keyBytes, type2);
+        keyValue = ORecordSerializerNetworkDistributed.INSTANCE.deserializeValue(keyBytes, type2);
       }
       this.resultPayload = new OTxUniqueIndex(rid2, indexName, keyValue);
     }

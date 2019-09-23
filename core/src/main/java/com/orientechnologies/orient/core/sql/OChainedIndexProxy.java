@@ -632,7 +632,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
         queryResult.addAll(applyTailIndexes(entry.getValue()));
 
         currentIterator = new Iterator<ORID>() {
-          final Iterator<OIdentifiable> identifiableIterator = queryResult.iterator();
+          private final Iterator<OIdentifiable> identifiableIterator = queryResult.iterator();
 
           @Override
           public boolean hasNext() {

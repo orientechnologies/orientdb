@@ -12,7 +12,7 @@ public class GlobalLetExpressionStep extends AbstractExecutionStep {
   private final OIdentifier varname;
   private final OExpression expression;
 
-  boolean executed = false;
+  private boolean executed = false;
 
   public GlobalLetExpressionStep(OIdentifier varName, OExpression expression, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

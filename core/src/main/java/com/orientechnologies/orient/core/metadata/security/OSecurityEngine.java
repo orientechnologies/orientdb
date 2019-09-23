@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
@@ -20,19 +19,18 @@ import java.util.Set;
 
 public class OSecurityEngine {
 
-  static OPredicateCache cache = new OPredicateCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
+  private static OPredicateCache cache = new OPredicateCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
 
   /**
-   * Calculates a predicate for a security resource. It also takes into consideration the security and schema hierarchies.
-   * ie. invoking it with a specific session for a specific class, the method checks all the roles of the session, all the parent roles
+   * Calculates a predicate for a security resource. It also takes into consideration the security and schema hierarchies. ie.
+   * invoking it with a specific session for a specific class, the method checks all the roles of the session, all the parent roles
    * and all the parent classes until it finds a valid predicarte (the most specific one).
    * <p>
    * For multiple-role session, the result is the OR of the predicates that would be calculated for each single role.
    * <p>
-   * For class hierarchies:
-   * - the most specific (ie. defined on subclass) defined predicate is applied
-   * - in case a class does not have a direct predicate defined, the superclass predicate is used (and recursively)
-   * - in case of multiple superclasses, the AND of the predicates for superclasses (also recursively) is applied
+   * For class hierarchies: - the most specific (ie. defined on subclass) defined predicate is applied - in case a class does not
+   * have a direct predicate defined, the superclass predicate is used (and recursively) - in case of multiple superclasses, the AND
+   * of the predicates for superclasses (also recursively) is applied
    *
    * @param session
    * @param security
@@ -40,7 +38,8 @@ public class OSecurityEngine {
    * @param scope
    * @return always returns a valid predicate (it is never supposed to be null)
    */
-  static OBooleanExpression getPredicateForSecurityResource(ODatabaseSession session, OSecurityShared security, String resourceString, OSecurityPolicy.Scope scope) {
+  static OBooleanExpression getPredicateForSecurityResource(ODatabaseSession session, OSecurityShared security,
+      String resourceString, OSecurityPolicy.Scope scope) {
     OSecurityUser user = session.getUser();
     if (user == null) {
       return OBooleanExpression.FALSE;
@@ -62,7 +61,8 @@ public class OSecurityEngine {
     return OBooleanExpression.FALSE;
   }
 
-  private static OBooleanExpression getPredicateForFunction(ODatabaseSession session, OSecurityShared security, OSecurityResourceFunction resource, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForFunction(ODatabaseSession session, OSecurityShared security,
+      OSecurityResourceFunction resource, OSecurityPolicy.Scope scope) {
     OFunction function = session.getMetadata().getFunctionLibrary().getFunction(resource.getFunctionName());
     Set<? extends OSecurityRole> roles = session.getUser().getRoles();
     if (roles == null || roles.size() == 0) {
@@ -85,7 +85,8 @@ public class OSecurityEngine {
     return result;
   }
 
-  private static OBooleanExpression getPredicateForProperty(ODatabaseSession session, OSecurityShared security, OSecurityResourceProperty resource, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForProperty(ODatabaseSession session, OSecurityShared security,
+      OSecurityResourceProperty resource, OSecurityPolicy.Scope scope) {
     OClass clazz = session.getClass(resource.getClassName());
     if (clazz == null) {
       clazz = session.getMetadata().getSchema().getView(resource.getClassName());
@@ -112,7 +113,8 @@ public class OSecurityEngine {
     return result;
   }
 
-  private static OBooleanExpression getPredicateForClass(ODatabaseSession session, OSecurityShared security, OSecurityResourceClass resource, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForClass(ODatabaseSession session, OSecurityShared security,
+      OSecurityResourceClass resource, OSecurityPolicy.Scope scope) {
     OClass clazz = session.getClass(resource.getClassName());
     if (clazz == null) {
       return OBooleanExpression.TRUE;
@@ -138,8 +140,8 @@ public class OSecurityEngine {
     return result;
   }
 
-
-  private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OFunction function, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security,
+      OSecurityRole role, OFunction function, OSecurityPolicy.Scope scope) {
     //TODO cache!
 
     OBooleanExpression result = getPredicateForFunction(session, security, role, function, scope);
@@ -153,8 +155,8 @@ public class OSecurityEngine {
     return OBooleanExpression.FALSE;
   }
 
-
-  private static OBooleanExpression getPredicateForFunction(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OFunction clazz, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForFunction(ODatabaseSession session, OSecurityShared security, OSecurityRole role,
+      OFunction clazz, OSecurityPolicy.Scope scope) {
     String resource = "database.function." + clazz.getName();
     Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, (ORole) role);
     OSecurityPolicy policy = definedPolicies.get(resource);
@@ -172,7 +174,8 @@ public class OSecurityEngine {
     return OBooleanExpression.FALSE;
   }
 
-  private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security,
+      OSecurityRole role, OClass clazz, OSecurityPolicy.Scope scope) {
     OBooleanExpression result;
     if (role != null) {
       result = security.getPredicateFromCache(role.getName(), clazz.getName());
@@ -198,7 +201,8 @@ public class OSecurityEngine {
     return result;
   }
 
-  private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForRoleHierarchy(ODatabaseSession session, OSecurityShared security,
+      OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
     String cacheKey = "$CLASS$" + clazz.getName() + "$PROP$" + propertyName + "$" + scope;
     OBooleanExpression result;
     if (role != null) {
@@ -207,7 +211,6 @@ public class OSecurityEngine {
         return result;
       }
     }
-
 
     result = getPredicateForClassHierarchy(session, security, role, clazz, propertyName, scope);
     if (result == null && role.getParentRole() != null) {
@@ -222,7 +225,8 @@ public class OSecurityEngine {
     return result;
   }
 
-  private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security,
+      OSecurityRole role, OClass clazz, OSecurityPolicy.Scope scope) {
     String resource = "database.class." + clazz.getName();
     Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, role);
     OSecurityPolicy classPolicy = definedPolicies.get(resource);
@@ -243,7 +247,6 @@ public class OSecurityEngine {
       return result;
     }
 
-
     if (predicateString == null) {
       OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class.*");
       predicateString = wildcardPolicy == null ? null : wildcardPolicy.get(scope);
@@ -259,8 +262,8 @@ public class OSecurityEngine {
     return OBooleanExpression.FALSE;
   }
 
-
-  private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security, OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
+  private static OBooleanExpression getPredicateForClassHierarchy(ODatabaseSession session, OSecurityShared security,
+      OSecurityRole role, OClass clazz, String propertyName, OSecurityPolicy.Scope scope) {
     String resource = "database.class." + clazz.getName() + "." + propertyName;
     Map<String, OSecurityPolicy> definedPolicies = security.getSecurityPolicies(session, role);
     OSecurityPolicy classPolicy = definedPolicies.get(resource);
@@ -268,11 +271,13 @@ public class OSecurityEngine {
     String predicateString = classPolicy != null ? classPolicy.get(scope) : null;
     if (predicateString == null && clazz.getSuperClasses().size() > 0) {
       if (clazz.getSuperClasses().size() == 1) {
-        return getPredicateForClassHierarchy(session, security, role, clazz.getSuperClasses().iterator().next(), propertyName, scope);
+        return getPredicateForClassHierarchy(session, security, role, clazz.getSuperClasses().iterator().next(), propertyName,
+            scope);
       }
       OAndBlock result = new OAndBlock(-1);
       for (OClass superClass : clazz.getSuperClasses()) {
-        OBooleanExpression superClassPredicate = getPredicateForClassHierarchy(session, security, role, superClass, propertyName, scope);
+        OBooleanExpression superClassPredicate = getPredicateForClassHierarchy(session, security, role, superClass, propertyName,
+            scope);
         if (superClassPredicate == null) {
           return OBooleanExpression.TRUE;
         }
@@ -280,7 +285,6 @@ public class OSecurityEngine {
       }
       return result;
     }
-
 
     if (predicateString == null) {
       OSecurityPolicy wildcardPolicy = definedPolicies.get("database.class." + clazz.getName() + ".*");

@@ -16,9 +16,9 @@ import java.util.Optional;
 public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
 
   protected final OSimpleExecStatement statement;
-  OCommandContext ctx;
+  private         OCommandContext      ctx;
 
-  boolean executed = false;
+  private boolean    executed = false;
   private OResultSet result;
 
   public OSingleOpExecutionPlan(OCommandContext ctx, OSimpleExecStatement stm) {
@@ -44,7 +44,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
       }
     }
     return new OResultSet() {
-      int fetched = 0;
+      private int fetched = 0;
 
       @Override
       public boolean hasNext() {

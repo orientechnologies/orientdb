@@ -20,9 +20,9 @@ public class UnwindStep extends AbstractExecutionStep {
   private final OUnwind      unwind;
   private       List<String> unwindFields;
 
-  OResultSet        lastResult      = null;
-  Iterator<OResult> nextSubsequence = null;
-  OResult           nextElement     = null;
+  private OResultSet        lastResult      = null;
+  private Iterator<OResult> nextSubsequence = null;
+  private OResult           nextElement     = null;
 
   public UnwindStep(OUnwind unwind, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -36,7 +36,7 @@ public class UnwindStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
     return new OResultSet() {
-      long localCount = 0;
+      private long localCount = 0;
 
       @Override
       public boolean hasNext() {

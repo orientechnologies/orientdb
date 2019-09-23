@@ -63,8 +63,8 @@ public abstract class OSequence {
   private static final String FIELD_NAME = "name";
   private static final String FIELD_TYPE = "type";
 
-  private ODocument document;
-  ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
+  private   ODocument              document;
+  protected ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
 
   private boolean cruacialValueChanged = false;
 

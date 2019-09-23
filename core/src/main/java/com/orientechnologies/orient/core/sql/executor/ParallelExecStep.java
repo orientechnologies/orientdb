@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class ParallelExecStep extends AbstractExecutionStep {
   private final List<OInternalExecutionPlan> subExecutionPlans;
 
-  int current = 0;
+  private int        current          = 0;
   private OResultSet currentResultSet = null;
 
   public ParallelExecStep(List<OInternalExecutionPlan> subExecuitonPlans, OCommandContext ctx, boolean profilingEnabled) {
@@ -26,7 +26,7 @@ public class ParallelExecStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
-      int localCount = 0;
+      private int localCount = 0;
 
       @Override
       public boolean hasNext() {

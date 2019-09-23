@@ -12,12 +12,12 @@ import java.util.*;
  */
 public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
 
-  List<OExecutionStep> subSteps;
-  private boolean orderByRidAsc  = false;
-  private boolean orderByRidDesc = false;
+  private List<OExecutionStep> subSteps;
+  private boolean              orderByRidAsc  = false;
+  private boolean              orderByRidDesc = false;
 
-  OResultSet currentResultSet;
-  int currentStep = 0;
+  private OResultSet currentResultSet;
+  private int        currentStep = 0;
 
   /**
    * iterates over a class and its subclasses
@@ -67,7 +67,7 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
 
-      int totDispatched = 0;
+      private int totDispatched = 0;
 
       @Override
       public boolean hasNext() {

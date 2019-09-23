@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class ONashornObjectMirrorTransformer implements OResultSetTransformer<ScriptObjectMirror> {
 
-  OScriptTransformer transformer;
+  private OScriptTransformer transformer;
 
   public ONashornObjectMirrorTransformer(OScriptTransformer transformer) {
     this.transformer = transformer;

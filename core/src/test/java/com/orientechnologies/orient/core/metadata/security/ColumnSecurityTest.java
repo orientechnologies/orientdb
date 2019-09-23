@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.sql.executor.FetchFromIndexStep;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.*;
@@ -40,7 +41,7 @@ public class ColumnSecurityTest {
   }
 
   @Test
-  public void testIndexWithPolicy1() {
+  public void testIndexWithPolicy() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     OClass person = db.createClass("Person");
@@ -52,8 +53,25 @@ public class ColumnSecurityTest {
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
 
+    db.command("create index Person.name on Person (name) NOTUNIQUE");
+  }
+
+  @Test
+  public void testIndexWithPolicy1() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    OClass person = db.createClass("Person");
+    person.createProperty("name", OType.STRING);
+    person.createProperty("surname", OType.STRING);
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+
     try {
-      db.command("create index Person.name on Person (name) NOTUNIQUE");
+      db.command("create index Person.name_surname on Person (name, surname) NOTUNIQUE");
       Assert.fail();
     } catch (OIndexException e) {
     }
@@ -192,6 +210,44 @@ public class ColumnSecurityTest {
 
     Assert.assertTrue(fooFound);
     Assert.assertTrue(nullFound);
+  }
+
+  @Test
+  public void testReadFilterOnePropertyWithIndex() {
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    OClass clazz = db.createClass("Person");
+    clazz.createProperty("name", OType.STRING);
+
+    db.command("create index Person.name on Person (name) NOTUNIQUE");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    db.save(elem);
+
+    elem = db.newElement("Person");
+    elem.setProperty("name", "bar");
+    db.save(elem);
+
+    db.close();
+    this.db = orient.open(DB_NAME, "reader", "reader");
+    OResultSet rs = db.query("select from Person where name = 'foo'");
+    Assert.assertTrue(rs.hasNext());
+    rs.next();
+    Assert.assertFalse(rs.hasNext());
+    rs.close();
+
+    rs = db.query("select from Person where name = 'bar'");
+    Assert.assertFalse(rs.hasNext());
+    Assert.assertTrue(rs.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    rs.close();
+
   }
 
   @Test
@@ -403,5 +459,55 @@ public class ColumnSecurityTest {
 
     }
   }
+
+  @Test
+  public void testReadHiddenColumn() {
+
+    db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'bar')");
+    db.command("ALTER ROLE reader SET POLICY testPolicy ON database.class.Person.name");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    db.close();
+
+    db = orient.open(DB_NAME, "reader", "reader");
+    try (final OResultSet resultSet = db.query("SELECT from Person")) {
+      OResult item = resultSet.next();
+      Assert.assertNull(item.getProperty("name"));
+    }
+  }
+
+  @Test
+  public void testUpdateHiddenColumn() {
+
+    db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'bar')");
+    db.command("ALTER ROLE reader SET POLICY testPolicy ON database.class.Person.name");
+
+    OElement elem = db.newElement("Person");
+    elem.setProperty("name", "foo");
+    elem.setProperty("surname", "foo");
+    db.save(elem);
+
+    db.close();
+
+    db = orient.open(DB_NAME, "reader", "reader");
+    try (final OResultSet resultSet = db.query("SELECT from Person")) {
+      OResult item = resultSet.next();
+      Assert.assertNull(item.getProperty("name"));
+      OElement doc = item.getElement().get();
+      doc.setProperty("name", "bar");
+      try {
+        doc.save();
+        Assert.fail();
+      } catch (Exception e) {
+
+      }
+
+    }
+  }
+
 
 }

@@ -21,24 +21,14 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.serialization.types.*;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -1143,7 +1133,7 @@ final class Bucket<K> extends ODurablePage {
   }
 
   static class Entry {
-    final byte[] key;
+    protected final byte[] key;
 
     Entry(final byte[] key) {
       this.key = key;
@@ -1151,7 +1141,7 @@ final class Bucket<K> extends ODurablePage {
   }
 
   static final class LeafEntry extends Entry {
-    final List<ORID> values;
+    protected final List<ORID> values;
 
     LeafEntry(final byte[] key, final List<ORID> values) {
       super(key);
@@ -1160,8 +1150,8 @@ final class Bucket<K> extends ODurablePage {
   }
 
   static final class NonLeafEntry extends Entry {
-    final int leftChild;
-    final int rightChild;
+    protected final int leftChild;
+    protected final int rightChild;
 
     NonLeafEntry(final byte[] key, final int leftChild, final int rightChild) {
       super(key);

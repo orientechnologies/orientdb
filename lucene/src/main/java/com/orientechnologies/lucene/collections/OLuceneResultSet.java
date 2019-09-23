@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.collections;
@@ -48,18 +48,18 @@ import java.util.*;
  */
 public class OLuceneResultSet implements Set<OIdentifiable> {
 
-  private static Integer PAGE_SIZE = 10000;
-  private final Query               query;
-  private final OLuceneIndexEngine  engine;
-  private final OLuceneQueryContext queryContext;
-  private final String              indexName;
-  private final Highlighter         highlighter;
-  private final List<String>        highlighted;
-  private final int                 maxNumFragments;
-  private       TopDocs             topDocs;
-  private long deletedMatchCount = 0;
-  
-  boolean closed = false;
+  private static Integer             PAGE_SIZE = 10000;
+  private final  Query               query;
+  private final  OLuceneIndexEngine  engine;
+  private final  OLuceneQueryContext queryContext;
+  private final  String              indexName;
+  private final  Highlighter         highlighter;
+  private final  List<String>        highlighted;
+  private final  int                 maxNumFragments;
+  private        TopDocs             topDocs;
+
+  private long    deletedMatchCount = 0;
+  private boolean closed            = false;
 
   public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext, ODocument metadata) {
     this.engine = engine;
@@ -178,7 +178,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     private ScoreDoc[] scoreDocs;
     private int        index;
     private int        localIndex;
-    private long        totalHits;
+    private long       totalHits;
 
     public OLuceneResultSetIteratorTx() {
       totalHits = topDocs.totalHits;

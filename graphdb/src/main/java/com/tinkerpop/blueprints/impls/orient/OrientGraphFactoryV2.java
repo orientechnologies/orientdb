@@ -30,12 +30,11 @@ import com.orientechnologies.orient.core.db.OrientDB;
  */
 public class OrientGraphFactoryV2 {
 
-  private final OrientDB orientDB;
-  String        dbName;
-  ODatabasePool pool;
+  private final OrientDB      orientDB;
+  private       String        dbName;
+  private       ODatabasePool pool;
 
   /**
-   *
    * @param orientDB
    * @param dbName
    * @param username

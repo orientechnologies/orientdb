@@ -24,7 +24,7 @@ public class ORidSet implements Set<ORID> {
    */
   protected long[][][] content = new long[8][][];
 
-  long size = 0;
+  private long size = 0;
 
   protected int maxArraySize;
 

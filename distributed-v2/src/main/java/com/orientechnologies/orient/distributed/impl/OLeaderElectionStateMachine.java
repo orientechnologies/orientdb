@@ -11,12 +11,12 @@ public class OLeaderElectionStateMachine {
     LEADER, FOLLOWER, CANDIDATE;
   }
 
-  ONodeIdentity      nodeIdentity;
-  int                currentTerm;
-  Status             status;
-  int                quorum;
-  Set<ONodeIdentity> votesReceived = new HashSet<>();
-  int                lastTermVoted = -1;
+  protected ONodeIdentity      nodeIdentity;
+  protected int                currentTerm;
+  protected Status             status;
+  protected int                quorum;
+  protected Set<ONodeIdentity> votesReceived = new HashSet<>();
+  protected int                lastTermVoted = -1;
 
   synchronized void receiveVote(int term, ONodeIdentity fromNode, ONodeIdentity toNode) {
     if (!nodeIdentity.equals(toNode)) {

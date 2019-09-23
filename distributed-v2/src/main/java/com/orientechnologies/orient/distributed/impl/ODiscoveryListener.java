@@ -4,14 +4,14 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 
 public interface ODiscoveryListener {
   static class NodeData {
-    ONodeIdentity identity;
-    String        address;
-    int           port;
-    boolean       leader;
-    int           term;
-    long          lastPingTimestamp;
-    String        connectionUsername;
-    String        connectionPassword;
+    protected ONodeIdentity identity;
+    protected String        address;
+    protected int           port;
+    protected boolean       leader;
+    protected int           term;
+    protected long          lastPingTimestamp;
+    protected String        connectionUsername;
+    protected String        connectionPassword;
 
     public ONodeIdentity getNodeIdentity() {
       return identity;

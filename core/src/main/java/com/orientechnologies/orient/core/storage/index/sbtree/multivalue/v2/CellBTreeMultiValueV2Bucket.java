@@ -864,8 +864,8 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     return getLongValue(RIGHT_SIBLING_OFFSET);
   }
 
-  static class Entry {
-    final byte[] key;
+  protected static class Entry {
+    protected final byte[] key;
 
     Entry(final byte[] key) {
       this.key = key;
@@ -885,9 +885,9 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     }
   }
 
-  static final class NonLeafEntry extends Entry {
-    final int leftChild;
-    final int rightChild;
+  protected static final class NonLeafEntry extends Entry {
+    protected final int leftChild;
+    protected final int rightChild;
 
     NonLeafEntry(final byte[] key, final int leftChild, final int rightChild) {
       super(key);

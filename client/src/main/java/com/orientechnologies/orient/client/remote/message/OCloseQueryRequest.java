@@ -32,7 +32,7 @@ import java.io.IOException;
 
 public final class OCloseQueryRequest implements OBinaryRequest<OCloseQueryResponse> {
 
-  String queryId;
+  private String queryId;
 
   public OCloseQueryRequest(String queryId) {
     this.queryId = queryId;

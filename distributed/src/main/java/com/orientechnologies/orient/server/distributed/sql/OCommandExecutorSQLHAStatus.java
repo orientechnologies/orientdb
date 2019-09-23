@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.parser.OHaStatusStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
@@ -51,7 +50,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
   public static final String KEYWORD_HA     = "HA";
   public static final String KEYWORD_STATUS = "STATUS";
 
-  OHaStatusStatement parsedStatement;
+  private OHaStatusStatement parsedStatement;
 
   public OCommandExecutorSQLHAStatus parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);

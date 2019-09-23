@@ -14,11 +14,11 @@ import java.util.Set;
  */
 public class DistinctExecutionStep extends AbstractExecutionStep {
 
-  Set<OResult> pastItems = new HashSet<>();
-  ORidSet      pastRids  = new ORidSet();
+  private Set<OResult> pastItems = new HashSet<>();
+  private ORidSet      pastRids  = new ORidSet();
 
-  OResultSet lastResult = null;
-  OResult nextValue;
+  private OResultSet lastResult = null;
+  private OResult    nextValue;
 
   private long cost = 0;
 
@@ -30,7 +30,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
 
     OResultSet result = new OResultSet() {
-      int nextLocal = 0;
+      private int nextLocal = 0;
 
       @Override
       public boolean hasNext() {

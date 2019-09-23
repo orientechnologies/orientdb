@@ -25,9 +25,9 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private static class OpLogInfo {
-    int  currentFileNum;
-    int  firstFileNum;
-    long keepUntil;
+    private int  currentFileNum;
+    private int  firstFileNum;
+    private long keepUntil;
 
     void fromStream(InputStream stream) {
       try {

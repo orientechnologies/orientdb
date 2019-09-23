@@ -245,7 +245,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     if (entry == null)
       return null;
 
-    return entry.getValue();
+    return OIndexInternal.securityFilterOnRead(this, entry.getValue());
   }
 
   @Override
@@ -271,11 +271,11 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       txCursor = new PureTxBetweenIndexBackwardCursor(fromKey, fromInclusive, toKey, toInclusive, indexChanges);
 
     if (indexChanges.cleared)
-      return txCursor;
+      return new OIndexCursorSecurityDecorator(txCursor, this);
 
     final OIndexCursor backedCursor = super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
 
-    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override
@@ -296,11 +296,11 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       txCursor = new PureTxBetweenIndexBackwardCursor(fromKey, fromInclusive, lastKey, true, indexChanges);
 
     if (indexChanges.cleared)
-      return txCursor;
+      return new OIndexCursorSecurityDecorator(txCursor, this);
 
     final OIndexCursor backedCursor = super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
 
-    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override
@@ -321,10 +321,10 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       txCursor = new PureTxBetweenIndexBackwardCursor(firstKey, true, toKey, toInclusive, indexChanges);
 
     if (indexChanges.cleared)
-      return txCursor;
+      return new OIndexCursorSecurityDecorator(txCursor, this);
 
     final OIndexCursor backedCursor = super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
-    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override
@@ -368,10 +368,10 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     };
 
     if (indexChanges.cleared)
-      return txCursor;
+      return new OIndexCursorSecurityDecorator(txCursor, this);
 
     final OIndexCursor backedCursor = super.iterateEntries(keys, ascSortOrder);
-    return new OIndexTxCursor(txCursor, backedCursor, ascSortOrder, indexChanges);
+    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascSortOrder, indexChanges), this);
   }
 
   private Map.Entry<Object, OIdentifiable> calculateTxIndexEntry(final Object key, final OIdentifiable backendValue,

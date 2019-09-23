@@ -26,11 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Text based Command Request abstract class.
@@ -118,7 +114,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   public OCommandRequestAbstract onAsyncReplicationError(final OAsyncReplicationError iCallback) {
     if (iCallback != null) {
       onAsyncReplicationError = new OAsyncReplicationError() {
-        int retry = 0;
+        private int retry = 0;
 
         @Override
         public ACTION onAsyncReplicationError(Throwable iException, final int iRetry) {

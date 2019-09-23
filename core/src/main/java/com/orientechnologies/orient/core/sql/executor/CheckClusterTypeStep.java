@@ -16,14 +16,11 @@ import com.orientechnologies.orient.core.sql.parser.OCluster;
  */
 public class CheckClusterTypeStep extends AbstractExecutionStep {
 
-  OCluster cluster;
-  String   clusterName;
-
-  String targetClass;
-
-  private long cost = 0;
-
-  boolean found = false;
+  private OCluster cluster;
+  private String   clusterName;
+  private String   targetClass;
+  private long     cost  = 0;
+  private boolean  found = false;
 
   public CheckClusterTypeStep(String targetClusterName, String clazz, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
