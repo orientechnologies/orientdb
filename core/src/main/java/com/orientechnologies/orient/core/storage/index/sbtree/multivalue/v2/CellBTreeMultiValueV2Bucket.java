@@ -501,7 +501,8 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     return new LeafEntry(key, mId, values, entriesCount);
   }
 
-  public NonLeafEntry getNonLeafEntry(final int entryIndex, final OBinarySerializer<K> keySerializer, final OEncryption encryption) {
+  public NonLeafEntry getNonLeafEntry(final int entryIndex, final OBinarySerializer<K> keySerializer,
+      final OEncryption encryption) {
     assert !isLeaf();
 
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
@@ -905,6 +906,8 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
         setIntValue(nextEntryPosition, prevChild);
       }
     }
+
+    addPageOperation(new CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO(entryIndex, key, leftChild, rightChild, prevChild));
   }
 
   public void setLeftSibling(final long pageIndex) {
