@@ -279,14 +279,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
                 if (type != null) {
                   // TREAT IT AS EMBEDDED
-                  doc.field(fieldName, v, type);
+                  doc.setProperty(fieldName, v, type);
                   continue;
                 }
               } else if (v instanceof Map<?, ?> && !((Map<?, ?>) v).isEmpty()) {
                 // CHECK IF THE MAP IS EMBEDDED
                 Object first = ((Map<?, ?>) v).values().iterator().next();
                 if (first != null && first instanceof ORecord && !((ORecord) first).getIdentity().isValid()) {
-                  doc.field(fieldName, v, OType.EMBEDDEDMAP);
+                  doc.setProperty(fieldName, v, OType.EMBEDDEDMAP);
                   continue;
                 }
               } else if (v instanceof ODocument && type != null && type.isLink()) {
@@ -307,9 +307,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             }
 
             if (type != null)
-              doc.field(fieldName, v, type);
+              doc.setProperty(fieldName, v, type);
             else
-              doc.field(fieldName, v);
+              doc.setProperty(fieldName, v);
           }
 
         }
