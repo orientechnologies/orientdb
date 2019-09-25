@@ -82,6 +82,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Created by tglman on 27/06/16.
@@ -589,6 +590,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OResultSet execute(String language, String script, Object... args) {
     checkOpenness();
     checkIfActive();
+    if (!"sql".equalsIgnoreCase(language)) {
+      checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
+    }
 
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
 
@@ -609,6 +613,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OResultSet execute(String language, String script, Map<String, ?> args) {
     checkOpenness();
     checkIfActive();
+    if (!"sql".equalsIgnoreCase(language)) {
+      checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
+    }
+
 
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original;

@@ -39,7 +39,7 @@ public class OClassSecurityTest {
   }
 
   @Test
-  public void testUpdateHiddenColumn() {
+  public void testReadWithClassPermissions() {
     db.createClass("Person");
     ORole reader = db.getMetadata().getSecurity().getRole("reader");
     reader.grant(ORule.ResourceGeneric.CLASS, "Person", ORole.PERMISSION_NONE);
