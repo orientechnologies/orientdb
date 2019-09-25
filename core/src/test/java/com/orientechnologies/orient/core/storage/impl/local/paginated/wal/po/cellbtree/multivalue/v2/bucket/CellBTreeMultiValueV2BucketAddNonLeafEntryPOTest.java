@@ -58,12 +58,12 @@ public class CellBTreeMultiValueV2BucketAddNonLeafEntryPOTest {
       CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
       Assert.assertEquals(2, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 0 }, nonLeafEntry.key);
       Assert.assertEquals(1, nonLeafEntry.leftChild);
       Assert.assertEquals(3, nonLeafEntry.rightChild);
 
-      nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, null);
+      nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 2 }, nonLeafEntry.key);
       Assert.assertEquals(3, nonLeafEntry.leftChild);
       Assert.assertEquals(4, nonLeafEntry.rightChild);
@@ -72,17 +72,17 @@ public class CellBTreeMultiValueV2BucketAddNonLeafEntryPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, null);
+      nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 0 }, nonLeafEntry.key);
       Assert.assertEquals(1, nonLeafEntry.leftChild);
       Assert.assertEquals(2, nonLeafEntry.rightChild);
 
-      nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, null);
+      nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 1 }, nonLeafEntry.key);
       Assert.assertEquals(2, nonLeafEntry.leftChild);
       Assert.assertEquals(3, nonLeafEntry.rightChild);
 
-      nonLeafEntry = restoredBucket.getNonLeafEntry(2, OByteSerializer.INSTANCE, null);
+      nonLeafEntry = restoredBucket.getNonLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 2 }, nonLeafEntry.key);
       Assert.assertEquals(3, nonLeafEntry.leftChild);
       Assert.assertEquals(4, nonLeafEntry.rightChild);
@@ -126,17 +126,17 @@ public class CellBTreeMultiValueV2BucketAddNonLeafEntryPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 0 }, nonLeafEntry.key);
       Assert.assertEquals(1, nonLeafEntry.leftChild);
       Assert.assertEquals(2, nonLeafEntry.rightChild);
 
-      nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, null);
+      nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 1 }, nonLeafEntry.key);
       Assert.assertEquals(2, nonLeafEntry.leftChild);
       Assert.assertEquals(3, nonLeafEntry.rightChild);
 
-      nonLeafEntry = restoredBucket.getNonLeafEntry(2, OByteSerializer.INSTANCE, null);
+      nonLeafEntry = restoredBucket.getNonLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 2 }, nonLeafEntry.key);
       Assert.assertEquals(3, nonLeafEntry.leftChild);
       Assert.assertEquals(4, nonLeafEntry.rightChild);
@@ -145,12 +145,12 @@ public class CellBTreeMultiValueV2BucketAddNonLeafEntryPOTest {
 
       Assert.assertEquals(2, restoredBucket.size());
 
-      nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, null);
+      nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 0 }, nonLeafEntry.key);
       Assert.assertEquals(1, nonLeafEntry.leftChild);
       Assert.assertEquals(3, nonLeafEntry.rightChild);
 
-      nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, null);
+      nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertArrayEquals(new byte[] { 2 }, nonLeafEntry.key);
       Assert.assertEquals(3, nonLeafEntry.leftChild);
       Assert.assertEquals(4, nonLeafEntry.rightChild);

@@ -287,7 +287,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
   }
 
   private void fetchValues(int itemIndex, List<ORID> result, CellBTreeMultiValueV2Bucket<K> bucket) {
-    final CellBTreeMultiValueV2Bucket.LeafEntry entry = bucket.getLeafEntry(itemIndex, keySerializer, encryption);
+    final CellBTreeMultiValueV2Bucket.LeafEntry entry = bucket.getLeafEntry(itemIndex, keySerializer, encryption != null);
     result.addAll(entry.values);
     if (entry.values.size() < entry.entriesCount) {
       final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
@@ -305,7 +305,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
   private void fetchMapEntries(@SuppressWarnings("SameParameterValue") final int itemIndex, final K key,
       final List<Map.Entry<K, ORID>> result, final CellBTreeMultiValueV2Bucket<K> bucket) {
-    final CellBTreeMultiValueV2Bucket.LeafEntry entry = bucket.getLeafEntry(itemIndex, keySerializer, encryption);
+    final CellBTreeMultiValueV2Bucket.LeafEntry entry = bucket.getLeafEntry(itemIndex, keySerializer, encryption != null);
     fetchMapEntriesFromLeafEntry(key, result, entry);
   }
 
@@ -1181,11 +1181,11 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
     if (splitLeaf) {
       for (int i = startRightIndex; i < bucketSize; i++) {
-        rightEntries.add(bucketToSplit.getLeafEntry(i, keySerializer, encryption));
+        rightEntries.add(bucketToSplit.getLeafEntry(i, keySerializer, encryption != null));
       }
     } else {
       for (int i = startRightIndex; i < bucketSize; i++) {
-        rightEntries.add(bucketToSplit.getNonLeafEntry(i, keySerializer, encryption));
+        rightEntries.add(bucketToSplit.getNonLeafEntry(i, keySerializer, encryption != null));
       }
     }
 
@@ -1252,10 +1252,10 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       final CellBTreeMultiValueV2Bucket<K> newRightBucket = new CellBTreeMultiValueV2Bucket<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
 
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, keySerializer, encryption != null);
 
       assert bucketToSplit.size() > 1;
-      bucketToSplit.shrink(indexToSplit, keySerializer, encryption);
+      bucketToSplit.shrink(indexToSplit, keySerializer, encryption != null);
 
       if (splitLeaf) {
         final long rightSiblingPageIndex = bucketToSplit.getRightSibling();
@@ -1362,14 +1362,14 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     if (splitLeaf) {
       if (bucketToSplit.size() > 1) {
         for (int i = 0; i < indexToSplit; i++) {
-          leftEntries.add(bucketToSplit.getLeafEntry(i, keySerializer, encryption));
+          leftEntries.add(bucketToSplit.getLeafEntry(i, keySerializer, encryption != null));
         }
       } else {
         throw new IllegalStateException("Bucket should have at least two entries to be able to split");
       }
     } else {
       for (int i = 0; i < indexToSplit; i++) {
-        leftEntries.add(bucketToSplit.getNonLeafEntry(i, keySerializer, encryption));
+        leftEntries.add(bucketToSplit.getNonLeafEntry(i, keySerializer, encryption != null));
       }
     }
 
@@ -1412,7 +1412,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       final CellBTreeMultiValueV2Bucket<K> newLeftBucket = new CellBTreeMultiValueV2Bucket<>(leftBucketEntry);
       newLeftBucket.init(splitLeaf);
 
-      newLeftBucket.addAll(leftEntries);
+      newLeftBucket.addAll(leftEntries, keySerializer, encryption != null);
 
       if (splitLeaf) {
         newLeftBucket.setRightSibling(rightBucketEntry.getPageIndex());
@@ -1426,7 +1426,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       final CellBTreeMultiValueV2Bucket<K> newRightBucket = new CellBTreeMultiValueV2Bucket<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
 
-      newRightBucket.addAll(rightEntries);
+      newRightBucket.addAll(rightEntries, keySerializer, encryption != null);
 
       if (splitLeaf) {
         newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());
@@ -1874,7 +1874,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
                   continue mainCycle;
                 }
 
-                final CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = bucket.getLeafEntry(itemIndex, keySerializer, encryption);
+                final CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = bucket
+                    .getLeafEntry(itemIndex, keySerializer, encryption != null);
                 itemIndex++;
 
                 final K key = deserializeKey(leafEntry.key);
@@ -2064,7 +2065,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
                   continue mainCycle;
                 }
 
-                final CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = bucket.getLeafEntry(itemIndex, keySerializer, encryption);
+                final CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = bucket
+                    .getLeafEntry(itemIndex, keySerializer, encryption != null);
                 itemIndex--;
 
                 final K key = deserializeKey(leafEntry.key);

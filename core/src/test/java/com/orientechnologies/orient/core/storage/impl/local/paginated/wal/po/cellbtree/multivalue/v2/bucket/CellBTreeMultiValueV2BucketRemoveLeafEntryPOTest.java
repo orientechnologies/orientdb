@@ -63,17 +63,17 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
       CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
       Assert.assertEquals(3, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
@@ -82,17 +82,17 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(0, leafEntry.entriesCount);
       Assert.assertTrue(leafEntry.values.isEmpty());
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
@@ -123,7 +123,7 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
       final CellBTreeMultiValueV2Bucket.LeafEntry addLeafEntry = new CellBTreeMultiValueV2Bucket.LeafEntry(new byte[] { 4 }, 4,
           Arrays.asList(new ORecordId[] { new ORecordId(4, 4), new ORecordId(5, 5), new ORecordId(6, 6) }), 3);
 
-      bucket.addAll(Collections.singletonList(addLeafEntry));
+      bucket.addAll(Collections.singletonList(addLeafEntry), OByteSerializer.INSTANCE, false);
 
       entry.clearPageOperations();
 
@@ -153,22 +153,22 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
       CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
       Assert.assertEquals(4, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(3, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(5, 5), leafEntry.values.get(1));
@@ -179,22 +179,22 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(4, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(5, 5), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(6, 6), leafEntry.values.get(1));
@@ -226,7 +226,7 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
       final CellBTreeMultiValueV2Bucket.LeafEntry addLeafEntry = new CellBTreeMultiValueV2Bucket.LeafEntry(new byte[] { 4 }, 4,
           Arrays.asList(new ORecordId[] { new ORecordId(4, 4), new ORecordId(5, 5), new ORecordId(6, 6) }), 3);
 
-      bucket.addAll(Collections.singletonList(addLeafEntry));
+      bucket.addAll(Collections.singletonList(addLeafEntry), OByteSerializer.INSTANCE, false);
 
       entry.clearPageOperations();
 
@@ -256,22 +256,22 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
       CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
       Assert.assertEquals(4, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(3, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(5, 5), leafEntry.values.get(1));
@@ -282,22 +282,22 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(4, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(6, 6), leafEntry.values.get(1));
@@ -356,18 +356,18 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
       CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
       Assert.assertEquals(3, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(1));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
@@ -376,17 +376,17 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
@@ -432,17 +432,17 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(0, leafEntry.entriesCount);
       Assert.assertTrue(leafEntry.values.isEmpty());
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
@@ -451,17 +451,17 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
@@ -492,7 +492,7 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
       final CellBTreeMultiValueV2Bucket.LeafEntry addLeafEntry = new CellBTreeMultiValueV2Bucket.LeafEntry(new byte[] { 4 }, 4,
           Arrays.asList(new ORecordId[] { new ORecordId(4, 4), new ORecordId(5, 5), new ORecordId(6, 6) }), 3);
 
-      bucket.addAll(Collections.singletonList(addLeafEntry));
+      bucket.addAll(Collections.singletonList(addLeafEntry), OByteSerializer.INSTANCE, false);
 
       entry.clearPageOperations();
 
@@ -511,22 +511,22 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(4, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(5, 5), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(6, 6), leafEntry.values.get(1));
@@ -536,22 +536,22 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(4, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(3, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(5, 5), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(1));
@@ -584,7 +584,7 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
       final CellBTreeMultiValueV2Bucket.LeafEntry addLeafEntry = new CellBTreeMultiValueV2Bucket.LeafEntry(new byte[] { 4 }, 4,
           Arrays.asList(new ORecordId[] { new ORecordId(4, 4), new ORecordId(5, 5), new ORecordId(6, 6) }), 3);
 
-      bucket.addAll(Collections.singletonList(addLeafEntry));
+      bucket.addAll(Collections.singletonList(addLeafEntry), OByteSerializer.INSTANCE, false);
 
       entry.clearPageOperations();
 
@@ -603,22 +603,22 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(4, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(6, 6), leafEntry.values.get(1));
@@ -627,22 +627,22 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(4, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(3, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(3, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(5, 5), leafEntry.values.get(1));
@@ -689,17 +689,17 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);
@@ -708,18 +708,18 @@ public class CellBTreeMultiValueV2BucketRemoveLeafEntryPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
       Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(1));
       Assert.assertEquals(2, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
       Assert.assertEquals(3, leafEntry.mId);

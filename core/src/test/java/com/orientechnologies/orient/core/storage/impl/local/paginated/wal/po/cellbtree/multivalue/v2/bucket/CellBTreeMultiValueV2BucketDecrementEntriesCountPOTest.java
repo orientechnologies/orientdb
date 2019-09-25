@@ -59,7 +59,7 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
       CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
       Assert.assertEquals(1, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
@@ -68,7 +68,7 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
 
       Assert.assertEquals(1, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
@@ -112,7 +112,7 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
 
       Assert.assertEquals(1, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
@@ -121,7 +121,7 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
 
       Assert.assertEquals(1, restoredBucket.size());
 
-      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, null);
+      leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
