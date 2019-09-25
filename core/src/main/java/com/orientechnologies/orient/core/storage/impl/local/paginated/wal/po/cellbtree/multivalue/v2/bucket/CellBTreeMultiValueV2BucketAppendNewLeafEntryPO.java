@@ -12,7 +12,7 @@ import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.Cell
 
 import java.nio.ByteBuffer;
 
-public class CellBTreeMultiValueV2BucketAppendNewLeafEntryPO extends PageOperationRecord {
+public final class CellBTreeMultiValueV2BucketAppendNewLeafEntryPO extends PageOperationRecord {
   private int  index;
   private ORID value;
 

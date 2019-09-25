@@ -16,7 +16,7 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public class CellBTreeMultiValueV2BucketAppendNewLeafEntryPOTest {
+public class CellBTreeMultiValueV2BucketIncrementEntriesCountPOTest {
   @Test
   public void testRedo() {
     final int pageSize = 64 * 1024;
@@ -30,8 +30,6 @@ public class CellBTreeMultiValueV2BucketAppendNewLeafEntryPOTest {
       bucket.init(true);
 
       bucket.createMainLeafEntry(0, new byte[] { 1 }, new ORecordId(1, 1), 1);
-      bucket.createMainLeafEntry(1, new byte[] { 2 }, new ORecordId(2, 2), 2);
-      bucket.createMainLeafEntry(2, new byte[] { 3 }, new ORecordId(3, 3), 3);
 
       entry.clearPageOperations();
 
@@ -47,53 +45,32 @@ public class CellBTreeMultiValueV2BucketAppendNewLeafEntryPOTest {
 
       restoredBuffer.put(originalBuffer);
 
-      bucket.appendNewLeafEntry(1, new ORecordId(4, 4));
+      bucket.incrementEntriesCount(0);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketAppendNewLeafEntryPO);
+      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketIncrementEntriesCountPO);
 
-      final CellBTreeMultiValueV2BucketAppendNewLeafEntryPO pageOperation = (CellBTreeMultiValueV2BucketAppendNewLeafEntryPO) operations
+      final CellBTreeMultiValueV2BucketIncrementEntriesCountPO pageOperation = (CellBTreeMultiValueV2BucketIncrementEntriesCountPO) operations
           .get(0);
 
       CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
-      Assert.assertEquals(3, restoredBucket.size());
+      Assert.assertEquals(1, restoredBucket.size());
 
       CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(1, leafEntry.entriesCount);
-      Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
-      Assert.assertEquals(2, leafEntry.mId);
-
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(1, leafEntry.entriesCount);
-      Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
-      Assert.assertEquals(3, leafEntry.mId);
-
       pageOperation.redo(restoredCacheEntry);
 
-      Assert.assertEquals(3, restoredBucket.size());
+      Assert.assertEquals(1, restoredBucket.size());
 
       leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(1, leafEntry.entriesCount);
+      Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
-
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(2, leafEntry.entriesCount);
-      Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
-      Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(1));
-      Assert.assertEquals(2, leafEntry.mId);
-
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(1, leafEntry.entriesCount);
-      Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
-      Assert.assertEquals(3, leafEntry.mId);
 
       byteBufferPool.release(pointer);
       byteBufferPool.release(restoredPointer);
@@ -116,57 +93,36 @@ public class CellBTreeMultiValueV2BucketAppendNewLeafEntryPOTest {
       bucket.init(true);
 
       bucket.createMainLeafEntry(0, new byte[] { 1 }, new ORecordId(1, 1), 1);
-      bucket.createMainLeafEntry(1, new byte[] { 2 }, new ORecordId(2, 2), 2);
-      bucket.createMainLeafEntry(2, new byte[] { 3 }, new ORecordId(3, 3), 3);
 
       entry.clearPageOperations();
 
-      bucket.appendNewLeafEntry(1, new ORecordId(4, 4));
+      bucket.incrementEntriesCount(0);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketAppendNewLeafEntryPO);
+      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketIncrementEntriesCountPO);
 
-      final CellBTreeMultiValueV2BucketAppendNewLeafEntryPO pageOperation = (CellBTreeMultiValueV2BucketAppendNewLeafEntryPO) operations
+      final CellBTreeMultiValueV2BucketIncrementEntriesCountPO pageOperation = (CellBTreeMultiValueV2BucketIncrementEntriesCountPO) operations
           .get(0);
 
       final CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(entry);
 
-      Assert.assertEquals(3, restoredBucket.size());
+      Assert.assertEquals(1, restoredBucket.size());
 
       CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(1, leafEntry.entriesCount);
+      Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
 
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(2, leafEntry.entriesCount);
-      Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
-      Assert.assertEquals(new ORecordId(4, 4), leafEntry.values.get(1));
-      Assert.assertEquals(2, leafEntry.mId);
-
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(1, leafEntry.entriesCount);
-      Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
-      Assert.assertEquals(3, leafEntry.mId);
-
       pageOperation.undo(entry);
+
+      Assert.assertEquals(1, restoredBucket.size());
 
       leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
-
-      leafEntry = restoredBucket.getLeafEntry(1, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(1, leafEntry.entriesCount);
-      Assert.assertEquals(new ORecordId(2, 2), leafEntry.values.get(0));
-      Assert.assertEquals(2, leafEntry.mId);
-
-      leafEntry = restoredBucket.getLeafEntry(2, OByteSerializer.INSTANCE, false);
-      Assert.assertEquals(1, leafEntry.entriesCount);
-      Assert.assertEquals(new ORecordId(3, 3), leafEntry.values.get(0));
-      Assert.assertEquals(3, leafEntry.mId);
 
       byteBufferPool.release(pointer);
     } finally {
@@ -178,8 +134,7 @@ public class CellBTreeMultiValueV2BucketAppendNewLeafEntryPOTest {
   public void testSerialization() {
     OOperationUnitId operationUnitId = OOperationUnitId.generateId();
 
-    CellBTreeMultiValueV2BucketAppendNewLeafEntryPO operation = new CellBTreeMultiValueV2BucketAppendNewLeafEntryPO(1,
-        new ORecordId(5, 5));
+    CellBTreeMultiValueV2BucketIncrementEntriesCountPO operation = new CellBTreeMultiValueV2BucketIncrementEntriesCountPO(42);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -191,14 +146,13 @@ public class CellBTreeMultiValueV2BucketAppendNewLeafEntryPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    CellBTreeMultiValueV2BucketAppendNewLeafEntryPO restoredOperation = new CellBTreeMultiValueV2BucketAppendNewLeafEntryPO();
+    CellBTreeMultiValueV2BucketIncrementEntriesCountPO restoredOperation = new CellBTreeMultiValueV2BucketIncrementEntriesCountPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());
     Assert.assertEquals(24, restoredOperation.getPageIndex());
     Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
 
-    Assert.assertEquals(1, restoredOperation.getIndex());
-    Assert.assertEquals(new ORecordId(5, 5), restoredOperation.getValue());
+    Assert.assertEquals(42, restoredOperation.getEntryIndex());
   }
 }

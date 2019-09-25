@@ -1,10 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
@@ -12,52 +8,67 @@ import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.Cell
 
 import java.nio.ByteBuffer;
 
-public final class CellBTreeMultiValueV2BucketRemoveLeafEntryPO extends PageOperationRecord {
-  private int  index;
-  private ORID value;
+public final class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO extends PageOperationRecord {
+  private int    index;
+  private byte[] key;
+  private int    left;
+  private int    right;
+  private int    prevChild;
 
-  public CellBTreeMultiValueV2BucketRemoveLeafEntryPO() {
+  public CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO() {
   }
 
-  public CellBTreeMultiValueV2BucketRemoveLeafEntryPO(int index, ORID value) {
+  public CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO(int index, byte[] key, int left, int right, int prevChild) {
     this.index = index;
-    this.value = value;
+    this.key = key;
+    this.left = left;
+    this.right = right;
+    this.prevChild = prevChild;
   }
 
   public int getIndex() {
     return index;
   }
 
-  public ORID getValue() {
-    return value;
+  public byte[] getKey() {
+    return key;
+  }
+
+  public int getLeft() {
+    return left;
+  }
+
+  public int getRight() {
+    return right;
+  }
+
+  public int getPrevChild() {
+    return prevChild;
   }
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final CellBTreeMultiValueV2Bucket bucket = new CellBTreeMultiValueV2Bucket(cacheEntry);
-    final int result = bucket.removeLeafEntry(index, value);
-    if (result < 0) {
-      throw new IllegalStateException("Can not redo remove leaf entry operation");
-    }
+    bucket.removeNonLeafEntry(index, key, prevChild);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final CellBTreeMultiValueV2Bucket bucket = new CellBTreeMultiValueV2Bucket(cacheEntry);
-    final long result = bucket.appendNewLeafEntry(index, value);
-    if (result != -1) {
+    final boolean result = bucket.addNonLeafEntry(index, key, left, right, true);
+    if (!result) {
       throw new IllegalStateException("Can not undo remove leaf entry operation");
     }
   }
 
   @Override
   public int getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_LEAF_ENTRY_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_NON_LEAF_ENTRY_PO;
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE + OShortSerializer.SHORT_SIZE;
+    return super.serializedSize() + 5 * OIntegerSerializer.INT_SIZE + key.length;
   }
 
   @Override
@@ -65,9 +76,12 @@ public final class CellBTreeMultiValueV2BucketRemoveLeafEntryPO extends PageOper
     super.serializeToByteBuffer(buffer);
 
     buffer.putInt(index);
+    buffer.putInt(left);
+    buffer.putInt(right);
+    buffer.putInt(prevChild);
 
-    buffer.putShort((short) value.getClusterId());
-    buffer.putLong(value.getClusterPosition());
+    buffer.putInt(key.length);
+    buffer.put(key);
   }
 
   @Override
@@ -75,10 +89,12 @@ public final class CellBTreeMultiValueV2BucketRemoveLeafEntryPO extends PageOper
     super.deserializeFromByteBuffer(buffer);
 
     index = buffer.getInt();
+    left = buffer.getInt();
+    right = buffer.getInt();
+    prevChild = buffer.getInt();
 
-    final int clusterId = buffer.getShort();
-    final long clusterPosition = buffer.getLong();
-
-    value = new ORecordId(clusterId, clusterPosition);
+    final int keyLen = buffer.getInt();
+    key = new byte[keyLen];
+    buffer.get(key);
   }
 }
