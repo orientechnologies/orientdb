@@ -89,7 +89,7 @@ import java.util.concurrent.TimeUnit;
 public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract implements OQueryLifecycleListener {
 
   private OrientDBConfig config;
-  private OStorage       storage;
+  private OStorage storage;
 
   public ODatabaseDocumentEmbedded(final OStorage storage) {
     activateOnCurrentThread();
@@ -209,7 +209,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * Opens a database using an authentication token received as an argument.
    *
    * @param iToken Authentication token
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   @Deprecated
@@ -705,7 +704,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * @Internal
    */
   public void executeDeleteRecord(OIdentifiable identifiable, final int iVersion, final boolean iRequired,
-      final OPERATION_MODE iMode, boolean prohibitTombstones) {
+                                  final OPERATION_MODE iMode, boolean prohibitTombstones) {
     checkOpenness();
     checkIfActive();
 
@@ -713,7 +712,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     if (rid == null)
       throw new ODatabaseException(
-          "Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
+              "Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
 
     if (!rid.isValid())
       return;
@@ -888,9 +887,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * OConcurrentModificationException} exception is thrown.
    *
    * @param record record to delete
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   *
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   public ODatabaseDocumentAbstract delete(ORecord record) {
@@ -918,7 +915,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     } catch (Exception e) {
       if (record instanceof ODocument)
         throw OException.wrapException(new ODatabaseException(
-            "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
+                "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
       else
         throw OException.wrapException(new ODatabaseException("Error on deleting record " + record.getIdentity()), e);
     }
@@ -1071,6 +1068,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           }
         }
 
+        try {
+          checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, clazz.getName());
+        } catch (OSecurityException e) {
+          return true;
+        }
+
         if (!getSharedContext().getSecurity().canRead(this, doc)) {
           return true;
         }
@@ -1098,7 +1101,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+                         ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
 
     ORecord toRet = null;
     ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
@@ -1182,8 +1185,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * @Internal
    */
   public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
-      final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
-      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
+                                                     final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
+                                                     final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
     checkOpenness();
     checkIfActive();
 
@@ -1229,12 +1232,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
         if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
           OLogManager.instance()
-              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
+                  .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
           record.lock(false);
 
         } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
           OLogManager.instance()
-              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
+                  .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
           record.lock(true);
         }
 
@@ -1294,8 +1297,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
       else
         throw OException.wrapException(new ODatabaseException(
-            "Error on retrieving record " + rid + " (cluster: " + getStorage().getPhysicalClusterNameById(rid.getClusterId())
-                + ")"), t);
+                "Error on retrieving record " + rid + " (cluster: " + getStorage().getPhysicalClusterNameById(rid.getClusterId())
+                        + ")"), t);
     } finally {
       ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
