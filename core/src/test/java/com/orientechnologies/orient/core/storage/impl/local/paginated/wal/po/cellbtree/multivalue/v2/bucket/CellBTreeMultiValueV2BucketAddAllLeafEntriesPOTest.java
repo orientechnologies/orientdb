@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class CellBTreeMultiValueV2BucketAddAllLeafEntryPOTest {
+public class CellBTreeMultiValueV2BucketAddAllLeafEntriesPOTest {
   @Test
   public void testRedo() {
     final int pageSize = 64 * 1024;
@@ -65,9 +65,9 @@ public class CellBTreeMultiValueV2BucketAddAllLeafEntryPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketAddAllLeafEntryPO);
+      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketAddAllLeafEntriesPO);
 
-      final CellBTreeMultiValueV2BucketAddAllLeafEntryPO pageOperation = (CellBTreeMultiValueV2BucketAddAllLeafEntryPO) operations
+      final CellBTreeMultiValueV2BucketAddAllLeafEntriesPO pageOperation = (CellBTreeMultiValueV2BucketAddAllLeafEntriesPO) operations
           .get(0);
 
       CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
@@ -160,9 +160,9 @@ public class CellBTreeMultiValueV2BucketAddAllLeafEntryPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketAddAllLeafEntryPO);
+      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketAddAllLeafEntriesPO);
 
-      final CellBTreeMultiValueV2BucketAddAllLeafEntryPO pageOperation = (CellBTreeMultiValueV2BucketAddAllLeafEntryPO) operations
+      final CellBTreeMultiValueV2BucketAddAllLeafEntriesPO pageOperation = (CellBTreeMultiValueV2BucketAddAllLeafEntriesPO) operations
           .get(0);
 
       final CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(entry);
@@ -234,7 +234,7 @@ public class CellBTreeMultiValueV2BucketAddAllLeafEntryPOTest {
     leafEntries.add(leafEntryOne);
     leafEntries.add(leafEntryTwo);
 
-    CellBTreeMultiValueV2BucketAddAllLeafEntryPO operation = new CellBTreeMultiValueV2BucketAddAllLeafEntryPO(3, leafEntries,
+    CellBTreeMultiValueV2BucketAddAllLeafEntriesPO operation = new CellBTreeMultiValueV2BucketAddAllLeafEntriesPO(3, leafEntries,
         OByteSerializer.INSTANCE, true);
 
     operation.setFileId(42);
@@ -247,7 +247,7 @@ public class CellBTreeMultiValueV2BucketAddAllLeafEntryPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    CellBTreeMultiValueV2BucketAddAllLeafEntryPO restoredOperation = new CellBTreeMultiValueV2BucketAddAllLeafEntryPO();
+    CellBTreeMultiValueV2BucketAddAllLeafEntriesPO restoredOperation = new CellBTreeMultiValueV2BucketAddAllLeafEntriesPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

@@ -148,14 +148,15 @@ public final class WALRecordTypes {
   public static final int SBTREE_NULL_BUCKET_V2_REMOVE_VALUE_PO = 122;
   public static final int SBTREE_NULL_BUCKET_V2_SET_VALUE_PO    = 123;
 
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_INIT_PO                    = 124;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_CREATE_MAIN_LEAF_ENTRY_PO  = 125;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_MAIN_LEAF_ENTRY_PO  = 126;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_APPEND_NEW_LEAF_ENTRY_PO   = 127;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_LEAF_ENTRY_PO       = 128;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_INCREMENT_ENTRIES_COUNT_PO = 129;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_DECREMENT_ENTRIES_COUNT_PO = 130;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_NON_LEAF_ENTRY_PO      = 131;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_NON_LEAF_ENTRY_PO   = 132;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_ALL_PO                 = 133;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_INIT_PO                     = 124;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_CREATE_MAIN_LEAF_ENTRY_PO   = 125;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_MAIN_LEAF_ENTRY_PO   = 126;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_APPEND_NEW_LEAF_ENTRY_PO    = 127;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_LEAF_ENTRY_PO        = 128;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_INCREMENT_ENTRIES_COUNT_PO  = 129;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_DECREMENT_ENTRIES_COUNT_PO  = 130;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_NON_LEAF_ENTRY_PO       = 131;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_NON_LEAF_ENTRY_PO    = 132;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_ALL_LEAF_ENTRIES_PO     = 133;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_ALL_NON_LEAF_ENTRIES_PO = 134;
 }

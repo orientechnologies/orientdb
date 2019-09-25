@@ -529,6 +529,12 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_MULTI_VALUE_V2_REMOVE_NON_LEAF_ENTRY_PO:
       walRecord = new CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO();
       break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_ALL_LEAF_ENTRIES_PO:
+      walRecord = new CellBTreeMultiValueV2BucketAddAllLeafEntriesPO();
+      break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_ALL_NON_LEAF_ENTRIES_PO:
+      walRecord = new CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
