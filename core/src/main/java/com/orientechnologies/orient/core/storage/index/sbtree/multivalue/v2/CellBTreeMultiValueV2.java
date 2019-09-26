@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -155,7 +156,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
         final OCacheEntry nullBucketEntry = addPage(atomicOperation, nullBucketFileId);
         try {
-          final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullBucketEntry, multiContainer);
+          final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullBucketEntry);
           nullBucket.init(incrementMId(atomicOperation));
         } finally {
           releasePageFromWrite(atomicOperation, nullBucketEntry);
@@ -269,8 +270,25 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
         } else {
           final OCacheEntry nullCacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
           try {
-            final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullCacheEntry, multiContainer);
-            return nullBucket.getValues();
+            final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullCacheEntry);
+            final int size = nullBucket.getSize();
+            final List<ORID> values = nullBucket.getValues();
+            if (values.size() < size) {
+              final long mId = nullBucket.getMid();
+
+              final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
+                  .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true,
+                      new MultiValueEntry(mId, Integer.MAX_VALUE, Long.MAX_VALUE), true, true);
+              Map.Entry<MultiValueEntry, Byte> entry = cursor.next(-1);
+
+              while (entry != null) {
+                final MultiValueEntry multiValueEntry = entry.getKey();
+                values.add(new ORecordId(multiValueEntry.clusterId, multiValueEntry.clusterPosition));
+
+                entry = cursor.next(-1);
+              }
+            }
+            return values;
           } finally {
             releasePageFromRead(atomicOperation, nullCacheEntry);
           }
@@ -426,8 +444,19 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
           final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
 
           try {
-            final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullCacheEntry, multiContainer);
-            nullBucket.addValue(value);
+            final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullCacheEntry);
+            final long result = nullBucket.addValue(value);
+            if (result >= 0) {
+              multiContainer.validatedPut(new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()), (byte) 1,
+                  (k, ov, v) -> {
+                    if (ov != null) {
+                      return OBaseIndexEngine.Validator.IGNORE;
+                    }
+
+                    nullBucket.incrementSize();
+                    return v;
+                  });
+            }
           } finally {
             releasePageFromWrite(atomicOperation, nullCacheEntry);
           }
@@ -460,7 +489,15 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     final long result = bucketMultiValue.appendNewLeafEntry(index, value);
     if (result >= 0) {
       multiContainer.put(new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()), (byte) 1);
-      bucketMultiValue.incrementEntriesCount(index);
+      multiContainer
+          .validatedPut(new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()), (byte) 1, (k, ov, v) -> {
+            if (ov != null) {
+              return OBaseIndexEngine.Validator.IGNORE;
+            }
+
+            bucketMultiValue.incrementEntriesCount(index);
+            return v;
+          });
       return true;
     }
 
@@ -681,9 +718,18 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
         } else {
           final OCacheEntry nullBucketCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
           try {
-            final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullBucketCacheEntry,
-                multiContainer);
-            removed = nullBucket.removeValue(value);
+            final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullBucketCacheEntry);
+            final int result = nullBucket.removeValue(value);
+            if (result >= 0) {
+              removed = result == 1;
+            } else {
+              removed =
+                  multiContainer.remove(new MultiValueEntry(nullBucket.getMid(), value.getClusterId(), value.getClusterPosition()))
+                      != null;
+              if (removed) {
+                nullBucket.decrementSize();
+              }
+            }
           } finally {
             releasePageFromWrite(atomicOperation, nullBucketCacheEntry);
           }
