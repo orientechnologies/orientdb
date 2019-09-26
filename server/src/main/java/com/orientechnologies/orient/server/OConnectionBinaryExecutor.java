@@ -1425,9 +1425,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeRollback(ORollbackTransactionRequest request) {
     ODatabaseDocumentInternal database = connection.getDatabase();
-    if (!database.getTransaction().isActive())
-      throw new ODatabaseException("No Transaction Active");
-    database.rollback(true);
+    if (database.getTransaction().isActive()) {
+      database.rollback(true);
+    }
     return new ORollbackTransactionResponse();
   }
 
