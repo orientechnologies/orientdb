@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.Cell
 
 import java.nio.ByteBuffer;
 
-public class CellBTreeMultiValueV2BucketSetRightSiblingPO extends PageOperationRecord {
+public final class CellBTreeMultiValueV2BucketSetRightSiblingPO extends PageOperationRecord {
   private long sibling;
   private long prevSibling;
 
