@@ -108,7 +108,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     super.delete(collectionPointer);
   }
 
-  public void createComponentIfPossible(final int clusterId) throws IOException {
+  public void createComponent(final int clusterId) throws IOException {
     //ignore creation of ridbags in distributed storage
     if (!prohibitAccess) {
       final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId,
@@ -144,16 +144,17 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   public void deleteComponentByClusterId(final int clusterId) throws IOException {
-    checkAccess();
+    //ignore deletion of ridbags in distributed storage
+    if (!prohibitAccess) {
+      final String fileName = FILE_NAME_PREFIX + clusterId;
+      final String fullFileName = fileName + DEFAULT_EXTENSION;
+      final long fileId = storage.getWriteCache().fileIdByName(fullFileName);
 
-    final String fileName = FILE_NAME_PREFIX + clusterId;
-    final String fullFileName = fileName + DEFAULT_EXTENSION;
-    final long fileId = storage.getWriteCache().fileIdByName(fullFileName);
+      clearClusterCache(fileId, fileName);
 
-    clearClusterCache(fileId, fileName);
-
-    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
-    tree.deleteComponent();
+      final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
+      tree.deleteComponent();
+    }
   }
 
   public void deleteComponentByFileId(final long fileId) throws IOException {
