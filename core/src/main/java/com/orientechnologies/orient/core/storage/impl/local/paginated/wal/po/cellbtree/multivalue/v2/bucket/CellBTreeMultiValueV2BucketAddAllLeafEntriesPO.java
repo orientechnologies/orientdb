@@ -13,16 +13,16 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CellBTreeMultiValueV2BucketAddAllLeafEntryPO extends PageOperationRecord {
+public final class CellBTreeMultiValueV2BucketAddAllLeafEntriesPO extends PageOperationRecord {
   private int                                         prevSize;
   private List<CellBTreeMultiValueV2Bucket.LeafEntry> leafEntries;
   private OBinarySerializer                           keySerializer;
   private boolean                                     isEncrypted;
 
-  public CellBTreeMultiValueV2BucketAddAllLeafEntryPO() {
+  public CellBTreeMultiValueV2BucketAddAllLeafEntriesPO() {
   }
 
-  public CellBTreeMultiValueV2BucketAddAllLeafEntryPO(int prevSize, List<CellBTreeMultiValueV2Bucket.LeafEntry> leafEntries,
+  public CellBTreeMultiValueV2BucketAddAllLeafEntriesPO(int prevSize, List<CellBTreeMultiValueV2Bucket.LeafEntry> leafEntries,
       OBinarySerializer keySerializer, boolean isEncrypted) {
     this.prevSize = prevSize;
     this.leafEntries = leafEntries;
@@ -62,7 +62,7 @@ public class CellBTreeMultiValueV2BucketAddAllLeafEntryPO extends PageOperationR
 
   @Override
   public int getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_ALL_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_ALL_LEAF_ENTRIES_PO;
   }
 
   @Override
