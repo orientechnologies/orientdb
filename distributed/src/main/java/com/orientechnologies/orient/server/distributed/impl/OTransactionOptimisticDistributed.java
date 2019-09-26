@@ -71,29 +71,23 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
     break;
     case ORecordOperation.UPDATED: {
       OIdentifiable updateRecord = change.getRecord();
-
-      ODocument original = database.load(updateRecord.getIdentity());
-      if (original == null) {
-        throw new ORecordNotFoundException(updateRecord.getIdentity());
-      }
-
-      original.merge((ODocument) updateRecord, false, false);
-
-      ODocument updateDoc = original;
-      OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
-      OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
-      if (clazz != null) {
-        if (onlyExecutorCase) {
-          OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
-        }
-        if (clazz.isFunction()) {
-          database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
-          Orient.instance().getScriptManager().close(database.getName());
-        }
-        if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate()
-              .onSequenceUpdated(database, updateDoc);
+      if (updateRecord instanceof ODocument) {
+        ODocument updateDoc = (ODocument) updateRecord;
+        OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
+        OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
+        OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
+        if (clazz != null) {
+          if (onlyExecutorCase) {
+            OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
+          }
+          if (clazz.isFunction()) {
+            database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
+            Orient.instance().getScriptManager().close(database.getName());
+          }
+          if (clazz.isSequence()) {
+            ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate()
+                .onSequenceUpdated(database, updateDoc);
+          }
         }
       }
       updatedRecords.put(change.getRID(), change.getRecord());

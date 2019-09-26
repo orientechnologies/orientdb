@@ -11,6 +11,8 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -69,8 +71,15 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
-      case ORecordOperation.UPDATED:
         request.setRecord(ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
+        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+        break;
+      case ORecordOperation.UPDATED:
+        if (request.getRecordType() == ODocument.RECORD_TYPE) {
+          request.setRecord(ODocumentSerializerDelta.instance().serializeDelta((ODocument) txEntry.getRecord()));
+        } else {
+          request.setRecord(ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
+        }
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.DELETED:
@@ -162,19 +171,29 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
       ORecord record = null;
       switch (type) {
-      case ORecordOperation.CREATED:
-      case ORecordOperation.UPDATED: {
+      case ORecordOperation.CREATED: {
         record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
-      }
         break;
-      case ORecordOperation.DELETED:
-        record = database.getRecord(req.getId());
+      }
+      case ORecordOperation.UPDATED: {
+        if (req.getRecordType() == ODocument.RECORD_TYPE) {
+          record = database.load(req.getId());
+          ODocumentSerializerDelta.instance().deserializeDelta(req.getRecord(), (ODocument) record);
+        } else {
+          record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
+          ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        }
+        break;
+      }
+      case ORecordOperation.DELETED: {
+        record = database.load(req.getId());
         if (record == null) {
           record = Orient.instance().getRecordFactoryManager()
               .newInstance(req.getRecordType(), req.getId().getClusterId(), database);
         }
         break;
+      }
       }
       ORecordInternal.setIdentity(record, (ORecordId) req.getId());
       ORecordInternal.setVersion(record, req.getVersion());
