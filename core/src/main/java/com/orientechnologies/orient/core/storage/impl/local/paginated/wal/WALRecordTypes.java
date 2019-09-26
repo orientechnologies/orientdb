@@ -162,4 +162,5 @@ public final class WALRecordTypes {
   public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_SHRINK_LEAF_ENTRIES_PO      = 135;
   public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_SHRINK_NON_LEAF_ENTRIES_PO  = 136;
   public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_SET_LEFT_SIBLING_PO         = 137;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_SET_RIGHT_SIBLING_PO         = 138;
 }

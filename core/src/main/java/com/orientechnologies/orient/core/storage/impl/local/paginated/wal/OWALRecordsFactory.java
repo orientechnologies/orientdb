@@ -544,6 +544,9 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_MULTI_VALUE_V2_SET_LEFT_SIBLING_PO:
       walRecord = new CellBTreeMultiValueV2BucketSetLeftSiblingPO();
       break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_SET_RIGHT_SIBLING_PO:
+      walRecord = new CellBTreeMultiValueV2BucketSetRightSiblingPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
