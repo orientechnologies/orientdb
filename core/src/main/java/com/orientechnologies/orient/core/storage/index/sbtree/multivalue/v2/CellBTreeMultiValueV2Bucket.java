@@ -953,7 +953,11 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
   }
 
   public void setLeftSibling(final long pageIndex) {
+    final long prevSibling = getLongValue(LEFT_SIBLING_OFFSET);
+
     setLongValue(LEFT_SIBLING_OFFSET, pageIndex);
+
+    addPageOperation(new CellBTreeMultiValueV2BucketSetLeftSiblingPO(pageIndex, prevSibling));
   }
 
   public long getLeftSibling() {
