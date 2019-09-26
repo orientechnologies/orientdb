@@ -538,6 +538,9 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_MULTI_VALUE_V2_SHRINK_LEAF_ENTRIES_PO:
       walRecord = new CellBTreeMultiValueV2BucketShrinkLeafEntriesPO();
       break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_SHRINK_NON_LEAF_ENTRIES_PO:
+      walRecord = new CellBTreeMultiValueV2BucketShrinkNonLeafEntriesPO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
