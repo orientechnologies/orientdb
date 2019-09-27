@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -39,8 +40,11 @@ import java.util.concurrent.Future;
      */
 
 /**
+ * In 3.1 we do not support this anymore, we may remove the test case as well
+ *
  * @author Enrico Risa
  */
+@Ignore
 public class HaSyncClusterIT extends AbstractServerClusterTest {
   private final static int SERVERS     = 2;
   public static final  int NUM_RECORDS = 1000;

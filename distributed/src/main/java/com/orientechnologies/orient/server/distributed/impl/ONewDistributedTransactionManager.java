@@ -320,7 +320,7 @@ public class ONewDistributedTransactionManager {
           messages.add(String.format("exception (node " + node + "): '%s'", ((OTxException) result).getException().getMessage()));
           break;
         case OTxUniqueIndex.ID:
-          messages.add(String.format("unique index violation on index (node " + node + "):'$s' with key:'%s' and rid:'%s'",
+          messages.add(String.format("unique index violation on index (node " + node + "):'%s' with key:'%s' and rid:'%s'",
               ((OTxUniqueIndex) result).getIndex(), ((OTxUniqueIndex) result).getKey(), ((OTxUniqueIndex) result).getRecordId()));
           break;
 
@@ -330,7 +330,7 @@ public class ONewDistributedTransactionManager {
       localKo(requestId, database);
 
       ODistributedOperationException ex = new ODistributedOperationException(
-          String.format("quorum of '%i' not reached, responses: [%s]", responseManager.getQuorum(), String.join(",", messages)));
+          String.format("quorum of '%d' not reached, responses: [%s]", responseManager.getQuorum(), String.join(",", messages)));
       for (Exception e : exceptions) {
         ex.addSuppressed(e);
       }
