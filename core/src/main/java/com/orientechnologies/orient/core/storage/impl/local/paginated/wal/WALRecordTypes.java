@@ -170,5 +170,6 @@ public final class WALRecordTypes {
   public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V2_DECREMENT_SIZE_PO    = 142;
   public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V2_REMOVE_VALUE_PO      = 143;
 
-  public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_INIT_PO = 144;
+  public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_INIT_PO          = 144;
+  public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_SET_TREE_SIZE_PO = 145;
 }

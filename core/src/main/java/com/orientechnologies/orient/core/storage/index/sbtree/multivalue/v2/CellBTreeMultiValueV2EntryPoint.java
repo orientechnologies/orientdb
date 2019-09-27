@@ -6,6 +6,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.entrypoint.CellBTreeMultiValueV2EntryPointInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.entrypoint.CellBTreeMultiValueV2EntryPointSetTreeSizePO;
 
 public final class CellBTreeMultiValueV2EntryPoint<K> extends ODurablePage {
   private static final int KEY_SERIALIZER_OFFSET = NEXT_FREE_POSITION;
@@ -26,8 +27,12 @@ public final class CellBTreeMultiValueV2EntryPoint<K> extends ODurablePage {
     addPageOperation(new CellBTreeMultiValueV2EntryPointInitPO());
   }
 
-  void setTreeSize(final long size) {
+  public void setTreeSize(final long size) {
+    final long prevSize = getLongValue(TREE_SIZE_OFFSET);
+
     setLongValue(TREE_SIZE_OFFSET, size);
+
+    addPageOperation(new CellBTreeMultiValueV2EntryPointSetTreeSizePO(size, prevSize));
   }
 
   public long getTreeSize() {
