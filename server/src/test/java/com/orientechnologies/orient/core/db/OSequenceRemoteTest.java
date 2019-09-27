@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.AbstractRemoteTest;
 import org.junit.Test;
 
@@ -10,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by Enrico Risa on 19/05/2017.
  */
-public class OSequenceRemoteTest  extends AbstractRemoteTest{
+public class OSequenceRemoteTest extends AbstractRemoteTest {
 
 
   ODatabaseDocument db;
@@ -19,7 +20,7 @@ public class OSequenceRemoteTest  extends AbstractRemoteTest{
   public void setup() throws Exception {
     super.setup();
     OrientDB factory = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    db = factory.open(name.getMethodName(),"admin","admin");
+    db = factory.open(name.getMethodName(), "admin", "admin");
   }
 
   @Override
@@ -68,5 +69,23 @@ public class OSequenceRemoteTest  extends AbstractRemoteTest{
     db.commit();
 
     assertThat(db.countClass("Person")).isEqualTo(10);
+  }
+
+  @Test
+  public void testCreateCachedSequenceInTx() {
+    db.begin();
+    db.command("CREATE SEQUENCE CircuitSequence TYPE CACHED START 1 INCREMENT 1 CACHE 10;");
+    db.commit();
+
+    db.command("select sequence('CircuitSequence').next() as seq");
+  }
+
+  @Test
+  public void testCreateOrderedSequenceInTx() {
+    db.begin();
+    db.command("CREATE SEQUENCE CircuitSequence TYPE ORDERED;");
+    db.commit();
+
+    db.command("select sequence('CircuitSequence').next() as seq");
   }
 }
