@@ -5,6 +5,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.entrypoint.CellBTreeMultiValueV2EntryPointInitPO;
 
 public final class CellBTreeMultiValueV2EntryPoint<K> extends ODurablePage {
   private static final int KEY_SERIALIZER_OFFSET = NEXT_FREE_POSITION;
@@ -13,21 +14,23 @@ public final class CellBTreeMultiValueV2EntryPoint<K> extends ODurablePage {
   private static final int PAGES_SIZE_OFFSET     = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int ENTRY_ID_OFFSET       = PAGES_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  CellBTreeMultiValueV2EntryPoint(final OCacheEntry cacheEntry) {
+  public CellBTreeMultiValueV2EntryPoint(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
-  void init() {
+  public void init() {
     setLongValue(TREE_SIZE_OFFSET, 0);
     setIntValue(PAGES_SIZE_OFFSET, 1);
     setLongValue(ENTRY_ID_OFFSET, 0);
+
+    addPageOperation(new CellBTreeMultiValueV2EntryPointInitPO());
   }
 
   void setTreeSize(final long size) {
     setLongValue(TREE_SIZE_OFFSET, size);
   }
 
-  long getTreeSize() {
+  public long getTreeSize() {
     return getLongValue(TREE_SIZE_OFFSET);
   }
 
@@ -35,7 +38,7 @@ public final class CellBTreeMultiValueV2EntryPoint<K> extends ODurablePage {
     setIntValue(PAGES_SIZE_OFFSET, pages);
   }
 
-  int getPagesSize() {
+  public int getPagesSize() {
     return getIntValue(PAGES_SIZE_OFFSET);
   }
 
@@ -43,7 +46,7 @@ public final class CellBTreeMultiValueV2EntryPoint<K> extends ODurablePage {
     setLongValue(ENTRY_ID_OFFSET, id);
   }
 
-  long getEntryId() {
+  public long getEntryId() {
     return getLongValue(ENTRY_ID_OFFSET);
   }
 }

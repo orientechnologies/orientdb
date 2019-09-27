@@ -5,7 +5,7 @@ final class MultiValueEntry implements Comparable<MultiValueEntry> {
   public final int  clusterId;
   public final long clusterPosition;
 
-  public MultiValueEntry(final long id, final int clusterId, final long clusterPosition) {
+  MultiValueEntry(final long id, final int clusterId, final long clusterPosition) {
     this.id = id;
     this.clusterId = clusterId;
     this.clusterPosition = clusterPosition;
