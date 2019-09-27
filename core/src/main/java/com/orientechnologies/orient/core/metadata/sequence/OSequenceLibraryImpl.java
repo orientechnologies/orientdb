@@ -112,6 +112,9 @@ public class OSequenceLibraryImpl {
     final OSequence sequence = OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
     sequence.save(database);
     sequences.put(key, sequence);
+    if (database.getTransaction().isActive()) {
+      this.reloadNeeded.set(true);
+    }
 
     return sequence;
   }
