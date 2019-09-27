@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.entrypoint;
 
-import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
@@ -8,61 +8,61 @@ import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.Cell
 
 import java.nio.ByteBuffer;
 
-public final class CellBTreeMultiValueV2EntryPointSetTreeSizePO extends PageOperationRecord {
-  private long treeSize;
-  private long prevTreeSize;
+public final class CellBTreeMultiValueV2EntryPointSetPagesSizePO extends PageOperationRecord {
+  private int pagesSize;
+  private int prevPagesSize;
 
-  public CellBTreeMultiValueV2EntryPointSetTreeSizePO() {
+  public CellBTreeMultiValueV2EntryPointSetPagesSizePO() {
   }
 
-  public CellBTreeMultiValueV2EntryPointSetTreeSizePO(long treeSize, long prevTreeSize) {
-    this.treeSize = treeSize;
-    this.prevTreeSize = prevTreeSize;
+  public CellBTreeMultiValueV2EntryPointSetPagesSizePO(int pagesSize, int prevPagesSize) {
+    this.pagesSize = pagesSize;
+    this.prevPagesSize = prevPagesSize;
   }
 
-  public long getTreeSize() {
-    return treeSize;
+  public long getPagesSize() {
+    return pagesSize;
   }
 
-  public long getPrevTreeSize() {
-    return prevTreeSize;
+  public long getPrevPagesSize() {
+    return prevPagesSize;
   }
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final CellBTreeMultiValueV2EntryPoint bucket = new CellBTreeMultiValueV2EntryPoint(cacheEntry);
-    bucket.setTreeSize(treeSize);
+    bucket.setPagesSize(pagesSize);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final CellBTreeMultiValueV2EntryPoint bucket = new CellBTreeMultiValueV2EntryPoint(cacheEntry);
-    bucket.setTreeSize(prevTreeSize);
+    bucket.setPagesSize(prevPagesSize);
   }
 
   @Override
   public int getId() {
-    return WALRecordTypes.CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_SET_TREE_SIZE_PO;
+    return WALRecordTypes.CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_SET_PAGES_SIZE_PO;
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 2 * OLongSerializer.LONG_SIZE;
+    return super.serializedSize() + 2 * OIntegerSerializer.INT_SIZE;
   }
 
   @Override
   protected void serializeToByteBuffer(ByteBuffer buffer) {
     super.serializeToByteBuffer(buffer);
 
-    buffer.putLong(treeSize);
-    buffer.putLong(prevTreeSize);
+    buffer.putInt(pagesSize);
+    buffer.putInt(prevPagesSize);
   }
 
   @Override
   protected void deserializeFromByteBuffer(ByteBuffer buffer) {
     super.deserializeFromByteBuffer(buffer);
 
-    treeSize = buffer.getLong();
-    prevTreeSize = buffer.getLong();
+    pagesSize = buffer.getInt();
+    prevPagesSize = buffer.getInt();
   }
 }
