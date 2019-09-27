@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.config.OMulticastConfguration;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Timer;
@@ -164,6 +165,7 @@ public class OUDPMulticastNodeManagerTest {
   }
 
   @Test
+  @Ignore
   public void testTwoGroups() throws InterruptedException {
     MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 1);
     MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(2, 0);
