@@ -165,5 +165,6 @@ public final class WALRecordTypes {
   public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_SET_RIGHT_SIBLING_PO        = 138;
 
   public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V2_SET_RIGHT_SIBLING_PO = 139;
+  public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V2_ADD_VALUE_PO         = 140;
 
 }
