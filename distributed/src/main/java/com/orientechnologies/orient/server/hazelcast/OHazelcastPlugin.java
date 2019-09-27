@@ -67,17 +67,8 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.OClusterHealthChecker;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
@@ -1836,6 +1827,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessagePartitionCalculated(request, involvedWorkerQueues);
+    }
+
+  }
+
+  @Override
+  public void messageBeforeLocks(ODistributedRequestId request) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageBeforeLocks(request);
+    }
+  }
+
+  @Override
+  public void messageAfterLocks(ODistributedRequestId request) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageAfterLocks(request);
     }
 
   }
