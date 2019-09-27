@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -30,7 +31,9 @@ public class CellBTreeMultiValueV2TestIT {
     final File dbDirectory = new File(buildDirectory, DB_NAME);
     OFileUtils.deleteRecursively(dbDirectory);
 
-    orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
+    final OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX, true)
+        .build();
+    orientDB = new OrientDB("plocal:" + buildDirectory, config);
     orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");

@@ -488,7 +488,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
     final long result = bucketMultiValue.appendNewLeafEntry(index, value);
     if (result >= 0) {
-      multiContainer.put(new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()), (byte) 1);
       multiContainer
           .validatedPut(new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()), (byte) 1, (k, ov, v) -> {
             if (ov != null) {
@@ -720,15 +719,14 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
           try {
             final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullBucketCacheEntry);
             final int result = nullBucket.removeValue(value);
-            if (result >= 0) {
-              removed = result == 1;
-            } else {
-              removed =
-                  multiContainer.remove(new MultiValueEntry(nullBucket.getMid(), value.getClusterId(), value.getClusterPosition()))
-                      != null;
+            if (result == 0) {
+              removed = multiContainer.remove(new MultiValueEntry(nullBucket.getMid(), value.getClusterId(), value.getClusterPosition()))
+                  != null;
               if (removed) {
                 nullBucket.decrementSize();
               }
+            } else {
+              removed = result == 1;
             }
           } finally {
             releasePageFromWrite(atomicOperation, nullBucketCacheEntry);
