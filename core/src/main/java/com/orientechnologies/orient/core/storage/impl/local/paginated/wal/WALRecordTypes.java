@@ -173,4 +173,5 @@ public final class WALRecordTypes {
   public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_INIT_PO           = 144;
   public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_SET_TREE_SIZE_PO  = 145;
   public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_SET_PAGES_SIZE_PO = 146;
+  public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_SET_ENTRY_ID_PO   = 147;
 }
