@@ -1808,6 +1808,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
+  public void messageBeforeLocks(ODistributedRequestId request) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageBeforeLocks(request);
+    }
+  }
+
+  @Override
+  public void messageAfterLocks(ODistributedRequestId request) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageAfterLocks(request);
+    }
+
+  }
+
+  @Override
   public void messageProcessStart(ODistributedRequest message) {
     for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageProcessStart(message);

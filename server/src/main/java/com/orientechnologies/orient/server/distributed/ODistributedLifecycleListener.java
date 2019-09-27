@@ -74,6 +74,14 @@ public interface ODistributedLifecycleListener {
 
   }
 
+
+  default void onMessageBeforeLocks(ODistributedRequestId request) {
+
+  }
+  default void onMessageAfterLocks(ODistributedRequestId request) {
+
+  }
+
   default void onMessageProcessStart(ODistributedRequest message) {
 
   }

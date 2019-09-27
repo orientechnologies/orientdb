@@ -307,6 +307,14 @@ public interface ODistributedServerManager {
 
   }
 
+  default void messageBeforeLocks(ODistributedRequestId request) {
+
+  }
+  default void messageAfterLocks(ODistributedRequestId request) {
+
+  }
+
+
   default void messageProcessStart(ODistributedRequest message) {
 
   }
