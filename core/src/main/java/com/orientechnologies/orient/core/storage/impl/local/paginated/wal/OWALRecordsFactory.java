@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketAddValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketIncrementSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1InitPO;
@@ -145,6 +146,19 @@ public final class OWALRecordsFactory {
       content = restored;
     }
 
+    final OWriteableWALRecord walRecord = walRecordById(content, recordId);
+
+    walRecord.fromStream(content, 2);
+
+    if (walRecord.getId() != recordId) {
+      throw new IllegalStateException(
+          "Deserialized WAL record id does not match to the serialized record id " + walRecord.getId() + " - " + content[0]);
+    }
+
+    return walRecord;
+  }
+
+  private OWriteableWALRecord walRecordById(byte[] content, int recordId) {
     final OWriteableWALRecord walRecord;
     switch (recordId) {
     case UPDATE_PAGE_RECORD:
@@ -555,6 +569,9 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V2_ADD_VALUE_PO:
       walRecord = new CellBTreeMultiValueV2NullBucketAddValuePO();
       break;
+    case CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V2_INCREMENT_SIZE_PO:
+      walRecord = new CellBTreeMultiValueV2NullBucketIncrementSizePO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
@@ -565,14 +582,6 @@ public final class OWALRecordsFactory {
       else
         throw new IllegalStateException("Cannot deserialize passed in wal record.");
     }
-
-    walRecord.fromStream(content, 2);
-
-    if (walRecord.getId() != recordId) {
-      throw new IllegalStateException(
-          "Deserialized WAL record id does not match to the serialized record id " + walRecord.getId() + " - " + content[0]);
-    }
-
     return walRecord;
   }
 
