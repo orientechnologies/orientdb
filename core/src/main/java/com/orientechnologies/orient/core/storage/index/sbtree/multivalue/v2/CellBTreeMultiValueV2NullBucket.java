@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketAddValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketDecrementSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketIncrementSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketInitPO;
 
@@ -99,6 +100,7 @@ public final class CellBTreeMultiValueV2NullBucket extends ODurablePage {
     assert size >= 1;
 
     setIntValue(RIDS_SIZE_OFFSET, size - 1);
+    addPageOperation(new CellBTreeMultiValueV2NullBucketDecrementSizePO());
   }
 
   public List<ORID> getValues() {
