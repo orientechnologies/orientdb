@@ -180,6 +180,11 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         if (req.getRecordType() == ODocument.RECORD_TYPE) {
           record = database.load(req.getId());
           ODocumentSerializerDelta.instance().deserializeDelta(req.getRecord(), (ODocument) record);
+          /// Got record with empty deltas, at this level we mark the record dirty anyway.
+          if (record.isDirty()) {
+            ODocumentSerializerDelta.instance().deserializeDelta(req.getRecord(), (ODocument) record);
+          }
+          record.setDirty();
         } else {
           record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
           ORecordInternal.setRecordSerializer(record, database.getSerializer());
