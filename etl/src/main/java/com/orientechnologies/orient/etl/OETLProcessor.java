@@ -208,7 +208,7 @@ public class OETLProcessor {
       OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process halted: ", e);
       executor.shutdownNow();
     } catch (Exception e) {
-      OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process has problem: ", e);
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process has problem: " + e.getMessage());
       executor.shutdownNow();
     }
     executor.shutdown();
