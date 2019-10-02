@@ -4781,7 +4781,7 @@ OGrantStatement GrantStatement():
 {
     (
         <GRANT>
-        (OLuceneIndexType.java
+        (
             (
                  <POLICY>
                  jjtThis.policyName = Identifier()
@@ -4798,19 +4798,17 @@ OGrantStatement GrantStatement():
 }
 
 ORevokeStatement RevokeStatement():
-{
-    OResourcePathItem lastItem;
-}
+{}
 {
     (
         <REVOKE>
-        jjtThis.permission = Permission()
-        <ON>
-        lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
         (
-            <DOT>
-            lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
-        )*
+            <POLICY> {jjtThis.revokePolicy = true;}
+            |
+            jjtThis.permission = Permission()
+        )
+        <ON>
+        jjtThis.securityResource = SecurityResourceSegment()
         <FROM>
         jjtThis.actor = Identifier()
     )

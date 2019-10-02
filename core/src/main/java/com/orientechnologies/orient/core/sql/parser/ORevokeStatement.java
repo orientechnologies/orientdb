@@ -3,21 +3,22 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 public class ORevokeStatement extends OSimpleExecStatement {
 
   protected OPermission permission;
-  protected List<OResourcePathItem> resourceChain = new ArrayList<OResourcePathItem>();
+  protected boolean revokePolicy = false;
+  protected OSecurityResourceSegment securityResource;
   protected OIdentifier actor;
 
   public ORevokeStatement(int id) {
@@ -28,37 +29,32 @@ public class ORevokeStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
-    ORole role = getDatabase().getMetadata().getSecurity().getRole(actor.getStringValue());
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
+    ODatabaseDocumentInternal db = getDatabase();
+    ORole role = db.getMetadata().getSecurity().getRole(actor.getStringValue());
     if (role == null)
       throw new OCommandExecutionException("Invalid role: " + actor.getStringValue());
 
-    String resourcePath = toResourcePath(resourceChain, ctx);
-    role.revoke(resourcePath, toPrivilege(permission.permission));
-    role.save();
+    String resourcePath = securityResource.toString();
+    if (permission != null) {
+      role.revoke(resourcePath, toPrivilege(permission.permission));
+      role.save();
+    } else {
+      OSecurityInternal security = db.getSharedContext().getSecurity();
+      security.removeSecurityPolicy(db, role, resourcePath);
+    }
 
     OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "grant");
     result.setProperty("role", actor.getStringValue());
-    result.setProperty("permission", permission.toString());
+    if (permission != null) {
+      result.setProperty("permission", permission.toString());
+    }
     result.setProperty("resource", resourcePath);
     rs.add(result);
     return rs;
-  }
-
-  private String toResourcePath(List<OResourcePathItem> resourceChain, OCommandContext ctx) {
-    Map<Object, Object> params = ctx.getInputParameters();
-    StringBuilder builder = new StringBuilder();
-    boolean first = true;
-    for (OResourcePathItem res : resourceChain) {
-      if (!first) {
-        builder.append(".");
-      }
-      res.toString(params, builder);
-      first = false;
-    }
-    return builder.toString();
   }
 
   protected int toPrivilege(String privilegeName) {
@@ -82,54 +78,44 @@ public class ORevokeStatement extends OSimpleExecStatement {
     return privilege;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("REVOKE ");
-    permission.toString(params, builder);
-    builder.append(" ON ");
-    boolean first = true;
-    for (OResourcePathItem res : resourceChain) {
-      if (!first) {
-        builder.append(".");
-      }
-      res.toString(params, builder);
-      first = false;
+    if (revokePolicy) {
+      builder.append("POLICY");
+    } else {
+      permission.toString(params, builder);
     }
+    builder.append(" ON ");
+    this.securityResource.toString(params, builder);
     builder.append(" FROM ");
     actor.toString(params, builder);
   }
 
-  @Override public ORevokeStatement copy() {
+  @Override
+  public ORevokeStatement copy() {
     ORevokeStatement result = new ORevokeStatement(-1);
     result.permission = permission == null ? null : permission.copy();
-    result.resourceChain =
-        resourceChain == null ? null : resourceChain.stream().map(OResourcePathItem::copy).collect(Collectors.toList());
+    result.securityResource = securityResource == null ? null : securityResource.copy();
+    result.revokePolicy = revokePolicy;
     result.actor = actor == null ? null : actor.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     ORevokeStatement that = (ORevokeStatement) o;
-
-    if (permission != null ? !permission.equals(that.permission) : that.permission != null)
-      return false;
-    if (resourceChain != null ? !resourceChain.equals(that.resourceChain) : that.resourceChain != null)
-      return false;
-    if (actor != null ? !actor.equals(that.actor) : that.actor != null)
-      return false;
-
-    return true;
+    return revokePolicy == that.revokePolicy &&
+            Objects.equals(permission, that.permission) &&
+            Objects.equals(securityResource, that.securityResource) &&
+            Objects.equals(actor, that.actor);
   }
 
-  @Override public int hashCode() {
-    int result = permission != null ? permission.hashCode() : 0;
-    result = 31 * result + (resourceChain != null ? resourceChain.hashCode() : 0);
-    result = 31 * result + (actor != null ? actor.hashCode() : 0);
-    return result;
+  @Override
+  public int hashCode() {
+    return Objects.hash(permission, revokePolicy, securityResource, actor);
   }
 }
 /* JavaCC - OriginalChecksum=d483850d10e1562c1b942fcc249278eb (do not edit this line) */

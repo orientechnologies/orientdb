@@ -41,12 +41,12 @@ public class OGrantStatement extends OSimpleExecStatement {
     String resourcePath = securityResource.toString();
     if (permission != null) {
       role.grant(resourcePath, toPrivilege(permission.permission));
+      role.save();
     } else {
       OSecurityInternal security = db.getSharedContext().getSecurity();
       OSecurityPolicy policy = security.getSecurityPolicy(db, policyName.getStringValue());
       security.setSecurityPolicy(db, role, securityResource.toString(), policy);
     }
-    role.save();
 
     OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
