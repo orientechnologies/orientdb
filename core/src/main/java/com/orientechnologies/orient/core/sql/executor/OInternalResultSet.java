@@ -56,4 +56,10 @@ public class OInternalResultSet implements OResultSet, OResettable {
   public int size() {
     return content.size();
   }
+
+  public OInternalResultSet copy() {
+    OInternalResultSet result = new OInternalResultSet();
+    result.content = this.content;
+    return result;
+  }
 }

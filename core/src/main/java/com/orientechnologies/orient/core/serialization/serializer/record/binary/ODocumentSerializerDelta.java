@@ -603,7 +603,7 @@ public class ODocumentSerializerDelta {
     OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, uuidPos);
 
     OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> timeline = value.getTransactionTimeLine();
-    assert timeline != null : "Collection timeline required for link* types serialization";
+    assert timeline != null : "Collection timeline required for link types serialization";
     OVarIntSerializer.write(bytes, timeline.getMultiValueChangeEvents().size());
     for (OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event : timeline.getMultiValueChangeEvents()) {
       switch (event.getChangeType()) {

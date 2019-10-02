@@ -92,7 +92,9 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
     }
     inited = true;
     Object src = ctx.getVariable(variableName);
-    if (src instanceof OResultSet) {
+    if (src instanceof OInternalResultSet) {
+      source = ((OInternalResultSet)src).copy();
+    } else if (src instanceof OResultSet) {
       source = (OResultSet) src;
       source.reset();
     } else if (src instanceof OElement) {

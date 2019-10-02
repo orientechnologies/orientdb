@@ -2971,8 +2971,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     tableFormatter.writeRecords(currentResultSet, limit);
   }
 
-  private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand, final String iMessage,
+  private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand, final String iMessageSuccess,
       final boolean iIncludeResult) {
+    final String iMessageFailure = "\nCommand failed.\n";
     checkForDatabase();
 
     if (iReceivedCommand == null)
@@ -2991,9 +2992,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     float elapsedSeconds = getElapsedSecs(start);
 
     if (iIncludeResult)
-      message(iMessage, result, elapsedSeconds);
+      message(iMessageSuccess, result, elapsedSeconds);
     else
-      message(iMessage, elapsedSeconds);
+      message(iMessageFailure, elapsedSeconds);
 
     return result;
   }

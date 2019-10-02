@@ -276,7 +276,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
    *
    * @param index
    * @param newValue
-   *
    * @return
    */
   public boolean swap(int index, OIdentifiable newValue) {
@@ -614,6 +613,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     this.dirty = true;
     this.transactionDirty = true;
     return (RET) this;
+  }
+
+  public void setTransactionModified(boolean transactionDirty) {
+    this.transactionDirty = transactionDirty;
   }
 
   @Override

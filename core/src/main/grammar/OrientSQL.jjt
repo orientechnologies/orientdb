@@ -4761,33 +4761,22 @@ OPermission Permission():
     {return jjtThis;}
 }
 
-OResourcePathItem ResourcePathItem():
-{}
-{
-    (
-        <CLUSTER> { jjtThis.name = "cluster"; }
-        |
-        <STAR> { jjtThis.star = true; }
-        |
-        jjtThis.identifier = Identifier()
-    )
-    {return jjtThis;}
-}
-
 OGrantStatement GrantStatement():
 {
-    OResourcePathItem lastItem;
 }
 {
     (
         <GRANT>
-        jjtThis.permission = Permission()
-        <ON>
-        lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
         (
-            <DOT>
-            lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
-        )*
+            (
+                 <POLICY>
+                 jjtThis.policyName = Identifier()
+            )
+            |
+            jjtThis.permission = Permission()
+        )
+        <ON>
+        jjtThis.securityResource = SecurityResourceSegment()
         <TO>
         jjtThis.actor = Identifier()
     )
@@ -4795,19 +4784,17 @@ OGrantStatement GrantStatement():
 }
 
 ORevokeStatement RevokeStatement():
-{
-    OResourcePathItem lastItem;
-}
+{}
 {
     (
         <REVOKE>
-        jjtThis.permission = Permission()
-        <ON>
-        lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
         (
-            <DOT>
-            lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
-        )*
+            <POLICY> {jjtThis.revokePolicy = true;}
+            |
+            jjtThis.permission = Permission()
+        )
+        <ON>
+        jjtThis.securityResource = SecurityResourceSegment()
         <FROM>
         jjtThis.actor = Identifier()
     )

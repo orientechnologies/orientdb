@@ -3,20 +3,24 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 public class OGrantStatement extends OSimpleExecStatement {
   protected OPermission permission;
-  protected List<OResourcePathItem> resourceChain = new ArrayList<OResourcePathItem>();
+  protected OIdentifier policyName;
+  protected OSecurityResourceSegment securityResource;
   protected OIdentifier actor;
 
   public OGrantStatement(int id) {
@@ -27,37 +31,35 @@ public class OGrantStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
-    ORole role = getDatabase().getMetadata().getSecurity().getRole(actor.getStringValue());
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
+    ODatabaseDocumentInternal db = getDatabase();
+    ORole role = db.getMetadata().getSecurity().getRole(actor.getStringValue());
     if (role == null)
       throw new OCommandExecutionException("Invalid role: " + actor.getStringValue());
 
-    String resourcePath = toResourcePath(resourceChain, ctx);
-    role.grant(resourcePath, toPrivilege(permission.permission));
-    role.save();
+    String resourcePath = securityResource.toString();
+    if (permission != null) {
+      role.grant(resourcePath, toPrivilege(permission.permission));
+      role.save();
+    } else {
+      OSecurityInternal security = db.getSharedContext().getSecurity();
+      OSecurityPolicy policy = security.getSecurityPolicy(db, policyName.getStringValue());
+      security.setSecurityPolicy(db, role, securityResource.toString(), policy);
+    }
 
     OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "grant");
     result.setProperty("role", actor.getStringValue());
-    result.setProperty("permission", permission.toString());
+    if (permission != null) {
+      result.setProperty("permission", permission.toString());
+    } else {
+      result.setProperty("policy", policyName.getStringValue());
+    }
     result.setProperty("resource", resourcePath);
     rs.add(result);
     return rs;
-  }
-
-  private String toResourcePath(List<OResourcePathItem> resourceChain, OCommandContext ctx) {
-    Map<Object, Object> params = ctx.getInputParameters();
-    StringBuilder builder = new StringBuilder();
-    boolean first = true;
-    for (OResourcePathItem res : resourceChain) {
-      if (!first) {
-        builder.append(".");
-      }
-      res.toString(params, builder);
-      first = false;
-    }
-    return builder.toString();
   }
 
   protected int toPrivilege(String privilegeName) {
@@ -81,53 +83,45 @@ public class OGrantStatement extends OSimpleExecStatement {
     return privilege;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("GRANT ");
-    permission.toString(params, builder);
-    builder.append(" ON ");
-    boolean first = true;
-    for (OResourcePathItem res : resourceChain) {
-      if (!first) {
-        builder.append(".");
-      }
-      res.toString(params, builder);
-      first = false;
+    if (permission != null) {
+      permission.toString(params, builder);
+    } else {
+      builder.append("POLICY ");
+      policyName.toString(params, builder);
     }
+    builder.append(" ON ");
+    securityResource.toString(params, builder);
     builder.append(" TO ");
     actor.toString(params, builder);
   }
 
-  @Override public OGrantStatement copy() {
+  @Override
+  public OGrantStatement copy() {
     OGrantStatement result = new OGrantStatement(-1);
     result.permission = permission == null ? null : permission.copy();
-    this.resourceChain = resourceChain == null ? null : resourceChain.stream().map(x -> x.copy()).collect(Collectors.toList());
-    this.actor = actor == null ? null : actor.copy();
+    result.securityResource = securityResource == null ? null : securityResource.copy();
+    result.policyName = this.policyName == null ? null : policyName.copy();
+    result.actor = actor == null ? null : actor.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     OGrantStatement that = (OGrantStatement) o;
-
-    if (permission != null ? !permission.equals(that.permission) : that.permission != null)
-      return false;
-    if (resourceChain != null ? !resourceChain.equals(that.resourceChain) : that.resourceChain != null)
-      return false;
-    if (actor != null ? !actor.equals(that.actor) : that.actor != null)
-      return false;
-
-    return true;
+    return Objects.equals(permission, that.permission)
+            && Objects.equals(policyName, that.policyName)
+            && Objects.equals(securityResource, that.securityResource)
+            && Objects.equals(actor, that.actor);
   }
 
-  @Override public int hashCode() {
-    int result = permission != null ? permission.hashCode() : 0;
-    result = 31 * result + (resourceChain != null ? resourceChain.hashCode() : 0);
-    result = 31 * result + (actor != null ? actor.hashCode() : 0);
-    return result;
+  @Override
+  public int hashCode() {
+    return Objects.hash(permission, policyName, securityResource, actor);
   }
 }
 /* JavaCC - OriginalChecksum=c5f7b91e57070a95c6ea490373d16f7f (do not edit this line) */

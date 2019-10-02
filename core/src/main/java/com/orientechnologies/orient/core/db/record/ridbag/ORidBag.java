@@ -270,41 +270,48 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
       if (isEmbedded() && ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager() != null
           && delegate.size() >= topThreshold) {
         ORidBagDelegate oldDelegate = delegate;
+        boolean isTransactionModified = oldDelegate.isTransactionModified();
         delegate = new OSBTreeRidBag();
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
         oldDelegate.setAutoConvertToRecord(false);
 
+        final ORecordElement owner = oldDelegate.getOwner();
+        delegate.disableTracking(owner);
         for (OIdentifiable identifiable : oldDelegate) {
           delegate.add(identifiable);
         }
 
-        final ORecordElement owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
 
         delegate.setTracker(oldDelegate.getTracker());
         oldDelegate.disableTracking(owner);
-
         delegate.setDirty();
+        delegate.setTransactionModified(isTransactionModified);
+        delegate.enableTracking(owner);
 
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
       } else if (bottomThreshold >= 0 && !isEmbedded() && delegate.size() <= bottomThreshold) {
         ORidBagDelegate oldDelegate = delegate;
+        boolean isTransactionModified = oldDelegate.isTransactionModified();
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
         oldDelegate.setAutoConvertToRecord(false);
         delegate = new OEmbeddedRidBag();
 
+        final ORecordElement owner = oldDelegate.getOwner();
+        delegate.disableTracking(owner);
         for (OIdentifiable identifiable : oldDelegate) {
           delegate.add(identifiable);
         }
 
-        final ORecordElement owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
 
         delegate.setTracker(oldDelegate.getTracker());
         oldDelegate.disableTracking(owner);
 
         delegate.setDirty();
+        delegate.setTransactionModified(isTransactionModified);
+        delegate.enableTracking(owner);
 
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();

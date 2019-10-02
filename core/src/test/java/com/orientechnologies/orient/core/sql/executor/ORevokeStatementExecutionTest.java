@@ -1,31 +1,44 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import com.orientechnologies.orient.core.metadata.security.*;
+import org.junit.*;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class ORevokeStatementExecutionTest {
-  static ODatabaseDocument db;
+  static OrientDB orient;
+  private ODatabaseSession db;
 
-  @BeforeClass public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:ORevokeStatementExecutionTest");
-    db.create();
+  @BeforeClass
+  public static void beforeClass() {
+    orient = new OrientDB("plocal:.", OrientDBConfig.defaultConfig());
   }
 
-  @AfterClass public static void afterClass() {
-    db.drop();
+  @AfterClass
+  public static void afterClass() {
+    orient.close();
   }
 
-  @Test public void testSimple() {
+  @Before
+  public void before() {
+    orient.create("test", ODatabaseType.MEMORY);
+    this.db = orient.open("test", "admin", "admin");
+  }
+
+  @After
+  public void after() {
+    this.db.close();
+    orient.drop("test");
+    this.db = null;
+  }
+
+
+  @Test
+  public void testSimple() {
     ORole testRole = db.getMetadata().getSecurity().createRole("testRole", OSecurityRole.ALLOW_MODES.DENY_ALL_BUT);
     Assert.assertFalse(testRole.allow(ORule.ResourceGeneric.SERVER, "server", ORole.PERMISSION_EXECUTE));
     db.command("GRANT execute on server.remove to testRole");
@@ -37,5 +50,20 @@ public class ORevokeStatementExecutionTest {
   }
 
 
+  @Test
+  public void testRemovePolicy(){
+    OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
+
+    db.createClass("Person");
+
+    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    policy.setActive(true);
+    policy.setReadRule("name = 'foo'");
+    security.saveSecurityPolicy(db, policy);
+    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person", policy);
+    Assert.assertEquals("testPolicy", security.getSecurityPolicies(db, security.getRole(db, "reader")).get("database.class.Person").getName());
+    db.command("REVOKE POLICY ON database.class.Person FROM reader").close();
+    Assert.assertNull(security.getSecurityPolicies(db, security.getRole(db, "reader")).get("database.class.Person"));
+  }
 
 }
