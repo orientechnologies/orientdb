@@ -216,7 +216,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
           revertPageOperation(pageOperationRecord);
         }
       } else if (!pageOperationRefs.isEmpty()) {
-        final int chunkSize = 100;
+        final int chunkSize = 1_000;
         final List<PageOperationRecord> chunkToRevert = new ArrayList<>();
 
         int startIndex = pageOperationRefs.size() - chunkSize;

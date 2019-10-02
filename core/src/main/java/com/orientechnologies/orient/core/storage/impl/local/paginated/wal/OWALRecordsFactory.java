@@ -592,6 +592,9 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_SET_ENTRY_ID_PO:
       walRecord = new CellBTreeMultiValueV2EntryPointSetEntryIdPO();
       break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V2_SWITCH_BUCKET_TYPE_PO:
+      walRecord = new CellBTreeMultiValueV2BucketSwitchBucketTypePO();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {

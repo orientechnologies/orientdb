@@ -720,8 +720,9 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
             final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullBucketCacheEntry);
             final int result = nullBucket.removeValue(value);
             if (result == 0) {
-              removed = multiContainer.remove(new MultiValueEntry(nullBucket.getMid(), value.getClusterId(), value.getClusterPosition()))
-                  != null;
+              removed =
+                  multiContainer.remove(new MultiValueEntry(nullBucket.getMid(), value.getClusterId(), value.getClusterPosition()))
+                      != null;
               if (removed) {
                 nullBucket.decrementSize();
               }
@@ -1278,7 +1279,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       final int pageSize = entryPoint.getPagesSize();
 
       if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize + 1, false, false);
         entryPoint.setPagesSize(pageSize + 1);
       } else {
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
@@ -1428,8 +1429,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
       if (pageSize < filledUpTo - 1) {
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
         pageSize++;
+        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
       } else {
         assert pageSize == filledUpTo - 1;
 
@@ -1438,8 +1439,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       }
 
       if (pageSize < filledUpTo) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
         pageSize++;
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
       } else {
         assert pageSize == filledUpTo;
 
@@ -1480,7 +1481,10 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
 
     bucketToSplit = new CellBTreeMultiValueV2Bucket<>(bucketEntry);
-    bucketToSplit.init(false);
+    bucketToSplit.shrink(0, keySerializer, encryption != null);
+    if (splitLeaf) {
+      bucketToSplit.switchBucketType();
+    }
 
     bucketToSplit
         .addNonLeafEntry(0, serializedSeparationKey, leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(), true);

@@ -67,7 +67,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private static final int           XX_SEED       = 0x9747b28c;
 
   private static final int MASTER_RECORD_SIZE = 20;
-  private static final int BATCH_READ_SIZE    = 320;
+  private static final int BATCH_READ_SIZE    = 4 * 1024;
 
   private static final OScheduledThreadPoolExecutorWithLogging commitExecutor;
   private static final OThreadPoolExecutorWithLogging          writeExecutor;
