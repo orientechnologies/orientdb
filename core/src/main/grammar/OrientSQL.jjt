@@ -4761,22 +4761,8 @@ OPermission Permission():
     {return jjtThis;}
 }
 
-OResourcePathItem ResourcePathItem():
-{}
-{
-    (
-        <CLUSTER> { jjtThis.name = "cluster"; }
-        |
-        <STAR> { jjtThis.star = true; }
-        |
-        jjtThis.identifier = Identifier()
-    )
-    {return jjtThis;}
-}
-
 OGrantStatement GrantStatement():
 {
-    OResourcePathItem lastItem;
 }
 {
     (

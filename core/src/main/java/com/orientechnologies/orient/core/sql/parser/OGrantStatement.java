@@ -62,20 +62,6 @@ public class OGrantStatement extends OSimpleExecStatement {
     return rs;
   }
 
-  private String toResourcePath(List<OResourcePathItem> resourceChain, OCommandContext ctx) {
-    Map<Object, Object> params = ctx.getInputParameters();
-    StringBuilder builder = new StringBuilder();
-    boolean first = true;
-    for (OResourcePathItem res : resourceChain) {
-      if (!first) {
-        builder.append(".");
-      }
-      res.toString(params, builder);
-      first = false;
-    }
-    return builder.toString();
-  }
-
   protected int toPrivilege(String privilegeName) {
     int privilege;
     if ("CREATE".equals(privilegeName))
