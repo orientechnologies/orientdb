@@ -49,7 +49,7 @@ public class OLuceneIndexType {
     return new TextField(fieldName, value.toString(), Field.Store.YES);
   }
 
-  public static List<Field> createFields(String fieldName, Object value, Field.Store store ,Boolean sort) {
+  public static List<Field> createFields(String fieldName, Object value, Field.Store store, Boolean sort) {
 
     List<Field> fields = new ArrayList<>();
 
@@ -80,7 +80,7 @@ public class OLuceneIndexType {
       return fields;
     }
 
-    if(Boolean.TRUE.equals(sort)) {
+    if (Boolean.TRUE.equals(sort)) {
       fields.add(new SortedDocValuesField(fieldName, new BytesRef(value.toString())));
     }
     fields.add(new TextField(fieldName, value.toString(), Field.Store.YES));
@@ -138,7 +138,5 @@ public class OLuceneIndexType {
     }
     return queryBuilder.build();
   }
-
-
 
 }
