@@ -7,7 +7,7 @@ import java.util.Map;
 public class OResourcePathItem extends SimpleNode {
   protected boolean star = false;
   protected OIdentifier identifier;
-  protected String      name;
+  protected String name;
 
   public OResourcePathItem(int id) {
     super(id);
@@ -17,7 +17,8 @@ public class OResourcePathItem extends SimpleNode {
     super(p, id);
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (star) {
       builder.append("*");
     } else if (identifier != null) {
@@ -27,7 +28,8 @@ public class OResourcePathItem extends SimpleNode {
     }
   }
 
-  @Override public OResourcePathItem copy() {
+  @Override
+  public OResourcePathItem copy() {
     OResourcePathItem result = new OResourcePathItem(-1);
     result.star = star;
     result.identifier = identifier == null ? null : identifier.copy();
@@ -35,7 +37,8 @@ public class OResourcePathItem extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -53,7 +56,8 @@ public class OResourcePathItem extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = (star ? 1 : 0);
     result = 31 * result + (identifier != null ? identifier.hashCode() : 0);
     result = 31 * result + (name != null ? name.hashCode() : 0);

@@ -4781,13 +4781,16 @@ OGrantStatement GrantStatement():
 {
     (
         <GRANT>
-        jjtThis.permission = Permission()
+        (OLuceneIndexType.java
+            (
+                 <POLICY>
+                 jjtThis.policyName = Identifier()
+            )
+            |
+            jjtThis.permission = Permission()
+        )
         <ON>
-        lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
-        (
-            <DOT>
-            lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
-        )*
+        jjtThis.securityResource = SecurityResourceSegment()
         <TO>
         jjtThis.actor = Identifier()
     )
