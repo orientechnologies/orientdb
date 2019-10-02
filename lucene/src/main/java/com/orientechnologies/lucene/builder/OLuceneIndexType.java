@@ -49,7 +49,7 @@ public class OLuceneIndexType {
     return new TextField(fieldName, value.toString(), Field.Store.YES);
   }
 
-  public static List<Field> createFields(String fieldName, Object value, Field.Store store ,Boolean sort) {
+  public static List<Field> createFields(String fieldName, Object value, Field.Store store, Boolean sort) {
 
     List<Field> fields = new ArrayList<>();
 
@@ -136,7 +136,5 @@ public class OLuceneIndexType {
     }
     return queryBuilder.build();
   }
-
-
 
 }
