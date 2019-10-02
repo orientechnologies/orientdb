@@ -80,7 +80,7 @@ public class OLuceneIndexType {
       return fields;
     }
 
-    if(Boolean.TRUE.equals(sort)) {
+    if (Boolean.TRUE.equals(sort)) {
       fields.add(new SortedDocValuesField(fieldName, new BytesRef(value.toString())));
     }
     fields.add(new TextField(fieldName, value.toString(), Field.Store.YES));
