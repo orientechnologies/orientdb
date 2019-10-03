@@ -693,7 +693,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
 
       int index = 0;
       for (final NonLeafEntry entry : entries) {
-        addNonLeafEntry(index, entry.key, entry.leftChild, entry.rightChild, false);
+        doAddNonLeafEntry(index, entry.key, entry.leftChild, entry.rightChild, false);
         index++;
       }
 
