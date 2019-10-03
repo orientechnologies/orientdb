@@ -114,7 +114,7 @@ public class OrientDBRemote implements OrientDBInternal {
     OStorageRemote storage = storages.get(name);
     if (storage == null) {
       try {
-        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager, null);
+        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager, solveConfig(pool.getConfig()));
         storages.put(name, storage);
       } catch (Exception e) {
         throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);

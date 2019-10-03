@@ -34,7 +34,7 @@ public class SimpleConnectionStrategiesIT {
   }
 
   @Test
-  public void testRoundRobing() {
+  public void testRoundRobin() {
     OrientDB remote1 = new OrientDB("remote:localhost;localhost:2425", "root", "test",
         OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build());
     Set<String> urls = new HashSet<>();
@@ -81,6 +81,29 @@ public class SimpleConnectionStrategiesIT {
     ODatabaseSession session1 = remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
     assertTrue(((OStorageRemote) ((ODatabaseDocumentInternal) session1).getStorage()).getServerURLs().size() > 1);
     session1.close();
+    remote1.close();
+
+  }
+
+  @Test
+  public void testConnectNoHostFetchWithPool() {
+    OrientDB remote = new OrientDB("remote:localhost",
+        OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_FETCH_HOST_LIST, false).build());
+
+    ODatabasePool pool = new ODatabasePool(remote, SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+    ODatabaseSession session = pool.acquire();
+    assertEquals(((OStorageRemote) ((ODatabaseDocumentInternal) session).getStorage()).getServerURLs().size(), 1);
+    session.close();
+    pool.close();
+    remote.close();
+
+    OrientDB remote1 = new OrientDB("remote:localhost",
+        OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_FETCH_HOST_LIST, true).build());
+    ODatabasePool pool1 = new ODatabasePool(remote1, SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+    ODatabaseSession session1 = pool1.acquire();
+    assertTrue(((OStorageRemote) ((ODatabaseDocumentInternal) session1).getStorage()).getServerURLs().size() > 1);
+    session1.close();
+    pool1.close();
     remote1.close();
 
   }
