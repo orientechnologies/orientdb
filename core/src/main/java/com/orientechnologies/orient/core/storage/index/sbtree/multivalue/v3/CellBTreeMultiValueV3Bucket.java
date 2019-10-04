@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketInitPO;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -35,7 +36,7 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
+public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
   private static final int NEXT_ITEM_POINTER_OFFSET      = 0;
   private static final int EMBEDDED_ENTRIES_COUNT_OFFSET = NEXT_ITEM_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int ENTRIES_COUNT_OFFSET          = EMBEDDED_ENTRIES_COUNT_OFFSET + OByteSerializer.BYTE_SIZE;
@@ -58,7 +59,7 @@ final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
 
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-  CellBTreeMultiValueV3Bucket(final OCacheEntry cacheEntry) {
+  public CellBTreeMultiValueV3Bucket(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
@@ -69,6 +70,8 @@ final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
     setByteValue(IS_LEAF_OFFSET, (byte) (isLeaf ? 1 : 0));
     setLongValue(LEFT_SIBLING_OFFSET, -1);
     setLongValue(RIGHT_SIBLING_OFFSET, -1);
+
+    addPageOperation(new CellBTreeMultiValueV3BucketInitPO(isLeaf));
   }
 
   boolean isEmpty() {
