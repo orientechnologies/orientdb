@@ -96,7 +96,7 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
  * @since 25.04.13
  */
 public final class OWALRecordsFactory {
-  private final Map<Byte, Class> idToTypeMap = new HashMap<>();
+  private final Map<Integer, Class> idToTypeMap = new HashMap<>();
 
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
@@ -148,7 +148,7 @@ public final class OWALRecordsFactory {
       content = restored;
     }
 
-    final OWriteableWALRecord walRecord = walRecordById(content, recordId);
+    final OWriteableWALRecord walRecord = walRecordById(recordId);
 
     walRecord.fromStream(content, 2);
 
@@ -160,7 +160,7 @@ public final class OWALRecordsFactory {
     return walRecord;
   }
 
-  private OWriteableWALRecord walRecordById(byte[] content, int recordId) {
+  private OWriteableWALRecord walRecordById(final int recordId) {
     final OWriteableWALRecord walRecord;
     switch (recordId) {
     case UPDATE_PAGE_RECORD:
@@ -596,9 +596,9 @@ public final class OWALRecordsFactory {
       walRecord = new CellBTreeMultiValueV2BucketSwitchBucketTypePO();
       break;
     default:
-      if (idToTypeMap.containsKey(content[0]))
+      if (idToTypeMap.containsKey(recordId))
         try {
-          walRecord = (OWriteableWALRecord) idToTypeMap.get(content[0]).newInstance();
+          walRecord = (OWriteableWALRecord) idToTypeMap.get(recordId).newInstance();
         } catch (final InstantiationException | IllegalAccessException e) {
           throw new IllegalStateException("Cannot deserialize passed in record", e);
         }
@@ -608,7 +608,7 @@ public final class OWALRecordsFactory {
     return walRecord;
   }
 
-  public void registerNewRecord(final byte id, final Class<? extends OWriteableWALRecord> type) {
+  public void registerNewRecord(final int id, final Class<? extends OWriteableWALRecord> type) {
     idToTypeMap.put(id, type);
   }
 }

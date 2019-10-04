@@ -28,7 +28,7 @@ public class OCASDiskWriteAheadLogIT {
     testDirectory = Paths.get(System.getProperty("buildDirectory" + File.separator + "casWALTest",
         "." + File.separator + "target" + File.separator + "casWALTest"));
 
-    OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 127, TestRecord.class);
+    OWALRecordsFactory.INSTANCE.registerNewRecord(1024, TestRecord.class);
   }
 
   @Before
@@ -48,7 +48,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -68,7 +68,7 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
@@ -91,6 +91,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        //noinspection ConstantConditions
         if (i > 0 && i % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", i, iterations);
         }
@@ -117,7 +118,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -137,7 +138,7 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
@@ -160,6 +161,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        // noinspection ConstantConditions
         if (i > 0 && i % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", i, iterations);
         }
@@ -186,7 +188,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -206,7 +208,7 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
@@ -227,6 +229,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        //noinspection ConstantConditions
         if (i > 0 && i % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", i, iterations);
         }
@@ -253,7 +256,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -276,7 +279,7 @@ public class OCASDiskWriteAheadLogIT {
         final byte[] otherAesKey = Base64.getDecoder().decode(otherAesKeyEncoded);
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, otherAesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
@@ -293,6 +296,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        //noinspection ConstantConditions
         if (i > 0 && i % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", i, iterations);
         }
@@ -314,7 +318,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -334,7 +338,7 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
@@ -358,6 +362,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        //noinspection ConstantConditions
         if (i > 0 && i % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", i, iterations);
         }
@@ -383,7 +388,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -403,7 +408,7 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
@@ -427,6 +432,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        //noinspection ConstantConditions
         if (i > 0 && i % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", i, iterations);
         }
@@ -448,7 +454,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -469,7 +475,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < 5; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, 5).iterator();
@@ -486,14 +492,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < 5; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, 5).iterator();
@@ -516,6 +522,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        //noinspection ConstantConditions
         if (n > 0 && n % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
@@ -541,7 +548,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -562,7 +569,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < 5; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, 5).iterator();
@@ -579,14 +586,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < 5; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, 5).iterator();
@@ -609,6 +616,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        //noinspection ConstantConditions
         if (n > 0 && n % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
@@ -631,7 +639,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -651,7 +659,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < 4; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, 5).iterator();
@@ -670,14 +678,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < 4; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, 5).iterator();
@@ -706,6 +714,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(2);
 
+        //noinspection ConstantConditions
         if (n > 0 && n % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
@@ -732,7 +741,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -752,7 +761,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < 4; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, 5).iterator();
@@ -771,14 +780,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < 4; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, 5).iterator();
@@ -807,6 +816,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(2);
 
+        //noinspection ConstantConditions
         if (n > 0 && n % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
@@ -829,7 +839,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -849,7 +859,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < 5; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, 5).iterator();
@@ -866,14 +876,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < 5; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, 5).iterator();
@@ -895,6 +905,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        //noinspection ConstantConditions
         if (n > 0 && n % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
@@ -921,7 +932,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -941,7 +952,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < 5; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, 5).iterator();
@@ -958,14 +969,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < 5; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, 5).iterator();
@@ -987,6 +998,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(1);
 
+        //noinspection ConstantConditions
         if (n > 0 && n % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
@@ -1009,7 +1021,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1029,7 +1041,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < 4; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, 5).iterator();
@@ -1047,14 +1059,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < 4; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, 5).iterator();
@@ -1083,6 +1095,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(2);
 
+        //noinspection ConstantConditions
         if (n > 0 && n % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
@@ -1109,7 +1122,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1129,7 +1142,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < 4; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, 5).iterator();
@@ -1147,14 +1160,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < 4; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, 5).iterator();
@@ -1183,6 +1196,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(2);
 
+        //noinspection ConstantConditions
         if (n > 0 && n % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
@@ -1205,7 +1219,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1227,7 +1241,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -1249,14 +1263,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -1303,7 +1317,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1325,7 +1339,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -1347,14 +1361,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -1397,7 +1411,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1419,7 +1433,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -1438,14 +1452,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -1493,7 +1507,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1515,7 +1529,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -1534,14 +1548,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -1586,7 +1600,7 @@ public class OCASDiskWriteAheadLogIT {
         final int numberOfSegmentsToAdd = random.nextInt(4) + 3;
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1623,7 +1637,7 @@ public class OCASDiskWriteAheadLogIT {
           final TestRecord testRecord = records.get(i);
           final List<OWriteableWALRecord> result = wal.read(testRecord.getLsn(), 10);
 
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -1647,7 +1661,7 @@ public class OCASDiskWriteAheadLogIT {
         Assert.assertEquals(calculatedWalSize, walSize);
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(numberOfSegmentsToAdd + 2, OCASWALPage.RECORDS_OFFSET));
@@ -1658,7 +1672,7 @@ public class OCASDiskWriteAheadLogIT {
           final TestRecord testRecord = records.get(i);
           final List<OWriteableWALRecord> result = wal.read(testRecord.getLsn(), 10);
 
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -1687,7 +1701,7 @@ public class OCASDiskWriteAheadLogIT {
           final TestRecord testRecord = records.get(i);
           final List<OWriteableWALRecord> result = wal.read(testRecord.getLsn(), 10);
 
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -1742,7 +1756,7 @@ public class OCASDiskWriteAheadLogIT {
         final int numberOfSegmentsToAdd = random.nextInt(4) + 3;
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1779,7 +1793,7 @@ public class OCASDiskWriteAheadLogIT {
           final TestRecord testRecord = records.get(i);
           final List<OWriteableWALRecord> result = wal.read(testRecord.getLsn(), 10);
 
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -1803,7 +1817,7 @@ public class OCASDiskWriteAheadLogIT {
         Assert.assertEquals(calculatedWalSize, walSize);
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(numberOfSegmentsToAdd + 2, OCASWALPage.RECORDS_OFFSET));
@@ -1814,7 +1828,7 @@ public class OCASDiskWriteAheadLogIT {
           final TestRecord testRecord = records.get(i);
           final List<OWriteableWALRecord> result = wal.read(testRecord.getLsn(), 10);
 
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -1843,7 +1857,7 @@ public class OCASDiskWriteAheadLogIT {
           final TestRecord testRecord = records.get(i);
           final List<OWriteableWALRecord> result = wal.read(testRecord.getLsn(), 10);
 
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -1894,7 +1908,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1916,7 +1930,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -1933,14 +1947,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -1982,7 +1996,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2004,7 +2018,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -2021,14 +2035,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -2066,7 +2080,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2088,7 +2102,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -2107,14 +2121,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -2162,7 +2176,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2184,7 +2198,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -2203,14 +2217,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -2253,7 +2267,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2275,7 +2289,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -2292,14 +2306,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -2339,7 +2353,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2361,7 +2375,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -2378,14 +2392,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -2421,7 +2435,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
 
@@ -2442,7 +2456,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -2461,14 +2475,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -2515,7 +2529,7 @@ public class OCASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2537,7 +2551,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -2556,14 +2570,14 @@ public class OCASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -2607,7 +2621,7 @@ public class OCASDiskWriteAheadLogIT {
         final int recordsCount = random.nextInt(10_000) + 100;
 
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
         for (int i = 0; i < recordsCount; i++) {
 
           final TestRecord testRecord = new TestRecord(random, 4 * wal.pageSize(), 1);
@@ -2625,6 +2639,7 @@ public class OCASDiskWriteAheadLogIT {
 
         Thread.sleep(2);
 
+        //noinspection ConstantConditions
         if (n > 0 && n % 10 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", n, iterations);
         }
@@ -2643,7 +2658,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2705,7 +2720,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -2727,7 +2742,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2787,7 +2802,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -2810,7 +2825,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2869,7 +2884,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -2892,7 +2907,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2952,7 +2967,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -2975,7 +2990,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -3035,7 +3050,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -3058,7 +3073,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -3118,7 +3133,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -3141,7 +3156,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -3201,7 +3216,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -3224,7 +3239,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -3284,7 +3299,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -3307,7 +3322,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       ThreadLocalRandom random = ThreadLocalRandom.current();
 
@@ -3334,7 +3349,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertEquals(masterLSN, loadedWAL.lastCheckpoint());
 
@@ -3348,7 +3363,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       long seed = System.nanoTime();
       Random random = new Random(seed);
@@ -3393,9 +3408,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L,
-
-          -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
       Assert.assertEquals(masterRecords.last(), wal.lastCheckpoint());
 
       loadedWAL.close();
@@ -3410,7 +3423,7 @@ public class OCASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       long seed = System.nanoTime();
       Random random = new Random(seed);
@@ -3437,7 +3450,7 @@ public class OCASDiskWriteAheadLogIT {
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       Assert.assertNotNull(loadedWAL.getFlushedLsn());
       Assert.assertEquals(loadedWAL.end(), loadedWAL.getFlushedLsn());
@@ -3461,7 +3474,7 @@ public class OCASDiskWriteAheadLogIT {
       TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       ExecutorService executorService = Executors.newCachedThreadPool();
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -3532,19 +3545,19 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < begin.getSegment(); i++) {
           final Path segmentPath = testDirectory.resolve(getSegmentName(i));
-          Assert.assertTrue(!Files.exists(segmentPath));
+          Assert.assertFalse(Files.exists(segmentPath));
         }
 
         {
           final Path segmentPath = testDirectory.resolve(getSegmentName(end.getSegment() + 1));
-          Assert.assertTrue(!Files.exists(segmentPath));
+          Assert.assertFalse(Files.exists(segmentPath));
         }
       }
 
       wal.close();
 
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
       long minSegment = begin.getSegment();
       long maxSegment = end.getSegment();
@@ -3568,12 +3581,12 @@ public class OCASDiskWriteAheadLogIT {
 
       for (int i = 0; i < begin.getSegment(); i++) {
         final Path segmentPath = testDirectory.resolve(getSegmentName(i));
-        Assert.assertTrue(!Files.exists(segmentPath));
+        Assert.assertFalse(Files.exists(segmentPath));
       }
 
       {
         final Path segmentPath = testDirectory.resolve(getSegmentName(end.getSegment() + 1));
-        Assert.assertTrue(!Files.exists(segmentPath));
+        Assert.assertFalse(Files.exists(segmentPath));
       }
 
       loadedWAL.close();
@@ -3592,7 +3605,7 @@ public class OCASDiskWriteAheadLogIT {
     final TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
 
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
     AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
     ExecutorService executorService = Executors.newCachedThreadPool();
@@ -3696,7 +3709,7 @@ public class OCASDiskWriteAheadLogIT {
   @Ignore
   public void testCutTillMT() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
     AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
     ExecutorService executorService = Executors.newCachedThreadPool();
@@ -3776,7 +3789,7 @@ public class OCASDiskWriteAheadLogIT {
 
       try {
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
         List<TestRecord> records = new ArrayList<>();
 
@@ -3804,7 +3817,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("First check");
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -3822,7 +3835,7 @@ public class OCASDiskWriteAheadLogIT {
 
         System.out.println("Second check");
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(),
@@ -3830,7 +3843,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount; i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, recordsCount).iterator();
@@ -3866,7 +3879,7 @@ public class OCASDiskWriteAheadLogIT {
 
       try {
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
         List<TestRecord> records = new ArrayList<>();
 
@@ -3894,7 +3907,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("First check");
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -3914,7 +3927,7 @@ public class OCASDiskWriteAheadLogIT {
 
         System.out.println("Second check");
         wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(),
@@ -3922,7 +3935,7 @@ public class OCASDiskWriteAheadLogIT {
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<OWriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
@@ -3956,7 +3969,7 @@ public class OCASDiskWriteAheadLogIT {
   @Test
   public void testDelete() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
     final long seed = System.nanoTime();
     final Random random = new Random(seed);
@@ -3984,7 +3997,8 @@ public class OCASDiskWriteAheadLogIT {
     wal.delete();
 
     Assert.assertTrue(Files.exists(testDirectory));
-    Assert.assertEquals(0, testDirectory.toFile().listFiles().length);
+    File[] files = testDirectory.toFile().listFiles();
+    Assert.assertTrue(files == null || files.length == 0);
   }
 
   @Test
@@ -3998,7 +4012,7 @@ public class OCASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 2 * 1024 * 1024 * 1024L;
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4059,7 +4073,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("Records check");
         for (int i = 0; i < records.size(); i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -4098,7 +4112,7 @@ public class OCASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 2 * 1024 * 1024 * 1024L;
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4159,7 +4173,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("Records check");
         for (int i = 0; i < records.size(); i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -4198,7 +4212,7 @@ public class OCASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4259,7 +4273,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("Records check");
         for (int i = 0; i < records.size(); i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -4298,7 +4312,7 @@ public class OCASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4359,7 +4373,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("Records check");
         for (int i = 0; i < records.size(); i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -4398,7 +4412,7 @@ public class OCASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 5 * 1024 * 1024 * 1024L;
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4464,7 +4478,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("Records check");
         for (int i = 0; i < records.size(); i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -4503,7 +4517,7 @@ public class OCASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 5 * 1024 * 1024 * 1024L;
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4569,7 +4583,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("Records check");
         for (int i = 0; i < records.size(); i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -4608,7 +4622,7 @@ public class OCASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4678,7 +4692,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("Records check");
         for (int i = 0; i < records.size(); i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -4717,7 +4731,7 @@ public class OCASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4787,7 +4801,7 @@ public class OCASDiskWriteAheadLogIT {
         System.out.println("Records check");
         for (int i = 0; i < records.size(); i++) {
           final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
-          Assert.assertTrue(!result.isEmpty());
+          Assert.assertFalse(result.isEmpty());
 
           final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
           final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
@@ -4827,7 +4841,7 @@ public class OCASDiskWriteAheadLogIT {
 
       try {
         OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
         ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -4883,7 +4897,7 @@ public class OCASDiskWriteAheadLogIT {
         }
 
         OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
         Iterator<TestRecord> recordIterator = records.iterator();
         List<OWriteableWALRecord> walRecords = loadedWAL.read(records.get(0).getLsn(), 100);
@@ -4937,7 +4951,7 @@ public class OCASDiskWriteAheadLogIT {
   @Test
   public void testMasterRecordCrashTwoRecords() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
     OLogSequenceNumber masterLSNOne = wal.log(new OFullCheckpointStartRecord());
     wal.flush();
@@ -4963,7 +4977,7 @@ public class OCASDiskWriteAheadLogIT {
     }
 
     wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null, Integer.MAX_VALUE,
-        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
     Assert.assertEquals(masterLSNOne, wal.lastCheckpoint());
 
@@ -4973,7 +4987,7 @@ public class OCASDiskWriteAheadLogIT {
   @Test
   public void testMasterRecordCrashThreeRecordsFirstDamage() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
     wal.log(new OFullCheckpointStartRecord());
     wal.flush();
@@ -5002,7 +5016,7 @@ public class OCASDiskWriteAheadLogIT {
     }
 
     wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null, Integer.MAX_VALUE,
-        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
     Assert.assertEquals(masterLSNOne, wal.lastCheckpoint());
 
@@ -5012,7 +5026,7 @@ public class OCASDiskWriteAheadLogIT {
   @Test
   public void testMasterRecordCrashThreeRecordsSecondDamage() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
     wal.log(new OFullCheckpointStartRecord());
     wal.flush();
@@ -5041,7 +5055,7 @@ public class OCASDiskWriteAheadLogIT {
     }
 
     wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null, Integer.MAX_VALUE,
-        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, true, false, true, 10);
+        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
 
     Assert.assertEquals(masterLSNTwo, wal.lastCheckpoint());
 
@@ -5073,7 +5087,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   private static void addLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
-    limits.merge(lsn, 1, (a, b) -> a + b);
+    limits.merge(lsn, 1, Integer::sum);
   }
 
   private static void removeLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
@@ -5141,7 +5155,7 @@ public class OCASDiskWriteAheadLogIT {
 
     while (recordsIterator.hasNext()) {
       records = wal.next(lastLSN, 100);
-      Assert.assertTrue(!records.isEmpty());
+      Assert.assertFalse(records.isEmpty());
 
       readIterator = records.iterator();
       while (readIterator.hasNext() && recordsIterator.hasNext()) {
@@ -5173,8 +5187,6 @@ public class OCASDiskWriteAheadLogIT {
         lastLSN = record.getLsn();
       }
     }
-
-    Assert.assertTrue(!recordsIterator.hasNext());
   }
 
   private String getSegmentName(long segment) {
@@ -5262,11 +5274,11 @@ public class OCASDiskWriteAheadLogIT {
 
     @Override
     public int getId() {
-      return 127;
+      return 1024;
     }
   }
 
-  public static final class RecordsAdder implements Callable<List<TestRecord>> {
+  static final class RecordsAdder implements Callable<List<TestRecord>> {
     private final OCASDiskWriteAheadLog wal;
     private final AtomicBoolean         walIsFull;
     private final List<TestRecord>      addedRecords = new ArrayList<>();
@@ -5357,7 +5369,7 @@ public class OCASDiskWriteAheadLogIT {
     }
   }
 
-  public static final class RecordsAdderBackwardIteration implements Callable<List<TestRecord>> {
+  static final class RecordsAdderBackwardIteration implements Callable<List<TestRecord>> {
     private final OCASDiskWriteAheadLog wal;
     private final AtomicBoolean         walIsFull;
     private final List<TestRecord>      addedRecords = new ArrayList<>();
