@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddAllLeafEntriesPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketInitPO;
 
 import java.util.ArrayList;
@@ -621,11 +622,10 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
 
     setIntValue(SIZE_OFFSET, currentSize + entries.size());
 
-//    if (isLeaf) {
-//      //noinspection unchecked
-//      addPageOperation(
-//          new CellBTreeMultiValueV2BucketAddAllLeafEntriesPO(currentSize, (List<LeafEntry>) entries, keySerializer, isEncrypted));
-//    } else {
+    if (isLeaf) {
+      //noinspection unchecked
+      addPageOperation(new CellBTreeMultiValueV3BucketAddAllLeafEntriesPO(currentSize, (List<LeafEntry>) entries, keySerializer));
+    } //else {
 //      //noinspection unchecked
 //      addPageOperation(
 //          new CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO(currentSize, (List<NonLeafEntry>) entries, keySerializer,
