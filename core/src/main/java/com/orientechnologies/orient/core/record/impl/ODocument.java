@@ -2798,6 +2798,9 @@ public class ODocument extends ORecordAbstract
       ODocumentEntry entry = fieldEntry.getValue();
       final Object fieldValue = entry.value;
       if (fieldValue instanceof ORidBag) {
+        if (isEmbedded()) {
+          throw new ODatabaseException("RidBag are supported only at document root");
+        }
         ((ORidBag) fieldValue).checkAndConvert();
       }
       if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
@@ -2920,6 +2923,7 @@ public class ODocument extends ORecordAbstract
   private void fillTrackedCollection(Collection<Object> dest, ORecordElement parent, Collection<Object> source) {
     for (Object cur : source) {
       if (cur instanceof ODocument) {
+        ((ODocument) cur).addOwner((ORecordElement) dest);
         ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
         ((ODocument) cur).clearTrackData();
       } else if (cur instanceof List) {
@@ -2934,6 +2938,8 @@ public class ODocument extends ORecordAbstract
         OTrackedMap<Object> newMap = new OTrackedMap<>(parent);
         fillTrackedMap(newMap, newMap, (Map<Object, Object>) cur);
         cur = newMap;
+      } else if (cur instanceof ORidBag) {
+        throw new ODatabaseException("RidBag are supported only at document root");
       }
       dest.add(cur);
     }
@@ -2957,6 +2963,8 @@ public class ODocument extends ORecordAbstract
         OTrackedMap<Object> newMap = new OTrackedMap<>(parent);
         fillTrackedMap(newMap, newMap, (Map<Object, Object>) value);
         value = newMap;
+      } else if (cur instanceof ORidBag) {
+        throw new ODatabaseException("RidBag are supported only at document root");
       }
       dest.put(cur.getKey(), value);
     }
