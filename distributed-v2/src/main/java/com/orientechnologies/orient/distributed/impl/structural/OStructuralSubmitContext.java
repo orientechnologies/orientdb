@@ -9,6 +9,8 @@ public interface OStructuralSubmitContext {
 
   Future<OStructuralSubmitResponse> send(OSessionOperationId requestId, OStructuralSubmitRequest response);
 
+  OStructuralSubmitResponse sendAndWait(OSessionOperationId operationId, OStructuralSubmitRequest request);
+
   void receive(OSessionOperationId requestId, OStructuralSubmitResponse response);
 
   void setLeader(ODistributedChannel channel);

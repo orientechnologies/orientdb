@@ -152,7 +152,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
     OSessionOperationId id = new OSessionOperationId();
-    id.init();
     OSequenceActionCoordinatorSubmit submitAction = new OSequenceActionCoordinatorSubmit(action);
     Future<OSubmitResponse> future = submitContext.send(id, submitAction);
     try {
@@ -189,8 +188,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
     OSessionOperationId id = new OSessionOperationId();
-    id.init();
-
     Future<OSubmitResponse> future = submitContext.send(id, ts);
     try {
       OTransactionResponse response = (OTransactionResponse) future.get();

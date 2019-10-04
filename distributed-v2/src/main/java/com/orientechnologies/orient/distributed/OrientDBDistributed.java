@@ -67,7 +67,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return nodeConfiguration;
   }
 
-  private ONodeIdentity getNodeIdentity() {
+  public ONodeIdentity getNodeIdentity() {
     return structuralConfiguration.getCurrentNodeIdentity();
   }
 
@@ -150,8 +150,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
           storages.remove(dbName);
         }
-        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize,
-            doubleWriteLogMaxSegSize);
+        storage = (OAbstractPaginatedStorage) disk
+            .createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize);
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {
@@ -201,18 +201,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
     checkReadyForHandleRequests();
     //TODO:RESOLVE CONFIGURATION PARAMETERS
-    Future<OStructuralSubmitResponse> created = structuralDistributedContext.getSubmitContext()
-        .send(new OSessionOperationId(), new OCreateDatabaseSubmitRequest(name, type.name(), new HashMap<>()));
-    try {
-      OCreateDatabaseSubmitResponse response = (OCreateDatabaseSubmitResponse) created.get();
-      if (!response.isSuccess()) {
-        throw new ODatabaseException(response.getError());
-      }
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-      return;
-    } catch (ExecutionException e) {
-      e.printStackTrace();
+    OCreateDatabaseSubmitResponse created = (OCreateDatabaseSubmitResponse) structuralDistributedContext
+        .forwardAndWait(new OCreateDatabaseSubmitRequest(name, type.name(), new HashMap<>()));
+    if (!created.isSuccess()) {
+      throw new ODatabaseException(created.getError());
     }
     //This initialize the distributed configuration.
     checkCoordinator(name);
@@ -476,15 +468,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
     checkReadyForHandleRequests();
     //TODO:RESOLVE CONFIGURATION PARAMETERS
-    Future<OStructuralSubmitResponse> created = structuralDistributedContext.getSubmitContext()
-        .send(new OSessionOperationId(), new ODropDatabaseSubmitRequest(name));
-    try {
-      created.get();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-    }
+    structuralDistributedContext.getSubmitContext().sendAndWait(new OSessionOperationId(), new ODropDatabaseSubmitRequest(name));
   }
 
   public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
@@ -563,4 +547,5 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public ODistributedNetworkManager getNetworkManager() {
     return networkManager;
   }
+
 }

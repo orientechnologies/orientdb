@@ -102,51 +102,12 @@ public class OSBTreeRidBagTest extends ORidBagTest {
       return;
 
     final int clusterIdOne = database.addCluster("clusterOne");
-    final int clusterIdTwo = database.addCluster("clusterTwo");
-    final int clusterIdThree = database.addCluster("clusterThree");
-    final int clusterIdFour = database.addCluster("clusterFour");
 
     ODocument docClusterOne = new ODocument();
     ORidBag ridBagClusterOne = new ORidBag();
     docClusterOne.field("ridBag", ridBagClusterOne);
     docClusterOne.save("clusterOne");
-
-    ODocument docClusterTwo = new ODocument();
-
-    ODocument embeddedDocTwo = new ODocument();
-    final ORidBag ridBagClusterTwo = new ORidBag();
-
-    embeddedDocTwo.field("ridBag", ridBagClusterTwo);
-    List<ODocument> elist = new ArrayList<ODocument>();
-    elist.add(embeddedDocTwo);
-
-    docClusterTwo.field("elist", elist, OType.EMBEDDEDLIST);
-    docClusterTwo.save("clusterTwo");
-
-    ODocument docClusterThree = new ODocument();
-
-    ODocument embeddedDocThree = new ODocument();
-    final ORidBag ridBagClusterThree = new ORidBag();
-
-    embeddedDocThree.field("ridBag", ridBagClusterThree);
-    Set<ODocument> eset = new HashSet<ODocument>();
-    eset.add(embeddedDocThree);
-
-    docClusterThree.field("eset", eset, OType.EMBEDDEDSET);
-    docClusterThree.save("clusterThree");
-
-    ODocument docClusterFour = new ODocument();
-
-    ODocument embeddedDocFour = new ODocument();
-    final ORidBag ridBagClusterFour = new ORidBag();
-
-    embeddedDocFour.field("ridBag", ridBagClusterFour);
-    Map<String, ODocument> emap = new HashMap<String, ODocument>();
-    emap.put("l", embeddedDocFour);
-
-    docClusterFour.field("emap", emap, OType.EMBEDDEDMAP);
-    docClusterFour.save("clusterFour");
-
+    
     final String directory = database.getStorage().getConfiguration().getDirectory();
 
     final OWOWCache wowCache = (OWOWCache) ((OLocalPaginatedStorage) (database.getStorage())).getWriteCache();
@@ -154,18 +115,6 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     final File ridBagOneFile = new File(directory, wowCache.nativeFileNameById(wowCache.fileIdByName(
         OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdOne + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION)));
     Assert.assertTrue(ridBagOneFile.exists());
-
-    final File ridBagTwoFile = new File(directory, wowCache.nativeFileNameById(wowCache.fileIdByName(
-        OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdTwo + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION)));
-    Assert.assertTrue(ridBagTwoFile.exists());
-
-    final File ridBagThreeFile = new File(directory, wowCache.nativeFileNameById(wowCache.fileIdByName(
-        OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdThree + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION)));
-    Assert.assertTrue(ridBagThreeFile.exists());
-
-    final File ridBagFourFile = new File(directory, wowCache.nativeFileNameById(wowCache.fileIdByName(
-        OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdFour + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION)));
-    Assert.assertTrue(ridBagFourFile.exists());
   }
 
   public void testIteratorOverAfterRemove() {
@@ -314,31 +263,6 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     ORidBag highLevelRidBag = new ORidBag();
     testDocument.field("ridBag", highLevelRidBag);
     testDocument.field("realDoc", realDoc);
-
-    final List<ODocument> embeddedList = new ArrayList<ODocument>();
-    ODocument embeddedListDoc = new ODocument();
-    ORidBag embeddedListDocRidBag = new ORidBag();
-    embeddedListDoc.field("ridBag", embeddedListDocRidBag);
-    embeddedListDoc.field("realDoc", realDoc);
-    embeddedList.add(embeddedListDoc);
-
-    Set<ODocument> embeddedSet = new HashSet<ODocument>();
-    ODocument embeddedSetDoc = new ODocument();
-    ORidBag embeddedSetDocRidBag = new ORidBag();
-    embeddedSetDoc.field("ridBag", embeddedSetDocRidBag);
-    embeddedSetDoc.field("realDoc", realDoc);
-    embeddedSet.add(embeddedSetDoc);
-
-    Map<String, ODocument> embeddedMap = new HashMap<String, ODocument>();
-    ODocument embeddedMapDoc = new ODocument();
-    ORidBag embeddedMapDocRidBag = new ORidBag();
-    embeddedMapDoc.field("ridBag", embeddedMapDocRidBag);
-    embeddedMapDoc.field("realDoc", realDoc);
-    embeddedMap.put("k1", embeddedMapDoc);
-
-    testDocument.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
-    testDocument.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
-    testDocument.field("embeddedMap", embeddedMap, OType.EMBEDDEDMAP);
 
     testDocument.save("ridBagDeleteTest");
 
