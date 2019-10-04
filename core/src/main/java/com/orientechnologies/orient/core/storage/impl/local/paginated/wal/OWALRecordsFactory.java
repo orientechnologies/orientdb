@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cel
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddAllLeafEntriesPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddNonLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1InitPO;
@@ -606,6 +607,9 @@ public final class OWALRecordsFactory {
       break;
     case CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_ALL_NON_LEAF_ENTRIES_PO:
       walRecord = new CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO();
+      break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_NON_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeMultiValueV3BucketAddNonLeafEntryPO();
       break;
     default:
       if (idToTypeMap.containsKey(recordId))

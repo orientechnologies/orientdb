@@ -180,4 +180,5 @@ public final class WALRecordTypes {
   public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_INIT_PO                     = 149;
   public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_ALL_LEAF_ENTRIES_PO     = 150;
   public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_ALL_NON_LEAF_ENTRIES_PO = 151;
+  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_NON_LEAF_ENTRY_PO       = 152;
 }

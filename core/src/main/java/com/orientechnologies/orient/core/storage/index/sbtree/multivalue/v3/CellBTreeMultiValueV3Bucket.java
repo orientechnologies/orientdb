@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddAllLeafEntriesPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddNonLeafEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketInitPO;
 
 import java.util.ArrayList;
@@ -919,9 +920,9 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
       final boolean updateNeighbors) {
     final int prevChild = doAddNonLeafEntry(index, serializedKey, leftChild, rightChild, updateNeighbors);
     if (prevChild >= 0) {
-//      addPageOperation(
-//          new CellBTreeMultiValueV2BucketAddNonLeafEntryPO(index, serializedKey, leftChild, rightChild, updateNeighbors,
-//              prevChild));
+      addPageOperation(
+          new CellBTreeMultiValueV3BucketAddNonLeafEntryPO(index, serializedKey, leftChild, rightChild, updateNeighbors,
+              prevChild));
       return true;
     }
     return false;
