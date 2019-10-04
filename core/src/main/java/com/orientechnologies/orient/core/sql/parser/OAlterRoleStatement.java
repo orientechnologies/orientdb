@@ -22,8 +22,8 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
 
   static class Op {
 
-    static int TYPE_ADD = 0;
-    static int TYPE_REMOVE = 1;
+    protected static int TYPE_ADD = 0;
+    protected static int TYPE_REMOVE = 1;
 
     Op(int type, OSecurityResourceSegment resource, OIdentifier policyName) {
       this.type = type;

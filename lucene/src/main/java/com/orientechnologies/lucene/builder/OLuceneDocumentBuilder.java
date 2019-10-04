@@ -26,10 +26,12 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.search.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.orientechnologies.lucene.builder.OLuceneIndexType.createField;
 import static com.orientechnologies.lucene.builder.OLuceneIndexType.createFields;
@@ -52,10 +54,7 @@ public class OLuceneDocumentBuilder {
     return null;
   }
 
-  public Document build(OIndexDefinition definition,
-      Object key,
-      OIdentifiable value,
-      Map<String, Boolean> fieldsToStore,
+  public Document build(OIndexDefinition definition, Object key, OIdentifiable value, Map<String, Boolean> fieldsToStore,
       ODocument metadata) {
 
     Document doc = new Document();
@@ -75,12 +74,12 @@ public class OLuceneDocumentBuilder {
       i++;
       if (val != null) {
 //        doc.add(createField(field, val, Field.Store.YES));
-        createFields(field, val, Field.Store.YES)
-            .forEach(f -> doc.add(f));
+
+        Boolean sorted = isSorted(field, metadata);
+        createFields(field, val, Field.Store.YES, sorted).forEach(f -> doc.add(f));
 
         //for cross class index
-        createFields(definition.getClassName() + "." + field, val, Field.Store.YES)
-            .forEach(f -> doc.add(f));
+        createFields(definition.getClassName() + "." + field, val, Field.Store.YES, sorted).forEach(f -> doc.add(f));
 
       }
     }
@@ -109,5 +108,29 @@ public class OLuceneDocumentBuilder {
 
   protected Field.Store isToStore(String f, Map<String, Boolean> collectionFields) {
     return collectionFields.get(f) ? Field.Store.YES : Field.Store.NO;
+  }
+
+  protected Boolean isSorted(String field, ODocument metadata) {
+
+    if (metadata == null)
+      return true;
+
+    Boolean sorted = true;
+    try {
+
+      Boolean localSorted = metadata.field("*_index_sorted");
+
+      if (localSorted == null) {
+        localSorted = metadata.field(field + "_index_sorted");
+      }
+      if (localSorted != null) {
+        sorted = localSorted;
+      }
+    } catch (Exception e) {
+
+    }
+
+    return sorted;
+
   }
 }

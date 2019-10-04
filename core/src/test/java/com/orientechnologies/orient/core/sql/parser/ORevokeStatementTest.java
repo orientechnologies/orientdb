@@ -14,6 +14,8 @@ public class ORevokeStatementTest extends OParserTestAbstract {
     checkRightSyntax("revoke EXECUTE on database.class.* from admin");
     checkRightSyntax("revoke execute on database.class.* from admin");
 
+    checkRightSyntax("revoke POLICY on database.class.* from admin");
+
 
     checkWrongSyntax("revoke Foo on database.class.Person from admin");
   }

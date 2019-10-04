@@ -74,6 +74,21 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     addPageOperation(new CellBTreeMultiValueV2BucketInitPO(isLeaf));
   }
 
+  public void switchBucketType() {
+    if (!isEmpty()) {
+      throw new IllegalStateException("Type of bucket can be changed only bucket if bucket is empty");
+    }
+
+    final boolean isLeaf = isLeaf();
+    if (isLeaf) {
+      setByteValue(IS_LEAF_OFFSET, (byte) 0);
+    } else {
+      setByteValue(IS_LEAF_OFFSET, (byte) 1);
+    }
+
+    addPageOperation(new CellBTreeMultiValueV2BucketSwitchBucketTypePO());
+  }
+
   boolean isEmpty() {
     return size() == 0;
   }
@@ -844,7 +859,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
   public boolean addNonLeafEntry(final int index, final byte[] serializedKey, final int leftChild, final int rightChild,
       final boolean updateNeighbors) {
     final int prevChild = doAddNonLeafEntry(index, serializedKey, leftChild, rightChild, updateNeighbors);
-    if (prevChild >= 0) {
+    if (prevChild >= -1) {
       addPageOperation(
           new CellBTreeMultiValueV2BucketAddNonLeafEntryPO(index, serializedKey, leftChild, rightChild, updateNeighbors,
               prevChild));
@@ -861,7 +876,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
     int size = size();
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
     if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
-      return -1;
+      return -2;
     }
 
     if (index <= size - 1) {

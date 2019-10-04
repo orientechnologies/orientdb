@@ -82,4 +82,6 @@ public interface ORidBagDelegate
   OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> getTracker();
 
   void setTracker(OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker);
+
+  void setTransactionModified(boolean transactionModified);
 }

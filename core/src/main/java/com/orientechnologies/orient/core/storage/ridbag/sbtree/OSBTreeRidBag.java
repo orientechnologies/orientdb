@@ -1067,6 +1067,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return (RET) this;
   }
 
+  public void setTransactionModified(boolean transactionDirty) {
+    this.transactionDirty = transactionDirty;
+  }
+
   @Override
   public void setDirtyNoChanged() {
     if (owner != null)
@@ -1089,4 +1093,5 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> getTransactionTimeLine() {
     return this.tracker.getTransactionTimeLine();
   }
+
 }
