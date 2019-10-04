@@ -12,7 +12,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2;
-import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v3.OCellBTreeMultiValueV3;
+import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v3.CellBTreeMultiValueV3;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,7 +39,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       this.sbTree = new CellBTreeMultiValueV2<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
           storage);
     } else if (version == 3) {
-      this.sbTree = new OCellBTreeMultiValueV3<>(id, name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
+      this.sbTree = new CellBTreeMultiValueV3<>(id, name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
           storage);
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
