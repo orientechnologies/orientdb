@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddAllLeafEntriesPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketInitPO;
 
 import java.util.ArrayList;
@@ -529,7 +530,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
     return new LeafEntry(key, mId, values, entriesCount);
   }
 
-  NonLeafEntry getNonLeafEntry(final int entryIndex, final OBinarySerializer<K> keySerializer) {
+  public NonLeafEntry getNonLeafEntry(final int entryIndex, final OBinarySerializer<K> keySerializer) {
     assert !isLeaf();
 
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
@@ -625,12 +626,11 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
     if (isLeaf) {
       //noinspection unchecked
       addPageOperation(new CellBTreeMultiValueV3BucketAddAllLeafEntriesPO(currentSize, (List<LeafEntry>) entries, keySerializer));
-    } //else {
-//      //noinspection unchecked
-//      addPageOperation(
-//          new CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO(currentSize, (List<NonLeafEntry>) entries, keySerializer,
-//              isEncrypted));
-//    }
+    } else {
+      //noinspection unchecked
+      addPageOperation(
+          new CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO(currentSize, (List<NonLeafEntry>) entries, keySerializer));
+    }
   }
 
   private int doAddNonLeafEntry(int index, byte[] serializedKey, int leftChild, int rightChild, boolean updateNeighbors) {

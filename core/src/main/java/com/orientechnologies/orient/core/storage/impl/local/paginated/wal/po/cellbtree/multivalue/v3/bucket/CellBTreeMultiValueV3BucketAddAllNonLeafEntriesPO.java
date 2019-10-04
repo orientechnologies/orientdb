@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -7,35 +7,32 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
+import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v3.CellBTreeMultiValueV3Bucket;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO extends PageOperationRecord {
+public final class CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO extends PageOperationRecord {
   private int                                            prevSize;
-  private List<CellBTreeMultiValueV2Bucket.NonLeafEntry> nonLeafEntries;
+  private List<CellBTreeMultiValueV3Bucket.NonLeafEntry> nonLeafEntries;
   private OBinarySerializer                              keySerializer;
-  private boolean                                        isEncrypted;
 
-  public CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO() {
+  public CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO() {
   }
 
-  public CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO(final int prevSize,
-      final List<CellBTreeMultiValueV2Bucket.NonLeafEntry> nonLeafEntries, final OBinarySerializer keySerializer,
-      final boolean isEncrypted) {
+  public CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO(final int prevSize,
+      final List<CellBTreeMultiValueV3Bucket.NonLeafEntry> nonLeafEntries, final OBinarySerializer keySerializer) {
     this.prevSize = prevSize;
     this.nonLeafEntries = nonLeafEntries;
     this.keySerializer = keySerializer;
-    this.isEncrypted = isEncrypted;
   }
 
   public int getPrevSize() {
     return prevSize;
   }
 
-  public List<CellBTreeMultiValueV2Bucket.NonLeafEntry> getNonLeafEntries() {
+  public List<CellBTreeMultiValueV3Bucket.NonLeafEntry> getNonLeafEntries() {
     return nonLeafEntries;
   }
 
@@ -43,33 +40,29 @@ public final class CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO extends Pag
     return keySerializer;
   }
 
-  public boolean isEncrypted() {
-    return isEncrypted;
-  }
-
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final CellBTreeMultiValueV2Bucket bucket = new CellBTreeMultiValueV2Bucket(cacheEntry);
+    final CellBTreeMultiValueV3Bucket bucket = new CellBTreeMultiValueV3Bucket(cacheEntry);
     //noinspection unchecked
-    bucket.addAll(nonLeafEntries, keySerializer, isEncrypted);
+    bucket.addAll(nonLeafEntries, keySerializer);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final CellBTreeMultiValueV2Bucket bucket = new CellBTreeMultiValueV2Bucket(cacheEntry);
+    final CellBTreeMultiValueV3Bucket bucket = new CellBTreeMultiValueV3Bucket(cacheEntry);
     //noinspection unchecked
-    bucket.shrink(prevSize, keySerializer, isEncrypted);
+    bucket.shrink(prevSize, keySerializer);
   }
 
   @Override
   public int getId() {
-    return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V2_ADD_ALL_NON_LEAF_ENTRIES_PO;
+    return WALRecordTypes.CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_ALL_NON_LEAF_ENTRIES_PO;
   }
 
   @Override
   public int serializedSize() {
-    int size = 2 * OIntegerSerializer.INT_SIZE + 2 * OByteSerializer.BYTE_SIZE;
-    for (CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry : nonLeafEntries) {
+    int size = 2 * OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
+    for (CellBTreeMultiValueV3Bucket.NonLeafEntry nonLeafEntry : nonLeafEntries) {
       size += 3 * OIntegerSerializer.INT_SIZE + nonLeafEntry.key.length;
     }
 
@@ -82,11 +75,10 @@ public final class CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO extends Pag
 
     buffer.putInt(prevSize);
     buffer.put(keySerializer.getId());
-    buffer.put(isEncrypted ? (byte) 1 : 0);
 
     buffer.putInt(nonLeafEntries.size());
 
-    for (final CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry : nonLeafEntries) {
+    for (final CellBTreeMultiValueV3Bucket.NonLeafEntry nonLeafEntry : nonLeafEntries) {
       buffer.putInt(nonLeafEntry.leftChild);
       buffer.putInt(nonLeafEntry.rightChild);
       buffer.putInt(nonLeafEntry.key.length);
@@ -100,7 +92,6 @@ public final class CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO extends Pag
 
     prevSize = buffer.getInt();
     keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(buffer.get());
-    isEncrypted = buffer.get() > 0;
 
     final int entriesSize = buffer.getInt();
     nonLeafEntries = new ArrayList<>(entriesSize);
@@ -113,7 +104,7 @@ public final class CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPO extends Pag
       final byte[] key = new byte[keyLen];
       buffer.get(key);
 
-      final CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry = new CellBTreeMultiValueV2Bucket.NonLeafEntry(key, leftChild,
+      final CellBTreeMultiValueV3Bucket.NonLeafEntry nonLeafEntry = new CellBTreeMultiValueV3Bucket.NonLeafEntry(key, leftChild,
           rightChild);
       nonLeafEntries.add(nonLeafEntry);
     }
