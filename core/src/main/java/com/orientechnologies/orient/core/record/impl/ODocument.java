@@ -2963,7 +2963,7 @@ public class ODocument extends ORecordAbstract
         OTrackedMap<Object> newMap = new OTrackedMap<>(parent);
         fillTrackedMap(newMap, newMap, (Map<Object, Object>) value);
         value = newMap;
-      } else if (cur instanceof ORidBag) {
+      } else if (value instanceof ORidBag) {
         throw new ODatabaseException("RidBag are supported only at document root");
       }
       dest.put(cur.getKey(), value);
