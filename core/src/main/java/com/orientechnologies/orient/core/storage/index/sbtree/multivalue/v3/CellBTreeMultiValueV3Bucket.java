@@ -860,7 +860,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
 
     setIntValue(entryPosition + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, entriesCount - 1);
 
-    //addPageOperation(new CellBTreeMultiValueV2BucketDecrementEntriesCountPO(entryIndex));
+    addPageOperation(new CellBTreeMultiValueV3BucketDecrementEntriesCountPO(entryIndex));
     return entriesCount == 1;
   }
 
