@@ -611,6 +611,9 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_MULTI_VALUE_V3_APPEND_NEW_LEAF_ENTRY_PO:
       walRecord = new CellBTreeMultiValueV3BucketAppendNewLeafEntryPO();
       break;
+    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_CREATE_MAIN_LEAF_ENTRY_PO:
+      walRecord = new CellBTreeMultiValueV3BucketCreateMainLeafEntryPO();
+      break;
     default:
       if (idToTypeMap.containsKey(recordId))
         try {

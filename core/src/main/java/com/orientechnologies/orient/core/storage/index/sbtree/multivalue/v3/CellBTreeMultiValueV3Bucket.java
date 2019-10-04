@@ -316,7 +316,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
     return -1;
   }
 
-  void removeMainLeafEntry(final int entryIndex, final int keySize) {
+  public void removeMainLeafEntry(final int entryIndex, final int keySize) {
     final int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
     final int entriesCount = getIntValue(entryPosition + ENTRIES_COUNT_OFFSET);
     final long mId = getLongValue(entryPosition + M_ID_OFFSET);
@@ -796,7 +796,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
       return false;
     }
 
-    //addPageOperation(new CellBTreeMultiValueV2BucketCreateMainLeafEntryPO(index, serializedKey, value, mId));
+    addPageOperation(new CellBTreeMultiValueV3BucketCreateMainLeafEntryPO(index, serializedKey, value, mId));
     return true;
   }
 
