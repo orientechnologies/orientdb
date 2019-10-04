@@ -26,10 +26,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddAllLeafEntriesPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketAddNonLeafEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.CellBTreeMultiValueV3BucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -845,7 +842,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
 
     setIntValue(entryPosition + OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE, entriesCount + 1);
 
-    //addPageOperation(new CellBTreeMultiValueV2BucketAppendNewLeafEntryPO(index, value));
+    addPageOperation(new CellBTreeMultiValueV3BucketAppendNewLeafEntryPO(index, value));
     return -1;
   }
 
