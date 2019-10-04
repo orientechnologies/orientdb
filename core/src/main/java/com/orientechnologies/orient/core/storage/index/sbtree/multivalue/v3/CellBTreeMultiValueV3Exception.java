@@ -26,14 +26,14 @@ import com.orientechnologies.orient.core.exception.ODurableComponentException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/30/13
  */
-public final class OCellBTreeMultiValueException extends ODurableComponentException {
+public final class CellBTreeMultiValueV3Exception extends ODurableComponentException {
 
   @SuppressWarnings("unused")
-  public OCellBTreeMultiValueException(final OCellBTreeMultiValueException exception) {
+  public CellBTreeMultiValueV3Exception(final CellBTreeMultiValueV3Exception exception) {
     super(exception);
   }
 
-  OCellBTreeMultiValueException(final String message, final OCellBTreeMultiValueV3 component) {
+  CellBTreeMultiValueV3Exception(final String message, final CellBTreeMultiValueV3 component) {
     super(message, component);
   }
 }
