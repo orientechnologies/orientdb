@@ -296,7 +296,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
 
   WAL_ALLOW_DIRECT_IO("storage.wal.allowDirectIO",
-      "Allows usage of direct IO API on Linux OS to avoid keeping of WAL data in " + "OS buffer", Boolean.class, true),
+      "Allows usage of direct IO API on Linux OS to avoid keeping of WAL data in OS buffer", Boolean.class, false),
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
@@ -730,7 +730,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 
-  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache. Zero means cache disabled", Integer.class, 100),
+  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache. Zero means cache disabled",
+      Integer.class, 100),
 
   // GRAPH
   SQL_GRAPH_CONSISTENCY_MODE("sql.graphConsistencyMode",
@@ -1065,8 +1066,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
       Boolean.class, Boolean.FALSE),
 
-  @Deprecated TX_USE_LOG("tx.useLog",
-      "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class, true),
+  @Deprecated TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash",
+      Boolean.class, true),
 
   @Deprecated INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
@@ -1175,7 +1176,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
    * @param iKey Key to find. It's case insensitive.
-   *
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {

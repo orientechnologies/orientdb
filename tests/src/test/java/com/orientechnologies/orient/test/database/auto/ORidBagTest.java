@@ -1640,44 +1640,6 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     testDocument.field("externalDoc", externalDoc);
     testDocument.save(database.getClusterNameById(database.getDefaultClusterId()));
 
-    final List<ODocument> embeddedList = new ArrayList<ODocument>();
-    ODocument embeddedListDoc = new ODocument();
-    ORidBag embeddedListDocRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++)
-      embeddedListDocRidBag.add(new ODocument().field("type", "embeddedListDocRidBag"+i).save(database.getClusterNameById(database.getDefaultClusterId())));
-
-    embeddedListDoc.field("type", "embeddedListDoc");
-    embeddedListDoc.field("ridBag", embeddedListDocRidBag);
-    embeddedListDoc.field("externalDoc", externalDoc);
-    embeddedListDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
-    embeddedList.add(embeddedListDoc);
-
-    Set<ODocument> embeddedSet = new HashSet<ODocument>();
-    ODocument embeddedSetDoc = new ODocument();
-    ORidBag embeddedSetDocRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++)
-      embeddedSetDocRidBag.add(new ODocument().field("type", "embeddedSetDocRidBag"+i).save(database.getClusterNameById(database.getDefaultClusterId())));
-
-    embeddedSetDoc.field("ridBag", embeddedSetDocRidBag);
-    embeddedSetDoc.field("externalDoc", externalDoc);
-    embeddedSetDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
-    embeddedSet.add(embeddedSetDoc);
-
-    Map<String, ODocument> embeddedMap = new HashMap<String, ODocument>();
-    ODocument embeddedMapDoc = new ODocument();
-    ORidBag embeddedMapDocRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++)
-      embeddedMapDocRidBag.add(new ODocument().save(database.getClusterNameById(database.getDefaultClusterId())));
-    embeddedMapDoc.field("ridBag", embeddedMapDocRidBag);
-    embeddedMapDoc.field("externalDoc", externalDoc);
-    embeddedMapDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
-    embeddedMap.put("k1", embeddedMapDoc);
-
-
-    testDocument.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
-    testDocument.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
-    testDocument.field("embeddedMap", embeddedMap, OType.EMBEDDEDMAP);
-
     testDocument.save(database.getClusterNameById(database.getDefaultClusterId()));
     testDocument.reload();
 

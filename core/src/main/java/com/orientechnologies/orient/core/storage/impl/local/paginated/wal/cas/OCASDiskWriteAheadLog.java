@@ -63,7 +63,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   private static final ThreadLocal<Cipher> CIPHER = ThreadLocal.withInitial(OCASDiskWriteAheadLog::getCipherInstance);
 
-  private static final XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
+  private static final XXHashFactory xxHashFactory = XXHashFactory.fastestJavaInstance();
   private static final int           XX_SEED       = 0x9747b28c;
 
   private static final int MASTER_RECORD_SIZE = 20;
@@ -666,14 +666,33 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
               chSize = Math.min(chSize, written.position);
             }
 
-            while (pageIndex * pageSize < chSize) {
-              file.position(pageIndex * pageSize);
+            long filePosition = file.position();
 
-              final OPointer ptr = allocator.allocate(pageSize, blockSize, false);
+            while (pageIndex * pageSize < chSize) {
+              long expectedFilePosition = pageIndex * pageSize;
+              if (filePosition != expectedFilePosition) {
+                file.position(expectedFilePosition);
+                filePosition = expectedFilePosition;
+              }
+
+              final OPointer ptr;
+              if (allowDirectIO) {
+                ptr = allocator.allocate(pageSize, blockSize, false);
+              } else {
+                ptr = null;
+              }
               try {
-                final ByteBuffer buffer = ptr.getNativeByteBuffer().order(ByteOrder.nativeOrder());
+                final ByteBuffer buffer;
+                if (ptr != null) {
+                  buffer = ptr.getNativeByteBuffer().order(ByteOrder.nativeOrder());
+                } else {
+                  buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
+                }
+
                 assert buffer.position() == 0;
                 file.readBuffer(buffer);
+                filePosition += buffer.position();
+
                 pagesRead++;
 
                 if (checkPageIsBrokenAndDecrypt(buffer, segment, pageIndex, pageSize)) {
@@ -738,7 +757,9 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                   }
                 }
               } finally {
-                allocator.deallocate(ptr);
+                if (ptr != null) {
+                  allocator.deallocate(ptr);
+                }
               }
 
               pageIndex++;
