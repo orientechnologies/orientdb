@@ -738,7 +738,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
 
       setIntValue(SIZE_OFFSET, newSize);
 
-      //addPageOperation(new CellBTreeMultiValueV2BucketShrinkNonLeafEntriesPO(newSize, entriesToRemove, keySerializer, isEncrypted));
+      addPageOperation(new CellBTreeMultiValueV3BucketShrinkNonLeafEntriesPO(newSize, entriesToRemove, keySerializer));
     }
   }
 
