@@ -27,13 +27,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.nullbucket.CellBTreeMultiValueV3NullBucketAddValuePO;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
@@ -47,7 +44,7 @@ import java.util.Map;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/15/14
  */
-final class CellBTreeMultiValueV3NullBucket extends ODurablePage {
+public final class CellBTreeMultiValueV3NullBucket extends ODurablePage {
   private static final int EMBEDDED_RIDS_BOUNDARY = 64;
 
   private static final int RID_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
@@ -57,21 +54,19 @@ final class CellBTreeMultiValueV3NullBucket extends ODurablePage {
   private static final int RIDS_SIZE_OFFSET          = EMBEDDED_RIDS_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int RIDS_OFFSET               = RIDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private final OSBTreeV2<MultiValueEntry, Byte> multiContainer;
-
-  CellBTreeMultiValueV3NullBucket(final OCacheEntry cacheEntry, final OSBTreeV2<MultiValueEntry, Byte> multiContainer) {
+  public CellBTreeMultiValueV3NullBucket(final OCacheEntry cacheEntry) {
     super(cacheEntry);
-
-    this.multiContainer = multiContainer;
   }
 
-  protected void init(final long mId) {
+  public void init(final long mId) {
     setLongValue(M_ID_OFFSET, mId);
     setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) 0);
     setIntValue(RIDS_SIZE_OFFSET, 0);
+
+    //addPageOperation(new CellBTreeMultiValueV2NullBucketInitPO(mId));
   }
 
-  void addValue(final ORID rid) throws IOException {
+  public long addValue(final ORID rid) {
     final int embeddedSize = getByteValue(EMBEDDED_RIDS_SIZE_OFFSET);
 
     if (embeddedSize < EMBEDDED_RIDS_BOUNDARY) {
@@ -81,14 +76,28 @@ final class CellBTreeMultiValueV3NullBucket extends ODurablePage {
       setLongValue(position + OShortSerializer.SHORT_SIZE, rid.getClusterPosition());
 
       setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) (embeddedSize + 1));
+
+      final int size = getIntValue(RIDS_SIZE_OFFSET);
+      setIntValue(RIDS_SIZE_OFFSET, size + 1);
+
+      addPageOperation(new CellBTreeMultiValueV3NullBucketAddValuePO(rid));
+      return -1;
     } else {
-      final long mId = getLongValue(M_ID_OFFSET);
-      multiContainer.put(new MultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()), (byte) 1);
+      return getLongValue(M_ID_OFFSET);
     }
+  }
 
+  public void incrementSize() {
+    setIntValue(RIDS_SIZE_OFFSET, getIntValue(RIDS_SIZE_OFFSET) + 1);
+    //addPageOperation(new CellBTreeMultiValueV2NullBucketIncrementSizePO());
+  }
+
+  public void decrementSize() {
     final int size = getIntValue(RIDS_SIZE_OFFSET);
-    setIntValue(RIDS_SIZE_OFFSET, size + 1);
+    assert size >= 1;
 
+    setIntValue(RIDS_SIZE_OFFSET, size - 1);
+    //addPageOperation(new CellBTreeMultiValueV2NullBucketDecrementSizePO());
   }
 
   public List<ORID> getValues() {
@@ -105,31 +114,18 @@ final class CellBTreeMultiValueV3NullBucket extends ODurablePage {
       rids.add(new ORecordId(clusterId, clusterPosition));
     }
 
-    if (size > embeddedSize) {
-      final long mId = getLongValue(M_ID_OFFSET);
-
-      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
-          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
-
-      Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
-      while (mapEntry != null) {
-        final MultiValueEntry entry = mapEntry.getKey();
-        rids.add(new ORecordId(entry.clusterId, entry.clusterPosition));
-
-        mapEntry = cursor.next(-1);
-      }
-    }
-
-    assert rids.size() == size;
-
     return rids;
+  }
+
+  public long getMid() {
+    return getLongValue(M_ID_OFFSET);
   }
 
   public int getSize() {
     return getIntValue(RIDS_SIZE_OFFSET);
   }
 
-  boolean removeValue(final ORID rid) throws IOException {
+  public int removeValue(final ORID rid) {
     final int size = getIntValue(RIDS_SIZE_OFFSET);
 
     final int embeddedSize = getByteValue(EMBEDDED_RIDS_SIZE_OFFSET);
@@ -146,58 +142,17 @@ final class CellBTreeMultiValueV3NullBucket extends ODurablePage {
         moveData(position + RID_SIZE, position, end - (position + RID_SIZE));
         setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) (embeddedSize - 1));
         setIntValue(RIDS_SIZE_OFFSET, size - 1);
-        return true;
+
+        //addPageOperation(new CellBTreeMultiValueV2NullBucketRemoveValuePO(new ORecordId(clusterId, clusterPosition)));
+        return 1;
       }
     }
 
-    if (size > embeddedSize) {
-      final long mId = getLongValue(M_ID_OFFSET);
-      final Byte result = multiContainer.remove(new MultiValueEntry(mId, rid.getClusterId(), rid.getClusterPosition()));
-      if (result != null) {
-        setIntValue(RIDS_SIZE_OFFSET, size - 1);
-        return true;
-      }
+    if (embeddedSize <= size) {
+      return 0;
     }
 
-    return false;
+    return -1;
   }
 
-  int remove() throws IOException {
-    final long mId = getLongValue(M_ID_OFFSET);
-    final int embeddedSize = getByteValue(EMBEDDED_RIDS_SIZE_OFFSET);
-    final int size = getIntValue(RIDS_SIZE_OFFSET);
-
-    if (size > embeddedSize) {
-      final List<MultiValueEntry> entriesToRemove = new ArrayList<>(size - embeddedSize);
-
-      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
-          .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true, new MultiValueEntry(mId + 1, 0, 0), false, true);
-
-      Map.Entry<MultiValueEntry, Byte> mapEntry = cursor.next(-1);
-      while (mapEntry != null) {
-        final MultiValueEntry entry = mapEntry.getKey();
-        entriesToRemove.add(entry);
-
-        mapEntry = cursor.next(-1);
-      }
-
-      for (final MultiValueEntry entry : entriesToRemove) {
-        multiContainer.remove(entry);
-      }
-    }
-
-    setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) 0);
-    setIntValue(RIDS_SIZE_OFFSET, 0);
-
-    return size;
-  }
-
-  void clear() {
-    setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) 0);
-    setIntValue(RIDS_SIZE_OFFSET, 0);
-  }
-
-  boolean isEmpty() {
-    return getIntValue(RIDS_SIZE_OFFSET) == 0;
-  }
 }
