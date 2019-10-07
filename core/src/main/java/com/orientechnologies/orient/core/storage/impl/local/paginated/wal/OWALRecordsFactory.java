@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cel
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.entrypoint.CellBTreeMultiValueV3EntryPointInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.entrypoint.CellBTreeMultiValueV3EntryPointSetPagesSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.entrypoint.CellBTreeMultiValueV3EntryPointSetTreeSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1InitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1SetPagesSizePO;
@@ -648,6 +649,9 @@ public final class OWALRecordsFactory {
       break;
     case CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V3_SET_PAGES_SIZE_PO:
       walRecord = new CellBTreeMultiValueV3EntryPointSetPagesSizePO();
+      break;
+    case CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V3_SET_TREE_SIZE_PO:
+      walRecord = new CellBTreeMultiValueV3EntryPointSetTreeSizePO();
       break;
     default:
       if (idToTypeMap.containsKey(recordId))
