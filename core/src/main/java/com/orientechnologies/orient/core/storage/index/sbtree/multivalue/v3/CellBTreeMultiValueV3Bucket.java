@@ -334,7 +334,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
 
     removeMainLeafEntry(entryIndex, entryPosition, keySize);
 
-    //addPageOperation(new CellBTreeMultiValueV2BucketRemoveMainLeafEntryPO(entryIndex, key, value, mId));
+    addPageOperation(new CellBTreeMultiValueV3BucketRemoveMainLeafEntryPO(entryIndex, key, value, mId));
   }
 
   boolean hasExternalEntries(final int entryIndex) {
