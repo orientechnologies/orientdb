@@ -137,7 +137,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
         setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
         setIntValue(entriesCountPosition, entriesCount - 1);
 
-        //addPageOperation(new CellBTreeMultiValueV2BucketRemoveLeafEntryPO(entryIndex, value));
+        addPageOperation(new CellBTreeMultiValueV3BucketRemoveLeafEntryPO(entryIndex, value));
         return entriesCount - 1;
       }
     } else {
@@ -203,7 +203,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
         setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
         setIntValue(entriesCountPosition, entriesCount - 1);
 
-        //addPageOperation(new CellBTreeMultiValueV2BucketRemoveLeafEntryPO(entryIndex, value));
+        addPageOperation(new CellBTreeMultiValueV3BucketRemoveLeafEntryPO(entryIndex, value));
         return entriesCount - 1;
       } else {
         int prevItem = entryPosition;
@@ -255,7 +255,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
               setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
               setIntValue(entriesCountPosition, entriesCount - 1);
 
-              //addPageOperation(new CellBTreeMultiValueV2BucketRemoveLeafEntryPO(entryIndex, value));
+              addPageOperation(new CellBTreeMultiValueV3BucketRemoveLeafEntryPO(entryIndex, value));
               return entriesCount - 1;
             }
           } else {
@@ -301,7 +301,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
                 setByteValue(embeddedEntriesCountPosition, (byte) (embeddedEntriesCount - 1));
                 setIntValue(entriesCountPosition, entriesCount - 1);
 
-                //addPageOperation(new CellBTreeMultiValueV2BucketRemoveLeafEntryPO(entryIndex, value));
+                addPageOperation(new CellBTreeMultiValueV3BucketRemoveLeafEntryPO(entryIndex, value));
                 return entriesCount - 1;
               }
             }
