@@ -452,7 +452,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
       }
     }
 
-    //addPageOperation(new CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO(entryIndex, key, leftChild, rightChild, prevChild));
+    addPageOperation(new CellBTreeMultiValueV3BucketRemoveNonLeafEntryPO(entryIndex, key, leftChild, rightChild, prevChild));
   }
 
   private void updateAllLinkedListReferences(final int firstItem, final int boundary, final int diffSize) {
