@@ -1368,7 +1368,10 @@ public final class CellBTreeMultiValueV3<K> extends ODurableComponent implements
     }
 
     bucketToSplit = new CellBTreeMultiValueV3Bucket<>(bucketEntry);
-    bucketToSplit.init(false);
+    bucketToSplit.shrink(0, keySerializer);
+    if (splitLeaf) {
+      bucketToSplit.switchBucketType();
+    }
 
     bucketToSplit
         .addNonLeafEntry(0, serializedSeparationKey, leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(), true);
