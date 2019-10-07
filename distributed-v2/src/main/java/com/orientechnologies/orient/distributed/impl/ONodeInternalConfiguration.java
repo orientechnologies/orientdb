@@ -8,18 +8,12 @@ public class ONodeInternalConfiguration {
   private ONodeIdentity nodeIdentity;
   private String        connectionUsername;
   private String        connectionPassword;
-  private OLogId        lastLogId;
 
-  public ONodeInternalConfiguration(OLogId lastLogId, ONodeIdentity nodeIdentity, String connectionUsername,
+  public ONodeInternalConfiguration(ONodeIdentity nodeIdentity, String connectionUsername,
       String connectionPassword) {
-    this.lastLogId = lastLogId;
     this.nodeIdentity = nodeIdentity;
     this.connectionUsername = connectionUsername;
     this.connectionPassword = connectionPassword;
-  }
-
-  public OLogId getLastLogId() {
-    return lastLogId;
   }
 
   public ONodeIdentity getNodeIdentity() {

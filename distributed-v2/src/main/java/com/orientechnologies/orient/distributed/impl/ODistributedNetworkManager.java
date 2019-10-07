@@ -83,7 +83,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   public void startup() {
     //TODO different strategies for different infrastructures, eg. AWS
 
-    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, orientDB);
+    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, orientDB, orientDB.getStructuralDistributedContext().getOpLog());
     discoveryManager.start();
   }
 
