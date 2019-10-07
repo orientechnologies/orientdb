@@ -497,6 +497,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void checkReadyForHandleRequests() {
+    structuralDistributedContext.waitApplyLastRequest();
     try {
       if (!distributedReady) {
         this.wait(MINUTES.toMillis(1));
@@ -530,6 +531,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void close() {
+    if (structuralDistributedContext != null) {
+      structuralDistributedContext.waitApplyLastRequest();
+    }
     if (networkManager != null) {
       this.networkManager.shutdown();
     }

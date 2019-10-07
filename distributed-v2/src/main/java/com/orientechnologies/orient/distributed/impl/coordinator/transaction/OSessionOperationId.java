@@ -58,4 +58,12 @@ public class OSessionOperationId {
     }
     return new OSessionOperationId(this.nodeId, next);
   }
+
+  public long getSequential() {
+    return sequential;
+  }
+
+  public String getNodeId() {
+    return nodeId;
+  }
 }

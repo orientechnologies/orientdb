@@ -6,10 +6,12 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMem
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -18,6 +20,7 @@ public class OStructuralFollower implements AutoCloseable {
   private ExecutorService             executor;
   private OrientDBDistributed         orientDB;
   private Map<OLogId, ORaftOperation> pending = new HashMap<>();
+  private OSessionOperationIdWaiter   waiter  = new OSessionOperationIdWaiter();
 
   public OStructuralFollower(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed orientDB) {
     this.operationLog = operationLog;
@@ -39,7 +42,18 @@ public class OStructuralFollower implements AutoCloseable {
       //TODO: The pending should be a queue we cannot really apply things in random order
       ORaftOperation op = pending.get(logId);
       op.apply(orientDB);
+      op.getRequesterSequential().ifPresent(this::notifyDone);
     });
+  }
+
+  private void notifyDone(OSessionOperationId requesterSequential) {
+    if (requesterSequential.getNodeId().equals(orientDB.getNodeIdentity().getId())) {
+      waiter.notify(requesterSequential);
+    }
+  }
+
+  public void waitForExecution(OSessionOperationId id) {
+    waiter.waitIfNeeded(id);
   }
 
   @Override

@@ -6,6 +6,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Optional;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DROP_DATABASE_REQUEST;
 
@@ -44,5 +45,10 @@ public class ODropDatabase implements ORaftOperation {
     this.operationId = new OSessionOperationId();
     this.operationId.deserialize(input);
     this.database = input.readUTF();
+  }
+
+  @Override
+  public Optional<OSessionOperationId> getRequesterSequential() {
+    return Optional.of(operationId);
   }
 }
