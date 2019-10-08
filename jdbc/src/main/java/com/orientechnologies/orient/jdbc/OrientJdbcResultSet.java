@@ -636,6 +636,7 @@ public class OrientJdbcResultSet implements ResultSet {
   public Object getObject(String columnLabel) throws SQLException {
 
     if ("@rid".equals(columnLabel) || "rid".equals(columnLabel)) {
+      lastReadWasNull = false;
       return result.getIdentity().toString();
     }
 
@@ -739,11 +740,12 @@ public class OrientJdbcResultSet implements ResultSet {
   public String getString(String columnLabel) throws SQLException {
 
     if ("@rid".equals(columnLabel) || "rid".equals(columnLabel)) {
+      lastReadWasNull = false;
       return result.toElement().getIdentity().toString();
     }
 
     if ("@class".equals(columnLabel) || "class".equals(columnLabel)) {
-
+      lastReadWasNull = false;
       return result.toElement().getSchemaType().map(c -> c.getName()).orElse("NOCLASS");
     }
 
