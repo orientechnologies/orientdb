@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.nullbucket.CellBTreeMultiValueV3NullBucketAddValuePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.nullbucket.CellBTreeMultiValueV3NullBucketDecrementSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.nullbucket.CellBTreeMultiValueV3NullBucketIncrementSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.nullbucket.CellBTreeMultiValueV3NullBucketInitPO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +66,7 @@ public final class CellBTreeMultiValueV3NullBucket extends ODurablePage {
     setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) 0);
     setIntValue(RIDS_SIZE_OFFSET, 0);
 
-    //addPageOperation(new CellBTreeMultiValueV2NullBucketInitPO(mId));
+    addPageOperation(new CellBTreeMultiValueV3NullBucketInitPO(mId));
   }
 
   public long addValue(final ORID rid) {
