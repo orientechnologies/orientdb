@@ -91,8 +91,19 @@ public class OStructuralDistributedContext {
     return last;
   }
 
+  private synchronized OSessionOperationId getLastOpId() {
+    return last;
+  }
+
   public Future<OStructuralSubmitResponse> forward(OStructuralSubmitRequest request) {
     return getSubmitContext().send(nextOpId(), request);
+  }
+
+  public void waitApplyLastRequest() {
+    OSessionOperationId lastOpId = getLastOpId();
+    if (lastOpId != null) {
+      follower.waitForExecution(lastOpId);
+    }
   }
 
   public OStructuralSubmitResponse forwardAndWait(OStructuralSubmitRequest request) {
