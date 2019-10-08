@@ -103,9 +103,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       server.addTemporaryUser(userName, "" + new SecureRandom().nextLong(), "*");
       user = server.getUser(userName);
     }
-    OLogId lastLogId = structuralDistributedContext.getOpLog().lastPersistentLog();
 
-    return new ONodeInternalConfiguration(lastLogId, getNodeIdentity(), userName, user.password);
+    return new ONodeInternalConfiguration(getNodeIdentity(), userName, user.password);
   }
 
   @Override

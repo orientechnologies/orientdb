@@ -4,7 +4,15 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MockOperationLog implements OOperationLog {
-  private AtomicLong sequence = new AtomicLong(0);
+  private AtomicLong sequence;
+
+  public MockOperationLog() {
+    this(0);
+  }
+
+  public MockOperationLog(long startFrom) {
+    sequence = new AtomicLong(0);
+  }
 
   @Override
   public OLogId log(OLogRequest request) {
