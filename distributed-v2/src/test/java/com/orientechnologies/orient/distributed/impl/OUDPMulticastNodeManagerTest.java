@@ -86,6 +86,7 @@ public class OUDPMulticastNodeManagerTest {
     return new ONodeInternalConfiguration(null, new ONodeIdentity(UUID.randomUUID().toString(), nodeName), "", "");
   }
 
+  @Ignore
   @Test
   public void test() throws InterruptedException {
     MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 1);
@@ -121,6 +122,7 @@ public class OUDPMulticastNodeManagerTest {
 
   }
 
+  @Ignore
   @Test
   public void testEncrypted() throws InterruptedException {
     MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 1);
@@ -212,6 +214,7 @@ public class OUDPMulticastNodeManagerTest {
   }
 
   @Test
+  @Ignore
   public void testMasterElectionWithTwo() throws InterruptedException {
     MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 0);
     MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(1, 0);
