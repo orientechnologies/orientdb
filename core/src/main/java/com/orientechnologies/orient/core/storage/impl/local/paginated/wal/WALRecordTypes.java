@@ -202,4 +202,5 @@ public final class WALRecordTypes {
 
   public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_ADD_VALUE_PO         = 169;
   public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_DECREMENT_SIZE_PO    = 170;
+  public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_INCREMENT_SIZE_PO    = 171;
 }
