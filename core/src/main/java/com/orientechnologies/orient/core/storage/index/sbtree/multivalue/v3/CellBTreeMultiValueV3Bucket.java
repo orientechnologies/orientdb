@@ -654,7 +654,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
     int size = size();
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
     if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
-      return -1;
+      return -2;
     }
 
     if (index <= size - 1) {
@@ -747,7 +747,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
 
       int index = 0;
       for (final NonLeafEntry entry : entries) {
-        addNonLeafEntry(index, entry.key, entry.leftChild, entry.rightChild, false);
+        doAddNonLeafEntry(index, entry.key, entry.leftChild, entry.rightChild, false);
         index++;
       }
 
@@ -931,7 +931,7 @@ public final class CellBTreeMultiValueV3Bucket<K> extends ODurablePage {
   public boolean addNonLeafEntry(final int index, final byte[] serializedKey, final int leftChild, final int rightChild,
       final boolean updateNeighbors) {
     final int prevChild = doAddNonLeafEntry(index, serializedKey, leftChild, rightChild, updateNeighbors);
-    if (prevChild >= 0) {
+    if (prevChild >= -1) {
       addPageOperation(
           new CellBTreeMultiValueV3BucketAddNonLeafEntryPO(index, serializedKey, leftChild, rightChild, updateNeighbors,
               prevChild));

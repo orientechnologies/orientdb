@@ -151,10 +151,11 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     }
 
     final long ptr = pointer.getNativePointer();
-    MemoryIO.getInstance().freeMemory(ptr);
-    memoryConsumption.add(-pointer.getSize());
-    untrack(pointer);
-  }
+    if (ptr > 0) {
+      MemoryIO.getInstance().freeMemory(ptr);
+      memoryConsumption.add(-pointer.getSize());
+      untrack(pointer);
+    }  }
 
   /**
    * @inheritDoc
@@ -258,7 +259,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   private static class TrackedPointerReference extends WeakReference<OPointer> {
 
     public final    int       id;
-    protected final Exception stackTrace;
+    final Exception stackTrace;
 
     TrackedPointerReference(OPointer referent, ReferenceQueue<? super OPointer> q) {
       super(referent, q);
