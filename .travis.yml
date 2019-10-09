@@ -8,4 +8,4 @@ branches:
   only:
   - develop
 jdk:
-  - oraclejdk8
+  - openjdk8
