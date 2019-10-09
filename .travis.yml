@@ -7,5 +7,5 @@ install: mvn clean install -Dmaven.test.failure.ignore=true
 branches:
   only:
   - develop
-jdk:
-  - oraclejdk8
+#jdk:
+#  - oraclejdk8
