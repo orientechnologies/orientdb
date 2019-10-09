@@ -2,8 +2,8 @@ language: scala
 
 os:
   - linux
-jdk:
-  - oraclejdk8
+#jdk:
+#  - oraclejdk8
  
 before_script:
   - echo "MAVEN_OPTS='-Xmx3g'" > ~/.mavenrc
