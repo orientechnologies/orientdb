@@ -2,7 +2,6 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -13,7 +12,9 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OAlterClusterStatement extends ODDLStatement {
 
@@ -60,14 +61,10 @@ public class OAlterClusterStatement extends ODDLStatement {
 
     Object finalValue = attributeValue.execute((OIdentifiable) null, ctx);
 
-    com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES attribute;
-    try {
-      attribute = OCluster.ATTRIBUTES.valueOf(attributeName.getStringValue());
-    } catch (IllegalArgumentException e) {
-      throw OException.wrapException(new OCommandExecutionException(
-          "Unknown class attribute '" + attributeName + "'. Supported attributes are: " + Arrays
-              .toString(OCluster.ATTRIBUTES.values())), e);
-    }
+    final com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES attribute = Arrays.stream(OCluster.ATTRIBUTES.values())
+            .filter(e -> e.name().equalsIgnoreCase(notNull(attributeName.getStringValue()))).findAny()
+            .orElseThrow(() -> new UnsupportedOperationException("Unknown class attribute '" + attributeName
+                    + "'. Supported attributes are: " + noDeprecatedValues(OCluster.ATTRIBUTES.values())));
 
     final OStorage storage = ((ODatabaseDocumentInternal) ctx.getDatabase()).getStorage();
     for (final int clusterId : clustersToUpdate) {
@@ -82,6 +79,21 @@ public class OAlterClusterStatement extends ODDLStatement {
     }
 
     return result;
+  }
+
+  private List<OCluster.ATTRIBUTES> noDeprecatedValues(final OCluster.ATTRIBUTES[] values) {
+    return Arrays.stream(values).filter(value -> {
+      try {
+        final Field field = OCluster.ATTRIBUTES.class.getField(value.name());
+        return !field.isAnnotationPresent(Deprecated.class);
+      } catch (final NoSuchFieldException | SecurityException e) {
+        return false;
+      }
+    }).collect(Collectors.toList());
+  }
+
+  private String notNull(final String value) {
+    return value != null ? value : "";
   }
 
   private OCluster.ATTRIBUTES getClusterAttribute(OIdentifier attributeName) {

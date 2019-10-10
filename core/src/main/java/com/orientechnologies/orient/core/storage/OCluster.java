@@ -29,7 +29,7 @@ import java.io.IOException;
 public interface OCluster {
 
   enum ATTRIBUTES {
-    NAME, CONFLICTSTRATEGY, STATUS, ENCRYPTION
+    NAME, CONFLICTSTRATEGY, STATUS, @Deprecated ENCRYPTION
   }
 
   void configure(int iId, String iClusterName) throws IOException;
