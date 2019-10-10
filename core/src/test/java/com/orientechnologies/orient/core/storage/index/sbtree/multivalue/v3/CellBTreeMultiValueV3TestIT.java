@@ -48,8 +48,8 @@ public class CellBTreeMultiValueV3TestIT {
 
   @After
   public void afterMethod() {
-//    orientDB.drop(DB_NAME);
-//    orientDB.close();
+    orientDB.drop(DB_NAME);
+    orientDB.close();
   }
 
   @Test
