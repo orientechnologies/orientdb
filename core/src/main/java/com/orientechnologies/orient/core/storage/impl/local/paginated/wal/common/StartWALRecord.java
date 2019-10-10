@@ -1,9 +1,9 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 
-public final class OStartWALRecord implements OWALRecord {
+public final class StartWALRecord implements OWALRecord {
   private volatile OLogSequenceNumber lsn;
 
   @Override
@@ -31,6 +31,6 @@ public final class OStartWALRecord implements OWALRecord {
 
   @Override
   public int getDiskSize() {
-    return OCASWALPage.RECORDS_OFFSET;
+    return CASWALPage.RECORDS_OFFSET;
   }
 }

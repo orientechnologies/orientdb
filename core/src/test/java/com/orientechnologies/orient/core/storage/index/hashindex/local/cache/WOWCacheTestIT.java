@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
 import org.junit.*;
 
 import javax.crypto.Cipher;
@@ -43,11 +43,11 @@ public class WOWCacheTestIT {
 
   private static String fileName;
 
-  private static       OCASDiskWriteAheadLog writeAheadLog;
-  private static final OByteBufferPool       bufferPool = new OByteBufferPool(pageSize);
-  private static       Path                  storagePath;
-  private static       OWOWCache             wowCache;
-  private static       String                storageName;
+  private static       CASDiskWriteAheadLog writeAheadLog;
+  private static final OByteBufferPool      bufferPool = new OByteBufferPool(pageSize);
+  private static       Path                 storagePath;
+  private static       OWOWCache            wowCache;
+  private static       String               storageName;
 
   private final OClosableLinkedContainer<Long, OFile> files = new OClosableLinkedContainer<>(1024);
 
@@ -120,7 +120,7 @@ public class WOWCacheTestIT {
   private void initBuffer() throws IOException, InterruptedException {
     Files.createDirectories(storagePath);
 
-    writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, null, null, Integer.MAX_VALUE,
+    writeAheadLog = new CASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, null, null, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
     wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, new DoubleWriteLogNoOP(), 10, 10, 100, storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, null, null, false, true);
 
@@ -186,7 +186,7 @@ public class WOWCacheTestIT {
 
     Files.createDirectories(storagePath);
 
-    writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, aesKey, iv, Integer.MAX_VALUE,
+    writeAheadLog = new CASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, aesKey, iv, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
     wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, new DoubleWriteLogNoOP(), 10, 10, 100, storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false, true);
 
@@ -361,7 +361,7 @@ public class WOWCacheTestIT {
 
     Files.createDirectories(storagePath);
 
-    writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, aesKey, iv, Integer.MAX_VALUE,
+    writeAheadLog = new CASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, aesKey, iv, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
     wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, new DoubleWriteLogNoOP(), 10, 10, 100, storagePath, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, iv, aesKey, false, true);
 

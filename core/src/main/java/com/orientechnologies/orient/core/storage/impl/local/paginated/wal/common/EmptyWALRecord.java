@@ -1,12 +1,12 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 
 import java.nio.ByteBuffer;
 
-public final class OEmptyWALRecord extends OAbstractWALRecord {
-  public OEmptyWALRecord() {
+public final class EmptyWALRecord extends OAbstractWALRecord {
+  public EmptyWALRecord() {
   }
 
   @Override

@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.deque;
 
 public final class Cursor<T> {
   protected final Node<T> node;

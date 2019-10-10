@@ -50,7 +50,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageConfiguratio
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedStorageDirtyFlag;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
@@ -82,7 +82,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   protected static final String IV_NAME = "data" + IV_EXT;
 
   private static final String[] ALL_FILE_EXTENSIONS = { ".cm", ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
-      ".oem", ".oet", ".fl", IV_EXT, OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION, OCASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+      ".oem", ".oet", ".fl", IV_EXT, CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION, CASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION,
@@ -392,7 +392,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
     final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
 
-    return new OCASDiskWriteAheadLog(name, storagePath, directory.toPath(),
+    return new CASDiskWriteAheadLog(name, storagePath, directory.toPath(),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE), aesKey, iv,
         contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60 * 1_000_000_000L,
@@ -611,7 +611,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         walPath = Paths.get(configWalPath);
       }
 
-      final OCASDiskWriteAheadLog diskWriteAheadLog = new OCASDiskWriteAheadLog(name, storagePath, walPath,
+      final CASDiskWriteAheadLog diskWriteAheadLog = new CASDiskWriteAheadLog(name, storagePath, walPath,
           contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
           contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE), aesKey, iv,
           contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60 * 1_000_000_000L, walMaxSegSize, 10,
@@ -707,10 +707,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   private final class SegmentAdder implements Callable<Void> {
-    private final long                  segment;
-    private final OCASDiskWriteAheadLog wal;
+    private final long                 segment;
+    private final CASDiskWriteAheadLog wal;
 
-    SegmentAdder(final long segment, final OCASDiskWriteAheadLog wal) {
+    SegmentAdder(final long segment, final CASDiskWriteAheadLog wal) {
       this.segment = segment;
       this.wal = wal;
     }

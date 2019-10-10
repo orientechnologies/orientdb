@@ -10,7 +10,7 @@
 //import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 //import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 //import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-//import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
+//import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
 //import org.junit.*;
 //
 //import java.io.File;

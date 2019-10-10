@@ -1,10 +1,10 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 
 import java.nio.ByteBuffer;
 
-public interface OWriteableWALRecord extends OWALRecord {
+public interface WriteableWALRecord extends OWALRecord {
   void setBinaryContent(ByteBuffer buffer, long pointer);
 
   ByteBuffer getBinaryContent();

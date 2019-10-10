@@ -1,8 +1,8 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.deque;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Node.BUFFER_SIZE;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.deque.Node.BUFFER_SIZE;
 
 public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
   private volatile     Node<T> head;

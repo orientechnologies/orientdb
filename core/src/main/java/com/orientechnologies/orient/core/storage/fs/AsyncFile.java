@@ -409,7 +409,6 @@ public final class AsyncFile implements OFile {
   }
 
   private final class WriteHandler implements CompletionHandler<Integer, CountDownLatch> {
-    private       int           written;
     private final ByteBuffer    byteBuffer;
     private final AsyncIOResult ioResult;
     private final long          position;
@@ -422,21 +421,16 @@ public final class AsyncFile implements OFile {
 
     @Override
     public void completed(Integer result, CountDownLatch attachment) {
-      written += result;
-
-      if (written < byteBuffer.limit()) {
+      if (byteBuffer.remaining() > 0) {
         lock.sharedLock();
         try {
           checkForClose();
 
-          byteBuffer.position(written);
-          fileChannel.write(byteBuffer, position + written, attachment, this);
+          fileChannel.write(byteBuffer, position + byteBuffer.position(), attachment, this);
         } finally {
           lock.sharedUnlock();
         }
       } else {
-        assert written == byteBuffer.limit();
-
         dirtyCounter.incrementAndGet();
         attachment.countDown();
       }
