@@ -655,6 +655,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
       }
 
       setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
+      setIntValue(SIZE_OFFSET, 0);
 
       int index = 0;
       for (final LeafEntry entry : entriesToAdd) {
@@ -674,8 +675,6 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
         index++;
       }
 
-      setIntValue(SIZE_OFFSET, newSize);
-
       addPageOperation(new CellBTreeMultiValueV2BucketShrinkLeafEntriesPO(newSize, entriesToRemove, keySerializer, isEncrypted));
     } else {
       final List<NonLeafEntry> entries = new ArrayList<>(newSize);
@@ -690,14 +689,13 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
       }
 
       setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
+      setIntValue(SIZE_OFFSET, 0);
 
       int index = 0;
       for (final NonLeafEntry entry : entries) {
         doAddNonLeafEntry(index, entry.key, entry.leftChild, entry.rightChild, false);
         index++;
       }
-
-      setIntValue(SIZE_OFFSET, newSize);
 
       addPageOperation(new CellBTreeMultiValueV2BucketShrinkNonLeafEntriesPO(newSize, entriesToRemove, keySerializer, isEncrypted));
     }
@@ -787,7 +785,7 @@ public final class CellBTreeMultiValueV2Bucket<K> extends ODurablePage {
         freePointer += setIntValue(freePointer, nextItem);//next item pointer
         freePointer += setByteValue(freePointer, (byte) 1);//size
         freePointer += setShortValue(freePointer, (short) value.getClusterId());//rid
-        setLongValue(freePointer, value.getClusterPosition());
+        freePointer += setLongValue(freePointer, value.getClusterPosition());
 
         freePointer -= itemSize;
         setIntValue(FREE_POINTER_OFFSET, freePointer);
