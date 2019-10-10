@@ -1337,7 +1337,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
 
   @Override
   public void setEncryption(final String method, final String key) {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Encryption should be configured on storage level.");
   }
 
   private static OPhysicalPosition createPhysicalPosition(final byte recordType, final long clusterPosition, final int version) {
