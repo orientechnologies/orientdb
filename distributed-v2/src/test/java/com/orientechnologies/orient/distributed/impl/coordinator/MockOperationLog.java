@@ -11,7 +11,7 @@ public class MockOperationLog implements OOperationLog {
   }
 
   public MockOperationLog(long startFrom) {
-    sequence = new AtomicLong(0);
+    sequence = new AtomicLong(startFrom);
   }
 
   @Override
