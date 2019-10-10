@@ -11,12 +11,12 @@ public class OLeaderElectionStateMachine {
     LEADER, FOLLOWER, CANDIDATE;
   }
 
-  protected ONodeIdentity      nodeIdentity;
-  protected int                currentTerm;
-  protected Status             status;
-  protected int                quorum;
+  protected ONodeIdentity nodeIdentity;
+  protected int currentTerm = -1;
+  protected volatile Status status;
+  protected int quorum;
   protected Set<ONodeIdentity> votesReceived = new HashSet<>();
-  protected int                lastTermVoted = -1;
+  protected int lastTermVoted = -1;
 
   synchronized void receiveVote(int term, ONodeIdentity fromNode, ONodeIdentity toNode) {
     if (!nodeIdentity.equals(toNode)) {
@@ -33,20 +33,23 @@ public class OLeaderElectionStateMachine {
   }
 
   synchronized void startElection() {
-    status = Status.CANDIDATE;
+    setStatus(Status.CANDIDATE);
     currentTerm++;
     votesReceived.clear();
     votesReceived.add(nodeIdentity);
   }
 
   synchronized void changeTerm(int term) {
-    status = Status.FOLLOWER;
+    if (term == this.currentTerm) {
+      return;
+    }
+    setStatus(Status.FOLLOWER);
     this.votesReceived.clear();
     this.currentTerm = term;
   }
 
   public void resetLeaderElection() {
-    status = Status.FOLLOWER;
+    setStatus(Status.FOLLOWER);
     this.votesReceived.clear();
   }
 
@@ -55,6 +58,14 @@ public class OLeaderElectionStateMachine {
   }
 
   public void setStatus(Status status) {
+    try {
+      if (this.status == Status.LEADER && status == Status.FOLLOWER) {
+        throw new Exception();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+//    System.out.println(nodeIdentity.getName() + " setting status to " + status);
     this.status = status;
   }
 

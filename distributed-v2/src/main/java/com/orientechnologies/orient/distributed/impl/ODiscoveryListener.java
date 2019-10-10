@@ -9,7 +9,7 @@ public interface ODiscoveryListener {
     protected int           port;
     protected boolean       leader;
     protected int           term;
-    protected long          lastPingTimestamp;
+    protected volatile long lastPingTimestamp;
     protected String        connectionUsername;
     protected String        connectionPassword;
 
