@@ -1203,7 +1203,7 @@ public final class CellBTreeMultiValueV3<K> extends ODurableComponent implements
       final int pageSize = entryPoint.getPagesSize();
 
       if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize + 1, false, false);
         entryPoint.setPagesSize(pageSize + 1);
       } else {
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
@@ -1353,8 +1353,8 @@ public final class CellBTreeMultiValueV3<K> extends ODurableComponent implements
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
       if (pageSize < filledUpTo - 1) {
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
         pageSize++;
+        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
       } else {
         assert pageSize == filledUpTo - 1;
 
@@ -1363,8 +1363,8 @@ public final class CellBTreeMultiValueV3<K> extends ODurableComponent implements
       }
 
       if (pageSize < filledUpTo) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
         pageSize++;
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
       } else {
         assert pageSize == filledUpTo;
 
