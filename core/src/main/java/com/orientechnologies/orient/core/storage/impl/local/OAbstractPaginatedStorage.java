@@ -5086,16 +5086,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(getConfiguration().getLocaleInstance())));
     }
     case ENCRYPTION:
-      if (cluster.getEntries() > 0) {
-        throw new IllegalArgumentException(
-            "Cannot change encryption setting on cluster '" + getName() + "' because it is not empty");
-      }
-      cluster.setEncryption(stringValue,
-          configuration.getContextConfiguration().getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY));
-      changed = true;
-      break;
+      throw new UnsupportedOperationException("Encryption should be configured on storage level.");
     default:
-      throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported");
+      throw new IllegalArgumentException("Runtime change of attribute '" + attribute + "' is not supported");
     }
 
     ((OClusterBasedStorageConfiguration) configuration).updateCluster(((OPaginatedCluster) cluster).generateClusterConfig());
