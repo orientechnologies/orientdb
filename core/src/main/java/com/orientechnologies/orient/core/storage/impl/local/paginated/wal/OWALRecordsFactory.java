@@ -23,8 +23,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBTreeMultiValuePutCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBtreeMultiValueRemoveEntryCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValuePutCO;
@@ -39,6 +37,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.entrypoint.CellBTreeMultiValueV2EntryPointInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.entrypoint.CellBTreeMultiValueV2EntryPointSetEntryIdPO;
@@ -111,7 +111,7 @@ public final class OWALRecordsFactory {
   private static final LZ4Factory factory                    = LZ4Factory.fastestInstance();
   private static final int        MIN_COMPRESSED_RECORD_SIZE = 8 * 1024;
 
-  public static OPair<ByteBuffer, Long> toStream(final OWriteableWALRecord walRecord) {
+  public static OPair<ByteBuffer, Long> toStream(final WriteableWALRecord walRecord) {
     final int contentSize = walRecord.serializedSize() + 2;
 
     final ByteBuffer content = ByteBuffer.allocate(contentSize).order(ByteOrder.nativeOrder());
@@ -144,7 +144,7 @@ public final class OWALRecordsFactory {
     }
   }
 
-  public OWriteableWALRecord fromStream(byte[] content) {
+  public WriteableWALRecord fromStream(byte[] content) {
     int recordId = OShortSerializer.INSTANCE.deserializeNative(content, 0);
     if (recordId < 0) {
       final int originalLen = OIntegerSerializer.INSTANCE.deserializeNative(content, 2);
@@ -156,7 +156,7 @@ public final class OWALRecordsFactory {
       content = restored;
     }
 
-    final OWriteableWALRecord walRecord = walRecordById(recordId);
+    final WriteableWALRecord walRecord = walRecordById(recordId);
 
     walRecord.fromStream(content, 2);
 
@@ -168,8 +168,8 @@ public final class OWALRecordsFactory {
     return walRecord;
   }
 
-  private OWriteableWALRecord walRecordById(final int recordId) {
-    final OWriteableWALRecord walRecord;
+  private WriteableWALRecord walRecordById(final int recordId) {
+    final WriteableWALRecord walRecord;
     switch (recordId) {
     case UPDATE_PAGE_RECORD:
       walRecord = new OUpdatePageRecord();
@@ -202,7 +202,7 @@ public final class OWALRecordsFactory {
       walRecord = new OFileDeletedWALRecord();
       break;
     case EMPTY_WAL_RECORD:
-      walRecord = new OEmptyWALRecord();
+      walRecord = new EmptyWALRecord();
       break;
     case CREATE_CLUSTER_CO:
       walRecord = new OPaginatedClusterCreateCO();
@@ -672,7 +672,7 @@ public final class OWALRecordsFactory {
     default:
       if (idToTypeMap.containsKey(recordId))
         try {
-          walRecord = (OWriteableWALRecord) idToTypeMap.get(recordId).newInstance();
+          walRecord = (WriteableWALRecord) idToTypeMap.get(recordId).newInstance();
         } catch (final InstantiationException | IllegalAccessException e) {
           throw new IllegalStateException("Cannot deserialize passed in record", e);
         }
@@ -682,7 +682,7 @@ public final class OWALRecordsFactory {
     return walRecord;
   }
 
-  public void registerNewRecord(final int id, final Class<? extends OWriteableWALRecord> type) {
+  public void registerNewRecord(final int id, final Class<? extends WriteableWALRecord> type) {
     idToTypeMap.put(id, type);
   }
 }

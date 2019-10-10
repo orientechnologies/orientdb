@@ -21,7 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.kenai.jffi.MemoryIO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -32,7 +32,7 @@ import java.util.Objects;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since 12.12.13
  */
-public abstract class OAbstractWALRecord implements OWriteableWALRecord {
+public abstract class OAbstractWALRecord implements WriteableWALRecord {
   protected volatile OLogSequenceNumber lsn;
 
   private int distance = 0;

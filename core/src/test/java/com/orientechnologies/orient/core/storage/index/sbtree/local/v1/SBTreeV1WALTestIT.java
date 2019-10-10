@@ -13,8 +13,8 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import org.assertj.core.api.Assertions;
 import org.junit.*;
 
@@ -78,7 +78,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
     databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
     actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
     actualStorageDir = actualStorage.getStoragePath().toString();
-    OCASDiskWriteAheadLog writeAheadLog = (OCASDiskWriteAheadLog) actualStorage.getWALInstance();
+    CASDiskWriteAheadLog writeAheadLog = (CASDiskWriteAheadLog) actualStorage.getWALInstance();
 
     actualStorage.synch();
     writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
@@ -229,17 +229,17 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    OCASDiskWriteAheadLog log = new OCASDiskWriteAheadLog(ACTUAL_DB_NAME, Paths.get(actualStorageDir), Paths.get(actualStorageDir),
+    CASDiskWriteAheadLog log = new CASDiskWriteAheadLog(ACTUAL_DB_NAME, Paths.get(actualStorageDir), Paths.get(actualStorageDir),
         10_000, 128, null, null, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false,
         true, false, 0);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<>();
-    List<OWriteableWALRecord> walRecords = log.read(lsn, 1_000);
+    List<WriteableWALRecord> walRecords = log.read(lsn, 1_000);
 
     boolean atomicChangeIsProcessed = false;
     while (!walRecords.isEmpty()) {
-      for (OWriteableWALRecord walRecord : walRecords) {
+      for (WriteableWALRecord walRecord : walRecords) {
         if (walRecord instanceof OOperationUnitBodyRecord) {
           atomicUnit.add(walRecord);
         }

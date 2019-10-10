@@ -15,8 +15,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
@@ -80,7 +80,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
     actualWriteCache = ((OLocalPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage()).getWriteCache();
     expectedWriteCache = ((OLocalPaginatedStorage) ((ODatabaseInternal) expectedDatabaseDocumentTx).getStorage()).getWriteCache();
 
-    OCASDiskWriteAheadLog diskWriteAheadLog = (OCASDiskWriteAheadLog) actualStorage.getWALInstance();
+    CASDiskWriteAheadLog diskWriteAheadLog = (CASDiskWriteAheadLog) actualStorage.getWALInstance();
 
     actualStorage.synch();
     diskWriteAheadLog.addCutTillLimit(diskWriteAheadLog.getFlushedLsn());
@@ -219,17 +219,17 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
     final OReadCache expectedReadCache = ((OAbstractPaginatedStorage) ((ODatabaseInternal) expectedDatabaseDocumentTx).getStorage())
         .getReadCache();
 
-    OCASDiskWriteAheadLog log = new OCASDiskWriteAheadLog(ACTUAL_DB_NAME, Paths.get(actualStorageDir), Paths.get(actualStorageDir),
+    CASDiskWriteAheadLog log = new CASDiskWriteAheadLog(ACTUAL_DB_NAME, Paths.get(actualStorageDir), Paths.get(actualStorageDir),
         10_000, 128, null, null, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false,
         true, false, 0);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<>();
-    List<OWriteableWALRecord> walRecords = log.read(lsn, 1_000);
+    List<WriteableWALRecord> walRecords = log.read(lsn, 1_000);
 
     boolean atomicChangeIsProcessed = false;
     while (!walRecords.isEmpty()) {
-      for (OWriteableWALRecord walRecord : walRecords) {
+      for (WriteableWALRecord walRecord : walRecords) {
         if (walRecord instanceof OOperationUnitBodyRecord) {
           atomicUnit.add(walRecord);
         }

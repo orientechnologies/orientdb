@@ -8,8 +8,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.OComponentOperationRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
@@ -227,11 +227,11 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
         }
 
         while (true) {
-          List<OWriteableWALRecord> walRecords = writeAheadLog.read(pageOperationRefs.get(startIndex), chunkSize);
+          List<WriteableWALRecord> walRecords = writeAheadLog.read(pageOperationRefs.get(startIndex), chunkSize);
 
           int recordsRead = 0;
           while (true) {
-            for (final OWriteableWALRecord walRecord : walRecords) {
+            for (final WriteableWALRecord walRecord : walRecords) {
               final int index = recordsRead + startIndex;
 
               if (startIndex + recordsRead < endIndex) {

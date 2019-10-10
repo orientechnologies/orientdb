@@ -1,9 +1,9 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 
-public final class OMilestoneWALRecord implements OWALRecord {
+public final class MilestoneWALRecord implements OWALRecord {
   private int distance = -1;
   private int diskSize = -1;
 
@@ -49,7 +49,7 @@ public final class OMilestoneWALRecord implements OWALRecord {
 
   @Override
   public String toString() {
-    return "OMilestoneWALRecord{" + "lsn=" + lsn + '}';
+    return "MilestoneWALRecord{" + "lsn=" + lsn + '}';
   }
 }
 
