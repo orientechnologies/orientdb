@@ -9,7 +9,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
-import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
@@ -37,6 +36,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -72,21 +73,12 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
   private static final int BATCH_READ_SIZE    = 4 * 1024;
 
   private static final OScheduledThreadPoolExecutorWithLogging commitExecutor;
-  private static final OThreadPoolExecutorWithLogging          writeExecutor;
 
   static {
     commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setName("OrientDB WAL Flush Task");
-      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      return thread;
-    });
-
-    writeExecutor = new OThreadPoolExecutorWithLogging(1, 1, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
-      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setName("OrientDB WAL Write Task Thread)");
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return thread;
     });
@@ -132,7 +124,7 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
   private final int     pageSize;
   private final int     maxRecordSize;
 
-  private volatile OWALFile walFile = null;
+  private volatile AsynchronousFileChannel walFile = null;
 
   private volatile OLogSequenceNumber flushedLSN = null;
 
@@ -156,11 +148,11 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
   private final TreeMap<OLogSequenceNumber, Integer> cutTillLimits = new TreeMap<>();
   private final Lock                                 cuttingLock   = new ReentrantLock();
 
-  private final ConcurrentLinkedQueue<OPair<Long, OWALFile>> fileCloseQueue     = new ConcurrentLinkedQueue<>();
-  private final AtomicInteger                                fileCloseQueueSize = new AtomicInteger();
+  private final ConcurrentLinkedQueue<OPair<Long, AsynchronousFileChannel>> fileCloseQueue     = new ConcurrentLinkedQueue<>();
+  private final AtomicInteger                                               fileCloseQueueSize = new AtomicInteger();
 
   private final    AtomicReference<CountDownLatch> flushLatch        = new AtomicReference<>(new CountDownLatch(0));
-  private volatile Future<?>                       writeFuture       = null;
+  private volatile CountDownLatch                  writeLatch        = null;
   //not volatile because used only inside of write thread.
   private          OLogSequenceNumber              writtenCheckpoint = null;
 
@@ -190,8 +182,6 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
   private final byte[] aesKey;
   private final byte[] iv;
 
-  private final boolean callFsync;
-
   private final boolean printPerformanceStatistic;
   private final int     statisticPrintInterval;
 
@@ -211,8 +201,8 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
   public AsyncWriteAheadLog(final String storageName, final Path storagePath, final Path walPath, final int maxPagesCacheSize,
       final int bufferSize, byte[] aesKey, byte[] iv, long segmentsInterval, final long maxSegmentSize, final int commitDelay,
       final boolean filterWALFiles, final Locale locale, final long walSizeHardLimit, final long freeSpaceLimit,
-      final int fsyncInterval, boolean allowDirectIO, boolean callFsync, boolean printPerformanceStatistic,
-      int statisticPrintInterval) throws IOException {
+      final int fsyncInterval, boolean allowDirectIO, boolean printPerformanceStatistic, int statisticPrintInterval)
+      throws IOException {
 
     if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
       throw new OInvalidStorageEncryptionKeyException("Invalid length of the encryption key, provided size is " + aesKey.length);
@@ -228,7 +218,6 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
     int bufferSize1 = bufferSize * 1024 * 1024;
 
     this.segmentsInterval = segmentsInterval;
-    this.callFsync = callFsync;
     this.printPerformanceStatistic = printPerformanceStatistic;
     this.statisticPrintInterval = statisticPrintInterval;
 
@@ -604,14 +593,12 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
   }
 
   private void waitTillWriteWillBeFinished() {
-    final Future<?> wf = writeFuture;
-    if (wf != null) {
+    final CountDownLatch wl = writeLatch;
+    if (wl != null) {
       try {
-        wf.get();
+        wl.await();
       } catch (final InterruptedException e) {
         throw OException.wrapException(new OStorageException("WAL write for storage " + storageName + " was interrupted"), e);
-      } catch (final ExecutionException e) {
-        throw OException.wrapException(new OStorageException("Error during WAL write for storage " + storageName), e);
       }
     }
   }
@@ -1142,16 +1129,13 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
           return false;
         }
 
-        OPair<Long, OWALFile> pair = fileCloseQueue.poll();
+        OPair<Long, AsynchronousFileChannel> pair = fileCloseQueue.poll();
         while (pair != null) {
-          final OWALFile file = pair.value;
+          final AsynchronousFileChannel file = pair.value;
 
           fileCloseQueueSize.decrementAndGet();
           if (pair.key >= segmentId) {
-            if (callFsync) {
-              file.force(true);
-            }
-
+            file.force(true);
             file.close();
             break;
           } else {
@@ -1359,10 +1343,10 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    if (writeFuture != null) {
+    if (writeLatch != null) {
       try {
-        writeFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
+        writeLatch.await();
+      } catch (InterruptedException e) {
         throw OException.wrapException(new OStorageException("Error during writing of WAL records in storage " + storageName), e);
       }
     }
@@ -1377,32 +1361,24 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
     }
 
     try {
-      if (writeFuture != null) {
-        writeFuture.get();
+      if (writeLatch != null) {
+        writeLatch.await();
       }
 
     } catch (final InterruptedException e) {
       OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
-    } catch (final ExecutionException e) {
-      OLogManager.instance().errorNoDb(this, "Error during writint of WAL data", e);
-      throw OException.wrapException(new OStorageException("Error during writint of WAL data"), e);
     }
 
-    for (final OPair<Long, OWALFile> pair : fileCloseQueue) {
-      final OWALFile file = pair.value;
-
-      if (callFsync) {
-        file.force(true);
-      }
+    for (final OPair<Long, AsynchronousFileChannel> pair : fileCloseQueue) {
+      final AsynchronousFileChannel file = pair.value;
+      file.force(true);
 
       file.close();
     }
 
     fileCloseQueueSize.set(0);
 
-    if (callFsync) {
-      walFile.force(true);
-    }
+    walFile.force(true);
 
     walFile.close();
     masterRecordLSNHolder.close();
@@ -1859,14 +1835,12 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
                     lastLSN = null;
 
                     try {
-                      if (writeFuture != null) {
-                        writeFuture.get();
+                      if (writeLatch != null) {
+                        writeLatch.await();
                       }
                     } catch (final InterruptedException e) {
                       OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
                     }
-
-                    assert walFile.position() == currentPosition;
 
                     fileCloseQueueSize.incrementAndGet();
                     fileCloseQueue.offer(new OPair<>(segmentId, walFile));
@@ -1874,7 +1848,9 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
 
                   segmentId = lsn.getSegment();
 
-                  walFile = OWALFile.createWriteWALFile(walLocation.resolve(getSegmentName(segmentId)), allowDirectIO, blockSize);
+                  walFile = AsynchronousFileChannel
+                      .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE,
+                          StandardOpenOption.READ);
                   assert lsn.getPosition() == CASWALPage.RECORDS_OFFSET;
                   currentPosition = 0;
                 }
@@ -2009,79 +1985,64 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
         if (makeFSync) {
           try {
             try {
-              if (writeFuture != null) {
-                writeFuture.get();
+              if (writeLatch != null) {
+                writeLatch.await();
               }
             } catch (final InterruptedException e) {
               OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
             }
 
-            assert walFile.position() == currentPosition;
-
-            writeFuture = writeExecutor.submit((Callable<?>) () -> {
-              try {
-                long startTs = 0;
-                if (printPerformanceStatistic) {
-                  startTs = System.nanoTime();
-                }
-
-                final int cqSize = fileCloseQueueSize.get();
-                if (cqSize > 0) {
-                  int counter = 0;
-
-                  while (counter < cqSize) {
-                    final OPair<Long, OWALFile> pair = fileCloseQueue.poll();
-                    if (pair != null) {
-                      @SuppressWarnings("resource")
-                      final OWALFile file = pair.value;
-
-                      assert file.position() % pageSize == 0;
-
-                      if (callFsync) {
-                        file.force(true);
-                      }
-
-                      file.close();
-
-                      fileCloseQueueSize.decrementAndGet();
-                    } else {
-                      break;
-                    }
-
-                    counter++;
-                  }
-                }
-
-                if (callFsync) {
-                  walFile.force(true);
-                }
-
-                updateCheckpoint(writtenCheckpoint);
-                flushedLSN = writtenUpTo.get().lsn;
-
-                fireEventsFor(flushedLSN);
-
-                if (printPerformanceStatistic) {
-                  final long endTs = System.nanoTime();
-                  //noinspection NonAtomicOperationOnVolatileField
-                  fsyncTime += (endTs - startTs);
-                  //noinspection NonAtomicOperationOnVolatileField
-                  fsyncCount++;
-                }
-              } catch (final IOException e) {
-                OLogManager.instance().errorNoDb(this, "Error during FSync of WAL data", e);
-                throw e;
+            try {
+              long startTs = 0;
+              if (printPerformanceStatistic) {
+                startTs = System.nanoTime();
               }
 
-              return null;
-            });
+              final int cqSize = fileCloseQueueSize.get();
+              if (cqSize > 0) {
+                int counter = 0;
+
+                while (counter < cqSize) {
+                  final OPair<Long, AsynchronousFileChannel> pair = fileCloseQueue.poll();
+                  if (pair != null) {
+                    @SuppressWarnings("resource")
+                    final AsynchronousFileChannel file = pair.value;
+                    file.force(true);
+                    file.close();
+
+                    fileCloseQueueSize.decrementAndGet();
+                  } else {
+                    break;
+                  }
+
+                  counter++;
+                }
+              }
+
+              walFile.force(true);
+              updateCheckpoint(writtenCheckpoint);
+              flushedLSN = writtenUpTo.get().lsn;
+
+              fireEventsFor(flushedLSN);
+
+              if (printPerformanceStatistic) {
+                final long endTs = System.nanoTime();
+                //noinspection NonAtomicOperationOnVolatileField
+                fsyncTime += (endTs - startTs);
+                //noinspection NonAtomicOperationOnVolatileField
+                fsyncCount++;
+              }
+            } catch (final IOException e) {
+              OLogManager.instance().errorNoDb(this, "Error during FSync of WAL data", e);
+              throw e;
+            }
 
             checkFreeSpace();
           } finally {
             lastFSyncTs = ts;
           }
         }
-      } catch (final IOException | ExecutionException e) {
+      } catch (final IOException e) {
         OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
         throw new IllegalStateException(e);
       } catch (final RuntimeException | Error e) {
@@ -2094,8 +2055,8 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    private void writeBuffer(final OWALFile file, final long segmentId, final ByteBuffer buffer, final OLogSequenceNumber lastLSN,
-        final OLogSequenceNumber checkpointLSN) throws IOException {
+    private void writeBuffer(final AsynchronousFileChannel file, final long segmentId, final ByteBuffer buffer,
+        final OLogSequenceNumber lastLSN, final OLogSequenceNumber checkpointLSN) throws IOException {
 
       if (buffer.position() <= CASWALPage.RECORDS_OFFSET) {
         return;
@@ -2143,8 +2104,8 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
       buffer.limit(limit);
 
       try {
-        if (writeFuture != null) {
-          writeFuture.get();
+        if (writeLatch != null) {
+          writeLatch.await();
         }
       } catch (final InterruptedException e) {
         OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
@@ -2153,71 +2114,9 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
         throw OException.wrapException(new OStorageException("Error during WAL data write"), e);
       }
 
-      assert file.position() == currentPosition;
+      writeLatch = new CountDownLatch(1);
+      walFile.write(buffer, currentPosition, null, new WALCompletionHandler(buffer, currentPosition, file, lastLSN, checkpointLSN));
       currentPosition += buffer.limit();
-
-      final long expectedPosition = currentPosition;
-
-      writeFuture = writeExecutor.submit((Callable<?>) () -> {
-        try {
-          long startTs = 0;
-          if (printPerformanceStatistic) {
-            startTs = System.nanoTime();
-          }
-
-          assert buffer.position() == 0;
-          assert file.position() % pageSize == 0;
-          assert buffer.limit() == limit;
-          assert file.position() == expectedPosition - buffer.limit();
-
-          while (buffer.remaining() > 0) {
-            final int initialPos = buffer.position();
-            final int written = file.write(buffer);
-            assert buffer.position() == initialPos + written;
-            assert
-                file.position() == expectedPosition - buffer.limit() + initialPos + written :
-                "File position " + file.position() + " buffer limit " + buffer.limit() + " initial pos " + initialPos + " written "
-                    + written;
-          }
-
-          assert file.position() == expectedPosition;
-
-          if (lastLSN != null) {
-            final WrittenUpTo written = writtenUpTo.get();
-
-            assert written == null || written.lsn.compareTo(lastLSN) < 0;
-
-            if (written == null) {
-              writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
-            } else {
-              if (written.lsn.getSegment() == lastLSN.getSegment()) {
-                writtenUpTo.lazySet(new WrittenUpTo(lastLSN, written.position + buffer.limit()));
-              } else {
-                writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
-              }
-            }
-          }
-
-          if (checkpointLSN != null) {
-            assert writtenCheckpoint == null || writtenCheckpoint.compareTo(checkpointLSN) < 0;
-            writtenCheckpoint = checkpointLSN;
-          }
-
-          if (printPerformanceStatistic) {
-            final long endTs = System.nanoTime();
-
-            //noinspection NonAtomicOperationOnVolatileField
-            bytesWrittenSum += buffer.limit();
-            //noinspection NonAtomicOperationOnVolatileField
-            bytesWrittenTime += (endTs - startTs);
-          }
-        } catch (final IOException e) {
-          OLogManager.instance().errorNoDb(this, "Error during WAL data write", e);
-          throw e;
-        }
-
-        return null;
-      });
     }
 
     private void printReport() {
@@ -2265,6 +2164,57 @@ public final class AsyncWriteAheadLog implements OWriteAheadLog {
 
     }
 
+    private class WALCompletionHandler implements CompletionHandler<Integer, Void> {
+      private final ByteBuffer              buffer;
+      private final AsynchronousFileChannel file;
+      private final long                    initialPosition;
+      private final OLogSequenceNumber      lastLSN;
+      private final OLogSequenceNumber      checkpointLSN;
+
+      public WALCompletionHandler(ByteBuffer buffer, long initialPosition, AsynchronousFileChannel file, OLogSequenceNumber lastLSN,
+          OLogSequenceNumber checkpointLSN) {
+        this.buffer = buffer;
+        this.initialPosition = initialPosition;
+        this.file = file;
+        this.lastLSN = lastLSN;
+        this.checkpointLSN = checkpointLSN;
+      }
+
+      @Override
+      public void completed(Integer result, Void attachment) {
+        if (buffer.remaining() > 0) {
+          file.write(buffer, initialPosition + buffer.remaining(), null, this);
+        } else {
+          if (lastLSN != null) {
+            final WrittenUpTo written = writtenUpTo.get();
+
+            assert written == null || written.lsn.compareTo(lastLSN) < 0;
+
+            if (written == null) {
+              writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
+            } else {
+              if (written.lsn.getSegment() == lastLSN.getSegment()) {
+                writtenUpTo.lazySet(new WrittenUpTo(lastLSN, written.position + buffer.limit()));
+              } else {
+                writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
+              }
+            }
+          }
+
+          if (checkpointLSN != null) {
+            assert writtenCheckpoint == null || writtenCheckpoint.compareTo(checkpointLSN) < 0;
+            writtenCheckpoint = checkpointLSN;
+          }
+
+          writeLatch.countDown();
+        }
+      }
+
+      @Override
+      public void failed(Throwable exc, Void attachment) {
+        OLogManager.instance().errorNoDb(this, "Error during write to the WAL", exc);
+      }
+    }
   }
 
   private static final class WrittenUpTo {
