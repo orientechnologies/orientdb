@@ -8,6 +8,6 @@ script: mvn clean package -B -DskipTests
 #TODO: enable tests!!! -q -Djava.util.logging.config.file=${basedir}/.travis-logging.properties -Dmaven.test.failure.ignore=true
 branches:
   only:
-  - develop
+  - 2.2.x
 #jdk:
 #  - openjdk8
