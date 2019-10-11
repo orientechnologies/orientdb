@@ -262,6 +262,7 @@ public class OUDPMulticastNodeManagerTest {
 
 
   @Test
+  @Ignore
   public void testMasterWithHighestOplog() throws InterruptedException {
     MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 1);
     MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(2, 0);
