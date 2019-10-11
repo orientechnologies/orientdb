@@ -3,7 +3,7 @@ language: java
 cache:
   directories:
   - $HOME/.m2
-install: mvn clean install -q -Djava.util.logging.config.file=${basedir}/.travis-logging.properties -Dmaven.test.failure.ignore=true
+install: mvn clean install -B -DskipTests #TODO: enable tests!!! -q -Djava.util.logging.config.file=${basedir}/.travis-logging.properties -Dmaven.test.failure.ignore=true
 branches:
   only:
   - develop
