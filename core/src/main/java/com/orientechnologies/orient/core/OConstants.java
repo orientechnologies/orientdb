@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.sun.corba.se.impl.util.ORBProperties;
 
 import java.io.IOException;
 import java.io.InputStream;
