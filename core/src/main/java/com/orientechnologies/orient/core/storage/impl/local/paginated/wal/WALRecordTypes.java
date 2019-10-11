@@ -207,5 +207,6 @@ public final class WALRecordTypes {
   public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_REMOVE_VALUE_PO      = 173;
 
   public static final int LOCAL_HASH_TABLE_BUCKET_INIT_PO = 174;
+  public static final int LOCAL_HASH_TABLE_BUCKET_UPDATE_ENTRY_PO = 175;
 
 }

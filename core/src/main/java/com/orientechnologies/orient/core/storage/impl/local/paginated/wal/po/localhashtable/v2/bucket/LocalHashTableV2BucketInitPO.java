@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIn
 
 import java.nio.ByteBuffer;
 
-public class LocalHashTableV2BucketInitPO extends PageOperationRecord {
+public final class LocalHashTableV2BucketInitPO extends PageOperationRecord {
   private int depth;
 
   public LocalHashTableV2BucketInitPO() {

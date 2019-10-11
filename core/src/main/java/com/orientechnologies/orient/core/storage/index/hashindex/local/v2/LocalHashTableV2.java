@@ -1158,8 +1158,9 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         //noinspection RedundantCast
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
-
-        return doPut(key, value, validator, atomicOperation);
+        //noinspection RedundantCast
+        return doPut(key, keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes), value,
+            valueSerializer.serializeNativeAsWhole(value), validator, atomicOperation);
       } finally {
         releaseExclusiveLock();
       }
@@ -1172,8 +1173,8 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
   }
 
   @SuppressWarnings("unchecked")
-  private boolean doPut(final K key, V value, final OIndexEngine.Validator<K, V> validator, final OAtomicOperation atomicOperation)
-      throws IOException {
+  private boolean doPut(final K key, final byte[] rawKey, V value, byte[] rawValue, final OIndexEngine.Validator<K, V> validator,
+      final OAtomicOperation atomicOperation) throws IOException {
     int sizeDiff = 0;
 
     if (key == null) {
@@ -1216,8 +1217,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
       atomicOperation.addComponentOperation(
           new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), null,
-              valueSerializer.getId(), valueSerializer.serializeNativeAsWhole(value),
-              oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
+              valueSerializer.getId(), rawValue, oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
 
       return true;
     } else {
@@ -1237,18 +1237,24 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
         final HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
         final int index = bucket.getIndex(hashCode, key, encryption, keySerializer);
 
-        final V oldValue = index > -1 ? bucket.getValue(index, encryption, keySerializer, valueSerializer) : null;
+        final byte[] oldRawValue = index > -1 ? bucket.getRawValue(index, rawKey.length, valueSerializer) : null;
+        final V oldValue = oldRawValue == null ? null : valueSerializer.deserializeNativeObject(oldRawValue, 0);
+
         if (validator != null) {
           final Object result = validator.validate(key, oldValue, value);
           if (result == OBaseIndexEngine.Validator.IGNORE) {
             return false;
           }
 
-          value = (V) result;
+          if (result != value) {
+            value = (V) result;
+            rawValue = valueSerializer.serializeNativeAsWhole(value);
+          }
         }
 
         if (index > -1) {
-          final int updateResult = bucket.updateEntry(index, value, encryption, keySerializer, valueSerializer);
+          assert oldRawValue != null;
+          final int updateResult = bucket.updateEntry(index, rawValue, oldRawValue, rawKey.length);
           if (updateResult == 0) {
             //we already keep entry with given key-value.
             return true;
@@ -1257,12 +1263,9 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           if (updateResult == 1) {
             changeSize(sizeDiff, atomicOperation);
 
-            //noinspection RedundantCast
             atomicOperation.addComponentOperation(
-                new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
-                    keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes), valueSerializer.getId(),
-                    valueSerializer.serializeNativeAsWhole(value),
-                    oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
+                new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), rawKey,
+                    valueSerializer.getId(), rawValue, oldRawValue));
 
             return true;
           }
@@ -1347,7 +1350,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       }
 
       changeSize(sizeDiff, atomicOperation);
-      doPut(key, value, null /* already validated */, atomicOperation);
+      doPut(key, rawKey, value, rawValue, null /* already validated */, atomicOperation);
       return true;
     }
 

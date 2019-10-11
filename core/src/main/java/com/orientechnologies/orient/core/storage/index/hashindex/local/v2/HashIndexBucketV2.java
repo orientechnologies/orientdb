@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketUpdateEntryPO;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 
 import java.util.Comparator;
@@ -139,6 +140,15 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     return new OHashTable.Entry<>(key, value, hashCode);
   }
 
+  public byte[] getRawValue(final int index, final int keySize, final OBinarySerializer<V> valueSerializer) {
+    int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
+
+    // skip hash code and key
+    entryPosition += OLongSerializer.LONG_SIZE + keySize;
+    final int rawSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
+    return getBinaryValue(entryPosition, rawSize);
+  }
+
   /**
    * Obtains the value stored under the given index in this bucket.
    *
@@ -206,32 +216,21 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
         FREE_POINTER_OFFSET));
   }
 
-  int updateEntry(final int index, final V value, final OEncryption encryption, final OBinarySerializer<K> keySerializer,
-      final OBinarySerializer<V> valueSerializer) {
+  public int updateEntry(final int index, final byte[] value, final byte[] oldValue, int keySize) {
     int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
-    entryPosition += OLongSerializer.LONG_SIZE;
+    entryPosition += OLongSerializer.LONG_SIZE + keySize;
 
-    if (encryption == null) {
-      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
-    } else {
-      final int encryptedSize = getIntValue(entryPosition);
-      entryPosition += OIntegerSerializer.INT_SIZE + encryptedSize;
+    if (oldValue.length != value.length) {
+      return -1;
     }
 
-    final int newSize = valueSerializer.getObjectSize(value);
-    final int oldSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
-    if (newSize != oldSize)
-      return -1;
-
-    byte[] newSerializedValue = new byte[newSize];
-    valueSerializer.serializeNativeObject(value, newSerializedValue, 0);
-
-    byte[] oldSerializedValue = getBinaryValue(entryPosition, oldSize);
-
-    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, newSerializedValue) == 0)
+    if (ODefaultComparator.INSTANCE.compare(oldValue, value) == 0) {
       return 0;
+    }
 
-    setBinaryValue(entryPosition, newSerializedValue);
+    setBinaryValue(entryPosition, value);
+
+    addPageOperation(new LocalHashTableV2BucketUpdateEntryPO(index, value, oldValue, keySize));
     return 1;
   }
 
