@@ -81,7 +81,7 @@ public class OHashTableDirectoryV2Test {
   public void addFirstLevel() throws IOException {
     OAtomicOperation atomicOperation = startTx();
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -102,7 +102,7 @@ public class OHashTableDirectoryV2Test {
   @Test
   public void changeFirstLevel() throws IOException {
     OAtomicOperation atomicOperation = startTx();
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -129,7 +129,7 @@ public class OHashTableDirectoryV2Test {
   public void addThreeRemoveSecondAddNewAndChange() throws IOException {
     OAtomicOperation atomicOperation = startTx();
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -170,7 +170,7 @@ public class OHashTableDirectoryV2Test {
   public void addRemoveChangeMix() throws IOException {
     OAtomicOperation atomicOperation = startTx();
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -254,7 +254,7 @@ public class OHashTableDirectoryV2Test {
     int secondIndex = -1;
     int thirdIndex = -1;
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
 
     for (int n = 0; n < ODirectoryFirstPage.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
@@ -351,7 +351,7 @@ public class OHashTableDirectoryV2Test {
   public void changeLastNodeSecondPage() throws IOException {
     OAtomicOperation atomicOperation = startTx();
 
-    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
+    long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
 
     for (int n = 0; n < ODirectoryFirstPage.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)

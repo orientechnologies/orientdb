@@ -35,9 +35,9 @@ import java.util.Locale;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/19/14
  */
-public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
-  private static final String ACTUAL_DB_NAME   = OLocalHashTableV2WALTestIT.class.getSimpleName() + "Actual";
-  private static final String EXPECTED_DB_NAME = OLocalHashTableV2WALTestIT.class.getSimpleName() + "Expected";
+public class LocalHashTableV2WALTestIT extends LocalHashTableV2Base {
+  private static final String ACTUAL_DB_NAME   = LocalHashTableV2WALTestIT.class.getSimpleName() + "Actual";
+  private static final String EXPECTED_DB_NAME = LocalHashTableV2WALTestIT.class.getSimpleName() + "Expected";
 
   private OLocalPaginatedStorage actualStorage;
   private OLocalPaginatedStorage expectedStorage;
@@ -98,7 +98,7 @@ public class OLocalHashTableV2WALTestIT extends OLocalHashTableV2Base {
   private void createActualHashTable() throws IOException {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<>(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTableV2<>(42, "actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new LocalHashTableV2<>(42, "actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
