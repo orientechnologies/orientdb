@@ -2,8 +2,6 @@ package com.orientechnologies.common.jna;
 
 import com.sun.jna.Library;
 import com.sun.jna.Structure;
-import com.sun.jna.platform.unix.Resource;
-import sun.misc.Version;
 
 import java.util.Arrays;
 import java.util.Collections;
