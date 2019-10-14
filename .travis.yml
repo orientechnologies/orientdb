@@ -9,7 +9,7 @@ before_script:
   - echo "MAVEN_OPTS='-Xmx3g'" > ~/.mavenrc
 
 install:
-  - mvn clean package -DskipTests
+  - mvn clean package -DskipTests -B
   # mvn install dependency:go-offline -Pskip-formatter -DskipTests=true -q -f driver/pom.xml -Dfailsafe.timeout=0
 
 script:
