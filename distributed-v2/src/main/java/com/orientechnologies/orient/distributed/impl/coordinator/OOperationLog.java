@@ -5,7 +5,13 @@ import java.util.Iterator;
 public interface OOperationLog extends AutoCloseable {
   OLogId log(OLogRequest request);
 
-  void logReceived(OLogId logId, OLogRequest request);
+  /**
+   *
+   * @param logId A log ID received
+   * @param request a request corresponding to the log ID
+   * @return true if the log was added, false otherwise (eg. if the oplog is ahead of the logId)
+   */
+  boolean logReceived(OLogId logId, OLogRequest request);
 
   OLogId lastPersistentLog();
 

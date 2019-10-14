@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -25,8 +26,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private static class OpLogInfo {
-    private int  currentFileNum;
-    private int  firstFileNum;
+    private int currentFileNum;
+    private int firstFileNum;
     private long keepUntil;
 
     void fromStream(InputStream stream) {
@@ -57,13 +58,13 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  protected static final long   MAGIC                = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
-  protected static final String OPLOG_INFO_FILE      = "oplog.opl";
-  protected static final String OPLOG_FILE           = "oplog_$NUM$.opl";
-  protected static final int    LOG_ENTRIES_PER_FILE = 16 * 1024;
+  protected static final long MAGIC = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
+  protected static final String OPLOG_INFO_FILE = "oplog.opl";
+  protected static final String OPLOG_FILE = "oplog_$NUM$.opl";
+  protected static final int LOG_ENTRIES_PER_FILE = 16 * 1024;
 
-  private final String    storagePath;
-  private       OpLogInfo info;
+  private final String storagePath;
+  private OpLogInfo info;
 
   private FileOutputStream fileOutput;
   private DataOutputStream stream;
@@ -232,12 +233,51 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   @Override
   public OLogId log(OLogRequest request) {
+    OLogId result;
+    synchronized (inc) {
+      result = createLogId();
+      write(result, request);
+      inc.notifyAll();
+    }
+
+    flush();
+    return result;
+  }
+
+  protected OLogId createLogId() {
     return new OLogId(inc.incrementAndGet());
   }
 
+  private void flush() {
+    try {
+      this.fileOutput.getFD().sync();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+
   @Override
-  public void logReceived(OLogId logId, OLogRequest request) {
-    write(logId, request);
+  public boolean logReceived(OLogId logId, OLogRequest request) {
+    if (logId.getId() <= lastPersistentLog().getId()) {
+      return false;
+    }
+
+    synchronized (inc) {
+      try {
+
+        while (logId.getId() > lastPersistentLog().getId() + 1) {
+          inc.wait();
+        }
+        write(logId, request);
+        inc.incrementAndGet();
+        inc.notifyAll();
+      } catch (InterruptedException ex) {
+      }
+    }
+
+    flush();
+    return true;
   }
 
   private void write(OLogId logId, OLogRequest request) {
@@ -250,6 +290,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   protected void writeRecord(DataOutputStream stream, OLogId logId, OLogRequest request) {
     ByteArrayOutputStream outArray = new ByteArrayOutputStream();
     DataOutput out = new DataOutputStream(outArray);
+
     try {
       request.serialize(out);
       byte[] packet = outArray.toByteArray();
@@ -262,6 +303,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       stream.writeLong(packetLengthPlusPacket);
       stream.writeLong(MAGIC);
       stream.flush();
+
     } catch (IOException e) {
       throw new ODistributedException("Cannot write oplog: " + e.getMessage());
     }

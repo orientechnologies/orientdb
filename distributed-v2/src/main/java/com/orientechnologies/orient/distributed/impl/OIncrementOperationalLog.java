@@ -17,8 +17,8 @@ public class OIncrementOperationalLog implements OOperationLog {
   }
 
   @Override
-  public void logReceived(OLogId logId, OLogRequest request) {
-
+  public boolean logReceived(OLogId logId, OLogRequest request) {
+    return true;
   }
 
   @Override
