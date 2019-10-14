@@ -280,7 +280,7 @@ public final class OrientGraph implements OGraph {
   public OGremlinResultSet querySql(String sql, Map params) {
     return executeWithConnectionCheck(() -> {
       makeActive();
-      OResultSet resultSet = database.command(sql, params);
+      OResultSet resultSet = database.query(sql, params);
       return new OGremlinResultSet(this, resultSet);
     });
   }
