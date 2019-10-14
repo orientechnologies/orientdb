@@ -581,11 +581,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType()) || OClass.INDEX_TYPE.DICTIONARY.name().equals(index.getType())
           || OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(index.getType())) {
+
+        String name = index.getName();
         for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-          keys.add(String.valueOf(changesPerKey.key));
+          keys.add(name + "#" + changesPerKey.key);
         }
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
-          keys.add("null");
+          keys.add(name + "#null");
         }
       }
     }
@@ -639,7 +641,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       throw e;
     } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
       /// ?? do i've to save this state as well ?
-        txContext.setStatus(TIMEDOUT);
+      txContext.setStatus(TIMEDOUT);
       getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw ex;
     } catch (ORecordDuplicatedException ex) {
