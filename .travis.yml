@@ -2,14 +2,15 @@ language: scala
 
 os:
   - linux
-jdk:
-  - oraclejdk9
+#jdk:
+#  - oraclejdk9
  
 before_script:
   - echo "MAVEN_OPTS='-Xmx3g'" > ~/.mavenrc
 
 install:
-  - mvn install dependency:go-offline -Pskip-formatter -DskipTests=true -q -f driver/pom.xml -Dfailsafe.timeout=0
+  - mvn clean package -DskipTests
+  # mvn install dependency:go-offline -Pskip-formatter -DskipTests=true -q -f driver/pom.xml -Dfailsafe.timeout=0
 
 script:
   - travis_wait 30 mvn install -P travis -B -f driver/pom.xml -Dfailsafe.timeout=0
