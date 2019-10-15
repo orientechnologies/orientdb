@@ -622,7 +622,7 @@ public abstract class ONodeManager {
       pwd += "=";
     }
     if (pwd.length() > 16) {
-      pwd = pwd.substring(16);
+      pwd = pwd.substring(0, 16);
     }
     return pwd.getBytes();
   }
