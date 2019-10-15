@@ -3,6 +3,11 @@ package com.orientechnologies.orient.distributed.impl.coordinator;
 import java.util.Iterator;
 
 public interface OOperationLog extends AutoCloseable {
+
+  enum LogIdStatus {
+    TOO_OLD, PRESENT, INVALID, FUTURE;
+  }
+
   OLogId log(OLogRequest request);
 
   /**
@@ -26,5 +31,5 @@ public interface OOperationLog extends AutoCloseable {
   @Override
   void close();
 
-  void removeAfter(OLogId lastValid);
+  LogIdStatus removeAfter(OLogId lastValid);
 }

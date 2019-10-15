@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLogEntry;
 import com.orientechnologies.orient.distributed.impl.coordinator.mocktx.OPhase1Tx;
 import org.junit.Assert;
@@ -132,6 +133,183 @@ public class OPersistentOperationalLogV1Test {
       file.toFile().delete();
     }
   }
+
+
+  @Test
+  public void testRemoveAfter1() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+
+    try {
+      int totLogEntries = 100;
+
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(10));
+
+      Assert.assertEquals(OOperationLog.LogIdStatus.PRESENT, status);
+
+      Iterator<OOperationLogEntry> iteartor = log.iterate(new OLogId(0), new OLogId(100));
+      for (int i = 0; i <= 10; i++) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(i, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+  @Test
+  public void testRemoveAfter2() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+
+    try {
+      int totLogEntries = 100;
+
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(100));
+
+      Assert.assertEquals(OOperationLog.LogIdStatus.FUTURE, status);
+
+      Iterator<OOperationLogEntry> iteartor = log.iterate(new OLogId(0), new OLogId(100));
+      for (int i = 0; i < 100; i++) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(i, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+
+  @Test
+  public void testRemoveAfter3() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+
+    try {
+      int totLogEntries = 100;
+
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(-5));
+
+      Assert.assertEquals(OOperationLog.LogIdStatus.TOO_OLD, status);
+
+      Iterator<OOperationLogEntry> iteartor = log.iterate(new OLogId(0), new OLogId(100));
+
+      Assert.assertFalse(iteartor.hasNext());
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+
+  @Test
+  public void testRemoveAfter4() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+
+    try {
+      int totLogEntries = 100;
+
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(10) {
+        @Override
+        public boolean equals(Object o) {
+          return false;
+        }
+      });
+
+      Assert.assertEquals(OOperationLog.LogIdStatus.INVALID, status);
+
+      Iterator<OOperationLogEntry> iteartor = log.iterate(new OLogId(0), new OLogId(100));
+      for (int i = 0; i < 100; i++) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(i, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+
+  /**
+   * test off-by-one errors across oplog file split
+   *
+   * @throws IOException
+   */
+  @Test
+  public void testRemoveAfter5() throws IOException {
+    for (int iter = -2; iter < 3; iter++) {
+
+
+      Path file = Files.createTempDirectory(".");
+      OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+
+      try {
+        int totLogEntries = OPersistentOperationalLogV1.LOG_ENTRIES_PER_FILE + 100;
+        int cutTo = OPersistentOperationalLogV1.LOG_ENTRIES_PER_FILE + iter;
+
+        for (int i = 0; i < totLogEntries; i++) {
+          OPhase1Tx item = new OPhase1Tx();
+          log.log(item);
+        }
+        OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(cutTo));
+
+        Assert.assertEquals(OOperationLog.LogIdStatus.PRESENT, status);
+
+        Iterator<OOperationLogEntry> iteartor = log.iterate(new OLogId(0), new OLogId(totLogEntries));
+        for (int i = 0; i <= cutTo; i++) {
+          OOperationLogEntry item = iteartor.next();
+          Assert.assertEquals(i, item.getLogId().getId());
+        }
+        try {
+          Assert.assertFalse("Failed iteration " + iter, iteartor.hasNext());
+        } catch (Exception e) {
+          System.out.println("Failed iteration " + iter);
+          throw e;
+        }
+
+      } finally {
+        for (File file1 : file.toFile().listFiles()) {
+          file1.delete();
+        }
+        file.toFile().delete();
+      }
+    }
+  }
+
 
   @Test
   @Ignore

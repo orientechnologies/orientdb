@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.distributed.impl;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -18,6 +17,7 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1 implements OOperationLog {
+
 
   private OLogRequestFactory factory;
 
@@ -144,6 +144,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     try {
       FileOutputStream stream = new FileOutputStream(infoFile);
       result.toStream(stream);
+      stream.flush();
+      stream.getFD().sync();
       stream.close();
     } catch (IOException e) {
       throw new ODistributedException("Cannot write oplog info:" + e.getMessage());
@@ -159,6 +161,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       FileOutputStream stream = new FileOutputStream(infoFile);
       result.toStream(stream);
       stream.flush();
+      stream.getFD().sync();
       stream.close();
     } catch (IOException e) {
       throw new ODistributedException("Cannot init oplog info:" + e.getMessage());
@@ -389,8 +392,142 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   @Override
-  public void removeAfter(OLogId lastValid) {
-    //TODO:
-    throw new UnsupportedOperationException("not yed done");
+  public LogIdStatus removeAfter(OLogId id) throws IllegalStateException {
+    synchronized (inc) {
+      LogIdStatus status = searchId(id);
+      switch (status) {
+      case TOO_OLD:
+        removeAllLogFiles();
+        inc.set(id.getId());
+        break;
+      case INVALID:
+        break;
+      case FUTURE:
+        break;
+      case PRESENT:
+        doRemoveAfter(id);
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid log ID: " + id);
+      }
+      return status;
+    }
+  }
+
+  private void doRemoveAfter(OLogId id) {
+    try {
+      stream.close();
+      stream = null;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    int currentFileId = (int) (inc.get() / LOG_ENTRIES_PER_FILE);
+    int newLastFileId = (int) (id.getId() / LOG_ENTRIES_PER_FILE);
+
+    for (int i = newLastFileId; i < currentFileId; i++) {
+      String fileName = calculateLogFileFullPath(i + 1);
+      File file = new File(fileName);
+      if (file.exists()) {
+        try {
+          file.delete();
+        } catch (Exception e) {
+        }
+      }
+    }
+    removeAfterInFile(newLastFileId, id.getId());
+
+    inc.set(id.getId());
+    createNewStreamFile();
+  }
+
+  /**
+   * @param fileId     the file ID
+   * @param untilLogId last log ID to be kept
+   */
+  private void removeAfterInFile(int fileId, long untilLogId) {
+    String oldFilePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + fileId);
+    File oldFile = new File(oldFilePath);
+    String newFilePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + fileId) + "_temp";
+    File newFile = new File(newFilePath);
+    if (newFile.exists()) {
+      newFile.delete();
+    }
+    try {
+      newFile.createNewFile();
+
+      FileOutputStream outFileStream = new FileOutputStream(newFile);
+      DataInputStream readStream = new DataInputStream(new FileInputStream(oldFile));
+      DataOutputStream writeStream = new DataOutputStream(outFileStream);
+
+      OOperationLogEntry record = readRecord(readStream);
+      while (record != null && record.getLogId().getId() <= untilLogId) {
+        writeRecord(writeStream, record.getLogId(), record.getRequest());
+        record = readRecord(readStream);
+      }
+      readStream.close();
+      outFileStream.getFD().sync();
+      writeStream.close();
+
+      File oldFileCopy = new File(oldFile.toString() + "_copy");
+      if (oldFileCopy.exists()) {
+        oldFileCopy.delete();
+      }
+      oldFile.renameTo(oldFileCopy);
+      newFile.renameTo(new File(oldFilePath));
+      oldFileCopy.delete();
+    } catch (IOException e) {
+      throw new ODistributedException("Cannot find oplog file: " + oldFilePath);
+    }
+  }
+
+  private void removeAllLogFiles() {
+    try {
+      stream.close();
+      stream = null;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    for (int i = 0; i <= inc.get() / LOG_ENTRIES_PER_FILE; i++) {
+      String fileName = calculateLogFileFullPath(i);
+      File file = new File(fileName);
+      if (file.exists()) {
+        try {
+          file.delete();
+        } catch (Exception e) {
+        }
+      }
+      info.firstFileNum = i + 1;
+    }
+    writeInfo(info);
+    createNewStreamFile();
+  }
+
+  public LogIdStatus searchId(OLogId logId) {
+    long sequential = logId.getId();
+    if (sequential > inc.get()) {
+      return LogIdStatus.FUTURE;
+    }
+    OLogId oldestId = getOldestId();
+    if (oldestId == null || oldestId.getId() > logId.getId()) {
+      return LogIdStatus.TOO_OLD;
+    }
+    Iterator<OOperationLogEntry> iterator = iterate(logId, logId);
+    if (!iterator.hasNext()) {
+      return LogIdStatus.INVALID;
+    } else {
+      OOperationLogEntry loaded = iterator.next();
+      if (loaded.getLogId().equals(logId)) {
+        return LogIdStatus.PRESENT;
+      } else {
+        return LogIdStatus.INVALID;
+      }
+    }
+  }
+
+
+  protected OLogId getOldestId() {
+    Iterator<OOperationLogEntry> iterator = iterate(null, lastPersistentLog());
+    return iterator.hasNext() ? iterator.next().getLogId() : null;
   }
 }
