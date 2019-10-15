@@ -158,6 +158,20 @@ public class OPersistentOperationalLogV1Test {
       }
       Assert.assertFalse(iteartor.hasNext());
 
+      for (int i = 0; i < 5; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+
+      iteartor = log.iterate(new OLogId(0), new OLogId(100));
+      for (int i = 0; i <= 15; i++) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(i, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
+
+
+
     } finally {
       for (File file1 : file.toFile().listFiles()) {
         file1.delete();
