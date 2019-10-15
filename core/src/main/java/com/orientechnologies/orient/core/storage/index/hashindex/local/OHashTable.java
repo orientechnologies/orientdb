@@ -161,6 +161,18 @@ public interface OHashTable<K, V> {
     }
   }
 
+  class RawEntry {
+    public final byte[] key;
+    public final byte[] value;
+    public final long   hashCode;
+
+    public RawEntry(byte[] key, byte[] value, long hashCode) {
+      this.key = key;
+      this.value = value;
+      this.hashCode = hashCode;
+    }
+  }
+
   class Entry<K, V> {
     public final K    key;
     public final V    value;

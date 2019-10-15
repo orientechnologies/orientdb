@@ -44,7 +44,7 @@ public final class OHashIndexFileLevelMetadataPage extends ODurablePage {
     super(cacheEntry);
 
     if (isNewPage) {
-      for (int i = 0; i < OLocalHashTableV2.HASH_CODE_SIZE; i++)
+      for (int i = 0; i < LocalHashTableV2.HASH_CODE_SIZE; i++)
         remove(i);
 
       setRecordsCount(0);
