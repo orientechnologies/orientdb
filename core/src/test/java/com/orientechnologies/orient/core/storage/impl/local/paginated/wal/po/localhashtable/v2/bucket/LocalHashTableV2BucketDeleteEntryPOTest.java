@@ -15,7 +15,7 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public class LocalHashTableV2BucketUpdateEntryPOTest {
+public class LocalHashTableV2BucketDeleteEntryPOTest {
   @Test
   public void testRedo() {
     final int pageSize = 64 * 1024;
@@ -44,14 +44,14 @@ public class LocalHashTableV2BucketUpdateEntryPOTest {
 
       restoredBuffer.put(originalBuffer);
 
-      bucket.updateEntry(0, new byte[] { (byte) 3 }, new byte[] { (byte) 2 }, 1);
+      bucket.deleteEntry(0, 1, new byte[] { (byte) 1 }, new byte[] { (byte) 2 });
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2BucketUpdateEntryPO);
+      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2BucketDeleteEntryPO);
 
-      final LocalHashTableV2BucketUpdateEntryPO pageOperation = (LocalHashTableV2BucketUpdateEntryPO) operations.get(0);
+      final LocalHashTableV2BucketDeleteEntryPO pageOperation = (LocalHashTableV2BucketDeleteEntryPO) operations.get(0);
 
       HashIndexBucketV2<Byte, Byte> restoredBucket = new HashIndexBucketV2<>(restoredCacheEntry);
       Assert.assertEquals(1, restoredBucket.size());
@@ -60,10 +60,7 @@ public class LocalHashTableV2BucketUpdateEntryPOTest {
 
       pageOperation.redo(restoredCacheEntry);
 
-      Assert.assertEquals(1, restoredBucket.size());
-
-      Assert.assertEquals(Byte.valueOf((byte) 3),
-          restoredBucket.getValue(0, null, OByteSerializer.INSTANCE, OByteSerializer.INSTANCE));
+      Assert.assertEquals(0, restoredBucket.size());
 
       byteBufferPool.release(pointer);
       byteBufferPool.release(restoredPointer);
@@ -90,21 +87,18 @@ public class LocalHashTableV2BucketUpdateEntryPOTest {
 
       entry.clearPageOperations();
 
-      bucket.updateEntry(0, new byte[] { (byte) 3 }, new byte[] { (byte) 2 }, 1);
+      bucket.deleteEntry(0, 1, new byte[] { (byte) 1 }, new byte[] { (byte) 2 });
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2BucketUpdateEntryPO);
+      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2BucketDeleteEntryPO);
 
-      final LocalHashTableV2BucketUpdateEntryPO pageOperation = (LocalHashTableV2BucketUpdateEntryPO) operations.get(0);
+      final LocalHashTableV2BucketDeleteEntryPO pageOperation = (LocalHashTableV2BucketDeleteEntryPO) operations.get(0);
 
       final HashIndexBucketV2<Byte, Byte> restoredBucket = new HashIndexBucketV2<>(entry);
 
-      Assert.assertEquals(1, restoredBucket.size());
-
-      Assert.assertEquals(Byte.valueOf((byte) 3),
-          restoredBucket.getValue(0, null, OByteSerializer.INSTANCE, OByteSerializer.INSTANCE));
+      Assert.assertEquals(0, restoredBucket.size());
 
       pageOperation.undo(entry);
 
@@ -122,8 +116,8 @@ public class LocalHashTableV2BucketUpdateEntryPOTest {
   public void testSerialization() {
     OOperationUnitId operationUnitId = OOperationUnitId.generateId();
 
-    LocalHashTableV2BucketUpdateEntryPO operation = new LocalHashTableV2BucketUpdateEntryPO(1, new byte[] { 1, 2 },
-        new byte[] { 3, 4 }, 12);
+    LocalHashTableV2BucketDeleteEntryPO operation = new LocalHashTableV2BucketDeleteEntryPO(1, 24, new byte[] { 1, 2 },
+        new byte[] { 3, 4 });
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -135,7 +129,7 @@ public class LocalHashTableV2BucketUpdateEntryPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    LocalHashTableV2BucketUpdateEntryPO restoredOperation = new LocalHashTableV2BucketUpdateEntryPO();
+    LocalHashTableV2BucketDeleteEntryPO restoredOperation = new LocalHashTableV2BucketDeleteEntryPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());
@@ -143,8 +137,8 @@ public class LocalHashTableV2BucketUpdateEntryPOTest {
     Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
 
     Assert.assertEquals(1, restoredOperation.getIndex());
-    Assert.assertArrayEquals(new byte[] { 3, 4 }, restoredOperation.getOldValue());
-    Assert.assertArrayEquals(new byte[] { 1, 2 }, restoredOperation.getValue());
-    Assert.assertEquals(12, restoredOperation.getKeySize());
+    Assert.assertArrayEquals(new byte[] { 1, 2 }, restoredOperation.getKey());
+    Assert.assertArrayEquals(new byte[] { 3, 4 }, restoredOperation.getValue());
+    Assert.assertEquals(24, restoredOperation.getHashCode());
   }
 }

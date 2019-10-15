@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
@@ -294,7 +295,10 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
             found = positionIndex >= 0;
 
             if (found) {
-              removed = bucket.deleteEntry(positionIndex, encryption, keySerializer, valueSerializer).value;
+              final byte[] rawKey = serializeKey(key);
+              final byte[] rawValue = bucket.getRawValue(positionIndex, rawKey.length, valueSerializer);
+              removed = valueSerializer.deserializeNativeObject(rawValue, 0);
+              bucket.deleteEntry(positionIndex, hashCode, rawKey, rawValue);
               sizeDiff--;
             } else {
               removed = null;
@@ -370,6 +374,21 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
     } finally {
       endAtomicOperation(rollback);
     }
+  }
+
+  private byte[] serializeKey(K separationKey) {
+    @SuppressWarnings("RedundantCast")
+    final byte[] serializedKey = keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes);
+    final byte[] rawKey;
+    if (encryption == null) {
+      rawKey = serializedKey;
+    } else {
+      final byte[] encryptedKey = encryption.encrypt(serializedKey);
+      rawKey = new byte[encryptedKey.length + OIntegerSerializer.INT_SIZE];
+      OIntegerSerializer.INSTANCE.serializeNative(encryptedKey.length, rawKey, 0);
+      System.arraycopy(encryptedKey, 0, rawKey, OIntegerSerializer.INT_SIZE, encryptedKey.length);
+    }
+    return rawKey;
   }
 
   private void changeSize(final int sizeDiff, final OAtomicOperation atomicOperation) throws IOException {
@@ -1158,9 +1177,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         //noinspection RedundantCast
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
-        //noinspection RedundantCast
-        return doPut(key, keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes), value,
-            valueSerializer.serializeNativeAsWhole(value), validator, atomicOperation);
+        return doPut(key, serializeKey(key), value, valueSerializer.serializeNativeAsWhole(value), validator, atomicOperation);
       } finally {
         releaseExclusiveLock();
       }
@@ -1272,11 +1289,11 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
           assert updateResult == -1;
 
-          bucket.deleteEntry(index, encryption, keySerializer, valueSerializer);
+          bucket.deleteEntry(index, hashCode, rawKey, rawValue);
           sizeDiff--;
         }
 
-        if (bucket.addEntry(hashCode, key, value, encryption, keySerializer, valueSerializer, keyTypes)) {
+        if (bucket.addEntry(index < 0 ? -index - 1 : index, hashCode, rawKey, rawValue)) {
           sizeDiff++;
 
           changeSize(sizeDiff, atomicOperation);
@@ -1674,20 +1691,20 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       final int newBucketDepth) {
     assert checkBucketDepth(bucket);
 
-    final List<Entry<K, V>> entries = new ArrayList<>(bucket.size());
-    final Iterator<Entry<K, V>> entryIterator = bucket.iterator(keySerializer, valueSerializer, encryption);
+    final List<RawEntry> entries = new ArrayList<>(bucket.size());
+    final Iterator<RawEntry> entryIterator = bucket.iterator(keySerializer, valueSerializer, encryption);
     while (entryIterator.hasNext()) {
-      final Entry<K, V> entry = entryIterator.next();
+      final RawEntry entry = entryIterator.next();
       entries.add(entry);
     }
 
     bucket.init(newBucketDepth);
 
-    for (final Entry<K, V> entry : entries) {
-      if (((keyHashFunction.hashCode(entry.key) >>> (HASH_CODE_SIZE - newBucketDepth)) & 1) == 0) {
-        bucket.appendEntry(entry.hashCode, entry.key, entry.value, encryption, keySerializer, valueSerializer, keyTypes);
+    for (final RawEntry entry : entries) {
+      if (((entry.hashCode >>> (HASH_CODE_SIZE - newBucketDepth)) & 1) == 0) {
+        bucket.addEntry(bucket.size(), entry.hashCode, entry.key, entry.value);
       } else {
-        newBucket.appendEntry(entry.hashCode, entry.key, entry.value, encryption, keySerializer, valueSerializer, keyTypes);
+        newBucket.addEntry(bucket.size(), entry.hashCode, entry.key, entry.value);
       }
     }
 
@@ -1726,11 +1743,11 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       return true;
     }
 
-    final Iterator<Entry<K, V>> positionIterator = bucket.iterator(keySerializer, valueSerializer, encryption);
+    final Iterator<RawEntry> positionIterator = bucket.iterator(keySerializer, valueSerializer, encryption);
 
-    final long firstValue = keyHashFunction.hashCode(positionIterator.next().key) >>> (HASH_CODE_SIZE - bucketDepth);
+    final long firstValue = positionIterator.next().hashCode >>> (HASH_CODE_SIZE - bucketDepth);
     while (positionIterator.hasNext()) {
-      final long value = keyHashFunction.hashCode(positionIterator.next().key) >>> (HASH_CODE_SIZE - bucketDepth);
+      final long value = positionIterator.next().hashCode >>> (HASH_CODE_SIZE - bucketDepth);
       if (value != firstValue) {
         return false;
       }

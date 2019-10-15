@@ -80,6 +80,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.clu
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetFreeListPagePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetRecordsSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketDeleteEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketUpdateEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.*;
@@ -676,6 +677,9 @@ public final class OWALRecordsFactory {
       break;
     case LOCAL_HASH_TABLE_BUCKET_UPDATE_ENTRY_PO:
       walRecord = new LocalHashTableV2BucketUpdateEntryPO();
+      break;
+    case LOCAL_HASH_TABLE_BUCKET_DELETE_ENTRY_PO:
+      walRecord = new LocalHashTableV2BucketDeleteEntryPO();
       break;
     default:
       if (idToTypeMap.containsKey(recordId))

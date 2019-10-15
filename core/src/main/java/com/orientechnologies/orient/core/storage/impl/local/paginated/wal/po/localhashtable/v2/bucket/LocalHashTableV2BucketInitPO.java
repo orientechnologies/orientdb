@@ -20,7 +20,7 @@ public final class LocalHashTableV2BucketInitPO extends PageOperationRecord {
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    HashIndexBucketV2 bucket = new HashIndexBucketV2(cacheEntry);
+    final HashIndexBucketV2 bucket = new HashIndexBucketV2(cacheEntry);
     bucket.init(depth);
   }
 
