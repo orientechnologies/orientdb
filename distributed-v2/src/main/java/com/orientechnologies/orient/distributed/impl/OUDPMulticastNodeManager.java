@@ -103,4 +103,12 @@ public class OUDPMulticastNodeManager extends ONodeManager {
     }
   }
 
+  @Override
+  protected String getLocalAddress() {
+    if (this.socket.getLocalAddress() != null) {
+      return this.socket.getLocalAddress().getHostAddress();
+    } else {
+      return "127.0.0.1";
+    }
+  }
 }

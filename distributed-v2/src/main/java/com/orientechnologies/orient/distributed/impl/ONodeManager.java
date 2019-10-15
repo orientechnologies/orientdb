@@ -200,8 +200,11 @@ public abstract class ONodeManager {
     }
     OBroadcastMessage ping = generatePingMessage();
     byte[] msg = serializeMessage(ping);
+    processReceivePing(ping, getLocalAddress());
     sendMessageToGroup(msg);
   }
+
+  protected abstract String getLocalAddress();
 
   protected synchronized OBroadcastMessage generatePingMessage() {
     //nodeData

@@ -17,8 +17,8 @@ public class OIncrementOperationalLog implements OOperationLog {
   }
 
   @Override
-  public void logReceived(OLogId logId, OLogRequest request) {
-
+  public boolean logReceived(OLogId logId, OLogRequest request) {
+    return true;
   }
 
   @Override
@@ -37,7 +37,8 @@ public class OIncrementOperationalLog implements OOperationLog {
   }
 
   @Override
-  public void removeAfter(OLogId lastValid) {
+  public LogIdStatus removeAfter(OLogId lastValid) {
     inc.set(lastValid.getId());
+    return LogIdStatus.PRESENT;
   }
 }
