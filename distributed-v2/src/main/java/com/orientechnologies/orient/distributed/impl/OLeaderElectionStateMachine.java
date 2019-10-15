@@ -58,13 +58,6 @@ public class OLeaderElectionStateMachine {
   }
 
   public void setStatus(Status status) {
-    try {
-      if (this.status == Status.LEADER && status == Status.FOLLOWER) {
-        throw new Exception();
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
 //    System.out.println(nodeIdentity.getName() + " setting status to " + status);
     this.status = status;
   }

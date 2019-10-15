@@ -228,6 +228,8 @@ public class OUDPMulticastNodeManagerTest {
 
     ONodeConfiguration config1 = createConfiguration("node1", 4321);
     ONodeInternalConfiguration internalConfiguration1 = createInternalConfiguration("node1");
+    config1.setGroupName("testMasterElectionWithTwo");
+    config1.setGroupPassword("testMasterElectionWithTwo");
 
     OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration1, discoveryListener1, scheduler, new MockOperationLog(0));
     manager1.start();
@@ -240,6 +242,8 @@ public class OUDPMulticastNodeManagerTest {
 
     ONodeInternalConfiguration internalConfiguration2 = createInternalConfiguration("node2");
     ONodeConfiguration config2 = createConfiguration("node2", 4322);
+    config2.setGroupName("testMasterElectionWithTwo");
+    config2.setGroupPassword("testMasterElectionWithTwo");
 
     OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration2, discoveryListener2, scheduler, new MockOperationLog(0));
     manager2.start();

@@ -52,7 +52,7 @@ public class ONodeConfiguration {
     return groupPassword;
   }
 
-  protected void setGroupPassword(String groupPassword) {
+  public void setGroupPassword(String groupPassword) {
     this.groupPassword = groupPassword;
   }
 
