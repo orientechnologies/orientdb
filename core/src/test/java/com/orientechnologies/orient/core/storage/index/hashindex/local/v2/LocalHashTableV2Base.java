@@ -12,7 +12,7 @@ import java.util.Set;
  * Created by frank on 24/04/2016.
  */
 public abstract class LocalHashTableV2Base {
-  protected static final int                               KEYS_COUNT = 500000;
+  protected static final int                               KEYS_COUNT = 1_000_000;
   protected              LocalHashTableV2<Integer, String> localHashTable;
 
   @Test

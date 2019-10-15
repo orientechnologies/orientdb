@@ -376,9 +376,13 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
     }
   }
 
-  private byte[] serializeKey(K separationKey) {
+  private byte[] serializeKey(K key) {
+    if (key == null) {
+      return null;
+    }
+
     @SuppressWarnings("RedundantCast")
-    final byte[] serializedKey = keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes);
+    final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
     final byte[] rawKey;
     if (encryption == null) {
       rawKey = serializedKey;
@@ -1704,7 +1708,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       if (((entry.hashCode >>> (HASH_CODE_SIZE - newBucketDepth)) & 1) == 0) {
         bucket.addEntry(bucket.size(), entry.hashCode, entry.key, entry.value);
       } else {
-        newBucket.addEntry(bucket.size(), entry.hashCode, entry.key, entry.value);
+        newBucket.addEntry(newBucket.size(), entry.hashCode, entry.key, entry.value);
       }
     }
 

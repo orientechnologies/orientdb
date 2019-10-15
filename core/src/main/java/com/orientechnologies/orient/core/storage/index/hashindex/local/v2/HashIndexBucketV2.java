@@ -261,6 +261,11 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
   }
 
   public void deleteEntry(final int index, final long hashCode, final byte[] key, final byte[] value) {
+    final int size = size();
+    if (index < 0 || index >= size) {
+      throw new IllegalStateException("Can not delete entry outside of border of the bucket");
+    }
+
     final int freePointer = getIntValue(FREE_POINTER_OFFSET);
 
     final int positionOffset = POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE;
@@ -275,7 +280,6 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
       moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
 
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
-    int size = size();
     for (int i = 0; i < size - 1; i++) {
       int currentEntryPosition = getIntValue(currentPositionOffset);
       if (currentEntryPosition < entryPosition)
