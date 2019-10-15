@@ -1289,7 +1289,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
           assert updateResult == -1;
 
-          bucket.deleteEntry(index, hashCode, rawKey, rawValue);
+          bucket.deleteEntry(index, hashCode, rawKey, oldRawValue);
           sizeDiff--;
         }
 
