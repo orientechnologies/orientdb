@@ -1824,7 +1824,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
-
     for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageCurrentPayload(requestId, responsePayload);
     }
