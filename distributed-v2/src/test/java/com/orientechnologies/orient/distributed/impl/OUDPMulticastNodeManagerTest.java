@@ -235,7 +235,7 @@ public class OUDPMulticastNodeManagerTest {
     manager1.start();
     assertTrue(discoveryListener1.connects.await(2, TimeUnit.SECONDS));
 
-    Assert.assertNotEquals(OLeaderElectionStateMachine.Status.LEADER, manager1.leaderStatus.status);
+    Assert.assertNotEquals(OLeaderElectionStateMachine.Status.LEADER, manager1.leaderStatus.getStatus());
     for (ODiscoveryListener.NodeData value : manager1.knownServers.values()) {
       Assert.assertFalse(value.leader);
     }
@@ -294,7 +294,8 @@ public class OUDPMulticastNodeManagerTest {
 //    }
     Assert.assertEquals(2, discoveryListener2.totalNodes);
 
-    Assert.assertEquals(OLeaderElectionStateMachine.Status.FOLLOWER, manager1.leaderStatus.status);
+    Assert.assertEquals(OLeaderElectionStateMachine.Status.FOLLOWER, manager1.leaderStatus.getStatus());
+    Assert.assertEquals(OLeaderElectionStateMachine.Status.LEADER, manager2.leaderStatus.getStatus());
     manager2.stop();
 
 
@@ -303,7 +304,47 @@ public class OUDPMulticastNodeManagerTest {
     Assert.assertEquals(1, discoveryListener1.totalNodes);
     manager1.stop();
     Thread.sleep(2000);
+  }
 
+  @Test
+//  @Ignore
+  public void testMasterWithHighestOplog2() throws InterruptedException {
+    MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 1);
+    MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(2, 0);
+    OSchedulerInternal scheduler = new OSchedulerInternalTest();
+
+    ONodeInternalConfiguration internalConfiguration1 = createInternalConfiguration("node1");
+
+    ONodeConfiguration config1 = createConfiguration("node1", "testMasterWithHighestOplog2", "testMasterWithHighestOplog2", 4321, new int[]{4321, 4322});
+
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, internalConfiguration1, discoveryListener1, scheduler, new MockOperationLog(10));
+    manager1.start();
+    assertTrue(discoveryListener1.connects.await(2, TimeUnit.SECONDS));
+
+    Assert.assertEquals(1, discoveryListener1.totalNodes);
+    ONodeInternalConfiguration internalConfiguration2 = createInternalConfiguration("node2");
+    ONodeConfiguration config2 = createConfiguration("node2", "testMasterWithHighestOplog2", "testMasterWithHighestOplog2", 4322, new int[]{4321, 4322});
+
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration2, discoveryListener2, scheduler, new MockOperationLog(0));
+    manager2.start();
+    assertTrue(discoveryListener2.connects.await(2, TimeUnit.SECONDS));
+    Thread.sleep(15000);
+    Assert.assertEquals(2, discoveryListener1.totalNodes);
+//    if (discoveryListener2.totalNodes < 2) {
+//      System.out.println(discoveryListener2.totalNodes);
+//    }
+    Assert.assertEquals(2, discoveryListener2.totalNodes);
+
+    Assert.assertEquals(OLeaderElectionStateMachine.Status.LEADER, manager1.leaderStatus.getStatus());
+    Assert.assertEquals(OLeaderElectionStateMachine.Status.FOLLOWER, manager2.leaderStatus.getStatus());
+    manager2.stop();
+
+
+    assertTrue(discoveryListener1.disconnects.await(15, TimeUnit.SECONDS));
+
+    Assert.assertEquals(1, discoveryListener1.totalNodes);
+    manager1.stop();
+    Thread.sleep(2000);
   }
 }
 

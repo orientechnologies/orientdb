@@ -97,7 +97,7 @@ public class OUDPMulticastNodeManagerIT {
 
     for (int i = 0; i < nNodes - quorum; i++) {
 
-      String leader = nodes.values().stream().filter(x -> x.leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER)
+      String leader = nodes.values().stream().filter(x -> x.leaderStatus.getStatus() == OLeaderElectionStateMachine.Status.LEADER)
               .map(x -> x.getInternalConfiguration().getNodeIdentity().getName()).findFirst().orElse(null);
       Assert.assertNotNull(leader);
       nodes.remove(leader).stop();

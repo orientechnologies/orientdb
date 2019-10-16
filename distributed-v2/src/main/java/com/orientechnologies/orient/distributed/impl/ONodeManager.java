@@ -213,7 +213,7 @@ public abstract class ONodeManager {
     message.nodeIdentity = this.internalConfiguration.getNodeIdentity();
     message.group = this.config.getGroupName();
     message.term = leaderStatus.currentTerm;
-    if (leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER) {
+    if (leaderStatus.getStatus() == OLeaderElectionStateMachine.Status.LEADER) {
       message.role = OBroadcastMessage.ROLE_COORDINATOR;
     } else {
       message.role = OBroadcastMessage.ROLE_REPLICA;
@@ -265,15 +265,17 @@ public abstract class ONodeManager {
         } else {
           data.leader = false;
         }
-        leaderStatus.changeTerm(message.term);
-        if (this.internalConfiguration.getNodeIdentity().equals(message.getNodeIdentity())) {
-          leaderStatus.status = OLeaderElectionStateMachine.Status.LEADER;
+        if (leaderStatus.currentTerm < message.term) {
+          leaderStatus.changeTerm(message.term);
+          if (this.internalConfiguration.getNodeIdentity().equals(message.getNodeIdentity())) {
+            leaderStatus.setStatus(OLeaderElectionStateMachine.Status.LEADER);
+          }
         }
       } else if (data.term == message.term && message.role == OBroadcastMessage.ROLE_COORDINATOR) {
         resetLeader();
         data.leader = true;
         if (!message.getNodeIdentity().equals(this.internalConfiguration.getNodeIdentity())) {
-          leaderStatus.status = OLeaderElectionStateMachine.Status.FOLLOWER;
+          leaderStatus.setStatus(OLeaderElectionStateMachine.Status.FOLLOWER);
         }
       }
       if (data.leader && !wasLeader) {
@@ -378,7 +380,7 @@ public abstract class ONodeManager {
 
   private void checkLeader() {
     synchronized (this) {
-      if (leaderStatus.status == OLeaderElectionStateMachine.Status.CANDIDATE) {
+      if (leaderStatus.getStatus() == OLeaderElectionStateMachine.Status.CANDIDATE) {
         leaderStatus.resetLeaderElection();
       }
       if (knownServers.size() < leaderStatus.quorum) {
@@ -405,7 +407,7 @@ public abstract class ONodeManager {
             }
           }
 
-          if (leaderStatus.status == OLeaderElectionStateMachine.Status.FOLLOWER) {
+          if (leaderStatus.getStatus() == OLeaderElectionStateMachine.Status.FOLLOWER) {
             leaderStatus.startElection();
             sendStartElection(leaderStatus.currentTerm, null, opLog == null ? 0 : opLog.lastPersistentLog().getId());
           }
@@ -513,12 +515,12 @@ public abstract class ONodeManager {
   }
 
   protected void processReceiveVote(OBroadcastMessage message, String fromAddr) {
-//    System.out.println("RECEIVE VOTE term " + message.term + " from " + message.nodeName + " to " + message.voteForNode);
-    if (leaderStatus.status != OLeaderElectionStateMachine.Status.CANDIDATE) {
+//    System.out.println("RECEIVE VOTE term " + message.term + " from " + message.getNodeIdentity().getName() + " to " + message.getNodeIdentity().getName());
+    if (leaderStatus.getStatus() != OLeaderElectionStateMachine.Status.CANDIDATE) {
       return;
     }
     leaderStatus.receiveVote(message.term, message.nodeIdentity, message.voteForIdentity);
-    if (leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER) {
+    if (leaderStatus.getStatus() == OLeaderElectionStateMachine.Status.LEADER) {
       resetLeader();
       ODiscoveryListener.NodeData data = new ODiscoveryListener.NodeData();
       data.term = leaderStatus.currentTerm;
