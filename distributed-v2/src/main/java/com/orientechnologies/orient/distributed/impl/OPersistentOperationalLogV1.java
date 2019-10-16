@@ -252,11 +252,11 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private void flush() {
-    try {
-      this.fileOutput.getFD().sync();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+//    try {
+//      this.fileOutput.getFD().sync();
+//    } catch (IOException e) {
+//      e.printStackTrace();
+//    }
   }
 
 

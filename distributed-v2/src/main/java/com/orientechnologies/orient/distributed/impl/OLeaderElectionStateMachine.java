@@ -8,12 +8,12 @@ import java.util.Set;
 public class OLeaderElectionStateMachine {
 
   public enum Status {
-    LEADER, FOLLOWER, CANDIDATE;
+    FOLLOWER, CANDIDATE, LEADER;
   }
 
   protected ONodeIdentity nodeIdentity;
   protected int currentTerm = -1;
-  protected volatile Status status;
+  private volatile Status status = Status.FOLLOWER;
   protected int quorum;
   protected Set<ONodeIdentity> votesReceived = new HashSet<>();
   protected int lastTermVoted = -1;
@@ -25,7 +25,7 @@ public class OLeaderElectionStateMachine {
     if (currentTerm == term) {
       votesReceived.add(fromNode);
       if (votesReceived.size() >= quorum) {
-        status = Status.LEADER;
+        setStatus(Status.LEADER);
       }
     } else if (currentTerm < term) {
       changeTerm(term);

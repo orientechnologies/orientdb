@@ -298,4 +298,34 @@ public class OScriptExecutionTest {
 
     rs.close();
   }
+
+  @Test
+  public void testAssignOnEdgeCreate() {
+    String script = "";
+    script += "create class IndirectEdge if not exists extends E;\n";
+
+    script += "insert into V set name = 'a', PrimaryName = 'foo1';\n";
+    script += "insert into V set name = 'b', PrimaryName = 'foo2';\n";
+    script += "insert into V set name = 'c', PrimaryName = 'foo3';\n";
+    script += "insert into V set name = 'd', PrimaryName = 'foo4';\n";
+
+    script += "create edge E from (select from V where name = 'a') to (select from V where name = 'b');\n";
+    script += "create edge E from (select from V where name = 'c') to (select from V where name = 'd');\n";
+
+    script += "begin;\n";
+    script += "LET SourceDataset = SELECT expand(out()) from V where name = 'a';\n";
+    script += "LET TarDataset = SELECT expand(out()) from V where name = 'c';\n";
+    script += "IF ($SourceDataset[0] != $TarDataset[0])\n";
+    script += "{\n";
+    script += "CREATE EDGE IndirectEdge FROM $SourceDataset To $TarDataset SET Source = $SourceDataset[0].PrimaryName;\n";
+    script += "};\n";
+    script += "commit retry 10;\n";
+
+    db.execute("sql", script).close();
+
+    try (OResultSet rs = db.query("select from IndirectEdge")) {
+      Assert.assertEquals("foo2", rs.next().getProperty("Source"));
+      Assert.assertFalse(rs.hasNext());
+    }
+  }
 }
