@@ -662,10 +662,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @param transactionId
    */
   public void commit2pcLocal(ODistributedRequestId transactionId) {
-    commit2pc(transactionId, true);
+    commit2pc(transactionId, true, transactionId);
   }
 
-  public boolean commit2pc(ODistributedRequestId transactionId, boolean local) {
+  public boolean commit2pc(ODistributedRequestId transactionId, boolean local, ODistributedRequestId requestId) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
@@ -673,7 +673,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
         try {
+
+          getStorageDistributed().getLocalDistributedDatabase().getManager()
+              .messageCurrentPayload(requestId, txContext.getTransaction());
+          getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("commit", requestId);
           txContext.commit(this);
+          getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("commit", requestId);
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
@@ -758,6 +763,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
     try {
       OTransactionInternal tx = txContext.getTransaction();
+
       ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
     } catch (OLowDiskSpaceException ex) {
       getStorageDistributed().getDistributedManager()
@@ -778,9 +784,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ((OTransactionOptimistic) transaction).begin();
     }
 
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("locks", txContext.getReqId());
+
     acquireLocksForTx(transaction, txContext);
 
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("locks", txContext.getReqId());
+
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("allocate", txContext.getReqId());
     ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("allocate", txContext.getReqId());
 
     for (Map.Entry<String, OTransactionIndexChanges> change : transaction.getIndexOperations().entrySet()) {
       OIndex<?> index = getSharedContext().getIndexManager().getRawIndex(change.getKey());

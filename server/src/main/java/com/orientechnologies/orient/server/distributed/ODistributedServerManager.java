@@ -305,13 +305,17 @@ public interface ODistributedServerManager {
 
   }
 
-  default void messageBeforeLocks(ODistributedRequestId request) {
-
-  }
-  default void messageAfterLocks(ODistributedRequestId request) {
+  default void messageBeforeOp(String op, ODistributedRequestId requestId) {
 
   }
 
+  default void messageAfterOp(String op, ODistributedRequestId requestId) {
+
+  }
+
+  default void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
+
+  }
 
   default void messageProcessStart(ODistributedRequest message) {
 

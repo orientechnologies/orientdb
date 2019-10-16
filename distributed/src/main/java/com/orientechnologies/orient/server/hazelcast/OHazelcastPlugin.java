@@ -1832,19 +1832,26 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
-  public void messageBeforeLocks(ODistributedRequestId request) {
+  public void messageBeforeOp(String op, ODistributedRequestId request) {
 
     for (ODistributedLifecycleListener listener : listeners) {
-      listener.onMessageBeforeLocks(request);
+      listener.onMessageBeforeOp(op, request);
     }
   }
 
   @Override
-  public void messageAfterLocks(ODistributedRequestId request) {
+  public void messageAfterOp(String op, ODistributedRequestId request) {
     for (ODistributedLifecycleListener listener : listeners) {
-      listener.onMessageAfterLocks(request);
+      listener.onMessageAfterOp(op, request);
     }
+  }
 
+  @Override
+  public void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageCurrentPayload(requestId, responsePayload);
+    }
   }
 
   @Override
