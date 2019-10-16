@@ -49,7 +49,6 @@ public class OUDPMulticastNodeManager extends ONodeManager {
     socket = new MulticastSocket(listeningPort);
     InetAddress group = InetAddress.getByName(multicastIp);
     try {
-      OLogManager.instance().info(this, "UDP multicast using network interface '" + socket.getNetworkInterface().getName() + "' for multicast");
       socket.joinGroup(group);
     } catch (Exception e) {
       Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
