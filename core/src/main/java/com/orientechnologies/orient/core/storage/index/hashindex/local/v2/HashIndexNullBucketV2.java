@@ -29,29 +29,21 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @since 4/25/14
  */
 public final class HashIndexNullBucketV2<V> extends ODurablePage {
-  private final OBinarySerializer<V> valueSerializer;
-
-  public HashIndexNullBucketV2(OCacheEntry cacheEntry, OBinarySerializer<V> valueSerializer, boolean isNew) {
+  public HashIndexNullBucketV2(OCacheEntry cacheEntry) {
     super(cacheEntry);
-    this.valueSerializer = valueSerializer;
-
-    if (isNew) {
-      setByteValue(NEXT_FREE_POSITION, (byte) 0);
-    }
   }
 
-  public void setValue(V value) {
+  public void init() {
+    setByteValue(NEXT_FREE_POSITION, (byte) 0);
+  }
+
+  public void setValue(final byte[] value) {
     setByteValue(NEXT_FREE_POSITION, (byte) 1);
 
-    final int valueSize = valueSerializer.getObjectSize(value);
-
-    final byte[] serializedValue = new byte[valueSize];
-    valueSerializer.serializeNativeObject(value, serializedValue, 0);
-
-    setBinaryValue(NEXT_FREE_POSITION + 1, serializedValue);
+    setBinaryValue(NEXT_FREE_POSITION + 1, value);
   }
 
-  public V getValue() {
+  public V getValue(final OBinarySerializer<V> valueSerializer) {
     if (getByteValue(NEXT_FREE_POSITION) == 0) {
       return null;
     }

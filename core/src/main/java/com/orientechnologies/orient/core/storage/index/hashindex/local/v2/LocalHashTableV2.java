@@ -196,8 +196,8 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           V result;
           final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
           try {
-            final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry, valueSerializer, false);
-            result = nullBucket.getValue();
+            final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry);
+            result = nullBucket.getValue(valueSerializer);
           } finally {
             releasePageFromRead(atomicOperation, cacheEntry);
           }
@@ -343,9 +343,9 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           }
 
           try {
-            final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry, valueSerializer, false);
+            final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry);
 
-            removed = nullBucket.getValue();
+            removed = nullBucket.getValue(valueSerializer);
             if (removed != null) {
               nullBucket.removeValue();
               sizeDiff--;
@@ -1211,9 +1211,12 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
       final V oldValue;
       try {
-        final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry, valueSerializer, isNew);
+        final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry);
+        if (isNew) {
+          nullBucket.init();
+        }
 
-        oldValue = nullBucket.getValue();
+        oldValue = nullBucket.getValue(valueSerializer);
 
         if (validator != null) {
           final Object result = validator.validate(null, oldValue, value);
@@ -1221,14 +1224,17 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
             return false;
           }
 
-          value = (V) result;
+          if (value != result) {
+            value = (V) result;
+            rawValue = valueSerializer.serializeNativeAsWhole(value);
+          }
         }
 
         if (oldValue != null) {
           sizeDiff--;
         }
 
-        nullBucket.setValue(value);
+        nullBucket.setValue(rawValue);
         sizeDiff++;
       } finally {
         releasePageFromWrite(atomicOperation, cacheEntry);
