@@ -675,6 +675,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         try {
 
           if (manager != null) {
+            manager.messageCurrentPayload(requestId, txContext.getTransaction());
             manager.messageBeforeOp("commit", requestId);
           }
           txContext.commit(this);
