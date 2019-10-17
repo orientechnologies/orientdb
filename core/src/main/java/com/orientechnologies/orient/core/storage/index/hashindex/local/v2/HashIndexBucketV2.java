@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketAddEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketDeleteEntryPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketUpdateEntryPO;
@@ -306,6 +307,8 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     }
 
     insertEntry(hashCode, key, value, index, entreeSize);
+
+    addPageOperation(new LocalHashTableV2BucketAddEntryPO(index, hashCode, key, value));
     return true;
   }
 
