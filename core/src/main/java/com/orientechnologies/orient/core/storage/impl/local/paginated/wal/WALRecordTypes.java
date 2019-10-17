@@ -218,4 +218,5 @@ public final class WALRecordTypes {
   public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_PAGE_SET_POINTER_PO                  = 182;
 
   public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_TREE_SIZE_PO = 183;
+  public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_TOMBSTONE_PO = 184;
 }

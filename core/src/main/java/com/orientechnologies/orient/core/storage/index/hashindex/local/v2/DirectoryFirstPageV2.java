@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTombstonePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTreeSizePO;
 
 /**
@@ -54,7 +55,9 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   }
 
   public void setTombstone(int tombstone) {
+    final int pastTombstone = getIntValue(TOMBSTONE_OFFSET);
     setIntValue(TOMBSTONE_OFFSET, tombstone);
+    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetTombstonePO(tombstone, pastTombstone));
   }
 
   public int getTombstone() {
