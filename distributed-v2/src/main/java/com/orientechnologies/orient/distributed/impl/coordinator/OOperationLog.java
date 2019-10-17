@@ -21,15 +21,17 @@ public interface OOperationLog extends AutoCloseable {
   OLogId lastPersistentLog();
 
   /**
-   * @param from first entry to get. Null to iterate since the beginning
+   * @param from first entry to get.
    * @param to   last entry to get (included).
    *
    * @return
    */
-  Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to);
+  Iterator<OOperationLogEntry> iterate(long from, long to);
 
   @Override
   void close();
 
   LogIdStatus removeAfter(OLogId lastValid);
+
+  void setLeader(boolean master, long term);
 }

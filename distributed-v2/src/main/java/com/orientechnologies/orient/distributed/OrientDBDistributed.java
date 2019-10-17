@@ -366,7 +366,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     OOperationLog opLog = this.structuralDistributedContext.getOpLog();
     OLogId lastPersistent = opLog.lastPersistentLog();
     if (lastPersistent != null && lastValid != null) {
-      Iterator<OOperationLogEntry> list = opLog.iterate(lastStateId, lastValid);
+      Iterator<OOperationLogEntry> list = opLog.iterate(lastStateId.getId(), lastValid.getId());
       while (list.hasNext()) {
         OOperationLogEntry change = list.next();
         this.getStructuralDistributedContext().getFollower().recover((ORaftOperation) change.getRequest());

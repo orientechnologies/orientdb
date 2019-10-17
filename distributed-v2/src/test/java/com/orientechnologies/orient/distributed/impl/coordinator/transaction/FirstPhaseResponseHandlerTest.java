@@ -40,7 +40,7 @@ public class FirstPhaseResponseHandlerTest {
     members.add(member3);
     OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1,
         new ArrayList<>(), new ArrayList<>(), null);
-    OLogId id = new OLogId(1);
+    OLogId id = new OLogId(1, 0);
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
     handler.receive(coordinator, context, member1, new OTransactionFirstPhaseResult(Type.SUCCESS, null));
@@ -65,7 +65,7 @@ public class FirstPhaseResponseHandlerTest {
     members.add(member3);
     OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1,
         new ArrayList<>(), new ArrayList<>(), null);
-    OLogId id = new OLogId(1);
+    OLogId id = new OLogId(1, 0);
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
     handler.receive(coordinator, context, member1, new OTransactionFirstPhaseResult(Type.CONCURRENT_MODIFICATION_EXCEPTION,
@@ -93,7 +93,7 @@ public class FirstPhaseResponseHandlerTest {
     members.add(member3);
     OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1,
         new ArrayList<>(), new ArrayList<>(), null);
-    OLogId id = new OLogId(1);
+    OLogId id = new OLogId(1, 0);
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
     handler.receive(coordinator, context, member1, new OTransactionFirstPhaseResult(Type.UNIQUE_KEY_VIOLATION,

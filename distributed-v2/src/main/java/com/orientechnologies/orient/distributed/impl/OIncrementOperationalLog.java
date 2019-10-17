@@ -9,11 +9,13 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OIncrementOperationalLog implements OOperationLog {
-  private AtomicLong inc = new AtomicLong(0);
+
+  private long term = 0;
+  private AtomicLong inc = new AtomicLong(term);
 
   @Override
   public OLogId log(OLogRequest request) {
-    return new OLogId(inc.incrementAndGet());
+    return new OLogId(inc.incrementAndGet(), term);
   }
 
   @Override
@@ -23,11 +25,11 @@ public class OIncrementOperationalLog implements OOperationLog {
 
   @Override
   public OLogId lastPersistentLog() {
-    return new OLogId(inc.get());
+    return new OLogId(inc.get(), 0);
   }
 
   @Override
-  public Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to) {
+  public Iterator<OOperationLogEntry> iterate(long from, long to) {
     throw new UnsupportedOperationException();
   }
 
@@ -40,5 +42,10 @@ public class OIncrementOperationalLog implements OOperationLog {
   public LogIdStatus removeAfter(OLogId lastValid) {
     inc.set(lastValid.getId());
     return LogIdStatus.PRESENT;
+  }
+
+  @Override
+  public void setLeader(boolean master, long term) {
+    this.term = term;
   }
 }

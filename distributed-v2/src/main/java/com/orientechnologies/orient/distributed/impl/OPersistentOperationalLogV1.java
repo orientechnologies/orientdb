@@ -20,6 +20,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
 
   private OLogRequestFactory factory;
+  private boolean leader;
+  private long term;
 
   public interface OLogRequestFactory {
     OLogRequest createLogRequest(int requestId);
@@ -171,7 +173,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   @Override
   public OLogId lastPersistentLog() {
-    return new OLogId(inc.get());
+    return new OLogId(inc.get(), term);
   }
 
   protected AtomicLong readLastLogId() {
@@ -192,7 +194,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       file.seek(file.length() - 16); //length plus magic
       long size = file.readLong();
 
-      file.seek(file.length() - 16 - size - 12);
+      file.seek(file.length() - 16 - size - 20);
       return new AtomicLong(file.readLong());
     } catch (IOException e) {
       return new AtomicLong(recover());
@@ -236,6 +238,9 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   @Override
   public OLogId log(OLogRequest request) {
+    if (!leader) {
+      throw new IllegalStateException("Cannot log on a non-leader node");
+    }
     OLogId result;
     synchronized (inc) {
       result = createLogId();
@@ -248,7 +253,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   protected OLogId createLogId() {
-    return new OLogId(inc.incrementAndGet());
+    return new OLogId(inc.incrementAndGet(), term);
   }
 
   private void flush() {
@@ -262,6 +267,9 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   @Override
   public boolean logReceived(OLogId logId, OLogRequest request) {
+    if (leader) {
+      return false;
+    }
     if (logId.getId() <= lastPersistentLog().getId()) {
       return false;
     }
@@ -272,6 +280,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
         while (logId.getId() > lastPersistentLog().getId() + 1) {
           inc.wait();
         }
+        this.term = logId.getTerm();
         write(logId, request);
         inc.incrementAndGet();
         inc.notifyAll();
@@ -300,6 +309,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       int packetLengthPlusPacket = packet.length + 4;
 
       stream.writeLong(logId.getId());
+      stream.writeLong(logId.getTerm());
       stream.writeInt(packetLengthPlusPacket);
       stream.writeInt(request.getRequestType());
       stream.write(packet);
@@ -315,6 +325,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   protected OOperationLogEntry readRecord(DataInputStream stream) {
     try {
       long logId = stream.readLong();
+      long term = stream.readLong();
       int totalPacketSize = stream.readInt();
       int packetType = stream.readInt();
       OLogRequest request = getCoordinateMessagesFactory().createLogRequest(packetType);
@@ -324,7 +335,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       if (magic != MAGIC) {
         throw new ODistributedException("Invalid OpLog magic number for entry " + logId);
       }
-      return new OOperationLogEntry(new OLogId(logId), request);
+      return new OOperationLogEntry(new OLogId(logId, term), request);
     } catch (Exception e) {
       return null;
     }
@@ -349,7 +360,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   @Override
-  public Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to) {
+  public Iterator<OOperationLogEntry> iterate(long from, long to) {
     return new OPersistentOperationalLogIterator(this, from, to);
   }
 
@@ -512,7 +523,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     if (oldestId == null || oldestId.getId() > logId.getId()) {
       return LogIdStatus.TOO_OLD;
     }
-    Iterator<OOperationLogEntry> iterator = iterate(logId, logId);
+    Iterator<OOperationLogEntry> iterator = iterate(logId.getId(), logId.getId());
     if (!iterator.hasNext()) {
       return LogIdStatus.INVALID;
     } else {
@@ -527,7 +538,15 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
 
   protected OLogId getOldestId() {
-    Iterator<OOperationLogEntry> iterator = iterate(null, lastPersistentLog());
+    Iterator<OOperationLogEntry> iterator = iterate(0, lastPersistentLog().getId());
     return iterator.hasNext() ? iterator.next().getLogId() : null;
+  }
+
+  @Override
+  public void setLeader(boolean leader, long term) {
+    synchronized (inc) {
+      this.leader = leader;
+      this.term = term;
+    }
   }
 }
