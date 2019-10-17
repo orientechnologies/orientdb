@@ -149,6 +149,10 @@ public class OFileUtils {
   }
 
   public static void deleteRecursively(final File rootFile) {
+    deleteRecursively(rootFile, false);
+  }
+
+  public static void deleteRecursively(final File rootFile, boolean onlyDirs) {
     if (!rootFile.exists())
       return;
 
@@ -157,7 +161,9 @@ public class OFileUtils {
       Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          Files.deleteIfExists(file);
+          if (!onlyDirs) {
+            Files.deleteIfExists(file);
+          }
           return FileVisitResult.CONTINUE;
         }
 
