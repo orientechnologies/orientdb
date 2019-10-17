@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetMaxRightChildDepthPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetNodeLocalDepthPO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -70,8 +71,11 @@ public class DirectoryPageV2 extends ODurablePage {
   }
 
   public void setNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth) {
-    int offset = getItemsOffset() + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE + 2 * OByteSerializer.BYTE_SIZE;
+    final int offset = getItemsOffset() + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE + 2 * OByteSerializer.BYTE_SIZE;
+
+    final byte pastDepth = getByteValue(offset);
     setByteValue(offset, nodeLocalDepth);
+    addPageOperation(new LocalHashTableV2DirectoryPageSetNodeLocalDepthPO(localNodeIndex, nodeLocalDepth, pastDepth));
   }
 
   public byte getNodeLocalDepth(int localNodeIndex) {
