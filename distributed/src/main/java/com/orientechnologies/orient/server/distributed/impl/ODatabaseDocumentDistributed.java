@@ -674,11 +674,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       if (SUCCESS.equals(txContext.getStatus())) {
         try {
 
-          getStorageDistributed().getLocalDistributedDatabase().getManager()
-              .messageCurrentPayload(requestId, txContext.getTransaction());
-          getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("commit", requestId);
+          if (manager != null) {
+            manager.messageBeforeOp("commit", requestId);
+          }
           txContext.commit(this);
-          getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("commit", requestId);
+          if (manager != null) {
+            manager.messageAfterOp("commit", requestId);
+          }
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
