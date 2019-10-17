@@ -206,10 +206,11 @@ public final class WALRecordTypes {
   public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_SET_RIGHT_SIBLING_PO = 172;
   public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_REMOVE_VALUE_PO      = 173;
 
-  public static final int LOCAL_HASH_TABLE_BUCKET_INIT_PO         = 174;
-  public static final int LOCAL_HASH_TABLE_BUCKET_UPDATE_ENTRY_PO = 175;
-  public static final int LOCAL_HASH_TABLE_BUCKET_DELETE_ENTRY_PO = 176;
-  public static final int LOCAL_HASH_TABLE_BUCKET_ADD_ENTRY_PO    = 177;
-  public static final int LOCAL_HASH_TABLE_BUCKET_SET_DEPTH_PO    = 178;
+  public static final int LOCAL_HASH_TABLE_V2_BUCKET_INIT_PO         = 174;
+  public static final int LOCAL_HASH_TABLE_V2_BUCKET_UPDATE_ENTRY_PO = 175;
+  public static final int LOCAL_HASH_TABLE_V2_BUCKET_DELETE_ENTRY_PO = 176;
+  public static final int LOCAL_HASH_TABLE_V2_BUCKET_ADD_ENTRY_PO    = 177;
+  public static final int LOCAL_HASH_TABLE_V2_BUCKET_SET_DEPTH_PO    = 178;
 
+  public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_PAGE_SET_MAX_LEFT_CHILDREN_DEPTH_PO = 179;
 }

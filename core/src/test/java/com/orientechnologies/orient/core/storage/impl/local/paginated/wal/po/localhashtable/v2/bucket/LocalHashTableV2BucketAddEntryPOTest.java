@@ -154,7 +154,7 @@ public class LocalHashTableV2BucketAddEntryPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    LocalHashTableV2BucketDeleteEntryPO restoredOperation = new LocalHashTableV2BucketDeleteEntryPO();
+    LocalHashTableV2BucketAddEntryPO restoredOperation = new LocalHashTableV2BucketAddEntryPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

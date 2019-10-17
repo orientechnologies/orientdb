@@ -42,7 +42,7 @@ public final class LocalHashTableV2BucketSetDepthPO extends PageOperationRecord 
 
   @Override
   public int getId() {
-    return WALRecordTypes.LOCAL_HASH_TABLE_BUCKET_SET_DEPTH_PO;
+    return WALRecordTypes.LOCAL_HASH_TABLE_V2_BUCKET_SET_DEPTH_PO;
   }
 
   @Override

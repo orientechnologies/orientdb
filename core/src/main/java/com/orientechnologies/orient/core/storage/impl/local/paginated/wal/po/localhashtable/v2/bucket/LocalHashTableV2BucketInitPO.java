@@ -30,7 +30,7 @@ public final class LocalHashTableV2BucketInitPO extends PageOperationRecord {
 
   @Override
   public int getId() {
-    return WALRecordTypes.LOCAL_HASH_TABLE_BUCKET_INIT_PO;
+    return WALRecordTypes.LOCAL_HASH_TABLE_V2_BUCKET_INIT_PO;
   }
 
   @Override

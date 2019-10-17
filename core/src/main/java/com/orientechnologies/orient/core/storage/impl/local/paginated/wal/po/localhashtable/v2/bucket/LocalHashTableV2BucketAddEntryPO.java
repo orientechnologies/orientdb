@@ -57,7 +57,7 @@ public final class LocalHashTableV2BucketAddEntryPO extends PageOperationRecord 
 
   @Override
   public int getId() {
-    return WALRecordTypes.LOCAL_HASH_TABLE_BUCKET_ADD_ENTRY_PO;
+    return WALRecordTypes.LOCAL_HASH_TABLE_V2_BUCKET_ADD_ENTRY_PO;
   }
 
   @Override

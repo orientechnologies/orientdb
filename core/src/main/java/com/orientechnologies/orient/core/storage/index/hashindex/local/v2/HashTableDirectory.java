@@ -64,7 +64,7 @@ public class HashTableDirectory extends ODurableComponent {
     }
 
     try {
-      final DirectoryFirstPage firstPage = new DirectoryFirstPage(firstEntry, firstEntry);
+      final DirectoryFirstPageV2 firstPage = new DirectoryFirstPageV2(firstEntry, firstEntry);
 
       firstPage.setTreeSize(0);
       firstPage.setTombstone(-1);
@@ -99,7 +99,7 @@ public class HashTableDirectory extends ODurableComponent {
     int nodeIndex;
     final OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
     try {
-      final DirectoryFirstPage firstPage = new DirectoryFirstPage(firstEntry, firstEntry);
+      final DirectoryFirstPageV2 firstPage = new DirectoryFirstPageV2(firstEntry, firstEntry);
 
       final int tombstone = firstPage.getTombstone();
 
@@ -110,7 +110,7 @@ public class HashTableDirectory extends ODurableComponent {
         firstPage.setTreeSize(nodeIndex + 1);
       }
 
-      if (nodeIndex < DirectoryFirstPage.NODES_PER_PAGE) {
+      if (nodeIndex < DirectoryFirstPageV2.NODES_PER_PAGE) {
         @SuppressWarnings("UnnecessaryLocalVariable")
         final int localNodeIndex = nodeIndex;
 
@@ -127,8 +127,8 @@ public class HashTableDirectory extends ODurableComponent {
         }
 
       } else {
-        final int pageIndex = nodeIndex / DirectoryPage.NODES_PER_PAGE;
-        final int localLevel = nodeIndex % DirectoryPage.NODES_PER_PAGE;
+        final int pageIndex = nodeIndex / DirectoryPageV2.NODES_PER_PAGE;
+        final int localLevel = nodeIndex % DirectoryPageV2.NODES_PER_PAGE;
 
         OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
         while (cacheEntry == null || cacheEntry.getPageIndex() < pageIndex) {
@@ -140,7 +140,7 @@ public class HashTableDirectory extends ODurableComponent {
         }
 
         try {
-          final DirectoryPage page = new DirectoryPage(cacheEntry);
+          final DirectoryPageV2 page = new DirectoryPageV2(cacheEntry);
 
           page.setMaxLeftChildDepth(localLevel, maxLeftChildDepth);
           page.setMaxRightChildDepth(localLevel, maxRightChildDepth);
@@ -169,17 +169,17 @@ public class HashTableDirectory extends ODurableComponent {
   void deleteNode(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
     try {
-      final DirectoryFirstPage firstPage = new DirectoryFirstPage(firstEntry, firstEntry);
-      if (nodeIndex < DirectoryFirstPage.NODES_PER_PAGE) {
+      final DirectoryFirstPageV2 firstPage = new DirectoryFirstPageV2(firstEntry, firstEntry);
+      if (nodeIndex < DirectoryFirstPageV2.NODES_PER_PAGE) {
         firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
         firstPage.setTombstone(nodeIndex);
       } else {
-        final int pageIndex = nodeIndex / DirectoryPage.NODES_PER_PAGE;
-        final int localNodeIndex = nodeIndex % DirectoryPage.NODES_PER_PAGE;
+        final int pageIndex = nodeIndex / DirectoryPageV2.NODES_PER_PAGE;
+        final int localNodeIndex = nodeIndex % DirectoryPageV2.NODES_PER_PAGE;
 
         final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
         try {
-          final DirectoryPage page = new DirectoryPage(cacheEntry);
+          final DirectoryPageV2 page = new DirectoryPageV2(cacheEntry);
 
           page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
           firstPage.setTombstone(nodeIndex);
@@ -194,7 +194,7 @@ public class HashTableDirectory extends ODurableComponent {
   }
 
   byte getMaxLeftChildDepth(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
-    final DirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, false, atomicOperation);
     try {
       return page.getMaxLeftChildDepth(getLocalNodeIndex(nodeIndex));
     } finally {
@@ -204,7 +204,7 @@ public class HashTableDirectory extends ODurableComponent {
 
   void setMaxLeftChildDepth(final int nodeIndex, final byte maxLeftChildDepth, final OAtomicOperation atomicOperation)
       throws IOException {
-    final DirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, true, atomicOperation);
     try {
       page.setMaxLeftChildDepth(getLocalNodeIndex(nodeIndex), maxLeftChildDepth);
     } finally {
@@ -213,7 +213,7 @@ public class HashTableDirectory extends ODurableComponent {
   }
 
   byte getMaxRightChildDepth(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
-    final DirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, false, atomicOperation);
     try {
       return page.getMaxRightChildDepth(getLocalNodeIndex(nodeIndex));
     } finally {
@@ -223,7 +223,7 @@ public class HashTableDirectory extends ODurableComponent {
 
   void setMaxRightChildDepth(final int nodeIndex, final byte maxRightChildDepth, final OAtomicOperation atomicOperation)
       throws IOException {
-    final DirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, true, atomicOperation);
     try {
       page.setMaxRightChildDepth(getLocalNodeIndex(nodeIndex), maxRightChildDepth);
     } finally {
@@ -232,7 +232,7 @@ public class HashTableDirectory extends ODurableComponent {
   }
 
   byte getNodeLocalDepth(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
-    final DirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, false, atomicOperation);
     try {
       return page.getNodeLocalDepth(getLocalNodeIndex(nodeIndex));
     } finally {
@@ -242,7 +242,7 @@ public class HashTableDirectory extends ODurableComponent {
 
   void setNodeLocalDepth(final int nodeIndex, final byte localNodeDepth, final OAtomicOperation atomicOperation)
       throws IOException {
-    final DirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, true, atomicOperation);
     try {
       page.setNodeLocalDepth(getLocalNodeIndex(nodeIndex), localNodeDepth);
     } finally {
@@ -252,7 +252,7 @@ public class HashTableDirectory extends ODurableComponent {
 
   long[] getNode(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
     final long[] node = new long[LEVEL_SIZE];
-    final DirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, false, atomicOperation);
 
     try {
       final int localNodeIndex = getLocalNodeIndex(nodeIndex);
@@ -267,7 +267,7 @@ public class HashTableDirectory extends ODurableComponent {
   }
 
   void setNode(final int nodeIndex, final long[] node, final OAtomicOperation atomicOperation) throws IOException {
-    final DirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, true, atomicOperation);
     try {
       final int localNodeIndex = getLocalNodeIndex(nodeIndex);
       for (int i = 0; i < LEVEL_SIZE; i++) {
@@ -279,7 +279,7 @@ public class HashTableDirectory extends ODurableComponent {
   }
 
   long getNodePointer(final int nodeIndex, final int index, final OAtomicOperation atomicOperation) throws IOException {
-    final DirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, false, atomicOperation);
     try {
       return page.getPointer(getLocalNodeIndex(nodeIndex), index);
     } finally {
@@ -289,7 +289,7 @@ public class HashTableDirectory extends ODurableComponent {
 
   void setNodePointer(final int nodeIndex, final int index, final long pointer, final OAtomicOperation atomicOperation)
       throws IOException {
-    final DirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+    final DirectoryPageV2 page = loadPage(nodeIndex, true, atomicOperation);
     try {
       page.setPointer(getLocalNodeIndex(nodeIndex), index, pointer);
     } finally {
@@ -307,9 +307,9 @@ public class HashTableDirectory extends ODurableComponent {
     writeCache.flush(fileId);
   }
 
-  private DirectoryPage loadPage(final int nodeIndex, final boolean exclusiveLock, final OAtomicOperation atomicOperation)
+  private DirectoryPageV2 loadPage(final int nodeIndex, final boolean exclusiveLock, final OAtomicOperation atomicOperation)
       throws IOException {
-    if (nodeIndex < DirectoryFirstPage.NODES_PER_PAGE) {
+    if (nodeIndex < DirectoryFirstPageV2.NODES_PER_PAGE) {
       final OCacheEntry cacheEntry;
 
       if (exclusiveLock) {
@@ -318,10 +318,10 @@ public class HashTableDirectory extends ODurableComponent {
         cacheEntry = loadPageForRead(atomicOperation, fileId, firstEntryIndex, true);
       }
 
-      return new DirectoryFirstPage(cacheEntry, cacheEntry);
+      return new DirectoryFirstPageV2(cacheEntry, cacheEntry);
     }
 
-    final int pageIndex = nodeIndex / DirectoryPage.NODES_PER_PAGE;
+    final int pageIndex = nodeIndex / DirectoryPageV2.NODES_PER_PAGE;
 
     final OCacheEntry cacheEntry;
 
@@ -331,10 +331,10 @@ public class HashTableDirectory extends ODurableComponent {
       cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, true);
     }
 
-    return new DirectoryPage(cacheEntry);
+    return new DirectoryPageV2(cacheEntry);
   }
 
-  private void releasePage(final DirectoryPage page, final boolean exclusiveLock, final OAtomicOperation atomicOperation)
+  private void releasePage(final DirectoryPageV2 page, final boolean exclusiveLock, final OAtomicOperation atomicOperation)
       throws IOException {
     final OCacheEntry cacheEntry = page.getCacheEntry();
 
@@ -347,10 +347,10 @@ public class HashTableDirectory extends ODurableComponent {
   }
 
   private static int getLocalNodeIndex(final int nodeIndex) {
-    if (nodeIndex < DirectoryFirstPage.NODES_PER_PAGE) {
+    if (nodeIndex < DirectoryFirstPageV2.NODES_PER_PAGE) {
       return nodeIndex;
     }
 
-    return (nodeIndex - DirectoryFirstPage.NODES_PER_PAGE) % DirectoryPage.NODES_PER_PAGE;
+    return (nodeIndex - DirectoryFirstPageV2.NODES_PER_PAGE) % DirectoryPageV2.NODES_PER_PAGE;
   }
 }

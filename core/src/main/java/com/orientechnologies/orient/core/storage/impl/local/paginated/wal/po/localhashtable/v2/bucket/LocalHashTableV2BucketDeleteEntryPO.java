@@ -58,7 +58,7 @@ public final class LocalHashTableV2BucketDeleteEntryPO extends PageOperationReco
 
   @Override
   public int getId() {
-    return WALRecordTypes.LOCAL_HASH_TABLE_BUCKET_DELETE_ENTRY_PO;
+    return WALRecordTypes.LOCAL_HASH_TABLE_V2_BUCKET_DELETE_ENTRY_PO;
   }
 
   @Override

@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/14/14
  */
-public final class DirectoryFirstPage extends DirectoryPage {
+public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   private static final int TREE_SIZE_OFFSET = NEXT_FREE_POSITION;
   private static final int TOMBSTONE_OFFSET = TREE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
@@ -37,7 +37,7 @@ public final class DirectoryFirstPage extends DirectoryPage {
   static final int NODES_PER_PAGE =
       (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET) / HashTableDirectory.BINARY_LEVEL_SIZE;
 
-  public DirectoryFirstPage(OCacheEntry cacheEntry, OCacheEntry entry) {
+  public DirectoryFirstPageV2(OCacheEntry cacheEntry, OCacheEntry entry) {
     super(cacheEntry);
   }
 

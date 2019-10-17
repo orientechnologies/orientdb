@@ -81,6 +81,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.clu
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetRecordsSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1InitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1RemoveValuePO;
@@ -670,20 +671,23 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_REMOVE_VALUE_PO:
       walRecord = new CellBTreeMultiValueV3NullBucketRemoveValuePO();
       break;
-    case LOCAL_HASH_TABLE_BUCKET_INIT_PO:
+    case LOCAL_HASH_TABLE_V2_BUCKET_INIT_PO:
       walRecord = new LocalHashTableV2BucketInitPO();
       break;
-    case LOCAL_HASH_TABLE_BUCKET_UPDATE_ENTRY_PO:
+    case LOCAL_HASH_TABLE_V2_BUCKET_UPDATE_ENTRY_PO:
       walRecord = new LocalHashTableV2BucketUpdateEntryPO();
       break;
-    case LOCAL_HASH_TABLE_BUCKET_DELETE_ENTRY_PO:
+    case LOCAL_HASH_TABLE_V2_BUCKET_DELETE_ENTRY_PO:
       walRecord = new LocalHashTableV2BucketDeleteEntryPO();
       break;
-    case LOCAL_HASH_TABLE_BUCKET_ADD_ENTRY_PO:
+    case LOCAL_HASH_TABLE_V2_BUCKET_ADD_ENTRY_PO:
       walRecord = new LocalHashTableV2BucketAddEntryPO();
       break;
-    case LOCAL_HASH_TABLE_BUCKET_SET_DEPTH_PO:
+    case LOCAL_HASH_TABLE_V2_BUCKET_SET_DEPTH_PO:
       walRecord = new LocalHashTableV2BucketSetDepthPO();
+      break;
+    case LOCAL_HASH_TABLE_V2_DIRECTORY_PAGE_SET_MAX_LEFT_CHILDREN_DEPTH_PO:
+      walRecord = new LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO();
       break;
     default:
       if (idToTypeMap.containsKey(recordId))
