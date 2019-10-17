@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MockOperationLog implements OOperationLog {
+  private long term = 0;
   private AtomicLong sequence;
 
   public MockOperationLog() {
@@ -16,7 +17,7 @@ public class MockOperationLog implements OOperationLog {
 
   @Override
   public OLogId log(OLogRequest request) {
-    return new OLogId(sequence.incrementAndGet());
+    return new OLogId(sequence.incrementAndGet(), term);
   }
 
   @Override
@@ -26,11 +27,11 @@ public class MockOperationLog implements OOperationLog {
 
   @Override
   public OLogId lastPersistentLog() {
-    return new OLogId(sequence.get());
+    return new OLogId(sequence.get(), term);
   }
 
   @Override
-  public Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to) {
+  public Iterator<OOperationLogEntry> iterate(long from, long to) {
     throw new UnsupportedOperationException();
   }
 
@@ -43,5 +44,10 @@ public class MockOperationLog implements OOperationLog {
   public LogIdStatus removeAfter(OLogId lastValid) {
     sequence.set(lastValid.getId());
     return LogIdStatus.PRESENT;
+  }
+
+  @Override
+  public void setLeader(boolean master, long term) {
+    this.term = term;
   }
 }

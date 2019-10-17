@@ -173,7 +173,7 @@ public class OUDPMulticastNodeManagerTest {
   }
 
   @Test
-  @Ignore
+//  @Ignore
   public void testTwoGroups() throws InterruptedException {
     MockDiscoveryListener discoveryListener1 = new MockDiscoveryListener(1, 1);
     MockDiscoveryListener discoveryListener2 = new MockDiscoveryListener(2, 0);
@@ -203,6 +203,7 @@ public class OUDPMulticastNodeManagerTest {
 
     OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration2, discoveryListener2, scheduler, new MockOperationLog(0));
     manager2.start();
+    Thread.sleep(3000);
     assertTrue(discoveryListener2.connects.await(20, TimeUnit.SECONDS));
 
     Assert.assertEquals(2, discoveryListener1.totalNodes);

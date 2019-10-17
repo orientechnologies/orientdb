@@ -269,6 +269,7 @@ public abstract class ONodeManager {
           leaderStatus.changeTerm(message.term);
           if (this.internalConfiguration.getNodeIdentity().equals(message.getNodeIdentity())) {
             leaderStatus.setStatus(OLeaderElectionStateMachine.Status.LEADER);
+            opLog.setLeader(true, message.term);
           }
         }
       } else if (data.term == message.term && message.role == OBroadcastMessage.ROLE_COORDINATOR) {
@@ -276,6 +277,7 @@ public abstract class ONodeManager {
         data.leader = true;
         if (!message.getNodeIdentity().equals(this.internalConfiguration.getNodeIdentity())) {
           leaderStatus.setStatus(OLeaderElectionStateMachine.Status.FOLLOWER);
+          opLog.setLeader(false, message.term);
         }
       }
       if (data.leader && !wasLeader) {
@@ -457,8 +459,10 @@ public abstract class ONodeManager {
     if (message.term >= leaderStatus.currentTerm) {
       if (!this.internalConfiguration.getNodeIdentity().equals(message.nodeIdentity)) {
         leaderStatus.setStatus(OLeaderElectionStateMachine.Status.FOLLOWER);
+        opLog.setLeader(false, message.term);
       } else {
         leaderStatus.setStatus(OLeaderElectionStateMachine.Status.LEADER);
+        opLog.setLeader(true, message.term);
       }
       this.leaderStatus.setCurrentTerm(message.term);
 
@@ -477,6 +481,7 @@ public abstract class ONodeManager {
       if (oldEntry == null) {
         discoveryListener.nodeConnected(data);
       }
+
 
       discoveryListener.leaderElected(data);
 
@@ -530,6 +535,7 @@ public abstract class ONodeManager {
       discoveryListener.leaderElected(data);
       knownServers.put(this.internalConfiguration.getNodeIdentity(), data);
       sendLeaderElected();
+      opLog.setLeader(true, message.term);
     }
   }
 
