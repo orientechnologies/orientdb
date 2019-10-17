@@ -31,7 +31,7 @@ import java.util.List;
 
 /**
  * Implementation of hash index which is based on <a href="http://en.wikipedia.org/wiki/Extendible_hashing">extendible hashing
- * algorithm</a>. The directory for extindible hashing is implemented in {@link OHashTableDirectory} class. Directory is not
+ * algorithm</a>. The directory for extindible hashing is implemented in {@link HashTableDirectory} class. Directory is not
  * implemented according to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead
  * it is implemented according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002".
  * Which has much less memory consumption in case of nonuniform data distribution. Index itself uses so called "multilevel schema"
@@ -105,7 +105,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
   private long hashStateEntryIndex;
 
-  private OHashTableDirectory directory;
+  private HashTableDirectory directory;
 
   private OEncryption encryption;
 
@@ -142,7 +142,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         this.nullKeyIsSupported = nullKeyIsSupported;
 
-        this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), getFullName(), storage);
+        this.directory = new HashTableDirectory(treeStateFileExtension, getName(), getFullName(), storage);
 
         fileStateId = addFile(atomicOperation, getName() + metadataConfigurationFileExtension);
 
@@ -151,7 +151,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
         final OCacheEntry hashStateEntry = addPage(atomicOperation, fileStateId);
         try {
           @SuppressWarnings("unused")
-          final OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, true);
+          final HashIndexFileLevelMetadataPage page = new HashIndexFileLevelMetadataPage(hashStateEntry, true);
 
           hashStateEntryIndex = hashStateEntry.getPageIndex();
         } finally {
@@ -196,7 +196,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           V result;
           final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
           try {
-            final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
+            final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry, valueSerializer, false);
             result = nullBucket.getValue();
           } finally {
             releasePageFromRead(atomicOperation, cacheEntry);
@@ -343,7 +343,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           }
 
           try {
-            final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
+            final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry, valueSerializer, false);
 
             removed = nullBucket.getValue();
             if (removed != null) {
@@ -399,7 +399,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
     if (sizeDiff != 0) {
       final OCacheEntry hashStateEntry = loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true);
       try {
-        final OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
+        final HashIndexFileLevelMetadataPage page = new HashIndexFileLevelMetadataPage(hashStateEntry, false);
 
         page.setRecordsCount(page.getRecordsCount() + sizeDiff);
       } finally {
@@ -507,7 +507,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       this.keySerializer = keySerializer;
       this.valueSerializer = valueSerializer;
 
-      directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
+      directory = new HashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
       directory.open(atomicOperation);
 
       final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, 0, true);
@@ -1051,7 +1051,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex, true);
         try {
-          final OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
+          final HashIndexFileLevelMetadataPage metadataPage = new HashIndexFileLevelMetadataPage(hashStateEntry, false);
           return metadataPage.getRecordsCount();
         } finally {
           releasePageFromRead(atomicOperation, hashStateEntry);
@@ -1211,7 +1211,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
       final V oldValue;
       try {
-        final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, isNew);
+        final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry, valueSerializer, isNew);
 
         oldValue = nullBucket.getValue();
 
@@ -1802,7 +1802,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
     final OCacheEntry hashStateEntry = loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true);
     try {
-      final OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
+      final HashIndexFileLevelMetadataPage metadataPage = new HashIndexFileLevelMetadataPage(hashStateEntry, false);
       metadataPage.setRecordsCount(0);
     } finally {
       releasePageFromWrite(atomicOperation, hashStateEntry);

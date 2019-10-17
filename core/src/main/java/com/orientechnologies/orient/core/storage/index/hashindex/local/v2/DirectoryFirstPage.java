@@ -28,17 +28,17 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/14/14
  */
-public final class ODirectoryFirstPage extends ODirectoryPage {
+public final class DirectoryFirstPage extends DirectoryPage {
   private static final int TREE_SIZE_OFFSET = NEXT_FREE_POSITION;
   private static final int TOMBSTONE_OFFSET = TREE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int ITEMS_OFFSET     = TOMBSTONE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int ITEMS_OFFSET = TOMBSTONE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  public static final int  NODES_PER_PAGE   = (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
-                                                / OHashTableDirectory.BINARY_LEVEL_SIZE;
+  static final int NODES_PER_PAGE =
+      (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET) / HashTableDirectory.BINARY_LEVEL_SIZE;
 
-  ODirectoryFirstPage(OCacheEntry cacheEntry, OCacheEntry entry) {
-    super(cacheEntry, entry);
+  public DirectoryFirstPage(OCacheEntry cacheEntry, OCacheEntry entry) {
+    super(cacheEntry);
   }
 
   public void setTreeSize(int treeSize) {
@@ -49,11 +49,11 @@ public final class ODirectoryFirstPage extends ODirectoryPage {
     return getIntValue(TREE_SIZE_OFFSET);
   }
 
-  void setTombstone(int tombstone) {
+  public void setTombstone(int tombstone) {
     setIntValue(TOMBSTONE_OFFSET, tombstone);
   }
 
-  int getTombstone() {
+  public int getTombstone() {
     return getIntValue(TOMBSTONE_OFFSET);
   }
 

@@ -31,7 +31,7 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/8/14
  */
-public final class OHashIndexFileLevelMetadataPage extends ODurablePage {
+public final class HashIndexFileLevelMetadataPage extends ODurablePage {
 
   private static final int RECORDS_COUNT_OFFSET       = NEXT_FREE_POSITION;
   private static final int KEY_SERIALIZER_ID_OFFSET   = RECORDS_COUNT_OFFSET + OLongSerializer.LONG_SIZE;
@@ -40,7 +40,7 @@ public final class OHashIndexFileLevelMetadataPage extends ODurablePage {
 
   private static final int ITEM_SIZE                  = OByteSerializer.BYTE_SIZE + 3 * OLongSerializer.LONG_SIZE;
 
-  OHashIndexFileLevelMetadataPage(OCacheEntry cacheEntry, boolean isNewPage) {
+  HashIndexFileLevelMetadataPage(OCacheEntry cacheEntry, boolean isNewPage) {
     super(cacheEntry);
 
     if (isNewPage) {

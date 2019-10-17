@@ -13,14 +13,14 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/15/14
  */
-public class OHashTableDirectoryV3Test {
+public class HashTableDirectoryV3Test {
   private static ODatabaseDocumentTx databaseDocumentTx;
 
   private static OHashTableDirectory directory;
 
   @BeforeClass
   public static void beforeClass() throws IOException {
-    databaseDocumentTx = new ODatabaseDocumentTx("memory:" + OHashTableDirectoryV3Test.class.getSimpleName());
+    databaseDocumentTx = new ODatabaseDocumentTx("memory:" + HashTableDirectoryV3Test.class.getSimpleName());
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
