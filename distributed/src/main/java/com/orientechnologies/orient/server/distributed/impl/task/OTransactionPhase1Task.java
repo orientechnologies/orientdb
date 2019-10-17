@@ -94,7 +94,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
+
+    iManager.messageBeforeOp("prepare1Phase", requestId);
     convert(database);
+    iManager.messageAfterOp("prepare1Phase", requestId);
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
     //No need to increase the lock timeout here with the retry because this retries are not deadlock retries
     OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
