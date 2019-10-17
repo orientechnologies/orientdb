@@ -64,7 +64,7 @@ public class HashTableDirectory extends ODurableComponent {
     }
 
     try {
-      final DirectoryFirstPageV2 firstPage = new DirectoryFirstPageV2(firstEntry, firstEntry);
+      final DirectoryFirstPageV2 firstPage = new DirectoryFirstPageV2(firstEntry);
 
       firstPage.setTreeSize(0);
       firstPage.setTombstone(-1);
@@ -99,7 +99,7 @@ public class HashTableDirectory extends ODurableComponent {
     int nodeIndex;
     final OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
     try {
-      final DirectoryFirstPageV2 firstPage = new DirectoryFirstPageV2(firstEntry, firstEntry);
+      final DirectoryFirstPageV2 firstPage = new DirectoryFirstPageV2(firstEntry);
 
       final int tombstone = firstPage.getTombstone();
 
@@ -169,7 +169,7 @@ public class HashTableDirectory extends ODurableComponent {
   void deleteNode(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
     try {
-      final DirectoryFirstPageV2 firstPage = new DirectoryFirstPageV2(firstEntry, firstEntry);
+      final DirectoryFirstPageV2 firstPage = new DirectoryFirstPageV2(firstEntry);
       if (nodeIndex < DirectoryFirstPageV2.NODES_PER_PAGE) {
         firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
         firstPage.setTombstone(nodeIndex);
@@ -318,7 +318,7 @@ public class HashTableDirectory extends ODurableComponent {
         cacheEntry = loadPageForRead(atomicOperation, fileId, firstEntryIndex, true);
       }
 
-      return new DirectoryFirstPageV2(cacheEntry, cacheEntry);
+      return new DirectoryFirstPageV2(cacheEntry);
     }
 
     final int pageIndex = nodeIndex / DirectoryPageV2.NODES_PER_PAGE;

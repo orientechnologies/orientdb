@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTreeSizePO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -37,12 +38,15 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   static final int NODES_PER_PAGE =
       (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET) / HashTableDirectory.BINARY_LEVEL_SIZE;
 
-  public DirectoryFirstPageV2(OCacheEntry cacheEntry, OCacheEntry entry) {
+  public DirectoryFirstPageV2(OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
   public void setTreeSize(int treeSize) {
+    final int pastSize = getIntValue(TREE_SIZE_OFFSET);
     setIntValue(TREE_SIZE_OFFSET, treeSize);
+
+    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetTreeSizePO(treeSize, pastSize));
   }
 
   public int getTreeSize() {

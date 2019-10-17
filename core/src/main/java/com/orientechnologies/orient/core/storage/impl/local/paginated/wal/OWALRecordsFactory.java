@@ -81,6 +81,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.clu
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetRecordsSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTreeSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetMaxRightChildDepthPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetNodeLocalDepthPO;
@@ -700,6 +701,9 @@ public final class OWALRecordsFactory {
       break;
     case LOCAL_HASH_TABLE_V2_DIRECTORY_PAGE_SET_POINTER_PO:
       walRecord = new LocalHashTableV2DirectoryPageSetPointerPO();
+      break;
+    case LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_TREE_SIZE_PO:
+      walRecord = new LocalHashTableV2DirectoryFirstPageSetTreeSizePO();
       break;
     default:
       if (idToTypeMap.containsKey(recordId))
