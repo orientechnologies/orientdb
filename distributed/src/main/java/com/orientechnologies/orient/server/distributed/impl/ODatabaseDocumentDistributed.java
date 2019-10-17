@@ -660,6 +660,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
     getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("allocate", txContext.getReqId());
 
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("indexCheck", txContext.getReqId());
     for (Map.Entry<String, OTransactionIndexChanges> change : transaction.getIndexOperations().entrySet()) {
       OIndex index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
@@ -709,6 +710,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
 
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("indexCheck", txContext.getReqId());
+
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("mvccCheck", txContext.getReqId());
     for (ORecordOperation entry : transaction.getRecordOperations()) {
       if (entry.getType() != ORecordOperation.CREATED) {
         int changeVersion = entry.getRecord().getVersion();
@@ -727,6 +731,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("mvccCheck", txContext.getReqId());
   }
 
   @Override
