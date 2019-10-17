@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIn
 
 import java.nio.ByteBuffer;
 
-public class LocalHashTableV2BucketDeleteEntryPO extends PageOperationRecord {
+public final class LocalHashTableV2BucketDeleteEntryPO extends PageOperationRecord {
   private int    index;
   private long   hashCode;
   private byte[] key;

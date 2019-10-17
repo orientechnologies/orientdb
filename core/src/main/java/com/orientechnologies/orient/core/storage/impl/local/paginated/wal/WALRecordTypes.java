@@ -210,5 +210,6 @@ public final class WALRecordTypes {
   public static final int LOCAL_HASH_TABLE_BUCKET_UPDATE_ENTRY_PO = 175;
   public static final int LOCAL_HASH_TABLE_BUCKET_DELETE_ENTRY_PO = 176;
   public static final int LOCAL_HASH_TABLE_BUCKET_ADD_ENTRY_PO    = 177;
+  public static final int LOCAL_HASH_TABLE_BUCKET_SET_DEPTH_PO    = 178;
 
 }

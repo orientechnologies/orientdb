@@ -28,10 +28,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketAddEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketDeleteEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketInitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketUpdateEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.*;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 
 import java.util.Comparator;
@@ -344,7 +341,11 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
   }
 
   public void setDepth(int depth) {
+    final byte oldDepth = getByteValue(DEPTH_OFFSET);
+
     setByteValue(DEPTH_OFFSET, (byte) depth);
+
+    addPageOperation(new LocalHashTableV2BucketSetDepthPO((byte) depth, oldDepth));
   }
 
   private final class EntryIterator implements Iterator<OHashTable.Entry<K, V>> {
