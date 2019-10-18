@@ -22,27 +22,29 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.metadatapage.LocalHashTableV2MetadataPageInitPO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/8/14
  */
-public final class HashIndexMetadataPage extends ODurablePage {
+public final class HashIndexMetadataPageV2 extends ODurablePage {
   private static final int RECORDS_COUNT_OFFSET = NEXT_FREE_POSITION;
 
-  public HashIndexMetadataPage(OCacheEntry cacheEntry) {
+  public HashIndexMetadataPageV2(OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
   public void init() {
     setLongValue(RECORDS_COUNT_OFFSET, 0);
+    addPageOperation(new LocalHashTableV2MetadataPageInitPO());
   }
 
-  void setRecordsCount(long recordsCount) {
+  public void setRecordsCount(long recordsCount) {
     setLongValue(RECORDS_COUNT_OFFSET, recordsCount);
   }
 
-  long getRecordsCount() {
+  public long getRecordsCount() {
     return getLongValue(RECORDS_COUNT_OFFSET);
   }
 }

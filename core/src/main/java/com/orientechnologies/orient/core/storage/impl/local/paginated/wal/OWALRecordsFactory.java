@@ -87,6 +87,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.loc
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetMaxRightChildDepthPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetNodeLocalDepthPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetPointerPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.metadatapage.LocalHashTableV2MetadataPageInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1InitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1RemoveValuePO;
@@ -708,6 +709,9 @@ public final class OWALRecordsFactory {
       break;
     case LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_TOMBSTONE_PO:
       walRecord = new LocalHashTableV2DirectoryFirstPageSetTombstonePO();
+      break;
+    case LOCAL_HASH_TABLE_V2_METADATA_PAGE_INIT_PO:
+      walRecord = new LocalHashTableV2MetadataPageInitPO();
       break;
     default:
       if (idToTypeMap.containsKey(recordId))
