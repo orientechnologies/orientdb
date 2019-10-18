@@ -4,12 +4,13 @@ import java.util.UUID;
 
 public class ONodeConfigurationBuilder {
 
-  private int                    quorum                = 2;
-  private String                 nodeName              = UUID.randomUUID().toString();
-  private String                 groupName             = "OrientDB";
-  private Integer                tcpPort               = null;
-  private String                 groupPassword         = "OrientDB";
-  private OMulticastConfguration multicastConfguration = new OMulticastConfguration();
+  private int quorum = 2;
+  private String nodeName = UUID.randomUUID().toString();
+  private String groupName = "OrientDB";
+  private Integer tcpPort = null;
+  private String groupPassword = "OrientDB";
+  private OMulticastConfguration multicastConfguration;
+  private OUDPUnicastConfiguration unicastConfiguration;
 
   protected ONodeConfigurationBuilder() {
   }
@@ -44,7 +45,19 @@ public class ONodeConfigurationBuilder {
     return this;
   }
 
+  public ONodeConfigurationBuilder setUnicast(OUDPUnicastConfiguration config) {
+    this.unicastConfiguration = config;
+    return this;
+  }
+
   public ONodeConfiguration build() {
-    return new ONodeConfiguration(nodeName, groupName, groupPassword, quorum, tcpPort, multicastConfguration);
+    if (multicastConfguration != null) {
+      return new ONodeConfiguration(nodeName, groupName, groupPassword, quorum, tcpPort, multicastConfguration);
+    } else if (unicastConfiguration != null) {
+      return new ONodeConfiguration(nodeName, groupName, groupPassword, quorum, tcpPort, unicastConfiguration);
+    } else {
+      //empty multicast as fallback... review...
+      return new ONodeConfiguration(nodeName, groupName, groupPassword, quorum, tcpPort, new OMulticastConfguration());
+    }
   }
 }
