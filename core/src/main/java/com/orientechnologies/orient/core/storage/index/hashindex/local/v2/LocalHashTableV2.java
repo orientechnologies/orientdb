@@ -151,7 +151,8 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
         final OCacheEntry hashStateEntry = addPage(atomicOperation, fileStateId);
         try {
           @SuppressWarnings("unused")
-          final HashIndexFileLevelMetadataPage page = new HashIndexFileLevelMetadataPage(hashStateEntry, true);
+          final HashIndexMetadataPage page = new HashIndexMetadataPage(hashStateEntry);
+          page.init();
 
           hashStateEntryIndex = hashStateEntry.getPageIndex();
         } finally {
@@ -399,7 +400,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
     if (sizeDiff != 0) {
       final OCacheEntry hashStateEntry = loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true);
       try {
-        final HashIndexFileLevelMetadataPage page = new HashIndexFileLevelMetadataPage(hashStateEntry, false);
+        final HashIndexMetadataPage page = new HashIndexMetadataPage(hashStateEntry);
 
         page.setRecordsCount(page.getRecordsCount() + sizeDiff);
       } finally {
@@ -1051,7 +1052,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex, true);
         try {
-          final HashIndexFileLevelMetadataPage metadataPage = new HashIndexFileLevelMetadataPage(hashStateEntry, false);
+          final HashIndexMetadataPage metadataPage = new HashIndexMetadataPage(hashStateEntry);
           return metadataPage.getRecordsCount();
         } finally {
           releasePageFromRead(atomicOperation, hashStateEntry);
@@ -1808,7 +1809,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
     final OCacheEntry hashStateEntry = loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true);
     try {
-      final HashIndexFileLevelMetadataPage metadataPage = new HashIndexFileLevelMetadataPage(hashStateEntry, false);
+      final HashIndexMetadataPage metadataPage = new HashIndexMetadataPage(hashStateEntry);
       metadataPage.setRecordsCount(0);
     } finally {
       releasePageFromWrite(atomicOperation, hashStateEntry);
