@@ -90,6 +90,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.loc
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.metadatapage.LocalHashTableV2MetadataPageInitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.metadatapage.LocalHashTableV2MetadataPageSetRecordsCountPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.nullbucket.LocalHashTableV2NullBucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.nullbucket.LocalHashTableV2NullBucketSetValuePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1InitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1RemoveValuePO;
@@ -720,6 +721,9 @@ public final class OWALRecordsFactory {
       break;
     case LOCAL_HASH_TABLE_V2_NULL_BUCKET_INIT_PO:
       walRecord = new LocalHashTableV2NullBucketInitPO();
+      break;
+    case LOCAL_HASH_TABLE_V2_NULL_BUCKET_SET_VALUE_PO:
+      walRecord = new LocalHashTableV2NullBucketSetValuePO();
       break;
     default:
       if (idToTypeMap.containsKey(recordId))

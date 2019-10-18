@@ -24,6 +24,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.nullbucket.LocalHashTableV2NullBucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.nullbucket.LocalHashTableV2NullBucketSetValuePO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -40,10 +41,22 @@ public final class HashIndexNullBucketV2<V> extends ODurablePage {
     addPageOperation(new LocalHashTableV2NullBucketInitPO());
   }
 
-  public void setValue(final byte[] value) {
-    setByteValue(NEXT_FREE_POSITION, (byte) 1);
+  public void setValue(final byte[] value, final byte[] oldValue) {
+    assert value != null;
 
+    setByteValue(NEXT_FREE_POSITION, (byte) 1);
     setBinaryValue(NEXT_FREE_POSITION + 1, value);
+
+    addPageOperation(new LocalHashTableV2NullBucketSetValuePO(oldValue, value));
+  }
+
+  public byte[] getRawValue(final OBinarySerializer<V> valueSerializer) {
+    if (getByteValue(NEXT_FREE_POSITION) == 0) {
+      return null;
+    }
+
+    final int valueSize = getObjectSizeInDirectMemory(valueSerializer, NEXT_FREE_POSITION + 1);
+    return getBinaryValue(NEXT_FREE_POSITION + 1, valueSize);
   }
 
   public V getValue(final OBinarySerializer<V> valueSerializer) {

@@ -1217,7 +1217,8 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           nullBucket.init();
         }
 
-        oldValue = nullBucket.getValue(valueSerializer);
+        final byte[] oldRawValue = nullBucket.getRawValue(valueSerializer);
+        oldValue = oldRawValue == null ? null : valueSerializer.deserializeNativeObject(oldRawValue, 0);
 
         if (validator != null) {
           final Object result = validator.validate(null, oldValue, value);
@@ -1235,7 +1236,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           sizeDiff--;
         }
 
-        nullBucket.setValue(rawValue);
+        nullBucket.setValue(rawValue, oldRawValue);
         sizeDiff++;
       } finally {
         releasePageFromWrite(atomicOperation, cacheEntry);
