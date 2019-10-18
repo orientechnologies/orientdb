@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRec
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexMetadataPageV2;
 
-public class LocalHashTableV2MetadataPageInitPO extends PageOperationRecord {
+public final class LocalHashTableV2MetadataPageInitPO extends PageOperationRecord {
   @Override
   public void redo(final OCacheEntry cacheEntry) {
     final HashIndexMetadataPageV2 page = new HashIndexMetadataPageV2(cacheEntry);
