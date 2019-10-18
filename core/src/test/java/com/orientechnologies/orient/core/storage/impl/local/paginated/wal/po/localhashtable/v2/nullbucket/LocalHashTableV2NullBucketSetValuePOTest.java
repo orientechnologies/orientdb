@@ -217,7 +217,7 @@ public class LocalHashTableV2NullBucketSetValuePOTest {
     Assert.assertEquals(24, restoredOperation.getPageIndex());
     Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
 
-    Assert.assertArrayEquals(new byte[] { (byte) 1 }, restoredOperation.getPastValue());
+    Assert.assertArrayEquals(new byte[] { (byte) 1 }, restoredOperation.getPrevValue());
     Assert.assertArrayEquals(new byte[] { (byte) 2 }, restoredOperation.getValue());
   }
 
@@ -244,7 +244,7 @@ public class LocalHashTableV2NullBucketSetValuePOTest {
     Assert.assertEquals(24, restoredOperation.getPageIndex());
     Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
 
-    Assert.assertNull(restoredOperation.getPastValue());
+    Assert.assertNull(restoredOperation.getPrevValue());
     Assert.assertArrayEquals(new byte[] { (byte) 2 }, restoredOperation.getValue());
   }
 }

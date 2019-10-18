@@ -82,7 +82,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
   private final String metadataConfigurationFileExtension;
   private final String treeStateFileExtension;
 
-  static final         int HASH_CODE_SIZE  = 64;
+  private static final int HASH_CODE_SIZE  = 64;
   private static final int MAX_LEVEL_DEPTH = 8;
   static final         int MAX_LEVEL_SIZE  = 1 << MAX_LEVEL_DEPTH;
 
@@ -346,10 +346,13 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           try {
             final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry);
 
-            removed = nullBucket.getValue(valueSerializer);
-            if (removed != null) {
-              nullBucket.removeValue();
+            final byte[] rawRemoved = nullBucket.getRawValue(valueSerializer);
+            if (rawRemoved != null) {
+              removed = valueSerializer.deserializeNativeObject(rawRemoved, 0);
+              nullBucket.removeValue(rawRemoved);
               sizeDiff--;
+            } else {
+              removed = null;
             }
           } finally {
             releasePageFromWrite(atomicOperation, cacheEntry);

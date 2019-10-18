@@ -10,19 +10,19 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIn
 import java.nio.ByteBuffer;
 
 public class LocalHashTableV2NullBucketSetValuePO extends PageOperationRecord {
-  private byte[] pastValue;
+  private byte[] prevValue;
   private byte[] value;
 
-  public LocalHashTableV2NullBucketSetValuePO(byte[] pastValue, byte[] value) {
-    this.pastValue = pastValue;
+  public LocalHashTableV2NullBucketSetValuePO(byte[] prevValue, byte[] value) {
+    this.prevValue = prevValue;
     this.value = value;
   }
 
   public LocalHashTableV2NullBucketSetValuePO() {
   }
 
-  public byte[] getPastValue() {
-    return pastValue;
+  public byte[] getPrevValue() {
+    return prevValue;
   }
 
   public byte[] getValue() {
@@ -32,16 +32,16 @@ public class LocalHashTableV2NullBucketSetValuePO extends PageOperationRecord {
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final HashIndexNullBucketV2 bucket = new HashIndexNullBucketV2(cacheEntry);
-    bucket.setValue(value, pastValue);
+    bucket.setValue(value, prevValue);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final HashIndexNullBucketV2 bucket = new HashIndexNullBucketV2(cacheEntry);
-    if (pastValue == null) {
-      bucket.removeValue();
+    if (prevValue == null) {
+      bucket.removeValue(value);
     } else {
-      bucket.setValue(pastValue, value);
+      bucket.setValue(prevValue, value);
     }
   }
 
@@ -53,8 +53,8 @@ public class LocalHashTableV2NullBucketSetValuePO extends PageOperationRecord {
   @Override
   public int serializedSize() {
     int size = OIntegerSerializer.INT_SIZE + value.length + OByteSerializer.BYTE_SIZE;
-    if (pastValue != null) {
-      size += OIntegerSerializer.INT_SIZE + pastValue.length;
+    if (prevValue != null) {
+      size += OIntegerSerializer.INT_SIZE + prevValue.length;
     }
 
     return super.serializedSize() + size;
@@ -67,10 +67,10 @@ public class LocalHashTableV2NullBucketSetValuePO extends PageOperationRecord {
     buffer.putInt(value.length);
     buffer.put(value);
 
-    buffer.put(pastValue != null ? (byte) 1 : 0);
-    if (pastValue != null) {
-      buffer.putInt(pastValue.length);
-      buffer.put(pastValue);
+    buffer.put(prevValue != null ? (byte) 1 : 0);
+    if (prevValue != null) {
+      buffer.putInt(prevValue.length);
+      buffer.put(prevValue);
     }
   }
 
@@ -84,8 +84,8 @@ public class LocalHashTableV2NullBucketSetValuePO extends PageOperationRecord {
 
     if (buffer.get() > 0) {
       final int pastValueLen = buffer.getInt();
-      pastValue = new byte[pastValueLen];
-      buffer.get(pastValue);
+      prevValue = new byte[pastValueLen];
+      buffer.get(prevValue);
     }
   }
 }

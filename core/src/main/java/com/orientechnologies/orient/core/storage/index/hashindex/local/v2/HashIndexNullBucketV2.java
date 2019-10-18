@@ -24,6 +24,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.nullbucket.LocalHashTableV2NullBucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.nullbucket.LocalHashTableV2NullBucketRemoveValuePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.nullbucket.LocalHashTableV2NullBucketSetValuePO;
 
 /**
@@ -67,11 +68,12 @@ public final class HashIndexNullBucketV2<V> extends ODurablePage {
     return deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 1);
   }
 
-  public void removeValue() {
+  public void removeValue(final byte[] prevValue) {
     if (getByteValue(NEXT_FREE_POSITION) == 0) {
       return;
     }
 
     setByteValue(NEXT_FREE_POSITION, (byte) 0);
+    addPageOperation(new LocalHashTableV2NullBucketRemoveValuePO(prevValue));
   }
 }
