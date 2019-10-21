@@ -50,7 +50,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageConfiguratio
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import javax.crypto.*;
@@ -608,10 +608,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           continue;
         }
 
-        if (zipEntry.getName().toLowerCase(serverLocale).endsWith(OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
+        if (zipEntry.getName().toLowerCase(serverLocale).endsWith(CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
           final String walName = zipEntry.getName();
           final int segmentIndex = walName
-              .lastIndexOf(".", walName.length() - OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION.length() - 1);
+              .lastIndexOf(".", walName.length() - CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION.length() - 1);
           final String storageName = getName();
 
           if (segmentIndex < 0) {
