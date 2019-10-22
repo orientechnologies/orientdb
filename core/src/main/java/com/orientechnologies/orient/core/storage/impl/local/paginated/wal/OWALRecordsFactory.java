@@ -737,6 +737,9 @@ public final class OWALRecordsFactory {
     case LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_NODE_LOCAL_DEPTH_PO:
       walRecord = new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO();
       break;
+    case LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_POINTER_PO:
+      walRecord = new LocalHashTableV2DirectoryFirstPageSetPointerPO();
+      break;
     default:
       if (idToTypeMap.containsKey(recordId))
         try {

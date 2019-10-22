@@ -82,4 +82,9 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   protected void logSetNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth, byte pastDepth) {
     addPageOperation(new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO(localNodeIndex, nodeLocalDepth, pastDepth));
   }
+
+  @Override
+  protected void logSetPointer(int localNodeIndex, int index, long pointer, long pastPointer) {
+    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetPointerPO(localNodeIndex, index, pointer, pastPointer));
+  }
 }

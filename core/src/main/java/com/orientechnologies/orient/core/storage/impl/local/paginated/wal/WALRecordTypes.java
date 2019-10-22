@@ -230,4 +230,5 @@ public final class WALRecordTypes {
   public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_MAX_LEFT_CHILDREN_DEPTH_PO  = 190;
   public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_MAX_RIGHT_CHILDREN_DEPTH_PO = 191;
   public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_NODE_LOCAL_DEPTH_PO         = 192;
+  public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_POINTER_PO                  = 193;
 }

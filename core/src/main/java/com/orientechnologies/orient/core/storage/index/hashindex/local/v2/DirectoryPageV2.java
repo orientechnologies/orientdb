@@ -102,6 +102,10 @@ public class DirectoryPageV2 extends ODurablePage {
 
     final long pastPointer = getLongValue(offset);
     setLongValue(offset, pointer);
+    logSetPointer(localNodeIndex, index, pointer, pastPointer);
+  }
+
+  protected void logSetPointer(int localNodeIndex, int index, long pointer, long pastPointer) {
     addPageOperation(new LocalHashTableV2DirectoryPageSetPointerPO(localNodeIndex, index, pointer, pastPointer));
   }
 
