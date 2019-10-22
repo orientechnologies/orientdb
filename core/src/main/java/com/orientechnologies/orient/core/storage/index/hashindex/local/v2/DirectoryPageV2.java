@@ -84,6 +84,10 @@ public class DirectoryPageV2 extends ODurablePage {
 
     final byte pastDepth = getByteValue(offset);
     setByteValue(offset, nodeLocalDepth);
+    logSetNodeLocalDepth(localNodeIndex, nodeLocalDepth, pastDepth);
+  }
+
+  protected void logSetNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth, byte pastDepth) {
     addPageOperation(new LocalHashTableV2DirectoryPageSetNodeLocalDepthPO(localNodeIndex, nodeLocalDepth, pastDepth));
   }
 
