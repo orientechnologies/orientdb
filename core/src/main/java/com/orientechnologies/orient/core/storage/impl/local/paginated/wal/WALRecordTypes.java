@@ -226,4 +226,6 @@ public final class WALRecordTypes {
   public static final int LOCAL_HASH_TABLE_V2_NULL_BUCKET_INIT_PO         = 187;
   public static final int LOCAL_HASH_TABLE_V2_NULL_BUCKET_SET_VALUE_PO    = 188;
   public static final int LOCAL_HASH_TABLE_V2_NULL_BUCKET_REMOVE_VALUE_PO = 189;
+
+  public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_MAX_LEFT_CHILDREN_DEPTH_PO = 190;
 }
