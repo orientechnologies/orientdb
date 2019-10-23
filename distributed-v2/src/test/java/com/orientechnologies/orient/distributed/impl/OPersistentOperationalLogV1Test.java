@@ -84,13 +84,13 @@ public class OPersistentOperationalLogV1Test {
     OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
-      int totLogEntries = 50_000;
+      int totLogEntries = 500;
       for (int i = 0; i < totLogEntries; i++) {
         OPhase1Tx item = new OPhase1Tx();
         log.log(item);
       }
 
-      long nextEntry = 10_000;
+      long nextEntry = 100;
       Iterator<OOperationLogEntry> iteartor = log.iterate(nextEntry, totLogEntries - 1);
       while (nextEntry < totLogEntries) {
         OOperationLogEntry item = iteartor.next();
@@ -113,15 +113,15 @@ public class OPersistentOperationalLogV1Test {
     OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
-      int totLogEntries = 50_000;
+      int totLogEntries = 500;
 
       for (int i = 0; i < totLogEntries; i++) {
         OPhase1Tx item = new OPhase1Tx();
         log.log(item);
       }
 
-      Iterator<OOperationLogEntry> iteartor = log.iterate(10_000, 40_000 - 1);
-      for (int i = 10_000; i < 40_000; i++) {
+      Iterator<OOperationLogEntry> iteartor = log.iterate(100, 400 - 1);
+      for (int i = 100; i < 400; i++) {
         OOperationLogEntry item = iteartor.next();
         Assert.assertEquals(i, item.getLogId().getId());
       }
@@ -280,54 +280,6 @@ public class OPersistentOperationalLogV1Test {
   }
 
 
-  /**
-   * test off-by-one errors across oplog file split
-   *
-   * @throws IOException
-   */
-  @Test
-  public void testRemoveAfter5() throws IOException {
-    for (int iter = -2; iter < 3; iter++) {
-
-
-      Path file = Files.createTempDirectory(".");
-      OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
-      log.setLeader(true, 0);
-
-      try {
-        int totLogEntries = OPersistentOperationalLogV1.LOG_ENTRIES_PER_FILE + 100;
-        int cutTo = OPersistentOperationalLogV1.LOG_ENTRIES_PER_FILE + iter;
-
-        for (int i = 0; i < totLogEntries; i++) {
-          OPhase1Tx item = new OPhase1Tx();
-          log.log(item);
-        }
-        OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(cutTo, 0));
-
-        Assert.assertEquals(OOperationLog.LogIdStatus.PRESENT, status);
-
-        Iterator<OOperationLogEntry> iteartor = log.iterate(0, totLogEntries);
-        for (int i = 0; i <= cutTo; i++) {
-          OOperationLogEntry item = iteartor.next();
-          Assert.assertEquals(i, item.getLogId().getId());
-        }
-        try {
-          Assert.assertFalse("Failed iteration " + iter, iteartor.hasNext());
-        } catch (Exception e) {
-          System.out.println("Failed iteration " + iter);
-          throw e;
-        }
-
-      } finally {
-        for (File file1 : file.toFile().listFiles()) {
-          file1.delete();
-        }
-        file.toFile().delete();
-      }
-    }
-  }
-
-
   @Test
   @Ignore
   public void stressTest() throws IOException {
@@ -370,9 +322,9 @@ public class OPersistentOperationalLogV1Test {
     OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
-      final long totLogEntries = 100_000;
-      final int recordSize = 102400;
-      final int nThreads = 5;
+      final long totLogEntries = 1_000;
+      final int recordSize = 1024;
+      final int nThreads = 8;
       final List<Thread> threads = new ArrayList<>();
 
       long begin = System.currentTimeMillis();
@@ -387,10 +339,13 @@ public class OPersistentOperationalLogV1Test {
               OPhase1Tx item = new OPhase1Tx() {
                 @Override
                 public void serialize(DataOutput output) throws IOException {
-                  output.write(new byte[recordSize]);
+                  output.write(new byte[(int) (recordSize * 2 * Math.random())]);
                 }
               };
               log.log(item);
+              if (i % 100 == 0) {
+                System.out.println("flushed " + i);
+              }
             }
           }
         };

@@ -96,7 +96,6 @@ public class OGraphBatchInsert {
   private       long[]                  lastClusterPositions;
   private       long[]                  nextVerticesToCreate;                                        // absolute value
   private       long                    last                     = 0;
-  private       boolean                 walActive;
 
   private       int           parallel       = 4;
   private final AtomicInteger runningThreads = new AtomicInteger(0);
@@ -232,9 +231,6 @@ public class OGraphBatchInsert {
    * vertices and edges.
    */
   public void begin() {
-    walActive = OGlobalConfiguration.USE_WAL.getValueAsBoolean();
-    if (walActive)
-      OGlobalConfiguration.USE_WAL.setValue(false);
     if (averageEdgeNumberPerNode > 0) {
       OGlobalConfiguration.RID_BAG_EMBEDDED_DEFAULT_SIZE.setValue(averageEdgeNumberPerNode);
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(bonsaiThreshold);
@@ -315,8 +311,6 @@ public class OGraphBatchInsert {
       db.activateOnCurrentThread();
       db.declareIntent(null);
       db.close();
-      if (walActive)
-        OGlobalConfiguration.USE_WAL.setValue(true);
     }
   }
 

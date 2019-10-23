@@ -14,6 +14,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 
 import java.io.*;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1 implements OOperationLog {
@@ -22,6 +23,9 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   private OLogRequestFactory factory;
   private boolean leader;
   private long term;
+  private AtomicLong lastFlushed = new AtomicLong(-1);
+  private AtomicLong lastWritten = new AtomicLong(-1);
+  private AtomicLong paralledThreads = new AtomicLong(0);
 
   public interface OLogRequestFactory {
     OLogRequest createLogRequest(int requestId);
@@ -242,13 +246,21 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       throw new IllegalStateException("Cannot log on a non-leader node");
     }
     OLogId result;
+    paralledThreads.incrementAndGet();
     synchronized (inc) {
       result = createLogId();
       write(result, request);
       inc.notifyAll();
+      lastWritten.set(result.getId());
     }
 
-    flush();
+    if (paralledThreads.get() > 1) {
+      sleep(0, 100_000);
+    } else {
+      Thread.yield();
+    }
+    flush(result);
+    paralledThreads.decrementAndGet();
     return result;
   }
 
@@ -256,12 +268,28 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     return new OLogId(inc.incrementAndGet(), term);
   }
 
-  private void flush() {
-//    try {
-//      this.fileOutput.getFD().sync();
-//    } catch (IOException e) {
-//      e.printStackTrace();
-//    }
+
+  private void flush(OLogId log) {
+    synchronized (inc) {
+      if (lastFlushed.get() >= log.getId()) {
+        return;
+      }
+
+      try {
+        this.fileOutput.getFD().sync();
+        lastFlushed.set(lastWritten.get());
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  public void sleep(long millis, int nanos) {
+    try {
+      Thread.sleep(millis, nanos);
+    } catch (InterruptedException e) {
+
+    }
   }
 
 
@@ -274,6 +302,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       return false;
     }
 
+    paralledThreads.incrementAndGet();
     synchronized (inc) {
       try {
 
@@ -284,11 +313,19 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
         write(logId, request);
         inc.incrementAndGet();
         inc.notifyAll();
+        lastWritten.set(logId.getId());
       } catch (InterruptedException ex) {
       }
     }
 
-    flush();
+    if (paralledThreads.get() > 1) {
+      sleep(0, 100_000);
+    } else {
+      Thread.yield();
+    }
+    flush(logId);
+    paralledThreads.decrementAndGet();
+
     return true;
   }
 

@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -40,10 +39,8 @@ public class LocalCreateVertexSpeedTest extends OrientMonoThreadTest {
 
   @Test(enabled = false)
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-    OGlobalConfiguration.USE_WAL.setValue(false);
     LocalCreateVertexSpeedTest test = new LocalCreateVertexSpeedTest();
     test.data.go(test);
-    OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
   @Override

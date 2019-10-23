@@ -79,17 +79,15 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
 
     OLogSequenceNumber lastLSN = null;
     for (final PageOperationRecord pageOperationRecord : pageOperationRecords) {
-      if (writeAheadLog != null) {
-        pageOperationRecord.setOperationUnitId(operationUnitId);
-        pageOperationRecord.setFileId(cacheEntry.getFileId());
-        pageOperationRecord.setPageIndex(cacheEntry.getPageIndex());
+      pageOperationRecord.setOperationUnitId(operationUnitId);
+      pageOperationRecord.setFileId(cacheEntry.getFileId());
+      pageOperationRecord.setPageIndex(cacheEntry.getPageIndex());
 
-        final OLogSequenceNumber lsn = writeAheadLog.log(pageOperationRecord);
-        pageOperationRefs.add(lsn);
+      final OLogSequenceNumber lsn = writeAheadLog.log(pageOperationRecord);
+      pageOperationRefs.add(lsn);
 
-        sizeSerializedOperations += pageOperationRecord.serializedSize();
-        lastLSN = lsn;
-      }
+      sizeSerializedOperations += pageOperationRecord.serializedSize();
+      lastLSN = lsn;
 
       if (sizeSerializedOperations <= operationsCacheLimit) {
         pageOperationCache.add(pageOperationRecord);
@@ -273,11 +271,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
       }
     }
 
-    if (writeAheadLog != null) {
-      return writeAheadLog.logAtomicOperationEndRecord(getOperationUnitId(), rollbackInProgress, this.startLSN, getMetadata());
-    }
-
-    return null;
+    return writeAheadLog.logAtomicOperationEndRecord(getOperationUnitId(), rollbackInProgress, this.startLSN, getMetadata());
   }
 
   private void revertPageOperation(PageOperationRecord pageOperationRecord) throws IOException {
@@ -287,16 +281,14 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
     try {
       pageOperationRecord.undo(cacheEntry);
 
-      if (writeAheadLog != null) {
-        final List<PageOperationRecord> rollbackOperationRecords = cacheEntry.getPageOperations();
-        for (final PageOperationRecord rollbackOperationRecord : rollbackOperationRecords) {
+      final List<PageOperationRecord> rollbackOperationRecords = cacheEntry.getPageOperations();
+      for (final PageOperationRecord rollbackOperationRecord : rollbackOperationRecords) {
 
-          rollbackOperationRecord.setOperationUnitId(operationUnitId);
-          rollbackOperationRecord.setFileId(cacheEntry.getFileId());
-          rollbackOperationRecord.setPageIndex(cacheEntry.getPageIndex());
+        rollbackOperationRecord.setOperationUnitId(operationUnitId);
+        rollbackOperationRecord.setFileId(cacheEntry.getFileId());
+        rollbackOperationRecord.setPageIndex(cacheEntry.getPageIndex());
 
-          lastLSN = writeAheadLog.log(rollbackOperationRecord);
-        }
+        lastLSN = writeAheadLog.log(rollbackOperationRecord);
       }
 
       if (lastLSN != null) {

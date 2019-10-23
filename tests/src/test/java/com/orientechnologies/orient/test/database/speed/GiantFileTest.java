@@ -31,9 +31,7 @@ public class GiantFileTest {
   private static ODatabaseDocumentTx db                = null;
 
   public static void main(final String[] args) throws Exception {
-
-    OGlobalConfiguration.USE_WAL.setValue(false);
-    OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);
+  OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);
     try {
       db = new ODatabaseDocumentTx("plocal:" + DATABASE_NAME);
       if (db.exists() && RECREATE_DATABASE) {
@@ -85,7 +83,6 @@ public class GiantFileTest {
       System.out.printf("Finished storing giant file in %f seconds.\n", (float) storeFileMs / 1000);
     } finally {
       db.close();
-      OGlobalConfiguration.USE_WAL.setValue(true);
     }
   }
 

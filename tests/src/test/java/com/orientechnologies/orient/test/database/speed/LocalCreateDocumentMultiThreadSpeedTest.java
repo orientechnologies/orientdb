@@ -84,11 +84,9 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     // System.setProperty("url", "memory:test");
-    OGlobalConfiguration.USE_WAL.setValue(false);
     OGlobalConfiguration.WAL_SYNC_ON_PAGE_FLUSH.setValue(false);
     LocalCreateDocumentMultiThreadSpeedTest test = new LocalCreateDocumentMultiThreadSpeedTest();
     test.data.go(test);
-    OGlobalConfiguration.USE_WAL.setValue(true);
     OGlobalConfiguration.WAL_SYNC_ON_PAGE_FLUSH.setValue(true);
   }
 

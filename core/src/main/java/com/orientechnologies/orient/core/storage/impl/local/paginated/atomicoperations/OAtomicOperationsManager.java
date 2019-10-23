@@ -31,13 +31,11 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -174,20 +172,19 @@ public class OAtomicOperationsManager {
 
     assert freezeRequests.get() >= 0;
 
-    final boolean useWal = useWal();
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
+    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
     if (!trackPageOperations) {
       operation = new OAtomicOperationBinaryTracking(lsn, unitId, readCache, writeCache, storage.getId());
     } else {
-      operation = new OAtomicOperationPageOperationsTracking(readCache, writeCache, useWal ? writeAheadLog : null, unitId,
-          operationsCacheLimit, lsn);
+      operation = new OAtomicOperationPageOperationsTracking(readCache, writeCache, writeAheadLog, unitId, operationsCacheLimit,
+          lsn);
     }
 
     currentOperation.set(operation);
 
-    if (useWal && trackNonTxOperations && storage.getStorageTransaction() == null) {
+    if (trackNonTxOperations && storage.getStorageTransaction() == null) {
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
     }
 
@@ -382,11 +379,10 @@ public class OAtomicOperationsManager {
 
       if (counter == 1) {
         try {
-          final boolean useWal = useWal();
           if (trackPageOperations) {
-            lsn = operation.commitChanges(useWal ? writeAheadLog : null);
+            lsn = operation.commitChanges(writeAheadLog);
           } else if (!operation.isRollbackInProgress()) {
-            lsn = operation.commitChanges(useWal ? writeAheadLog : null);
+            lsn = operation.commitChanges(writeAheadLog);
           } else {
             lsn = null;
           }
@@ -505,20 +501,5 @@ public class OAtomicOperationsManager {
             e);
       }
     }
-  }
-
-  private boolean useWal() {
-    if (writeAheadLog == null) {
-      return false;
-    }
-
-    final OStorageTransaction storageTransaction = storage.getStorageTransaction();
-    if (storageTransaction == null) {
-      return true;
-    }
-
-    final OTransactionInternal clientTx = storageTransaction.getClientTx();
-    return clientTx == null || clientTx.isUsingLog();
-
   }
 }

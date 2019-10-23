@@ -803,10 +803,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public void updateDirtyPagesTable(final OCachePointer pointer, final OLogSequenceNumber startLSN) {
-    if (writeAheadLog == null) {
-      return;
-    }
-
     final long fileId = pointer.getFileId();
     final long pageIndex = pointer.getPageIndex();
 
@@ -898,50 +894,48 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public void makeFuzzyCheckpoint(final long segmentId) throws IOException {
-    if (writeAheadLog != null) {
-      filesLock.acquireReadLock();
+    filesLock.acquireReadLock();
+    try {
+      doubleWriteLog.startCheckpoint();
       try {
-        doubleWriteLog.startCheckpoint();
-        try {
-          final OLogSequenceNumber startLSN = writeAheadLog.begin(segmentId);
-          if (startLSN == null) {
-            return;
-          }
-
-          writeAheadLog.logFuzzyCheckPointStart(startLSN);
-
-          for (final Integer intId : nameIdMap.values()) {
-            if (intId < 0) {
-              continue;
-            }
-
-            if (callFsync) {
-              final long fileId = composeFileId(id, intId);
-              final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
-              try {
-                final OFile fileClassic = entry.get();
-                fileClassic.synch();
-              } finally {
-                files.release(entry);
-              }
-            }
-
-          }
-
-          writeAheadLog.logFuzzyCheckPointEnd();
-          writeAheadLog.flush();
-
-          writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
-
-          doubleWriteLog.truncate();
-        } finally {
-          doubleWriteLog.endCheckpoint();
+        final OLogSequenceNumber startLSN = writeAheadLog.begin(segmentId);
+        if (startLSN == null) {
+          return;
         }
-      } catch (final InterruptedException e) {
-        throw OException.wrapException(new OStorageException("Fuzzy checkpoint was interrupted"), e);
+
+        writeAheadLog.logFuzzyCheckPointStart(startLSN);
+
+        for (final Integer intId : nameIdMap.values()) {
+          if (intId < 0) {
+            continue;
+          }
+
+          if (callFsync) {
+            final long fileId = composeFileId(id, intId);
+            final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
+            try {
+              final OFile fileClassic = entry.get();
+              fileClassic.synch();
+            } finally {
+              files.release(entry);
+            }
+          }
+
+        }
+
+        writeAheadLog.logFuzzyCheckPointEnd();
+        writeAheadLog.flush();
+
+        writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
+
+        doubleWriteLog.truncate();
       } finally {
-        filesLock.releaseReadLock();
+        doubleWriteLog.endCheckpoint();
       }
+    } catch (final InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Fuzzy checkpoint was interrupted"), e);
+    } finally {
+      filesLock.releaseReadLock();
     }
   }
 
@@ -2411,10 +2405,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         return null;
       }
 
-      if (writeAheadLog == null) {
-        return null;
-      }
-
       convertSharedDirtyPagesToLocal();
       Map.Entry<Long, TreeSet<PageKey>> firstEntry = localDirtyPagesBySegment.firstEntry();
 
@@ -2536,17 +2526,24 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             }
           }
 
-          if (writeAheadLog != null) {
+          final OLogSequenceNumber begin = writeAheadLog.begin();
+          final OLogSequenceNumber end = writeAheadLog.end();
+          final long segments = end.getSegment() - begin.getSegment() + 1;
+
+          if (segments > 1) {
             convertSharedDirtyPagesToLocal();
 
-            if (localDirtyPagesBySegment.size() > 1) {
-              final Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
+            Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
+            if (firstSegment != null) {
               final long firstSegmentIndex = firstSegment.getKey();
-              flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
-
-              if (localDirtyPagesBySegment.size() > 1) {
-                flushInterval = 1;
+              if (firstSegmentIndex < end.getSegment()) {
+                flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
               }
+            }
+
+            firstSegment = localDirtyPagesBySegment.firstEntry();
+            if (firstSegment != null && firstSegment.getKey() < end.getSegment()) {
+              flushInterval = 1;
             }
           }
         } catch (final Error | Exception t) {
@@ -2787,13 +2784,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     if (fullLogLSN != null) {
-      if (writeAheadLog != null) {
-        OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
+      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
 
-        while (flushedLSN == null || flushedLSN.compareTo(fullLogLSN) < 0) {
-          writeAheadLog.flush();
-          flushedLSN = writeAheadLog.getFlushedLsn();
-        }
+      while (flushedLSN == null || flushedLSN.compareTo(fullLogLSN) < 0) {
+        writeAheadLog.flush();
+        flushedLSN = writeAheadLog.getFlushedLsn();
       }
     }
 
@@ -3112,9 +3107,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         return null;
       }
 
-      if (writeAheadLog != null) {
-        writeAheadLog.flush();
-      }
+      writeAheadLog.flush();
 
       final TreeSet<PageKey> pagesToFlush = new TreeSet<>();
       for (final Map.Entry<PageKey, OCachePointer> entry : writeCachePages.entrySet()) {
