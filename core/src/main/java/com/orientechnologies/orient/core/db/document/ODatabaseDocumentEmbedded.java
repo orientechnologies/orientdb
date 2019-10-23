@@ -962,7 +962,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           this.getSharedContext().getFunctionLibrary().createdFunction(doc);
           Orient.instance().getScriptManager().close(this.getName());
         }
-        if (clazz.isOuser() || clazz.isOrole() || clazz.isSubClassOf(OSecurityPolicy.class.getName())) {
+        if (clazz.isOuser() || clazz.isOrole() || clazz.isSubClassOf(OSecurityPolicy.class.getSimpleName())) {
           sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
@@ -994,7 +994,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
           Orient.instance().getScriptManager().close(this.getName());
         }
-        if (clazz.isOuser() || clazz.isOrole()) {
+        if (clazz.isOuser() || clazz.isOrole() || clazz.isSubClassOf(OSecurityPolicy.class.getSimpleName())) {
           sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
@@ -1023,7 +1023,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
           Orient.instance().getScriptManager().close(this.getName());
         }
-        if (clazz.isOuser() || clazz.isOrole()) {
+        if (clazz.isOuser() || clazz.isOrole() || clazz.isSubClassOf(OSecurityPolicy.class.getSimpleName())) {
           sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {

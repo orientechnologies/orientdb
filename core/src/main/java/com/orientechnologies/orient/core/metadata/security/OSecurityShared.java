@@ -902,6 +902,11 @@ public class OSecurityShared implements OSecurityInternal {
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document);
     } else {
 
+      OBooleanExpression readPredicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class.`" + clazz.getName() + "`.`" + propertyName + "`", OSecurityPolicy.Scope.READ);
+      if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, readPredicate, document)) {
+        return false;
+      }
+
       OBooleanExpression beforePredicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class.`" + clazz.getName() + "`.`" + propertyName + "`", OSecurityPolicy.Scope.BEFORE_UPDATE);
       OResultInternal originalRecord = calculateOriginalValue(document);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, beforePredicate, originalRecord)) {
