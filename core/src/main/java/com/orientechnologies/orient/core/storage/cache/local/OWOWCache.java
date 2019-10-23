@@ -2526,14 +2526,23 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             }
           }
 
-          convertSharedDirtyPagesToLocal();
+          final OLogSequenceNumber begin = writeAheadLog.begin();
+          final OLogSequenceNumber end = writeAheadLog.end();
+          final long segments = end.getSegment() - begin.getSegment() + 1;
 
-          if (localDirtyPagesBySegment.size() > 1) {
-            final Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
-            final long firstSegmentIndex = firstSegment.getKey();
-            flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
+          if (segments > 1) {
+            convertSharedDirtyPagesToLocal();
 
-            if (localDirtyPagesBySegment.size() > 1) {
+            Map.Entry<Long, TreeSet<PageKey>> firstSegment = localDirtyPagesBySegment.firstEntry();
+            if (firstSegment != null) {
+              final long firstSegmentIndex = firstSegment.getKey();
+              if (firstSegmentIndex < end.getSegment()) {
+                flushWriteCacheFromMinLSN(firstSegmentIndex, firstSegmentIndex + 1, chunkSize);
+              }
+            }
+
+            firstSegment = localDirtyPagesBySegment.firstEntry();
+            if (firstSegment != null && firstSegment.getKey() < end.getSegment()) {
               flushInterval = 1;
             }
           }
