@@ -397,9 +397,6 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       }
     }
 
-    // use wal or not
-    OGlobalConfiguration.USE_WAL.setValue(wal);
-
     createDatabasePool();
   }
 

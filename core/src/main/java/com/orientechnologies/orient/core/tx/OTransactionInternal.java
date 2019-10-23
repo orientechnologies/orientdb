@@ -75,9 +75,8 @@ public interface OTransactionInternal extends OBasicTransaction {
 
   /**
    * Retrieve if log is enabled for the transaction
-   *
-   * @return
    */
+  @Deprecated
   boolean isUsingLog();
 
   /**

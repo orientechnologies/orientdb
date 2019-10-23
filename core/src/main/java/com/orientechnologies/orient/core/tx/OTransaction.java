@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.HashMap;
 import java.util.List;
 
 public interface OTransaction extends OBasicTransaction {
@@ -123,7 +122,9 @@ public interface OTransaction extends OBasicTransaction {
    * </ol>
    * <p>
    * So you practically unable to work in multithreaded environment and keep data consistent.
+   * @deprecated This option has no effect
    */
+  @Deprecated
   void setUsingLog(boolean useLog);
 
   void close();

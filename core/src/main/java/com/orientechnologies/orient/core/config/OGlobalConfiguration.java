@@ -261,6 +261,10 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   STORAGE_PESSIMISTIC_LOCKING("storage.pessimisticLock",
       "Set the approach of the pessimistic locking, valid options: none, modification, readwrite", String.class, "none"),
 
+  /**
+   * @deprecated WAL can not be disabled because that is very unsafe for consistency and durability
+   */
+  @Deprecated
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
   @Deprecated USE_CHM_CACHE("storage.useCHMCache",

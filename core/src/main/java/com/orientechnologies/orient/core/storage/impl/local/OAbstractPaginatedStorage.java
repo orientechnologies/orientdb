@@ -147,7 +147,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private final   OSimpleRWLockManager<ORID>     lockManager;
-  @SuppressWarnings("WeakerAccess")
   protected final OSBTreeCollectionManagerShared sbTreeCollectionManager;
 
   /**
@@ -336,9 +335,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         try {
-          if (writeAheadLog != null) {
-            writeAheadLog.close();
-          }
+          writeAheadLog.close();
         } catch (final Exception ee) {
           //ignore
         }
@@ -951,10 +948,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public OLogSequenceNumber getLSN() {
     try {
-      if (writeAheadLog == null) {
-        return null;
-      }
-
       return writeAheadLog.end();
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -1004,10 +997,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        if (writeAheadLog == null) {
-          return null;
-        }
-
         // we iterate till the last record is contained in wal at the moment when we call this method
         endLsn = writeAheadLog.end();
 
@@ -1185,11 +1174,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        if (writeAheadLog == null) {
-          OLogManager.instance().warn(this, "No WAL found for database '%s'", name);
-          return null;
-        }
-
         OLogSequenceNumber startLsn = writeAheadLog.begin();
         if (startLsn == null) {
           OLogManager.instance().warn(this, "The WAL is empty for database '%s'", name);
@@ -3576,20 +3560,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               }
             }
 
-            if (writeAheadLog != null) {
-              makeFullCheckpoint();
-              return;
-            }
+            makeFullCheckpoint();
 
-            writeCache.flush();
-
-            clearStorageDirty();
           } else {
             OLogManager.instance().errorNoDb(this, "Sync can not be performed because of JVM error on storage", null);
           }
-
-        } catch (final IOException e) {
-          throw OException.wrapException(new OStorageException("Error on synch storage '" + name + "'"), e);
 
         } finally {
           atomicOperationsManager.releaseAtomicOperations(lockId);
@@ -4354,7 +4329,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Checks if the storage is open. If it's closed an exception is raised.
    */
-  @SuppressWarnings("WeakerAccess")
   protected final void checkOpenness() {
     if (status != STATUS.OPEN) {
       throw new OStorageException("Storage " + name + " is not opened.");
@@ -4362,10 +4336,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected final void makeFuzzyCheckpoint() {
-    if (writeAheadLog == null) {
-      return;
-    }
-
     //check every 1 ms.
     while (!stateLock.tryAcquireReadLock(1_000_000)) {
       if (status != STATUS.OPEN) {
@@ -4374,7 +4344,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     try {
-      if (status != STATUS.OPEN || writeAheadLog == null) {
+      if (status != STATUS.OPEN) {
         return;
       }
 
@@ -4423,10 +4393,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       statistic.startFullCheckpointTimer();
     }
     try {
-      if (writeAheadLog == null) {
-        return;
-      }
-
       try {
         writeAheadLog.flush();
 
@@ -5060,7 +5026,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throws IOException {
     makeStorageDirty();
 
-    boolean changed = false;
+    boolean changed;
     final String stringValue = value != null ? value.toString() : null;
     switch (attribute) {
     case NAME:
@@ -5175,10 +5141,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           writeCache.removePageIsBrokenListener(this);
         }
 
-        if (writeAheadLog != null) {
-          writeAheadLog.removeFullCheckpointListener(this);
-          writeAheadLog.removeLowDiskSpaceListener(this);
-        }
+        writeAheadLog.removeFullCheckpointListener(this);
+        writeAheadLog.removeLowDiskSpaceListener(this);
 
         if (readCache != null) {
           if (!onDelete) {
@@ -5188,12 +5152,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         }
 
-        if (writeAheadLog != null) {
-          if (onDelete) {
-            writeAheadLog.delete();
-          } else {
-            writeAheadLog.close();
-          }
+        if (onDelete) {
+          writeAheadLog.delete();
+        } else {
+          writeAheadLog.close();
         }
 
         try {
@@ -5392,11 +5354,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OLogSequenceNumber restoreFromWAL() throws IOException {
-    if (writeAheadLog == null) {
-      OLogManager.instance().error(this, "Restore is not possible because write ahead logging is switched off.", null);
-      return null;
-    }
-
     if (writeAheadLog.begin() == null) {
       OLogManager.instance().error(this, "Restore is not possible because write ahead log is empty.", null);
       return null;
