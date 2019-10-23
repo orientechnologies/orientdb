@@ -979,7 +979,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * not deleted - length of content is provided in above entity</li> </ol>
    *
    * @param lsn LSN from which we should find changed records
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OBackgroundDelta recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OCommandOutputListener outputListener) {
@@ -1155,9 +1154,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * This method finds all the records changed in the last X transactions.
    *
    * @param maxEntries Maximum number of entries to check back from last log.
-   *
    * @return A set of record ids of the changed records
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public Set<ORecordId> recordsChangedRecently(final int maxEntries) {
@@ -1806,7 +1803,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Traditional commit that support already temporary rid and already assigned rids
    *
    * @param clientTx the transaction to commit
-   *
    * @return The list of operations applied by the transaction
    */
   @Override
@@ -1818,7 +1814,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Commit a transaction where the rid where pre-allocated in a previous phase
    *
    * @param clientTx the pre-allocated transaction to commit
-   *
    * @return The list of operations applied by the transaction
    */
   @SuppressWarnings("UnusedReturnValue")
@@ -1837,7 +1832,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    *
    * @param transaction the transaction to commit
    * @param allocated   true if the operation is pre-allocated commit
-   *
    * @return The list of operations applied by the transaction
    */
   private List<ORecordOperation> commit(final OTransactionInternal transaction, final boolean allocated) {
@@ -2991,9 +2985,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param key       the key to put the value under.
    * @param value     the value to put.
    * @param validator the operation validator.
-   *
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   *
    * @see OBaseIndexEngine.Validator#validate(Object, Object, Object)
    */
   @SuppressWarnings("UnusedReturnValue")
@@ -4882,7 +4874,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
-   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
    */
   private int registerCluster(final OCluster cluster) {
@@ -5537,7 +5528,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkPointRecord.getLsn());
 
     final OLogSequenceNumber lsn = writeAheadLog.next(checkPointRecord.getLsn(), 1).get(0).getLsn();
-    return restoreFrom(lsn, writeAheadLog);
+    return restoreFrom(lsn, writeAheadLog, true);
   }
 
   private OLogSequenceNumber restoreFromFuzzyCheckPoint(final OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
@@ -5550,20 +5541,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       flushedLsn = writeAheadLog.begin();
     }
 
-    return restoreFrom(flushedLsn, writeAheadLog);
+    return restoreFrom(flushedLsn, writeAheadLog, true);
   }
 
   private OLogSequenceNumber restoreFromBeginning() throws IOException {
     OLogManager.instance().info(this, "Data restore procedure is started.");
     final OLogSequenceNumber lsn = writeAheadLog.begin();
 
-    return restoreFrom(lsn, writeAheadLog);
+    return restoreFrom(lsn, writeAheadLog, true);
   }
 
   @SuppressWarnings("WeakerAccess")
-  protected final OLogSequenceNumber restoreFrom(final OLogSequenceNumber lsn, final OWriteAheadLog writeAheadLog)
-      throws IOException {
-    writeCache.restoreModeOn();
+  protected final OLogSequenceNumber restoreFrom(final OLogSequenceNumber lsn, final OWriteAheadLog writeAheadLog,
+      @SuppressWarnings("SameParameterValue") final boolean wcRestoreMode) throws IOException {
+    if (wcRestoreMode) {
+      writeCache.restoreModeOn();
+    }
     try {
       OLogSequenceNumber logSequenceNumber = null;
       final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();

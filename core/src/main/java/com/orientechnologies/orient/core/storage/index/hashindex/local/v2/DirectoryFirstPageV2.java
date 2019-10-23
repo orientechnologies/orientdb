@@ -23,8 +23,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTombstonePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTreeSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -67,5 +66,25 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   @Override
   protected int getItemsOffset() {
     return ITEMS_OFFSET;
+  }
+
+  @Override
+  protected void logSetMaxLeftChildDepth(int localNodeIndex, byte maxLeftChildDepth, byte pastDepth) {
+    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO(localNodeIndex, maxLeftChildDepth, pastDepth));
+  }
+
+  @Override
+  protected void logSetMaxRightChildDepth(int localNodeIndex, byte maxRightChildDepth, byte pastDepth) {
+    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetMaxRightChildDepthPO(localNodeIndex, maxRightChildDepth, pastDepth));
+  }
+
+  @Override
+  protected void logSetNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth, byte pastDepth) {
+    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO(localNodeIndex, nodeLocalDepth, pastDepth));
+  }
+
+  @Override
+  protected void logSetPointer(int localNodeIndex, int index, long pointer, long pastPointer) {
+    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetPointerPO(localNodeIndex, index, pointer, pastPointer));
   }
 }

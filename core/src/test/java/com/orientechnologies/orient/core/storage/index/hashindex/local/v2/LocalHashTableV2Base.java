@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,6 +15,7 @@ import java.util.Set;
 public abstract class LocalHashTableV2Base {
   protected static final int                               KEYS_COUNT = 1_000_000;
   protected              LocalHashTableV2<Integer, String> localHashTable;
+  protected              OAbstractPaginatedStorage         storage;
 
   @Test
   public void testKeyPut() throws IOException {
