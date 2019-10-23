@@ -64,16 +64,16 @@ public class OUDPUnicastNodeManagerTest {
     return createConfiguration(nodeName, null, port);
   }
 
-  protected ONodeConfiguration createConfiguration(String nodeName, int port, int[] multicastPorts) {
-    return createConfiguration(nodeName, null, port, multicastPorts);
+  protected ONodeConfiguration createConfiguration(String nodeName, int port, int[] ports) {
+    return createConfiguration(nodeName, null, port, ports);
   }
 
   protected ONodeConfiguration createConfiguration(String nodeName, String password, int port) {
     return createConfiguration(nodeName, password, port, new int[]{4321, 4322});
   }
 
-  protected ONodeConfiguration createConfiguration(String nodeName, String password, int port, int[] multicastPorts) {
-    return createConfiguration(nodeName, "default", password, port, multicastPorts);
+  protected ONodeConfiguration createConfiguration(String nodeName, String password, int port, int[] ports) {
+    return createConfiguration(nodeName, "default", password, port, ports);
   }
 
   protected ONodeConfiguration createConfiguration(String nodeName, String groupName, String password, int port,
