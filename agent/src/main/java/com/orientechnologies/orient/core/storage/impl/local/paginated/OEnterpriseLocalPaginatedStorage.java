@@ -720,7 +720,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       if (restoreLog != null) {
         final OLogSequenceNumber beginLsn = restoreLog.begin();
-        restoreLsn = restoreFrom(beginLsn, restoreLog);
+        restoreLsn = restoreFrom(beginLsn, restoreLog, false);
 
         restoreLog.delete();
       }
