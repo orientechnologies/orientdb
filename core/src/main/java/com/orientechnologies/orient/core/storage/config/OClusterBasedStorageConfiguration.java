@@ -6,15 +6,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationUpdateListener;
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -34,15 +26,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 
 public final class OClusterBasedStorageConfiguration implements OStorageConfiguration {
   public static final String MAP_FILE_EXTENSION  = ".ccm";
@@ -1079,7 +1063,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       }
 
       boolean rollback = false;
-      atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true);
+      atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true, false);
       try {
         for (final String key : keysToRemove) {
           btree.remove(key);
@@ -1537,7 +1521,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private void dropProperty(final String name) {
     try {
       boolean rollback = false;
-      atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true);
+      atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true, false);
       try {
         final ORID identifiable = btree.remove(name);
 
@@ -1621,7 +1605,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private void storeProperty(final String name, final byte[] property) {
     try {
       boolean rollback = false;
-      atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true);
+      atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true, false);
       try {
         ORID identity = btree.get(name);
         if (identity == null) {

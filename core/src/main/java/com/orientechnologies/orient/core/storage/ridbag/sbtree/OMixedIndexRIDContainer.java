@@ -12,12 +12,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
@@ -55,7 +50,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     boolean rollback = false;
     final OAtomicOperation atomicOperation;
     try {
-      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true, false);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }

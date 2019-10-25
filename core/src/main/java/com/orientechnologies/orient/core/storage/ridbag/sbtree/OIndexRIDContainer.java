@@ -87,7 +87,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     boolean rollback = false;
     final OAtomicOperation atomicOperation;
     try {
-      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true, false);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }

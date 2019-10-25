@@ -24,7 +24,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -195,13 +194,13 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       }
 
       treeCache.remove(cacheKey);
-      OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = this.loadTree(collectionPointer);
+      final OSBTreeBonsaiLocal<OIdentifiable, Integer> treeBonsai = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) this
+          .loadTree(collectionPointer);
       try {
-        treeBonsai.delete();
+        return treeBonsai.tryDelete();
       } catch (IOException e) {
         throw OException.wrapException(new ODatabaseException("Error during ridbag deletion"), e);
       }
     }
-    return true;
   }
 }

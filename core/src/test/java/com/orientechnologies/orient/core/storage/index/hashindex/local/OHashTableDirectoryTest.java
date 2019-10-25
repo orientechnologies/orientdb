@@ -5,12 +5,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 
@@ -69,7 +64,7 @@ public class OHashTableDirectoryTest {
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
     OAtomicOperationsManager manager = storage.getAtomicOperationsManager();
     Assert.assertNull(OAtomicOperationsManager.getCurrentOperation());
-    return manager.startAtomicOperation((String) null, false);
+    return manager.startAtomicOperation((String) null, false, false);
   }
 
   private static void rollbackTx() throws IOException {

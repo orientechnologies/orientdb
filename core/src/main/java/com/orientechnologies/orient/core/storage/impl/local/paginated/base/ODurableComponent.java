@@ -112,6 +112,10 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
+  protected OAtomicOperation tryStartAtomicOperation(final boolean trackNonTxOperations) throws IOException {
+    return atomicOperationsManager.tryStartAtomicOperation(this, trackNonTxOperations);
+  }
+
   protected long getFilledUpTo(final OAtomicOperation atomicOperation, final long fileId) {
     if (atomicOperation == null) {
       return writeCache.getFilledUpTo(fileId);

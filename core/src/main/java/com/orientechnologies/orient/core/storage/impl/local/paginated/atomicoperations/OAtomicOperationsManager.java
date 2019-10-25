@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -109,15 +110,24 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   /**
-   * @see #startAtomicOperation(String, boolean)
+   * @see #startAtomicOperation(String, boolean, boolean)
    */
   public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
       throws IOException {
     if (durableComponent != null) {
-      return startAtomicOperation(durableComponent.getLockName(), trackNonTxOperations);
+      return startAtomicOperation(durableComponent.getLockName(), trackNonTxOperations, false);
     }
 
-    return startAtomicOperation((String) null, trackNonTxOperations);
+    return startAtomicOperation((String) null, trackNonTxOperations, false);
+  }
+
+  public OAtomicOperation tryStartAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
+      throws IOException {
+    if (durableComponent != null) {
+      return startAtomicOperation(durableComponent.getLockName(), trackNonTxOperations, true);
+    }
+
+    return startAtomicOperation((String) null, trackNonTxOperations, true);
   }
 
   /**
@@ -133,21 +143,31 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * stopped till call of {@link #releaseAtomicOperations(long)} method or exception will be thrown. Concrete behaviour depends on
    * real values of parameters of {@link #freezeAtomicOperations(Class, String)} method.
    *
+   * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
    * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord}
    *                             will be added to WAL in case of atomic operation is started outside of active storage transaction.
    *                             During storage restore procedure this record is monitored and if given record is present then
    *                             rebuild of all indexes is performed.
-   * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
+   * @param tryLock              Try to lock component inside of current TX, if it is already locked in other TX do not start atomic
+   *                             operation and  return <code>null</code>.
    *
    * @return Instance of active atomic operation.
    */
-  public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
+  public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations, boolean tryLock) throws IOException {
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
       operation.incrementCounter();
 
       if (lockName != null) {
-        acquireExclusiveLockTillOperationComplete(operation, lockName);
+        if (!tryLock) {
+          acquireExclusiveLockTillOperationComplete(operation, lockName);
+        } else {
+          final boolean locked = tryAcquireExclusiveLockTillOperationComplete(operation, lockName);
+          if (!locked) {
+            operation.decrementCounter();
+            return null;
+          }
+        }
       }
 
       return operation;
@@ -452,6 +472,20 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     lockManager.acquireLock(lockName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
     operation.addLockedObject(lockName);
+  }
+
+  public boolean tryAcquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String lockName) {
+    if (operation.containsInLockedObjects(lockName)) {
+      return true;
+    }
+
+    try {
+      lockManager.acquireLock(lockName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE, 0);
+    } catch (OLockException e) {
+      return false;
+    }
+    operation.addLockedObject(lockName);
+    return true;
   }
 
   /**
