@@ -460,8 +460,9 @@ public class OSecurityShared implements OSecurityInternal {
   public OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name) {
     OElement elem = session.newElement(OSecurityPolicy.class.getSimpleName());
     elem.setProperty("name", name);
-    session.save(elem);
-    return new OSecurityPolicy(elem);
+    OSecurityPolicy policy = new OSecurityPolicy(elem);
+    saveSecurityPolicy(session, policy);
+    return policy;
   }
 
   @Override
