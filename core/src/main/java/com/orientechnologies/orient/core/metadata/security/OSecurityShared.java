@@ -477,7 +477,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy) {
-    session.save(policy.getElement());
+    session.save(policy.getElement(), OSecurityPolicy.class.getSimpleName().toLowerCase(Locale.ENGLISH));
   }
 
   @Override
@@ -1064,7 +1064,7 @@ public class OSecurityShared implements OSecurityInternal {
         result = calculateAllFilteredProperties(session);
       } else {
         result = session.getSharedContext().getOrientDB()
-            .executeNoAuthorization(session.getName(), (db -> calculateAllFilteredProperties(db))).get();
+                .executeNoAuthorization(session.getName(), (db -> calculateAllFilteredProperties(db))).get();
       }
       synchronized (this) {
         filteredProperties = result;
