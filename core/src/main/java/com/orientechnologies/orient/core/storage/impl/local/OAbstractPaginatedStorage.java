@@ -4362,7 +4362,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               + ", fuzzy segment is " + fuzzySegment, null);
 
       if (fuzzySegment > beginLSN.getSegment() && beginLSN.getSegment() < endLSN.getSegment()) {
-        OLogManager.instance().infoNoDb(this, "Making fuzzy checkpoint");
+        OLogManager.instance().debugNoDb(this, "Making fuzzy checkpoint", null);
         writeCache.makeFuzzyCheckpoint(fuzzySegment);
 
         beginLSN = writeAheadLog.begin();
