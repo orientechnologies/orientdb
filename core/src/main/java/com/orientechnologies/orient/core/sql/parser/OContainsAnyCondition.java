@@ -45,6 +45,9 @@ public class OContainsAnyCondition extends OBooleanExpression {
           if (((Collection) left).contains(next)) {
             return true;
           }
+          if(next instanceof OResult && ((OResult) next).isElement() && ((Collection) left).contains(((OResult) next).toElement())){
+            return true;
+          }
         }
       }
       return false;
