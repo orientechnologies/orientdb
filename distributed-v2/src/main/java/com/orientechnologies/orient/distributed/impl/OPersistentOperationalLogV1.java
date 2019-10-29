@@ -296,35 +296,35 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   @Override
   public boolean logReceived(OLogId logId, OLogRequest request) {
     if (leader) {
-      return false;
+      throw new IllegalStateException("Attempt to log received OpLog package on master node");
     }
     if (logId.getId() <= lastPersistentLog().getId()) {
       return false;
     }
 
     paralledThreads.incrementAndGet();
-    synchronized (inc) {
-      try {
-
-        while (logId.getId() > lastPersistentLog().getId() + 1) {
-          inc.wait();
+    try {
+      synchronized (inc) {
+        if (logId.getId() > lastPersistentLog().getId() + 1) {
+          paralledThreads.decrementAndGet();
+          return false;
         }
         this.term = logId.getTerm();
         write(logId, request);
         inc.incrementAndGet();
         inc.notifyAll();
         lastWritten.set(logId.getId());
-      } catch (InterruptedException ex) {
       }
-    }
 
-    if (paralledThreads.get() > 1) {
-      sleep(0, 100_000);
-    } else {
-      Thread.yield();
+      if (paralledThreads.get() > 1) {
+        sleep(0, 100_000);
+      } else {
+        Thread.yield();
+      }
+      flush(logId);
+    } finally {
+      paralledThreads.decrementAndGet();
     }
-    flush(logId);
-    paralledThreads.decrementAndGet();
 
     return true;
   }

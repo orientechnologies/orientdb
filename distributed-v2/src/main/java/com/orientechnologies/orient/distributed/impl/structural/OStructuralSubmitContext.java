@@ -5,6 +5,9 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 
 import java.util.concurrent.Future;
 
+/**
+ * manages client->follower->leader pass-through communication for write operations
+ */
 public interface OStructuralSubmitContext {
 
   Future<OStructuralSubmitResponse> send(OSessionOperationId requestId, OStructuralSubmitRequest response);
