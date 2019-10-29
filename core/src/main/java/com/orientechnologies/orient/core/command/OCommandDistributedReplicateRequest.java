@@ -35,7 +35,7 @@ public interface OCommandDistributedReplicateRequest {
   }
 
   enum QUORUM_TYPE {
-    NONE, READ, WRITE, ALL
+    NONE, READ, WRITE, ALL, WRITE_ALL_MASTERS
   }
 
   /**
@@ -79,7 +79,8 @@ public interface OCommandDistributedReplicateRequest {
   String getUndoCommand();
 
   /**
-   * Returns true if the command is executed on local node first and then distributed, or false if it's executed to all the servers at the same time.
+   * Returns true if the command is executed on local node first and then distributed, or false if it's executed to all the servers
+   * at the same time.
    */
   boolean isDistributedExecutingOnLocalNodeFirst();
 }
