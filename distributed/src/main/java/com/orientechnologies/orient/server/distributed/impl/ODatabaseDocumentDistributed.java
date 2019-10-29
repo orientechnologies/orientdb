@@ -519,7 +519,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public boolean commit2pc(ODistributedRequestId transactionId, boolean local, ODistributedRequestId requestId) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-
+    ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
     ONewDistributedTxContextImpl txContext = (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
 
     if (txContext != null) {

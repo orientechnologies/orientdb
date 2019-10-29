@@ -103,12 +103,11 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
 
-
-    if(iManager!=null) {
+    if (iManager != null) {
       iManager.messageBeforeOp("prepare1Phase", requestId);
     }
     convert(database);
-    if(iManager!=null) {
+    if (iManager != null) {
       iManager.messageAfterOp("prepare1Phase", requestId);
     }
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
@@ -240,7 +239,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       final ODatabaseDocumentInternal database = operations.getDatabase();
       if (indexOp.getValue().resolveAssociatedIndex(indexOp.getKey(), database.getMetadata().getIndexManagerInternal(), database)
           .isUnique()) {
-        quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
+        quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
         break;
       }
     }
