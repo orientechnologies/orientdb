@@ -82,6 +82,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 
@@ -476,8 +477,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       final int expectedResponses = localResult != null ? availableNodes + 1 : availableNodes;
 
+      // all online masters
+      int onlineMasters = manager.getOnlineNodes(databaseName).stream()
+          .filter(f -> cfg.getServerRole(f) == ODistributedConfiguration.ROLES.MASTER).collect(Collectors.toSet()).size();
+
       final int quorum = calculateQuorum(task.getQuorumType(), iClusterNames, cfg, expectedResponses, nodesConcurToTheQuorum.size(),
-          checkNodesAreOnline, localNodeName);
+          onlineMasters, checkNodesAreOnline, localNodeName);
 
       final boolean groupByResponse = task.getResultStrategy() != OAbstractRemoteTask.RESULT_STRATEGY.UNION;
 
@@ -1062,8 +1067,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType, Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int totalServers, final int totalMasterServers, final boolean checkNodesAreOnline,
-      final String localNodeName) {
+      final ODistributedConfiguration cfg, final int totalServers, final int totalMasterServers, int onlineMasters,
+      final boolean checkNodesAreOnline, final String localNodeName) {
 
     int quorum = 1;
 
@@ -1085,6 +1090,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       case WRITE:
         clusterQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
         totalServerInQuorum = totalMasterServers;
+        break;
+      case WRITE_ALL_MASTERS:
+        int cfgQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
+        clusterQuorum = Math.max(cfgQuorum, onlineMasters);
         break;
       case ALL:
         clusterQuorum = totalServers;
