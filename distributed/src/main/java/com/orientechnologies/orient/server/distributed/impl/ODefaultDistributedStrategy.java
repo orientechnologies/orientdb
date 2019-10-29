@@ -51,7 +51,8 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
       final ODistributedRequest request, final Collection<String> iNodes, final String databaseName, final Object localResult) {
 
     final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
-    if (request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
+    if (request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE
+        || request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS) {
       // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
       for (String node : iNodes) {
         if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER)
