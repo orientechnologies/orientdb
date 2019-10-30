@@ -382,7 +382,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new SyncRequest(Optional.empty()));
   }
 
-  private void nodeSyncRequest(OLogId logId) {
+  public void nodeSyncRequest(OLogId logId) {
     this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new SyncRequest(Optional.of(logId)));
   }
 

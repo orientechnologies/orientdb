@@ -16,11 +16,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class OStructuralFollower implements AutoCloseable {
-  private OOperationLog operationLog;
-  private ExecutorService executor;
-  private OrientDBDistributed orientDB;
+  private OOperationLog               operationLog;
+  private ExecutorService             executor;
+  private OrientDBDistributed         orientDB;
   private Map<OLogId, ORaftOperation> pending = new HashMap<>();
-  private OSessionOperationIdWaiter waiter = new OSessionOperationIdWaiter();
+  private OSessionOperationIdWaiter   waiter  = new OSessionOperationIdWaiter();
 
   public OStructuralFollower(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed orientDB) {
     this.operationLog = operationLog;
@@ -30,7 +30,6 @@ public class OStructuralFollower implements AutoCloseable {
 
   public void log(OStructuralDistributedMember member, OLogId logId, ORaftOperation operation) {
     executor.execute(() -> {
-      //TODO: this should check that the operation is in order and in case request the copy.
       if (operationLog.logReceived(logId, operation)) {
         pending.put(logId, operation);
         member.ack(logId);
@@ -41,15 +40,17 @@ public class OStructuralFollower implements AutoCloseable {
   }
 
   private void resyncOplog() {
-    //TODO
+    orientDB.nodeSyncRequest(operationLog.lastPersistentLog());
   }
 
   public void confirm(OLogId logId) {
     executor.execute(() -> {
       //TODO: The pending should be a queue we cannot really apply things in random order
       ORaftOperation op = pending.get(logId);
-      op.apply(orientDB);
-      op.getRequesterSequential().ifPresent(this::notifyDone);
+      if (op != null) {
+        op.apply(orientDB);
+        op.getRequesterSequential().ifPresent(this::notifyDone);
+      }
     });
   }
 
