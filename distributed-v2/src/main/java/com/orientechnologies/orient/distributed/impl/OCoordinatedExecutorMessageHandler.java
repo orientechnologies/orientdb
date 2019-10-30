@@ -17,6 +17,7 @@ import com.orientechnologies.orient.distributed.impl.structural.raft.OStructural
 
 public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor {
   private OrientDBDistributed distributed;
+  private ONodeIdentity       leader;
 
   public OCoordinatedExecutorMessageHandler(OrientDBDistributed distributed) {
     this.distributed = distributed;
@@ -84,6 +85,10 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
 
   @Override
   public void executePropagate(ONodeIdentity sender, ONetworkPropagate propagate) {
+    if (!sender.equals(leader)) {
+      OLogManager.instance().warn(this, "Received propagate from node '%s' but leader is '%s' ignoring it", sender, leader);
+      return;
+    }
     OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
     OStructuralFollower slave = distributedContext.getFollower();
     OStructuralDistributedMember member = slave.getMember(sender);
@@ -92,6 +97,10 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
 
   @Override
   public void executeConfirm(ONodeIdentity sender, ONetworkConfirm confirm) {
+    if (!sender.equals(leader)) {
+      OLogManager.instance().warn(this, "Received confirm from node '%s' but leader is '%s' ignoring it", sender, leader);
+      return;
+    }
     OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
     OStructuralFollower slave = distributedContext.getFollower();
     slave.confirm(confirm.getId());
@@ -106,5 +115,9 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
     } else {
       master.receiveAck(sender, ack.getLogId());
     }
+  }
+
+  public void setLeader(ONodeIdentity leader) {
+    this.leader = leader;
   }
 }
