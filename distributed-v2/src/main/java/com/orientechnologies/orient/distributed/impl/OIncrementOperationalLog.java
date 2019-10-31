@@ -10,9 +10,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class OIncrementOperationalLog implements OOperationLog {
 
-  private long term = 0;
-  private AtomicLong inc = new AtomicLong(term);
-  private OLogId lastLog;
+  private long       term = 0;
+  private AtomicLong inc  = new AtomicLong(term);
+  private OLogId     lastLog;
 
   @Override
   public OLogId log(OLogRequest request) {
@@ -33,6 +33,11 @@ public class OIncrementOperationalLog implements OOperationLog {
 
   @Override
   public Iterator<OOperationLogEntry> iterate(long from, long to) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Iterator<OOperationLogEntry> searchFrom(OLogId from) {
     throw new UnsupportedOperationException();
   }
 

@@ -19,13 +19,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1 implements OOperationLog {
 
-
   private OLogRequestFactory factory;
-  private boolean leader;
-  private long term;
-  private AtomicLong lastFlushed = new AtomicLong(-1);
-  private AtomicLong lastWritten = new AtomicLong(-1);
-  private AtomicLong paralledThreads = new AtomicLong(0);
+  private boolean            leader;
+  private long               term;
+  private AtomicLong         lastFlushed     = new AtomicLong(-1);
+  private AtomicLong         lastWritten     = new AtomicLong(-1);
+  private AtomicLong         paralledThreads = new AtomicLong(0);
 
   private OLogId lastId;
 
@@ -34,8 +33,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private static class OpLogInfo {
-    private int currentFileNum;
-    private int firstFileNum;
+    private int  currentFileNum;
+    private int  firstFileNum;
     private long keepUntil;
 
     void fromStream(InputStream stream) {
@@ -66,13 +65,13 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  protected static final long MAGIC = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
-  protected static final String OPLOG_INFO_FILE = "oplog.opl";
-  protected static final String OPLOG_FILE = "oplog_$NUM$.opl";
-  protected static final int LOG_ENTRIES_PER_FILE = 16 * 1024;
+  protected static final long   MAGIC                = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
+  protected static final String OPLOG_INFO_FILE      = "oplog.opl";
+  protected static final String OPLOG_FILE           = "oplog_$NUM$.opl";
+  protected static final int    LOG_ENTRIES_PER_FILE = 16 * 1024;
 
-  private final String storagePath;
-  private OpLogInfo info;
+  private final String    storagePath;
+  private       OpLogInfo info;
 
   private FileOutputStream fileOutput;
   private DataOutputStream stream;
@@ -298,7 +297,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     return new OLogId(inc.incrementAndGet(), term, lastPersistentLog().getTerm());
   }
 
-
   private void flush(OLogId log) {
     synchronized (inc) {
       if (lastFlushed.get() >= log.getId()) {
@@ -321,7 +319,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
     }
   }
-
 
   @Override
   public boolean logReceived(OLogId logId, OLogRequest request) {
@@ -429,6 +426,12 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       }
     }
     stream = initStream(info);
+  }
+
+  @Override
+  public Iterator<OOperationLogEntry> searchFrom(OLogId from) {
+    // TODO: Implement a better search algorithm that take in consideration il term
+    return iterate(from.getId(), lastPersistentLog().getId());
   }
 
   @Override
@@ -607,7 +610,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       }
     }
   }
-
 
   protected OLogId getOldestId() {
     Iterator<OOperationLogEntry> iterator = iterate(0, lastPersistentLog().getId());

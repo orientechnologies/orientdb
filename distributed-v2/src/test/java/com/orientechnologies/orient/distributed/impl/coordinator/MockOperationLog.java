@@ -4,9 +4,9 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MockOperationLog implements OOperationLog {
-  private long term = 0;
+  private long       term = 0;
   private AtomicLong sequence;
-  private OLogId lastLog;
+  private OLogId     lastLog;
 
   public MockOperationLog() {
     this(0);
@@ -35,6 +35,11 @@ public class MockOperationLog implements OOperationLog {
 
   @Override
   public Iterator<OOperationLogEntry> iterate(long from, long to) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Iterator<OOperationLogEntry> searchFrom(OLogId from) {
     throw new UnsupportedOperationException();
   }
 
