@@ -29,13 +29,13 @@ public class LocalHashTableV2EncryptionTestIT extends LocalHashTableV2Base {
     orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
 
     ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
+    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
 
     final OEncryption encryption = OEncryptionFactory.INSTANCE.getEncryption("aes/gcm", "T1JJRU5UREJfSVNfQ09PTA==");
 
     OSHA256HashFunction<Integer> SHA256HashFunction = new OSHA256HashFunction<>(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new LocalHashTableV2<>(42, "localHashTableEncryptionTest", ".imc", ".tsc", ".obf", ".nbh",
-        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
+    localHashTable = new LocalHashTableV2<>(42, "localHashTableEncryptionTest", ".imc", ".tsc", ".obf", ".nbh", storage);
 
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null,

@@ -460,8 +460,9 @@ public class OSecurityShared implements OSecurityInternal {
   public OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name) {
     OElement elem = session.newElement(OSecurityPolicy.class.getSimpleName());
     elem.setProperty("name", name);
-    session.save(elem);
-    return new OSecurityPolicy(elem);
+    OSecurityPolicy policy = new OSecurityPolicy(elem);
+    saveSecurityPolicy(session, policy);
+    return policy;
   }
 
   @Override
@@ -477,7 +478,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy) {
-    session.save(policy.getElement());
+    session.save(policy.getElement(), OSecurityPolicy.class.getSimpleName().toLowerCase(Locale.ENGLISH));
   }
 
   @Override
@@ -902,6 +903,11 @@ public class OSecurityShared implements OSecurityInternal {
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document);
     } else {
 
+      OBooleanExpression readPredicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class.`" + clazz.getName() + "`.`" + propertyName + "`", OSecurityPolicy.Scope.READ);
+      if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, readPredicate, document)) {
+        return false;
+      }
+
       OBooleanExpression beforePredicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class.`" + clazz.getName() + "`.`" + propertyName + "`", OSecurityPolicy.Scope.BEFORE_UPDATE);
       OResultInternal originalRecord = calculateOriginalValue(document);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, beforePredicate, originalRecord)) {
@@ -1059,7 +1065,7 @@ public class OSecurityShared implements OSecurityInternal {
         result = calculateAllFilteredProperties(session);
       } else {
         result = session.getSharedContext().getOrientDB()
-            .executeNoAuthorization(session.getName(), (db -> calculateAllFilteredProperties(db))).get();
+                .executeNoAuthorization(session.getName(), (db -> calculateAllFilteredProperties(db))).get();
       }
       synchronized (this) {
         filteredProperties = result;

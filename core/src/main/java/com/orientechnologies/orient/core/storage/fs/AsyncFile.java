@@ -147,6 +147,7 @@ public final class AsyncFile implements OFile {
 
       checkForClose();
       checkPosition(offset);
+      checkPosition(offset + buffer.limit() - 1);
 
       int written = 0;
       do {
@@ -178,6 +179,7 @@ public final class AsyncFile implements OFile {
       try {
         checkForClose();
         checkPosition(pair.getFirst());
+        checkPosition(pair.getFirst() + pair.getSecond().limit() - 1);
 
         final long position = pair.getFirst() + HEADER_SIZE;
         fileChannel.write(byteBuffer, position, latch, new WriteHandler(byteBuffer, asyncIOResult, position));
@@ -268,7 +270,7 @@ public final class AsyncFile implements OFile {
       } else {
         final long sizeDiff = currentSize - currentCommittedSize;
         if (sizeDiff > 0) {
-          ONative.instance().fallocate(fd, allocatedPosition + HEADER_SIZE, sizeDiff);
+          ONative.instance().fallocate(fd, currentCommittedSize + HEADER_SIZE, sizeDiff);
         }
       }
 

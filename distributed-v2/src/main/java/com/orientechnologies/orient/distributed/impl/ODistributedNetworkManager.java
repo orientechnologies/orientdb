@@ -28,7 +28,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   private final OrientDBDistributed                                             orientDB;
   private final ONodeConfiguration                                              config;
   private final ONodeInternalConfiguration                                      internalConfiguration;
-  private       OUDPMulticastNodeManager                                        discoveryManager;
+  private       ONodeManager                                                    discoveryManager;
   private       OCoordinatedExecutorMessageHandler                              requestHandler;
 
   public ODistributedNetworkManager(OrientDBDistributed orientDB, ONodeConfiguration config,
@@ -121,6 +121,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   public void leaderElected(NodeData data) {
     //TODO: Come from a term
     OLogId lastValid = null;
+    requestHandler.setLeader(data.getNodeIdentity());
     orientDB.setLeader(data.getNodeIdentity(), lastValid);
   }
 

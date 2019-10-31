@@ -30,19 +30,27 @@ public class OStructuralFollower implements AutoCloseable {
 
   public void log(OStructuralDistributedMember member, OLogId logId, ORaftOperation operation) {
     executor.execute(() -> {
-      //TODO: this should check that the operation is in order and in case request the copy.
-      operationLog.logReceived(logId, operation);
-      pending.put(logId, operation);
-      member.ack(logId);
+      if (operationLog.logReceived(logId, operation)) {
+        pending.put(logId, operation);
+        member.ack(logId);
+      } else {
+        resyncOplog();
+      }
     });
+  }
+
+  private void resyncOplog() {
+    orientDB.nodeSyncRequest(operationLog.lastPersistentLog());
   }
 
   public void confirm(OLogId logId) {
     executor.execute(() -> {
       //TODO: The pending should be a queue we cannot really apply things in random order
       ORaftOperation op = pending.get(logId);
-      op.apply(orientDB);
-      op.getRequesterSequential().ifPresent(this::notifyDone);
+      if (op != null) {
+        op.apply(orientDB);
+        op.getRequesterSequential().ifPresent(this::notifyDone);
+      }
     });
   }
 

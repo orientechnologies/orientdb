@@ -22,6 +22,12 @@ public class OStructuralDistributedContext {
   private OrientDBDistributed      context;
   private OStructuralLeader        leader;
   private OStructuralFollower      follower;
+
+  /**
+   * used in client->follower->leader communication pattern
+   * to guarantee that op N is executed AFTER op N-1 is ALREADY propagated to the slave
+   * eg. create database VS open database
+   */
   private OSessionOperationId      last;
 
   public OStructuralDistributedContext(OrientDBDistributed context) {

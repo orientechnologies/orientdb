@@ -362,38 +362,27 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void realignToLog(OLogId lastValid) {
-    OLogId lastStateId = this.structuralConfiguration.getLastUpdateId();
     OOperationLog opLog = this.structuralDistributedContext.getOpLog();
     OLogId lastPersistent = opLog.lastPersistentLog();
     if (lastPersistent != null && lastValid != null) {
-      Iterator<OOperationLogEntry> list = opLog.iterate(lastStateId.getId(), lastValid.getId());
-      while (list.hasNext()) {
-        OOperationLogEntry change = list.next();
-        this.getStructuralDistributedContext().getFollower().recover((ORaftOperation) change.getRequest());
-      }
-      int isCoordinatorLastMoreRecent = lastValid.compareTo(lastPersistent);
-      if (isCoordinatorLastMoreRecent > 0) {
-        nodeSyncRequest(lastPersistent);
-      } else if (isCoordinatorLastMoreRecent < 0) {
-        //Remove from the log the staff i've after the master id, this should not have been applied to the state yet.
-        //TODO: double check if state has an id more recent, this should not happen just add an assert.
-        opLog.removeAfter(lastValid);
-      }
+      nodeSyncRequest(lastPersistent);
+      //TODO: at the end of the sync, the state should align to the log
     } else if (lastValid != null) {
       nodeFirstJoin();
     } else if (lastPersistent != null) {
-      //TODO:  I've something that the master has not, rely on what the master tell me.
+      // If the leader has nothing and this node something, start from scratch anyway
+      nodeFirstJoin();
     } else {
       //TODO: First join for everyone, do nothing for a while ? and then sync the databases existing on the disc on nodes.
     }
-
   }
 
   private void nodeFirstJoin() {
+    // TODO handle eventual database that are in the database folder but not registered in the configuration
     this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new SyncRequest(Optional.empty()));
   }
 
-  private void nodeSyncRequest(OLogId logId) {
+  public void nodeSyncRequest(OLogId logId) {
     this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new SyncRequest(Optional.of(logId)));
   }
 
