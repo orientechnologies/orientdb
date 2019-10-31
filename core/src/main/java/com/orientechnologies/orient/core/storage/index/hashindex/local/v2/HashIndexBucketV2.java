@@ -153,10 +153,8 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
       entryPosition += keySize;
     } else {
       final int encryptedLength = getIntValue(entryPosition);
-      entryPosition += OIntegerSerializer.INT_SIZE;
-
-      key = getBinaryValue(entryPosition, encryptedLength);
-      entryPosition += encryptedLength;
+      key = getBinaryValue(entryPosition, encryptedLength + OIntegerSerializer.INT_SIZE);
+      entryPosition += encryptedLength + OIntegerSerializer.INT_SIZE;
     }
 
     final int valueSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
@@ -177,7 +175,6 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
    * Obtains the value stored under the given index in this bucket.
    *
    * @param index the value index.
-   *
    * @return the obtained value.
    */
   public V getValue(final int index, final OEncryption encryption, final OBinarySerializer<K> keySerializer,
@@ -274,8 +271,9 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     moveData(positionOffset + OIntegerSerializer.INT_SIZE, positionOffset,
         size() * OIntegerSerializer.INT_SIZE - (index + 1) * OIntegerSerializer.INT_SIZE);
 
-    if (entryPosition > freePointer)
+    if (entryPosition > freePointer) {
       moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
+    }
 
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
     for (int i = 0; i < size - 1; i++) {

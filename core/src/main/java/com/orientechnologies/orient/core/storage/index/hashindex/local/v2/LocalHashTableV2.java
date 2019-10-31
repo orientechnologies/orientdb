@@ -4,6 +4,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
@@ -1713,14 +1714,22 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       entries.add(entry);
     }
 
-    bucket.init(newBucketDepth);
+    bucket.setDepth(newBucketDepth);
 
-    for (final RawEntry entry : entries) {
-      if (((entry.hashCode >>> (HASH_CODE_SIZE - newBucketDepth)) & 1) == 0) {
-        bucket.addEntry(bucket.size(), entry.hashCode, entry.key, entry.value);
-      } else {
+    final List<ORawPair<Integer, RawEntry>> entriesToRemove = new ArrayList<>();
+
+    for (int i = 0; i < entries.size(); i++) {
+      final RawEntry entry = entries.get(i);
+      if (((entry.hashCode >>> (HASH_CODE_SIZE - newBucketDepth)) & 1) == 1) {
+        entriesToRemove.add(new ORawPair<>(i, entry));
         newBucket.addEntry(newBucket.size(), entry.hashCode, entry.key, entry.value);
       }
+    }
+
+    for (int i = entriesToRemove.size() - 1; i >= 0; i--) {
+      final ORawPair<Integer, RawEntry> pair = entriesToRemove.get(i);
+      final RawEntry entry = pair.getSecond();
+      bucket.deleteEntry(pair.getFirst(), entry.hashCode, entry.key, entry.value);
     }
 
     assert checkBucketDepth(bucket);
