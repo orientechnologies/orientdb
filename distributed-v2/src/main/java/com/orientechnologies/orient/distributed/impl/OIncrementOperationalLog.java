@@ -12,20 +12,23 @@ public class OIncrementOperationalLog implements OOperationLog {
 
   private long term = 0;
   private AtomicLong inc = new AtomicLong(term);
+  private OLogId lastLog;
 
   @Override
   public OLogId log(OLogRequest request) {
-    return new OLogId(inc.incrementAndGet(), term);
+    lastLog = new OLogId(inc.incrementAndGet(), term, lastLog == null ? -1 : lastLog.getTerm());
+    return lastLog;
   }
 
   @Override
   public boolean logReceived(OLogId logId, OLogRequest request) {
+    lastLog = logId;
     return true;
   }
 
   @Override
   public OLogId lastPersistentLog() {
-    return new OLogId(inc.get(), 0);
+    return lastLog == null ? new OLogId(inc.get(), -1, -1) : lastLog;
   }
 
   @Override

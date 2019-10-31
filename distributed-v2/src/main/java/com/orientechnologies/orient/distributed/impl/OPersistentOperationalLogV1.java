@@ -27,6 +27,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   private AtomicLong lastWritten = new AtomicLong(-1);
   private AtomicLong paralledThreads = new AtomicLong(0);
 
+  private OLogId lastId;
+
   public interface OLogRequestFactory {
     OLogRequest createLogRequest(int requestId);
   }
@@ -101,6 +103,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
     this.stream = initStream(info);
     inc = readLastLogId();
+    loadLastId();
   }
 
   private DataOutputStream initStream(OpLogInfo info) {
@@ -177,7 +180,28 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   @Override
   public OLogId lastPersistentLog() {
-    return new OLogId(inc.get(), term);
+    synchronized (inc) {
+      if (lastId == null) {
+        loadLastId();
+      }
+      return lastId;
+    }
+
+  }
+
+  private void loadLastId() {
+    try {
+      AtomicLong id = readLastLogId();
+      Iterator<OOperationLogEntry> iterator = iterate(id.get(), id.get());
+      if (iterator.hasNext()) {
+        this.lastId = iterator.next().getLogId();
+      } else {
+        this.lastId = new OLogId(inc.get(), term, -1);
+      }
+    } catch (Exception e) {
+
+    }
+
   }
 
   protected AtomicLong readLastLogId() {
@@ -252,6 +276,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       write(result, request);
       inc.notifyAll();
       lastWritten.set(result.getId());
+      lastId = result;
     }
 
     if (paralledThreads.get() > 1) {
@@ -265,7 +290,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   protected OLogId createLogId() {
-    return new OLogId(inc.incrementAndGet(), term);
+    return new OLogId(inc.incrementAndGet(), term, lastPersistentLog().getTerm());
   }
 
 
@@ -306,7 +331,9 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     try {
       synchronized (inc) {
         if (logId.getId() > lastPersistentLog().getId() + 1) {
-          paralledThreads.decrementAndGet();
+          return false;
+        }
+        if (logId.getPreviousIdTerm() != -1 && logId.getPreviousIdTerm() != lastPersistentLog().getTerm()) {
           return false;
         }
         this.term = logId.getTerm();
@@ -314,6 +341,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
         inc.incrementAndGet();
         inc.notifyAll();
         lastWritten.set(logId.getId());
+        this.lastId = logId;
       }
 
       if (paralledThreads.get() > 1) {
@@ -372,7 +400,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       if (magic != MAGIC) {
         throw new ODistributedException("Invalid OpLog magic number for entry " + logId);
       }
-      return new OOperationLogEntry(new OLogId(logId, term), request);
+      return new OOperationLogEntry(new OLogId(logId, term, lastPersistentLog().getTerm()), request);
     } catch (Exception e) {
       return null;
     }

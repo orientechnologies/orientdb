@@ -148,7 +148,7 @@ public class OPersistentOperationalLogV1Test {
         OPhase1Tx item = new OPhase1Tx();
         log.log(item);
       }
-      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(10, 0));
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(10, 0, 0));
 
       Assert.assertEquals(OOperationLog.LogIdStatus.PRESENT, status);
 
@@ -192,7 +192,7 @@ public class OPersistentOperationalLogV1Test {
         OPhase1Tx item = new OPhase1Tx();
         log.log(item);
       }
-      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(100, 0));
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(100, 0, 0));
 
       Assert.assertEquals(OOperationLog.LogIdStatus.FUTURE, status);
 
@@ -225,7 +225,7 @@ public class OPersistentOperationalLogV1Test {
         OPhase1Tx item = new OPhase1Tx();
         log.log(item);
       }
-      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(-5, 0));
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(-5, 0, 0));
 
       Assert.assertEquals(OOperationLog.LogIdStatus.TOO_OLD, status);
 
@@ -255,7 +255,7 @@ public class OPersistentOperationalLogV1Test {
         OPhase1Tx item = new OPhase1Tx();
         log.log(item);
       }
-      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(10, 0) {
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(10, 0, 0) {
         @Override
         public boolean equals(Object o) {
           return false;
@@ -372,6 +372,73 @@ public class OPersistentOperationalLogV1Test {
       }
       file.toFile().delete();
     }
+  }
+
+  @Test
+  public void testLogReceived() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(false, 0);
+
+    Assert.assertTrue(log.logReceived(new OLogId(0, 0, 0), new OPhase1Tx()));
+    Assert.assertFalse(log.logReceived(new OLogId(0, 0, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(1, 0, 0), new OPhase1Tx()));
+    Assert.assertFalse(log.logReceived(new OLogId(1, 1, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(2, 1, 0), new OPhase1Tx()));
+    Assert.assertFalse(log.logReceived(new OLogId(3, 1, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(3, 1, 1), new OPhase1Tx()));
+  }
+
+  @Test
+  public void testStartWithEmptyLog() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(false, 0);
+
+    Assert.assertFalse(log.logReceived(new OLogId(100, 4, 0), new OPhase1Tx()));
+  }
+
+  @Test
+  public void testLog() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+
+    OLogId logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(0L, logId.getId());
+    Assert.assertEquals(0L, logId.getTerm());
+
+    logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(1L, logId.getId());
+    Assert.assertEquals(0L, logId.getTerm());
+    Assert.assertEquals(0L, logId.getPreviousIdTerm());
+
+    log.setLeader(true, 1);
+
+    logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(2L, logId.getId());
+    Assert.assertEquals(1L, logId.getTerm());
+    Assert.assertEquals(0L, logId.getPreviousIdTerm());
+
+    logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(3L, logId.getId());
+    Assert.assertEquals(1L, logId.getTerm());
+    Assert.assertEquals(1L, logId.getPreviousIdTerm());
+
+    log.setLeader(false, 2);
+
+    Assert.assertFalse(log.logReceived(new OLogId(4, 2, 2), new OPhase1Tx()));
+    Assert.assertFalse(log.logReceived(new OLogId(4, 2, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(4, 2, 1), new OPhase1Tx()));
+
+    log.setLeader(true, 3);
+
+    logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(5L, logId.getId());
+    Assert.assertEquals(3L, logId.getTerm());
+    Assert.assertEquals(2L, logId.getPreviousIdTerm());
+
+
   }
 }
 

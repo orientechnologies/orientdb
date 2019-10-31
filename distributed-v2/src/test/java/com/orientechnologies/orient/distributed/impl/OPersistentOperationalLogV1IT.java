@@ -79,8 +79,6 @@ public class OPersistentOperationalLogV1IT {
   }
 
 
-
-
   /**
    * test off-by-one errors across oplog file split
    *
@@ -103,7 +101,7 @@ public class OPersistentOperationalLogV1IT {
           OPhase1Tx item = new OPhase1Tx();
           log.log(item);
         }
-        OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(cutTo, 0));
+        OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(cutTo, 0, 0));
 
         Assert.assertEquals(OOperationLog.LogIdStatus.PRESENT, status);
 
