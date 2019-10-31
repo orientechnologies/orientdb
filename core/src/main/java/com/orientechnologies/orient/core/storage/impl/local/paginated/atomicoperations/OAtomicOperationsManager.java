@@ -212,7 +212,18 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
 
     if (lockName != null) {
-      acquireExclusiveLockTillOperationComplete(operation, lockName);
+      if (!tryLock) {
+        acquireExclusiveLockTillOperationComplete(operation, lockName);
+      } else {
+        final boolean locked = tryAcquireExclusiveLockTillOperationComplete(operation, lockName);
+        if (!locked) {
+          operation.commitChanges(useWal ? writeAheadLog : null);
+          operation.decrementCounter();
+          atomicOperationsCount.decrement();
+          currentOperation.set(null);
+          return null;
+        }
+      }
     }
 
     try {
