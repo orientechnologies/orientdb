@@ -45,18 +45,10 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * This is implementation which is based on B+-tree implementation threaded tree.
- * The main differences are:
+ * This is implementation which is based on B+-tree implementation threaded tree. The main differences are:
  * <ol>
  * <li>Buckets are not compacted/removed if they are empty after deletion of item. They reused later when new items are added.</li>
  * <li>All non-leaf buckets have links to neighbor buckets which contain keys which are less/more than keys contained in current
@@ -1311,7 +1303,7 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
       final int pageSize = entryPoint.getPagesSize();
 
       if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize + 1, false, false);
         entryPoint.setPagesSize(pageSize + 1);
       } else {
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
@@ -1466,8 +1458,8 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
       if (pageSize < filledUpTo - 1) {
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
         pageSize++;
+        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
       } else {
         assert pageSize == filledUpTo - 1;
 
@@ -1476,6 +1468,7 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
       }
 
       if (pageSize < filledUpTo) {
+        pageSize++;
         rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
         pageSize++;
       } else {
@@ -1672,13 +1665,14 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
   }
 
   /**
-   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether
-   * lowest or highest partially matched key should be used.
+   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
+   * or highest partially matched key should be used.
    */
-  private enum PartialSearchMode {/**
-   * Any partially matched key will be used as search result.
-   */
-  NONE,
+  private enum PartialSearchMode {
+    /**
+     * Any partially matched key will be used as search result.
+     */
+    NONE,
     /**
      * The biggest partially matched key will be used as search result.
      */
@@ -1687,7 +1681,8 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
     /**
      * The smallest partially matched key will be used as search result.
      */
-    LOWEST_BOUNDARY}
+    LOWEST_BOUNDARY
+  }
 
   private static final class BucketSearchResult {
     private final int  itemIndex;
@@ -1992,9 +1987,9 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
                   break mainCycle;
                 }
 
-                if (fromKey != null && (fromKeyInclusive ?
-                    comparator.compare(key, fromKey) < 0 :
-                    comparator.compare(key, fromKey) <= 0)) {
+                if (fromKey != null && (fromKeyInclusive
+                    ? comparator.compare(key, fromKey) < 0
+                    : comparator.compare(key, fromKey) <= 0)) {
                   continue;
                 }
 
@@ -2230,9 +2225,9 @@ public final class OCellBTreeMultiValueV2<K> extends ODurableComponent implement
                   continue;
                 }
 
-                if (fromKey != null && (fromKeyInclusive ?
-                    comparator.compare(key, fromKey) < 0 :
-                    comparator.compare(key, fromKey) <= 0)) {
+                if (fromKey != null && (fromKeyInclusive
+                    ? comparator.compare(key, fromKey) < 0
+                    : comparator.compare(key, fromKey) <= 0)) {
                   break mainCycle;
                 }
 

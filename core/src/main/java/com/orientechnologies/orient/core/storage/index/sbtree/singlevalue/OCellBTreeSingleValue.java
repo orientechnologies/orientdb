@@ -45,17 +45,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * This is implementation which is based on B+-tree implementation threaded tree.
- * The main differences are:
+ * This is implementation which is based on B+-tree implementation threaded tree. The main differences are:
  * <ol>
  * <li>Buckets are not compacted/removed if they are empty after deletion of item. They reused later when new items are added.</li>
  * <li>All non-leaf buckets have links to neighbor buckets which contain keys which are less/more than keys contained in current
@@ -1054,11 +1047,12 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
     final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
-      final int pageSize = entryPoint.getPagesSize();
+      int pageSize = entryPoint.getPagesSize();
 
       if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
+        pageSize++;
         rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-        entryPoint.setPagesSize(pageSize + 1);
+        entryPoint.setPagesSize(pageSize);
       } else {
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
 
@@ -1167,29 +1161,29 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
     final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
-      int pageSize = entryPoint.getPagesSize();
+      int pagesSize = entryPoint.getPagesSize();
 
       final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
-      if (pageSize < filledUpTo - 1) {
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-        pageSize++;
+      if (pagesSize < filledUpTo - 1) {
+        pagesSize++;
+        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pagesSize, false, false);
       } else {
-        assert pageSize == filledUpTo - 1;
+        assert pagesSize == filledUpTo - 1;
         leftBucketEntry = addPage(atomicOperation, fileId);
-        pageSize = (int) leftBucketEntry.getPageIndex();
+        pagesSize = (int) leftBucketEntry.getPageIndex();
       }
 
-      if (pageSize < filledUpTo) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-        pageSize++;
+      if (pagesSize < filledUpTo) {
+        pagesSize++;
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pagesSize, false, false);
       } else {
-        assert pageSize == filledUpTo;
+        assert pagesSize == filledUpTo;
         rightBucketEntry = addPage(atomicOperation, fileId);
-        pageSize = (int) rightBucketEntry.getPageIndex();
+        pagesSize = (int) rightBucketEntry.getPageIndex();
       }
 
-      entryPoint.setPagesSize(pageSize);
+      entryPoint.setPagesSize(pagesSize);
     } finally {
       releasePageFromWrite(atomicOperation, entryPointCacheEntry);
     }
@@ -1384,13 +1378,14 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
   }
 
   /**
-   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether
-   * lowest or highest partially matched key should be used.
+   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
+   * or highest partially matched key should be used.
    */
-  private enum PartialSearchMode {/**
-   * Any partially matched key will be used as search result.
-   */
-  NONE,
+  private enum PartialSearchMode {
+    /**
+     * Any partially matched key will be used as search result.
+     */
+    NONE,
     /**
      * The biggest partially matched key will be used as search result.
      */
@@ -1399,7 +1394,8 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
     /**
      * The smallest partially matched key will be used as search result.
      */
-    LOWEST_BOUNDARY}
+    LOWEST_BOUNDARY
+  }
 
   public interface OSBTreeCursor<K, V> {
     Map.Entry<K, V> next(int prefetchSize);
@@ -1637,15 +1633,15 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
                 final Map.Entry<K, ORID> entry = convertToMapEntry(bucket.getEntry(itemIndex));
                 itemIndex++;
 
-                if (fromKey != null && (fromKeyInclusive ?
-                    comparator.compare(entry.getKey(), fromKey) < 0 :
-                    comparator.compare(entry.getKey(), fromKey) <= 0)) {
+                if (fromKey != null && (fromKeyInclusive
+                    ? comparator.compare(entry.getKey(), fromKey) < 0
+                    : comparator.compare(entry.getKey(), fromKey) <= 0)) {
                   continue;
                 }
 
-                if (toKey != null && (toKeyInclusive ?
-                    comparator.compare(entry.getKey(), toKey) > 0 :
-                    comparator.compare(entry.getKey(), toKey) >= 0)) {
+                if (toKey != null && (toKeyInclusive
+                    ? comparator.compare(entry.getKey(), toKey) > 0
+                    : comparator.compare(entry.getKey(), toKey) >= 0)) {
                   break mainCycle;
                 }
 
@@ -1776,15 +1772,15 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
                 final Map.Entry<K, ORID> entry = convertToMapEntry(bucket.getEntry(itemIndex));
                 itemIndex--;
 
-                if (toKey != null && (toKeyInclusive ?
-                    comparator.compare(entry.getKey(), toKey) > 0 :
-                    comparator.compare(entry.getKey(), toKey) >= 0)) {
+                if (toKey != null && (toKeyInclusive
+                    ? comparator.compare(entry.getKey(), toKey) > 0
+                    : comparator.compare(entry.getKey(), toKey) >= 0)) {
                   continue;
                 }
 
-                if (fromKey != null && (fromKeyInclusive ?
-                    comparator.compare(entry.getKey(), fromKey) < 0 :
-                    comparator.compare(entry.getKey(), fromKey) <= 0)) {
+                if (fromKey != null && (fromKeyInclusive
+                    ? comparator.compare(entry.getKey(), fromKey) < 0
+                    : comparator.compare(entry.getKey(), fromKey) <= 0)) {
                   break mainCycle;
                 }
 
