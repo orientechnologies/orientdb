@@ -222,7 +222,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       file.seek(file.length() - 16); //length plus magic
       long size = file.readLong();
 
-      file.seek(file.length() - 16 - size - 20);
+      file.seek(file.length() - 24 - size - 20);
       return new AtomicLong(file.readLong());
     } catch (IOException e) {
       return new AtomicLong(recover());
@@ -237,6 +237,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     if (newFile.exists()) {
       newFile.delete();
     }
+    long lastIdRead = -1;
     try {
       newFile.createNewFile();
 
@@ -245,9 +246,13 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
       OOperationLogEntry record = readRecord(readStream);
       while (record != null) {
+        if (record != null) {
+          lastIdRead = record.getLogId().getId();
+        }
         writeRecord(writeStream, record.getLogId(), record.getRequest());
         record = readRecord(readStream);
       }
+
       readStream.close();
       writeStream.close();
 
@@ -257,11 +262,11 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       }
       oldFile.renameTo(oldFileCopy);
       newFile.renameTo(new File(oldFilePath));
-      oldFile.delete();
+      new File(newFilePath).delete();
     } catch (IOException e) {
       throw new ODistributedException("Cannot find oplog file: " + oldFilePath);
     }
-    throw new UnsupportedOperationException();
+    return lastIdRead;
   }
 
   @Override
@@ -375,6 +380,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
       stream.writeLong(logId.getId());
       stream.writeLong(logId.getTerm());
+      stream.writeLong(logId.getPreviousIdTerm());
       stream.writeInt(packetLengthPlusPacket);
       stream.writeInt(request.getRequestType());
       stream.write(packet);
@@ -391,6 +397,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     try {
       long logId = stream.readLong();
       long term = stream.readLong();
+      long previousMsgGTerm = stream.readLong();
       int totalPacketSize = stream.readInt();
       int packetType = stream.readInt();
       OLogRequest request = getCoordinateMessagesFactory().createLogRequest(packetType);
@@ -400,7 +407,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       if (magic != MAGIC) {
         throw new ODistributedException("Invalid OpLog magic number for entry " + logId);
       }
-      return new OOperationLogEntry(new OLogId(logId, term, lastPersistentLog().getTerm()), request);
+      return new OOperationLogEntry(new OLogId(logId, term, previousMsgGTerm), request);
     } catch (Exception e) {
       return null;
     }

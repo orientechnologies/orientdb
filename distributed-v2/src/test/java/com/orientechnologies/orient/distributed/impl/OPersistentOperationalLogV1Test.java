@@ -437,6 +437,57 @@ public class OPersistentOperationalLogV1Test {
     Assert.assertEquals(5L, logId.getId());
     Assert.assertEquals(3L, logId.getTerm());
     Assert.assertEquals(2L, logId.getPreviousIdTerm());
+  }
+
+  @Test
+  public void testRecover1() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+
+    log.log(new OPhase1Tx());
+    log.log(new OPhase1Tx());
+    log.log(new OPhase1Tx());
+
+
+    OLogId lastLogId = log.log(new OPhase1Tx());
+
+    log.close();
+
+    log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+    Assert.assertEquals(lastLogId, log.lastPersistentLog());
+
+
+  }
+
+  @Test
+  public void testRecover2() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+
+    log.log(new OPhase1Tx());
+    log.log(new OPhase1Tx());
+    log.log(new OPhase1Tx());
+
+
+    OLogId lastLogId = log.log(new OPhase1Tx());
+
+    log.close();
+
+    File logFile = new File(log.calculateLogFileFullPath(0));
+
+    Assert.assertTrue(logFile.exists());
+    FileWriter writer = new FileWriter(logFile, true);
+    writer.write("foobar");
+    writer.flush();
+    writer.close();
+
+
+    log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+    Assert.assertEquals(lastLogId, log.lastPersistentLog());
 
 
   }
