@@ -491,7 +491,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
 
     try {
-      lockManager.acquireLock(lockName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE, 0);
+      lockManager.acquireLock(lockName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE, 1);
     } catch (OLockException e) {
       return false;
     }
