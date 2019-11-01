@@ -11,20 +11,20 @@ import java.util.*;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
-  private final    OTransactionPhase1Task                        iRequest;
-  private final    Collection<String>                            iNodes;
-  private final    Set<String>                                   nodesConcurToTheQuorum;
-  private final    int                                           availableNodes;
-  private final    int                                           expectedResponses;
-  private final    int                                           quorum;
-  private final    long                                          timeout;
-  private volatile int                                           responseCount;
-  private final    List<String>                                  debugNodeReplied = new ArrayList<>();
-  private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType    = new HashMap<>();
-  private volatile IdentityHashMap<OTransactionResultPayload, String> payloadToNode = new IdentityHashMap<>();
-  private volatile boolean                                       finished         = false;
-  private volatile boolean                                       quorumReached    = false;
-  private volatile Object                                        finalResult;
+  private final    OTransactionPhase1Task                             iRequest;
+  private final    Collection<String>                                 iNodes;
+  private final    Set<String>                                        nodesConcurToTheQuorum;
+  private final    int                                                availableNodes;
+  private final    int                                                expectedResponses;
+  private final    int                                                quorum;
+  private final    long                                               timeout;
+  private volatile int                                                responseCount;
+  private final    List<String>                                       debugNodeReplied = new ArrayList<>();
+  private volatile Map<Integer, List<OTransactionResultPayload>>      resultsByType    = new HashMap<>();
+  private volatile IdentityHashMap<OTransactionResultPayload, String> payloadToNode    = new IdentityHashMap<>();
+  private volatile boolean                                            finished         = false;
+  private volatile boolean                                            quorumReached    = false;
+  private volatile Object                                             finalResult;
 
   public ONewDistributedResponseManager(OTransactionPhase1Task iRequest, Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum, int availableNodes, int expectedResponses, int quorum) {
@@ -137,7 +137,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return null;
   }
 
-  public String getNodeNameFromPayload(OTransactionResultPayload payload){
+  public String getNodeNameFromPayload(OTransactionResultPayload payload) {
     return this.payloadToNode.get(payload);
   }
 
@@ -157,15 +157,20 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   private boolean addResult(String senderNodeName, OTransactionResultPayload result) {
-    List<OTransactionResultPayload> results = resultsByType.get(result.getResponseType());
-    if (results == null) {
-      results = new ArrayList<>();
-      results.add(result);
-      resultsByType.put(result.getResponseType(), results);
-    } else {
-      results.add(result);
+
+    List<OTransactionResultPayload> results = new ArrayList<>();
+
+    if (nodesConcurToTheQuorum.contains(senderNodeName)) {
+      results = resultsByType.get(result.getResponseType());
+      if (results == null) {
+        results = new ArrayList<>();
+        results.add(result);
+        resultsByType.put(result.getResponseType(), results);
+      } else {
+        results.add(result);
+      }
+      payloadToNode.put(result, senderNodeName);
     }
-    payloadToNode.put(result, senderNodeName);
     responseCount += 1;
     checkFinished(results);
     return this.finished;
