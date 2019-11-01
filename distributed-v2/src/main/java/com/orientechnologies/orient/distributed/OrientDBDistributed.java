@@ -24,7 +24,6 @@ import com.orientechnologies.orient.distributed.impl.structural.*;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.*;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -379,11 +378,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   private void nodeFirstJoin() {
     // TODO handle eventual database that are in the database folder but not registered in the configuration
-    this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new SyncRequest(Optional.empty()));
+    this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new OSyncRequest(Optional.empty()));
   }
 
   public void nodeSyncRequest(OLogId logId) {
-    this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new SyncRequest(Optional.of(logId)));
+    this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new OSyncRequest(Optional.of(logId)));
   }
 
   private synchronized void syncDatabase(OStructuralNodeDatabase configuration) {

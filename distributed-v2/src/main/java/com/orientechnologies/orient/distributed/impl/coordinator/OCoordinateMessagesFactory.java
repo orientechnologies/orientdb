@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.distributed.OSyncRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOperationRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOperationResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
@@ -40,6 +41,7 @@ public class OCoordinateMessagesFactory {
   public static final int DROP_DATABASE_RESPONSE               = 25;
   public static final int CONFIGURATION_FETCH_SUBMIT_REQUEST   = 26;
   public static final int CONFIGURATION_FETCH_SUBMIT_RESPONSE  = 27;
+  public static final int SYNC_SUBMIT_REQUEST                  = 28;
 
   public static ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {
@@ -103,6 +105,8 @@ public class OCoordinateMessagesFactory {
       return new OCreateDatabaseSubmitRequest();
     case DROP_DATABASE_SUBMIT_REQUEST:
       return new ODropDatabaseSubmitRequest();
+    case SYNC_SUBMIT_REQUEST:
+      return new OSyncRequest();
     }
     return null;
   }

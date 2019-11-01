@@ -9,6 +9,7 @@ import com.orientechnologies.orient.distributed.impl.structural.OReadStructuralS
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -132,14 +133,14 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
       if (shared.existsDatabase(database)) {
         getLockManager().unlock(guards);
         if (requester.isPresent()) {
-          ODistributedChannel requesterChannel = members.get(requester.get());
+          ODistributedChannel requesterChannel = getMemberChannel(requester.get());
           requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(false, "Database Already Exists"));
         }
       } else {
         this.propagateAndApply(new OCreateDatabase(operationId, database, type, configurations), () -> {
           getLockManager().unlock(guards);
           if (requester.isPresent()) {
-            ODistributedChannel requesterChannel = members.get(requester.get());
+            ODistributedChannel requesterChannel = getMemberChannel(requester.get());
             requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(true, ""));
           }
         });
@@ -155,14 +156,14 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
         this.propagateAndApply(new ODropDatabase(operationId, database), () -> {
           getLockManager().unlock(guards);
           if (requester.isPresent()) {
-            ODistributedChannel requesterChannel = members.get(requester.get());
+            ODistributedChannel requesterChannel = getMemberChannel(requester.get());
             requesterChannel.reply(operationId, new ODropDatabaseSubmitResponse(true, ""));
           }
         });
       } else {
         getLockManager().unlock(guards);
         if (requester.isPresent()) {
-          ODistributedChannel requesterChannel = members.get(requester.get());
+          ODistributedChannel requesterChannel = getMemberChannel(requester.get());
           requesterChannel.reply(operationId, new ODropDatabaseSubmitResponse(false, "Database do not exists"));
         }
       }
@@ -184,9 +185,18 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
       Iterator<OOperationLogEntry> iter = operationLog.searchFrom(logId);
       while (iter.hasNext()) {
         OOperationLogEntry logEntry = iter.next();
-        members.get(identity).propagate(logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());
+        getMemberChannel(identity).propagate(logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());
       }
     });
+  }
+
+  private ODistributedChannel getMemberChannel(ONodeIdentity identity) {
+    ODistributedChannel channel = members.get(identity);
+    if (channel == null) {
+      throw new ODistributedException(
+          String.format("Cannot find channel for node with id:%s, available nodes:%s", identity, members.keySet().toString()));
+    }
+    return channel;
   }
 
   @Override
@@ -195,7 +205,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
       OStructuralConfiguration structuralConfiguration = getOrientDB().getStructuralConfiguration();
       OLogId lastId = structuralConfiguration.getLastUpdateId();
       OReadStructuralSharedConfiguration shared = structuralConfiguration.readSharedConfiguration();
-      members.get(identity).send(new OFullConfiguration(lastId, shared));
+      getMemberChannel(identity).send(new OFullConfiguration(lastId, shared));
     });
   }
 
