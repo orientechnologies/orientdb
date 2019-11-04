@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -42,14 +41,10 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import java.util.zip.CRC32;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
@@ -70,17 +65,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private          TimerTask                              autoCloseTimer = null;
 
   /**
-   * Format version, then in v1 list of entries: crc32, name, id
-   */
-  private final FileChannel          storageMetaData;
-  /**
-   * Map between storage name and id, if storage was create and then deleted, when it is created again we just reuse its id.
-   */
-  private       Map<String, Integer> nameIdMap = new HashMap<>();
-  /**
    * Next storage id
    */
-  private       int                  nextStorageId;
+  private int nextStorageId;
 
   protected final long maxWALSegmentSize;
 
@@ -101,64 +88,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
         }
       }
       this.basePath = dirFile.getAbsolutePath();
-      try {
-        if (dirFile.exists()) {
-          storageMetaData = FileChannel
-              .open(Paths.get(basePath).resolve("storages.dat"), StandardOpenOption.READ, StandardOpenOption.WRITE,
-                  StandardOpenOption.CREATE, StandardOpenOption.DSYNC);
-          final int currentMetadataSize = (int) storageMetaData.size();
-          if (currentMetadataSize == 0) {
-            final ByteBuffer buffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
-            buffer.putInt(1);
-            storageMetaData.write(buffer);
-            nextStorageId = 0;
-          } else {
-            //skip version we have only single one for now
-            storageMetaData.position(OIntegerSerializer.INT_SIZE);
-            final ByteBuffer metadata = ByteBuffer.allocate(currentMetadataSize - OIntegerSerializer.INT_SIZE);
-            metadata.rewind();
-            int metaDataSize = OIntegerSerializer.INT_SIZE;
-
-            while (metadata.remaining() >= 2 * OIntegerSerializer.INT_SIZE) {
-              final int crc = metadata.getInt();
-              final int len = metadata.getInt();
-              if (len > metadata.remaining() - OIntegerSerializer.INT_SIZE) {
-                break;
-              }
-
-              final byte[] name = new byte[len];
-              metadata.get(name);
-              final int storageId = metadata.getInt();
-              final CRC32 crc32 = new CRC32();
-              crc32.update(metadata.array(), metadata.position() - 2 * OIntegerSerializer.INT_SIZE - len,
-                  2 * OIntegerSerializer.INT_SIZE + len);
-              if ((int) crc32.getValue() == crc) {
-                nameIdMap.put(new String(name, StandardCharsets.UTF_8), storageId);
-                metaDataSize += 3 * OIntegerSerializer.INT_SIZE + len;
-                if (nextStorageId <= storageId) {
-                  nextStorageId = storageId + 1;
-                }
-              } else {
-                break;
-              }
-            }
-
-            //truncate broken data
-            if (metaDataSize < currentMetadataSize) {
-              OLogManager.instance()
-                  .warnNoDb(this, "Storages metadata file is broken and will be truncated up to " + metaDataSize + " bytes");
-              storageMetaData.truncate(metaDataSize);
-            }
-          }
-        } else {
-          storageMetaData = null;
-        }
-      } catch (IOException e) {
-        throw OException.wrapException(new ODatabaseException("Can not create/open file to keep metadata of storages."), e);
-      }
     } else {
       this.basePath = null;
-      storageMetaData = null;
     }
 
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
@@ -408,46 +339,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
       storage = storages.get(name);
       if (storage == null) {
-        final int storageId = generateStorageId(name);
-        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, storageId);
+        storage = (OAbstractPaginatedStorage) disk
+            .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, Math.abs(nextStorageId++));
         if (storage.exists()) {
           storages.put(name, storage);
         }
       }
     }
     return storage;
-  }
-
-  protected int generateStorageId(String name) {
-    try {
-      Integer storageId = nameIdMap.get(name);
-      if (storageId == null) {
-        storageId = nextStorageId++;
-
-        if (storageMetaData != null) {
-          final byte[] rawName = name.getBytes(StandardCharsets.UTF_8);
-          final ByteBuffer metadata = ByteBuffer.allocate(3 * OIntegerSerializer.INT_SIZE + rawName.length);
-          metadata.position(OIntegerSerializer.INT_SIZE);
-
-          metadata.putInt(rawName.length);
-          metadata.put(rawName);
-          metadata.putInt(storageId);
-
-          final CRC32 crc32 = new CRC32();
-          crc32.update(metadata.array(), OIntegerSerializer.INT_SIZE, metadata.capacity() - OIntegerSerializer.INT_SIZE);
-          metadata.putInt(0, (int) crc32.getValue());
-
-          storageMetaData.position(storageMetaData.size());
-          metadata.rewind();
-          storageMetaData.write(metadata);
-        }
-      }
-
-      OLogManager.instance().infoNoDb(this, "For storage `%s` id `%d` is assigned", name, storageId);
-      return storageId;
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during generation of storage-id for storage" + name), e);
-    }
   }
 
   public synchronized OAbstractPaginatedStorage getStorage(String name) {
@@ -474,7 +373,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
           config = solveConfig(config);
           OAbstractPaginatedStorage storage;
 
-          final int storageId = generateStorageId(name);
+          final int storageId = Math.abs(nextStorageId++);
           if (type == ODatabaseType.MEMORY) {
             storage = (OAbstractPaginatedStorage) memory.createStorage(name, new HashMap<>(), maxWALSegmentSize, storageId);
           } else {
@@ -499,8 +398,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     synchronized (this) {
       if (!exists(name, null, null)) {
         try {
-          final int storageId = generateStorageId(name);
-          storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, storageId);
+          storage = (OAbstractPaginatedStorage) disk
+              .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, nextStorageId++);
           embedded = internalCreate(config, storage);
           storages.put(name, storage);
         } catch (Exception e) {
@@ -654,13 +553,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     if (autoCloseTimer != null) {
       autoCloseTimer.cancel();
     }
-    try {
-      if (storageMetaData != null) {
-        storageMetaData.close();
-      }
-    } catch (final IOException e) {
-      OLogManager.instance().errorNoDb(this, "Can not close file which contains information about storage metadata", e);
-    }
     open = false;
   }
 
@@ -709,9 +601,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     ODatabaseDocumentEmbedded embedded = null;
     synchronized (this) {
       boolean exists = OLocalPaginatedStorage.exists(Paths.get(path));
-      final int storageId = generateStorageId(name);
       OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) disk
-          .createStorage(path, new HashMap<>(), maxWALSegmentSize, storageId);
+          .createStorage(path, new HashMap<>(), maxWALSegmentSize, Math.abs(nextStorageId++));
       // TODO: Add Creation settings and parameters
       if (!exists) {
         embedded = internalCreate(getConfigurations(), storage);

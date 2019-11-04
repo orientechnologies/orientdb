@@ -124,13 +124,14 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testRegisterDatabase() {
-    OrientDBEmbedded orientDb = (OrientDBEmbedded) new OrientDB("embedded:", OrientDBConfig.defaultConfig()).getInternal();
+    OrientDBEmbedded orientDb = (OrientDBEmbedded) new OrientDB("embedded:./target/registerDatabase",
+        OrientDBConfig.defaultConfig()).getInternal();
     assertEquals(orientDb.listDatabases("", "").size(), 0);
-    orientDb.initCustomStorage("database1", "./target/databases/database1", "", "");
+    orientDb.initCustomStorage("database1", "databases/database1", "", "");
     try (ODatabaseDocument db = orientDb.open("database1", "admin", "admin")) {
       assertEquals("database1", db.getName());
     }
-    orientDb.initCustomStorage("database2", "./target/databases/database2", "", "");
+    orientDb.initCustomStorage("database2", "databases/database2", "", "");
 
     try (ODatabaseDocument db = orientDb.open("database2", "admin", "admin")) {
       assertEquals("database2", db.getName());
