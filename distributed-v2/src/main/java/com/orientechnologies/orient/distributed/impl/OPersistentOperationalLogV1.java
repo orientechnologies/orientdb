@@ -14,7 +14,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 
 import java.io.*;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1 implements OOperationLog {
@@ -325,9 +324,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     if (leader) {
       throw new IllegalStateException("Attempt to log received OpLog package on master node");
     }
-    if (logId.getId() <= lastPersistentLog().getId()) {
-      return false;
-    }
 
     paralledThreads.incrementAndGet();
     try {
@@ -335,7 +331,14 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
         if (logId.getId() > lastPersistentLog().getId() + 1) {
           return false;
         }
-        if (logId.getPreviousIdTerm() != -1 && logId.getPreviousIdTerm() != lastPersistentLog().getTerm()) {
+        if (tryTruncateLogHead(logId)) {
+          return false;
+        }
+        if (logId.getId() < lastPersistentLog().getId()) {
+          // already received, not truncated, so it's just a duplicate
+          return true;
+        }
+        if (logId.getId() != lastPersistentLog().getId() + 1) {
           return false;
         }
         this.term = logId.getTerm();
@@ -354,6 +357,44 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       flush(logId);
     } finally {
       paralledThreads.decrementAndGet();
+    }
+
+    return true;
+  }
+
+  /**
+   * given a logId, checks if it requires a log truncate to be written.
+   * If it does, the log head is truncated until that id and the method returns true
+   * otherwise it returns false.
+   *
+   * @param logId
+   * @return true if the log was truncated, ie. if this logId did not fit in the current log sequence,
+   * false otherwise
+   */
+  private boolean tryTruncateLogHead(OLogId logId) {
+    OLogId logHead = lastPersistentLog();
+    if (logHead.getId() == logId.getId() - 1) {
+      return (logId.getPreviousIdTerm() != -1 && logHead.getTerm() != logId.getPreviousIdTerm());
+    }
+    Iterator<OOperationLogEntry> iterator = iterate(logId.getId(), logHead.getId());
+    if (!iterator.hasNext()) {
+      return false;
+    }
+
+    OLogId samePositionLog = iterator.next().getLogId();
+    if (samePositionLog.getId() > logId.getId()) {
+      //I cannot check this log, it's too old
+      return false;
+    }
+    if (samePositionLog.getTerm() == logId.getTerm()) {
+      return false;
+    }
+
+    iterator = iterate(logId.getId() - 1, logHead.getId() - 1);
+    if (iterator.hasNext()) {
+      removeAfter(iterator.next().getLogId());
+    } else {
+      removeAfter(new OLogId(logId.getId() - 1, 0, 0));
     }
 
     return true;

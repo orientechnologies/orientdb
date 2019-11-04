@@ -437,6 +437,13 @@ public class OPersistentOperationalLogV1Test {
     Assert.assertEquals(5L, logId.getId());
     Assert.assertEquals(3L, logId.getTerm());
     Assert.assertEquals(2L, logId.getPreviousIdTerm());
+
+    log.log(new OPhase1Tx());//6
+    log.log(new OPhase1Tx());//7
+
+    log.setLeader(false, 4);
+    Assert.assertFalse(log.logReceived(new OLogId(6, 4, 3), new OPhase1Tx()));
+
   }
 
   @Test
