@@ -14,11 +14,9 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 
 import java.io.*;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1 implements OOperationLog {
-
 
   private OLogRequestFactory factory;
   private boolean leader;
@@ -26,6 +24,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   private AtomicLong lastFlushed = new AtomicLong(-1);
   private AtomicLong lastWritten = new AtomicLong(-1);
   private AtomicLong paralledThreads = new AtomicLong(0);
+
+  private OLogId lastId;
 
   public interface OLogRequestFactory {
     OLogRequest createLogRequest(int requestId);
@@ -101,6 +101,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
     this.stream = initStream(info);
     inc = readLastLogId();
+    loadLastId();
   }
 
   private DataOutputStream initStream(OpLogInfo info) {
@@ -177,7 +178,28 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   @Override
   public OLogId lastPersistentLog() {
-    return new OLogId(inc.get(), term);
+    synchronized (inc) {
+      if (lastId == null) {
+        loadLastId();
+      }
+      return lastId;
+    }
+
+  }
+
+  private void loadLastId() {
+    try {
+      AtomicLong id = readLastLogId();
+      Iterator<OOperationLogEntry> iterator = iterate(id.get(), id.get());
+      if (iterator.hasNext()) {
+        this.lastId = iterator.next().getLogId();
+      } else {
+        this.lastId = new OLogId(inc.get(), term, -1);
+      }
+    } catch (Exception e) {
+
+    }
+
   }
 
   protected AtomicLong readLastLogId() {
@@ -198,7 +220,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       file.seek(file.length() - 16); //length plus magic
       long size = file.readLong();
 
-      file.seek(file.length() - 16 - size - 20);
+      file.seek(file.length() - 24 - size - 20);
       return new AtomicLong(file.readLong());
     } catch (IOException e) {
       return new AtomicLong(recover());
@@ -213,6 +235,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     if (newFile.exists()) {
       newFile.delete();
     }
+    long lastIdRead = -1;
     try {
       newFile.createNewFile();
 
@@ -221,9 +244,13 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
       OOperationLogEntry record = readRecord(readStream);
       while (record != null) {
+        if (record != null) {
+          lastIdRead = record.getLogId().getId();
+        }
         writeRecord(writeStream, record.getLogId(), record.getRequest());
         record = readRecord(readStream);
       }
+
       readStream.close();
       writeStream.close();
 
@@ -233,11 +260,11 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       }
       oldFile.renameTo(oldFileCopy);
       newFile.renameTo(new File(oldFilePath));
-      oldFile.delete();
+      new File(newFilePath).delete();
     } catch (IOException e) {
       throw new ODistributedException("Cannot find oplog file: " + oldFilePath);
     }
-    throw new UnsupportedOperationException();
+    return lastIdRead;
   }
 
   @Override
@@ -252,6 +279,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       write(result, request);
       inc.notifyAll();
       lastWritten.set(result.getId());
+      lastId = result;
     }
 
     if (paralledThreads.get() > 1) {
@@ -265,9 +293,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   protected OLogId createLogId() {
-    return new OLogId(inc.incrementAndGet(), term);
+    return new OLogId(inc.incrementAndGet(), term, lastPersistentLog().getTerm());
   }
-
 
   private void flush(OLogId log) {
     synchronized (inc) {
@@ -292,21 +319,29 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-
   @Override
   public boolean logReceived(OLogId logId, OLogRequest request) {
     if (leader) {
       throw new IllegalStateException("Attempt to log received OpLog package on master node");
-    }
-    if (logId.getId() <= lastPersistentLog().getId()) {
-      return false;
     }
 
     paralledThreads.incrementAndGet();
     try {
       synchronized (inc) {
         if (logId.getId() > lastPersistentLog().getId() + 1) {
-          paralledThreads.decrementAndGet();
+          return false;
+        }
+        if (tryTruncateLogHead(logId)) {
+          return false;
+        }
+        if (logId.getId() < lastPersistentLog().getId()) {
+          // already received, not truncated, so it's just a duplicate
+          return true;
+        }
+        if (logId.getId() != lastPersistentLog().getId() + 1) {
+          return false;
+        }
+        if (logId.getPreviousIdTerm() != -1 && logId.getPreviousIdTerm() != lastPersistentLog().getTerm()) {
           return false;
         }
         this.term = logId.getTerm();
@@ -314,6 +349,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
         inc.incrementAndGet();
         inc.notifyAll();
         lastWritten.set(logId.getId());
+        this.lastId = logId;
       }
 
       if (paralledThreads.get() > 1) {
@@ -324,6 +360,52 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       flush(logId);
     } finally {
       paralledThreads.decrementAndGet();
+    }
+
+    return true;
+  }
+
+  /**
+   * given a logId, checks if it requires a log truncate to be written.
+   * If it does, the log head is truncated until that id and the method returns true
+   * otherwise it returns false.
+   *
+   * @param logId
+   * @return true if the log was truncated, ie. if this logId did not fit in the current log sequence,
+   * false otherwise
+   */
+  private boolean tryTruncateLogHead(OLogId logId) {
+    OLogId logHead = lastPersistentLog();
+    if (logHead.getId() == logId.getId() - 1) {
+      if (logId.getPreviousIdTerm() != -1 && logHead.getTerm() < logId.getPreviousIdTerm()) {
+        Iterator<OOperationLogEntry> iterator = iterate(logHead.getId() - 1, logHead.getId() - 1);
+        if (iterator.hasNext()) {
+          removeAfter(iterator.next().getLogId());
+        } else {
+          removeAfter(new OLogId(logHead.getId() - 1, 0, 0));
+        }
+      }
+      return false;
+    }
+    Iterator<OOperationLogEntry> iterator = iterate(logId.getId(), logHead.getId());
+    if (!iterator.hasNext()) {
+      return false;
+    }
+
+    OLogId samePositionLog = iterator.next().getLogId();
+    if (samePositionLog.getId() > logId.getId()) {
+      //I cannot check this log, it's too old
+      return false;
+    }
+    if (samePositionLog.getTerm() == logId.getTerm()) {
+      return false;
+    }
+
+    iterator = iterate(logId.getId() - 1, logHead.getId());
+    if (iterator.hasNext()) {
+      removeAfter(iterator.next().getLogId());
+    } else {
+      removeAfter(new OLogId(logId.getId() - 1, 0, 0));
     }
 
     return true;
@@ -347,6 +429,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
       stream.writeLong(logId.getId());
       stream.writeLong(logId.getTerm());
+      stream.writeLong(logId.getPreviousIdTerm());
       stream.writeInt(packetLengthPlusPacket);
       stream.writeInt(request.getRequestType());
       stream.write(packet);
@@ -363,6 +446,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     try {
       long logId = stream.readLong();
       long term = stream.readLong();
+      long previousMsgGTerm = stream.readLong();
       int totalPacketSize = stream.readInt();
       int packetType = stream.readInt();
       OLogRequest request = getCoordinateMessagesFactory().createLogRequest(packetType);
@@ -372,7 +456,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       if (magic != MAGIC) {
         throw new ODistributedException("Invalid OpLog magic number for entry " + logId);
       }
-      return new OOperationLogEntry(new OLogId(logId, term), request);
+      return new OOperationLogEntry(new OLogId(logId, term, previousMsgGTerm), request);
     } catch (Exception e) {
       return null;
     }
@@ -394,6 +478,12 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       }
     }
     stream = initStream(info);
+  }
+
+  @Override
+  public Iterator<OOperationLogEntry> searchFrom(OLogId from) {
+    // TODO: Implement a better search algorithm that take in consideration il term
+    return iterate(from.getId(), lastPersistentLog().getId());
   }
 
   @Override
@@ -524,6 +614,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       oldFile.renameTo(oldFileCopy);
       newFile.renameTo(new File(oldFilePath));
       oldFileCopy.delete();
+      this.lastId = null;
     } catch (IOException e) {
       throw new ODistributedException("Cannot find oplog file: " + oldFilePath);
     }
@@ -572,7 +663,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       }
     }
   }
-
 
   protected OLogId getOldestId() {
     Iterator<OOperationLogEntry> iterator = iterate(0, lastPersistentLog().getId());

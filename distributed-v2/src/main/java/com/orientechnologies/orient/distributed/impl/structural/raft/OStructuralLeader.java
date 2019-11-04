@@ -181,7 +181,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
     //TODO: this may fail, handle the failure.
     executor.execute(() -> {
       //TODO: this in single thread executor may cost too much, find a different implementation
-      Iterator<OOperationLogEntry> iter = operationLog.iterate(logId.getId(), operationLog.lastPersistentLog().getId());
+      Iterator<OOperationLogEntry> iter = operationLog.searchFrom(logId);
       while (iter.hasNext()) {
         OOperationLogEntry logEntry = iter.next();
         members.get(identity).propagate(logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());

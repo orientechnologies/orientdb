@@ -11,8 +11,7 @@ public interface OOperationLog extends AutoCloseable {
   OLogId log(OLogRequest request);
 
   /**
-   *
-   * @param logId A log ID received
+   * @param logId   A log ID received
    * @param request a request corresponding to the log ID
    * @return true if the log was added, false otherwise (eg. if the oplog is ahead of the logId)
    */
@@ -23,10 +22,11 @@ public interface OOperationLog extends AutoCloseable {
   /**
    * @param from first entry to get.
    * @param to   last entry to get (included).
-   *
    * @return
    */
   Iterator<OOperationLogEntry> iterate(long from, long to);
+
+  Iterator<OOperationLogEntry> searchFrom(OLogId from);
 
   @Override
   void close();
