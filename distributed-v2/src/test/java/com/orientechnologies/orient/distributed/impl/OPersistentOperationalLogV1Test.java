@@ -384,7 +384,8 @@ public class OPersistentOperationalLogV1Test {
     Assert.assertFalse(log.logReceived(new OLogId(0, 0, 0), new OPhase1Tx()));
     Assert.assertTrue(log.logReceived(new OLogId(1, 0, 0), new OPhase1Tx()));
     Assert.assertFalse(log.logReceived(new OLogId(1, 1, 0), new OPhase1Tx()));
-    Assert.assertTrue(log.logReceived(new OLogId(2, 1, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(1, 1, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(2, 1, 1), new OPhase1Tx()));
     Assert.assertFalse(log.logReceived(new OLogId(3, 1, 0), new OPhase1Tx()));
     Assert.assertTrue(log.logReceived(new OLogId(3, 1, 1), new OPhase1Tx()));
   }
@@ -427,7 +428,6 @@ public class OPersistentOperationalLogV1Test {
 
     log.setLeader(false, 2);
 
-    Assert.assertFalse(log.logReceived(new OLogId(4, 2, 2), new OPhase1Tx()));
     Assert.assertFalse(log.logReceived(new OLogId(4, 2, 0), new OPhase1Tx()));
     Assert.assertTrue(log.logReceived(new OLogId(4, 2, 1), new OPhase1Tx()));
 
@@ -444,6 +444,11 @@ public class OPersistentOperationalLogV1Test {
     log.setLeader(false, 4);
     Assert.assertFalse(log.logReceived(new OLogId(6, 4, 3), new OPhase1Tx()));
 
+
+    OLogId last = log.lastPersistentLog();
+    Assert.assertEquals(5L, last.getId());
+    Assert.assertEquals(3L, last.getTerm());
+    Assert.assertEquals(2L, last.getPreviousIdTerm());
   }
 
   @Test

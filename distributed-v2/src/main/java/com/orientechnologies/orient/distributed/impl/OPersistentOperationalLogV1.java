@@ -19,11 +19,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class OPersistentOperationalLogV1 implements OOperationLog {
 
   private OLogRequestFactory factory;
-  private boolean            leader;
-  private long               term;
-  private AtomicLong         lastFlushed     = new AtomicLong(-1);
-  private AtomicLong         lastWritten     = new AtomicLong(-1);
-  private AtomicLong         paralledThreads = new AtomicLong(0);
+  private boolean leader;
+  private long term;
+  private AtomicLong lastFlushed = new AtomicLong(-1);
+  private AtomicLong lastWritten = new AtomicLong(-1);
+  private AtomicLong paralledThreads = new AtomicLong(0);
 
   private OLogId lastId;
 
@@ -32,8 +32,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private static class OpLogInfo {
-    private int  currentFileNum;
-    private int  firstFileNum;
+    private int currentFileNum;
+    private int firstFileNum;
     private long keepUntil;
 
     void fromStream(InputStream stream) {
@@ -64,13 +64,13 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  protected static final long   MAGIC                = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
-  protected static final String OPLOG_INFO_FILE      = "oplog.opl";
-  protected static final String OPLOG_FILE           = "oplog_$NUM$.opl";
-  protected static final int    LOG_ENTRIES_PER_FILE = 16 * 1024;
+  protected static final long MAGIC = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
+  protected static final String OPLOG_INFO_FILE = "oplog.opl";
+  protected static final String OPLOG_FILE = "oplog_$NUM$.opl";
+  protected static final int LOG_ENTRIES_PER_FILE = 16 * 1024;
 
-  private final String    storagePath;
-  private       OpLogInfo info;
+  private final String storagePath;
+  private OpLogInfo info;
 
   private FileOutputStream fileOutput;
   private DataOutputStream stream;
@@ -341,6 +341,9 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
         if (logId.getId() != lastPersistentLog().getId() + 1) {
           return false;
         }
+        if (logId.getPreviousIdTerm() != -1 && logId.getPreviousIdTerm() != lastPersistentLog().getTerm()) {
+          return false;
+        }
         this.term = logId.getTerm();
         write(logId, request);
         inc.incrementAndGet();
@@ -374,7 +377,15 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   private boolean tryTruncateLogHead(OLogId logId) {
     OLogId logHead = lastPersistentLog();
     if (logHead.getId() == logId.getId() - 1) {
-      return (logId.getPreviousIdTerm() != -1 && logHead.getTerm() != logId.getPreviousIdTerm());
+      if (logId.getPreviousIdTerm() != -1 && logHead.getTerm() < logId.getPreviousIdTerm()) {
+        Iterator<OOperationLogEntry> iterator = iterate(logHead.getId() - 1, logHead.getId() - 1);
+        if (iterator.hasNext()) {
+          removeAfter(iterator.next().getLogId());
+        } else {
+          removeAfter(new OLogId(logHead.getId() - 1, 0, 0));
+        }
+      }
+      return false;
     }
     Iterator<OOperationLogEntry> iterator = iterate(logId.getId(), logHead.getId());
     if (!iterator.hasNext()) {
@@ -390,7 +401,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       return false;
     }
 
-    iterator = iterate(logId.getId() - 1, logHead.getId() - 1);
+    iterator = iterate(logId.getId() - 1, logHead.getId());
     if (iterator.hasNext()) {
       removeAfter(iterator.next().getLogId());
     } else {
@@ -603,6 +614,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       oldFile.renameTo(oldFileCopy);
       newFile.renameTo(new File(oldFilePath));
       oldFileCopy.delete();
+      this.lastId = null;
     } catch (IOException e) {
       throw new ODistributedException("Cannot find oplog file: " + oldFilePath);
     }
