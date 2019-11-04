@@ -32,13 +32,7 @@ import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -48,11 +42,7 @@ import org.junit.Test;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -147,7 +137,7 @@ public class PostponedEngineStartTest {
     OEngine engine = ORIENT.getEngineIfRunning(ENGINE2.getName());
     Assert.assertNull(engine);
 
-    final OStorage storage = ENGINE2.createStorage(ENGINE2.getName() + ":storage", null, 125 * 1024 * 1024);
+    final OStorage storage = ENGINE2.createStorage(ENGINE2.getName() + ":storage", null, 125 * 1024 * 1024, Integer.MAX_VALUE);
     Assert.assertNotNull(storage);
 
     engine = ORIENT.getRunningEngine(ENGINE2.getName());
@@ -209,7 +199,7 @@ public class PostponedEngineStartTest {
     }
 
     @Override
-    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize) {
+    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize, int storageId) {
       return new OStorage() {
 
         @Override
@@ -675,7 +665,7 @@ public class PostponedEngineStartTest {
     }
 
     @Override
-    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize) {
+    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize, int storageId) {
       throw new UnsupportedOperationException();
     }
 

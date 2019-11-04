@@ -26,7 +26,7 @@ import java.util.Map;
 public interface OEngine {
   String getName();
 
-  OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize);
+  OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize, int storageId);
 
   void removeStorage(OStorage iStorage);
 

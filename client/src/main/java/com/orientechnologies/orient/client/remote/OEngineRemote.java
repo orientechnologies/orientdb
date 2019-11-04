@@ -37,7 +37,8 @@ public class OEngineRemote extends OEngineAbstract {
   public OEngineRemote() {
   }
 
-  public OStorageRemote createStorage(final String iURL, final Map<String, String> iConfiguration, long maxWalSegSize) {
+  public OStorageRemote createStorage(final String iURL, final Map<String, String> iConfiguration, long maxWalSegSize,
+      final int storageId) {
     throw new OStorageException("deprecated");
   }
 

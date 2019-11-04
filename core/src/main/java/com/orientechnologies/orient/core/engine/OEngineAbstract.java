@@ -19,20 +19,12 @@
  */
 package com.orientechnologies.orient.core.engine;
 
+import com.orientechnologies.orient.core.storage.OStorage;
+
 import java.util.Map;
 
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cache.OSnowFlakeIdGen;
-import com.orientechnologies.orient.core.storage.cache.OWriteCacheIdGen;
-
 public abstract class OEngineAbstract implements OEngine {
-  private static final OWriteCacheIdGen writeCacheIdGen = new OSnowFlakeIdGen();
-
   private boolean running = false;
-
-  protected int generateStorageId() {
-    return writeCacheIdGen.nextId();
-  }
 
   protected String getMode(Map<String, String> iConfiguration) {
     String dbMode = null;

@@ -124,10 +124,10 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     //otherwise memory size will be set during cache initialization.
   }
 
-  public OStorage createStorage(final String dbName, final Map<String, String> configuration, long maxWalSegSize) {
+  public OStorage createStorage(final String dbName, final Map<String, String> configuration, long maxWalSegSize, int storageId) {
     try {
 
-      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache, files,
+      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), storageId, readCache, files,
           maxWalSegSize);
     } catch (Exception e) {
       final String message =
