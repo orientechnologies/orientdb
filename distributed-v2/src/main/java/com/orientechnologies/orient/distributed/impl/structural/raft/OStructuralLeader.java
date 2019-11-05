@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural.raft;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
@@ -90,9 +91,11 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   }
 
   public void receiveSubmit(ONodeIdentity senderNode, OSessionOperationId operationId, OStructuralSubmit request) {
-    executor.execute(() -> {
-      request.begin(Optional.of(senderNode), operationId, this);
-    });
+    if (members.containsKey(senderNode)) {
+      executor.execute(() -> {
+        request.begin(Optional.of(senderNode), operationId, this);
+      });
+    }
   }
 
   public void submit(OSessionOperationId operationId, OStructuralSubmit request) {
@@ -193,8 +196,8 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   private ODistributedChannel getMemberChannel(ONodeIdentity identity) {
     ODistributedChannel channel = members.get(identity);
     if (channel == null) {
-      throw new ODistributedException(
-          String.format("Cannot find channel for node with id:%s, available nodes:%s", identity, members.keySet().toString()));
+      OLogManager.instance().errorNoDb(this, "Cannot find channel for node with id:%s, available nodes:%s", null, identity,
+          members.keySet().toString());
     }
     return channel;
   }

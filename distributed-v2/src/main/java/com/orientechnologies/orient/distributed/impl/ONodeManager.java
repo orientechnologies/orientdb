@@ -18,11 +18,11 @@ public abstract class ONodeManager {
   protected boolean running = true;
 
   protected final ODiscoveryListener discoveryListener;
-  private Thread messageThread;
+  private         Thread             messageThread;
 
   protected volatile Map<ONodeIdentity, ODiscoveryListener.NodeData> knownServers;
 
-  protected final ONodeConfiguration config;
+  protected final ONodeConfiguration         config;
   protected final ONodeInternalConfiguration internalConfiguration;
 
   private String encryptionAlgorithm = "AES";
@@ -32,19 +32,19 @@ public abstract class ONodeManager {
   protected OOperationLog opLog;
 
   protected long discoveryPingIntervalMillis = 500;//TODO configure
-  protected long checkLeaderIntervalMillis = 1000;//TODO configure
+  protected long checkLeaderIntervalMillis   = 1000;//TODO configure
   /**
    * max time a server can be silent (did not get ping from it) until it is considered inactive, ie. left the network
    */
   protected long maxInactiveServerTimeMillis = 5000;
 
   protected OLeaderElectionStateMachine leaderStatus;
-  private TimerTask discoveryTimer;
-  private TimerTask disconnectTimer;
-  private TimerTask checkerTimer;
+  private   TimerTask                   discoveryTimer;
+  private   TimerTask                   disconnectTimer;
+  private   TimerTask                   checkerTimer;
 
   public ONodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration, int term,
-                      OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener, OOperationLog opLog) {
+      OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener, OOperationLog opLog) {
     this.config = config;
     this.internalConfiguration = internalConfiguration;
     if (config.getGroupName() == null || config.getGroupName().length() == 0) {
@@ -52,8 +52,11 @@ public abstract class ONodeManager {
     }
 
     if (internalConfiguration.getNodeIdentity().getName() == null
-            || internalConfiguration.getNodeIdentity().getName().length() == 0) {
+        || internalConfiguration.getNodeIdentity().getName().length() == 0) {
       throw new IllegalArgumentException("Invalid node name");
+    }
+    if (internalConfiguration.getNodeIdentity().getId() == null || internalConfiguration.getNodeIdentity().getId().length() == 0) {
+      throw new IllegalArgumentException("Invalid node id");
     }
     this.opLog = opLog;
     this.discoveryListener = discoveryListener;
@@ -286,7 +289,7 @@ public abstract class ONodeManager {
 
       //Master info
       if (message.leaderIdentity != null && message.leaderTerm >= this.leaderStatus.currentTerm
-              && message.leaderPing + maxInactiveServerTimeMillis > System.currentTimeMillis()) {
+          && message.leaderPing + maxInactiveServerTimeMillis > System.currentTimeMillis()) {
         data = knownServers.get(message.leaderIdentity);
 
         if (data == null) {
@@ -482,15 +485,14 @@ public abstract class ONodeManager {
         discoveryListener.nodeConnected(data);
       }
 
-
       discoveryListener.leaderElected(data);
-
 
     }
   }
 
   protected void processReceiveStartElection(OBroadcastMessage message, String fromAddr) {
-    if (message.term > leaderStatus.currentTerm && message.term > leaderStatus.lastTermVoted && (opLog == null || message.lastLogId >= opLog.lastPersistentLog().getId())) {
+    if (message.term > leaderStatus.currentTerm && message.term > leaderStatus.lastTermVoted && (opLog == null
+        || message.lastLogId >= opLog.lastPersistentLog().getId())) {
       //vote, but only once per term!
       leaderStatus.setStatus(OLeaderElectionStateMachine.Status.FOLLOWER);
       leaderStatus.lastTermVoted = message.term;
@@ -551,6 +553,8 @@ public abstract class ONodeManager {
     message.term = leaderStatus.currentTerm;
     message.tcpPort = getConfig().getTcpPort();
     message.type = OBroadcastMessage.TYPE_LEADER_ELECTED;
+    message.leaderConnectionUsername = this.internalConfiguration.getConnectionUsername();
+    message.leaderConnectionPassword = this.internalConfiguration.getConnectionPassword();
 
     try {
       byte[] msg = serializeMessage(message);

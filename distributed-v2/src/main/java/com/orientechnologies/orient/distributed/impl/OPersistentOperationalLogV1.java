@@ -270,7 +270,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   @Override
   public OLogId log(OLogRequest request) {
     if (!leader) {
-      throw new IllegalStateException("Cannot log on a non-leader node");
+//      throw new IllegalStateException("Cannot log on a non-leader node");
     }
     OLogId result;
     paralledThreads.incrementAndGet();

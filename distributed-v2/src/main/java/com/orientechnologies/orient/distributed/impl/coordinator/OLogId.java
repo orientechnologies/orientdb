@@ -35,7 +35,7 @@ public class OLogId implements Comparable<OLogId> {
     if (val == -1) {
       return null;
     } else {
-      return new OLogId(term, term, previousIdTerm);
+      return new OLogId(val, term, previousIdTerm);
     }
   }
 

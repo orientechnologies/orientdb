@@ -20,7 +20,7 @@
         </listeners>
     </network>
     <distributed enabled="true">
-        <node-name>server1</node-name>
+        <node-name>server0</node-name>
         <quorum>2</quorum>
         <group>
             <name>OrientDB</name>
