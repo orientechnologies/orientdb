@@ -180,7 +180,7 @@
         <osgi.dynamicImport/>
         <osgi.private/>
         <!-- | shared build/report plugins version -->
-        <surefire.version>2.21.0</surefire.version>
+        <surefire.version>2.22.2</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 
@@ -519,7 +519,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.9</version>
+                <version>0.8.5</version>
                 <configuration>
                     <excludes>
                         **/*OrientSqlTokenManager*
