@@ -44,6 +44,7 @@ import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
@@ -53,6 +54,11 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE
  * Created by tglman on 08/04/16.
  */
 public class OrientDBEmbedded implements OrientDBInternal {
+  /**
+   * Next storage id
+   */
+  private static final AtomicInteger nextStorageId = new AtomicInteger();
+
   protected final  Map<String, OAbstractPaginatedStorage> storages       = new HashMap<>();
   protected final  Set<ODatabasePoolInternal>             pools          = new HashSet<>();
   protected final  OrientDBConfig                         configurations;
@@ -63,11 +69,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private volatile boolean                                open           = true;
   private volatile OEmbeddedDatabaseInstanceFactory       factory        = new ODefaultEmbeddedDatabaseInstanceFactory();
   private          TimerTask                              autoCloseTimer = null;
-
-  /**
-   * Next storage id
-   */
-  private int nextStorageId;
 
   protected final long maxWALSegmentSize;
 
@@ -350,7 +351,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected final int generateStorageId() {
-    return Math.abs(nextStorageId++);
+    return Math.abs(nextStorageId.getAndIncrement());
   }
 
   public synchronized OAbstractPaginatedStorage getStorage(String name) {
@@ -403,7 +404,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       if (!exists(name, null, null)) {
         try {
           storage = (OAbstractPaginatedStorage) disk
-              .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, nextStorageId++);
+              .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, generateStorageId());
           embedded = internalCreate(config, storage);
           storages.put(name, storage);
         } catch (Exception e) {
