@@ -2,14 +2,12 @@ package com.orientechnologies.orient.distributed.impl.structural.raft;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogRequest;
-import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -46,12 +44,28 @@ public class OStructuralFollower implements AutoCloseable {
   public void confirm(OLogId logId) {
     executor.execute(() -> {
       //TODO: The pending should be a queue we cannot really apply things in random order
-      ORaftOperation op = pending.get(logId);
-      if (op != null) {
-        op.apply(orientDB);
-        op.getRequesterSequential().ifPresent(this::notifyDone);
+      OLogId lastStateId = orientDB.getStructuralConfiguration().getLastUpdateId();
+      if (logId.getId() - 1 == lastStateId.getId()) {
+        ORaftOperation op = pending.get(logId);
+        if (op != null) {
+          op.apply(orientDB);
+          op.getRequesterSequential().ifPresent(this::notifyDone);
+        }
+      } else if (logId.getId() > lastStateId.getId()) {
+        enqueueFrom(lastStateId, logId);
       }
     });
+  }
+
+  private void enqueueFrom(OLogId lastStateId, OLogId confirmedId) {
+    Iterator<OOperationLogEntry> res = operationLog.iterate(lastStateId.getId(), confirmedId.getId());
+    while (res.hasNext()) {
+      OOperationLogEntry entry = res.next();
+      if (!pending.containsKey(entry.getLogId())) {
+        pending.put(entry.getLogId(), (ORaftOperation) entry.getRequest());
+      }
+      confirm(confirmedId);
+    }
   }
 
   private void notifyDone(OSessionOperationId requesterSequential) {
