@@ -24,7 +24,6 @@ import com.orientechnologies.orient.distributed.impl.structural.*;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.*;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -35,7 +34,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -150,7 +151,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storages.remove(dbName);
         }
         storage = (OAbstractPaginatedStorage) disk
-            .createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize);
+            .createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {

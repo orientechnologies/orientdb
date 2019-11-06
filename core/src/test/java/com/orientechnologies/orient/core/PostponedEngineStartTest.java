@@ -137,7 +137,9 @@ public class PostponedEngineStartTest {
     OEngine engine = ORIENT.getEngineIfRunning(ENGINE2.getName());
     Assert.assertNull(engine);
 
-    final OStorage storage = ENGINE2.createStorage(ENGINE2.getName() + ":storage", null, 125 * 1024 * 1024, 25 * 1024 * 1024);
+    final OStorage storage = ENGINE2
+        .createStorage(ENGINE2.getName() + ":storage", null, 125 * 1024 * 1024, 25 * 1024 * 1024, Integer.MAX_VALUE);
+
     Assert.assertNotNull(storage);
 
     engine = ORIENT.getRunningEngine(ENGINE2.getName());
@@ -199,7 +201,8 @@ public class PostponedEngineStartTest {
     }
 
     @Override
-    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize, long doubleWriteLogMaxSegSize) {
+    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize, long doubleWriteLogMaxSegSize,
+        int storageId) {
       return new OStorage() {
 
         @Override
@@ -658,7 +661,8 @@ public class PostponedEngineStartTest {
     }
 
     @Override
-    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize, long doubleWriteLogMaxSegSize) {
+    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize, long doubleWriteLogMaxSegSize,
+        int storageId) {
       throw new UnsupportedOperationException();
     }
 

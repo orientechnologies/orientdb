@@ -118,10 +118,10 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   }
 
   public OStorage createStorage(final String dbName, final Map<String, String> configuration, long maxWalSegSize,
-      long doubleWriteLogMaxSegSize) {
+      long doubleWriteLogMaxSegSize, int storageId) {
     try {
 
-      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache, files,
+      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), storageId, readCache, files,
           maxWalSegSize, doubleWriteLogMaxSegSize);
     } catch (Exception e) {
       final String message =

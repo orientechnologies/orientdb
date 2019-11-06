@@ -46,6 +46,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
@@ -55,6 +56,15 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE
  * Created by tglman on 08/04/16.
  */
 public class OrientDBEmbedded implements OrientDBInternal {
+  /**
+   * Keeps track of next possible storage id.
+   */
+  private static final AtomicInteger nextStorageId     = new AtomicInteger();
+  /**
+   * Storage IDs current assigned to the storage.
+   */
+  private static final Set<Integer>  currentStorageIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
   protected final  Map<String, OAbstractPaginatedStorage> storages       = new HashMap<>();
   protected final  Map<String, OSharedContext>            sharedContexts = new HashMap<>();
   protected final  Set<ODatabasePoolInternal>             pools          = new HashSet<>();
@@ -454,13 +464,22 @@ public class OrientDBEmbedded implements OrientDBInternal {
       storage = storages.get(name);
       if (storage == null) {
         storage = (OAbstractPaginatedStorage) disk
-            .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize);
+            .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
         if (storage.exists()) {
           storages.put(name, storage);
         }
       }
     }
     return storage;
+  }
+
+  protected final int generateStorageId() {
+    int storageId = Math.abs(nextStorageId.getAndIncrement());
+    while (!currentStorageIds.add(storageId)) {
+      storageId = Math.abs(nextStorageId.getAndIncrement());
+    }
+
+    return storageId;
   }
 
   public synchronized OAbstractPaginatedStorage getStorage(String name) {
@@ -488,10 +507,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
           OAbstractPaginatedStorage storage;
           if (type == ODatabaseType.MEMORY) {
             storage = (OAbstractPaginatedStorage) memory
-                .createStorage(name, new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize);
+                .createStorage(name, new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
           } else {
             storage = (OAbstractPaginatedStorage) disk
-                .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize);
+                .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
           }
           storages.put(name, storage);
           embedded = internalCreate(config, storage);
@@ -512,7 +531,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       if (!exists(name, null, null)) {
         try {
           storage = (OAbstractPaginatedStorage) disk
-              .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize);
+              .createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
           embedded = internalCreate(config, storage);
           storages.put(name, storage);
         } catch (Exception e) {
@@ -606,10 +625,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
       if (exists(name, user, password)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         OSharedContext sharedContext = sharedContexts.get(name);
-        if (sharedContext != null)
+        if (sharedContext != null) {
           sharedContext.close();
+        }
+        final int storageId = storage.getId();
         storage.delete();
         storages.remove(name);
+        currentStorageIds.remove(storageId);
         sharedContexts.remove(name);
       }
     }
@@ -756,7 +778,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     synchronized (this) {
       boolean exists = OLocalPaginatedStorage.exists(Paths.get(path));
       OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) disk
-          .createStorage(path, new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize);
+          .createStorage(path, new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
       // TODO: Add Creation settings and parameters
       if (!exists) {
         embedded = internalCreate(getConfigurations(), storage);

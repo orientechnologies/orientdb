@@ -36,9 +36,10 @@ public class OEngineMemory extends OEngineAbstract {
   public OEngineMemory() {
   }
 
-  public OStorage createStorage(String url, Map<String, String> configuration, long maxWalSegSize, long doubleWriteLogMaxSegSize) {
+  public OStorage createStorage(String url, Map<String, String> configuration, long maxWalSegSize, long doubleWriteLogMaxSegSize,
+      int storageId) {
     try {
-      return new ODirectMemoryStorage(url, url, getMode(configuration), generateStorageId());
+      return new ODirectMemoryStorage(url, url, getMode(configuration), storageId);
     } catch (Exception e) {
       final String message = "Error on opening in memory storage: " + url;
       OLogManager.instance().error(this, message, e);

@@ -29,10 +29,10 @@ import java.util.Iterator;
  */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
 
-  private          OServer                            server;
-  private volatile OHazelcastPlugin                   plugin;
-  private volatile boolean                            coordinator = false;
-  private volatile String                             coordinatorName;
+  private          OServer          server;
+  private volatile OHazelcastPlugin plugin;
+  private volatile boolean          coordinator = false;
+  private volatile String           coordinatorName;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -97,8 +97,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
           storages.remove(dbName);
         }
-        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize,
-            doubleWriteLogMaxSegSize);
+        storage = (OAbstractPaginatedStorage) disk
+            .createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {
