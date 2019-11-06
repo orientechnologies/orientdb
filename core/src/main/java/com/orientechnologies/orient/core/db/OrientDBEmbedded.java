@@ -696,6 +696,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     synchronized (this) {
       removeShutdownHook();
       internalClose();
+      currentStorageIds.clear();
     }
   }
 
