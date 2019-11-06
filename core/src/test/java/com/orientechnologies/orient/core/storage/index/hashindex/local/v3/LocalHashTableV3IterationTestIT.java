@@ -38,7 +38,7 @@ public class LocalHashTableV3IterationTestIT {
 
     OHashFunction<Integer> hashFunction = value -> Long.MAX_VALUE / 2 + value;
 
-    localHashTable = new OLocalHashTableV3<>(42, "localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTableV3<>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     localHashTable

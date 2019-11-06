@@ -43,8 +43,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValuePutCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValueRemoveCO;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 
 import java.io.IOException;
@@ -89,12 +87,9 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
   private       OBinarySerializer<K> keySerializer;
   private       OType[]              keyTypes;
 
-  private final int indexId;
-
-  public CellBTreeSingleValueV3(final String name, int indexId, final String dataFileExtension, final String nullFileExtension,
+  public CellBTreeSingleValueV3(final String name, final String dataFileExtension, final String nullFileExtension,
       final OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
-    this.indexId = indexId;
     acquireExclusiveLock();
     try {
       this.nullFileExtension = nullFileExtension;
@@ -316,15 +311,9 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
           if (sizeDiff != 0) {
             updateSize(sizeDiff, atomicOperation);
           }
-
-          atomicOperation.addComponentOperation(
-              new OCellBTreeSingleValuePutCO(serializedKey, value, oldValue, keySerializer.getId(), indexId, null));
-
         } else {
           final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
-
           int sizeDiff = 0;
-
           final ORID oldValue;
           try {
             final CellBTreeSingleValueV3NullBucket nullBucket = new CellBTreeSingleValueV3NullBucket(cacheEntry);
@@ -349,13 +338,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
 
           sizeDiff++;
           updateSize(sizeDiff, atomicOperation);
-
-          final byte[] serializedValue = new byte[OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE];
-          OShortSerializer.INSTANCE.serializeNative((short) value.getClusterId(), serializedValue, 0);
-          OLongSerializer.INSTANCE.serializeNative(value.getClusterPosition(), serializedValue, OShortSerializer.SHORT_SIZE);
-
-          atomicOperation.addComponentOperation(
-              new OCellBTreeSingleValuePutCO(null, value, oldValue, keySerializer.getId(), indexId, nullFileExtension));
         }
         return true;
       } finally {
@@ -485,20 +467,12 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
           final long clusterPosition = OLongSerializer.INSTANCE.deserializeNative(rawValue, OShortSerializer.SHORT_SIZE);
 
           removedValue = new ORecordId(clusterId, clusterPosition);
-
-          atomicOperation.addComponentOperation(
-              new OCellBTreeSingleValueRemoveCO(keySerializer.getId(), indexId, null, serializedKey, removedValue));
         } else {
           if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
             return null;
           }
 
           removedValue = removeNullBucket(atomicOperation);
-
-          if (removedValue != null) {
-            atomicOperation
-                .addComponentOperation(new OCellBTreeSingleValueRemoveCO(keySerializer.getId(), indexId, null, null, removedValue));
-          }
         }
         return removedValue;
       } finally {
@@ -1172,6 +1146,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     if (splitLeaf) {
       bucketToSplit.switchBucketType();
     }
+    //noinspection RedundantCast
     bucketToSplit.addNonLeafEntry(0, leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(),
         keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes), true);
 

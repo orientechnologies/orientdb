@@ -44,8 +44,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBTreeMultiValuePutCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBtreeMultiValueRemoveEntryCO;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
@@ -98,12 +96,10 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
   private       OSBTreeV2<MultiValueEntry, Byte> multiContainer;
   private final OModifiableLong                  mIdCounter = new OModifiableLong();
-  private final int                              indexId;
 
-  public CellBTreeMultiValueV2(final String name, int indexId, final String dataFileExtension, final String nullFileExtension,
+  public CellBTreeMultiValueV2(final String name, final String dataFileExtension, final String nullFileExtension,
       final String containerExtension, final OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
-    this.indexId = indexId;
     acquireExclusiveLock();
     try {
       this.nullFileExtension = nullFileExtension;
@@ -162,7 +158,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
           releasePageFromWrite(atomicOperation, nullBucketEntry);
         }
 
-        multiContainer = new OSBTreeV2<>(-1, getName(), containerExtension, null, storage);
+        multiContainer = new OSBTreeV2<>(getName(), containerExtension, null, storage);
         multiContainer.create(MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
       } finally {
         releaseExclusiveLock();
@@ -436,10 +432,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
           releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
           updateSize(1, atomicOperation);
-
-          atomicOperation.addComponentOperation(
-              new OCellBTreeMultiValuePutCO((encryption != null ? encryption.name() : null), keySerializer.getId(), indexId,
-                  keyToInsert, value));
         } else {
           final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
 
@@ -462,10 +454,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
           }
 
           updateSize(1, atomicOperation);
-
-          atomicOperation.addComponentOperation(
-              new OCellBTreeMultiValuePutCO((encryption != null ? encryption.name() : null), keySerializer.getId(), indexId, null,
-                  value));
         }
       } finally {
         releaseExclusiveLock();
@@ -572,7 +560,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       this.encryption = encryption;
       this.keySerializer = keySerializer;
 
-      multiContainer = new OSBTreeV2<>(-1, getName(), containerExtension, null, storage);
+      multiContainer = new OSBTreeV2<>(getName(), containerExtension, null, storage);
       multiContainer.load(getName(), MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
 
       final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
@@ -708,11 +696,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
           if (removed) {
             updateSize(-1, atomicOperation);
-
-            @SuppressWarnings("RedundantCast")
-            final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
-            atomicOperation.addComponentOperation(new OCellBtreeMultiValueRemoveEntryCO(indexId, keySerializer.getId(),
-                (encryption != null ? encryption.name() : null), serializeKey(serializedKey), value));
           }
         } else {
           final OCacheEntry nullBucketCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
@@ -735,9 +718,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
           if (removed) {
             updateSize(-1, atomicOperation);
-
-            atomicOperation.addComponentOperation(new OCellBtreeMultiValueRemoveEntryCO(indexId, keySerializer.getId(),
-                (encryption != null ? encryption.name() : null), null, value));
           }
         }
       } finally {

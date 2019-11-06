@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.OComponentOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
 import java.io.IOException;
@@ -124,14 +123,6 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
       }
     }
     return null;
-  }
-
-  /**
-   * Stub which will be used in next version of atomic operation to log actions on the component level
-   */
-  @Override
-  public void addComponentOperation(final OComponentOperationRecord componentOperation) {
-
   }
 
   @Override

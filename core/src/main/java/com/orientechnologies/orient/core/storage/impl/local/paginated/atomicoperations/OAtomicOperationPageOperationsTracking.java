@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.OComponentOperationRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
@@ -108,11 +107,6 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   @Override
   public OCacheEntry addPage(long fileId) throws IOException {
     return readCache.allocateNewPage(fileId, writeCache, null);
-  }
-
-  @Override
-  public void addComponentOperation(OComponentOperationRecord componentOperation) {
-    //do nothing at this stage
   }
 
   @Override

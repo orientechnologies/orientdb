@@ -36,10 +36,10 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     if (version == 1) {
       throw new IllegalArgumentException("Unsupported version of index : " + version);
     } else if (version == 2) {
-      this.sbTree = new CellBTreeMultiValueV2<>(name, id, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
+      this.sbTree = new CellBTreeMultiValueV2<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
           storage);
     } else if (version == 3) {
-      this.sbTree = new CellBTreeMultiValueV3<>(id, name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
+      this.sbTree = new CellBTreeMultiValueV3<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, M_CONTAINER_EXTENSION,
           storage);
     } else {
       throw new IllegalStateException("Invalid tree version " + version);

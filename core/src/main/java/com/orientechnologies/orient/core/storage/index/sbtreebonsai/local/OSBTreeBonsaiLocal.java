@@ -35,10 +35,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbteebonsai.OSBTreeBonsaiDeleteComponentCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -89,8 +85,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       initSysBucket(atomicOperation);
 
-      atomicOperation.addComponentOperation(new OSBTreeBonsaiCreateComponentCO(getName(), fileId));
-
       return fileId;
     } catch (final Exception e) {
       rollback = true;
@@ -119,9 +113,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-
-      atomicOperation.addComponentOperation(
-          new OSBTreeBonsaiCreateCO(getName(), fileId, (int) rootBucketPointer.getPageIndex(), rootBucketPointer.getPageOffset()));
     } catch (final Exception e) {
       rollback = true;
       throw e;
@@ -150,8 +141,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-
-      atomicOperation.addComponentOperation(new OSBTreeBonsaiCreateCO(getName(), fileId, pageIndex, pageOffset));
     } catch (final Exception e) {
       rollback = true;
       throw e;
@@ -464,8 +453,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       }
 
       atomicOperation.addDeletedRidBag(rootBucketPointer);
-      atomicOperation.addComponentOperation(
-          new OSBTreeBonsaiDeleteCO(getName(), fileId, (int) rootBucketPointer.getPageIndex(), rootBucketPointer.getPageOffset()));
     } catch (final Exception e) {
       rollback = true;
       throw e;
@@ -502,8 +489,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-
-      atomicOperation.addComponentOperation(new OSBTreeBonsaiDeleteComponentCO(getName(), fileId));
     } catch (Exception e) {
       rollback = true;
       throw e;

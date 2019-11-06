@@ -104,7 +104,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     final String partitionsProperty = engineProperties.get("partitions");
     if (partitionsProperty != null) {
       try {
-        this.partitionSize = Integer.valueOf(partitionsProperty);
+        this.partitionSize = Integer.parseInt(partitionsProperty);
       } catch (NumberFormatException e) {
         OLogManager.instance().error(this, "Invalid value of 'partitions' property : `" + partitionsProperty + "`", e);
       }
@@ -213,7 +213,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
     partitions = new ArrayList<>(partitionSize);
     for (int i = 0; i < partitionSize; ++i) {
-      partitions.add(new LocalHashTableV2<>(id, name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
+      partitions.add(new LocalHashTableV2<>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
           SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, storage));
     }
   }

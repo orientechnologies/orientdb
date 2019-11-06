@@ -38,7 +38,7 @@ public class LocalHashTableV2EncryptionTestIT extends LocalHashTableV2Base {
 
     OSHA256HashFunction<Integer> SHA256HashFunction = new OSHA256HashFunction<>(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new LocalHashTableV2<>(42, "localHashTableEncryptionTest", ".imc", ".tsc", ".obf", ".nbh", storage);
+    localHashTable = new LocalHashTableV2<>("localHashTableEncryptionTest", ".imc", ".tsc", ".obf", ".nbh", storage);
 
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null,

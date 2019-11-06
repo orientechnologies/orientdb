@@ -59,7 +59,7 @@ public class SBTreeV2TestIT {
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
     storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
-    sbTree = new OSBTreeV2<>(42, "sbTree", ".sbt", ".nbt", storage);
+    sbTree = new OSBTreeV2<>("sbTree", ".sbt", ".nbt", storage);
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, null);
   }
 
@@ -698,7 +698,7 @@ public class SBTreeV2TestIT {
 
   @Test
   public void testNullKeysInSBTree() throws Exception {
-    final OSBTreeV1<Integer, OIdentifiable> nullSBTree = new OSBTreeV1<>(42, "nullSBTree", ".sbt", ".nbt",
+    final OSBTreeV1<Integer, OIdentifiable> nullSBTree = new OSBTreeV1<>("nullSBTree", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     nullSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true, null);
 

@@ -98,7 +98,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
   private void createActualHashTable() throws IOException {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<>(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTableV3<>(42, "actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTableV3<>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,

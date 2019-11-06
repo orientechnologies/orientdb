@@ -44,8 +44,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValuePutCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValueRemoveCO;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 
 import java.io.IOException;
@@ -90,12 +88,9 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   private       OType[]              keyTypes;
   private       OEncryption          encryption;
 
-  private final int indexId;
-
-  public CellBTreeSingleValueV1(final String name, int indexId, final String dataFileExtension, final String nullFileExtension,
+  public CellBTreeSingleValueV1(final String name, final String dataFileExtension, final String nullFileExtension,
       final OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
-    this.indexId = indexId;
     acquireExclusiveLock();
     try {
       this.nullFileExtension = nullFileExtension;
@@ -173,6 +168,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         if (key != null) {
+          //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
           final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
@@ -202,7 +198,8 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
       }
     } catch (final IOException e) {
       throw OException
-          .wrapException(new OCellBTreeSingleValueV1Exception("Error during retrieving  of sbtree with name " + getName(), this), e);
+          .wrapException(new OCellBTreeSingleValueV1Exception("Error during retrieving  of sbtree with name " + getName(), this),
+              e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -227,6 +224,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
       try {
         if (key != null) {
 
+          //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
           if (keySize > MAX_KEY_SIZE) {
@@ -321,11 +319,6 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
           if (sizeDiff != 0) {
             updateSize(sizeDiff, atomicOperation);
           }
-
-          atomicOperation.addComponentOperation(
-              new OCellBTreeSingleValuePutCO(rawKey, value, oldValue, keySerializer.getId(), indexId,
-                  encryption != null ? encryption.name() : null));
-
         } else {
           final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
 
@@ -355,15 +348,6 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
 
           sizeDiff++;
           updateSize(sizeDiff, atomicOperation);
-
-          final byte[] serializedValue = new byte[OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE];
-          OShortSerializer.INSTANCE.serializeNative((short) value.getClusterId(), serializedValue, 0);
-          OLongSerializer.INSTANCE.serializeNative(value.getClusterPosition(), serializedValue, OShortSerializer.SHORT_SIZE);
-
-          atomicOperation.addComponentOperation(
-              new OCellBTreeSingleValuePutCO(null, value, oldValue, keySerializer.getId(), indexId,
-                  encryption != null ? encryption.name() : null));
-
         }
         return true;
       } finally {
@@ -472,6 +456,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
         final ORID removedValue;
 
         if (key != null) {
+          //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
           final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
@@ -496,22 +481,12 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
           } finally {
             releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
           }
-
-          atomicOperation.addComponentOperation(
-              new OCellBTreeSingleValueRemoveCO(keySerializer.getId(), indexId, encryption != null ? encryption.name() : null,
-                  rawKey, removedValue));
         } else {
           if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
             return null;
           }
 
           removedValue = removeNullBucket(atomicOperation);
-
-          if (removedValue != null) {
-            atomicOperation.addComponentOperation(
-                new OCellBTreeSingleValueRemoveCO(keySerializer.getId(), indexId, encryption != null ? encryption.name() : null,
-                    null, removedValue));
-          }
         }
         return removedValue;
       } finally {
@@ -712,6 +687,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   }
 
   private OCellBTreeCursor<K, ORID> iterateEntriesMinorDesc(K key, final boolean inclusive) {
+    //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorDesc(key, inclusive);
 
@@ -719,6 +695,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   }
 
   private OCellBTreeCursor<K, ORID> iterateEntriesMinorAsc(K key, final boolean inclusive) {
+    //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorAsc(key, inclusive);
 
@@ -750,6 +727,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   }
 
   private OCellBTreeCursor<K, ORID> iterateEntriesMajorAsc(K key, final boolean inclusive) {
+    //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMajorAsc(key, inclusive);
 
@@ -759,6 +737,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   private OCellBTreeCursor<K, ORID> iterateEntriesMajorDesc(K key, final boolean inclusive) {
     acquireSharedLock();
     try {
+      //noinspection RedundantCast
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
       key = enhanceCompositeKeyMajorDesc(key, inclusive);
 
@@ -916,7 +895,9 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
 
   private OCellBTreeCursor<K, ORID> iterateEntriesBetweenAscOrder(K keyFrom, final boolean fromInclusive, K keyTo,
       final boolean toInclusive) {
+    //noinspection RedundantCast
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
+    //noinspection RedundantCast
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
     keyFrom = enhanceFromCompositeKeyBetweenAsc(keyFrom, fromInclusive);
@@ -927,7 +908,9 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
 
   private OCellBTreeCursor<K, ORID> iterateEntriesBetweenDescOrder(K keyFrom, final boolean fromInclusive, K keyTo,
       final boolean toInclusive) {
+    //noinspection RedundantCast
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
+    //noinspection RedundantCast
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
     keyFrom = enhanceFromCompositeKeyBetweenDesc(keyFrom, fromInclusive);
@@ -1027,7 +1010,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
 
         rightBucketEntry = addPage(atomicOperation, fileId);
-        entryPoint.setPagesSize((int) rightBucketEntry.getPageIndex());
+        entryPoint.setPagesSize(rightBucketEntry.getPageIndex());
       }
     } finally {
       releasePageFromWrite(atomicOperation, entryPointCacheEntry);
@@ -1114,6 +1097,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   }
 
   private byte[] serializeKey(K separationKey) {
+    @SuppressWarnings("RedundantCast")
     final byte[] serializedKey = keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes);
     final byte[] rawKey;
     if (encryption == null) {
@@ -1152,7 +1136,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
       } else {
         assert pagesSize == filledUpTo - 1;
         leftBucketEntry = addPage(atomicOperation, fileId);
-        pagesSize = (int) leftBucketEntry.getPageIndex();
+        pagesSize = leftBucketEntry.getPageIndex();
       }
 
       if (pagesSize < filledUpTo) {
@@ -1161,7 +1145,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
       } else {
         assert pagesSize == filledUpTo;
         rightBucketEntry = addPage(atomicOperation, fileId);
-        pagesSize = (int) rightBucketEntry.getPageIndex();
+        pagesSize = rightBucketEntry.getPageIndex();
       }
 
       entryPoint.setPagesSize(pagesSize);

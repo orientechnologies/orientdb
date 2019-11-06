@@ -19,8 +19,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTablePutCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTableRemoveCO;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 
@@ -110,13 +108,10 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
   private OEncryption encryption;
 
-  private final int indexId;
-
-  public LocalHashTableV2(int indexId, final String name, final String metadataConfigurationFileExtension,
-      final String treeStateFileExtension, final String bucketFileExtension, final String nullBucketFileExtension,
+  public LocalHashTableV2(final String name, final String metadataConfigurationFileExtension, final String treeStateFileExtension,
+      final String bucketFileExtension, final String nullBucketFileExtension,
       final OAbstractPaginatedStorage abstractPaginatedStorage) {
     super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);
-    this.indexId = indexId;
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -324,13 +319,6 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
           }
 
-          if (removed != null) {
-            atomicOperation.addComponentOperation(
-                new OLocalHashTableRemoveCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
-                    keySerializer.serializeNativeAsWhole(key), valueSerializer.serializeNativeAsWhole(removed),
-                    valueSerializer.getId()));
-          }
-
           return removed;
         } else {
           if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
@@ -360,12 +348,6 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           }
 
           changeSize(sizeDiff, atomicOperation);
-
-          if (removed != null) {
-            atomicOperation.addComponentOperation(
-                new OLocalHashTableRemoveCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), null,
-                    valueSerializer.serializeNativeAsWhole(removed), valueSerializer.getId()));
-          }
 
           return removed;
         }
@@ -1248,10 +1230,6 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
       changeSize(sizeDiff, atomicOperation);
 
-      atomicOperation.addComponentOperation(
-          new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), null,
-              valueSerializer.getId(), rawValue, oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
-
       return true;
     } else {
       final long hashCode = keyHashFunction.hashCode(key);
@@ -1296,10 +1274,6 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           if (updateResult == 1) {
             changeSize(sizeDiff, atomicOperation);
 
-            atomicOperation.addComponentOperation(
-                new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(), rawKey,
-                    valueSerializer.getId(), rawValue, oldRawValue));
-
             return true;
           }
 
@@ -1313,13 +1287,6 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           sizeDiff++;
 
           changeSize(sizeDiff, atomicOperation);
-
-          //noinspection RedundantCast
-          atomicOperation.addComponentOperation(
-              new OLocalHashTablePutCO(indexId, encryption != null ? encryption.name() : null, keySerializer.getId(),
-                  keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes), valueSerializer.getId(),
-                  valueSerializer.serializeNativeAsWhole(value),
-                  oldValue != null ? valueSerializer.serializeNativeAsWhole(oldValue) : null));
           return true;
         }
 

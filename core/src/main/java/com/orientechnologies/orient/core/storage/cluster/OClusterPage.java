@@ -399,7 +399,7 @@ public final class OClusterPage extends ODurablePage {
     return getIntValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
   }
 
-  public int findFirstDeletedRecord(final int position) {
+  int findFirstDeletedRecord(final int position) {
     final int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
     for (int i = position; i < indexesLength; i++) {
       int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
@@ -412,7 +412,7 @@ public final class OClusterPage extends ODurablePage {
     return -1;
   }
 
-  public int findFirstRecord(final int position) {
+  int findFirstRecord(final int position) {
     final int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
     for (int i = position; i < indexesLength; i++) {
       final int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
@@ -425,7 +425,7 @@ public final class OClusterPage extends ODurablePage {
     return -1;
   }
 
-  public int findLastRecord(final int position) {
+  int findLastRecord(final int position) {
     final int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
 
     final int endIndex = Math.min(indexesLength - 1, position);

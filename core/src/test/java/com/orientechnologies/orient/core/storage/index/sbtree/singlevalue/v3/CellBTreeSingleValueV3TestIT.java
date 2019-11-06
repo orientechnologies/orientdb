@@ -41,7 +41,7 @@ public class CellBTreeSingleValueV3TestIT {
     final ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
     storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
-    singleValueTree = new CellBTreeSingleValueV3<>("singleBTree", 42, ".sbt", ".nbt", storage);
+    singleValueTree = new CellBTreeSingleValueV3<>("singleBTree", ".sbt", ".nbt", storage);
     singleValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
 

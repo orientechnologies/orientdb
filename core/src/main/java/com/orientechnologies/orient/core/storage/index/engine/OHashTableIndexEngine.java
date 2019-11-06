@@ -70,10 +70,10 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     if (version < 2) {
       throw new IllegalStateException("Unsupported version of hash index");
     } else if (version == 2) {
-      hashTable = new LocalHashTableV2<>(id, name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new LocalHashTableV2<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 3) {
-      hashTable = new OLocalHashTableV3<>(id, name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTableV3<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid value of the index version , version = " + version);

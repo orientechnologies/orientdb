@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.OComponentOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
 import java.io.IOException;
@@ -15,8 +14,6 @@ public interface OAtomicOperation {
 
   OCacheEntry loadPageForWrite(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount, boolean verifyChecksum)
       throws IOException;
-
-  void addComponentOperation(OComponentOperationRecord componentOperation) throws IOException;
 
   OCacheEntry loadPageForRead(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount) throws IOException;
 

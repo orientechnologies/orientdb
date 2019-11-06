@@ -23,20 +23,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBTreeMultiValuePutCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreemultivalue.OCellBtreeMultiValueRemoveEntryCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValuePutCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.cellbtreesinglevalue.OCellBTreeSingleValueRemoveCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineCreateCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.indexengine.OIndexEngineDeleteCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTablePutCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.localhashtable.OLocalHashTableRemoveCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.paginatedcluster.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtree.OSBTreePutCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtree.OSBTreeRemoveCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiCreateComponentCO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbtreebonsai.OSBTreeBonsaiDeleteCO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.*;
@@ -214,66 +200,6 @@ public final class OWALRecordsFactory {
       break;
     case EMPTY_WAL_RECORD:
       walRecord = new EmptyWALRecord();
-      break;
-    case CREATE_CLUSTER_CO:
-      walRecord = new OPaginatedClusterCreateCO();
-      break;
-    case DELETE_CLUSTER_CO:
-      walRecord = new OPaginatedClusterDeleteCO();
-      break;
-    case CLUSTER_CREATE_RECORD_CO:
-      walRecord = new OPaginatedClusterCreateRecordCO();
-      break;
-    case CLUSTER_DELETE_RECORD_CO:
-      walRecord = new OPaginatedClusterDeleteRecordCO();
-      break;
-    case CLUSTER_ALLOCATE_RECORD_POSITION_CO:
-      walRecord = new OPaginatedClusterAllocatePositionCO();
-      break;
-    case CLUSTER_UPDATE_RECORD_CO:
-      walRecord = new OPaginatedClusterUpdateRecordCO();
-      break;
-    case INDEX_ENGINE_CREATE_CO:
-      walRecord = new OIndexEngineCreateCO();
-      break;
-    case INDEX_ENGINE_DELETE_CO:
-      walRecord = new OIndexEngineDeleteCO();
-      break;
-    case CELL_BTREE_SINGLE_VALUE_PUT_CO:
-      walRecord = new OCellBTreeSingleValuePutCO();
-      break;
-    case CELL_BTREE_SINGLE_VALUE_REMOVE_CO:
-      walRecord = new OCellBTreeSingleValueRemoveCO();
-      break;
-    case CELL_BTREE_MULTI_VALUE_PUT_CO:
-      walRecord = new OCellBTreeMultiValuePutCO();
-      break;
-    case CELL_BTREE_MULTI_VALUE_REMOVE_ENTRY_CO:
-      walRecord = new OCellBtreeMultiValueRemoveEntryCO();
-      break;
-    case SBTREE_PUT_CO:
-      walRecord = new OSBTreePutCO();
-      break;
-    case SBTREE_REMOVE_CO:
-      walRecord = new OSBTreeRemoveCO();
-      break;
-    case LOCAL_HASHTABLE_PUT_CO:
-      walRecord = new OLocalHashTablePutCO();
-      break;
-    case LOCAL_HASHTABLE_REMOVE_CO:
-      walRecord = new OLocalHashTableRemoveCO();
-      break;
-    case SBTREE_BONSAI_CREATE_COMPONENT_CO:
-      walRecord = new OSBTreeBonsaiCreateComponentCO();
-      break;
-    case SBTREE_BONSAI_CREATE_CO:
-      walRecord = new OSBTreeBonsaiCreateCO();
-      break;
-    case SBTREE_BONSAI_DELETE_COMPONENT_CO:
-      walRecord = new com.orientechnologies.orient.core.storage.impl.local.paginated.wal.co.sbteebonsai.OSBTreeBonsaiDeleteComponentCO();
-      break;
-    case SBTREE_BONSAI_DELETE_CO:
-      walRecord = new OSBTreeBonsaiDeleteCO();
       break;
     case CLUSTER_POSITION_MAP_INIT_PO:
       walRecord = new ClusterPositionMapBucketInitPO();

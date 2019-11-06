@@ -466,10 +466,6 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
     return fileId;
   }
 
-  void replaceFileId(final long newFileId) {
-    this.fileId = newFileId;
-  }
-
   public static class OClusterPositionEntry {
     private final long position;
     private final long page;

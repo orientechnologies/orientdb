@@ -42,7 +42,7 @@ public class CellBTreeMultiValueV2TestIT {
     final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
     storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
-    multiValueTree = new CellBTreeMultiValueV2<>("multiBTree", 42, ".sbt", ".nbt", ".mdt", storage);
+    multiValueTree = new CellBTreeMultiValueV2<>("multiBTree", ".sbt", ".nbt", ".mdt", storage);
     multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
 

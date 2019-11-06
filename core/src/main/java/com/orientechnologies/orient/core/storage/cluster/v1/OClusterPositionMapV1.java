@@ -564,10 +564,6 @@ public final class OClusterPositionMapV1 extends OClusterPositionMap {
     return fileId;
   }
 
-  void replaceFileId(final long newFileId) {
-    this.fileId = newFileId;
-  }
-
   public static final class OClusterPositionEntry {
     private final long position;
     private final long page;
