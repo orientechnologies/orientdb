@@ -45,7 +45,7 @@ public class OStructuralFollower implements AutoCloseable {
     executor.execute(() -> {
       //TODO: The pending should be a queue we cannot really apply things in random order
       OLogId lastStateId = orientDB.getStructuralConfiguration().getLastUpdateId();
-      if (logId.getId() - 1 == lastStateId.getId()) {
+      if (lastStateId == null || logId.getId() - 1 == lastStateId.getId()) {
         ORaftOperation op = pending.get(logId);
         if (op != null) {
           op.apply(orientDB);

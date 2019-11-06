@@ -48,16 +48,16 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     // OK
     ORemoteServerController remoteServer = new ORemoteServerController(new ORemoteServerAvailabilityCheck() {
       @Override
-      public boolean isNodeAvailable(String node) {
+      public boolean isNodeAvailable(String nodeIdToString) {
         return true;
       }
 
       @Override
-      public void nodeDisconnected(String node) {
+      public void nodeDisconnected(String nodeIdToString) {
         //TODO: Integrate with the discovery manager.
         ODistributedNetworkManager.this.orientDB.nodeDisconnected(nodeIdentity);
       }
-    }, internalConfiguration.getNodeIdentity().getName(), nodeIdentity.getName(), host, user, password);
+    }, internalConfiguration.getNodeIdentity().toString(), nodeIdentity.toString(), host, user, password);
     ODistributedChannelBinaryProtocol channel = new ODistributedChannelBinaryProtocol(internalConfiguration.getNodeIdentity(),
         remoteServer);
     final ODistributedChannelBinaryProtocol old = remoteServers.putIfAbsent(nodeIdentity, channel);
@@ -83,7 +83,8 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   public void startup() {
     //TODO different strategies for different infrastructures, eg. AWS
 
-    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, orientDB, orientDB.getStructuralDistributedContext().getOpLog());
+    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, orientDB,
+        orientDB.getStructuralDistributedContext().getOpLog());
     discoveryManager.start();
   }
 
@@ -99,7 +100,6 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
       return;
     ODistributedChannelBinaryProtocol channel = getRemoteServer(data.getNodeIdentity());
     if (channel == null) {
-      //TODO: use some authentication data to do a binary connection.
       try {
         channel = connectRemoteServer(data.getNodeIdentity(), data.address + ":" + data.port, data.connectionUsername,
             data.connectionPassword);

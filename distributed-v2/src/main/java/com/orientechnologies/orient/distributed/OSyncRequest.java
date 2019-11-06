@@ -11,11 +11,17 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Optional;
 
-public class SyncRequest implements OStructuralSubmitRequest {
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.SYNC_SUBMIT_REQUEST;
+
+public class OSyncRequest implements OStructuralSubmitRequest {
   private Optional<OLogId> logId;
 
-  public SyncRequest(Optional<OLogId> logId) {
+  public OSyncRequest(Optional<OLogId> logId) {
     this.logId = logId;
+  }
+
+  public OSyncRequest() {
+
   }
 
   @Override
@@ -32,7 +38,7 @@ public class SyncRequest implements OStructuralSubmitRequest {
   public void deserialize(DataInput input) throws IOException {
     boolean isPresent = input.readBoolean();
     if (isPresent) {
-      logId = Optional.of(OLogId.deserialize(input));
+      logId = Optional.ofNullable(OLogId.deserialize(input));
     } else {
       logId = Optional.empty();
     }
@@ -40,13 +46,13 @@ public class SyncRequest implements OStructuralSubmitRequest {
 
   @Override
   public int getRequestType() {
-    return 0;
+    return SYNC_SUBMIT_REQUEST;
   }
 
   @Override
   public void begin(Optional<ONodeIdentity> requester, OSessionOperationId id, OLeaderContext context) {
     if (this.logId.isPresent()) {
-      context.tryResend(requester.get(),this.logId.get());
+      context.tryResend(requester.get(), this.logId.get());
     } else {
       context.sendFullConfiguration(requester.get());
     }
