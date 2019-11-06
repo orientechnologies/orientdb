@@ -38,8 +38,8 @@ public class OEnterpriseEnginePaginated extends OEngineLocalPaginated {
 
   @Override
   public OStorage createStorage(String dbName, Map<String, String> configuration, long maxWalSegSize,
-      long doubleWriteLogMaxSegSize) {
-    return new OEnterpriseLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), getReadCache(), files,
+      long doubleWriteLogMaxSegSize, int storageId) {
+    return new OEnterpriseLocalPaginatedStorage(dbName, dbName, getMode(configuration), storageId, getReadCache(), files,
         maxWalSegSize, doubleWriteLogMaxSegSize);
   }
 }
