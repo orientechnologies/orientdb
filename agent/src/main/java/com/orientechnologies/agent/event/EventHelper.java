@@ -25,10 +25,7 @@ import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,24 +44,24 @@ public class EventHelper {
     Object value = null;
     if (iContent instanceof String) {
       value = OVariableParser
-          .resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END,
-              new OVariableParserListener() {
+              .resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END,
+                      new OVariableParserListener() {
 
-                @Override
-                public Object resolve(final String iVariable) {
+                        @Override
+                        public Object resolve(final String iVariable) {
 
-                  Object val = body2name2.get(iVariable);
-                  if (val == null)
-                    return null;
+                          Object val = body2name2.get(iVariable);
+                          if (val == null)
+                            return null;
 
-                  if (val instanceof Date) {
-                    return ODateHelper.getDateTimeFormatInstance().format(Date.class.cast(val));
-                  }
+                          if (val instanceof Date) {
+                            return ODateHelper.getDateTimeFormatInstance().format(Date.class.cast(val));
+                          }
 
-                  return val.toString();
-                }
+                          return val.toString();
+                        }
 
-              });
+                      });
     } else {
       value = iContent;
     }
@@ -73,7 +70,7 @@ public class EventHelper {
   }
 
   public static Object resolveVariables(final String iText, final String iBegin, final String iEnd,
-      final OVariableParserListener iListener) {
+                                        final OVariableParserListener iListener) {
     if (iListener == null)
       throw new IllegalArgumentException("Missed VariableParserListener listener");
 
@@ -192,10 +189,18 @@ public class EventHelper {
 
   private static void doPost(String parameters, HttpURLConnection con) throws IOException {
     con.setDoOutput(true);
-    DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-    wr.writeBytes(parameters);
-    wr.flush();
-    wr.close();
+    OutputStream stream = con.getOutputStream();
+    DataOutputStream wr = null;
+    try {
+      wr = new DataOutputStream(stream);
+      wr.writeBytes(parameters);
+      wr.flush();
+    } finally {
+      safeClose(wr);
+      safeClose(stream);
+    }
+
+
     BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
     String inputLine;
     StringBuffer response = new StringBuffer();
@@ -205,6 +210,16 @@ public class EventHelper {
 
     OLogManager.instance().info(null, "HTTP result: %s", response.toString());
     in.close();
+  }
+
+  private static void safeClose(OutputStream stream) {
+    if (stream != null) {
+      try {
+        stream.close();
+      } catch (Exception e) {
+        OLogManager.instance().info(EventHelper.class, "Failed to close output stream " + stream);
+      }
+    }
   }
 
   private static void doGet(HttpURLConnection con) throws IOException {
