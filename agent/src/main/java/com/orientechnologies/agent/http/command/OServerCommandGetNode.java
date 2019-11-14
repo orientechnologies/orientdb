@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerInfo;
@@ -35,8 +36,13 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
 
   private static final String[] NAMES = { "GET|node/*", "POST|node/*" };
 
-  public OServerCommandGetNode() {
-    super(EnterprisePermissions.SERVER_DISTRIBUTED.toString());
+  public OServerCommandGetNode(OEnterpriseServer server) {
+    super(EnterprisePermissions.SERVER_DISTRIBUTED.toString(), server);
+  }
+
+  @Override
+  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

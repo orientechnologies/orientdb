@@ -18,6 +18,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -44,12 +45,13 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
 
   SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 
-  public OServerCommandGetLog(final OServerCommandConfiguration iConfiguration) {
-    super("log"); // TODO: CHECK WHAT TO PASS
+  public OServerCommandGetLog(OEnterpriseServer server) {
+    super(EnterprisePermissions.SERVER_LOG.toString(), server);
   }
 
-  public OServerCommandGetLog() {
-    super(EnterprisePermissions.SERVER_LOG.toString());
+  @Override
+  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

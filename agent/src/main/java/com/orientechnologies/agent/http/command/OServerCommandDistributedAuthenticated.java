@@ -18,14 +18,9 @@
 
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.OL;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
-
-import java.io.IOException;
 
 /**
  * Created by Enrico Risa on 19/02/16.
@@ -34,25 +29,6 @@ public abstract class OServerCommandDistributedAuthenticated extends OServerComm
 
   protected OServerCommandDistributedAuthenticated(String iRequiredResource) {
     super(iRequiredResource);
-  }
-
-  @Override
-  protected boolean authenticate(OHttpRequest iRequest, OHttpResponse iResponse, boolean iAskForAuthentication) throws IOException {
-    if (isAgentAuthenticated(iRequest)) {
-      return true;
-    } else {
-      return super.authenticate(iRequest, iResponse, iAskForAuthentication);
-    }
-  }
-
-  @Override
-  protected boolean authenticate(OHttpRequest iRequest, OHttpResponse iResponse, boolean iAskForAuthentication, String resource)
-      throws IOException {
-    if (isAgentAuthenticated(iRequest)) {
-      return true;
-    } else {
-      return super.authenticate(iRequest, iResponse, iAskForAuthentication, resource);
-    }
   }
 
   protected boolean isLocalNode(OHttpRequest iRequest) {
@@ -66,20 +42,4 @@ public abstract class OServerCommandDistributedAuthenticated extends OServerComm
     return distributedManager.getLocalNodeName().equalsIgnoreCase(node);
   }
 
-  private boolean isAgentAuthenticated(OHttpRequest iRequest) {
-
-    String header = iRequest.getHeader("X-REQUEST-AGENT");
-    return (isLocalNode(iRequest) && header != null && authenticateAgent(header));
-  }
-
-  private boolean authenticateAgent(String token) {
-
-    try {
-      String decrypted = OL.decrypt(token);
-      String localDecripted = OL.decrypt(OEnterpriseAgent.TOKEN);
-      return decrypted.equals(localDecripted);
-    } catch (Exception e) {
-      return false;
-    }
-  }
 }

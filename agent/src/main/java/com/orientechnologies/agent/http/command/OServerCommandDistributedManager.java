@@ -21,6 +21,7 @@ import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.agent.ha.sql.OCommandExecutorSQLHAStartReplication;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -48,8 +49,13 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
   private static final String[] NAMES = { "GET|distributed/*", "PUT|distributed/*", "POST|distributed/*" };
 
-  public OServerCommandDistributedManager() {
-    super(EnterprisePermissions.SERVER_DISTRIBUTED.toString());
+  public OServerCommandDistributedManager(OEnterpriseServer server) {
+    super(EnterprisePermissions.SERVER_DISTRIBUTED.toString(), server);
+  }
+
+  @Override
+  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

@@ -81,26 +81,13 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   private             String     enterpriseVersion = "";
   public              OServer    server;
   private             String     license;
-  public static final String     TOKEN;
   private             Properties properties        = new Properties();
 
   private List<OEnterpriseService> services = new ArrayList<>();
 
   private OEnterpriseServer enterpriseServer;
 
-  static {
-    String t = null;
-    try {
-      t = OL.encrypt(UUID.randomUUID().toString());
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    TOKEN = t;
-  }
-
   protected OEnterpriseProfiler profiler;
-
 
   private NodesManager nodesManager;
 
@@ -178,9 +165,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
               } catch (InterruptedException e) {
                 e.printStackTrace();
               }
-              Map<String, Object> map = manager.getConfigurationMap();
-              map.put(EE + manager.getLocalNodeName(), TOKEN);
               manager.registerLifecycleListener(profiler);
+              installCommands();
               break;
             }
 
@@ -192,7 +178,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         installer.start();
         Orient.instance().addDbLifecycleListener(this);
 
-
       }
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Error loading agent.properties file. EE will be disabled: %s", e.getMessage());
@@ -203,7 +188,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   @Override
   public void shutdown() {
     if (enabled) {
-
 
       uninstallCommands();
       uninstallProfiler();
@@ -282,15 +266,12 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       throw new OConfigurationException("HTTP listener not found");
 
     listener.registerStatelessCommand(new OServerCommandGetProfiler());
-    listener.registerStatelessCommand(new OServerCommandDistributedManager());
-    listener.registerStatelessCommand(new OServerCommandGetLog());
-    listener.registerStatelessCommand(new OServerCommandConfiguration());
-    listener.registerStatelessCommand(new OServerCommandPostBackupDatabase());
+    listener.registerStatelessCommand(new OServerCommandDistributedManager(enterpriseServer));
+    listener.registerStatelessCommand(new OServerCommandGetLog(enterpriseServer));
+    listener.registerStatelessCommand(new OServerCommandConfiguration(enterpriseServer));
     listener.registerStatelessCommand(new OServerCommandGetDeployDb());
 
-    listener.registerStatelessCommand(new OServerCommandPluginManager());
-    listener.registerStatelessCommand(new OServerCommandGetNode());
-    listener.registerStatelessCommand(new OServerCommandQueryCacheManager());
+    listener.registerStatelessCommand(new OServerCommandGetNode(enterpriseServer));
 
   }
 
@@ -303,11 +284,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
     listener.unregisterStatelessCommand(OServerCommandGetLog.class);
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
-    listener.unregisterStatelessCommand(OServerCommandPostBackupDatabase.class);
     listener.unregisterStatelessCommand(OServerCommandGetDeployDb.class);
-    listener.unregisterStatelessCommand(OServerCommandPluginManager.class);
     listener.unregisterStatelessCommand(OServerCommandGetNode.class);
-    listener.unregisterStatelessCommand(OServerCommandQueryCacheManager.class);
 
   }
 
@@ -483,8 +461,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     }
   }
 
-
-
   public boolean isDistributed() {
     return server.getDistributedManager() != null;
   }
@@ -493,7 +469,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
     return server.getDistributedManager();
   }
-
 
   public String getNodeName() {
     return isDistributed() ? server.getDistributedManager().getLocalNodeName() : "orientdb";

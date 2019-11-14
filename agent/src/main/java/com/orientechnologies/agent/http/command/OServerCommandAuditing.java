@@ -31,12 +31,15 @@ import java.util.Collection;
 import java.util.List;
 
 public class OServerCommandAuditing extends OServerCommandDistributedScope {
-  private static final String[]          NAMES = { "GET|auditing/*", "POST|auditing/*" };
-  private              OEnterpriseServer server;
+  private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
 
   public OServerCommandAuditing(OEnterpriseServer server) {
-    super(EnterprisePermissions.SERVER_SECURITY.toString());
-    this.server = server;
+    super(EnterprisePermissions.SERVER_SECURITY.toString(), server);
+  }
+
+  @Override
+  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

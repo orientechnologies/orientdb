@@ -34,9 +34,14 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
   private final        OEnterpriseServer eeServer;
 
   public OServerCommandGetSQLProfiler(OEnterpriseServer server) {
-    super(EnterprisePermissions.SERVER_METRICS.toString());
+    super(EnterprisePermissions.SERVER_METRICS.toString(), server);
 
     this.eeServer = server;
+  }
+
+  @Override
+  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

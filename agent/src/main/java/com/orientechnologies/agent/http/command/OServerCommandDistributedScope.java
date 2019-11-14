@@ -1,7 +1,11 @@
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.proxy.HttpProxy;
-import com.orientechnologies.agent.proxy.HttpProxyListener;
+import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsResponse;
+import com.orientechnologies.agent.cloud.processor.tasks.NewEnterpriseStatsTask;
+import com.orientechnologies.agent.operation.NodeResponse;
+import com.orientechnologies.agent.operation.OperationResponseFromNode;
+import com.orientechnologies.agent.operation.ResponseOk;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -9,39 +13,42 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.operation.NodeOperation;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by Enrico Risa on 16/11/15.
  */
 public abstract class OServerCommandDistributedScope extends OServerCommandDistributedAuthenticated {
 
-  HttpProxy proxy = new HttpProxy();
+  private final OEnterpriseServer enterpriseServer;
 
-  protected OServerCommandDistributedScope(String iRequiredResource) {
+  protected OServerCommandDistributedScope(String iRequiredResource, OEnterpriseServer enterpriseServer) {
     super(iRequiredResource);
+    this.enterpriseServer = enterpriseServer;
 
   }
 
-  public void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-    proxyRequest(iRequest, iResponse, null);
-  }
+  public List<OperationResponseFromNode> sendTask(OHttpRequest iRequest, NodeOperation op) {
 
-  public void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse, HttpProxyListener listener) throws IOException {
-
-    ODistributedServerManager manager = server.getDistributedManager();
     String node = iRequest.getParameter("node");
     if ("_all".equalsIgnoreCase(node)) {
-      proxy.broadcastRequest(manager, iRequest, iResponse);
+      return enterpriseServer.getNodesManager().sendAll(op);
     } else {
-      proxy.proxyRequest(manager, node, iRequest, iResponse, listener);
+      return Collections.singletonList(enterpriseServer.getNodesManager().send(node, op));
     }
+
   }
+
+  abstract void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse);
 
   protected ODatabaseDocumentInternal getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user

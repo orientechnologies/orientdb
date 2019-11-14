@@ -18,8 +18,8 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
-import com.orientechnologies.agent.proxy.HttpProxyListener;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -34,12 +34,13 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
 
   private static final String[] NAMES = { "GET|configuration" };
 
-  protected OServerCommandConfiguration(String iRequiredResource) {
-    super(iRequiredResource);
+  public OServerCommandConfiguration(OEnterpriseServer server) {
+    super(EnterprisePermissions.SERVER_CONFIGURATION.toString(), server);
   }
 
-  public OServerCommandConfiguration() {
-    super(EnterprisePermissions.SERVER_CONFIGURATION.toString());
+  @Override
+  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
+
   }
 
   @Override
@@ -70,18 +71,18 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
         iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
       }
     } else {
-      proxyRequest(iRequest, iResponse, new HttpProxyListener() {
-        @Override
-        public void onProxySuccess(OHttpRequest request, OHttpResponse response, InputStream is) throws IOException {
-          response.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", is, -1);
-        }
-
-        @Override
-        public void onProxyError(OHttpRequest request, OHttpResponse iResponse, InputStream is, int code, Exception e)
-            throws IOException {
-          iResponse.send(code, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_JSON, e, null);
-        }
-      });
+//      proxyRequest(iRequest, iResponse, new HttpProxyListener() {
+//        @Override
+//        public void onProxySuccess(OHttpRequest request, OHttpResponse response, InputStream is) throws IOException {
+//          response.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", is, -1);
+//        }
+//
+//        @Override
+//        public void onProxyError(OHttpRequest request, OHttpResponse iResponse, InputStream is, int code, Exception e)
+//            throws IOException {
+//          iResponse.send(code, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_JSON, e, null);
+//        }
+//      });
     }
 
     return false;

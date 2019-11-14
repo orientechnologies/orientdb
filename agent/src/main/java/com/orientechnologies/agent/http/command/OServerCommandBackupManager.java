@@ -20,6 +20,7 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.agent.services.backup.OBackupService;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -36,9 +37,14 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
   private static final String[] NAMES = { "GET|backupManager", "GET|backupManager/*", "POST|backupManager", "POST|backupManager/*",
       "PUT|backupManager/*", "DELETE|backupManager/*" };
 
-  public OServerCommandBackupManager(OBackupService manager) {
-    super(EnterprisePermissions.SERVER_BACKUP.toString());
+  public OServerCommandBackupManager(OBackupService manager, OEnterpriseServer server) {
+    super(EnterprisePermissions.SERVER_BACKUP.toString(), server);
     backupManager = manager;
+  }
+
+  @Override
+  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

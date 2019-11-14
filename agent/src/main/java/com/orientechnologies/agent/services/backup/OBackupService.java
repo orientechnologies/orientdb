@@ -169,7 +169,7 @@ public class OBackupService implements OEnterpriseService {
     this.config = new OBackupConfig().load();
     initLogger();
     initTasks();
-    server.registerStatelessCommand(new OServerCommandBackupManager(this));
+    server.registerStatelessCommand(new OServerCommandBackupManager(this, server));
   }
 
   @Override
