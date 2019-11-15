@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.IndexCursor;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -14,8 +13,9 @@ import org.testng.annotations.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Test
 public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
@@ -47,7 +47,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
   @Test
   public void testPut() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -62,7 +62,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> resultOne = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    IndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
@@ -88,7 +88,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
   @Test
   public void testRemove() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -103,7 +103,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> resultOne = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    IndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
@@ -128,7 +128,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
   @Test
   public void testRemoveAndPut() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -143,7 +143,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> resultOne = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    IndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
@@ -165,7 +165,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
   @Test
   public void testMultiPut() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -183,7 +183,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> result = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    IndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, result);
 
     Assert.assertEquals(result.size(), 2);
@@ -197,7 +197,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
   @Test
   public void testPutAfterTransaction() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -211,7 +211,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> result = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    IndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, result);
 
     Assert.assertEquals(result.size(), 2);
@@ -226,7 +226,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
   @Test
   public void testRemoveOneWithinTransaction() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -242,7 +242,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> result = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    IndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, result);
     Assert.assertEquals(result.size(), 1);
 
@@ -255,7 +255,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
   @Test
   public void testPutAfterRemove() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -274,7 +274,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> result = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    IndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
     cursorToSet(cursor, result);
 
     Assert.assertEquals(result.size(), 2);
@@ -286,13 +286,9 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 2);
   }
 
-  private void cursorToSet(OIndexCursor cursor, Set<OIdentifiable> result) {
+  private static void cursorToSet(IndexCursor cursor, Set<OIdentifiable> result) {
     result.clear();
-    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
-    while (entry != null) {
-      result.add(entry.getValue());
-      entry = cursor.nextEntry();
-    }
+    result.addAll(StreamSupport.stream(cursor, false).map((entry) -> entry.second).collect(Collectors.toSet()));
   }
 
 }

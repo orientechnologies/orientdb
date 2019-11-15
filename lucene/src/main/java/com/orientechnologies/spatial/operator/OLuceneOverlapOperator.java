@@ -21,10 +21,10 @@ import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.IndexCursor;
+import com.orientechnologies.orient.core.index.IndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.IndexCursorSingleValue;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
-import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -52,8 +52,8 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
-    OIndexCursor cursor;
+  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+    IndexCursor cursor;
     Object key;
     key = keyParams.get(0);
 
@@ -67,9 +67,9 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
       indexResult.sendLookupTime(iContext, start);
 
     if (indexResult == null || indexResult instanceof OIdentifiable)
-      return new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+      return new IndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
 
-    return new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(keyParams));
+    return new IndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(keyParams));
 
   }
 

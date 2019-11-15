@@ -106,9 +106,9 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
 
-    OIndexCursor cursor;
+    IndexCursor cursor;
     OIndexDefinition definition = index.getDefinition();
     int idxSize = definition.getFields().size();
     int paramsSize = keyParams.size();
@@ -132,8 +132,8 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
 
     Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setContext(iContext));
     if (indexResult == null || indexResult instanceof OIdentifiable)
-      return new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
-    return new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(keyParams));
+      return new IndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+    return new IndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(keyParams));
 
   }
 

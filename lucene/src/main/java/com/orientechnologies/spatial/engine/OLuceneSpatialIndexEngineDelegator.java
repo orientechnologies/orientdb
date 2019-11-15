@@ -173,34 +173,34 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+  public IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
     return delegate.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer) {
     return delegate.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return delegate.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+  public IndexCursor cursor(ValuesTransformer valuesTransformer) {
     return delegate.cursor(valuesTransformer);
   }
 
   @Override
-  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public IndexCursor descCursor(ValuesTransformer valuesTransformer) {
     return delegate.descCursor(valuesTransformer);
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
+  public IndexKeySpliterator keyCursor() {
     return delegate.keyCursor();
   }
 

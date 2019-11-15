@@ -3,13 +3,13 @@ package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.common.types.OModifiableInteger;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,7 +24,7 @@ public class CellBTreeMultiValueV2TestIT {
   private OrientDB                      orientDB;
   private OAbstractPaginatedStorage     storage;
 
-  private final String DB_NAME = "localMultiBTreeTest";
+  private static final String DB_NAME = "localMultiBTreeTest";
 
   @Before
   public void before() throws IOException {
@@ -775,10 +775,11 @@ public class CellBTreeMultiValueV2TestIT {
     Assert.assertEquals(multiValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(multiValueTree.lastKey(), keyValues.lastKey());
 
-    final OCellBTreeMultiValue.OCellBTreeKeyCursor<String> cursor = multiValueTree.keyCursor();
+    final Spliterator<String> cursor = multiValueTree.keySpliterator();
+    final Iterator<String> indexIterator = Spliterators.iterator(cursor);
 
     for (String entryKey : keyValues.keySet()) {
-      final String indexKey = cursor.next(-1);
+      final String indexKey = indexIterator.next();
       Assert.assertEquals(entryKey, indexKey);
     }
   }
@@ -922,8 +923,8 @@ public class CellBTreeMultiValueV2TestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 1) + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final OCellBTreeMultiValue.OCellBTreeCursor<String, ORID> cursor = multiValueTree
-          .iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
+      final Spliterator<ORawPair<String, ORID>> cursor = multiValueTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<String, ORID>> indexIterator = Spliterators.iterator(cursor);
 
       Iterator<Map.Entry<String, Integer>> iterator;
       if (ascSortOrder) {
@@ -933,27 +934,27 @@ public class CellBTreeMultiValueV2TestIT {
       }
 
       while (iterator.hasNext()) {
-        Map.Entry<String, ORID> indexEntry = cursor.next(-1);
+        ORawPair<String, ORID> indexEntry = indexIterator.next();
         final Map.Entry<String, Integer> entry = iterator.next();
 
         final int repetition = entry.getValue();
         final int value = Integer.parseInt(entry.getKey());
         final ORID expected = new ORecordId(value % 32_000, value);
 
-        Assert.assertEquals(entry.getKey(), indexEntry.getKey());
-        Assert.assertEquals(expected, indexEntry.getValue());
+        Assert.assertEquals(entry.getKey(), indexEntry.first);
+        Assert.assertEquals(expected, indexEntry.second);
 
         for (int n = 1; n < repetition; n++) {
-          indexEntry = cursor.next(-1);
+          indexEntry = indexIterator.next();
 
-          Assert.assertEquals(entry.getKey(), indexEntry.getKey());
-          Assert.assertEquals(expected, indexEntry.getValue());
+          Assert.assertEquals(entry.getKey(), indexEntry.first);
+          Assert.assertEquals(expected, indexEntry.second);
         }
       }
 
       //noinspection ConstantConditions
       Assert.assertFalse(iterator.hasNext());
-      Assert.assertNull(cursor.next(-1));
+      Assert.assertFalse(indexIterator.hasNext());
     }
   }
 
@@ -974,8 +975,8 @@ public class CellBTreeMultiValueV2TestIT {
         toKey = toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final OCellBTreeMultiValue.OCellBTreeCursor<String, ORID> cursor = multiValueTree
-          .iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
+      final Spliterator<ORawPair<String, ORID>> cursor = multiValueTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<String, ORID>> indexIterator = Spliterators.iterator(cursor);
 
       Iterator<Map.Entry<String, Integer>> iterator;
       if (ascSortOrder) {
@@ -985,27 +986,27 @@ public class CellBTreeMultiValueV2TestIT {
       }
 
       while (iterator.hasNext()) {
-        Map.Entry<String, ORID> indexEntry = cursor.next(-1);
+        ORawPair<String, ORID> indexEntry = indexIterator.next();
         Map.Entry<String, Integer> entry = iterator.next();
 
         final int repetition = entry.getValue();
         final int value = Integer.parseInt(entry.getKey());
         final ORID expected = new ORecordId(value % 32_000, value);
 
-        Assert.assertEquals(entry.getKey(), indexEntry.getKey());
-        Assert.assertEquals(expected, indexEntry.getValue());
+        Assert.assertEquals(entry.getKey(), indexEntry.first);
+        Assert.assertEquals(expected, indexEntry.second);
 
         for (int n = 1; n < repetition; n++) {
-          indexEntry = cursor.next(-1);
+          indexEntry = indexIterator.next();
 
-          Assert.assertEquals(entry.getKey(), indexEntry.getKey());
-          Assert.assertEquals(expected, indexEntry.getValue());
+          Assert.assertEquals(entry.getKey(), indexEntry.first);
+          Assert.assertEquals(expected, indexEntry.second);
         }
       }
 
       //noinspection ConstantConditions
       Assert.assertFalse(iterator.hasNext());
-      Assert.assertNull(cursor.next(-1));
+      Assert.assertFalse(indexIterator.hasNext());
     }
   }
 
@@ -1042,8 +1043,9 @@ public class CellBTreeMultiValueV2TestIT {
         fromKey = toKey;
       }
 
-      OCellBTreeMultiValue.OCellBTreeCursor<String, ORID> cursor = multiValueTree
+      Spliterator<ORawPair<String, ORID>> cursor = multiValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
+      final Iterator<ORawPair<String, ORID>> indexIterator = Spliterators.iterator(cursor);
 
       Iterator<Map.Entry<String, Integer>> iterator;
       if (ascSortOrder) {
@@ -1053,7 +1055,7 @@ public class CellBTreeMultiValueV2TestIT {
       }
 
       while (iterator.hasNext()) {
-        Map.Entry<String, ORID> indexEntry = cursor.next(-1);
+        ORawPair<String, ORID> indexEntry = indexIterator.next();
         Assert.assertNotNull(indexEntry);
 
         Map.Entry<String, Integer> entry = iterator.next();
@@ -1062,19 +1064,19 @@ public class CellBTreeMultiValueV2TestIT {
         final int value = Integer.parseInt(entry.getKey());
         final ORID expected = new ORecordId(value % 32_000, value);
 
-        Assert.assertEquals(entry.getKey(), indexEntry.getKey());
-        Assert.assertEquals(expected, indexEntry.getValue());
+        Assert.assertEquals(entry.getKey(), indexEntry.first);
+        Assert.assertEquals(expected, indexEntry.second);
 
         for (int n = 1; n < repetition; n++) {
-          indexEntry = cursor.next(-1);
+          indexEntry = indexIterator.next();
 
-          Assert.assertEquals(entry.getKey(), indexEntry.getKey());
-          Assert.assertEquals(expected, indexEntry.getValue());
+          Assert.assertEquals(entry.getKey(), indexEntry.first);
+          Assert.assertEquals(expected, indexEntry.second);
         }
       }
       //noinspection ConstantConditions
       Assert.assertFalse(iterator.hasNext());
-      Assert.assertNull(cursor.next(-1));
+      Assert.assertFalse(indexIterator.hasNext());
     }
   }
 

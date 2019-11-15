@@ -2,19 +2,18 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @since 22.03.12
@@ -72,29 +71,28 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      String key = (String) keyIterator.next();
+
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndexMap.getSize(), 2);
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -126,29 +124,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      String key = (String) keyIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -183,29 +179,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -238,29 +232,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -298,29 +290,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key2") && !key.equals("key1")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docTwo.getIdentity()) && !value.equals(docOne.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -351,30 +341,28 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 3);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 3);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
           .getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -413,30 +401,29 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 3);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
+
       if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 3);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
           .getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -470,29 +457,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docTwo.getIdentity()) && !value.getIdentity().equals(docOne.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -523,29 +508,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
 
     Assert.assertEquals(keyIndexMap.getSize(), 2);
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -585,29 +568,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
     Assert.assertEquals(keyIndexMap.getSize(), 2);
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown key found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -641,29 +622,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -694,29 +673,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -756,29 +733,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (!valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -813,30 +788,28 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 3);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      String key = (String) keyIterator.next();
       if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 3);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
           .getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 
@@ -928,29 +901,27 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor keyCursor = keyIndexMap.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
+    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final OIndexKeyCursor valueCursor = valueIndexMap.keyCursor();
-    OIdentifiable value = (OIdentifiable) valueCursor.next(-1);
+    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
+    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (OIdentifiable) valueCursor.next(-1);
     }
   }
 

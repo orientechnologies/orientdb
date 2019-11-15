@@ -22,10 +22,10 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexCursor;
+import com.orientechnologies.orient.core.index.IndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.IndexCursorSingleValue;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
-import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
@@ -79,16 +79,16 @@ public class OLuceneWithinOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
 
     Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setOperation(SpatialOperation.IsWithin));
 
     iContext.setVariable("$luceneIndex", true);
 
     if (indexResult == null || indexResult instanceof OIdentifiable)
-      return new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+      return new IndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
 
-    return new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(keyParams));
+    return new IndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(keyParams));
 
   }
 

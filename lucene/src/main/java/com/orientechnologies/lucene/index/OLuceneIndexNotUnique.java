@@ -21,7 +21,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneTxOperations;
-import com.orientechnologies.lucene.collections.OLuceneIndexCursor;
+import com.orientechnologies.lucene.collections.LuceneIndexCursor;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
@@ -40,7 +40,10 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> implements OLuceneIndex {
 
@@ -366,22 +369,22 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
-  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+  public IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
 
     String query = (String) keys.stream().findFirst().map(k -> (OCompositeKey) k).map(ck -> ck.getKeys())
         .orElse(Arrays.asList("q=*:*")).get(0);
 
     OLuceneResultSet identifiables = (OLuceneResultSet) get(query);
 
-    return new OIndexCursorSecurityDecorator(new OLuceneIndexCursor(identifiables, query), this);
+    return new IndexCursorSecurityDecorator(new LuceneIndexCursor(identifiables, query), this);
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+  public IndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
       boolean ascOrder) {
     while (true) {
       try {
-        return new OIndexCursorSecurityDecorator(storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null), this);
+        return new IndexCursorSecurityDecorator(storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null), this);
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
@@ -390,10 +393,10 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     while (true) {
       try {
-        return new OIndexCursorSecurityDecorator(storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null), this);
+        return new IndexCursorSecurityDecorator(storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null), this);
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
@@ -401,10 +404,10 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     while (true) {
       try {
-        return new OIndexCursorSecurityDecorator(storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null), this);
+        return new IndexCursorSecurityDecorator(storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null), this);
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
@@ -412,10 +415,10 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
-  public OIndexCursor cursor() {
+  public IndexCursor cursor() {
     while (true) {
       try {
-        return new OIndexCursorSecurityDecorator(storage.getIndexCursor(indexId, null), this);
+        return new IndexCursorSecurityDecorator(storage.getIndexCursor(indexId, null), this);
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
@@ -424,10 +427,10 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
-  public OIndexCursor descCursor() {
+  public IndexCursor descCursor() {
     while (true) {
       try {
-        return new OIndexCursorSecurityDecorator(storage.getIndexCursor(indexId, null), this);
+        return new IndexCursorSecurityDecorator(storage.getIndexCursor(indexId, null), this);
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }

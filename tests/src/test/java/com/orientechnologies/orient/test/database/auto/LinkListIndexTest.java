@@ -1,21 +1,18 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @since 21.03.12
@@ -39,18 +36,21 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void destroySchema() {
+    //noinspection deprecation
     database.open("admin", "admin");
     database.getMetadata().getSchema().dropClass("LinkListIndexTestClass");
   }
 
   @AfterMethod
   public void afterMethod() throws Exception {
+    //noinspection deprecation
     database.command(new OCommandSQL("DELETE FROM LinkListIndexTestClass")).execute();
 
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database.command(new OCommandSQL("select from LinkListIndexTestClass")).execute();
     Assert.assertEquals(result.size(), 0);
 
-    if (!((ODatabaseDocumentInternal) database).getStorage().isRemote()) {
+    if (!database.getStorage().isRemote()) {
       final OIndex index = getIndex("linkCollectionIndex");
       Assert.assertEquals(index.getSize(), 0);
     }
@@ -68,21 +68,21 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
+
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -98,7 +98,7 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     try {
       database.begin();
       final ODocument document = new ODocument("LinkListIndexTestClass");
-      document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+      document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
       document.save();
       database.commit();
     } catch (Exception e) {
@@ -109,15 +109,15 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
+
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -134,24 +134,23 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docThree.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docThree.getIdentity())));
     document.save();
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -168,12 +167,12 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
     try {
       database.begin();
-      document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docThree.getIdentity())));
+      document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docThree.getIdentity())));
       document.save();
       database.commit();
     } catch (Exception e) {
@@ -184,15 +183,15 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
+
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -209,26 +208,25 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
     database.begin();
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docThree.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docThree.getIdentity())));
     document.save();
     database.rollback();
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -245,25 +243,25 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
+    //noinspection deprecation
     database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " add linkCollection = " + docThree.getIdentity()))
         .execute();
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 3);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
           .equals(docThree.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -280,13 +278,13 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
-      loadedDocument.<List>field("linkCollection").add(docThree.getIdentity());
+      loadedDocument.<List<OIdentifiable>>field("linkCollection").add(docThree.getIdentity());
       document.save();
       database.commit();
     } catch (Exception e) {
@@ -297,16 +295,15 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 3);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
           .equals(docThree.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -323,27 +320,26 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
-    loadedDocument.<List>field("linkCollection").add(docThree.getIdentity());
+    loadedDocument.<List<OIdentifiable>>field("linkCollection").add(docThree.getIdentity());
     loadedDocument.save();
     database.rollback();
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -374,15 +370,14 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 1);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -408,15 +403,14 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -433,21 +427,22 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
+    //noinspection deprecation
     database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove linkCollection = " + docTwo.getIdentity()))
         .execute();
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getSize(), 1);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
+
       if (!key.getIdentity().equals(docOne.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -505,7 +500,7 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
     database.begin();
@@ -516,14 +511,14 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor indexKeyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) indexKeyCursor.next(-1);
-    while (key != null) {
+    IndexKeySpliterator indexKeySpliterator = index.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(indexKeySpliterator);
+
+    while (keyIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keyIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) indexKeyCursor.next(-1);
     }
   }
 
@@ -535,9 +530,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
-    document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    document.field("linkCollection", new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database
         .query(new OSQLSynchQuery<ODocument>("select * from LinkListIndexTestClass where linkCollection contains ?"),
             docOne.getIdentity());

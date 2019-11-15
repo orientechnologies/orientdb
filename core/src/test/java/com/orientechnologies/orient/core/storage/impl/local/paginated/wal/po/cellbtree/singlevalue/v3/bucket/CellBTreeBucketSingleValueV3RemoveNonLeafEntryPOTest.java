@@ -60,20 +60,20 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(1, 2, (byte) 0, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(1, 2, (byte) 0, null),
           restoredBucket.getEntry(0, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(2, 3, (byte) 1, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(2, 3, (byte) 1, null),
           restoredBucket.getEntry(1, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(3, 4, (byte) 2, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(3, 4, (byte) 2, null),
           restoredBucket.getEntry(2, OByteSerializer.INSTANCE));
 
       pageOperation.redo(restoredCacheEntry);
 
       Assert.assertEquals(2, restoredBucket.size());
 
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(1, 3, (byte) 0, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(1, 3, (byte) 0, null),
           restoredBucket.getEntry(0, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(3, 4, (byte) 2, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(3, 4, (byte) 2, null),
           restoredBucket.getEntry(1, OByteSerializer.INSTANCE));
 
       byteBufferPool.release(pointer);
@@ -116,20 +116,20 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
 
       Assert.assertEquals(2, restoredBucket.size());
 
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(1, 3, (byte) 0, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(1, 3, (byte) 0, null),
           restoredBucket.getEntry(0, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(3, 4, (byte) 2, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(3, 4, (byte) 2, null),
           restoredBucket.getEntry(1, OByteSerializer.INSTANCE));
 
       pageOperation.undo(entry);
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(1, 2, (byte) 0, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(1, 2, (byte) 0, null),
           restoredBucket.getEntry(0, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(2, 3, (byte) 1, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(2, 3, (byte) 1, null),
           restoredBucket.getEntry(1, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new CellBTreeSingleValueBucketV3.SBTreeEntry<>(3, 4, (byte) 2, null),
+      Assert.assertEquals(new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(3, 4, (byte) 2, null),
           restoredBucket.getEntry(2, OByteSerializer.INSTANCE));
 
       byteBufferPool.release(pointer);

@@ -21,8 +21,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
+import com.orientechnologies.lucene.collections.LuceneIndexCursor;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
-import com.orientechnologies.lucene.collections.OLuceneIndexCursor;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
@@ -174,9 +174,9 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+  public IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OLuceneIndexCursor((OLuceneResultSet) get(rangeFrom), rangeFrom);
+    return new LuceneIndexCursor((OLuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
   private Set<OIdentifiable> getResults(Query query, OCommandContext context, OLuceneTxChanges changes, ODocument metadata) {
@@ -194,13 +194,13 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer) {
     return null;
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
   }
 

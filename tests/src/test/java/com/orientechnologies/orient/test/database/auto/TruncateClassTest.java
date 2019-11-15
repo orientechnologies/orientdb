@@ -15,9 +15,10 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexCursor;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -69,11 +70,12 @@ public class TruncateClassTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 6);
 
-    OIndexCursor cursor = index.cursor();
-    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
-    while (entry != null) {
-      Assert.assertTrue(set.contains((Integer) entry.getKey()));
-      entry = cursor.nextEntry();
+    IndexCursor cursor = index.cursor();
+    Iterator<ORawPair<Object, ORID>> indexIterator = Spliterators.iterator(cursor);
+
+    while (indexIterator.hasNext()) {
+      ORawPair<Object, ORID> entry = indexIterator.next();
+      Assert.assertTrue(set.contains((Integer) entry.first));
     }
 
     schema.dropClass("test_class");

@@ -27,10 +27,10 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexCursor;
+import com.orientechnologies.orient.core.index.IndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.IndexCursorSingleValue;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
-import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
@@ -76,7 +76,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     if (!index.getType().toLowerCase().contains("fulltext")) {
       return null;
     }
@@ -88,9 +88,9 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
         .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()));
 
     if (indexResult == null)
-      return new OIndexCursorSingleValue((OIdentifiable) indexResult, new OLuceneCompositeKey(keyParams));
+      return new IndexCursorSingleValue((OIdentifiable) indexResult, new OLuceneCompositeKey(keyParams));
 
-    return new OIndexCursorCollectionValue(indexResult, new OLuceneCompositeKey(keyParams));
+    return new IndexCursorCollectionValue(indexResult, new OLuceneCompositeKey(keyParams));
   }
 
   @Override

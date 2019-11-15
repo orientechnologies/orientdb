@@ -35,10 +35,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.IndexCursor;
+import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -539,17 +539,17 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
-  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public IndexCursor descCursor(ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
   @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+  public IndexCursor cursor(ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
+  public IndexKeySpliterator keyCursor() {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
