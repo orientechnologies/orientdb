@@ -18,6 +18,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
+import com.orientechnologies.agent.Utils;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,7 +34,7 @@ import java.util.*;
 
 public class OServerCommandGetLog extends OServerCommandDistributedScope {
 
-  private static final String[] NAMES = { "GET|log/*" };
+  private static final String[] NAMES = {"GET|log/*"};
 
   private static final String TAIL = "tail";
 
@@ -92,7 +93,12 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
       };
 
       String env = Orient.getHomePath();
-      prop.load(new FileInputStream(env + "/config/orientdb-server-log.properties"));
+      FileInputStream inStream = new FileInputStream(env + "/config/orientdb-server-log.properties");
+      try {
+        prop.load(inStream);
+      } finally {
+        Utils.safeClose(this, inStream);
+      }
       String logDir = (String) prop.get("java.util.logging.FileHandler.pattern");
 
       if (!logDir.startsWith("/")) {
@@ -127,13 +133,13 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
         for (int i = 0; i <= files.length - 1; i++) {
           if (files[i].getName().equals(selectedFile))
             insertFromFile(value, size, logType, dFrom, dTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc,
-                files[i]);
+                    files[i]);
         }
       } else if (SEARCH.equals(type)) {
         for (int i = 0; i <= files.length - 1; i++) {
           line = "";
           insertFromFile(value, size, logType, dFrom, dTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc,
-              files[i]);
+                  files[i]);
         }
       } else if (ALLFILES.equals(type)) {
         for (int i = 0; i <= files.length - 1; i++) {
@@ -169,59 +175,63 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
   }
 
   private void insertFromFile(String value, String size, String logType, Date dFrom, Date dTo, File[] files,
-      List<ODocument> subdocuments, String line, String dayToDoc, String hour, String typeToDoc, String info, ODocument doc,
-      File file) throws FileNotFoundException, IOException {
+                              List<ODocument> subdocuments, String line, String dayToDoc, String hour, String typeToDoc, String info, ODocument doc,
+                              File file) throws FileNotFoundException, IOException {
     File f = file;
-    BufferedReader br = new BufferedReader(new FileReader(f));
-    Date day = null;
-    while (line != null) {
-      line = br.readLine();
-      if (line != null) {
-        String[] split = line.split(" ");
-        if (split != null) {
+    FileReader in = new FileReader(f);
+    BufferedReader br = new BufferedReader(in);
+    try {
+      Date day = null;
+      while (line != null) {
+        line = br.readLine();
+        if (line != null) {
+          String[] split = line.split(" ");
+          if (split != null) {
 
-          try {
+            try {
 
-            day = dateFormatter.parse(split[0]);
+              day = dateFormatter.parse(split[0]);
 
-            // trying to create a Date
-            if (doc.field("day") != null) {
-              doc.field("info", info);
-              doc.field("file", f.getName());
-              checkInsert(value, logType, subdocuments, typeToDoc, info, doc, dFrom, day, hour, dTo);
-              doc = new ODocument();
+              // trying to create a Date
+              if (doc.field("day") != null) {
+                doc.field("info", info);
+                doc.field("file", f.getName());
+                checkInsert(value, logType, subdocuments, typeToDoc, info, doc, dFrom, day, hour, dTo);
+                doc = new ODocument();
+              }
+
+              // Created new Doc
+              dayToDoc = split[0];
+              hour = split[1];
+
+              typeToDoc = split[2];
+
+              if (doc.field("day") == null) {
+                doc = new ODocument();
+                addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+              }
+              line = line.replace(split[0], "");
+              line = line.replace(split[1], "");
+              line = line.replace(split[2], "");
+              info = line;
+
+            } catch (Exception e) {
+              // stack trace
+              info = info.concat(line);
             }
-
-            // Created new Doc
-            dayToDoc = split[0];
-            hour = split[1];
-
-            typeToDoc = split[2];
-
-            if (doc.field("day") == null) {
-              doc = new ODocument();
-              addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-            }
-            line = line.replace(split[0], "");
-            line = line.replace(split[1], "");
-            line = line.replace(split[2], "");
-            info = line;
-
-          } catch (Exception e) {
-            // stack trace
-            info = info.concat(line);
+          }
+        } else {
+          if (doc.field("day") != null) {
+            addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+            doc.field("info", info);
+            doc.field("file", f.getName());
+            checkInsert(value, logType, subdocuments, typeToDoc, info, doc, dFrom, day, hour, dTo);
           }
         }
-      } else {
-        if (doc.field("day") != null) {
-          addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-          doc.field("info", info);
-          doc.field("file", f.getName());
-          checkInsert(value, logType, subdocuments, typeToDoc, info, doc, dFrom, day, hour, dTo);
-        }
       }
+    } finally {
+      Utils.safeClose(this, br, in);
     }
-    br.close();
   }
 
   private Time setTimeFromParameter(String hourFrom) throws UnsupportedEncodingException {
@@ -248,7 +258,7 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
   }
 
   private void checkInsert(String value, String logType, List<ODocument> subdocuments, String typeToDoc, String info, ODocument doc,
-      Date dFrom, Date day, String hour, Date dTo) {
+                           Date dFrom, Date day, String hour, Date dTo) {
     Time tHour = setTime(hour);
 
     Calendar cal = Calendar.getInstance();

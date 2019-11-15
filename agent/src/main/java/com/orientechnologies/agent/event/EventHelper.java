@@ -18,6 +18,7 @@
 
 package com.orientechnologies.agent.event;
 
+import com.orientechnologies.agent.Utils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
@@ -195,7 +196,7 @@ public class EventHelper {
       wr.writeBytes(parameters);
       wr.flush();
     } finally {
-      safeClose(wr, stream);
+      Utils.safeClose(null, wr, stream);
     }
 
 
@@ -211,23 +212,10 @@ public class EventHelper {
 
       OLogManager.instance().info(null, "HTTP result: %s", response.toString());
     } finally {
-      safeClose(in, isr, is);
+      Utils.safeClose(null, in, isr, is);
     }
   }
 
-  private static void safeClose(Closeable... streams) {
-    if (streams != null) {
-      for (Closeable closeable : streams) {
-        if (closeable != null) {
-          try {
-            closeable.close();
-          } catch (Exception e) {
-            OLogManager.instance().info(EventHelper.class, "Failed to close output stream " + closeable);
-          }
-        }
-      }
-    }
-  }
 
   private static void doGet(HttpURLConnection con) throws IOException {
     InputStream inputStream = con.getInputStream();
@@ -243,7 +231,7 @@ public class EventHelper {
 
       OLogManager.instance().debug(null, "HTTP result: %s", response.toString());
     } finally {
-      safeClose(in, in1, inputStream);
+      Utils.safeClose(in, in1, inputStream);
     }
   }
 }
