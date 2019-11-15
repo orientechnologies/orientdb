@@ -4,8 +4,7 @@ import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.TimerTask;
 
 /**
  * Default implementation of {@link OCachedDatabasePoolFactory}
@@ -24,160 +23,162 @@ import java.util.stream.Collectors;
  * @author Vitalii Honchar (weaxme@gmail.com)
  */
 public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactory {
-    /**
-     * Max size of connections which one pool can contains
-     */
-    private volatile int maxPoolSize = 100;
+  /**
+   * Max size of connections which one pool can contains
+   */
+  private volatile int maxPoolSize = 100;
 
-    private volatile boolean closed;
-    private final ConcurrentLinkedHashMap<String, ODatabasePoolInternal> poolCache;
-    private final OrientDBInternal orientDB;
+  private volatile boolean closed;
+  private final ConcurrentLinkedHashMap<String, ODatabasePoolInternal> poolCache;
+  private final OrientDBInternal orientDB;
 
 
-    /**
-     * @param orientDB instance of {@link OrientDB} which will be used for create new database pools {@link ODatabasePoolInternal}
-     * @param capacity capacity of pool cache, by default is 100
-     * @param timeout timeout in milliseconds which means that every timeout will be executed task for clean up cache from closed pools
-     */
-    public OCachedDatabasePoolFactoryImpl(OrientDBInternal orientDB, int capacity, long timeout) {
-        poolCache = new ConcurrentLinkedHashMap.Builder<String, ODatabasePoolInternal>()
-                .maximumWeightedCapacity(capacity)
-                .listener((identity, databasePool) -> databasePool.close())
-                .build();
-        this.orientDB = orientDB;
-        scheduleCleanUpCache(createCleanUpTask(), timeout);
-    }
+  /**
+   * @param orientDB instance of {@link OrientDB} which will be used for create new database pools {@link ODatabasePoolInternal}
+   * @param capacity capacity of pool cache, by default is 100
+   * @param timeout  timeout in milliseconds which means that every timeout will be executed task for clean up cache from closed pools
+   */
+  public OCachedDatabasePoolFactoryImpl(OrientDBInternal orientDB, int capacity, long timeout) {
+    poolCache = new ConcurrentLinkedHashMap.Builder<String, ODatabasePoolInternal>()
+            .maximumWeightedCapacity(capacity)
+            .listener((identity, databasePool) -> databasePool.close())
+            .build();
+    this.orientDB = orientDB;
+    scheduleCleanUpCache(createCleanUpTask(), timeout);
+  }
 
-    protected void scheduleCleanUpCache(TimerTask task, long timeout) {
-        orientDB.schedule(task, timeout, timeout);
-    }
+  protected void scheduleCleanUpCache(TimerTask task, long timeout) {
+    orientDB.schedule(task, timeout, timeout);
+  }
 
-    private TimerTask createCleanUpTask() {
-        return new TimerTask() {
-            @Override
-            public void run() {
-                if (closed) {
-                    cancel();
-                } else {
-                    cleanUpCache();
-                }
-            }
-        };
-    }
-
-    private void cleanUpCache() {
-        synchronized (this) {
-            poolCache.values().removeIf(ODatabasePoolInternal::isClosed);
-        }
-    }
-
-    /**
-     * Get or create database pool instance for given user
-     *
-     * Get or create database pool:
-     * 1. Create string database + username + password
-     * 2. Create key by hashing this string using SHA-256
-     * 3. Try to get pool from cache
-     * 4. If pool is in cache and pool is not closed, so return this pool
-     * 5. If pool is not in cache or pool is closed, so create new pool and put it in cache
-     *
-     * @param database name of database
-     * @param username name of user which need access to database
-     * @param password user password
-     * @return {@link ODatabasePoolInternal} which is new instance of pool or instance from pool storage
-     */
-    @Override
-    public ODatabasePoolInternal get(String database, String username, String password, OrientDBConfig parentConfig) {
-        checkForClose();
-
-        String key = OSecurityManager.instance().createSHA256(database + username + password);
-        ODatabasePoolInternal pool = getByKey(key);
-
-        if (pool != null) {
-            return pool;
-        }
-
-        return poolCache.computeIfAbsent(key, hash -> {
-            OrientDBConfig config = OrientDBConfig.builder()
-                    .addConfig(OGlobalConfiguration.DB_POOL_MAX, maxPoolSize)
-                    .build();
-
-            if (parentConfig != null) {
-                config.setParent(parentConfig);
-            }
-
-            return new ODatabasePoolImpl(orientDB, database, username, password, config);
-        });
-    }
-
-    /**
-     * Close all open pools and clear pool storage
-     */
-    @Override
-    public OCachedDatabasePoolFactory reset() {
-        poolCache.forEach((key, pool) -> pool.close());
-        poolCache.clear();
-        return this;
-    }
-
-    /**
-     * Close all open pools and clear pool storage. Set flag closed to true, so this instance can't be used again.
-     * Need create new instance of {@link OCachedDatabasePoolFactory} after close one of factories.
-     */
-    @Override
-    public void close() {
-        if (!isClosed()) {
-            closed = true;
-            reset();
-        }
-    }
-
-    /**
-     * @return true if factory is closed
-     */
-    @Override
-    public boolean isClosed() {
-        return closed;
-    }
-
-    /**
-     * @return max pool size. Default is 64
-     */
-    public int getMaxPoolSize() {
-        return maxPoolSize;
-    }
-
-    /**
-     * Set max pool connections size which will be used for create new {@link ODatabasePool}
-     * @param maxPoolSize max pool connections size
-     * @return this instance
-     */
-    public OCachedDatabasePoolFactory setMaxPoolSize(int maxPoolSize) {
-        this.maxPoolSize = maxPoolSize;
-        return this;
-    }
-
-    /**
-     * Tries to get database pool from cache by given key. If pool exists in cache, but pool is already closed - so remove
-     * closed pool and return null
-     * @param key key associated with pool
-     * @return database pool or null
-     */
-    private ODatabasePoolInternal getByKey(String key) {
-        ODatabasePoolInternal pool = poolCache.get(key);
-        if (pool != null && pool.isClosed()) {
-            poolCache.remove(key);
-        }
-        return pool;
-    }
-
-    /**
-     * @throws IllegalStateException if pool factory is closed
-     */
-    private void checkForClose() {
+  private TimerTask createCleanUpTask() {
+    return new TimerTask() {
+      @Override
+      public void run() {
         if (closed) {
-            throw new IllegalStateException("Cached pool factory is closed!");
+          cancel();
+        } else {
+          cleanUpCache();
         }
+      }
+    };
+  }
+
+  private void cleanUpCache() {
+    synchronized (this) {
+      poolCache.values().removeIf(ODatabasePoolInternal::isClosed);
     }
+  }
+
+  /**
+   * Get or create database pool instance for given user
+   *
+   * Get or create database pool:
+   * 1. Create string database + username + password
+   * 2. Create key by hashing this string using SHA-256
+   * 3. Try to get pool from cache
+   * 4. If pool is in cache and pool is not closed, so return this pool
+   * 5. If pool is not in cache or pool is closed, so create new pool and put it in cache
+   *
+   * @param database name of database
+   * @param username name of user which need access to database
+   * @param password user password
+   * @return {@link ODatabasePoolInternal} which is new instance of pool or instance from pool storage
+   */
+  @Override
+  public ODatabasePoolInternal get(String database, String username, String password, OrientDBConfig parentConfig) {
+    checkForClose();
+
+    String key = OSecurityManager.instance().createSHA256(database + username + password);
+    ODatabasePoolInternal pool = getByKey(key);
+
+    if (pool != null) {
+      return pool;
+    }
+
+    return poolCache.computeIfAbsent(key, hash -> {
+      OrientDBConfig config = OrientDBConfig.builder()
+              .addConfig(OGlobalConfiguration.DB_POOL_MAX, maxPoolSize)
+              .build();
+
+      if (parentConfig != null) {
+        config.setParent(parentConfig);
+      }
+
+      return new ODatabasePoolImpl(orientDB, database, username, password, config);
+    });
+  }
+
+  /**
+   * Close all open pools and clear pool storage
+   */
+  @Override
+  public OCachedDatabasePoolFactory reset() {
+    poolCache.forEach((key, pool) -> pool.close());
+    poolCache.clear();
+    return this;
+  }
+
+  /**
+   * Close all open pools and clear pool storage. Set flag closed to true, so this instance can't be used again.
+   * Need create new instance of {@link OCachedDatabasePoolFactory} after close one of factories.
+   */
+  @Override
+  public void close() {
+    if (!isClosed()) {
+      closed = true;
+      reset();
+    }
+  }
+
+  /**
+   * @return true if factory is closed
+   */
+  @Override
+  public boolean isClosed() {
+    return closed;
+  }
+
+  /**
+   * @return max pool size. Default is 64
+   */
+  public int getMaxPoolSize() {
+    return maxPoolSize;
+  }
+
+  /**
+   * Set max pool connections size which will be used for create new {@link ODatabasePool}
+   *
+   * @param maxPoolSize max pool connections size
+   * @return this instance
+   */
+  public OCachedDatabasePoolFactory setMaxPoolSize(int maxPoolSize) {
+    this.maxPoolSize = maxPoolSize;
+    return this;
+  }
+
+  /**
+   * Tries to get database pool from cache by given key. If pool exists in cache, but pool is already closed - so remove
+   * closed pool and return null
+   *
+   * @param key key associated with pool
+   * @return database pool or null
+   */
+  private ODatabasePoolInternal getByKey(String key) {
+    ODatabasePoolInternal pool = poolCache.get(key);
+    if (pool != null && pool.isClosed()) {
+      poolCache.remove(key);
+    }
+    return pool;
+  }
+
+  /**
+   * @throws IllegalStateException if pool factory is closed
+   */
+  private void checkForClose() {
+    if (closed) {
+      throw new IllegalStateException("Cached pool factory is closed!");
+    }
+  }
 
 }
