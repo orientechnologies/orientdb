@@ -190,48 +190,60 @@ public class EventHelper {
   private static void doPost(String parameters, HttpURLConnection con) throws IOException {
     con.setDoOutput(true);
     OutputStream stream = con.getOutputStream();
-    DataOutputStream wr = null;
+    DataOutputStream wr = new DataOutputStream(stream);
     try {
-      wr = new DataOutputStream(stream);
       wr.writeBytes(parameters);
       wr.flush();
     } finally {
-      safeClose(wr);
-      safeClose(stream);
+      safeClose(wr, stream);
     }
 
 
-    BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-    String inputLine;
-    StringBuffer response = new StringBuffer();
-    while ((inputLine = in.readLine()) != null) {
-      response.append(inputLine);
-    }
+    InputStream is = con.getInputStream();
+    InputStreamReader isr = new InputStreamReader(is);
+    BufferedReader in = new BufferedReader(isr);
+    try {
+      String inputLine;
+      StringBuffer response = new StringBuffer();
+      while ((inputLine = in.readLine()) != null) {
+        response.append(inputLine);
+      }
 
-    OLogManager.instance().info(null, "HTTP result: %s", response.toString());
-    in.close();
+      OLogManager.instance().info(null, "HTTP result: %s", response.toString());
+    } finally {
+      safeClose(in, isr, is);
+    }
   }
 
-  private static void safeClose(OutputStream stream) {
-    if (stream != null) {
-      try {
-        stream.close();
-      } catch (Exception e) {
-        OLogManager.instance().info(EventHelper.class, "Failed to close output stream " + stream);
+  private static void safeClose(Closeable... streams) {
+    if (streams != null) {
+      for (Closeable closeable : streams) {
+        if (closeable != null) {
+          try {
+            closeable.close();
+          } catch (Exception e) {
+            OLogManager.instance().info(EventHelper.class, "Failed to close output stream " + closeable);
+          }
+        }
       }
     }
   }
 
   private static void doGet(HttpURLConnection con) throws IOException {
-    BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-    String inputLine;
-    StringBuffer response = new StringBuffer();
+    InputStream inputStream = con.getInputStream();
+    InputStreamReader in1 = new InputStreamReader(inputStream);
+    BufferedReader in = new BufferedReader(in1);
+    try {
+      String inputLine;
+      StringBuffer response = new StringBuffer();
 
-    while ((inputLine = in.readLine()) != null) {
-      response.append(inputLine);
+      while ((inputLine = in.readLine()) != null) {
+        response.append(inputLine);
+      }
+
+      OLogManager.instance().debug(null, "HTTP result: %s", response.toString());
+    } finally {
+      safeClose(in, in1, inputStream);
     }
-
-    OLogManager.instance().debug(null, "HTTP result: %s", response.toString());
-    in.close();
   }
 }

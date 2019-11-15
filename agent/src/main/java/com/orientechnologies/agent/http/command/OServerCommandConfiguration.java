@@ -18,6 +18,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -32,7 +33,7 @@ import java.io.InputStream;
 
 public class OServerCommandConfiguration extends OServerCommandDistributedScope {
 
-  private static final String[] NAMES = { "GET|configuration" };
+  private static final String[] NAMES = {"GET|configuration"};
 
   public OServerCommandConfiguration(OEnterpriseServer server) {
     super(EnterprisePermissions.SERVER_CONFIGURATION.toString(), server);
@@ -66,7 +67,15 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
         File file2 = new File(config);
 
         FileInputStream input = new FileInputStream(file2);
-        iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", input, file2.length());
+        try {
+          iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", input, file2.length());
+        } finally {
+          try {
+            input.close();
+          } catch (Exception e) {
+            OLogManager.instance().info(this, "Failed to close input stream for " + file2);
+          }
+        }
       } catch (Exception e) {
         iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
       }
