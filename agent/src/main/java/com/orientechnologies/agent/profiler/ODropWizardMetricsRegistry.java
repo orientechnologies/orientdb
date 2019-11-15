@@ -73,15 +73,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     MetricFilter filter = MetricFilter.ALL;
     this.mapper = new ObjectMapper().registerModule(new MetricsModule(rateUnit, durationUnit, showSamples, filter));
   }
-
-  private TimeUnit parseTimeUnit(String value, TimeUnit defaultValue) {
-    try {
-      return TimeUnit.valueOf(String.valueOf(value).toUpperCase(Locale.US));
-    } catch (IllegalArgumentException e) {
-      return defaultValue;
-    }
-  }
-
+  
   private void initFactories(OrientDBMetricsSettings settings) {
     metricFactory.put(GCMetric.class, (s) -> registry.register(s, new GarbageCollectorMetricSet()));
     metricFactory.put(ThreadsMetric.class, (s) -> registry.register(s, new CachedThreadStatesGaugeSet(10, TimeUnit.SECONDS)));
