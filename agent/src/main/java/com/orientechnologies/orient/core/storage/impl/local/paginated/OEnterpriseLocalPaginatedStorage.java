@@ -530,7 +530,11 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             final boolean fullBackup = buffer.get() == 1;
 
             final InputStream inputStream = Channels.newInputStream(ibuChannel);
-            restoreFromIncrementalBackup(inputStream, fullBackup);
+            try {
+              restoreFromIncrementalBackup(inputStream, fullBackup);
+            } finally {
+              Utils.safeClose(this, inputStream);
+            }
           }
 
         }
