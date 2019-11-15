@@ -159,12 +159,16 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       while (!indexIterator.hasNext()) {
         if (!nextCursors.isEmpty()) {
           cursor = nextCursors.remove(0);
-          indexIterator = Spliterators.iterator(cursor);
+          cursorToIterator();
         } else {
           cursor = null;
           indexIterator = null;
           break;
         }
+      }
+
+      if (indexIterator != null) {
+        nextEntry = indexIterator.next();
       }
     }
     if (nextEntry == null && customIterator != null && customIterator.hasNext()) {
@@ -310,6 +314,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       customIterator.reset();
     } else {
       cursor = createCursor(equals, definition, rightValue, ctx);
+      cursorToIterator();
     }
     fetchNextEntry();
   }
@@ -327,6 +332,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private void processFlatIteration() {
     cursor = isOrderAsc() ? index.cursor() : index.descCursor();
+    cursorToIterator();
 
     fetchNullKeys();
     if (cursor != null) {
@@ -386,14 +392,18 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         if (from == null && to == null) {
           //manage null value explicitly, as the index API does not seem to work correctly in this case
           cursor = getCursorForNullKey();
+          cursorToIterator();
         } else {
           cursor = index.iterateEntriesBetween(from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
+          cursorToIterator();
         }
 
       } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
         cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+        cursorToIterator();
       } else if (isFullTextIndex(index) || isFullTextHashIndex(index)) {
         cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+        cursorToIterator();
       } else {
         throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
       }
@@ -402,7 +412,16 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
     if (nextCursors.size() > 0) {
       cursor = nextCursors.remove(0);
+      cursorToIterator();
       fetchNextEntry();
+    }
+  }
+
+  private void cursorToIterator() {
+    if (cursor != null) {
+      indexIterator = Spliterators.iterator(cursor);
+    } else {
+      indexIterator = null;
     }
   }
 
@@ -418,6 +437,30 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private IndexCursor getCursorForNullKey() {
     Object result = index.get(null);
 
+    if (result == null) {
+      return new IndexCursor() {
+        @Override
+        public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+          return false;
+        }
+
+        @Override
+        public Spliterator<ORawPair<Object, ORID>> trySplit() {
+          return null;
+        }
+
+        @Override
+        public long estimateSize() {
+          return 0;
+        }
+
+        @Override
+        public int characteristics() {
+          return 0;
+        }
+      };
+    }
+
     if (!(result instanceof Iterable)) {
       result = Collections.singleton(result);
     }
@@ -432,6 +475,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           return false;
         }
         Object val = iter.next();
+
         action.accept(new ORawPair<>(null, ((OIdentifiable) val).getIdentity()));
         return true;
       }
@@ -589,6 +633,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     cursor = index
         .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
             isOrderAsc());
+    cursorToIterator();
     if (cursor != null) {
       fetchNextEntry();
     }
@@ -603,6 +648,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
     cursor = createCursor(operator, definition, rightValue, ctx);
+    cursorToIterator();
     if (cursor != null) {
       fetchNextEntry();
     }
@@ -894,6 +940,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
     inited = false;
     cursor = null;
+    indexIterator = null;
     customIterator = null;
     nullKeyIterator = null;
     nextEntry = null;

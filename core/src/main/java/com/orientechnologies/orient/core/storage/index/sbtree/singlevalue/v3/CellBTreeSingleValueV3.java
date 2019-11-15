@@ -1517,8 +1517,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     private final List<ORawPair<K, ORID>>     dataCache     = new ArrayList<>();
     private       Iterator<ORawPair<K, ORID>> cacheIterator = Collections.emptyIterator();
 
-    private SpliteratorForward(final K fromKey, final K toKey, final boolean fromKeyInclusive,
-        final boolean toKeyInclusive) {
+    private SpliteratorForward(final K fromKey, final K toKey, final boolean fromKeyInclusive, final boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
 
@@ -1553,10 +1552,10 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
 
     private void fetchNextCachePortion() {
       final K lastKey;
-      if (dataCache.isEmpty()) {
-        lastKey = fromKey;
-      } else {
+      if (!dataCache.isEmpty()) {
         lastKey = dataCache.get(dataCache.size() - 1).first;
+      } else {
+        lastKey = null;
       }
 
       dataCache.clear();
@@ -1643,7 +1642,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
               if (toKey != null && (toKeyInclusive
                   ? comparator.compare(entry.key, toKey) > 0
                   : comparator.compare(entry.key, toKey) >= 0)) {
-                break;
+                return true;
               }
 
               //noinspection ObjectAllocationInLoop
@@ -1712,8 +1711,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     private final List<ORawPair<K, ORID>>     dataCache     = new ArrayList<>();
     private       Iterator<ORawPair<K, ORID>> cacheIterator = Collections.emptyIterator();
 
-    private SpliteratorBackward(final K fromKey, final K toKey, final boolean fromKeyInclusive,
-        final boolean toKeyInclusive) {
+    private SpliteratorBackward(final K fromKey, final K toKey, final boolean fromKeyInclusive, final boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
       this.fromKeyInclusive = fromKeyInclusive;
@@ -1748,7 +1746,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     private void fetchNextCachePortion() {
       final K lastKey;
       if (dataCache.isEmpty()) {
-        lastKey = fromKey;
+        lastKey = null;
       } else {
         lastKey = dataCache.get(dataCache.size() - 1).first;
       }
@@ -1841,7 +1839,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
               if (fromKey != null && (fromKeyInclusive
                   ? comparator.compare(entry.key, fromKey) < 0
                   : comparator.compare(entry.key, fromKey) <= 0)) {
-                break;
+                return true;
               }
 
               //noinspection ObjectAllocationInLoop
