@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.agent.Utils;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OErrorCode;
@@ -156,7 +157,13 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
         ibuChannel.position(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
 
-        final OLogSequenceNumber maxLsn = incrementalBackup(Channels.newOutputStream(ibuChannel), lastLsn, true);
+        OutputStream stream = Channels.newOutputStream(ibuChannel);
+        OLogSequenceNumber maxLsn;
+        try {
+           maxLsn = incrementalBackup(stream, lastLsn, true);
+        } finally {
+          Utils.safeClose(this, stream);
+        }
         final ByteBuffer dataBuffer = ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
 
         dataBuffer.putLong(nextIndex);

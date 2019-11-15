@@ -2,6 +2,7 @@ package com.orientechnologies.agent.services.metrics;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orientechnologies.agent.Utils;
 import com.orientechnologies.agent.profiler.OMetricsRegistry;
 import com.orientechnologies.agent.profiler.OMetricsRegistryFactory;
 import com.orientechnologies.agent.services.OEnterpriseService;
@@ -160,8 +161,7 @@ public class OrientDBMetricsService implements OEnterpriseService {
             settings = mapper.readValue(buffer, OrientDBMetricsSettings.class);
 
           } finally {
-            if (fis != null)
-              fis.close();
+            Utils.safeClose(this, fis);
           }
         } else {
           OLogManager.instance()
