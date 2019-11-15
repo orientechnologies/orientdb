@@ -31,14 +31,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cel
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.entrypoint.CellBTreeMultiValueV2EntryPointSetPagesSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.entrypoint.CellBTreeMultiValueV2EntryPointSetTreeSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.bucket.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.entrypoint.CellBTreeMultiValueV3EntryPointInitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.entrypoint.CellBTreeMultiValueV3EntryPointSetPagesSizePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.entrypoint.CellBTreeMultiValueV3EntryPointSetTreeSizePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.nullbucket.CellBTreeMultiValueV3NullBucketDecrementSizePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.nullbucket.CellBTreeMultiValueV3NullBucketIncrementSizePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.nullbucket.CellBTreeMultiValueV3NullBucketInitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v3.nullbucket.CellBTreeMultiValueV3NullBucketRemoveValuePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.bucket.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1InitPO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v1.entrypoint.CellBTreeEntryPointSingleValueV1SetPagesSizePO;
@@ -89,6 +81,7 @@ import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
 
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -540,72 +533,6 @@ public final class OWALRecordsFactory {
     case CELL_BTREE_BUCKET_MULTI_VALUE_V2_SWITCH_BUCKET_TYPE_PO:
       walRecord = new CellBTreeMultiValueV2BucketSwitchBucketTypePO();
       break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_INIT_PO:
-      walRecord = new CellBTreeMultiValueV3BucketInitPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_ALL_LEAF_ENTRIES_PO:
-      walRecord = new CellBTreeMultiValueV3BucketAddAllLeafEntriesPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_ALL_NON_LEAF_ENTRIES_PO:
-      walRecord = new CellBTreeMultiValueV3BucketAddAllNonLeafEntriesPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_NON_LEAF_ENTRY_PO:
-      walRecord = new CellBTreeMultiValueV3BucketAddNonLeafEntryPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_APPEND_NEW_LEAF_ENTRY_PO:
-      walRecord = new CellBTreeMultiValueV3BucketAppendNewLeafEntryPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_CREATE_MAIN_LEAF_ENTRY_PO:
-      walRecord = new CellBTreeMultiValueV3BucketCreateMainLeafEntryPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_DECREMENT_ENTRIES_COUNT_PO:
-      walRecord = new CellBTreeMultiValueV3BucketDecrementEntriesCountPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_INCREMENT_ENTRIES_COUNT_PO:
-      walRecord = new CellBTreeMultiValueV3BucketIncrementEntriesCountPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_REMOVE_LEAF_ENTRY_PO:
-      walRecord = new CellBTreeMultiValueV3BucketRemoveLeafEntryPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_REMOVE_MAIN_LEAF_ENTRY_PO:
-      walRecord = new CellBTreeMultiValueV3BucketRemoveMainLeafEntryPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_REMOVE_NON_LEAF_ENTRY_PO:
-      walRecord = new CellBTreeMultiValueV3BucketRemoveNonLeafEntryPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_SET_LEFT_SIBLING_PO:
-      walRecord = new CellBTreeMultiValueV3BucketSetLeftSiblingPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_SET_RIGHT_SIBLING_PO:
-      walRecord = new CellBTreeMultiValueV3BucketSetRightSiblingPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_SHRINK_NON_LEAF_ENTRIES_PO:
-      walRecord = new CellBTreeMultiValueV3BucketShrinkNonLeafEntriesPO();
-      break;
-    case CELL_BTREE_BUCKET_MULTI_VALUE_V3_SHRINK_LEAF_ENTRIES_PO:
-      walRecord = new CellBTreeMultiValueV3BucketShrinkLeafEntriesPO();
-      break;
-    case CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V3_INIT_PO:
-      walRecord = new CellBTreeMultiValueV3EntryPointInitPO();
-      break;
-    case CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V3_SET_PAGES_SIZE_PO:
-      walRecord = new CellBTreeMultiValueV3EntryPointSetPagesSizePO();
-      break;
-    case CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V3_SET_TREE_SIZE_PO:
-      walRecord = new CellBTreeMultiValueV3EntryPointSetTreeSizePO();
-      break;
-    case CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_DECREMENT_SIZE_PO:
-      walRecord = new CellBTreeMultiValueV3NullBucketDecrementSizePO();
-      break;
-    case CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_INCREMENT_SIZE_PO:
-      walRecord = new CellBTreeMultiValueV3NullBucketIncrementSizePO();
-      break;
-    case CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_SET_RIGHT_SIBLING_PO:
-      walRecord = new CellBTreeMultiValueV3NullBucketInitPO();
-      break;
-    case CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_REMOVE_VALUE_PO:
-      walRecord = new CellBTreeMultiValueV3NullBucketRemoveValuePO();
-      break;
     case LOCAL_HASH_TABLE_V2_BUCKET_INIT_PO:
       walRecord = new LocalHashTableV2BucketInitPO();
       break;
@@ -669,8 +596,9 @@ public final class OWALRecordsFactory {
     default:
       if (idToTypeMap.containsKey(recordId))
         try {
-          walRecord = (WriteableWALRecord) idToTypeMap.get(recordId).newInstance();
-        } catch (final InstantiationException | IllegalAccessException e) {
+          //noinspection unchecked
+          walRecord = (WriteableWALRecord) idToTypeMap.get(recordId).getDeclaredConstructor().newInstance();
+        } catch (final InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
           throw new IllegalStateException("Cannot deserialize passed in record", e);
         }
       else

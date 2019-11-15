@@ -222,9 +222,9 @@ public final class OFileClassic implements OFile {
   @Override
   public IOResult write(List<ORawPair<Long, ByteBuffer>> buffers) throws IOException {
     for (final ORawPair<Long, ByteBuffer> pair : buffers) {
-      final long position = pair.getFirst();
+      final long position = pair.first;
 
-      final ByteBuffer buffer = pair.getSecond();
+      final ByteBuffer buffer = pair.second;
       write(position, buffer);
     }
 

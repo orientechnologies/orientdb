@@ -19,79 +19,65 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 
 /**
  * Implementation of index cursor in case of collection of values which belongs to single key should be returned.
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/4/14
  */
-public class OIndexCursorCollectionValue extends OIndexAbstractCursor implements OSizeable {
-  private final Object              key;
-  private Collection<OIdentifiable> collection;
-  private Iterator<OIdentifiable>   iterator;
+public final class IndexCursorCollectionValue implements OSizeable, IndexCursor {
+  private final Object                    key;
+  private final Collection<OIdentifiable> collection;
+  private       Iterator<OIdentifiable>   iterator;
 
-  public OIndexCursorCollectionValue(final Collection<OIdentifiable> collection, final Object key) {
+  public IndexCursorCollectionValue(final Collection<OIdentifiable> collection, final Object key) {
     this.collection = collection;
     this.iterator = collection.iterator();
     this.key = key;
   }
 
   @Override
-  public boolean hasNext() {
-    if (iterator == null)
+  public int size() {
+    return collection.size();
+  }
+
+  @Override
+  public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+    if (iterator == null) {
       return false;
+    }
 
     if (!iterator.hasNext()) {
       iterator = null;
       return false;
     }
 
+    action.accept(new ORawPair<>(key, iterator.next().getIdentity()));
     return true;
   }
 
   @Override
-  public OIdentifiable next() {
-    return iterator.next();
+  public Spliterator<ORawPair<Object, ORID>> trySplit() {
+    return null;
   }
 
   @Override
-  public Map.Entry<Object, OIdentifiable> nextEntry() {
-    if (iterator == null)
-      return null;
-
-    if (!iterator.hasNext()) {
-      iterator = null;
-      return null;
-    }
-
-    final OIdentifiable value = iterator.next();
-    return new Map.Entry<Object, OIdentifiable>() {
-      @Override
-      public Object getKey() {
-        return key;
-      }
-
-      @Override
-      public OIdentifiable getValue() {
-        return value;
-      }
-
-      @Override
-      public OIdentifiable setValue(OIdentifiable value) {
-        throw new UnsupportedOperationException("setValue");
-      }
-    };
-  }
-
-  @Override
-  public int size() {
+  public long estimateSize() {
     return collection.size();
+  }
+
+  @Override
+  public int characteristics() {
+    return NONNULL | SIZED | ORDERED;
   }
 }

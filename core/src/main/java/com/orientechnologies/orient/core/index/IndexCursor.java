@@ -17,23 +17,16 @@
  *  * For more information: http://orientdb.com
  *
  */
+package com.orientechnologies.orient.core.index;
 
-package com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v3;
+import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.id.ORID;
 
-import com.orientechnologies.orient.core.exception.ODurableComponentException;
+import java.util.Spliterator;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 8/30/13
+ * @since 4/4/14
  */
-public final class CellBTreeMultiValueV3Exception extends ODurableComponentException {
-
-  @SuppressWarnings("unused")
-  public CellBTreeMultiValueV3Exception(final CellBTreeMultiValueV3Exception exception) {
-    super(exception);
-  }
-
-  CellBTreeMultiValueV3Exception(final String message, final CellBTreeMultiValueV3 component) {
-    super(message, component);
-  }
+public interface IndexCursor extends Spliterator<ORawPair<Object, ORID>> {
 }

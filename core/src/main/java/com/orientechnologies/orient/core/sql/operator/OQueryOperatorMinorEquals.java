@@ -24,17 +24,11 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
@@ -74,11 +68,11 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
-    OIndexCursor cursor;
+    IndexCursor cursor;
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
 

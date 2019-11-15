@@ -3,9 +3,9 @@ package com.orientechnologies.orient.core.index.engine;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.IndexCursor;
+import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -37,19 +37,19 @@ public interface OBaseIndexEngine {
 
   Object getLastKey();
 
-  OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+  IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer);
 
-  OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer);
+  IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer);
 
-  OIndexCursor iterateEntriesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
+  IndexCursor iterateEntriesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer);
 
-  OIndexCursor cursor(ValuesTransformer valuesTransformer);
+  IndexCursor cursor(ValuesTransformer valuesTransformer);
 
-  OIndexCursor descCursor(ValuesTransformer valuesTransformer);
+  IndexCursor descCursor(ValuesTransformer valuesTransformer);
 
-  OIndexKeyCursor keyCursor();
+  IndexKeySpliterator keyCursor();
 
   long size(ValuesTransformer transformer);
 

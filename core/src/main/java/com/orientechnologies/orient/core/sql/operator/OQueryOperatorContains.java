@@ -138,10 +138,10 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
-    OIndexCursor cursor;
+    IndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;
@@ -161,9 +161,9 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       indexResult = index.get(key);
 
       if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+        cursor = new IndexCursorSingleValue((OIdentifiable) indexResult, key);
       else
-        cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
+        cursor = new IndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -185,9 +185,9 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
           indexResult = index.get(keyOne);
 
           if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+            cursor = new IndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
           else
-            cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, keyOne);
+            cursor = new IndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, keyOne);
         } else
           return null;
       }

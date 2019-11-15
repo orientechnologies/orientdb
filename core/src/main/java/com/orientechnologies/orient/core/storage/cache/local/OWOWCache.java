@@ -1228,7 +1228,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
 
       if (file != null) {
-        writeNameIdEntry(new NameFileIdEntry(file.getFirst(), -intId, file.getSecond()), true);
+        writeNameIdEntry(new NameFileIdEntry(file.first, -intId, file.second), true);
       }
     } finally {
       filesLock.releaseWriteLock();

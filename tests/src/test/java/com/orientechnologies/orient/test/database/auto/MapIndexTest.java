@@ -1,19 +1,18 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Mapper;
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author LomakiA <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
@@ -65,7 +64,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     final Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -76,29 +75,28 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keyIterator.hasNext()) {
+      String key = (String) keyIterator.next();
+
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(20)) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -108,7 +106,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     try {
       database.begin();
       final Mapper mapper = new Mapper();
-      Map<String, Integer> map = new HashMap<String, Integer>();
+      Map<String, Integer> map = new HashMap<>();
 
       map.put("key1", 10);
       map.put("key2", 20);
@@ -124,29 +122,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
     Assert.assertEquals(keyIndex.getSize(), 2);
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(20)) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -154,7 +150,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> mapOne = new HashMap<String, Integer>();
+    Map<String, Integer> mapOne = new HashMap<>();
 
     mapOne.put("key1", 10);
     mapOne.put("key2", 20);
@@ -162,7 +158,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(mapOne);
     mapper = database.save(mapper);
 
-    final Map<String, Integer> mapTwo = new HashMap<String, Integer>();
+    final Map<String, Integer> mapTwo = new HashMap<>();
 
     mapTwo.put("key3", 30);
     mapTwo.put("key2", 20);
@@ -174,29 +170,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(30) && !value.equals(20)) {
         Assert.fail("Unknown key found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -204,7 +198,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> mapOne = new HashMap<String, Integer>();
+    Map<String, Integer> mapOne = new HashMap<>();
 
     mapOne.put("key1", 10);
     mapOne.put("key2", 20);
@@ -214,7 +208,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     database.begin();
     try {
-      final Map<String, Integer> mapTwo = new HashMap<String, Integer>();
+      final Map<String, Integer> mapTwo = new HashMap<>();
 
       mapTwo.put("key3", 30);
       mapTwo.put("key2", 20);
@@ -231,29 +225,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(30) && !value.equals(20)) {
         Assert.fail("Unknown key found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -261,7 +253,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> mapOne = new HashMap<String, Integer>();
+    Map<String, Integer> mapOne = new HashMap<>();
 
     mapOne.put("key1", 10);
     mapOne.put("key2", 20);
@@ -270,7 +262,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper = database.save(mapper);
 
     database.begin();
-    final Map<String, Integer> mapTwo = new HashMap<String, Integer>();
+    final Map<String, Integer> mapTwo = new HashMap<>();
 
     mapTwo.put("key3", 30);
     mapTwo.put("key2", 20);
@@ -282,29 +274,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key2") && !key.equals("key1")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(20)) {
         Assert.fail("Unknown key found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -312,7 +302,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -325,29 +315,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 3);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 3);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -355,7 +343,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -378,29 +366,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 3);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 3);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -408,7 +394,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -426,29 +412,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(20) && !value.equals(10)) {
         Assert.fail("Unknown key found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -456,7 +440,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -469,30 +453,28 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(40)) {
         Assert.fail("Unknown key found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -500,7 +482,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -522,29 +504,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(40)) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -552,7 +532,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -569,29 +549,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(20)) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -599,7 +577,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -613,29 +591,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(30)) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -643,7 +619,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -666,29 +642,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndex.getSize(), 2);
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(30)) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -696,7 +670,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -714,29 +688,27 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
     Assert.assertEquals(keyIndex.getSize(), 3);
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndex.getSize(), 3);
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(20) && !value.equals(30)) {
         Assert.fail("Unknown key found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -744,7 +716,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -765,7 +737,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -793,7 +765,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     checkEmbeddedDB();
 
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
@@ -808,41 +780,39 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      String key = (String) keysIterator.next();
       if (!key.equals("key1") && !key.equals("key2")) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (String) keyCursor.next(-1);
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
-    Integer value = (Integer) valueCursor.next(-1);
+    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
+    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (value != null) {
+    while (valuesIterator.hasNext()) {
+      Integer value = (Integer) valuesIterator.next();
       if (!value.equals(10) && !value.equals(20)) {
         Assert.fail("Unknown value found: " + value);
       }
-
-      value = (Integer) valueCursor.next(-1);
     }
   }
 
   public void testIndexMapSQL() {
     Mapper mapper = new Mapper();
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
 
     map.put("key1", 10);
     map.put("key2", 20);
 
     mapper.setIntMap(map);
-    mapper = database.save(mapper);
+    database.save(mapper);
 
     final List<Mapper> resultByKey = database
         .query(new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containskey ?"), "key1");

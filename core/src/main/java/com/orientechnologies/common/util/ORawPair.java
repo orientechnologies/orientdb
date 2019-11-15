@@ -22,20 +22,12 @@ package com.orientechnologies.common.util;
  * @since 2.2
  */
 public final class ORawPair<V1, V2> {
-  private final V1 first;
-  private final V2 second;
+  public final V1 first;
+  public final V2 second;
 
   public ORawPair(V1 first, V2 second) {
     this.first = first;
     this.second = second;
-  }
-
-  public V1 getFirst() {
-    return first;
-  }
-
-  public V2 getSecond() {
-    return second;
   }
 
   @Override

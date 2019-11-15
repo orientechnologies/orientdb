@@ -21,17 +21,12 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Basic interface to handle index.
@@ -215,7 +210,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return cursor which presents data associated with passed in keys.
    */
-  OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder);
+  IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder);
 
   OIndexDefinition getDefinition();
 
@@ -237,7 +232,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return Cursor which presents subset of index data between passed in keys.
    */
-  OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder);
+  IndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder);
 
   /**
    * Returns cursor which presents subset of data which associated with key which is greater than passed in key.
@@ -248,7 +243,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return cursor which presents subset of data which associated with key which is greater than passed in key.
    */
-  OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
+  IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
 
   /**
    * Returns cursor which presents subset of data which associated with key which is less than passed in key.
@@ -259,66 +254,18 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return cursor which presents subset of data which associated with key which is less than passed in key.
    */
-  OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
+  IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
 
-  OIndexCursor cursor();
+  IndexCursor cursor();
 
-  OIndexCursor descCursor();
+  IndexCursor descCursor();
 
-  OIndexKeyCursor keyCursor();
+  IndexKeySpliterator keySpliterator();
 
   ODocument getMetadata();
 
   boolean supportsOrderedIterations();
 
-  /**
-   * Returns amount of times when index was rebuilt since storage was opened.
-   * <p>
-   * It is used to support so called "live index rebuild" feature.
-   * <p>
-   * Value of this version is increased every time when index is going to be rebuild. So if two sequential calls of this method
-   * return different numbers it means that index at least started to rebuild itself.
-   * <p>
-   * If you use indexes to increase speed of fetching data from database you should follow following workflow:
-   * <ol>
-   * <li>Read index rebuild version.</li>
-   * <li>Check index rebuild flag {@link #isRebuilding()}, if it is true, do not use index and fetch data directly from
-   * database clusters.</li>
-   * <li>Fetch data from index.</li>
-   * <li>Read index rebuild version again, if it is not equal to version which was read at first time, go to step 2.
-   * It is VERY important do not reorder steps 1 and 2. Such recording may lead to situation when index is rebuilding but we miss
-   * this state.</li>
-   * </ol>
-   * <p>
-   * This approach works well ONLY if you do not use methods which return {@link OIndexCursor} instance. In case of you work with
-   * cursors index rebuild may cause data inconsistency issues in both:
-   * <ol>
-   * <li>Code which calls index methods to create cursor (can be avoided using steps are listed above)</li>
-   * <li>During iteration over the cursor itself</li>
-   * </ol>
-   * <p>
-   * To detect last data inconsistency issue please use cursor wrapper {@link OIndexChangesWrapper} which throws {@link
-   * com.orientechnologies.orient.core.exception.OIndexIsRebuildingException} in case of index rebuild.
-   * <p>
-   * Both of these approaches are used in implementation of support of "live index rebuild" for <code>SELECT</code> SQL queries.
-   * <ol>
-   * <li>In case of index which we are going to use to speed up <code>SELECT</code> query is rebuilding
-   * we skip this index.</li>
-   * <li>If index is rebuilding at the moment when we iterate over the cursor
-   * we catch {@link com.orientechnologies.orient.core.exception.OIndexIsRebuildingException} exception and retry whole query
-   * again.</li>
-   * </ol>
-   *
-   * @return amount of times  when index was rebuilt since the start of the storage.
-   *
-   * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#searchForIndexes(com.orientechnologies.orient.core.metadata.schema.OClass)
-   * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#getIndexCursors(com.orientechnologies.orient.core.metadata.schema.OClass)
-   * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#getOptimizedSortCursor(com.orientechnologies.orient.core.metadata.schema.OClass)
-   * @see com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage#command(com.orientechnologies.orient.core.command.OCommandRequestText)
-   * @see OIndexChangesWrapper
-   * @see com.orientechnologies.orient.core.exception.OIndexIsRebuildingException
-   * @see com.orientechnologies.orient.core.exception.ORetryQueryException
-   */
   long getRebuildVersion();
 
   /**

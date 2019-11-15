@@ -1,11 +1,12 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexCursor;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -20,12 +21,12 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   private final   OBooleanExpression ridCondition;
   private final   boolean            orderAsc;
 
-  private Map.Entry<Object, OIdentifiable> nextEntry = null;
+  private ORawPair<Object, ORID> nextEntry = null;
 
   private OBooleanExpression condition;
 
-  private boolean      inited = false;
-  private OIndexCursor cursor;
+  private boolean     inited = false;
+  private IndexCursor cursor;
 
   private long cost = 0;
 
@@ -64,9 +65,9 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
           if (!hasNext()) {
             throw new IllegalStateException();
           }
-          Map.Entry<Object, OIdentifiable> entry = nextEntry;
+          ORawPair<Object, ORID> entry = nextEntry;
           OResultInternal result = new OResultInternal();
-          OIdentifiable value = entry.getValue();
+          ORID value = entry.second;
 
 //        if(index.isAutomatic()) {
 //          ORecord record = value.getRecord();
@@ -74,7 +75,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 //            ctx.getDatabase().delete(record);
 //          }
 //        }else{
-          index.remove(entry.getKey(), value);
+          index.remove(entry.first, value);
 //        }
           localCount++;
           nextEntry = loadNextEntry(ctx);
@@ -118,22 +119,21 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     }
   }
 
-  private Map.Entry<Object, OIdentifiable> loadNextEntry(OCommandContext commandContext) {
-    Map.Entry<Object, OIdentifiable> result = cursor.nextEntry();
-    while (true) {
-      if (result == null) {
-        return null;
-      }
+  private ORawPair<Object, ORID> loadNextEntry(OCommandContext commandContext) {
+    final Iterator<ORawPair<Object, ORID>> iterator = Spliterators.iterator(cursor);
+    while (iterator.hasNext()) {
+      final ORawPair<Object, ORID> entry = iterator.next();
       if (ridCondition == null) {
-        return result;
+        return entry;
       }
       OResultInternal res = new OResultInternal();
-      res.setProperty("rid", result.getValue());
+      res.setProperty("rid", entry.second);
       if (ridCondition.evaluate(res, commandContext)) {
-        return result;
+        return entry;
       }
-      result = cursor.nextEntry();
     }
+
+    return null;
   }
 
   private void init(OBooleanExpression condition) {
@@ -253,7 +253,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return rightValue;
   }
 
-  private OIndexCursor createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
+  private IndexCursor createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
       OCommandContext ctx) {
     boolean orderAsc = isOrderAsc();
     if (operator instanceof OEqualsCompareOperator) {

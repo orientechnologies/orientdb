@@ -1,13 +1,14 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.multivalue;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
+import java.util.Spliterator;
 
 public interface OCellBTreeMultiValue<K> {
   void create(OBinarySerializer<K> keySerializer, OType[] keyTypes, int keySize, OEncryption encryption) throws IOException;
@@ -26,26 +27,18 @@ public interface OCellBTreeMultiValue<K> {
 
   boolean remove(K key, ORID value) throws IOException;
 
-  OCellBTreeCursor<K, ORID> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
+  Spliterator<ORawPair<K, ORID>> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
 
-  OCellBTreeCursor<K, ORID> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
+  Spliterator<ORawPair<K, ORID>> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
 
   K firstKey();
 
   K lastKey();
 
-  OCellBTreeKeyCursor<K> keyCursor();
+  Spliterator<K> keySpliterator();
 
-  OCellBTreeCursor<K, ORID> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+  Spliterator<ORawPair<K, ORID>> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
       boolean ascSortOrder);
 
   void acquireAtomicExclusiveLock();
-
-  interface OCellBTreeCursor<K2, V> {
-    Map.Entry<K2, V> next(int prefetchSize);
-  }
-
-  interface OCellBTreeKeyCursor<K2> {
-    K2 next(int prefetchSize);
-  }
 }

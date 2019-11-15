@@ -26,6 +26,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.types.OModifiableLong;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
@@ -44,12 +45,14 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * This is implementation which is based on B+-tree implementation threaded tree. The main differences are:
@@ -213,6 +216,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
           while (leftSibling >= 0) {
             cacheEntry = loadPageForRead(atomicOperation, fileId, leftSibling, false);
             try {
+              @SuppressWarnings("ObjectAllocationInLoop")
               final CellBTreeMultiValueV2Bucket<K> bucket = new CellBTreeMultiValueV2Bucket<>(cacheEntry);
               final int size = bucket.size();
 
@@ -272,17 +276,15 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
             if (values.size() < size) {
               final long mId = nullBucket.getMid();
 
-              final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
+              final Spliterator<ORawPair<MultiValueEntry, Byte>> spliterator = multiContainer
                   .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true,
                       new MultiValueEntry(mId, Integer.MAX_VALUE, Long.MAX_VALUE), true, true);
-              Map.Entry<MultiValueEntry, Byte> entry = cursor.next(-1);
 
-              while (entry != null) {
-                final MultiValueEntry multiValueEntry = entry.getKey();
-                values.add(new ORecordId(multiValueEntry.clusterId, multiValueEntry.clusterPosition));
+              values.addAll(StreamSupport.stream(spliterator, false).map((pair) -> {
+                final MultiValueEntry entry = pair.first;
+                return new ORecordId(entry.clusterId, entry.clusterPosition);
+              }).collect(Collectors.toList()));
 
-                entry = cursor.next(-1);
-              }
             }
             return values;
           } finally {
@@ -304,73 +306,37 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     final CellBTreeMultiValueV2Bucket.LeafEntry entry = bucket.getLeafEntry(itemIndex, keySerializer, encryption != null);
     result.addAll(entry.values);
     if (entry.values.size() < entry.entriesCount) {
-      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
+      final Spliterator<ORawPair<MultiValueEntry, Byte>> spliterator = multiContainer
           .iterateEntriesBetween(new MultiValueEntry(entry.mId, 0, 0), true,
               new MultiValueEntry(entry.mId, Integer.MAX_VALUE, Long.MAX_VALUE), true, true);
 
-      Map.Entry<MultiValueEntry, Byte> cursorEntry = cursor.next(-1);
-      while (cursorEntry != null) {
-        final MultiValueEntry multiValueEntry = cursorEntry.getKey();
-        result.add(new ORecordId(multiValueEntry.clusterId, multiValueEntry.clusterPosition));
-        cursorEntry = cursor.next(-1);
-      }
+      result.addAll(StreamSupport.stream(spliterator, false).map((pair) -> {
+        final MultiValueEntry multiValueEntry = pair.first;
+        return new ORecordId(multiValueEntry.clusterId, multiValueEntry.clusterPosition);
+      }).collect(Collectors.toList()));
     }
   }
 
   private void fetchMapEntries(@SuppressWarnings("SameParameterValue") final int itemIndex, final K key,
-      final List<Map.Entry<K, ORID>> result, final CellBTreeMultiValueV2Bucket<K> bucket) {
+      final List<ORawPair<K, ORID>> result, final CellBTreeMultiValueV2Bucket<K> bucket) {
     final CellBTreeMultiValueV2Bucket.LeafEntry entry = bucket.getLeafEntry(itemIndex, keySerializer, encryption != null);
     fetchMapEntriesFromLeafEntry(key, result, entry);
   }
 
-  private void fetchMapEntriesFromLeafEntry(K key, List<Map.Entry<K, ORID>> result, CellBTreeMultiValueV2Bucket.LeafEntry entry) {
+  private void fetchMapEntriesFromLeafEntry(K key, List<ORawPair<K, ORID>> result, CellBTreeMultiValueV2Bucket.LeafEntry entry) {
     for (final ORID rid : entry.values) {
-      result.add(new Map.Entry<K, ORID>() {
-        @Override
-        public K getKey() {
-          return key;
-        }
-
-        @Override
-        public ORID getValue() {
-          return rid;
-        }
-
-        @Override
-        public ORID setValue(final ORID value) {
-          throw new UnsupportedOperationException("setValue");
-        }
-      });
+      result.add(new ORawPair<>(key, rid));
     }
 
     if (entry.values.size() < entry.entriesCount) {
-      final OSBTree.OSBTreeCursor<MultiValueEntry, Byte> cursor = multiContainer
+      final Spliterator<ORawPair<MultiValueEntry, Byte>> spliterator = multiContainer
           .iterateEntriesBetween(new MultiValueEntry(entry.mId, 0, 0), true,
               new MultiValueEntry(entry.mId, Integer.MAX_VALUE, Long.MAX_VALUE), true, true);
 
-      Map.Entry<MultiValueEntry, Byte> cursorEntry = cursor.next(-1);
-      final MultiValueEntry multiValueEntry = cursorEntry.getKey();
-
-      while (cursorEntry != null) {
-        result.add(new Map.Entry<K, ORID>() {
-          @Override
-          public K getKey() {
-            return key;
-          }
-
-          @Override
-          public ORID getValue() {
-            return new ORecordId(multiValueEntry.clusterId, multiValueEntry.clusterPosition);
-          }
-
-          @Override
-          public ORID setValue(final ORID value) {
-            throw new UnsupportedOperationException("setValue");
-          }
-        });
-
-        cursorEntry = cursor.next(-1);
-      }
+      result.addAll(StreamSupport.stream(spliterator, false).map((pair) -> {
+        final MultiValueEntry multiValueEntry = pair.first;
+        return new ORawPair<K, ORID>(key, new ORecordId(multiValueEntry.clusterId, multiValueEntry.clusterPosition));
+      }).collect(Collectors.toList()));
     }
   }
 
@@ -755,7 +721,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     return removed;
   }
 
-  public OCellBTreeCursor<K, ORID> iterateEntriesMinor(final K key, final boolean inclusive, final boolean ascSortOrder) {
+  public Spliterator<ORawPair<K, ORID>> iterateEntriesMinor(final K key, final boolean inclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -773,7 +739,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  public OCellBTreeCursor<K, ORID> iterateEntriesMajor(final K key, final boolean inclusive, final boolean ascSortOrder) {
+  public Spliterator<ORawPair<K, ORID>> iterateEntriesMajor(final K key, final boolean inclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -851,7 +817,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  public OCellBTreeKeyCursor<K> keyCursor() {
+  public Spliterator<K> keySpliterator() {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -859,7 +825,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         final BucketSearchResult searchResult = firstItem(atomicOperation);
         if (searchResult == null) {
-          return prefetchSize -> null;
+          return Spliterators.emptySpliterator();
         }
 
         return new OCellBTreeFullKeyCursor(searchResult.pageIndex);
@@ -874,7 +840,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  public OCellBTreeCursor<K, ORID> iterateEntriesBetween(final K keyFrom, final boolean fromInclusive, final K keyTo,
+  public Spliterator<ORawPair<K, ORID>> iterateEntriesBetween(final K keyFrom, final boolean fromInclusive, final K keyTo,
       final boolean toInclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
@@ -910,7 +876,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesMinorDesc(K key, final boolean inclusive) {
+  private Spliterator<ORawPair<K, ORID>> iterateEntriesMinorDesc(K key, final boolean inclusive) {
     //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorDesc(key, inclusive);
@@ -918,7 +884,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     return new OCellBTreeCursorBackward(null, key, false, inclusive);
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesMinorAsc(K key, final boolean inclusive) {
+  private Spliterator<ORawPair<K, ORID>> iterateEntriesMinorAsc(K key, final boolean inclusive) {
     //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorAsc(key, inclusive);
@@ -950,7 +916,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     return key;
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesMajorAsc(K key, final boolean inclusive) {
+  private Spliterator<ORawPair<K, ORID>> iterateEntriesMajorAsc(K key, final boolean inclusive) {
     //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMajorAsc(key, inclusive);
@@ -958,7 +924,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     return new OCellBTreeCursorForward(key, null, inclusive, false);
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesMajorDesc(K key, final boolean inclusive) {
+  private Spliterator<ORawPair<K, ORID>> iterateEntriesMajorDesc(K key, final boolean inclusive) {
     acquireSharedLock();
     try {
       //noinspection RedundantCast
@@ -1117,7 +1083,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesBetweenAscOrder(K keyFrom, final boolean fromInclusive, K keyTo,
+  private Spliterator<ORawPair<K, ORID>> iterateEntriesBetweenAscOrder(K keyFrom, final boolean fromInclusive, K keyTo,
       final boolean toInclusive) {
     //noinspection RedundantCast
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
@@ -1130,7 +1096,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     return new OCellBTreeCursorForward(keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
-  private OCellBTreeCursor<K, ORID> iterateEntriesBetweenDescOrder(K keyFrom, final boolean fromInclusive, K keyTo,
+  private Spliterator<ORawPair<K, ORID>> iterateEntriesBetweenDescOrder(K keyFrom, final boolean fromInclusive, K keyTo,
       final boolean toInclusive) {
     //noinspection RedundantCast
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
@@ -1344,7 +1310,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     } else if (keyIndex > indexToSplit) {
       return addToTheRightNonRootBucket(keyIndex, splitLeaf, indexToSplit, rightBucketEntry.getPageIndex(), resultPath,
           resultInsertionIndexes);
-    } else if (splitLeaf && keyToInsert.equals(separationKey != null ? separationKey : deserializeKey(serializedSeparationKey))) {
+    } else if (splitLeaf && keyToInsert
+        .equals(Optional.ofNullable(separationKey).orElseGet(() -> deserializeKey(serializedSeparationKey)))) {
       return addToTheRightNonRootBucket(keyIndex, true, indexToSplit, rightBucketEntry.getPageIndex(), resultPath,
           resultInsertionIndexes);
     } else {
@@ -1662,7 +1629,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       this.itemIndex = itemIndex;
     }
 
-    final long getLastPathItem() {
+    private long getLastPathItem() {
       return path.get(path.size() - 1);
     }
   }
@@ -1677,37 +1644,32 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  public final class OCellBTreeFullKeyCursor implements OCellBTreeKeyCursor<K> {
+  public final class OCellBTreeFullKeyCursor implements Spliterator<K> {
     private long pageIndex;
     private int  itemIndex;
 
     private List<K>     keysCache    = new ArrayList<>();
     private Iterator<K> keysIterator = new OEmptyIterator<>();
 
-    OCellBTreeFullKeyCursor(final long startPageIndex) {
+    private OCellBTreeFullKeyCursor(final long startPageIndex) {
       pageIndex = startPageIndex;
       itemIndex = 0;
     }
 
     @Override
-    public K next(int prefetchSize) {
+    public boolean tryAdvance(Consumer<? super K> action) {
       if (keysIterator == null) {
-        return null;
+        return false;
       }
 
       if (keysIterator.hasNext()) {
-        return keysIterator.next();
+        action.accept(keysIterator.next());
+        return true;
       }
 
       keysCache.clear();
 
-      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger()) {
-        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
-      }
-
-      if (prefetchSize == 0) {
-        prefetchSize = 1;
-      }
+      final int prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
 
       atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
@@ -1762,23 +1724,45 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
       if (keysCache.isEmpty()) {
         keysCache = null;
-        return null;
+        return false;
       }
 
       keysIterator = keysCache.iterator();
-      return keysIterator.next();
+      action.accept(keysIterator.next());
+      return true;
+    }
+
+    @Override
+    public Spliterator<K> trySplit() {
+      return null;
+    }
+
+    @Override
+    public long estimateSize() {
+      return Long.MAX_VALUE;
+
+    }
+
+    @Override
+    public int characteristics() {
+      return NONNULL | ORDERED | SORTED;
+    }
+
+    @Override
+    public Comparator<? super K> getComparator() {
+      return comparator;
     }
   }
 
-  private final class OCellBTreeCursorForward implements OCellBTreeCursor<K, ORID> {
+  private final class OCellBTreeCursorForward implements Spliterator<ORawPair<K, ORID>> {
     private       K       fromKey;
     private final K       toKey;
     private       boolean fromKeyInclusive;
     private final boolean toKeyInclusive;
 
-    private final List<Map.Entry<K, ORID>>     dataCache         = new ArrayList<>();
+    private final List<ORawPair<K, ORID>>     dataCache         = new ArrayList<>();
     @SuppressWarnings("unchecked")
-    private       Iterator<Map.Entry<K, ORID>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
+    private       Iterator<ORawPair<K, ORID>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
 
     private OCellBTreeCursorForward(final K fromKey, final K toKey, final boolean fromKeyInclusive, final boolean toKeyInclusive) {
       this.fromKey = fromKey;
@@ -1791,29 +1775,25 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       }
     }
 
-    public Map.Entry<K, ORID> next(int prefetchSize) {
+    @Override
+    public boolean tryAdvance(Consumer<? super ORawPair<K, ORID>> action) {
       if (dataCacheIterator == null) {
-        return null;
+        return false;
       }
 
       if (dataCacheIterator.hasNext()) {
-        final Map.Entry<K, ORID> entry = dataCacheIterator.next();
+        final ORawPair<K, ORID> entry = dataCacheIterator.next();
 
-        fromKey = entry.getKey();
+        fromKey = entry.first;
         fromKeyInclusive = false;
 
-        return entry;
+        action.accept(entry);
+        return true;
       }
 
       dataCache.clear();
 
-      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger()) {
-        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
-      }
-
-      if (prefetchSize == 0) {
-        prefetchSize = 1;
-      }
+      final int prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
 
       atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
@@ -1831,7 +1811,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
           if (bucketSearchResult == null) {
             dataCacheIterator = null;
-            return null;
+            return false;
           }
 
           long pageIndex = bucketSearchResult.pageIndex;
@@ -1951,29 +1931,50 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
       if (dataCache.isEmpty()) {
         dataCacheIterator = null;
-        return null;
+        return false;
       }
 
       dataCacheIterator = dataCache.iterator();
 
-      final Map.Entry<K, ORID> entry = dataCacheIterator.next();
+      final ORawPair<K, ORID> entry = dataCacheIterator.next();
 
-      fromKey = entry.getKey();
+      fromKey = entry.first;
       fromKeyInclusive = false;
 
-      return entry;
+      action.accept(entry);
+      return true;
+
+    }
+
+    @Override
+    public Spliterator<ORawPair<K, ORID>> trySplit() {
+      return null;
+    }
+
+    @Override
+    public long estimateSize() {
+      return Long.MAX_VALUE;
+    }
+
+    @Override
+    public int characteristics() {
+      return NONNULL | ORDERED | SORTED;
+    }
+
+    @Override
+    public Comparator<? super ORawPair<K, ORID>> getComparator() {
+      return (pairOne, pairTwo) -> comparator.compare(pairOne.first, pairTwo.first);
     }
   }
 
-  private final class OCellBTreeCursorBackward implements OCellBTreeCursor<K, ORID> {
+  private final class OCellBTreeCursorBackward implements Spliterator<ORawPair<K, ORID>> {
     private final K       fromKey;
     private       K       toKey;
     private final boolean fromKeyInclusive;
     private       boolean toKeyInclusive;
 
-    private final List<Map.Entry<K, ORID>>     dataCache         = new ArrayList<>();
-    @SuppressWarnings("unchecked")
-    private       Iterator<Map.Entry<K, ORID>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
+    private final List<ORawPair<K, ORID>>     dataCache         = new ArrayList<>();
+    private       Iterator<ORawPair<K, ORID>> dataCacheIterator = Collections.emptyIterator();
 
     private OCellBTreeCursorBackward(final K fromKey, final K toKey, final boolean fromKeyInclusive, final boolean toKeyInclusive) {
       this.fromKey = fromKey;
@@ -1987,25 +1988,25 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
     }
 
-    public Map.Entry<K, ORID> next(int prefetchSize) {
+    @Override
+    public boolean tryAdvance(Consumer<? super ORawPair<K, ORID>> action) {
       if (dataCacheIterator == null) {
-        return null;
+        return false;
       }
 
       if (dataCacheIterator.hasNext()) {
-        final Map.Entry<K, ORID> entry = dataCacheIterator.next();
-        toKey = entry.getKey();
+        final ORawPair<K, ORID> entry = dataCacheIterator.next();
+        toKey = entry.first;
 
         toKeyInclusive = false;
-        return entry;
+
+        action.accept(entry);
+        return true;
       }
 
       dataCache.clear();
 
-      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger()) {
-        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
-      }
-
+      final int prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
       atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
         acquireSharedLock();
@@ -2022,7 +2023,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
           if (bucketSearchResult == null) {
             dataCacheIterator = null;
-            return null;
+            return false;
           }
 
           long pageIndex = bucketSearchResult.pageIndex;
@@ -2142,17 +2143,38 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
       if (dataCache.isEmpty()) {
         dataCacheIterator = null;
-        return null;
+        return false;
       }
 
       dataCacheIterator = dataCache.iterator();
 
-      final Map.Entry<K, ORID> entry = dataCacheIterator.next();
+      final ORawPair<K, ORID> entry = dataCacheIterator.next();
 
-      toKey = entry.getKey();
+      toKey = entry.first;
       toKeyInclusive = false;
 
-      return entry;
+      action.accept(entry);
+      return true;
+    }
+
+    @Override
+    public Spliterator<ORawPair<K, ORID>> trySplit() {
+      return null;
+    }
+
+    @Override
+    public long estimateSize() {
+      return Long.MAX_VALUE;
+    }
+
+    @Override
+    public int characteristics() {
+      return NONNULL | SORTED | ORDERED;
+    }
+
+    @Override
+    public Comparator<? super ORawPair<K, ORID>> getComparator() {
+      return (pairOne, pairTwo) -> -comparator.compare(pairOne.first, pairTwo.first);
     }
   }
 }

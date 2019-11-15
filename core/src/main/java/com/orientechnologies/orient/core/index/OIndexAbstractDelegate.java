@@ -108,18 +108,18 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+  public IndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
       boolean ascOrder) {
     return delegate.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     return delegate.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     return delegate.iterateEntriesMinor(toKey, toInclusive, ascOrder);
   }
 
@@ -209,7 +209,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+  public IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
     return delegate.iterateEntries(keys, ascSortOrder);
   }
 
@@ -256,18 +256,18 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public OIndexCursor cursor() {
+  public IndexCursor cursor() {
     return delegate.cursor();
   }
 
   @Override
-  public OIndexCursor descCursor() {
+  public IndexCursor descCursor() {
     return delegate.descCursor();
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
-    return delegate.keyCursor();
+  public IndexKeySpliterator keySpliterator() {
+    return delegate.keySpliterator();
   }
 
   @Override

@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -47,7 +46,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     List<ODocument> result = database.command(new OCommandSQL("select from LinkSetIndexTestClass")).execute();
     Assert.assertEquals(result.size(), 0);
 
-    if (((ODatabaseDocumentInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "linkSetIndex");
       Assert.assertEquals(index.getSize(), 0);
 
@@ -76,15 +75,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -115,15 +113,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -157,15 +154,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -207,15 +203,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -252,15 +247,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -289,16 +283,15 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 3);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
           .equals(docThree.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -336,16 +329,15 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 3);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
           .equals(docThree.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -378,15 +370,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -420,15 +411,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 1);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -457,15 +447,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -491,15 +480,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 1);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -568,7 +556,6 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
 
-
     linkSet.add(docOne);
     linkSet.add(docTwo);
 
@@ -582,15 +569,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    IndexKeySpliterator keyCursor = index.keySpliterator();
+    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
 
-    while (key != null) {
+    while (keysIterator.hasNext()) {
+      OIdentifiable key = (OIdentifiable) keysIterator.next();
       if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
         Assert.fail("Unknown key found: " + key);
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 

@@ -40,7 +40,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * Index engine implementation that relies on multiple hash indexes partitioned by key.
@@ -326,18 +328,19 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public OIndexCursor cursor(final ValuesTransformer valuesTransformer) {
+  public IndexCursor cursor(final ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("cursor");
   }
 
   @Override
-  public OIndexCursor descCursor(final ValuesTransformer valuesTransformer) {
+  public IndexCursor descCursor(final ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("descCursor");
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
-    return new OIndexKeyCursor() {
+  public IndexKeySpliterator keyCursor() {
+    return new IndexKeySpliterator() {
+
       private int nextPartition = 1;
       private OHashTable<Object, Object> hashTable;
       private int nextEntriesIndex;
@@ -359,9 +362,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       }
 
       @Override
-      public Object next(final int prefetchSize) {
+      public boolean tryAdvance(Consumer<? super Object> action) {
         if (entries.length == 0) {
-          return null;
+          return false;
         }
 
         final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
@@ -382,25 +385,41 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
           }
         }
 
-        return bucketEntry.key;
+        action.accept(bucketEntry.key);
+        return true;
+      }
+
+      @Override
+      public Spliterator<Object> trySplit() {
+        return null;
+      }
+
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
+
+      @Override
+      public int characteristics() {
+        return NONNULL;
       }
     };
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(final Object rangeFrom, final boolean fromInclusive, final Object rangeTo,
+  public IndexCursor iterateEntriesBetween(final Object rangeFrom, final boolean fromInclusive, final Object rangeTo,
       final boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(final Object fromKey, final boolean isInclusive, final boolean ascSortOrder,
+  public IndexCursor iterateEntriesMajor(final Object fromKey, final boolean isInclusive, final boolean ascSortOrder,
       ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -43,9 +45,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SQL UPDATE command.
@@ -230,11 +230,11 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
           return total;
         } else {
           // RETURNS ALL THE DELETED RECORDS
-          OIndexCursor cursor = index.cursor();
-          Map.Entry<Object, OIdentifiable> entry;
+          Iterator<ORawPair<Object, ORID>> cursor = Spliterators.iterator(index.cursor());
 
-          while ((entry = cursor.nextEntry()) != null) {
-            OIdentifiable rec = entry.getValue();
+          while (cursor.hasNext()) {
+            final ORawPair<Object, ORID> entry = cursor.next();
+            OIdentifiable rec = entry.second;
             rec = rec.getRecord();
             if (rec != null)
               allDeletedRecords.add((ORecord) rec);

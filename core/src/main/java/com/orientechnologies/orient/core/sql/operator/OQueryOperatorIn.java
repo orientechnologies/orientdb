@@ -53,11 +53,11 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
   @SuppressWarnings("unchecked")
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
-    OIndexCursor cursor;
+    IndexCursor cursor;
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;
 
@@ -155,11 +155,11 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         indexResult = index.iterateEntries(inKeys, ascSortOrder);
 
         if (indexResult == null || indexResult instanceof OIdentifiable) {
-          cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, inKeys);
-        } else if (indexResult instanceof OIndexCursor) {
-          cursor = (OIndexCursor) indexResult;
+          cursor = new IndexCursorSingleValue((OIdentifiable) indexResult, inKeys);
+        } else if (indexResult instanceof IndexCursor) {
+          cursor = (IndexCursor) indexResult;
         } else {
-          cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, inKeys);
+          cursor = new IndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, inKeys);
         }
       } else
         return null;

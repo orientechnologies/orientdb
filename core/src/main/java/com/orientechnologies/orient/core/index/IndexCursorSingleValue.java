@@ -19,11 +19,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 
 /**
  * Implementation of index cursor in case of only single entree should be returned.
@@ -31,12 +33,12 @@ import java.util.NoSuchElementException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/4/14
  */
-public class OIndexCursorSingleValue extends OIndexAbstractCursor implements OSizeable {
+public class IndexCursorSingleValue implements OSizeable, IndexCursor {
   private final Object        key;
   private       OIdentifiable identifiable;
   private       boolean       empty = false;
 
-  public OIndexCursorSingleValue(OIdentifiable identifiable, Object key) {
+  public IndexCursorSingleValue(OIdentifiable identifiable, Object key) {
     this.identifiable = identifiable;
     this.key = key;
     if (this.identifiable == null) {
@@ -45,49 +47,34 @@ public class OIndexCursorSingleValue extends OIndexAbstractCursor implements OSi
   }
 
   @Override
-  public boolean hasNext() {
-    return identifiable != null;
-  }
-
-  @Override
-  public OIdentifiable next() {
-    if (identifiable == null)
-      throw new NoSuchElementException();
-
-    final OIdentifiable value = identifiable;
-    identifiable = null;
-    return value;
-  }
-
-  @Override
-  public Map.Entry<Object, OIdentifiable> nextEntry() {
-    if (identifiable == null)
-      return null;
-
-    final OIdentifiable value = identifiable;
-    identifiable = null;
-
-    return new Map.Entry<Object, OIdentifiable>() {
-
-      @Override
-      public Object getKey() {
-        return key;
-      }
-
-      @Override
-      public OIdentifiable getValue() {
-        return value;
-      }
-
-      @Override
-      public OIdentifiable setValue(OIdentifiable value) {
-        throw new UnsupportedOperationException("setValue");
-      }
-    };
-  }
-
-  @Override
   public int size() {
     return empty ? 0 : 1;
+  }
+
+  @Override
+  public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+    if (identifiable == null) {
+      return false;
+    }
+
+    action.accept(new ORawPair<>(key, identifiable.getIdentity()));
+    identifiable = null;
+
+    return true;
+  }
+
+  @Override
+  public Spliterator<ORawPair<Object, ORID>> trySplit() {
+    return null;
+  }
+
+  @Override
+  public long estimateSize() {
+    return 1;
+  }
+
+  @Override
+  public int characteristics() {
+    return NONNULL | SIZED | ORDERED;
   }
 }

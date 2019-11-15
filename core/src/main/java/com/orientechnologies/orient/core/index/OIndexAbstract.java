@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.StreamSupport;
 
 /**
  * Handles indexing when records change. The underlying lock manager for keys can be the {@link OPartitionedLockManager}, the
@@ -553,21 +554,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       while (true)
         try {
-          final OIndexKeyCursor indexCursor = keyCursor();
-
-          Object key = indexCursor.next(-1);
-          while (key != null) {
-            Object entry = get(key);
-            if (entry instanceof Collection) {
-              //noinspection unchecked
-              for (final OIdentifiable entryItem : (Collection<OIdentifiable>) entry) {
-                remove(key, entryItem);
-              }
-            } else {
-              remove(key, (OIdentifiable) entry);
-            }
-
-            key = indexCursor.next(-1);
+          final Object firstKey = getFirstKey();
+          final Object lastKey = getLastKey();
+          if (firstKey != null && lastKey != null) {
+            final IndexCursor cursor = iterateEntriesBetween(firstKey, true, lastKey, true, true);
+            //noinspection ObjectAllocationInLoop
+            StreamSupport.stream(cursor, false).forEach((pair) -> remove(pair.first, pair.second));
           }
 
           storage.deleteIndexEngine(indexId);
@@ -700,6 +692,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
    * changes.
    *
    * @param changes the changes to interpret.
+   *
    * @return the interpreted index key changes.
    */
   protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
@@ -780,7 +773,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
+  public IndexKeySpliterator keySpliterator() {
     acquireSharedLock();
     try {
       while (true)
@@ -1075,6 +1068,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       document.field(VALUE_CONTAINER_ALGORITHM, valueContainerAlgorithm);
 
     }
+
   }
 
   public static void manualIndexesWarning() {

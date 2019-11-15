@@ -123,10 +123,10 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
-    OIndexCursor cursor;
+    IndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;

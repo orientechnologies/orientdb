@@ -4,6 +4,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -13,12 +14,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -36,13 +39,15 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private long cost  = 0;
   private long count = 0;
 
-  private boolean            inited      = false;
-  private OIndexCursor       cursor;
-  private List<OIndexCursor> nextCursors = new ArrayList<>();
+  private boolean                          inited = false;
+  private IndexCursor                      cursor;
+  private Iterator<ORawPair<Object, ORID>> indexIterator;
+
+  private final List<IndexCursor> nextCursors = new ArrayList<>();
 
   private OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
   private Iterator                                                   nullKeyIterator;
-  private Map.Entry<Object, OIdentifiable>                           nextEntry = null;
+  private ORawPair<Object, ORID>                                     nextEntry = null;
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OCommandContext ctx, boolean profilingEnabled) {
@@ -104,8 +109,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         }
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
-          Object key = nextEntry.getKey();
-          OIdentifiable value = nextEntry.getValue();
+          Object key = nextEntry.first;
+          OIdentifiable value = nextEntry.second;
 
           nextEntry = null;
 
@@ -151,34 +156,25 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private void fetchNextEntry() {
     nextEntry = null;
     if (cursor != null) {
-      nextEntry = cursor.nextEntry();
-      while (nextEntry == null && nextCursors.size() > 0) {
-        cursor = nextCursors.remove(0);
-        nextEntry = cursor.nextEntry();
+      while (!indexIterator.hasNext()) {
+        if (!nextCursors.isEmpty()) {
+          cursor = nextCursors.remove(0);
+          indexIterator = Spliterators.iterator(cursor);
+        } else {
+          cursor = null;
+          indexIterator = null;
+          break;
+        }
       }
     }
     if (nextEntry == null && customIterator != null && customIterator.hasNext()) {
-      nextEntry = customIterator.next();
+      final Map.Entry<Object, OIdentifiable> entry = customIterator.next();
+      nextEntry = new ORawPair<>(entry.getKey(), entry.getValue().getIdentity());
     }
 
     if (nextEntry == null && nullKeyIterator != null && nullKeyIterator.hasNext()) {
       OIdentifiable nextValue = (OIdentifiable) nullKeyIterator.next();
-      nextEntry = new Map.Entry<Object, OIdentifiable>() {
-        @Override
-        public Object getKey() {
-          return null;
-        }
-
-        @Override
-        public OIdentifiable getValue() {
-          return nextValue;
-        }
-
-        @Override
-        public OIdentifiable setValue(OIdentifiable value) {
-          return null;
-        }
-      };
+      nextEntry = new ORawPair<>(null, nextValue.getIdentity());
     }
     if (nextEntry == null) {
       updateIndexStats();
@@ -276,8 +272,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
             item = ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
           }
         }
-        OIndexCursor localCursor = createCursor(equals, definition, item, ctx);
 
+        Iterator<ORawPair<Object, ORID>> localCursor = Spliterators.iterator(createCursor(equals, definition, item, ctx));
         final Object itemRef = item;
         customIterator.add(new Iterator<Map.Entry>() {
           @Override
@@ -290,9 +286,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
             if (!localCursor.hasNext()) {
               throw new IllegalStateException();
             }
-            OIdentifiable value = localCursor.next();
-            return new Map.Entry() {
 
+            ORawPair<Object, ORID> value = localCursor.next();
+            return new Map.Entry() {
               @Override
               public Object getKey() {
                 return itemRef;
@@ -300,8 +296,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
               @Override
               public Object getValue() {
-
-                return value;
+                return value.second;
               }
 
               @Override
@@ -420,7 +415,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         .equalsIgnoreCase("LUCENE");
   }
 
-  private OIndexCursor getCursorForNullKey() {
+  private IndexCursor getCursorForNullKey() {
     Object result = index.get(null);
 
     if (!(result instanceof Iterable)) {
@@ -428,69 +423,32 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
     final Object r = result;
 
-    OIndexCursor cursor = new OIndexCursor() {
-
+    IndexCursor cursor = new IndexCursor() {
       private final Iterator iter = ((Iterable) r).iterator();
 
       @Override
-      public boolean hasNext() {
-        return iter.hasNext();
-      }
-
-      @Override
-      public OIdentifiable next() {
-        return (OIdentifiable) iter.next();
-      }
-
-      @Override
-      public Map.Entry<Object, OIdentifiable> nextEntry() {
+      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
         if (!iter.hasNext()) {
-          return null;
+          return false;
         }
         Object val = iter.next();
-        return new Map.Entry<Object, OIdentifiable>() {
-          @Override
-          public Object getKey() {
-            return null;
-          }
-
-          @Override
-          public OIdentifiable getValue() {
-            return (OIdentifiable) val;
-          }
-
-          @Override
-          public OIdentifiable setValue(OIdentifiable value) {
-            return (OIdentifiable) val;
-          }
-        };
+        action.accept(new ORawPair<>(null, ((OIdentifiable) val).getIdentity()));
+        return true;
       }
 
       @Override
-      public Set<OIdentifiable> toValues() {
-        Set<OIdentifiable> res = new HashSet<>();
-        while (hasNext()) {
-          res.add(next());
-        }
-        return res;
+      public Spliterator<ORawPair<Object, ORID>> trySplit() {
+        return null;
       }
 
       @Override
-      public Set<Map.Entry<Object, OIdentifiable>> toEntries() {
-        Set<Map.Entry<Object, OIdentifiable>> res = new HashSet<>();
-        while (hasNext()) {
-          res.add(nextEntry());
-        }
-        return res;
+      public long estimateSize() {
+        return Long.MAX_VALUE;
       }
 
       @Override
-      public Set<Object> toKeys() {
-        return Collections.singleton(null);
-      }
-
-      @Override
-      public void setPrefetchSize(int prefetchSize) {
+      public int characteristics() {
+        return NONNULL | ORDERED;
       }
     };
     return cursor;
@@ -501,6 +459,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
    * <li>if it's a document, the RID is returned</li> </ul>
    *
    * @param value
+   *
    * @return
    */
   private Object unboxOResult(Object value) {
@@ -681,7 +640,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return rightValue;
   }
 
-  private OIndexCursor createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
+  private IndexCursor createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
       OCommandContext ctx) {
     boolean orderAsc = isOrderAsc();
     if (operator instanceof OEqualsCompareOperator || operator instanceof OContainsKeyOperator

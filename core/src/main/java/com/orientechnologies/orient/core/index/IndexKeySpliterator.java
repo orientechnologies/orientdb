@@ -20,14 +20,11 @@
 
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
-import java.util.Map;
+import java.util.Spliterator;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/22/14
  */
-public interface OIndexKeyCursor {
-  Object next(int prefetchSize);
+public interface IndexKeySpliterator extends Spliterator<Object> {
 }

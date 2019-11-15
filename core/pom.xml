@@ -252,6 +252,13 @@
         </dependency>
 
         <dependency>
+            <groupId>com.ibm.icu</groupId>
+            <artifactId>icu4j</artifactId>
+            <version>65.1</version>
+        </dependency>
+
+
+        <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-test-commons</artifactId>
             <version>${project.version}</version>

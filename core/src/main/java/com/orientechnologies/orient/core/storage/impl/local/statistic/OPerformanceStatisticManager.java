@@ -1039,10 +1039,10 @@ public class OPerformanceStatisticManager {
 
     WritCacheCountersHolder holder = null;
     for (ORawPair<Thread, PerformanceSnapshot> pair : snapshots) {
-      final Thread thread = pair.getFirst();
+      final Thread thread = pair.first;
 
       if (thread.isAlive()) {
-        final PerformanceSnapshot snapshot = pair.getSecond();
+        final PerformanceSnapshot snapshot = pair.second;
 
         if (snapshot.writCacheCountersHolder != null) {
           if (holder == null)
@@ -1099,10 +1099,10 @@ public class OPerformanceStatisticManager {
 
     StorageCountersHolder holder = null;
     for (ORawPair<Thread, PerformanceSnapshot> pair : snapshots) {
-      final Thread thread = pair.getFirst();
+      final Thread thread = pair.first;
 
       if (thread.isAlive()) {
-        final PerformanceSnapshot snapshot = pair.getSecond();
+        final PerformanceSnapshot snapshot = pair.second;
 
         if (snapshot.storageCountersHolder != null) {
           if (holder == null)
@@ -1159,10 +1159,10 @@ public class OPerformanceStatisticManager {
 
     WALCountersHolder holder = null;
     for (ORawPair<Thread, PerformanceSnapshot> pair : snapshots) {
-      final Thread thread = pair.getFirst();
+      final Thread thread = pair.first;
 
       if (thread.isAlive()) {
-        final PerformanceSnapshot snapshot = pair.getSecond();
+        final PerformanceSnapshot snapshot = pair.second;
 
         if (snapshot.walCountersHolder != null) {
           if (holder == null)
@@ -1217,10 +1217,10 @@ public class OPerformanceStatisticManager {
     }
 
     for (ORawPair<Thread, PerformanceSnapshot> pair : snapshots) {
-      final Thread thread = pair.getFirst();
+      final Thread thread = pair.first;
 
       if (thread.isAlive()) {
-        final PerformanceSnapshot snapshot = pair.getSecond();
+        final PerformanceSnapshot snapshot = pair.second;
         snapshot.performanceCountersHolder.pushData(countersHolder);
       } else {
         threadsToRemove.add(thread);
@@ -1263,9 +1263,9 @@ public class OPerformanceStatisticManager {
     }
 
     for (ORawPair<Thread, PerformanceSnapshot> pair : snapshots) {
-      final Thread thread = pair.getFirst();
+      final Thread thread = pair.first;
       if (thread.isAlive()) {
-        final PerformanceSnapshot snapshot = pair.getSecond();
+        final PerformanceSnapshot snapshot = pair.second;
         final PerformanceCountersHolder holder = snapshot.countersByComponent.get(componentName);
         if (holder != null)
           holder.pushData(componentCountersHolder);

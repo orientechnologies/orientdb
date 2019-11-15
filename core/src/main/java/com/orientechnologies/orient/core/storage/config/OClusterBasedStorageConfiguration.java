@@ -6,6 +6,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -20,7 +21,6 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
-import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
 
 import java.io.IOException;
@@ -28,6 +28,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public final class OClusterBasedStorageConfiguration implements OStorageConfiguration {
   public static final String MAP_FILE_EXTENSION  = ".ccm";
@@ -157,12 +159,16 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
       cluster.delete();
 
-      final OCellBTreeSingleValue.OCellBTreeKeyCursor<String> keyCursor = btree.keyCursor();
-      String treeKey = keyCursor.next(-1);
-      while (treeKey != null) {
-        btree.remove(treeKey);
-        treeKey = keyCursor.next(-1);
-      }
+      final Spliterator<String> keyCursor = btree.keySpliterator();
+      StreamSupport.stream(keyCursor, false).forEach((key) -> {
+        try {
+          btree.remove(key);
+        } catch (IOException e) {
+          throw OException
+              .wrapException(new OStorageException("Can not clear index inside of storage " + storage.getName() + " configuration"),
+                  e);
+        }
+      });
 
       btree.delete();
 
@@ -1030,22 +1036,19 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private void preloadConfigurationProperties() throws IOException {
-    final Map<String, String> properties = new HashMap<>(8);
-
-    final OCellBTreeSingleValue.OCellBTreeCursor<String, ORID> cursor = btree
-        .iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
-    Map.Entry<String, ORID> entry = cursor.next(-1);
-    while (entry != null) {
-      if (!entry.getKey().startsWith(PROPERTY_PREFIX_PROPERTY)) {
-        break;
-      }
-
-      final ORawBuffer buffer = cluster.readRecord(entry.getValue().getClusterPosition(), false);
-      properties.put(entry.getKey().substring(PROPERTY_PREFIX_PROPERTY.length()), deserializeStringValue(buffer.buffer, 0));
-
-      entry = cursor.next(-1);
-    }
+  private void preloadConfigurationProperties() {
+    final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
+    final Map<String, String> properties = StreamSupport.stream(cursor, false)
+        .filter((pair) -> pair.first.startsWith(PROPERTY_PREFIX_PROPERTY)).map((entry) -> {
+          final ORawBuffer buffer;
+          try {
+            buffer = cluster.readRecord(entry.second.getClusterPosition(), false);
+            return new ORawPair<>(entry.first.substring(PROPERTY_PREFIX_PROPERTY.length()),
+                deserializeStringValue(buffer.buffer, 0));
+          } catch (IOException e) {
+            throw OException.wrapException(new OStorageException("Can not preload configuration properties"), e);
+          }
+        }).collect(Collectors.toMap((pair) -> pair.first, (pair) -> pair.second));
 
     cache.put(PROPERTIES, properties);
   }
@@ -1085,23 +1088,15 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void clearProperties() {
     lock.acquireWriteLock();
     try {
-      final OCellBTreeSingleValue.OCellBTreeCursor<String, ORID> cursor = btree
-          .iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
+      final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
 
       final List<String> keysToRemove = new ArrayList<>(8);
       final List<ORID> ridsToRemove = new ArrayList<>(8);
 
-      Map.Entry<String, ORID> entry = cursor.next(-1);
-      while (entry != null) {
-        if (!entry.getKey().startsWith(PROPERTY_PREFIX_PROPERTY)) {
-          break;
-        }
-
-        keysToRemove.add(entry.getKey());
-        ridsToRemove.add(entry.getValue());
-
-        entry = cursor.next(-1);
-      }
+      StreamSupport.stream(cursor, false).filter((entry) -> entry.first.startsWith(PROPERTY_PREFIX_PROPERTY)).forEach((entry) -> {
+        keysToRemove.add(entry.first);
+        ridsToRemove.add(entry.second);
+      });
 
       boolean rollback = false;
       atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true);
@@ -1167,51 +1162,28 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public Set<String> indexEngines() {
     lock.acquireReadLock();
     try {
-      final OCellBTreeSingleValue.OCellBTreeCursor<String, ORID> cursor = btree
-          .iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
-
-      final Set<String> result = new HashSet<>(4);
-      Map.Entry<String, ORID> entry = cursor.next(-1);
-      while (entry != null) {
-        if (!entry.getKey().startsWith(ENGINE_PREFIX_PROPERTY)) {
-          break;
-        }
-
-        result.add(entry.getKey().substring(ENGINE_PREFIX_PROPERTY.length()));
-
-        entry = cursor.next(-1);
-      }
-
-      return result;
+      final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
+      return StreamSupport.stream(cursor, false).filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY))
+          .map((entry) -> entry.first.substring(ENGINE_PREFIX_PROPERTY.length())).collect(Collectors.toSet());
     } finally {
       lock.releaseReadLock();
     }
   }
 
   private List<IndexEngineData> loadIndexEngines() {
-    try {
-      final OCellBTreeSingleValue.OCellBTreeCursor<String, ORID> cursor = btree
-          .iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
-      final List<IndexEngineData> result = new ArrayList<>(4);
+    final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
+    return StreamSupport.stream(cursor, false).filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY)).map((entry) -> {
 
-      Map.Entry<String, ORID> entry = cursor.next(-1);
-      while (entry != null) {
-        if (!entry.getKey().startsWith(ENGINE_PREFIX_PROPERTY)) {
-          break;
-        }
-
-        final String name = entry.getKey().substring(ENGINE_PREFIX_PROPERTY.length());
-        final ORawBuffer buffer = cluster.readRecord(entry.getValue().getClusterPosition(), false);
-        final IndexEngineData engine = deserializeIndexEngineProperty(name, buffer.buffer, Integer.MIN_VALUE);
-        result.add(engine);
-
-        entry = cursor.next(-1);
+      String name = null;
+      try {
+        name = entry.first.substring(ENGINE_PREFIX_PROPERTY.length());
+        final ORawBuffer buffer = cluster.readRecord(entry.second.getClusterPosition(), false);
+        return deserializeIndexEngineProperty(name, buffer.buffer, Integer.MIN_VALUE);
+      } catch (IOException e) {
+        throw OException
+            .wrapException(new OStorageException("Can not load data for index " + name + " for storage " + storage.getName()), e);
       }
-
-      return result;
-    } catch (final IOException e) {
-      throw OException.wrapException(new OStorageException("Can not fetch list of index engines"), e);
-    }
+    }).collect(Collectors.toList());
   }
 
   @Override
@@ -1285,35 +1257,34 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private void preloadClusters() throws IOException {
+  private void preloadClusters() {
     final List<OStorageClusterConfiguration> clusters = new ArrayList<>(1024);
-    final OCellBTreeSingleValue.OCellBTreeCursor<String, ORID> cursor = btree
-        .iterateEntriesMajor(CLUSTERS_PREFIX_PROPERTY, false, true);
+    final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(CLUSTERS_PREFIX_PROPERTY, false, true);
 
-    Map.Entry<String, ORID> entry = cursor.next(-1);
-    while (entry != null) {
-      if (!entry.getKey().startsWith(CLUSTERS_PREFIX_PROPERTY)) {
-        break;
-      }
+    StreamSupport.stream(cursor, false).filter((entry) -> entry.first.startsWith(CLUSTERS_PREFIX_PROPERTY)).forEach((entry) -> {
+      final int id = Integer.parseInt(entry.first.substring(CLUSTERS_PREFIX_PROPERTY.length()));
 
-      final int id = Integer.parseInt(entry.getKey().substring(CLUSTERS_PREFIX_PROPERTY.length()));
-      final ORawBuffer buffer = cluster.readRecord(entry.getValue().getClusterPosition(), false);
+      try {
+        final ORawBuffer buffer = cluster.readRecord(entry.second.getClusterPosition(), false);
 
-      if (clusters.size() <= id) {
-        final int diff = id - clusters.size();
+        if (clusters.size() <= id) {
+          final int diff = id - clusters.size();
 
-        for (int i = 0; i < diff; i++) {
-          clusters.add(null);
+          for (int i = 0; i < diff; i++) {
+            clusters.add(null);
+          }
+
+          clusters.add(deserializeStorageClusterConfig(id, buffer.buffer));
+          assert id == clusters.size() - 1;
+        } else {
+          clusters.set(id, deserializeStorageClusterConfig(id, buffer.buffer));
         }
-
-        clusters.add(deserializeStorageClusterConfig(id, buffer.buffer));
-        assert id == clusters.size() - 1;
-      } else {
-        clusters.set(id, deserializeStorageClusterConfig(id, buffer.buffer));
+      } catch (final IOException e) {
+        throw OException.wrapException(
+            new OStorageException("Can not load data for cluster with id=" + id + " for storage " + storage.getName()), e);
       }
 
-      entry = cursor.next(-1);
-    }
+    });
 
     cache.put(CLUSTERS, clusters);
   }

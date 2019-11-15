@@ -20,8 +20,10 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -30,6 +32,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -38,42 +41,16 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifiable>> {
-  private static class MapEntry implements Map.Entry<Object, OIdentifiable> {
-    private final Object        key;
-    private final OIdentifiable backendValue;
-
-    public MapEntry(Object key, OIdentifiable backendValue) {
-      this.key = key;
-      this.backendValue = backendValue;
-    }
-
-    @Override
-    public Object getKey() {
-      return key;
-    }
-
-    @Override
-    public OIdentifiable getValue() {
-      return backendValue;
-    }
-
-    @Override
-    public OIdentifiable setValue(OIdentifiable value) {
-      throw new UnsupportedOperationException("setValue");
-    }
-  }
-
-  private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
+  private class PureTxBetweenIndexForwardCursor implements IndexCursor {
     private final OTransactionIndexChanges indexChanges;
-    private       Object                   firstKey;
     private       Object                   lastKey;
 
     private Object nextKey;
 
-    private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
-    private Object key;
+    private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<>();
+    private Object                  key;
 
-    public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+    private PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
       this.indexChanges = indexChanges;
 
@@ -84,7 +61,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       if (keys.length == 0) {
         nextKey = null;
       } else {
-        firstKey = keys[0];
+        Object firstKey = keys[0];
         lastKey = keys[1];
 
         nextKey = firstKey;
@@ -92,12 +69,16 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     }
 
     @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (valuesIterator.hasNext())
-        return nextEntryInternal();
+    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+      if (valuesIterator.hasNext()) {
+        final ORawPair<Object, ORID> entry = nextEntryInternal();
+        action.accept(entry);
+        return true;
+      }
 
-      if (nextKey == null)
-        return null;
+      if (nextKey == null) {
+        return false;
+      }
 
       Set<OIdentifiable> result;
       do {
@@ -110,45 +91,48 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
           nextKey = null;
       } while ((result == null || result.isEmpty()) && nextKey != null);
 
-      if (result == null || result.isEmpty())
-        return null;
+      if (result == null || result.isEmpty()) {
+        return false;
+      }
 
       valuesIterator = result.iterator();
-      return nextEntryInternal();
+      final ORawPair<Object, ORID> entry = nextEntryInternal();
+      action.accept(entry);
+
+      return true;
     }
 
-    Map.Entry<Object, OIdentifiable> nextEntryInternal() {
+    private ORawPair<Object, ORID> nextEntryInternal() {
       final OIdentifiable identifiable = valuesIterator.next();
-      return new Map.Entry<Object, OIdentifiable>() {
-        @Override
-        public Object getKey() {
-          return key;
-        }
+      return new ORawPair<>(key, identifiable.getIdentity());
+    }
 
-        @Override
-        public OIdentifiable getValue() {
-          return identifiable;
-        }
+    @Override
+    public Spliterator<ORawPair<Object, ORID>> trySplit() {
+      return null;
+    }
 
-        @Override
-        public OIdentifiable setValue(OIdentifiable value) {
-          throw new UnsupportedOperationException("setValue");
-        }
-      };
+    @Override
+    public long estimateSize() {
+      return Long.MAX_VALUE;
+    }
+
+    @Override
+    public int characteristics() {
+      return NONNULL | ORDERED;
     }
   }
 
-  private class PureTxBetweenIndexBackwardCursor extends OIndexAbstractCursor {
+  private class PureTxBetweenIndexBackwardCursor implements IndexCursor {
     private final OTransactionIndexChanges indexChanges;
     private       Object                   firstKey;
-    private       Object                   lastKey;
 
     private Object nextKey;
 
-    private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
-    private Object key;
+    private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<>();
+    private Object                  key;
 
-    public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+    private PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
       this.indexChanges = indexChanges;
 
@@ -160,19 +144,26 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
         nextKey = null;
       } else {
         firstKey = keys[0];
-        lastKey = keys[1];
-
-        nextKey = lastKey;
+        nextKey = keys[1];
       }
     }
 
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (valuesIterator.hasNext())
-        return nextEntryInternal();
+    private ORawPair<Object, ORID> nextEntryInternal() {
+      final OIdentifiable identifiable = valuesIterator.next();
+      return new ORawPair<>(key, identifiable.getIdentity());
+    }
 
-      if (nextKey == null)
-        return null;
+    @Override
+    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+      if (valuesIterator.hasNext()) {
+        final ORawPair<Object, ORID> entry = nextEntryInternal();
+        action.accept(entry);
+        return true;
+      }
+
+      if (nextKey == null) {
+        return false;
+      }
 
       Set<OIdentifiable> result;
       do {
@@ -185,47 +176,45 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
           nextKey = null;
       } while ((result == null || result.isEmpty()) && nextKey != null);
 
-      if (result == null || result.isEmpty())
-        return null;
+      if (result == null || result.isEmpty()) {
+        return false;
+      }
 
       valuesIterator = result.iterator();
-      return nextEntryInternal();
+      final ORawPair<Object, ORID> entry = nextEntryInternal();
+      action.accept(entry);
+      return true;
     }
 
-    private Map.Entry<Object, OIdentifiable> nextEntryInternal() {
-      final OIdentifiable identifiable = valuesIterator.next();
-      return new Map.Entry<Object, OIdentifiable>() {
-        @Override
-        public Object getKey() {
-          return key;
-        }
+    @Override
+    public Spliterator<ORawPair<Object, ORID>> trySplit() {
+      return null;
+    }
 
-        @Override
-        public OIdentifiable getValue() {
-          return identifiable;
-        }
+    @Override
+    public long estimateSize() {
+      return Long.MAX_VALUE;
+    }
 
-        @Override
-        public OIdentifiable setValue(OIdentifiable value) {
-          throw new UnsupportedOperationException("setValue");
-        }
-      };
+    @Override
+    public int characteristics() {
+      return NONNULL | ORDERED;
     }
   }
 
-  private class OIndexTxCursor extends OIndexAbstractCursor {
+  private static final class OIndexTxCursor implements IndexCursor {
 
-    private final OIndexCursor             backedCursor;
+    private final IndexCursor              backedCursor;
     private final boolean                  ascOrder;
     private final OTransactionIndexChanges indexChanges;
-    private       OIndexCursor             txBetweenIndexCursor;
+    private final IndexCursor              txBetweenIndexCursor;
 
-    private Map.Entry<Object, OIdentifiable> nextTxEntry;
-    private Map.Entry<Object, OIdentifiable> nextBackedEntry;
+    private ORawPair<Object, ORID> nextTxEntry;
+    private ORawPair<Object, ORID> nextBackedEntry;
 
     private boolean firstTime;
 
-    public OIndexTxCursor(OIndexCursor txCursor, OIndexCursor backedCursor, boolean ascOrder,
+    private OIndexTxCursor(IndexCursor txCursor, IndexCursor backedCursor, boolean ascOrder,
         OTransactionIndexChanges indexChanges) {
       this.backedCursor = backedCursor;
       this.ascOrder = ascOrder;
@@ -234,52 +223,100 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       firstTime = true;
     }
 
+    private ORawPair<Object, ORID> nextTxEntry() {
+      ORawPair<Object, ORID> result = nextTxEntry;
+
+      @SuppressWarnings("unchecked")
+      final ORawPair<Object, ORID>[] entry = new ORawPair[1];
+      if (txBetweenIndexCursor.tryAdvance((pair) -> entry[0] = pair)) {
+        nextTxEntry = entry[0];
+      } else {
+        nextTxEntry = null;
+      }
+
+      return result;
+    }
+
+    private ORawPair<Object, ORID> nextBackedEntry() {
+      ORawPair<Object, ORID> result = calculateTxIndexEntry(nextBackedEntry.first, nextBackedEntry.second, indexChanges);
+
+      @SuppressWarnings("unchecked")
+      final ORawPair<Object, ORID>[] entry = new ORawPair[1];
+      if (backedCursor.tryAdvance((pair) -> entry[0] = pair)) {
+        nextBackedEntry = entry[0];
+      } else {
+        nextBackedEntry = null;
+      }
+
+      return result;
+    }
+
     @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
+    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
       if (firstTime) {
-        nextTxEntry = txBetweenIndexCursor.nextEntry();
-        nextBackedEntry = backedCursor.nextEntry();
+        @SuppressWarnings("unchecked")
+        final ORawPair<Object, ORID>[] entry = new ORawPair[1];
+
+        if (txBetweenIndexCursor.tryAdvance((pair) -> entry[0] = pair)) {
+          nextTxEntry = entry[0];
+        } else {
+          nextTxEntry = null;
+        }
+
+        if (backedCursor.tryAdvance((pair) -> entry[0] = pair)) {
+          nextBackedEntry = entry[0];
+        } else {
+          nextBackedEntry = null;
+        }
+
         firstTime = false;
       }
 
-      Map.Entry<Object, OIdentifiable> result = null;
+      ORawPair<Object, ORID> result = null;
 
       while (result == null && (nextTxEntry != null || nextBackedEntry != null)) {
-        if (nextTxEntry == null && nextBackedEntry != null) {
-          result = nextBackedEntry(getPrefetchSize());
-        } else if (nextBackedEntry == null && nextTxEntry != null) {
-          result = nextTxEntry(getPrefetchSize());
-        } else if (nextTxEntry != null && nextBackedEntry != null) {
+        if (nextTxEntry == null) {
+          result = nextBackedEntry();
+        } else if (nextBackedEntry == null) {
+          result = nextTxEntry();
+        } else {
           if (ascOrder) {
-            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) <= 0) {
-              result = nextBackedEntry(getPrefetchSize());
+            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.first, nextTxEntry.first) <= 0) {
+              result = nextBackedEntry();
             } else {
-              result = nextTxEntry(getPrefetchSize());
+              result = nextTxEntry();
             }
           } else {
-            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) >= 0) {
-              result = nextBackedEntry(getPrefetchSize());
+            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.first, nextTxEntry.first) >= 0) {
+              result = nextBackedEntry();
             } else {
-              result = nextTxEntry(getPrefetchSize());
+              result = nextTxEntry();
             }
           }
         }
       }
 
-      return result;
+      if (result == null) {
+        return false;
+      }
+
+      action.accept(result);
+      return true;
     }
 
-    private Map.Entry<Object, OIdentifiable> nextTxEntry(int prefetchSize) {
-      Map.Entry<Object, OIdentifiable> result = nextTxEntry;
-      nextTxEntry = txBetweenIndexCursor.nextEntry();
-      return result;
+    @Override
+    public Spliterator<ORawPair<Object, ORID>> trySplit() {
+      return null;
     }
 
-    private Map.Entry<Object, OIdentifiable> nextBackedEntry(int prefetchSize) {
-      Map.Entry<Object, OIdentifiable> result;
-      result = calculateTxIndexEntry(nextBackedEntry.getKey(), nextBackedEntry.getValue(), indexChanges);
-      nextBackedEntry = backedCursor.nextEntry();
-      return result;
+    @Override
+    public long estimateSize() {
+      return Long.MAX_VALUE;
+    }
+
+    @Override
+    public int characteristics() {
+      return NONNULL | ORDERED;
     }
   }
 
@@ -294,36 +331,40 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     if (indexChanges == null) {
       Collection<OIdentifiable> res = super.get(key);
       //In case of active transaction we use to return null instead of empty list, make check to be backward compatible
-      if (database.getTransaction().isActive() && ((OTransactionOptimistic) database.getTransaction()).getIndexOperations().size() != 0
-          && res.isEmpty())
+      if (database.getTransaction().isActive()
+          && ((OTransactionOptimistic) database.getTransaction()).getIndexOperations().size() != 0 && res.isEmpty())
         return null;
+      //noinspection unchecked
       return OIndexInternal.securityFilterOnRead(this, res);
     }
 
     key = getCollatingValue(key);
 
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    final Set<OIdentifiable> result = new HashSet<>();
     if (!indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
       final Collection<OIdentifiable> subResult = super.get(key);
-      if (subResult != null)
-        for (OIdentifiable oid : subResult)
-          result.add(oid);
+      if (subResult != null) {
+        result.addAll(subResult);
+      }
     }
 
-    final Set<OIdentifiable> processed = new HashSet<OIdentifiable>();
+    final Set<OIdentifiable> processed = new HashSet<>();
     for (OIdentifiable identifiable : result) {
-      Map.Entry<Object, OIdentifiable> entry = calculateTxIndexEntry(key, identifiable, indexChanges);
-      if (entry != null)
-        processed.add(entry.getValue());
+      ORawPair<Object, ORID> entry = calculateTxIndexEntry(key, identifiable.getIdentity(), indexChanges);
+      if (entry != null) {
+        processed.add(entry.second);
+      }
     }
 
     Set<OIdentifiable> txChanges = calculateTxValue(key, indexChanges);
     if (txChanges != null)
       processed.addAll(txChanges);
 
-    if (!processed.isEmpty())
+    if (!processed.isEmpty()) {
+      //noinspection unchecked
       return OIndexInternal.securityFilterOnRead(this, processed);
+    }
 
     return null;
   }
@@ -335,7 +376,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey, final boolean toInclusive,
+  public IndexCursor iterateEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey, final boolean toInclusive,
       final boolean ascOrder) {
 
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
@@ -346,22 +387,22 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);
 
-    final OIndexCursor txCursor;
+    final IndexCursor txCursor;
     if (ascOrder)
       txCursor = new PureTxBetweenIndexForwardCursor(fromKey, fromInclusive, toKey, toInclusive, indexChanges);
     else
       txCursor = new PureTxBetweenIndexBackwardCursor(fromKey, fromInclusive, toKey, toInclusive, indexChanges);
 
     if (indexChanges.cleared)
-      return new OIndexCursorSecurityDecorator(txCursor, this);
+      return new IndexCursorSecurityDecorator(txCursor, this);
 
-    final OIndexCursor backedCursor = super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
+    final IndexCursor backedCursor = super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
 
-    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
+    return new IndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
@@ -369,7 +410,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
     fromKey = getCollatingValue(fromKey);
 
-    final OIndexCursor txCursor;
+    final IndexCursor txCursor;
 
     final Object lastKey = indexChanges.getLastKey();
     if (ascOrder)
@@ -378,15 +419,15 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       txCursor = new PureTxBetweenIndexBackwardCursor(fromKey, fromInclusive, lastKey, true, indexChanges);
 
     if (indexChanges.cleared)
-      return new OIndexCursorSecurityDecorator(txCursor, this);
+      return new IndexCursorSecurityDecorator(txCursor, this);
 
-    final OIndexCursor backedCursor = super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
+    final IndexCursor backedCursor = super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
 
-    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
+    return new IndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
@@ -394,7 +435,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
     toKey = getCollatingValue(toKey);
 
-    final OIndexCursor txCursor;
+    final IndexCursor txCursor;
 
     final Object firstKey = indexChanges.getFirstKey();
     if (ascOrder)
@@ -403,40 +444,45 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       txCursor = new PureTxBetweenIndexBackwardCursor(firstKey, true, toKey, toInclusive, indexChanges);
 
     if (indexChanges.cleared)
-      return new OIndexCursorSecurityDecorator(txCursor, this);
+      return new IndexCursorSecurityDecorator(txCursor, this);
 
-    final OIndexCursor backedCursor = super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
-    return new OIndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
+    final IndexCursor backedCursor = super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
+    return new IndexCursorSecurityDecorator(new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges), this);
   }
 
   @Override
-  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+  public IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntries(keys, ascSortOrder);
 
-    final List<Object> sortedKeys = new ArrayList<Object>(keys.size());
+    final List<Object> sortedKeys = new ArrayList<>(keys.size());
     for (Object key : keys)
       sortedKeys.add(getCollatingValue(key));
-    if (ascSortOrder)
-      Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
-    else
-      Collections.sort(sortedKeys, Collections.reverseOrder(ODefaultComparator.INSTANCE));
+    if (ascSortOrder) {
+      sortedKeys.sort(ODefaultComparator.INSTANCE);
+    } else {
+      sortedKeys.sort(Collections.reverseOrder(ODefaultComparator.INSTANCE));
+    }
 
-    final OIndexCursor txCursor = new OIndexAbstractCursor() {
+    final IndexCursor txCursor = new IndexCursor() {
       private Iterator<Object> keysIterator = sortedKeys.iterator();
 
-      private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
+      private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<>();
       private Object key;
 
       @Override
-      public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (valuesIterator.hasNext())
-          return nextEntryInternal();
+      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+        if (valuesIterator.hasNext()) {
+          final ORawPair<Object, ORID> entry = nextEntryInternal();
+          action.accept(entry);
+          return true;
+        }
 
-        if (keysIterator == null)
-          return null;
+        if (keysIterator == null) {
+          return false;
+        }
 
         Set<OIdentifiable> result = null;
 
@@ -450,46 +496,50 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
         if (result == null) {
           keysIterator = null;
-          return null;
+          return false;
         }
 
         valuesIterator = result.iterator();
-        return nextEntryInternal();
+
+        final ORawPair<Object, ORID> entry = nextEntryInternal();
+        action.accept(entry);
+        return true;
       }
 
-      private Map.Entry<Object, OIdentifiable> nextEntryInternal() {
+      @Override
+      public Spliterator<ORawPair<Object, ORID>> trySplit() {
+        return null;
+      }
+
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
+
+      @Override
+      public int characteristics() {
+        return NONNULL | ORDERED;
+      }
+
+      private ORawPair<Object, ORID> nextEntryInternal() {
         final OIdentifiable identifiable = valuesIterator.next();
-        return new Map.Entry<Object, OIdentifiable>() {
-          @Override
-          public Object getKey() {
-            return key;
-          }
-
-          @Override
-          public OIdentifiable getValue() {
-            return identifiable;
-          }
-
-          @Override
-          public OIdentifiable setValue(OIdentifiable value) {
-            throw new UnsupportedOperationException("setValue");
-          }
-        };
+        return new ORawPair<>(key, identifiable.getIdentity());
       }
     };
 
     if (indexChanges.cleared)
-      return new OIndexCursorSecurityDecorator(txCursor, this);
+      return new IndexCursorSecurityDecorator(txCursor, this);
 
-    final OIndexCursor backedCursor = super.iterateEntries(keys, ascSortOrder);
+    final IndexCursor backedCursor = super.iterateEntries(keys, ascSortOrder);
     return new OIndexTxCursor(txCursor, backedCursor, ascSortOrder, indexChanges);
   }
 
-  private Map.Entry<Object, OIdentifiable> calculateTxIndexEntry(final Object key, final OIdentifiable backendValue,
+  private static ORawPair<Object, ORID> calculateTxIndexEntry(final Object key, final ORID backendValue,
       OTransactionIndexChanges indexChanges) {
     final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
-    if (changesPerKey.entries.isEmpty())
-      return createMapEntry(key, backendValue);
+    if (changesPerKey.entries.isEmpty()) {
+      return new ORawPair<>(key, backendValue);
+    }
 
     int putCounter = 1;
     for (OTransactionIndexEntry entry : changesPerKey.entries) {
@@ -503,18 +553,15 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       }
     }
 
-    if (putCounter <= 0)
+    if (putCounter <= 0) {
       return null;
+    }
 
-    return createMapEntry(key, backendValue);
+    return new ORawPair<>(key, backendValue);
   }
 
-  private Map.Entry<Object, OIdentifiable> createMapEntry(final Object key, final OIdentifiable backendValue) {
-    return new MapEntry(key, backendValue);
-  }
-
-  private Set<OIdentifiable> calculateTxValue(final Object key, OTransactionIndexChanges indexChanges) {
-    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+  private static Set<OIdentifiable> calculateTxValue(final Object key, OTransactionIndexChanges indexChanges) {
+    final List<OIdentifiable> result = new ArrayList<>();
     final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
     if (changesPerKey.entries.isEmpty()) {
       return null;
@@ -532,6 +579,6 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     if (result.isEmpty())
       return null;
 
-    return new HashSet<OIdentifiable>(result);
+    return new HashSet<>(result);
   }
 }

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-@SuppressWarnings("WeakerAccess")
 public final class WALRecordTypes {
   public static final int UPDATE_PAGE_RECORD                    = 0;
   public static final int FUZZY_CHECKPOINT_START_RECORD         = 1;
@@ -14,33 +13,6 @@ public final class WALRecordTypes {
   public static final int FILE_DELETED_WAL_RECORD               = 12;
   public static final int FILE_TRUNCATED_WAL_RECORD             = 13;
   public static final int EMPTY_WAL_RECORD                      = 14;
-
-  public static final int CREATE_CLUSTER_CO                   = 15;
-  public static final int DELETE_CLUSTER_CO                   = 16;
-  public static final int CLUSTER_CREATE_RECORD_CO            = 17;
-  public static final int CLUSTER_DELETE_RECORD_CO            = 18;
-  public static final int CLUSTER_ALLOCATE_RECORD_POSITION_CO = 19;
-  public static final int CLUSTER_UPDATE_RECORD_CO            = 20;
-
-  public static final int INDEX_ENGINE_CREATE_CO = 21;
-  public static final int INDEX_ENGINE_DELETE_CO = 22;
-
-  public static final int CELL_BTREE_SINGLE_VALUE_PUT_CO    = 23;
-  public static final int CELL_BTREE_SINGLE_VALUE_REMOVE_CO = 24;
-
-  public static final int CELL_BTREE_MULTI_VALUE_PUT_CO          = 25;
-  public static final int CELL_BTREE_MULTI_VALUE_REMOVE_ENTRY_CO = 26;
-
-  public static final int SBTREE_PUT_CO    = 27;
-  public static final int SBTREE_REMOVE_CO = 28;
-
-  public static final int LOCAL_HASHTABLE_PUT_CO    = 29;
-  public static final int LOCAL_HASHTABLE_REMOVE_CO = 30;
-
-  public static final int SBTREE_BONSAI_CREATE_COMPONENT_CO = 31;
-  public static final int SBTREE_BONSAI_CREATE_CO           = 32;
-  public static final int SBTREE_BONSAI_DELETE_COMPONENT_CO = 33;
-  public static final int SBTREE_BONSAI_DELETE_CO           = 34;
 
   public static final int CLUSTER_POSITION_MAP_INIT_PO                = 35;
   public static final int CLUSTER_POSITION_MAP_ADD_PO                 = 36;
@@ -176,35 +148,6 @@ public final class WALRecordTypes {
   public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V2_SET_ENTRY_ID_PO   = 147;
 
   public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V2_SWITCH_BUCKET_TYPE_PO = 148;
-
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_INIT_PO                     = 149;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_ALL_LEAF_ENTRIES_PO     = 150;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_ALL_NON_LEAF_ENTRIES_PO = 151;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_ADD_NON_LEAF_ENTRY_PO       = 152;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_APPEND_NEW_LEAF_ENTRY_PO    = 153;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_CREATE_MAIN_LEAF_ENTRY_PO   = 154;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_DECREMENT_ENTRIES_COUNT_PO  = 155;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_INCREMENT_ENTRIES_COUNT_PO  = 156;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_REMOVE_LEAF_ENTRY_PO        = 157;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_REMOVE_MAIN_LEAF_ENTRY_PO   = 158;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_REMOVE_NON_LEAF_ENTRY_PO    = 159;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_SET_LEFT_SIBLING_PO         = 160;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_SET_RIGHT_SIBLING_PO        = 161;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_SHRINK_NON_LEAF_ENTRIES_PO  = 162;
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_SHRINK_LEAF_ENTRIES_PO      = 163;
-
-  public static final int CELL_BTREE_BUCKET_MULTI_VALUE_V3_SWITCH_BUCKET_TYPE_PO = 164;
-
-  public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V3_INIT_PO           = 165;
-  public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V3_SET_ENTRY_ID_PO   = 166;
-  public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V3_SET_PAGES_SIZE_PO = 167;
-  public static final int CELL_BTREE_ENTRY_POINT_MULTI_VALUE_V3_SET_TREE_SIZE_PO  = 168;
-
-  public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_ADD_VALUE_PO         = 169;
-  public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_DECREMENT_SIZE_PO    = 170;
-  public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_INCREMENT_SIZE_PO    = 171;
-  public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_SET_RIGHT_SIBLING_PO = 172;
-  public static final int CELL_BTREE_NULL_BUCKET_MULTI_VALUE_V3_REMOVE_VALUE_PO      = 173;
 
   public static final int LOCAL_HASH_TABLE_V2_BUCKET_INIT_PO         = 174;
   public static final int LOCAL_HASH_TABLE_V2_BUCKET_UPDATE_ENTRY_PO = 175;

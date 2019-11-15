@@ -439,7 +439,7 @@ public final class AsyncReadCache implements OReadCache {
     }
 
     for (final ORawPair<Long, Integer> entry : filledUpTo) {
-      clearFile(entry.getFirst(), entry.getSecond(), writeCache);
+      clearFile(entry.first, entry.second, writeCache);
     }
 
     writeCache.delete();
@@ -454,7 +454,7 @@ public final class AsyncReadCache implements OReadCache {
     }
 
     for (final ORawPair<Long, Integer> entry : filledUpTo) {
-      clearFile(entry.getFirst(), entry.getSecond(), writeCache);
+      clearFile(entry.first, entry.second, writeCache);
     }
 
     writeCache.close();

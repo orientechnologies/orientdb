@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.storage.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
@@ -41,7 +42,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -204,9 +207,10 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       put(key, updated.getValue());
     } else if (updated.isRemove()) {
       remove(key);
-    } else if (updated.isNothing()) {
-      //Do nothing
-    }
+    } else //noinspection StatementWithEmptyBody
+      if (updated.isNothing()) {
+        //Do nothing
+      }
   }
 
   @SuppressWarnings("unchecked")
@@ -259,19 +263,18 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+  public IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
@@ -286,8 +289,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public OIndexCursor cursor(final ValuesTransformer valuesTransformer) {
-    return new OIndexAbstractCursor() {
+  public IndexCursor cursor(final ValuesTransformer valuesTransformer) {
+    return new IndexCursor() {
       private int nextEntriesIndex;
       private OHashTable.Entry<Object, Object>[] entries;
 
@@ -309,19 +312,21 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       }
 
       @Override
-      public Map.Entry<Object, OIdentifiable> nextEntry() {
+      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
         if (currentIterator == null) {
-          return null;
+          return false;
         }
 
         if (currentIterator.hasNext()) {
-          return nextCursorValue();
+          final OIdentifiable identifiable = currentIterator.next();
+          action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
+          return true;
         }
 
         while (currentIterator != null && !currentIterator.hasNext()) {
           if (entries.length == 0) {
             currentIterator = null;
-            return null;
+            return false;
           }
 
           final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
@@ -344,40 +349,30 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           }
         }
 
-        if (currentIterator != null && !currentIterator.hasNext()) {
-          return nextCursorValue();
-        }
-
         currentIterator = null;
+        return false;
+      }
+
+      @Override
+      public Spliterator<ORawPair<Object, ORID>> trySplit() {
         return null;
       }
 
-      private Map.Entry<Object, OIdentifiable> nextCursorValue() {
-        final OIdentifiable identifiable = currentIterator.next();
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
 
-        return new Map.Entry<Object, OIdentifiable>() {
-          @Override
-          public Object getKey() {
-            return currentKey;
-          }
-
-          @Override
-          public OIdentifiable getValue() {
-            return identifiable;
-          }
-
-          @Override
-          public OIdentifiable setValue(OIdentifiable value) {
-            throw new UnsupportedOperationException();
-          }
-        };
+      @Override
+      public int characteristics() {
+        return NONNULL;
       }
     };
   }
 
   @Override
-  public OIndexCursor descCursor(final ValuesTransformer valuesTransformer) {
-    return new OIndexAbstractCursor() {
+  public IndexCursor descCursor(final ValuesTransformer valuesTransformer) {
+    return new IndexCursor() {
       private int nextEntriesIndex;
       private OHashTable.Entry<Object, Object>[] entries;
 
@@ -399,19 +394,21 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       }
 
       @Override
-      public Map.Entry<Object, OIdentifiable> nextEntry() {
+      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
         if (currentIterator == null) {
-          return null;
+          return false;
         }
 
         if (currentIterator.hasNext()) {
-          return nextCursorValue();
+          final OIdentifiable identifiable = currentIterator.next();
+          action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
+          return true;
         }
 
         while (currentIterator != null && !currentIterator.hasNext()) {
           if (entries.length == 0) {
             currentIterator = null;
-            return null;
+            return false;
           }
 
           final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
@@ -434,40 +431,30 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           }
         }
 
-        if (currentIterator != null && !currentIterator.hasNext()) {
-          return nextCursorValue();
-        }
-
         currentIterator = null;
+        return false;
+      }
+
+      @Override
+      public Spliterator<ORawPair<Object, ORID>> trySplit() {
         return null;
       }
 
-      private Map.Entry<Object, OIdentifiable> nextCursorValue() {
-        final OIdentifiable identifiable = currentIterator.next();
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
 
-        return new Map.Entry<Object, OIdentifiable>() {
-          @Override
-          public Object getKey() {
-            return currentKey;
-          }
-
-          @Override
-          public OIdentifiable getValue() {
-            return identifiable;
-          }
-
-          @Override
-          public OIdentifiable setValue(OIdentifiable value) {
-            throw new UnsupportedOperationException();
-          }
-        };
+      @Override
+      public int characteristics() {
+        return NONNULL;
       }
     };
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
-    return new OIndexKeyCursor() {
+  public IndexKeySpliterator keyCursor() {
+    return new IndexKeySpliterator() {
       private int nextEntriesIndex;
       private OHashTable.Entry<Object, Object>[] entries;
 
@@ -482,9 +469,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       }
 
       @Override
-      public Object next(int prefetchSize) {
+      public boolean tryAdvance(Consumer<? super Object> action) {
         if (entries.length == 0) {
-          return null;
+          return false;
         }
 
         final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
@@ -495,7 +482,23 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           nextEntriesIndex = 0;
         }
 
-        return bucketEntry.key;
+        action.accept(bucketEntry.key);
+        return true;
+      }
+
+      @Override
+      public Spliterator<Object> trySplit() {
+        return null;
+      }
+
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
+
+      @Override
+      public int characteristics() {
+        return NONNULL;
       }
     };
   }

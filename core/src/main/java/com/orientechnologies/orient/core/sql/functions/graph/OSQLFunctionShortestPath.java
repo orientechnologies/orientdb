@@ -265,10 +265,10 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       OMultiCollectionIterator<OEdge> edgeIterator = new OMultiCollectionIterator<>();
       ORawPair<Iterable<OVertex>, Iterable<OEdge>> pair1 = getVerticesAndEdges(srcVertex, ODirection.OUT, types);
       ORawPair<Iterable<OVertex>, Iterable<OEdge>> pair2 = getVerticesAndEdges(srcVertex, ODirection.IN, types);
-      vertexIterator.add(pair1.getFirst());
-      vertexIterator.add(pair2.getFirst());
-      edgeIterator.add(pair1.getSecond());
-      edgeIterator.add(pair2.getSecond());
+      vertexIterator.add(pair1.first);
+      vertexIterator.add(pair2.first);
+      edgeIterator.add(pair1.second);
+      edgeIterator.add(pair2.second);
       return new ORawPair<>(vertexIterator, edgeIterator);
     } else {
       Iterable<OEdge> edges1 = srcVertex.getEdges(direction, types);
@@ -332,8 +332,8 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         } else {
           neighbors = getVerticesAndEdges(ctx.current, ctx.directionLeft, ctx.edgeTypeParam);
         }
-        Iterator<OVertex> vertexIterator = neighbors.getFirst().iterator();
-        Iterator<OEdge> edgeIterator = neighbors.getSecond().iterator();
+        Iterator<OVertex> vertexIterator = neighbors.first.iterator();
+        Iterator<OEdge> edgeIterator = neighbors.second.iterator();
         while (vertexIterator.hasNext() && edgeIterator.hasNext()) {
           OVertex v = vertexIterator.next();
           final ORID neighborVertexIdentity = v.getIdentity();
@@ -399,8 +399,8 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
           neighbors = getVerticesAndEdges(ctx.currentRight, ctx.directionRight, ctx.edgeTypeParam);
         }
 
-        Iterator<OVertex> vertexIterator = neighbors.getFirst().iterator();
-        Iterator<OEdge> edgeIterator = neighbors.getSecond().iterator();
+        Iterator<OVertex> vertexIterator = neighbors.first.iterator();
+        Iterator<OEdge> edgeIterator = neighbors.second.iterator();
         while (vertexIterator.hasNext() && edgeIterator.hasNext()) {
           final OVertex v = vertexIterator.next();
           final ORID neighborVertexIdentity = v.getIdentity();

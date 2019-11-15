@@ -17,7 +17,6 @@
 package com.orientechnologies.orient.core.exception;
 
 /**
- * Exception which is thrown by {@link com.orientechnologies.orient.core.index.OIndexChangesWrapper}
  * if index which is related to wrapped cursor is being rebuilt.
  *
  * @see com.orientechnologies.orient.core.index.OIndexAbstract#getRebuildVersion()

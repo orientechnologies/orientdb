@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -39,42 +41,41 @@ import java.util.stream.Collectors;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@SuppressWarnings("unchecked")
 public abstract class OIndexRemote<T> implements OIndex<T> {
   public static final    String QUERY_GET_VALUES_BEETWEN_SELECT                   = "select from index:`%s` where ";
-  public static final    String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
-  public static final    String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
-  public static final    String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION   = "key <= ?";
-  public static final    String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION   = "key < ?";
-  public static final    String QUERY_GET_VALUES_AND_OPERATOR                     = " and ";
-  public static final    String QUERY_GET_VALUES_LIMIT                            = " limit ";
+  private static final   String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
+  private static final   String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
+  private static final   String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION   = "key <= ?";
+  private static final   String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION   = "key < ?";
+  private static final   String QUERY_GET_VALUES_AND_OPERATOR                     = " and ";
+  private static final   String QUERY_GET_VALUES_LIMIT                            = " limit ";
   protected static final String QUERY_ENTRIES                                     = "select key, rid from index:`%s`";
-  protected static final String QUERY_ENTRIES_DESC                                = "select key, rid from index:`%s` order by key desc";
+  private static final   String QUERY_ENTRIES_DESC                                = "select key, rid from index:`%s` order by key desc";
 
   private static final String QUERY_ITERATE_ENTRIES = "select from index:`%s` where key in [%s] order by key %s ";
   private static final String QUERY_GET_ENTRIES     = "select from index:`%s` where key in [%s]";
 
-  private static final String QUERY_PUT         = "insert into index:`%s` (key,rid) values (?,?)";
-  private static final String QUERY_REMOVE      = "delete from index:`%s` where key = ?";
-  private static final String QUERY_REMOVE2     = "delete from index:`%s` where key = ? and rid = ?";
-  private static final String QUERY_REMOVE3     = "delete from index:`%s` where rid = ?";
-  private static final String QUERY_CONTAINS    = "select count(*) as size from index:`%s` where key = ?";
-  private static final String QUERY_COUNT       = "select count(*) as size from index:`%s` where key = ?";
-  private static final String QUERY_COUNT_RANGE = "select count(*) as size from index:`%s` where ";
-  private static final String QUERY_SIZE        = "select count(*) as size from index:`%s`";
-  private static final String QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
-  private static final String QUERY_KEYS        = "select key from index:`%s`";
-  private static final String QUERY_REBUILD     = "rebuild index %s";
-  private static final String QUERY_CLEAR       = "delete from index:`%s`";
-  private static final String QUERY_DROP        = "drop index %s";
-  protected final String           databaseName;
-  private final   String           wrappedType;
-  private final   String           algorithm;
-  private final   ORID             rid;
-  protected       OIndexDefinition indexDefinition;
-  protected       String           name;
-  protected       ODocument        configuration;
-  protected       Set<String>      clustersToIndex;
+  private static final String           QUERY_PUT         = "insert into index:`%s` (key,rid) values (?,?)";
+  private static final String           QUERY_REMOVE      = "delete from index:`%s` where key = ?";
+  private static final String           QUERY_REMOVE2     = "delete from index:`%s` where key = ? and rid = ?";
+  private static final String           QUERY_REMOVE3     = "delete from index:`%s` where rid = ?";
+  private static final String           QUERY_CONTAINS    = "select count(*) as size from index:`%s` where key = ?";
+  private static final String           QUERY_COUNT       = "select count(*) as size from index:`%s` where key = ?";
+  private static final String           QUERY_COUNT_RANGE = "select count(*) as size from index:`%s` where ";
+  private static final String           QUERY_SIZE        = "select count(*) as size from index:`%s`";
+  private static final String           QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
+  private static final String           QUERY_KEYS        = "select key from index:`%s`";
+  private static final String           QUERY_REBUILD     = "rebuild index %s";
+  private static final String           QUERY_CLEAR       = "delete from index:`%s`";
+  private static final String           QUERY_DROP        = "drop index %s";
+  protected final      String           databaseName;
+  private final        String           wrappedType;
+  private final        String           algorithm;
+  private final        ORID             rid;
+  protected            OIndexDefinition indexDefinition;
+  protected            String           name;
+  protected            ODocument        configuration;
+  protected            Set<String>      clustersToIndex;
 
   public OIndexRemote(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {
@@ -84,7 +85,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     this.rid = iRid;
     this.indexDefinition = iIndexDefinition;
     this.configuration = iConfiguration;
-    this.clustersToIndex = new HashSet<String>(clustersToIndex);
+    this.clustersToIndex = new HashSet<>(clustersToIndex);
     this.databaseName = database;
   }
 
@@ -95,7 +96,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public OIndexRemote<T> delete() {
-    getDatabase().indexQuery(getName(), String.format(QUERY_DROP, name));
+    getDatabase().indexQuery(name, String.format(QUERY_DROP, name));
     return this;
   }
 
@@ -109,7 +110,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public boolean contains(final Object iKey) {
-    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_CONTAINS, name), iKey)) {
+    try (final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_CONTAINS, name), iKey)) {
       if (!result.hasNext()) {
         return false;
       }
@@ -118,7 +119,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public long count(final Object iKey) {
-    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_COUNT, name), iKey)) {
+    try (final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_COUNT, name), iKey)) {
       if (!result.hasNext()) {
         return 0;
       }
@@ -145,7 +146,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     if (maxValuesToFetch > 0)
       query.append(QUERY_GET_VALUES_LIMIT).append(maxValuesToFetch);
 
-    try (OResultSet rs = getDatabase().indexQuery(getName(), query.toString(), iRangeFrom, iRangeTo)) {
+    try (OResultSet rs = getDatabase().indexQuery(name, query.toString(), iRangeFrom, iRangeTo)) {
       return (Long) rs.next().getProperty("value");
     }
   }
@@ -197,8 +198,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return deleted > 0;
   }
 
-  public int remove(final OIdentifiable iRecord) {
-    try (OResultSet rs = getDatabase().command(String.format(QUERY_REMOVE3, name, iRecord.getIdentity()), iRecord)) {
+  public int remove(final OIdentifiable record) {
+    try (final OResultSet rs = getDatabase().command(String.format(QUERY_REMOVE3, name), record.getIdentity())) {
       return (Integer) rs.next().getProperty("value");
     }
   }
@@ -213,10 +214,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       return version;
 
     return -1;
-  }
-
-  public void automaticRebuild() {
-    throw new UnsupportedOperationException("autoRebuild()");
   }
 
   public long rebuild() {
@@ -236,7 +233,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public long getSize() {
-    try (OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_SIZE, name));) {
+    try (OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_SIZE, name))) {
       if (result.hasNext())
         return (Long) result.next().getProperty("size");
     }
@@ -244,7 +241,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public long getKeySize() {
-    try (OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_KEY_SIZE, name))) {
+    try (OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_KEY_SIZE, name))) {
       if (result.hasNext())
         return (Long) result.next().getProperty("size");
     }
@@ -312,7 +309,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       }
     }
 
-    try (OResultSet rs = getDatabase().indexQuery(getName(), String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray())) {
+    try (OResultSet rs = getDatabase()
+        .indexQuery(name, String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray())) {
       return rs.stream().map((res) -> (ODocument) res.toElement()).collect(Collectors.toList());
     }
 
@@ -359,23 +357,23 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+  public IndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
       boolean ascOrder) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
   @Override
-  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+  public IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
 
     final StringBuilder params = new StringBuilder(128);
     if (!keys.isEmpty()) {
@@ -386,35 +384,38 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     }
 
     final OResultSet res = getDatabase()
-        .indexQuery(getName(), String.format(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"), keys.toArray());
+        .indexQuery(name, String.format(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"),
+            keys.toArray());
 
     final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    res.forEachRemaining(x -> copy.add(x));
+    res.forEachRemaining(copy::add);
     res.close();
 
-    return new OIndexAbstractCursor() {
+    return new IndexCursor() {
+      @Override
+      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+        if (!copy.hasNext()) {
+          return false;
+        }
+
+        final OResult next = copy.next();
+        action.accept(new ORawPair<>(next.getProperty("key"), next.getProperty("rid")));
+        return true;
+      }
 
       @Override
-      public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (!copy.hasNext())
-          return null;
-        final OResult next = copy.next();
-        return new Map.Entry<Object, OIdentifiable>() {
-          @Override
-          public Object getKey() {
-            return next.getProperty("key");
-          }
+      public Spliterator<ORawPair<Object, ORID>> trySplit() {
+        return null;
+      }
 
-          @Override
-          public OIdentifiable getValue() {
-            return next.getProperty("rid");
-          }
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
 
-          @Override
-          public OIdentifiable setValue(OIdentifiable value) {
-            throw new UnsupportedOperationException("cannot set value of index entry");
-          }
-        };
+      @Override
+      public int characteristics() {
+        return ORDERED | NONNULL;
       }
     };
 
@@ -426,94 +427,111 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public OIndexCursor cursor() {
-    OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES, name));
+  public IndexCursor cursor() {
+    OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_ENTRIES, name));
     final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    result.forEachRemaining(x -> copy.add(x));
+    result.forEachRemaining(copy::add);
     result.close();
 
-    return new OIndexAbstractCursor() {
+    return new IndexCursor() {
 
       @Override
-      public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (!copy.hasNext())
-          return null;
+      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+        if (!copy.hasNext()) {
+          return false;
+        }
 
         final OResult value = copy.next();
-
-        return new Map.Entry<Object, OIdentifiable>() {
-          @Override
-          public Object getKey() {
-            return value.getProperty("key");
-          }
-
-          @Override
-          public OIdentifiable getValue() {
-            return value.getProperty("rid");
-          }
-
-          @Override
-          public OIdentifiable setValue(OIdentifiable value) {
-            throw new UnsupportedOperationException("setValue");
-          }
-        };
+        action.accept(new ORawPair<>(value.getProperty("key"), value.getProperty("rid")));
+        return true;
       }
-    };
-
-  }
-
-  @Override
-  public OIndexCursor descCursor() {
-    final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES_DESC, name));
-    final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    result.forEachRemaining(x -> copy.add(x));
-    result.close();
-
-    return new OIndexAbstractCursor() {
 
       @Override
-      public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (!copy.hasNext())
-          return null;
+      public Spliterator<ORawPair<Object, ORID>> trySplit() {
+        return null;
+      }
 
-        final OResult value = copy.next();
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
 
-        return new Map.Entry<Object, OIdentifiable>() {
-          @Override
-          public Object getKey() {
-            return value.getProperty("key");
-          }
-
-          @Override
-          public OIdentifiable getValue() {
-            return value.getProperty("rid");
-          }
-
-          @Override
-          public OIdentifiable setValue(OIdentifiable value) {
-            throw new UnsupportedOperationException("setValue");
-          }
-        };
+      @Override
+      public int characteristics() {
+        return NONNULL | ORDERED;
       }
     };
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
-    final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_KEYS, name));
+  public IndexCursor descCursor() {
+    final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_ENTRIES_DESC, name));
     final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    result.forEachRemaining(x -> copy.add(x));
+    result.forEachRemaining(copy::add);
     result.close();
-    return new OIndexKeyCursor() {
 
+    return new IndexCursor() {
       @Override
-      public Object next(int prefetchSize) {
-        if (!copy.hasNext())
-          return null;
+      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+        if (!copy.hasNext()) {
+          return false;
+        }
 
         final OResult value = copy.next();
+        action.accept(new ORawPair<>(value.getProperty("key"), value.getProperty("rid")));
+        return true;
+      }
 
-        return value.getProperty("key");
+      @Override
+      public Spliterator<ORawPair<Object, ORID>> trySplit() {
+        return null;
+      }
+
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
+
+      @Override
+      public int characteristics() {
+        return NONNULL | ORDERED;
+      }
+    };
+  }
+
+  @Override
+  public IndexKeySpliterator keySpliterator() {
+    final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_KEYS, name));
+    final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
+    result.forEachRemaining(copy::add);
+    result.close();
+
+    return new IndexKeySpliterator() {
+      @Override
+      public boolean tryAdvance(Consumer<? super Object> action) {
+        if (!copy.hasNext()) {
+          return false;
+        }
+
+        final OResult value = copy.next();
+        action.accept(value.getProperty("key"));
+
+        return true;
+      }
+
+      @Override
+      public Spliterator<Object> trySplit() {
+        return null;
+      }
+
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
+
+      @Override
+      public int characteristics() {
+        return NONNULL | ORDERED;
       }
     };
   }
@@ -524,7 +542,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return this.name.compareTo(name);
   }
 
-  protected ODatabaseDocumentInternal getDatabase() {
+  protected static ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 }

@@ -3,9 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.IndexCursor;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -19,6 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.stream.StreamSupport;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -68,12 +68,10 @@ public class OTruncateClassStatementExecutionTest {
 
     Assert.assertEquals(index.getSize(), 6);
 
-    OIndexCursor cursor = index.cursor();
-    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
-    while (entry != null) {
-      Assert.assertTrue(set.contains((Integer) entry.getKey()));
-      entry = cursor.nextEntry();
-    }
+    IndexCursor cursor = index.cursor();
+    StreamSupport.stream(cursor, false).forEach((entry) -> {
+      Assert.assertTrue(set.contains((Integer) entry.first));
+    });
 
     schema.dropClass("test_class");
   }

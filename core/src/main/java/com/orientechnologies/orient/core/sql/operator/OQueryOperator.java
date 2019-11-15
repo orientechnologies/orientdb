@@ -24,19 +24,15 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexCursor;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
+import com.orientechnologies.orient.core.sql.operator.math.*;
 
 import java.util.List;
 
@@ -147,7 +143,7 @@ public abstract class OQueryOperator {
    *          Data returned by cursors should be sorted in ascending or descending order.
    * @return Cursor instance if index can be used to evaluate result of execution of given operator and <code>null</code> otherwise.
    */
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
+  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
       boolean ascSortOrder) {
     return null;
   }
