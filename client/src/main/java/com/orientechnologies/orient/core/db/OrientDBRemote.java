@@ -54,6 +54,7 @@ public class OrientDBRemote implements OrientDBInternal {
   private final      String[]                    hosts;
   private final      OrientDBConfig              configurations;
   private final      Orient                      orient;
+  private final      OCachedDatabasePoolFactory  cachedPoolFactory;
   protected volatile ORemoteConnectionManager    connectionManager;
   private volatile   boolean                     open           = true;
 
@@ -63,7 +64,19 @@ public class OrientDBRemote implements OrientDBInternal {
     this.orient = orient;
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
     connectionManager = new ORemoteConnectionManager(this.configurations.getConfigurations().getValueAsLong(NETWORK_LOCK_TIMEOUT));
+    cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
     orient.addOrientDB(this);
+  }
+
+  protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
+    int capacity = config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY);
+    long timeout = config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT);
+    return new OCachedDatabasePoolFactoryImpl(this, capacity, timeout) {
+      @Override
+      protected void scheduleCleanUpCache(TimerTask task, long timeout) {
+        new Timer().schedule(task, timeout, timeout);
+      }
+    };
   }
 
   private String buildUrl(String name) {
@@ -256,12 +269,15 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public ODatabasePoolInternal cachedPool(String database, String user, String password) {
-    throw new UnsupportedOperationException();
+    return cachedPool(database, user, password, null);
   }
 
   @Override
   public ODatabasePoolInternal cachedPool(String database, String user, String password, OrientDBConfig config) {
-    throw new UnsupportedOperationException();
+    checkOpen();
+    ODatabasePoolInternal pool = cachedPoolFactory.get(database, user, password, solveConfig(config));
+    pools.add(pool);
+    return pool;
   }
 
   public void removePool(ODatabasePoolInternal pool) {

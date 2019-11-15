@@ -4,10 +4,7 @@ import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,8 +45,11 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
                 .listener((identity, databasePool) -> databasePool.close())
                 .build();
         this.orientDB = orientDB;
+        scheduleCleanUpCache(createCleanUpTask(), timeout);
+    }
 
-        orientDB.schedule(createCleanUpTask(), timeout, timeout);
+    protected void scheduleCleanUpCache(TimerTask task, long timeout) {
+        orientDB.schedule(task, timeout, timeout);
     }
 
     private TimerTask createCleanUpTask() {
