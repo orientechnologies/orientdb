@@ -695,7 +695,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   @Override
   public ODatabasePoolInternal cachedPool(String database, String user, String password, OrientDBConfig config) {
-    return cachedPoolFactory.get(database, user, password, solveConfig(config));
+    checkOpen();
+    ODatabasePoolInternal pool = cachedPoolFactory.get(database, user, password, solveConfig(config));
+    pools.add(pool);
+    return pool;
   }
 
   @Override
