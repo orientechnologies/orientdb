@@ -19,6 +19,7 @@
 package com.orientechnologies.backup.uploader;
 
 import com.jcraft.jsch.*;
+import com.orientechnologies.agent.Utils;
 import com.orientechnologies.agent.services.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -117,7 +118,12 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
 
       // upload each file contained in the filesToUpload list
       for (File currentFile : localFileName2File.values()) {
-        sftp.put(new FileInputStream(currentFile), currentFile.getName());
+        FileInputStream src = new FileInputStream(currentFile);
+        try {
+          sftp.put(src, currentFile.getName());
+        } finally {
+          Utils.safeClose(this, src);
+        }
       }
 
       success = true;
@@ -183,7 +189,12 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
       }
 
       File file = new File(sourceFile);
-      sftp.put(new FileInputStream(file), fName);
+      FileInputStream src = new FileInputStream(file);
+      try {
+        sftp.put(src, fName);
+      } finally {
+        Utils.safeClose(this, src);
+      }
 
     } catch (Exception e) {
       e.printStackTrace();
