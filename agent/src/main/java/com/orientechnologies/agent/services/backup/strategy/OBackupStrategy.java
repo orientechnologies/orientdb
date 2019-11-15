@@ -359,6 +359,11 @@ public abstract class OBackupStrategy {
     return this.getClass().isInstance(obj);
   }
 
+  @Override
+  public int hashCode() {
+    return 1;
+  }
+
   public void markLastBackup() {
 
     try {
