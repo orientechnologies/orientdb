@@ -137,11 +137,10 @@ public class OEventController extends Thread {
   private ODocument metricToODocument(String type, String target, OProfilerData lastSnapshot, OProfilerData profilerData) {
     OPair<String, OProfiler.METRIC_TYPE> mType = Orient.instance().getProfiler().getMetadata().get(type);
 
-    ODocument metric = null;
+    ODocument metric = new ODocument();
     if (mType != null) {
       switch (mType.value) {
       case COUNTER:
-        metric = new ODocument();
         metric.field("name", type);
         Long counter = new Long(0);
         if (type.startsWith("db.*")) {
@@ -172,7 +171,6 @@ public class OEventController extends Thread {
         }
 
         if (chrono != null) {
-          metric = new ODocument();
           metric.field("name", chrono.name);
           metric.field("entries", chrono.entries);
           metric.field("average", chrono.average);
@@ -187,7 +185,6 @@ public class OEventController extends Thread {
         OProfilerEntry stat = profilerData.getStat(type);
 
         if (stat != null) {
-          metric = new ODocument();
           metric.field("name", stat.name);
           metric.field("entries", stat.entries);
           metric.field("average", stat.average);
