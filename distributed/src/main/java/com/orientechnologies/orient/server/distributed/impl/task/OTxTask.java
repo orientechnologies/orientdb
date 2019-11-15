@@ -48,7 +48,7 @@ import java.util.List;
 public class OTxTask extends OAbstract2pcTask {
   public static final int FACTORYID = 7;
 
-  transient ODistributedTxContext reqContext;
+  private transient ODistributedTxContext reqContext;
 
   public OTxTask() {
   }

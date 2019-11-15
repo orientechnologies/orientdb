@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,6 +45,8 @@ import java.util.zip.CRC32;
  * Handles the database configuration in one big record.
  */
 public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
+  private static final int VERSION_OFFSET = 48;
+
   //This class uses "double write" pattern.
   //Whenever we want to update configuration, first we write data in backup file and make fsync. Then we write the same data
   //in primary file and make fsync. Then we remove backup file. So does not matter if we have error on any of this stages
@@ -210,7 +212,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
     versionBuffer.put(FORMAT_VERSION);
 
     versionBuffer.position(0);
-    OIOUtils.writeByteBuffer(versionBuffer, channel, OFileClassic.VERSION_OFFSET);
+    OIOUtils.writeByteBuffer(versionBuffer, channel, VERSION_OFFSET);
 
     final ByteBuffer crc32buffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
     final CRC32 crc32 = new CRC32();
@@ -223,7 +225,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
     channel.force(true);
 
     byteBuffer.position(0);
-    OIOUtils.writeByteBuffer(byteBuffer, channel, OFileClassic.HEADER_SIZE);
+    OIOUtils.writeByteBuffer(byteBuffer, channel, OFile.HEADER_SIZE);
 
     channel.force(true);
   }
@@ -235,12 +237,12 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
     try (final FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
       //file header + size of content + at least one byte of content
-      if (channel.size() < OFileClassic.HEADER_SIZE + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE) {
+      if (channel.size() < OFile.HEADER_SIZE + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE) {
         return false;
       }
 
       final ByteBuffer versionBuffer = ByteBuffer.allocate(1);
-      OIOUtils.readByteBuffer(versionBuffer, channel, OFileClassic.VERSION_OFFSET, true);
+      OIOUtils.readByteBuffer(versionBuffer, channel, VERSION_OFFSET, true);
       versionBuffer.position(0);
 
       fileVersion = versionBuffer.get();
@@ -254,8 +256,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
         crc32content = 0;
       }
 
-      byteBuffer = ByteBuffer.allocate((int) channel.size() - OFileClassic.HEADER_SIZE);
-      OIOUtils.readByteBuffer(byteBuffer, channel, OFileClassic.HEADER_SIZE, true);
+      byteBuffer = ByteBuffer.allocate((int) channel.size() - OFile.HEADER_SIZE);
+      OIOUtils.readByteBuffer(byteBuffer, channel, OFile.HEADER_SIZE, true);
     }
 
     byteBuffer.position(0);
@@ -293,7 +295,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
             try {
               fromStream(buffer, 0, buffer.length, streamEncoding);
             } catch (Exception e) {
-              OLogManager.instance().errorNoDb(this, "Error during reading of configuration %s of storage %s", e, file, storageName);
+              OLogManager.instance()
+                  .errorNoDb(this, "Error during reading of configuration %s of storage %s", e, file, storageName);
               return false;
             }
 

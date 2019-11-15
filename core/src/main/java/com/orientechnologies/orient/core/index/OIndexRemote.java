@@ -48,25 +48,25 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   public static final    String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION   = "key < ?";
   public static final    String QUERY_GET_VALUES_AND_OPERATOR                     = " and ";
   public static final    String QUERY_GET_VALUES_LIMIT                            = " limit ";
-  protected final static String QUERY_ENTRIES                                     = "select key, rid from index:`%s`";
-  protected final static String QUERY_ENTRIES_DESC                                = "select key, rid from index:`%s` order by key desc";
+  protected static final String QUERY_ENTRIES                                     = "select key, rid from index:`%s`";
+  protected static final String QUERY_ENTRIES_DESC                                = "select key, rid from index:`%s` order by key desc";
 
-  private final static String QUERY_ITERATE_ENTRIES = "select from index:`%s` where key in [%s] order by key %s ";
-  private final static String QUERY_GET_ENTRIES     = "select from index:`%s` where key in [%s]";
+  private static final String QUERY_ITERATE_ENTRIES = "select from index:`%s` where key in [%s] order by key %s ";
+  private static final String QUERY_GET_ENTRIES     = "select from index:`%s` where key in [%s]";
 
-  private final static String QUERY_PUT         = "insert into index:`%s` (key,rid) values (?,?)";
-  private final static String QUERY_REMOVE      = "delete from index:`%s` where key = ?";
-  private final static String QUERY_REMOVE2     = "delete from index:`%s` where key = ? and rid = ?";
-  private final static String QUERY_REMOVE3     = "delete from index:`%s` where rid = ?";
-  private final static String QUERY_CONTAINS    = "select count(*) as size from index:`%s` where key = ?";
-  private final static String QUERY_COUNT       = "select count(*) as size from index:`%s` where key = ?";
-  private final static String QUERY_COUNT_RANGE = "select count(*) as size from index:`%s` where ";
-  private final static String QUERY_SIZE        = "select count(*) as size from index:`%s`";
-  private final static String QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
-  private final static String QUERY_KEYS        = "select key from index:`%s`";
-  private final static String QUERY_REBUILD     = "rebuild index %s";
-  private final static String QUERY_CLEAR       = "delete from index:`%s`";
-  private final static String QUERY_DROP        = "drop index %s";
+  private static final String QUERY_PUT         = "insert into index:`%s` (key,rid) values (?,?)";
+  private static final String QUERY_REMOVE      = "delete from index:`%s` where key = ?";
+  private static final String QUERY_REMOVE2     = "delete from index:`%s` where key = ? and rid = ?";
+  private static final String QUERY_REMOVE3     = "delete from index:`%s` where rid = ?";
+  private static final String QUERY_CONTAINS    = "select count(*) as size from index:`%s` where key = ?";
+  private static final String QUERY_COUNT       = "select count(*) as size from index:`%s` where key = ?";
+  private static final String QUERY_COUNT_RANGE = "select count(*) as size from index:`%s` where ";
+  private static final String QUERY_SIZE        = "select count(*) as size from index:`%s`";
+  private static final String QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
+  private static final String QUERY_KEYS        = "select key from index:`%s`";
+  private static final String QUERY_REBUILD     = "rebuild index %s";
+  private static final String QUERY_CLEAR       = "delete from index:`%s`";
+  private static final String QUERY_DROP        = "drop index %s";
   protected final String           databaseName;
   private final   String           wrappedType;
   private final   String           algorithm;
@@ -164,7 +164,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public boolean remove(final Object key) {
-    try(OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key)) {
+    try (OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key)) {
       if (!result.hasNext()) {
         return false;
       }
@@ -225,6 +225,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  @Deprecated
   public OIndexRemote<T> clear() {
     getDatabase().command(String.format(QUERY_CLEAR, name)).close();
     return this;

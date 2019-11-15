@@ -1,17 +1,14 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
@@ -39,7 +36,7 @@ import java.util.stream.Collectors;
  */
 public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunctionAbstract implements OIndexableSQLFunction {
 
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  protected OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSpatialFunctionAbstractIndexable(String iName, int iMinParams, int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
@@ -53,40 +50,15 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
     String fieldName = args[0].toString();
 
     String className = identifier.getStringValue();
-    List<OLuceneSpatialIndex> indices = dbMetadata
-        .getSchema()
-        .getClass(className)
-        .getIndexes()
-        .stream()
-        .filter(idx -> idx instanceof OLuceneSpatialIndex)
-        .map(idx -> (OLuceneSpatialIndex) idx)
-        .filter(idx -> intersect(idx.getDefinition().getFields(), Arrays.asList(fieldName)))
-        .collect(Collectors.toList());
+    List<OLuceneSpatialIndex> indices = dbMetadata.getSchema().getClass(className).getIndexes().stream()
+        .filter(idx -> idx instanceof OLuceneSpatialIndex).map(idx -> (OLuceneSpatialIndex) idx)
+        .filter(idx -> intersect(idx.getDefinition().getFields(), Arrays.asList(fieldName))).collect(Collectors.toList());
 
     if (indices.size() > 1) {
       throw new IllegalArgumentException("too many indices matching given field name: " + String.join(",", fieldName));
     }
 
     return indices.size() == 0 ? null : indices.get(0);
-  }
-
-  protected OLuceneSpatialIndex searchForIndexOLd(OFromClause target, OExpression[] args) {
-
-    // TODO Check if target is a class otherwise exception
-
-    OFromItem item = target.getItem();
-    OIdentifier identifier = item.getIdentifier();
-    String fieldName = args[0].toString();
-
-    Set<OIndex<?>> indexes = getDb().getMetadata().getIndexManager()
-        .getClassInvolvedIndexes(identifier.getStringValue(), fieldName);
-    for (OIndex<?> index : indexes) {
-      if (index.getInternal() instanceof OLuceneSpatialIndex) {
-        return (OLuceneSpatialIndex) index;
-      }
-    }
-    return null;
-
   }
 
   protected ODatabaseDocumentInternal getDb() {

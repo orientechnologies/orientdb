@@ -373,7 +373,7 @@ public class OBaseExpression extends OMathExpression {
         return Collections.singletonList(modifier.suffix.identifier.toString());
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Override

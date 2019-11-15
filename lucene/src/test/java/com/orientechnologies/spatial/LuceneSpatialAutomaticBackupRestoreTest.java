@@ -18,6 +18,7 @@
 
 package com.orientechnologies.spatial;
 
+import com.kenai.jffi.Platform;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -33,16 +34,12 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
-import com.sun.jna.Platform;
 import org.junit.*;
 import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -71,7 +68,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
   @Before
   public void setUp() throws Exception {
-    Assume.assumeFalse(Platform.isWindows());
+    Assume.assumeFalse(Platform.getPlatform().getOS() == Platform.OS.WINDOWS);
 
     final String buildDirectory = System.getProperty("buildDirectory", "target");
     final File buildDirectoryFile = new File(buildDirectory);
@@ -144,7 +141,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
   @After
   public void tearDown() throws Exception {
-    if (!Platform.isWindows()) {
+    if (Platform.getPlatform().getOS() != Platform.OS.WINDOWS) {
       dropIfExists();
 
       tempFolder.delete();
@@ -212,7 +209,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.location");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.SPATIAL.name());
@@ -280,7 +277,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.location");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.SPATIAL.name());

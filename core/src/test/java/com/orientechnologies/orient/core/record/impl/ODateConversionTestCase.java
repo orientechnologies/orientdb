@@ -54,7 +54,7 @@ public class ODateConversionTestCase {
 
     ODocument document = new ODocument();
     document.field("date", dateToInsert, OType.DATE);
-    byte[] res = serializer.toStream(document, false);
+    byte[] res = serializer.toStream(document);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     final String[] fields = extr.fieldNames();
 

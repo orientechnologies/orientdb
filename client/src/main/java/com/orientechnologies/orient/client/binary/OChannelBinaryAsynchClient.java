@@ -30,19 +30,13 @@ import com.orientechnologies.orient.client.remote.message.OError37Response;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
@@ -314,7 +308,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   }
 
   private Throwable deserializeException(final byte[] serializedException) throws IOException {
-    final OMemoryInputStream inputStream = new OMemoryInputStream(serializedException);
+    final ByteArrayInputStream inputStream = new ByteArrayInputStream(serializedException);
     final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
 
     Object throwable = null;
@@ -351,10 +345,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
     } else {
       // WRAP IT
+      String exceptionType = throwable != null ? throwable.getClass().getName() : "null";
       OLogManager.instance().error(this,
-          "Error during exception serialization, serialized exception is not Throwable, exception type is " + (throwable != null ?
-              throwable.getClass().getName() :
-              "null"), null);
+          "Error during exception serialization, serialized exception is not Throwable, exception type is " + exceptionType, null);
     }
 
   }

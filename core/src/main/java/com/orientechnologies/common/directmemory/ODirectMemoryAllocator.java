@@ -20,15 +20,14 @@
 
 package com.orientechnologies.common.directmemory;
 
+import com.kenai.jffi.MemoryIO;
+import com.kenai.jffi.Platform;
 import com.orientechnologies.common.exception.ODirectMemoryAllocationFailedException;
-import com.orientechnologies.common.jna.ONative;
+import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import jnr.ffi.NativeLong;
+import jnr.ffi.byref.PointerByReference;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -40,8 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Manages all allocations/deallocations from/to direct memory.
- * Also tracks the presence of memory leaks.
+ * Manages all allocations/deallocations from/to direct memory. Also tracks the presence of memory leaks.
  *
  * @see OGlobalConfiguration#DIRECT_MEMORY_POOL_LIMIT
  */
@@ -58,25 +56,24 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   private static final AtomicReference<ODirectMemoryAllocator> INSTANCE_HOLDER = new AtomicReference<>();
 
   /**
-   * Reference queue for all created direct memory pointers. During check of memory leaks we access this queue to check
-   * whether we have leaked direct memory pointers.
+   * Reference queue for all created direct memory pointers. During check of memory leaks we access this queue to check whether we
+   * have leaked direct memory pointers.
    */
   private final ReferenceQueue<OPointer> trackedPointersQueue;
 
   /**
-   * WeakReference to the allocated pointer. We use those references to track stack traces where
-   * those pointers were allocated. Even if reference to the pointer will be collected we still will have
-   * information where it was allocated and also presence of this pointers into the queue during OrientDB engine shutdown
-   * indicates that direct memory was not released back and there are memory leaks in application.
+   * WeakReference to the allocated pointer. We use those references to track stack traces where those pointers were allocated. Even
+   * if reference to the pointer will be collected we still will have information where it was allocated and also presence of this
+   * pointers into the queue during OrientDB engine shutdown indicates that direct memory was not released back and there are memory
+   * leaks in application.
    */
   private final Set<TrackedPointerReference> trackedReferences;
 
   /**
-   * Map between pointers and soft references which are used for tracking of memory leaks.
-   * Key itself is a weak reference but we can not use only single weak reference collection because
-   * identity of key equals to identity of pointer and identity of reference is based on comparision of
-   * instances of objects. The last one is used during memory leak detection when we find references in the reference queue and
-   * try to check whether those references were tracked during pointer allocation or not.
+   * Map between pointers and soft references which are used for tracking of memory leaks. Key itself is a weak reference but we can
+   * not use only single weak reference collection because identity of key equals to identity of pointer and identity of reference
+   * is based on comparision of instances of objects. The last one is used during memory leak detection when we find references in
+   * the reference queue and try to check whether those references were tracked during pointer allocation or not.
    */
   private final Map<TrackedPointerKey, TrackedPointerReference> trackedBuffers;
 
@@ -85,7 +82,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
    */
   private final LongAdder memoryConsumption = new LongAdder();
 
-  private final boolean isLinux = Platform.isLinux();
+  private final boolean isLinux = Platform.getPlatform().getOS() == Platform.OS.LINUX;
 
   /**
    * @return singleton instance.
@@ -113,25 +110,24 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   /**
    * Allocates chunk of direct memory of given size.
    *
-   * @param size Amount of memory to allocate
-   *
+   * @param size  Amount of memory to allocate
+   * @param clear clears memory if needed
    * @return Pointer to allocated memory
-   *
    * @throws ODirectMemoryAllocationFailedException if it is impossible to allocate amount of direct memory of given size
    */
-  public OPointer allocate(int size, int align) {
+  public OPointer allocate(int size, int align, boolean clear) {
     if (size <= 0) {
       throw new IllegalArgumentException("Size of allocated memory can not be less or equal to 0");
     }
 
     final OPointer ptr;
     if (align <= 0) {
-      final long pointer = Native.malloc(size);
-      if (pointer == 0) {
+      final long pointer = MemoryIO.getInstance().allocateMemory(size, clear);
+      if (pointer <= 0) {
         throw new ODirectMemoryAllocationFailedException("Can not allocate direct memory chunk of size " + size);
       }
 
-      ptr = new OPointer(new Pointer(pointer), size);
+      ptr = new OPointer(pointer, size);
     } else {
       if (!isLinux) {
         throw new ODirectMemoryAllocationFailedException("Alignment of pointers is allowed only on Linux platforms.");
@@ -139,7 +135,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
 
       final PointerByReference pointerByReference = new PointerByReference();
       ONative.instance().posix_memalign(pointerByReference, new NativeLong(align), new NativeLong(size));
-      ptr = new OPointer(pointerByReference.getValue(), size);
+      ptr = new OPointer(pointerByReference.getValue().address(), size);
     }
 
     memoryConsumption.add(size);
@@ -154,10 +150,12 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
       throw new IllegalArgumentException("Null value is passed");
     }
 
-    final Pointer ptr = pointer.getNativePointer();
-    Native.free(Pointer.nativeValue(ptr));
-    memoryConsumption.add(-pointer.getSize());
-    untrack(pointer);
+    final long ptr = pointer.getNativePointer();
+    if (ptr > 0) {
+      MemoryIO.getInstance().freeMemory(ptr);
+      memoryConsumption.add(-pointer.getSize());
+      untrack(pointer);
+    }
   }
 
   /**
@@ -256,12 +254,13 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   }
 
   /**
-   * WeakReference to the direct memory pointer which tracks stack trace of allocation of direct memory associated with this pointer.
+   * WeakReference to the direct memory pointer which tracks stack trace of allocation of direct memory associated with this
+   * pointer.
    */
   private static class TrackedPointerReference extends WeakReference<OPointer> {
 
     public final int       id;
-    final        Exception stackTrace;
+    private final        Exception stackTrace;
 
     TrackedPointerReference(OPointer referent, ReferenceQueue<? super OPointer> q) {
       super(referent, q);

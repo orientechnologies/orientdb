@@ -51,13 +51,13 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
         long minClusterPosition = calculateMinClusterPosition();
         long maxClusterPosition = calculateMaxClusterPosition();
         iterator = new ORecordIteratorCluster((ODatabaseDocumentInternal) ctx.getDatabase(), clusterId, minClusterPosition, maxClusterPosition);
-        if (ORDER_DESC == order) {
+        if (ORDER_DESC.equals(order)) {
           iterator.last();
         }
       }
       OResultSet rs = new OResultSet() {
 
-        int nFetched = 0;
+        private int nFetched = 0;
 
         @Override
         public boolean hasNext() {
@@ -66,7 +66,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
             if (nFetched >= nRecords) {
               return false;
             }
-            if (ORDER_DESC == order) {
+            if (ORDER_DESC.equals(order)) {
               return iterator.hasPrevious();
             } else {
               return iterator.hasNext();
@@ -88,14 +88,14 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
             if (nFetched >= nRecords) {
               throw new IllegalStateException();
             }
-            if (ORDER_DESC == order && !iterator.hasPrevious()) {
+            if (ORDER_DESC.equals(order) && !iterator.hasPrevious()) {
               throw new IllegalStateException();
-            } else if (ORDER_DESC != order && !iterator.hasNext()) {
+            } else if (!ORDER_DESC.equals(order) && !iterator.hasNext()) {
               throw new IllegalStateException();
             }
 
             ORecord record = null;
-            if (ORDER_DESC == order) {
+            if (ORDER_DESC.equals(order)) {
               record = iterator.previous();
             } else {
               record = iterator.next();
@@ -119,7 +119,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
         @Override
         public Optional<OExecutionPlan> getExecutionPlan() {
-          return null;
+          return Optional.empty();
         }
 
         @Override
@@ -209,10 +209,8 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    String result =
-        OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM CLUSTER " + clusterId + " " + (ORDER_DESC.equals(order) ?
-            "DESC" :
-            "ASC");
+    String orderString = ORDER_DESC.equals(order) ? "DESC" : "ASC";
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM CLUSTER " + clusterId + " " + orderString;
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }

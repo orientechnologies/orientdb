@@ -25,18 +25,18 @@ import java.io.Serializable;
 
 @SuppressWarnings("serial")
 public class OStorageSegmentConfiguration implements Serializable {
-  public transient OStorageConfiguration root;
-  public volatile  int                       id;
-  public volatile  String                    name;
-  public volatile String                 maxSize           = "0";
-  public volatile String                 fileType          = "mmap";
-  public volatile String                 fileStartSize     = "500Kb";
-  public volatile String                 fileMaxSize       = "500Mb";
-  public volatile String                 fileIncrementSize = "50%";
-  public volatile String                 defrag            = "auto";
-  public volatile STATUS                 status            = STATUS.ONLINE;
-  public OStorageFileConfiguration[]     infoFiles;
-  String                                 location;
+  public transient OStorageConfiguration       root;
+  public volatile  int                         id;
+  public volatile  String                      name;
+  public volatile  String                      maxSize           = "0";
+  public volatile  String                      fileType          = "mmap";
+  public volatile  String                      fileStartSize     = "500Kb";
+  public volatile  String                      fileMaxSize       = "500Mb";
+  public volatile  String                      fileIncrementSize = "50%";
+  public volatile  String                      defrag            = "auto";
+  public volatile  STATUS                      status            = STATUS.ONLINE;
+  public           OStorageFileConfiguration[] infoFiles;
+  protected        String                      location;
 
   public enum STATUS {
     ONLINE, OFFLINE

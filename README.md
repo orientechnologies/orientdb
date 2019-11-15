@@ -1,10 +1,9 @@
 ## OrientDB
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-**Develop branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/)  **2.2.x branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/) **Chat with the community:** [![Gitter chat](https://badges.gitter.im/orientechnologies/orientdb.png)](https://gitter.im/orientechnologies/orientdb)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) **Develop branch:** [![Build Status](https://travis-ci.org/orientechnologies/orientdb.svg?branch=develop)](https://travis-ci.org/orientechnologies/orientdb/) **2.2.x branch:** [![Build Status](https://travis-ci.org/orientechnologies/orientdb.svg?branch=2.2.x)](https://travis-ci.org/orientechnologies/orientdb/) **Chat with the community:** [![Gitter chat](https://badges.gitter.im/orientechnologies/orientdb.png)](https://gitter.im/orientechnologies/orientdb)
 ------
 
-<img src="http://orientdb.com/orientdb-studio_800px.png">
+<!---<img src="http://orientdb.com/orientdb-studio_800px.png">-->
 
 ## What is OrientDB?
 

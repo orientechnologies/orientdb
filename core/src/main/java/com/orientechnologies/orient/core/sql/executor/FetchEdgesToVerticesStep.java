@@ -40,7 +40,7 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
     init();
 
     return new OResultSet() {
-      int currentBatch = 0;
+      private int currentBatch = 0;
 
       @Override
       public boolean hasNext() {
@@ -68,7 +68,7 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

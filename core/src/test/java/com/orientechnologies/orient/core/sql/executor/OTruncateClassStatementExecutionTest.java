@@ -1,10 +1,12 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -22,7 +24,7 @@ import java.util.*;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OTruncateClassStatementExecutionTest {
-  static ODatabaseDocument database;
+  static ODatabaseDocumentInternal database;
 
   @BeforeClass
   public static void beforeClass() {
@@ -141,19 +143,18 @@ public class OTruncateClassStatementExecutionTest {
     database.command("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'");
     database.command("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'");
 
-    OResultSet result = database.query("select from index:TestTruncateVertexClassSuperclassWithIndex_index");
-    Assert.assertEquals(toList(result).size(), 2);
-    result.close();
+    if (!((ODatabaseInternal) database).getStorage().isRemote()) {
+      final OIndexManagerAbstract indexManager = ((OMetadataInternal) database.getMetadata()).getIndexManagerInternal();
+      final OIndex indexOne = indexManager
+          .getIndex((ODatabaseDocumentInternal) database, "TestTruncateVertexClassSuperclassWithIndex_index");
+      Assert.assertEquals(2, indexOne.getSize());
 
-    database.command("truncate class TestTruncateVertexClassSubclassWithIndex");
-    result = database.query("select from index:TestTruncateVertexClassSuperclassWithIndex_index");
-    Assert.assertEquals(toList(result).size(), 1);
-    result.close();
+      database.command("truncate class TestTruncateVertexClassSubclassWithIndex");
+      Assert.assertEquals(1, indexOne.getSize());
 
-    database.command("truncate class TestTruncateVertexClassSuperclassWithIndex polymorphic");
-    result = database.query("select from index:TestTruncateVertexClassSuperclassWithIndex_index");
-    Assert.assertEquals(toList(result).size(), 0);
-    result.close();
+      database.command("truncate class TestTruncateVertexClassSuperclassWithIndex polymorphic");
+      Assert.assertEquals(0, indexOne.getSize());
+    }
 
   }
 
@@ -166,7 +167,7 @@ public class OTruncateClassStatementExecutionTest {
   }
 
   private OIndex<?> getOrCreateIndex(OClass testClass) {
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("test_class_by_data");
+    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
     if (index == null) {
       testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
       index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");

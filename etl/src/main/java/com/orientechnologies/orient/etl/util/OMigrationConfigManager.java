@@ -35,8 +35,8 @@ import java.io.IOException;
 public class OMigrationConfigManager {
 
   // config info
-  private final static String configurationDirectoryName = "etl-config/";
-  private final static String configFileDefaultName      = "migration-config.json";           // path ORIENTDB_HOME/<db-name>/teleporter-config/migration-config.json
+  private static final String configurationDirectoryName = "etl-config/";
+  private static final String configFileDefaultName      = "migration-config.json";           // path ORIENTDB_HOME/<db-name>/teleporter-config/migration-config.json
 
 
   /**
@@ -79,11 +79,10 @@ public class OMigrationConfigManager {
   private static String prepareConfigDirectoryForWriting(String outOrientGraphUri, String configName) {
 
     String outDBConfigPath;
-    if(configName == null) {
+    if (configName == null) {
       outDBConfigPath = buildConfigurationFilePath(outOrientGraphUri, configFileDefaultName);
-    }
-    else {
-      if(!configName.endsWith(".json")) {
+    } else {
+      if (!configName.endsWith(".json")) {
         configName += ".json";
       }
       outDBConfigPath = buildConfigurationFilePath(outOrientGraphUri, configName);
@@ -101,7 +100,7 @@ public class OMigrationConfigManager {
       outOrientGraphUri = outOrientGraphUri.replace("\\", "/");
     }
 
-    if(!configFileName.endsWith(".json")) {
+    if (!configFileName.endsWith(".json")) {
       configFileName += ".json";
     }
 

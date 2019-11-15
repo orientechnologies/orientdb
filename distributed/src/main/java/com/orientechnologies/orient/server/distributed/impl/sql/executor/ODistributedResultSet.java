@@ -22,8 +22,8 @@ public class ODistributedResultSet implements OResultSet {
   private ODatabaseDocumentDistributed database;
   private String                       nodeName;
 
-  int     nextItem = -1;
-  boolean finished = false;
+  private int     nextItem = -1;
+  private boolean finished = false;
 
   @Override
   public boolean hasNext() {

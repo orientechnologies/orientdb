@@ -45,8 +45,8 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
 
       public boolean finished = false;
 
-      OResult nextItem = null;
-      int fetched = 0;
+      private OResult nextItem = null;
+      private int fetched = 0;
 
       @Override
       public boolean hasNext() {
@@ -147,7 +147,7 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

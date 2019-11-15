@@ -108,11 +108,11 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
               };
             }
             database.backup(dest, null, () -> {
-                  momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
-                  incremental.set(false);
-                  started.countDown();
-                  return null;
-                }, listener, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(),
+              momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+              incremental.set(false);
+              started.countDown();
+              return null;
+            }, listener, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(),
                 OAbstractSyncDatabaseTask.CHUNK_MAX_SIZE);
           } finally {
             try {

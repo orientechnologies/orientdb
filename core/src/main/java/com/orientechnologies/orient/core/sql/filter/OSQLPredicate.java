@@ -197,9 +197,9 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         // SPECIAL CASE: READ NEXT OPERATOR
         oper = new OQueryOperatorNot(extractConditionOperator());
 
-      if(oper instanceof OQueryOperatorAnd || oper instanceof OQueryOperatorOr){
+      if (oper instanceof OQueryOperatorAnd || oper instanceof OQueryOperatorOr) {
         right = extractCondition();
-      }else {
+      } else {
         right = oper != null ? extractConditionItem(false, oper.expectedRightWords) : null;
       }
     }

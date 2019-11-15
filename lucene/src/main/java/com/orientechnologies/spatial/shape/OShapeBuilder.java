@@ -46,8 +46,8 @@ public abstract class OShapeBuilder<T extends Shape> {
   protected static final JtsSpatialContext SPATIAL_CONTEXT;
   protected static final GeometryFactory   GEOMETRY_FACTORY;
   protected static final JtsShapeFactory   SHAPE_FACTORY;
-  protected static Map<String, Integer> capStyles = new HashMap<String, Integer>();
-  protected static Map<String, Integer> join      = new HashMap<String, Integer>();
+  private static final Map<String, Integer> capStyles = new HashMap<String, Integer>();
+  private static final Map<String, Integer> join      = new HashMap<String, Integer>();
 
   static {
 

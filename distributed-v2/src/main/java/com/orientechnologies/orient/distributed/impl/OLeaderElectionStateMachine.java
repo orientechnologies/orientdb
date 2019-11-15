@@ -8,15 +8,15 @@ import java.util.Set;
 public class OLeaderElectionStateMachine {
 
   public enum Status {
-    LEADER, FOLLOWER, CANDIDATE;
+    FOLLOWER, CANDIDATE, LEADER;
   }
 
-  ONodeIdentity      nodeIdentity;
-  int                currentTerm;
-  Status             status;
-  int                quorum;
-  Set<ONodeIdentity> votesReceived = new HashSet<>();
-  int                lastTermVoted = -1;
+  protected ONodeIdentity nodeIdentity;
+  protected int currentTerm = -1;
+  private volatile Status status = Status.FOLLOWER;
+  protected int quorum;
+  protected Set<ONodeIdentity> votesReceived = new HashSet<>();
+  protected int lastTermVoted = -1;
 
   synchronized void receiveVote(int term, ONodeIdentity fromNode, ONodeIdentity toNode) {
     if (!nodeIdentity.equals(toNode)) {
@@ -25,7 +25,7 @@ public class OLeaderElectionStateMachine {
     if (currentTerm == term) {
       votesReceived.add(fromNode);
       if (votesReceived.size() >= quorum) {
-        status = Status.LEADER;
+        setStatus(Status.LEADER);
       }
     } else if (currentTerm < term) {
       changeTerm(term);
@@ -33,20 +33,23 @@ public class OLeaderElectionStateMachine {
   }
 
   synchronized void startElection() {
-    status = Status.CANDIDATE;
+    setStatus(Status.CANDIDATE);
     currentTerm++;
     votesReceived.clear();
     votesReceived.add(nodeIdentity);
   }
 
   synchronized void changeTerm(int term) {
-    status = Status.FOLLOWER;
+    if (term == this.currentTerm) {
+      return;
+    }
+    setStatus(Status.FOLLOWER);
     this.votesReceived.clear();
     this.currentTerm = term;
   }
 
   public void resetLeaderElection() {
-    status = Status.FOLLOWER;
+    setStatus(Status.FOLLOWER);
     this.votesReceived.clear();
   }
 
@@ -55,6 +58,7 @@ public class OLeaderElectionStateMachine {
   }
 
   public void setStatus(Status status) {
+//    System.out.println(nodeIdentity.getName() + " setting status to " + status);
     this.status = status;
   }
 

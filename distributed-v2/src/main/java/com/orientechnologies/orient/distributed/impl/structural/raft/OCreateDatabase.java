@@ -8,6 +8,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.CREATE_DATABASE_REQUEST;
 
@@ -66,4 +67,8 @@ public class OCreateDatabase implements ORaftOperation {
     }
   }
 
+  @Override
+  public Optional<OSessionOperationId> getRequesterSequential() {
+    return Optional.of(operationId);
+  }
 }

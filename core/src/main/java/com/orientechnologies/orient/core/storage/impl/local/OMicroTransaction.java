@@ -32,10 +32,11 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
@@ -58,7 +59,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   private static final AtomicInteger transactionSerial = new AtomicInteger(0);
 
-  private ODatabaseDocumentInternal database;
+  private       ODatabaseDocumentInternal database;
   private final OAbstractPaginatedStorage storage;
 
   private final int id;
@@ -209,9 +210,10 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     // the OTransactionIndexChanges.changesPerKey in a consistent state.
 
     final List<KeyChangesUpdateRecord> keyRecordsToReinsert = new ArrayList<>();
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+    final ODatabaseDocumentInternal database = getDatabase();
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     for (Map.Entry<String, OTransactionIndexChanges> entry : indexOperations.entrySet()) {
-      final OIndex<?> index = indexManager.getIndex(entry.getKey());
+      final OIndex<?> index = indexManager.getIndex(database, entry.getKey());
       if (index == null)
         throw new OTransactionException("Cannot find index '" + entry.getValue() + "' while committing transaction");
 
@@ -377,14 +379,15 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     for (ORecordOperation recordOperation : recordOperations.values()) {
       final ORecord record = recordOperation.record.getRecord();
 
-      if (record.isDirty())
-        if (record instanceof ODocument) {
-          final ODocument document = (ODocument) record;
+      if (record.isDirty() && record instanceof ODocument) {
+        final ODocument document = (ODocument) record;
 
-          if (document.isTrackingChanges())
-            document.undo();
-        } else
-          record.unload();
+        if (document.isTrackingChanges())
+          document.undo();
+        else
+          document.unload();
+      } else
+        record.unload();
     }
 
     reset();
@@ -716,8 +719,8 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   }
 
   private static class KeyChangesUpdateRecord {
-    final OTransactionIndexChangesPerKey keyChanges;
-    final OTransactionIndexChanges       indexChanges;
+    private final OTransactionIndexChangesPerKey keyChanges;
+    private final OTransactionIndexChanges       indexChanges;
 
     public KeyChangesUpdateRecord(OTransactionIndexChangesPerKey keyChanges, OTransactionIndexChanges indexChanges) {
       this.keyChanges = keyChanges;
@@ -750,9 +753,5 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
   }
-  
-  @Override
-  public boolean isUseDeltas(){
-    return false;
-  }
+
 }

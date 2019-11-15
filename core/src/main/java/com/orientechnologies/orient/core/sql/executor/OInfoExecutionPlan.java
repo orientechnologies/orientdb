@@ -8,22 +8,25 @@ import java.util.List;
  */
 public class OInfoExecutionPlan implements OExecutionPlan {
 
-  List<OExecutionStep> steps = new ArrayList<>();
-  String  prettyPrint;
-  String  type;
-  String  javaType;
-  Integer cost;
-  String  stmText;
+  private List<OExecutionStep> steps = new ArrayList<>();
+  private String               prettyPrint;
+  private String               type;
+  private String               javaType;
+  private Integer              cost;
+  private String               stmText;
 
-  @Override public List<OExecutionStep> getSteps() {
+  @Override
+  public List<OExecutionStep> getSteps() {
     return steps;
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return prettyPrint;
   }
 
-  @Override public OResult toResult() {
+  @Override
+  public OResult toResult() {
     return null;
   }
 
@@ -71,7 +74,8 @@ public class OInfoExecutionPlan implements OExecutionPlan {
     this.stmText = stmText;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return prettyPrint;
   }
 }

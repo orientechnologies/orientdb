@@ -32,7 +32,7 @@ public class OFileManager {
   public static void deleteResource(String resourcePath) throws IOException {
 
     File currentFile = new File(resourcePath);
-    if(currentFile.exists()) {
+    if (currentFile.exists()) {
       if (currentFile.isDirectory()) {
         File[] innerFiles = currentFile.listFiles();
         for (File file : innerFiles) {

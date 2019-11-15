@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
@@ -154,10 +155,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     final OStorage storage = database.getStorage();
     if (storage instanceof OStorageProxy) {
-      storage.callInLock((Callable<Void>) () -> {
-        storage.rollback(OTransactionOptimistic.this);
-        return null;
-      }, true);
+      storage.rollback(OTransactionOptimistic.this);
     }
 
     internalRollback();
@@ -300,6 +298,19 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {
     if (!iRecord.getIdentity().isValid())
       return;
+    Set<ORecord> records = ORecordInternal.getDirtyManager(iRecord).getUpdateRecords();
+    if (records != null) {
+      for (ORecord rec : records) {
+        saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      }
+    }
+
+    Set<ORecord> newRecords = ORecordInternal.getDirtyManager(iRecord).getNewRecords();
+    if (newRecords != null) {
+      for (ORecord rec : newRecords) {
+        saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      }
+    }
 
     addRecord(iRecord, ORecordOperation.DELETED, null);
   }
@@ -333,9 +344,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (rec instanceof ODocument)
             ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
           if (rec == iRecord) {
-            final byte operation = iForceCreate ?
-                ORecordOperation.CREATED :
-                iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+            final byte operation;
+            if (iForceCreate) {
+              operation = ORecordOperation.CREATED;
+            } else {
+              operation = iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+            }
             recordOperation = addRecord(rec, operation, iClusterName);
             originalSaved = true;
           } else
@@ -345,9 +359,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     } while (dirtyManager.getNewRecords() != null || dirtyManager.getUpdateRecords() != null);
 
     if (!originalSaved && iRecord.isDirty()) {
-      final byte operation = iForceCreate ?
-          ORecordOperation.CREATED :
-          iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+      final byte operation;
+      if (iForceCreate) {
+        operation = ORecordOperation.CREATED;
+      } else {
+        operation = iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+      }
       recordOperation = addRecord(iRecord, operation, iClusterName);
     }
     if (recordOperation != null) {
@@ -584,11 +601,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     } else {
       return locks.keySet();
     }
-  }
-
-  @Override
-  public boolean isUseDeltas() {
-    return false;
   }
 
   public void setSentToServer(boolean sentToServer) {

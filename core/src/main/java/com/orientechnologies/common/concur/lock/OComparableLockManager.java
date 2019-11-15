@@ -37,7 +37,7 @@ public class OComparableLockManager<T extends  Comparable> {
   private         long                                    acquireTimeout;
   protected final ConcurrentSkipListMap<T, CountableLock> map;
   private final   boolean                                 enabled;
-  private final static Object NULL_KEY = new Object();
+  private static final Object NULL_KEY = new Object();
 
   @SuppressWarnings("serial")
   private static class CountableLock {
@@ -50,8 +50,6 @@ public class OComparableLockManager<T extends  Comparable> {
   }
 
   public OComparableLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
-    final int cL = closestInteger(concurrencyLevel);
-
     map = new ConcurrentSkipListMap<T, CountableLock>();
 
     acquireTimeout = iAcquireTimeout;
@@ -79,9 +77,6 @@ public class OComparableLockManager<T extends  Comparable> {
   }
 
   public void acquireLock(final T iResourceId, final LOCK iLockType, long iTimeout) {
-    if (!enabled)
-      return;
-
     if (!enabled)
       return;
 
@@ -180,9 +175,10 @@ public class OComparableLockManager<T extends  Comparable> {
   }
 
   private static int defaultConcurrency() {
-    return (Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL ?
-        (Runtime.getRuntime().availableProcessors() << 6) :
-        DEFAULT_CONCURRENCY_LEVEL;
+    if ((Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL)
+      return Runtime.getRuntime().availableProcessors() << 6;
+    else
+      return DEFAULT_CONCURRENCY_LEVEL;
   }
 
   private static int closestInteger(int value) {

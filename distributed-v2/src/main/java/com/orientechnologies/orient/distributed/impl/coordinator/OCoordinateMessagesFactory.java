@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.distributed.OSyncRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOperationRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOperationResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
@@ -13,41 +14,36 @@ import com.orientechnologies.orient.distributed.impl.structural.raft.ONodeJoin;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 
 public class OCoordinateMessagesFactory {
-  public static final int TRANSACTION_SUBMIT_REQUEST        = 1;
-  public static final int TRANSACTION_SUBMIT_RESPONSE       = 1;
-  public static final int TRANSACTION_FIRST_PHASE_REQUEST   = 1;
-  public static final int TRANSACTION_FIRST_PHASE_RESPONSE  = 1;
-  public static final int TRANSACTION_SECOND_PHASE_REQUEST  = 2;
-  public static final int TRANSACTION_SECOND_PHASE_RESPONSE = 2;
+  public static final int TRANSACTION_SUBMIT_REQUEST           = 1;
+  public static final int TRANSACTION_SUBMIT_RESPONSE          = 2;
+  public static final int TRANSACTION_FIRST_PHASE_REQUEST      = 3;
+  public static final int TRANSACTION_FIRST_PHASE_RESPONSE     = 4;
+  public static final int TRANSACTION_SECOND_PHASE_REQUEST     = 5;
+  public static final int TRANSACTION_SECOND_PHASE_RESPONSE    = 6;
+  public static final int SEQUENCE_ACTION_COORDINATOR_SUBMIT   = 7;
+  public static final int SEQUENCE_ACTION_COORDINATOR_RESPONSE = 8;
+  public static final int SEQUENCE_ACTION_NODE_REQUEST         = 9;
+  public static final int SEQUENCE_ACTION_NODE_RESPONSE        = 10;
+  public static final int DDL_QUERY_SUBMIT_REQUEST             = 11;
+  public static final int DDL_QUERY_SUBMIT_RESPONSE            = 12;
+  public static final int DDL_QUERY_NODE_REQUEST               = 13;
+  public static final int DDL_QUERY_NODE_RESPONSE              = 14;
+  public static final int CREATE_DATABASE_SUBMIT_REQUEST       = 15;
+  public static final int CREATE_DATABASE_SUBMIT_RESPONSE      = 16;
+  public static final int CREATE_DATABASE_REQUEST              = 17;
+  public static final int DROP_DATABASE_REQUEST                = 18;
+  public static final int CREATE_DATABASE_RESPONSE             = 19;
+  public static final int NODE_JOIN_REQUEST                    = 20;
+  public static final int CREATE_DATABASE_FINALIZE_REQUEST     = 21;
+  public static final int CREATE_DATABASE_FINALIZE_RESPONSE    = 22;
+  public static final int DROP_DATABASE_SUBMIT_REQUEST         = 23;
+  public static final int DROP_DATABASE_SUBMIT_RESPONSE        = 24;
+  public static final int DROP_DATABASE_RESPONSE               = 25;
+  public static final int CONFIGURATION_FETCH_SUBMIT_REQUEST   = 26;
+  public static final int CONFIGURATION_FETCH_SUBMIT_RESPONSE  = 27;
+  public static final int SYNC_SUBMIT_REQUEST                  = 28;
 
-  public static final int SEQUENCE_ACTION_COORDINATOR_SUBMIT   = 2;
-  public static final int SEQUENCE_ACTION_COORDINATOR_RESPONSE = 2;
-  public static final int SEQUENCE_ACTION_NODE_REQUEST         = 3;
-  public static final int SEQUENCE_ACTION_NODE_RESPONSE        = 3;
-
-  public static final int DDL_QUERY_SUBMIT_REQUEST  = 3;
-  public static final int DDL_QUERY_SUBMIT_RESPONSE = 3;
-  public static final int DDL_QUERY_NODE_REQUEST    = 4;
-  public static final int DDL_QUERY_NODE_RESPONSE   = 4;
-
-  //STRUCTURAL MESSAGES
-  public static final int CREATE_DATABASE_SUBMIT_REQUEST    = 1;
-  public static final int CREATE_DATABASE_SUBMIT_RESPONSE   = 1;
-  public static final int CREATE_DATABASE_REQUEST           = 1;
-  public static final int DROP_DATABASE_REQUEST             = 3;
-  public static final int CREATE_DATABASE_RESPONSE          = 1;
-  public static final int NODE_JOIN_REQUEST                 = 2;
-  public static final int CREATE_DATABASE_FINALIZE_REQUEST  = 3;
-  public static final int CREATE_DATABASE_FINALIZE_RESPONSE = 3;
-
-  public static final int DROP_DATABASE_SUBMIT_REQUEST  = 2;
-  public static final int DROP_DATABASE_SUBMIT_RESPONSE = 2;
-  public static final int DROP_DATABASE_RESPONSE        = 2;
-
-  public static final int CONFIGURATION_FETCH_SUBMIT_REQUEST  = 4;
-  public static final int CONFIGURATION_FETCH_SUBMIT_RESPONSE = 4;
-
-  public ONodeResponse createOperationResponse(int responseType) {
+  public static ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {
     case TRANSACTION_FIRST_PHASE_RESPONSE:
       return new OTransactionFirstPhaseResult();
@@ -62,7 +58,7 @@ public class OCoordinateMessagesFactory {
     return null;
   }
 
-  public ONodeRequest createOperationRequest(int requestType) {
+  public static ONodeRequest createOperationRequest(int requestType) {
     switch (requestType) {
     case TRANSACTION_FIRST_PHASE_REQUEST:
       return new OTransactionFirstPhaseOperation();
@@ -77,7 +73,7 @@ public class OCoordinateMessagesFactory {
     return null;
   }
 
-  public OSubmitRequest createSubmitRequest(int requestType) {
+  public static OSubmitRequest createSubmitRequest(int requestType) {
     switch (requestType) {
     case TRANSACTION_SUBMIT_REQUEST:
       return new OTransactionSubmit();
@@ -90,7 +86,7 @@ public class OCoordinateMessagesFactory {
     return null;
   }
 
-  public OSubmitResponse createSubmitResponse(int responseType) {
+  public static OSubmitResponse createSubmitResponse(int responseType) {
     switch (responseType) {
     case TRANSACTION_SUBMIT_RESPONSE:
       return new OTransactionResponse();
@@ -103,33 +99,19 @@ public class OCoordinateMessagesFactory {
     return null;
   }
 
-  public OStructuralNodeResponse createStructuralOperationResponse(int responseType) {
-    switch (responseType) {
-    case CREATE_DATABASE_RESPONSE:
-      return new OCreateDatabaseOperationResponse();
-    case CREATE_DATABASE_FINALIZE_RESPONSE:
-      return new OCreateDatabaseFinalizeResponse();
-    case DROP_DATABASE_RESPONSE:
-      return new ODropDatabaseOperationResponse();
-    }
-    return null;
-  }
-
-  public OStructuralNodeRequest createStructuralOperationRequest(int requestType) {
-    return null;
-  }
-
-  public OStructuralSubmitRequest createStructuralSubmitRequest(int requestType) {
+  public static OStructuralSubmitRequest createStructuralSubmitRequest(int requestType) {
     switch (requestType) {
     case CREATE_DATABASE_SUBMIT_REQUEST:
       return new OCreateDatabaseSubmitRequest();
     case DROP_DATABASE_SUBMIT_REQUEST:
       return new ODropDatabaseSubmitRequest();
+    case SYNC_SUBMIT_REQUEST:
+      return new OSyncRequest();
     }
     return null;
   }
 
-  public OStructuralSubmitResponse createStructuralSubmitResponse(int responseType) {
+  public static OStructuralSubmitResponse createStructuralSubmitResponse(int responseType) {
     switch (responseType) {
     case CREATE_DATABASE_SUBMIT_RESPONSE:
       return new OCreateDatabaseSubmitResponse();
@@ -139,7 +121,7 @@ public class OCoordinateMessagesFactory {
     return null;
   }
 
-  public ORaftOperation createRaftOperation(int requestType) {
+  public static ORaftOperation createRaftOperation(int requestType) {
     switch (requestType) {
     case CREATE_DATABASE_REQUEST:
       return new OCreateDatabase();

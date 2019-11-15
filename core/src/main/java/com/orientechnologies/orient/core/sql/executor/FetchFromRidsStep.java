@@ -35,7 +35,7 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
-      int internalNext = 0;
+      private int internalNext = 0;
 
       private void fetchNext() {
         if (nextResult != null) {
@@ -77,6 +77,7 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
         internalNext++;
         OResult result = nextResult;
         nextResult = null;
+        ctx.setVariable("$current", result.toElement());
         return result;
       }
 
@@ -87,7 +88,7 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

@@ -1,13 +1,11 @@
 package com.orientechnologies.orient.server.query;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.OServer;
@@ -210,34 +208,29 @@ public class RemoteTokenExpireTest {
 
   }
 
+
   @Test
-  public void itShouldNotFailWithIndexGet() {
+  public void itShouldNotFailWithRoundRobin() {
 
-    OIndex<?> index = session.getMetadata().getIndexManager().getIndex("OUser.name");
+    ODatabasePool pool = new ODatabasePool(orientDB, RemoteTokenExpireTest.class.getSimpleName(), "admin", "admin",
+        OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_CONNECT)
+            .build());
 
-    waitAndClean();
+    ODatabaseSession session = pool.acquire();
 
-    session.activateOnCurrentThread();
-
-    try {
-      index.get("admin");
-    } catch (OTokenSecurityException e) {
-      Assert.fail("It should not get the expire exception");
+    try (OResultSet resultSet = session.query("select from Some")) {
+      Assert.assertEquals(0, resultSet.stream().count());
     }
 
-  }
-
-  @Test
-  public void itShouldNotFailWithIndexPut() {
-
-    OIndex<?> index = session.getMetadata().getIndexManager().getIndex("OUser.name");
-
     waitAndClean();
 
     session.activateOnCurrentThread();
 
     try {
-      index.put("test", new ORecordId(5, 0));
+      try (OResultSet resultSet = session.query("select from Some")) {
+        Assert.assertEquals(0, resultSet.stream().count());
+      }
     } catch (OTokenSecurityException e) {
       Assert.fail("It should  get the expire exception");
     }
@@ -247,6 +240,7 @@ public class RemoteTokenExpireTest {
   @After
   public void after() {
     QUERY_REMOTE_RESULTSET_PAGE_SIZE.setValue(oldPageSize);
+    session.activateOnCurrentThread();
     session.close();
     orientDB.close();
     server.shutdown();

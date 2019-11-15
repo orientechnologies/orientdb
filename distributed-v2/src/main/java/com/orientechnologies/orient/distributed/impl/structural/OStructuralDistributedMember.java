@@ -17,10 +17,6 @@ public class OStructuralDistributedMember {
     this.channel = channel;
   }
 
-  public String getName() {
-    return identity.getName();
-  }
-
   public ONodeIdentity getIdentity() {
     return identity;
   }

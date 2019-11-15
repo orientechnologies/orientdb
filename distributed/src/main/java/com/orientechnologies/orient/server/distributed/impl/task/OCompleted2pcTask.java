@@ -39,18 +39,17 @@ import java.util.List;
 
 /**
  * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the locks must be released. Locks
- * are necessary to prevent concurrent modification of records before the transaction is finished. <br>
- * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
+ * are necessary to prevent concurrent modification of records before the transaction is finished. <br> This task uses the same
+ * partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- *
  */
 public class OCompleted2pcTask extends OAbstractReplicatedTask {
   public static final int FACTORYID = 8;
 
   protected ODistributedRequestId requestId;
   protected boolean               success;
-  protected List<ORemoteTask> fixTasks = new ArrayList<ORemoteTask>();
+  protected List<ORemoteTask>     fixTasks = new ArrayList<ORemoteTask>();
 
   public OCompleted2pcTask() {
   }
@@ -182,9 +181,8 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
 
   @Override
   public String toString() {
-    return getName() + " origReqId: " + requestId + " type: " + (success ?
-        "commit" :
-        (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) " + fixTasks));
+    String type = success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) " + fixTasks);
+    return getName() + " origReqId: " + requestId + " type: " + type;
   }
 
   public List<ORemoteTask> getFixTasks() {

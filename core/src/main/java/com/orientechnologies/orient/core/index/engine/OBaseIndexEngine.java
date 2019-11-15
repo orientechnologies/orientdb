@@ -12,20 +12,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 public interface OBaseIndexEngine {
+  int getId();
+
   void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata);
 
   void flush();
 
   void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) throws IOException;
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) throws IOException;
 
   void delete() throws IOException;
-
-  void deleteWithoutLoad(String indexName) throws IOException;
 
   boolean contains(Object key);
 
@@ -34,8 +32,6 @@ public interface OBaseIndexEngine {
   void close();
 
   Object get(Object key);
-
-  boolean remove(Object key) throws IOException;
 
   Object getFirstKey();
 

@@ -24,10 +24,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -45,7 +45,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private final    OHazelcastPlugin                                     manager;
   private final    ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final    TimerTask                                            asynchMessageManager;
-  final            ConcurrentHashMap<String, ODistributedDatabaseImpl>  databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  protected final  ConcurrentHashMap<String, ODistributedDatabaseImpl>  databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
   private          Thread                                               responseThread;
   private          long[]                                               responseTimeMetrics = new long[10];
   private volatile boolean                                              running             = true;

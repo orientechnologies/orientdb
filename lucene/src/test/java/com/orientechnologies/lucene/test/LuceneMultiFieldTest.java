@@ -13,12 +13,13 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -55,7 +56,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
             + EnglishAnalyzer.class.getName() + "\" , " + "\"title_query\":\"" + EnglishAnalyzer.class.getName() + "\" , "
             + "\"author_index\":\"" + StandardAnalyzer.class.getName() + "\"}")).execute();
 
-    final ODocument index = db.getMetadata().getIndexManager().getIndex("Song.title_author").getMetadata();
+    final ODocument index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title_author").getMetadata();
 
     assertThat(index.<Object>field("author_index")).isEqualTo(StandardAnalyzer.class.getName());
     assertThat(index.<Object>field("title_index")).isEqualTo(EnglishAnalyzer.class.getName());
@@ -125,9 +126,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Test
   public void testSelectOnIndexWithIgnoreNullValuesToFalse() {
     //#5579
-    String script = "create class Item\n"
-        + "create property Item.Title string\n"
-        + "create property Item.Summary string\n"
+    String script = "create class Item\n" + "create property Item.Title string\n" + "create property Item.Summary string\n"
         + "create property Item.Content string\n"
         + "create index Item.i_lucene on Item(Title, Summary, Content) fulltext engine lucene METADATA {ignoreNullValues:false}\n"
         + "insert into Item set Title = 'wrong', content = 'not me please'\n"
@@ -137,14 +136,11 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Item where Title lucene 'te*'"));
     assertThat(docs).hasSize(1);
 
-    docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Item where [Title, Summary, Content] lucene 'test'"));
+    docs = db.query(new OSQLSynchQuery<ODocument>("select * from Item where [Title, Summary, Content] lucene 'test'"));
     assertThat(docs).hasSize(1);
 
     //nidex api
-    docs = db.query(
-        new OSQLSynchQuery<ODocument>(" SELECT expand(rid) FROM index:Item.i_lucene where key = \"(Title:test )\""));
-    assertThat(docs).hasSize(1);
-
+    final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Item.i_lucene");
+    assertThat(index.get("\"(Title:test )\"")).isNotNull();
   }
 }

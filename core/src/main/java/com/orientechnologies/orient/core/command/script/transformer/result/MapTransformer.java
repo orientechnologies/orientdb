@@ -28,11 +28,11 @@ public class MapTransformer implements OResultTransformer<Map<Object, Object>> {
         internal.setProperty(key.toString(), transformer.toResult(val));
       } else {
 
-        if(val instanceof Iterable){
+        if (val instanceof Iterable) {
           Spliterator spliterator = ((Iterable) val).spliterator();
           Object collect = StreamSupport.stream(spliterator, false).map((e) -> this.transformer.toResult(e)).collect(Collectors.toList());
           internal.setProperty(key.toString(), collect);
-        }else {
+        } else {
           internal.setProperty(key.toString(), val);
         }
 

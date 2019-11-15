@@ -70,7 +70,7 @@ public class ORemoteServerChannel {
   private              Date                  createdOn     = new Date();
 
   private volatile     int             totalConsecutiveErrors = 0;
-  private final static int             MAX_CONSECUTIVE_ERRORS = 10;
+  private static final int             MAX_CONSECUTIVE_ERRORS = 10;
   private              ExecutorService executor;
 
   public ORemoteServerChannel(final ORemoteServerAvailabilityCheck check, String localNodeName, final String iServer,
@@ -85,11 +85,13 @@ public class ORemoteServerChannel {
     final int sepPos = iURL.lastIndexOf(":");
     remoteHost = iURL.substring(0, sepPos);
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
-
+    long timeout = contextConfig.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT) / 2;
     protocolVersion = currentProtocolVersion;
     RejectedExecutionHandler reject = (task, executor) -> {
       try {
-        executor.getQueue().put(task);
+        if (!executor.getQueue().offer(task, timeout, TimeUnit.MILLISECONDS)) {
+          check.nodeDisconnected(server);
+        }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
@@ -133,10 +135,10 @@ public class ORemoteServerChannel {
   public void sendResponse(final ODistributedResponse response) {
     executor.execute(() -> {
       networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, () -> {
-            response.toStream(channel.getDataOutput());
-            channel.flush();
-            return null;
-          }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "' " + response.getClass(), MAX_RETRY,
+        response.toStream(channel.getDataOutput());
+        channel.flush();
+        return null;
+      }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "' " + response.getClass(), MAX_RETRY,
           true);
     });
     this.prevResponse = response;

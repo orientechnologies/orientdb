@@ -97,9 +97,12 @@ public class OSQLCommandTask extends OAbstractCommandTask {
         OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
         executor.parse(cmd);
 
-        final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ?
-            ((OCommandExecutorSQLDelegate) executor).getDelegate() :
-            executor;
+        final OCommandExecutor exec;
+        if (executor instanceof OCommandExecutorSQLDelegate) {
+          exec = ((OCommandExecutorSQLDelegate) executor).getDelegate();
+        } else {
+          exec = executor;
+        }
 
         if (exec instanceof OCommandExecutorSQLSelect && clusters.size() > 0) {
           // REWRITE THE TARGET TO USE CLUSTERS

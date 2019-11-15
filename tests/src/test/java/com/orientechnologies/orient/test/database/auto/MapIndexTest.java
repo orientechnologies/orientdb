@@ -1,20 +1,19 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.test.domain.whiz.Mapper;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.orientechnologies.orient.test.domain.whiz.Mapper;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author LomakiA <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
@@ -30,7 +29,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
   @BeforeClass
   public void setupSchema() {
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
 
     final OClass mapper = database.getMetadata().getSchema().getClass("Mapper");
     mapper.createProperty("id", OType.STRING);
@@ -54,16 +53,17 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.close();
   }
 
-
   @AfterMethod
   public void afterMethod() throws Exception {
     database.command(new OCommandSQL("delete from Mapper")).execute();
     database.command(new OCommandSQL("delete from MapIndexTestMovie")).execute();
 
-		super.afterMethod();
+    super.afterMethod();
   }
 
   public void testIndexMap() {
+    checkEmbeddedDB();
+
     final Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -73,35 +73,38 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     database.save(mapper);
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(20)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(20)) {
+        Assert.fail("Unknown value found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
-  public void testIndexMapInTx() throws Exception {
+  public void testIndexMapInTx() {
+    checkEmbeddedDB();
+
     try {
       database.begin();
       final Mapper mapper = new Mapper();
@@ -118,35 +121,38 @@ public class MapIndexTest extends ObjectDBBaseTest {
       throw e;
     }
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(keyIndex.getSize(), 2);
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(20)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(20)) {
+        Assert.fail("Unknown value found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
   public void testIndexMapUpdateOne() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> mapOne = new HashMap<String, Integer>();
 
@@ -162,37 +168,41 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapTwo.put("key2", 20);
 
     mapper.setIntMap(mapTwo);
-    mapper = database.save(mapper);
+    database.save(mapper);
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-      if (!d.field("key").equals("key2") && !d.field("key").equals("key3")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
+
+    while (key != null) {
+      if (!key.equals("key2") && !key.equals("key3")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(30) && !d.field("key").equals(20)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(30) && !value.equals(20)) {
+        Assert.fail("Unknown key found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
-  public void testIndexMapUpdateOneTx() throws Exception {
+  public void testIndexMapUpdateOneTx() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> mapOne = new HashMap<String, Integer>();
 
@@ -210,42 +220,46 @@ public class MapIndexTest extends ObjectDBBaseTest {
       mapTwo.put("key2", 20);
 
       mapper.setIntMap(mapTwo);
-      mapper = database.save(mapper);
+      database.save(mapper);
       database.commit();
     } catch (Exception e) {
       database.rollback();
       throw e;
     }
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-      if (!d.field("key").equals("key2") && !d.field("key").equals("key3")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
+
+    while (key != null) {
+      if (!key.equals("key2") && !key.equals("key3")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(30) && !d.field("key").equals(20)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(30) && !value.equals(20)) {
+        Assert.fail("Unknown key found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
-  public void testIndexMapUpdateOneTxRollback() throws Exception {
+  public void testIndexMapUpdateOneTxRollback() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> mapOne = new HashMap<String, Integer>();
 
@@ -262,38 +276,41 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapTwo.put("key2", 20);
 
     mapper.setIntMap(mapTwo);
-    mapper = database.save(mapper);
+    database.save(mapper);
     database.rollback();
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key2") && !d.field("key").equals("key1")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key2") && !key.equals("key1")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(20)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(20)) {
+        Assert.fail("Unknown key found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
   public void testIndexMapAddItem() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -305,35 +322,38 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key3', 30")).execute();
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 3);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 3);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2") && !d.field("key").equals("key3")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 3);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 3);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(30) && !d.field("key").equals(20) && !d.field("key").equals(10)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
+        Assert.fail("Unknown value found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
-  public void testIndexMapAddItemTx() throws Exception {
+  public void testIndexMapAddItemTx() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -345,44 +365,48 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     try {
       database.begin();
-      Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
+      Mapper loadedMapper = database.load(new ORecordId(mapper.getId()));
       loadedMapper.getIntMap().put("key3", 30);
-      loadedMapper = database.save(loadedMapper);
+      database.save(loadedMapper);
+
       database.commit();
     } catch (Exception e) {
       database.rollback();
       throw e;
     }
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 3);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 3);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2") && !d.field("key").equals("key3")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 3);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 3);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(30) && !d.field("key").equals(20) && !d.field("key").equals(10)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
+        Assert.fail("Unknown value found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
-  public void testIndexMapAddItemTxRollback() throws Exception {
+  public void testIndexMapAddItemTxRollback() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -393,40 +417,44 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper = database.save(mapper);
 
     database.begin();
-    Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
+    Mapper loadedMapper = database.load(new ORecordId(mapper.getId()));
     loadedMapper.getIntMap().put("key3", 30);
-    loadedMapper = database.save(loadedMapper);
+    database.save(loadedMapper);
     database.rollback();
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
+
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(20) && !d.field("key").equals(10)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(20) && !value.equals(10)) {
+        Assert.fail("Unknown key found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
   public void testIndexMapUpdateItem() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -438,35 +466,39 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key2', 40")).execute();
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(40)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
+
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(40)) {
+        Assert.fail("Unknown key found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
-  public void testIndexMapUpdateItemInTx() throws Exception {
+  public void testIndexMapUpdateItemInTx() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -478,43 +510,47 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     try {
       database.begin();
-      Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
+      Mapper loadedMapper = database.load(new ORecordId(mapper.getId()));
       loadedMapper.getIntMap().put("key2", 40);
-      loadedMapper = database.save(loadedMapper);
+      database.save(loadedMapper);
       database.commit();
     } catch (Exception e) {
       database.rollback();
       throw e;
     }
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
+
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(40)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(40)) {
+        Assert.fail("Unknown value found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
-  public void testIndexMapUpdateItemInTxRollback() throws Exception {
+  public void testIndexMapUpdateItemInTxRollback() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -525,40 +561,43 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper = database.save(mapper);
 
     database.begin();
-    Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
+    Mapper loadedMapper = database.load(new ORecordId(mapper.getId()));
     loadedMapper.getIntMap().put("key2", 40);
-    loadedMapper = database.save(loadedMapper);
+    database.save(loadedMapper);
     database.rollback();
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(20)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(20)) {
+        Assert.fail("Unknown value found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
   public void testIndexMapRemoveItem() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -571,35 +610,38 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     database.command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'")).execute();
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key3")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key3")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(30)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(30)) {
+        Assert.fail("Unknown value found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
-  public void testIndexMapRemoveItemInTx() throws Exception {
+  public void testIndexMapRemoveItemInTx() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -612,44 +654,47 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     try {
       database.begin();
-      Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
+      Mapper loadedMapper = database.load(new ORecordId(mapper.getId()));
       loadedMapper.getIntMap().remove("key2");
-      loadedMapper = database.save(loadedMapper);
+      database.save(loadedMapper);
       database.commit();
     } catch (Exception e) {
       database.rollback();
       throw e;
     }
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key3")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key3")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(valueIndex.getSize(), 2);
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(30)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(30)) {
+        Assert.fail("Unknown value found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
-  public void testIndexMapRemoveItemInTxRollback() throws Exception {
+  public void testIndexMapRemoveItemInTxRollback() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -661,40 +706,43 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper = database.save(mapper);
 
     database.begin();
-    Mapper loadedMapper = (Mapper) database.load(new ORecordId(mapper.getId()));
+    Mapper loadedMapper = database.load(new ORecordId(mapper.getId()));
     loadedMapper.getIntMap().remove("key2");
-    loadedMapper = database.save(loadedMapper);
+    database.save(loadedMapper);
     database.rollback();
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 3);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(keyIndex.getSize(), 3);
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2") && !d.field("key").equals("key3")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 3);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    Assert.assertEquals(valueIndex.getSize(), 3);
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(20) && !d.field("key").equals(30)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(20) && !value.equals(30)) {
+        Assert.fail("Unknown key found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
   public void testIndexMapRemove() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -705,19 +753,17 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper = database.save(mapper);
     database.delete(mapper);
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 0);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 0);
+    OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
-
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 0);
+    Assert.assertEquals(valueIndex.getSize(), 0);
   }
 
-  public void testIndexMapRemoveInTx() throws Exception {
+  public void testIndexMapRemoveInTx() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -736,19 +782,16 @@ public class MapIndexTest extends ObjectDBBaseTest {
       throw e;
     }
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 0);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 0);
-
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
-
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 0);
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 0);
   }
 
-  public void testIndexMapRemoveInTxRollback() throws Exception {
+  public void testIndexMapRemoveInTxRollback() {
+    checkEmbeddedDB();
+
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -762,31 +805,32 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.delete(mapper);
     database.rollback();
 
-    final List<ODocument> resultByKey = database.command(new OCommandSQL("select key, rid from index:mapIndexTestKey")).execute();
+    OIndex keyIndex = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByKey);
-    Assert.assertEquals(resultByKey.size(), 2);
-    for (ODocument d : resultByKey) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor keyCursor = keyIndex.keyCursor();
+    String key = (String) keyCursor.next(-1);
 
-      if (!d.field("key").equals("key1") && !d.field("key").equals("key2")) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (key != null) {
+      if (!key.equals("key1") && !key.equals("key2")) {
+        Assert.fail("Unknown key found: " + key);
       }
+
+      key = (String) keyCursor.next(-1);
     }
 
-    final List<ODocument> resultByValue = database.command(new OCommandSQL("select key, rid from index:mapIndexTestValue"))
-        .execute();
+    OIndex valueIndex = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Assert.assertNotNull(resultByValue);
-    Assert.assertEquals(resultByValue.size(), 2);
-    for (ODocument d : resultByValue) {
-      Assert.assertTrue(d.containsField("key"));
-      Assert.assertTrue(d.containsField("rid"));
+    OIndexKeyCursor valueCursor = valueIndex.keyCursor();
+    Integer value = (Integer) valueCursor.next(-1);
 
-      if (!d.field("key").equals(10) && !d.field("key").equals(20)) {
-        Assert.fail("Unknown key found: " + d.field("key"));
+    while (value != null) {
+      if (!value.equals(10) && !value.equals(20)) {
+        Assert.fail("Unknown value found: " + value);
       }
+
+      value = (Integer) valueCursor.next(-1);
     }
   }
 
@@ -800,15 +844,15 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     mapper = database.save(mapper);
 
-    final List<Mapper> resultByKey = database.query(new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containskey ?"),
-        "key1");
+    final List<Mapper> resultByKey = database
+        .query(new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containskey ?"), "key1");
     Assert.assertNotNull(resultByKey);
     Assert.assertEquals(resultByKey.size(), 1);
 
     Assert.assertEquals(map, resultByKey.get(0).getIntMap());
 
-    final List<Mapper> resultByValue = database.query(new OSQLSynchQuery<Mapper>(
-        "select * from Mapper where intMap containsvalue ?"), 10);
+    final List<Mapper> resultByValue = database
+        .query(new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containsvalue ?"), 10);
     Assert.assertNotNull(resultByValue);
     Assert.assertEquals(resultByValue.size(), 1);
 

@@ -83,13 +83,8 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
 
   @Override
   public ODocument toStream() {
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-      serializeToStream();
-      return document;
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
+    serializeToStream();
+    return document;
   }
 
   @Override

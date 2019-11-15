@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
@@ -37,7 +38,16 @@ public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistrib
   }
 
   public void realClose() {
-    activateOnCurrentThread();
-    super.close();
+    ODatabaseDocumentInternal old = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    try {
+      activateOnCurrentThread();
+      super.close();
+    } finally {
+      if (old == null) {
+        ODatabaseRecordThreadLocal.instance().remove();
+      } else {
+        ODatabaseRecordThreadLocal.instance().set(old);
+      }
+    }
   }
 }

@@ -149,7 +149,7 @@ public class OFindReferenceHelper {
       final ORecord iRootObject) {
     if (iSourceRIDs.contains(value.getIdentity())) {
       map.get(value.getIdentity()).add(iRootObject.getIdentity());
-    }else if(!value.getIdentity().isValid() && value.getRecord() instanceof ODocument){
+    } else if (!value.getIdentity().isValid() && value.getRecord() instanceof ODocument) {
       //embedded document
       ODocument doc = value.getRecord();
       for (String fieldName : doc.fieldNames()) {

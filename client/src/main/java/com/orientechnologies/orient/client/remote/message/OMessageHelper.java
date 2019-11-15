@@ -78,7 +78,7 @@ public class OMessageHelper {
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
         .equals(serializer.toString()))) {
       ((ODocument) iRecord).deserializeFields();
-      stream = serializer.toStream(iRecord, false);
+      stream = serializer.toStream(iRecord);
     } else
       stream = iRecord.toStream();
 
@@ -154,7 +154,7 @@ public class OMessageHelper {
       final int clusterId = network.readShort();
       if (clusterName != null) {
         clusterName = clusterName.toLowerCase(Locale.ENGLISH);
-        cluster.configure(null, clusterId, clusterName);
+        cluster.configure(clusterId, clusterName);
         if (clusterId >= clusters.length)
           clusters = Arrays.copyOf(clusters, clusterId + 1);
         clusters[clusterId] = cluster;

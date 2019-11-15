@@ -24,9 +24,12 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
+import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -67,6 +70,13 @@ public class ODocumentInternal {
     return oDocument.getImmutableSchemaClass();
   }
 
+  public static OImmutableSchema getImmutableSchema(final ODocument oDocument) {
+    if (oDocument == null) {
+      return null;
+    }
+    return oDocument.getImmutableSchema();
+  }
+
   public static OGlobalProperty getGlobalPropertyById(final ODocument oDocument, final int id) {
     return oDocument.getGlobalPropertyById(id);
   }
@@ -77,6 +87,10 @@ public class ODocumentInternal {
 
   public static Set<Entry<String, ODocumentEntry>> rawEntries(final ODocument document) {
     return document.getRawEntries();
+  }
+
+  public static List<Entry<String, ODocumentEntry>> filteredEntries(final ODocument document) {
+    return document.getFilteredEntries();
   }
 
   public static void clearTrackData(final ODocument document) {
@@ -98,15 +112,23 @@ public class ODocumentInternal {
     return doc.getRawProperty(propertyName);
   }
 
-  public static ODocument toRawDocument(OElement element) {
-    if (element instanceof ODocument) {
-      return (ODocument) element;
-    } else if (element instanceof OVertexDelegate) {
-      return ((OVertexDelegate) element).element;
-    } else if (element instanceof OEdgeDelegate) {
-      return ((OEdgeDelegate) element).element;
-    }
-    return null;
+  public static void setPropertyAccess(ODocument doc, OPropertyAccess propertyAccess) {
+    doc.propertyAccess = propertyAccess;
   }
 
+  public static OPropertyAccess getPropertyAccess(ODocument doc) {
+    return doc.propertyAccess;
+  }
+
+  public static void setPropertyEncryption(ODocument doc, OPropertyEncryption propertyEncryption) {
+    doc.propertyEncryption = propertyEncryption;
+  }
+
+  public static OPropertyEncryption getPropertyEncryption(ODocument doc) {
+    return doc.propertyEncryption;
+  }
+
+  public static void clearTransactionTrackData(ODocument doc) {
+    doc.clearTransactionTrackData();
+  }
 }

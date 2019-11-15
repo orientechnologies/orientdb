@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 
@@ -22,9 +23,9 @@ public class CountFromIndexStep extends AbstractExecutionStep {
   private boolean executed = false;
 
   /**
-   * @param targetIndex the index name as it is parsed by the SQL parsed
-   * @param alias the name of the property returned in the result-set
-   * @param ctx the query context
+   * @param targetIndex      the index name as it is parsed by the SQL parsed
+   * @param alias            the name of the property returned in the result-set
+   * @param ctx              the query context
    * @param profilingEnabled true to enable the profiling of the execution (for SQL PROFILE)
    */
   public CountFromIndexStep(OIndexIdentifier targetIndex, String alias, OCommandContext ctx, boolean profilingEnabled) {
@@ -50,7 +51,8 @@ public class CountFromIndexStep extends AbstractExecutionStep {
         }
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
-          OIndex<?> idx = ctx.getDatabase().getMetadata().getIndexManager().getIndex(target.getIndexName());
+          final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+          OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database, target.getIndexName());
           long size = idx.getSize();
           executed = true;
           OResultInternal result = new OResultInternal();
@@ -68,7 +70,7 @@ public class CountFromIndexStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

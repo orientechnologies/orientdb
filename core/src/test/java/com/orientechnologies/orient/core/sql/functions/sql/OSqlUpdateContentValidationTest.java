@@ -1,13 +1,13 @@
 package com.orientechnologies.orient.core.sql.functions.sql;
 
-import org.junit.Assert; import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class OSqlUpdateContentValidationTest {
 
@@ -27,7 +27,7 @@ public class OSqlUpdateContentValidationTest {
     } catch (OValidationException val) {
       
     }
-
+    db.close();
   }
 
 }

@@ -25,37 +25,23 @@ import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexes;
-import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
-import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SQL CREATE INDEX command: Create a new index against a property.
  * <p/>
  * <p>
- * Supports following grammar: <br>
- * "CREATE" "INDEX" &lt;indexName&gt; ["ON" &lt;className&gt; "(" &lt;propName&gt; ("," &lt;propName&gt;)* ")"] &lt;indexType&gt;
- * [&lt;keyType&gt; ("," &lt;keyType&gt;)*]
+ * Supports following grammar: <br> "CREATE" "INDEX" &lt;indexName&gt; ["ON" &lt;className&gt; "(" &lt;propName&gt; (","
+ * &lt;propName&gt;)* ")"] &lt;indexType&gt; [&lt;keyType&gt; ("," &lt;keyType&gt;)*]
  * </p>
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
@@ -245,7 +231,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     if (indexName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final ODatabaseDocument database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     final OIndex<?> idx;
     List<OCollate> collatesList = null;
 
@@ -265,13 +251,13 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       OIndexFactory factory = OIndexes.getFactory(indexType.toString(), null);
 
       if (keyTypes != null)
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null,
-                metadataDoc, engine);
+        idx = database.getMetadata().getIndexManagerInternal()
+            .createIndex(database, indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes, collatesList), null,
+                null, metadataDoc, engine);
       else if (serializerKeyId != 0) {
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null, metadataDoc,
-                engine);
+        idx = database.getMetadata().getIndexManagerInternal()
+            .createIndex(database, indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null,
+                metadataDoc, engine);
       } else {
         throw new ODatabaseException("Impossible to create an index without specify the key type or the associated property");
       }
@@ -294,8 +280,8 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         final OIndexDefinition idxDef = OIndexDefinitionFactory
             .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, indexType.toString(), null);
 
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc, engine);
+        idx = database.getMetadata().getIndexManagerInternal()
+            .createIndex(database, indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc, engine);
       }
     }
 

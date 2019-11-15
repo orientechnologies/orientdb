@@ -70,9 +70,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     String originalQuery = queryText;
 
     try {
-      // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER TO: " + queryText);
       textRequest.setText(queryText);
 
       init((OCommandRequestText) iRequest);
@@ -226,7 +224,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
             Set<OIdentifiable> toIds = null;
             if (toExpr != null)
               toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr, context, iArgs);
-            if(label == null )
+            if (label == null )
               label = OrientEdgeType.CLASS_NAME;
             
             if (fromIds != null && toIds != null) {

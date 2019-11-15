@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.parser.OHaStatusStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
@@ -51,7 +50,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
   public static final String KEYWORD_HA     = "HA";
   public static final String KEYWORD_STATUS = "STATUS";
 
-  OHaStatusStatement parsedStatement;
+  private OHaStatusStatement parsedStatement;
 
   public OCommandExecutorSQLHAStatus parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
@@ -95,6 +94,9 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
         output.append(ODistributedOutput.formatLatency(dManager, dManager.getClusterConfiguration()));
       if (parsedStatement.messages)
         output.append(ODistributedOutput.formatMessages(dManager, dManager.getClusterConfiguration()));
+      if (parsedStatement.locks) {
+        output.append(ODistributedOutput.formatNewRecordLocks(dManager, databaseName));
+      }
       return output.toString();
     }
 
@@ -103,6 +105,10 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
       output.field("servers", dManager.getClusterConfiguration(), OType.EMBEDDED);
     if (parsedStatement.db)
       output.field("database", cfg.getDocument(), OType.EMBEDDED);
+
+    if (parsedStatement.locks) {
+      output.field("locks", ODistributedOutput.getRequestsStatus(dManager, databaseName));
+    }
 
     return output;
   }

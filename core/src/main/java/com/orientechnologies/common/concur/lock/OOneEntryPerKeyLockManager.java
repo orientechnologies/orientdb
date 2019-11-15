@@ -50,7 +50,7 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   private final   boolean                                   enabled;
   private final   int                                       amountOfCachedInstances;
 
-  private final static Object NULL_KEY = new Object();
+  private static final Object NULL_KEY = new Object();
 
   @SuppressWarnings("serial")
   private static class CountableLock {

@@ -20,27 +20,26 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
- *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodAsBoolean extends OAbstractSQLMethod {
 
-    public static final String NAME = "asboolean";
+  public static final String NAME = "asboolean";
 
-    public OSQLMethodAsBoolean() {
-        super(NAME);
-    }
+  public OSQLMethodAsBoolean() {
+    super(NAME);
+  }
 
-    @Override
-    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-        if (ioResult != null) {
-            if (ioResult instanceof String) {
-                ioResult = Boolean.valueOf(((String) ioResult).trim());
-            } else if (ioResult instanceof Number) {
-                return ((Number) ioResult).intValue() != 0;
-            }
-        }
-        return ioResult;
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (ioResult != null) {
+      if (ioResult instanceof String) {
+        ioResult = Boolean.valueOf(((String) ioResult).trim());
+      } else if (ioResult instanceof Number) {
+        return ((Number) ioResult).intValue() != 0;
+      }
     }
+    return ioResult;
+  }
 }

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 
@@ -83,17 +84,18 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract im
     if (name == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
+    final ODatabaseDocumentInternal database = getDatabase();
     if (name.equals("*")) {
       long totalIndexed = 0;
-      for (OIndex<?> idx : getDatabase().getMetadata().getIndexManager().getIndexes()) {
-        getDatabase().getMetadata().getIndexManager().dropIndex(idx.getName());
+      for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
+        database.getMetadata().getIndexManagerInternal().dropIndex(database, idx.getName());
         totalIndexed++;
       }
 
       return totalIndexed;
 
     } else
-      getDatabase().getMetadata().getIndexManager().dropIndex(name);
+      database.getMetadata().getIndexManagerInternal().dropIndex(database, name);
 
     return 1;
   }

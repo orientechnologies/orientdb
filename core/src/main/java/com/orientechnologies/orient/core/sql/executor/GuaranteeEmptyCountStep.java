@@ -10,8 +10,7 @@ import java.util.Optional;
 public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
 
   private final OProjectionItem item;
-
-  boolean executed = false;
+  private       boolean         executed = false;
 
   public GuaranteeEmptyCountStep(OProjectionItem oProjectionItem, OCommandContext ctx, boolean enableProfiling) {
     super(ctx, enableProfiling);
@@ -59,7 +58,7 @@ public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

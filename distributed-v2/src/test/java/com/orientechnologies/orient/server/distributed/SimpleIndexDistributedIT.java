@@ -1,25 +1,19 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SimpleIndexDistributedIT {
@@ -29,7 +23,6 @@ public class SimpleIndexDistributedIT {
   private OServer          server2;
   private OrientDB         remote;
   private ODatabaseSession session;
-  private String           indexName;
 
   @Before
   public void before() throws Exception {
@@ -40,8 +33,7 @@ public class SimpleIndexDistributedIT {
     remote.create("test", ODatabaseType.PLOCAL);
     session = remote.open("test", "admin", "admin");
     OClass clazz = session.createClass("Test");
-    OIndex<?> idx = clazz.createProperty("test", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-    indexName = idx.getName();
+    clazz.createProperty("test", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
   }
 
   @Test
@@ -51,13 +43,14 @@ public class SimpleIndexDistributedIT {
     doc = session.save(doc);
     doc.setProperty("test", "some");
     session.save(doc);
-    try (OResultSet res = session.query("select from index:" + indexName + " where key =\"some\"")) {
+
+    try (OResultSet res = session.query("select from test where test =\"some\"")) {
       assertTrue(res.hasNext());
     }
 
     OrientDB remote1 = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig());
     ODatabaseSession session1 = remote1.open("test", "admin", "admin");
-    try (OResultSet res1 = session1.query("select from index:" + indexName + " where key =\"some\"")) {
+    try (OResultSet res1 = session1.query("select from test where test =\"some\"")) {
       assertTrue(res1.hasNext());
     }
     session1.close();

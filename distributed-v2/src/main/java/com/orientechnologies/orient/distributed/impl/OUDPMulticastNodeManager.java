@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
+import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 
 import java.io.IOException;
 import java.net.*;
@@ -13,9 +14,9 @@ public class OUDPMulticastNodeManager extends ONodeManager {
   private static final int BUFFER_SIZE = 1024;
 
   private final String multicastIp;
-  private       int    listeningPort;
+  private int listeningPort;
 
-  MulticastSocket socket;
+  private MulticastSocket socket;
   private final int[] discoveryPorts;
 
   /**
@@ -24,8 +25,8 @@ public class OUDPMulticastNodeManager extends ONodeManager {
    * @param taskScheduler
    */
   public OUDPMulticastNodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration,
-      ODiscoveryListener oDistributedNetworkManager, OSchedulerInternal taskScheduler) {
-    super(config, internalConfiguration, 0, taskScheduler, oDistributedNetworkManager); //TODO term (from OpLog...?)!!
+                                  ODiscoveryListener oDistributedNetworkManager, OSchedulerInternal taskScheduler, OOperationLog opLog) {
+    super(config, internalConfiguration, 0, taskScheduler, oDistributedNetworkManager, opLog); //TODO term (from OpLog...?)!!
 
     this.listeningPort = config.getMulticast().getPort();
     this.multicastIp = config.getMulticast().getIp();
@@ -38,7 +39,7 @@ public class OUDPMulticastNodeManager extends ONodeManager {
   }
 
   public void stop() {
-    if(running) {
+    if (running) {
       socket.close();
       super.stop();
     }
@@ -62,8 +63,8 @@ public class OUDPMulticastNodeManager extends ONodeManager {
         }
         if (!interfaces.hasMoreElements()) {
           OLogManager.instance().error(this, "Cannot initialize multicast socket, "
-              + "probably the problem is due to default IPv6 settings for current network interface. "
-              + "Please try to start the process with -Djava.net.preferIPv4Stack=true", null);
+                  + "probably the problem is due to default IPv6 settings for current network interface. "
+                  + "Please try to start the process with -Djava.net.preferIPv4Stack=true", null);
         }
       }
     }
@@ -102,4 +103,12 @@ public class OUDPMulticastNodeManager extends ONodeManager {
     }
   }
 
+  @Override
+  protected String getLocalAddress() {
+    if (this.socket.getLocalAddress() != null) {
+      return this.socket.getLocalAddress().getHostAddress();
+    } else {
+      return "127.0.0.1";
+    }
+  }
 }

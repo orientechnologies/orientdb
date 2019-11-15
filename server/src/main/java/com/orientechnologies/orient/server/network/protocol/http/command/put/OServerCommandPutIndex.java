@@ -19,8 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.put;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -41,12 +40,12 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
 
     iRequest.data.commandInfo = "Index put";
 
-    ODatabaseDocument db = null;
+    ODatabaseDocumentInternal db = null;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(urlParts[2]);
+      final OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, urlParts[2]);
       if (index == null)
         throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
 
@@ -83,8 +82,8 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
       if (existent)
         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
       else
-        iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
-            null);
+        iResponse
+            .send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
 
     } finally {
       if (db != null)

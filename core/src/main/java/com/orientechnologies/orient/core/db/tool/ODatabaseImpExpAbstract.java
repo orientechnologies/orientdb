@@ -28,12 +28,12 @@ import java.util.*;
 
 /**
  * Abstract class for import/export of database and data in general.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ *
  */
 public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
-  protected final static String       DEFAULT_EXT               = ".json";
+  protected static final String       DEFAULT_EXT               = ".json";
   protected ODatabaseDocumentInternal database;
   protected String                    fileName;
   protected Set<String>               includeClusters;
@@ -55,14 +55,14 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
       final OCommandOutputListener iListener) {
     database = iDatabase;
     fileName = iFileName;
-    
+
     // Fix bug where you can't backup files with spaces. Now you can wrap with quotes and the filesystem won't create
     // directories with quotes in their name.
     if (fileName != null) {
-    	if ((fileName.startsWith("\"") && fileName.endsWith("\"")) || (fileName.startsWith("'") && fileName.endsWith("'"))) {
-    		fileName = fileName.substring(1, fileName.length() - 1);
-    		iListener.onMessage("Detected quotes surrounding filename; new backup file: " + fileName); 
-    	}
+      if ((fileName.startsWith("\"") && fileName.endsWith("\"")) || (fileName.startsWith("'") && fileName.endsWith("'"))) {
+        fileName = fileName.substring(1, fileName.length() - 1);
+        iListener.onMessage("Detected quotes surrounding filename; new backup file: " + fileName);
+      }
     }
 
     if (fileName != null && fileName.indexOf('.') == -1)

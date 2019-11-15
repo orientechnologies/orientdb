@@ -21,6 +21,9 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
@@ -32,11 +35,11 @@ import java.util.Base64;
 
 public class ORecordSerializerNetwork implements ORecordSerializer {
 
-  public static final String                   NAME                   = "onet_ser_v0";
-  public static final ORecordSerializerNetwork INSTANCE               = new ORecordSerializerNetwork();
-  private static final byte                    CURRENT_RECORD_VERSION = 0;
+  public static final  String                   NAME                   = "onet_ser_v0";
+  public static final  ORecordSerializerNetwork INSTANCE               = new ORecordSerializerNetwork();
+  private static final byte                     CURRENT_RECORD_VERSION = 0;
 
-  private final ODocumentSerializer[]                serializerByVersion;
+  private final ODocumentSerializer[] serializerByVersion;
 
   public ORecordSerializerNetwork() {
     serializerByVersion = new ODocumentSerializer[1];
@@ -81,15 +84,16 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       else
         serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
     } catch (RuntimeException e) {
-      OLogManager.instance().warn(this, "Error deserializing record with id %s send this data for debugging: %s ",
-          iRecord.getIdentity().toString(), Base64.getEncoder().encodeToString(iSource));
+      OLogManager.instance()
+          .warn(this, "Error deserializing record with id %s send this data for debugging: %s ", iRecord.getIdentity().toString(),
+              Base64.getEncoder().encodeToString(iSource));
       throw e;
     }
     return iRecord;
   }
 
   @Override
-  public byte[] toStream(final ORecord iSource, final boolean iOnlyDelta) {
+  public byte[] toStream(ORecord iSource) {
     if (iSource instanceof OBlob) {
       return iSource.toStream();
     } else if (iSource instanceof ORecordFlat) {
@@ -101,35 +105,25 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       int pos = container.alloc(1);
       container.bytes[pos] = CURRENT_RECORD_VERSION;
       // SERIALIZE RECORD
-      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
+      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container);
 
       return container.fitBytes();
     }
   }
 
   public byte[] serializeValue(Object value, OType type) {
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    OImmutableSchema schema = null;
+    if (db != null)
+      schema = db.getMetadata().getImmutableSchemaSnapshot();
     BytesContainer bytes = new BytesContainer();
-    serializerByVersion[0].serializeValue(bytes, value, type, null);
+    serializerByVersion[0].serializeValue(bytes, value, type, null, schema, null);
     return bytes.fitBytes();
   }
 
   public Object deserializeValue(byte[] val, OType type) {
     BytesContainer bytes = new BytesContainer(val);
     return serializerByVersion[0].deserializeValue(bytes, type, null);
-  }  
-
-  @Override
-  public byte[] writeClassOnly(ORecord iSource) {
-    final BytesContainer container = new BytesContainer();
-
-    // WRITE SERIALIZER VERSION
-    int pos = container.alloc(1);
-    container.bytes[pos] = CURRENT_RECORD_VERSION;
-
-    // SERIALIZE CLASS ONLY
-    serializerByVersion[CURRENT_RECORD_VERSION].serializeWithClassName((ODocument) iSource, container, true);
-
-    return container.fitBytes();
   }
 
   @Override
@@ -141,19 +135,9 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   public String getName() {
     return NAME;
   }
-    
-  @Override
-  public <RET> RET deserializeFieldFromRoot(byte[] record, String iFieldName) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
 
   @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[] record, int offset, String iFieldName, int serializerVersion) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public String[] getFieldNamesRoot(ODocument reference, byte[] iSource) {
+  public String[] getFieldNames(ODocument reference, byte[] iSource) {
     if (iSource == null || iSource.length == 0)
       return new String[0];
 
@@ -166,10 +150,5 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
           Base64.getEncoder().encodeToString(iSource));
       throw e;
     }
-  }
-  
-  @Override
-  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion) {
-    return getFieldNamesRoot(reference, iSource);
   }
 }

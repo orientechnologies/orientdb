@@ -29,7 +29,7 @@ public class OSTAsBinaryFunction extends OSQLFunctionAbstract {
 
   public static final String NAME = "ST_AsBinary";
 
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  private OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSTAsBinaryFunction() {
     super(NAME, 1, 1);

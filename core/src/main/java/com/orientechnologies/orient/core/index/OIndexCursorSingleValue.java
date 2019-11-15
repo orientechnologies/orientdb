@@ -34,7 +34,7 @@ import java.util.NoSuchElementException;
 public class OIndexCursorSingleValue extends OIndexAbstractCursor implements OSizeable {
   private final Object        key;
   private       OIdentifiable identifiable;
-  boolean empty = false;
+  private       boolean       empty = false;
 
   public OIndexCursorSingleValue(OIdentifiable identifiable, Object key) {
     this.identifiable = identifiable;

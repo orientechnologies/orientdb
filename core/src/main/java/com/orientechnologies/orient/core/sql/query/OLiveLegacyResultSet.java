@@ -17,7 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class OLiveLegacyResultSet<T> extends OConcurrentLegacyResultSet<T> {
 
-  final BlockingQueue<T> queue = new LinkedBlockingQueue<T>();
+  private final BlockingQueue<T> queue = new LinkedBlockingQueue<T>();
 
   public OLiveLegacyResultSet() {
   }

@@ -31,10 +31,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 6/25/14
  */
 public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
-  boolean closed;
-
-  final Lock syncObject = new ReentrantLock();
-  OLogSequenceNumber lastCheckpoint;
+  private       boolean            closed;
+  private final Lock               syncObject = new ReentrantLock();
+  private       OLogSequenceNumber lastCheckpoint;
 
   @Override
   public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException {

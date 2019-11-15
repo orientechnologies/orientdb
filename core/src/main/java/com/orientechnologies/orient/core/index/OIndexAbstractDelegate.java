@@ -30,9 +30,8 @@ import java.util.Set;
 
 /**
  * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex instance.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OIndexAbstractDelegate<T> implements OIndex<T> {
   protected OIndex<T> delegate;
@@ -86,6 +85,10 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.remove(iKey, iRID);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Deprecated
   public OIndex<T> clear() {
     return delegate.clear();
   }
@@ -98,7 +101,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
       if (type == null)
         return;
 
-      OIndexManager indexManager = ODatabaseRecordThreadLocal.instance().get().getMetadata().getIndexManager();
+      OIndexManagerAbstract indexManager = ODatabaseRecordThreadLocal.instance().get().getMetadata().getIndexManagerInternal();
       getInternal().setType(type);
       indexManager.save();
     }

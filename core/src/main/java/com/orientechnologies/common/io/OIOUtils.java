@@ -19,30 +19,19 @@
  */
 package com.orientechnologies.common.io;
 
-import com.orientechnologies.common.jna.ONative;
+import com.kenai.jffi.Platform;
+import com.orientechnologies.common.jnr.LastErrorException;
+import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.util.OPatternConst;
-import com.sun.jna.LastErrorException;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
+import java.util.*;
 
 public class OIOUtils {
   public static final long   SECOND   = 1000;
@@ -422,8 +411,7 @@ public class OIOUtils {
     buffer.position(read);
   }
 
-
-  public static void writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
+  public static int writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
     int bytesToWrite = buffer.limit();
 
     int written = 0;
@@ -432,49 +420,64 @@ public class OIOUtils {
 
       written += channel.write(buffer, position + written);
     }
+
+    return written;
   }
 
-  public static void writeByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToWrite) throws IOException {
-    long written = 0;
-
-    for (ByteBuffer buffer : buffers) {
-      buffer.position(0);
+  public static int calculateBlockSize(String path) {
+    if (Platform.getPlatform().getOS() != Platform.OS.LINUX) {
+      return -1;
     }
 
-    final int bufferLimit = buffers[0].limit();
+    final int linuxVersion = 0;
+    final int majorRev = 1;
+    final int minorRev = 2;
 
-    while (written < bytesToWrite) {
-      final int bufferIndex = (int) written / bufferLimit;
-
-      written += channel.write(buffers, bufferIndex, buffers.length - bufferIndex);
+    List<Integer> versionNumbers = new ArrayList<>();
+    for (String v : System.getProperty("os.version").split("[.\\-]")) {
+      if (v.matches("\\d")) {
+        versionNumbers.add(Integer.parseInt(v));
+      }
     }
+
+    if (versionNumbers.get(linuxVersion) < 2) {
+      return -1;
+    } else if (versionNumbers.get(linuxVersion) == 2) {
+      if (versionNumbers.get(majorRev) < 4) {
+        return -1;
+      } else if (versionNumbers.get(majorRev) == 4 && versionNumbers.get(minorRev) < 10) {
+        return -1;
+      }
+    }
+
+    final int _PC_REC_XFER_ALIGN = 0x11;
+
+    int fsBlockSize = ONative.instance().pathconf(path, _PC_REC_XFER_ALIGN);
+    int pageSize = ONative.instance().getpagesize();
+    fsBlockSize = lcm(fsBlockSize, pageSize);
+
+    // just being completely paranoid:
+    // (512 is the rule for 2.6+ kernels)
+    fsBlockSize = lcm(fsBlockSize, 512);
+
+    if (fsBlockSize <= 0 || ((fsBlockSize & (fsBlockSize - 1)) != 0)) {
+      return -1;
+    }
+
+    return fsBlockSize;
   }
 
-  public static void readByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToRead, boolean throwOnEof)
-      throws IOException {
-    long read = 0;
+  private static int lcm(long x, long y) {
+    long g = x; // will hold gcd
+    long yc = y;
 
-    for (ByteBuffer buffer : buffers) {
-      buffer.position(0);
+    // get the gcd first
+    while (yc != 0) {
+      long t = g;
+      g = yc;
+      yc = t % yc;
     }
 
-    final int bufferLimit = buffers[0].limit();
-
-    while (read < bytesToRead) {
-      final int bufferIndex = (int) read / bufferLimit;
-
-      final long r = channel.read(buffers, bufferIndex, buffers.length - bufferIndex);
-
-      if (r < 0)
-        if (throwOnEof)
-          throw new EOFException("End of file is reached");
-        else {
-          for (int i = bufferIndex; i < buffers.length; ++i)
-            buffers[i].put(new byte[buffers[i].remaining()]);
-          return;
-        }
-
-      read += r;
-    }
+    return (int) (x * y / g);
   }
 }

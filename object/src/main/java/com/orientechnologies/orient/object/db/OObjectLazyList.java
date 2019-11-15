@@ -297,7 +297,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
       record = getDatabase().getRecordByUserObject(element, false);
       if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
-      recordList.add(index, record);
+      recordList.set(index, record);
     }
     setDirty();
     return (TYPE) super.set(index, element);

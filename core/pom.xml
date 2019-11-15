@@ -62,6 +62,7 @@
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
+            -Dindex.allowManualIndexes=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
@@ -222,29 +223,14 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>8</source>
-                    <target>8</target>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
     <dependencies>
-
         <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>4.5.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna-platform</artifactId>
-            <version>4.5.0</version>
+            <groupId>com.github.jnr</groupId>
+            <artifactId>jnr-posix</artifactId>
+            <version>3.0.50</version>
         </dependency>
 
         <dependency>

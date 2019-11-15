@@ -193,7 +193,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     // UNAUTHORIZED
     iRequest.sessionId = SESSIONID_UNAUTHORIZED;
 
-    String header =null;
+    String header = null;
     String xRequestedWithHeader = iRequest.getHeader("X-Requested-With");
     if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
       // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.

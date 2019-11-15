@@ -64,10 +64,6 @@ public class ODocumentWrapper implements Serializable {
     document = (ODocument) document.load();
   }
 
-  void load(final String iFetchPlan) {
-    document = document.load(iFetchPlan);
-  }
-
   public <RET extends ODocumentWrapper> RET load(final String iFetchPlan, final boolean iIgnoreCache) {
     document = document.load(iFetchPlan, iIgnoreCache);
     return (RET) this;

@@ -113,13 +113,9 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
   @Override
   public ODocument toStream() {
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-      serializeToStream();
-      return document;
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
+    serializeToStream();
+    return document;
+
   }
 
   @Override
@@ -165,10 +161,11 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       setCollate(collate);
     } else {
       final List<String> collatesNames = document.field("collates");
-      if( collatesNames != null ) {
+      if (collatesNames != null) {
         OCompositeCollate collates = new OCompositeCollate(this);
-        for (String collateName : collatesNames)
+        for (String collateName : collatesNames) {
           collates.addCollate(OSQLEngine.getCollate(collateName));
+        }
         this.collate = collates;
       }
     }

@@ -23,14 +23,13 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 
 /**
  * Provides a basic credential interceptor interface.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
-public interface OCredentialInterceptor
-{
-	public String getUsername();
-	public String getPassword();
-	
-	public void intercept(final String url, final String username, final String password) throws OSecurityException;
+public interface OCredentialInterceptor {
+  String getUsername();
+
+  String getPassword();
+
+  void intercept(final String url, final String username, final String password) throws OSecurityException;
 }

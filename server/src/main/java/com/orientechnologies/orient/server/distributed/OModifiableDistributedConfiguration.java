@@ -143,7 +143,7 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
         }
       }
 
-      if( !removed )
+      if ( !removed )
         throw new ODistributedException("Cannot set ownership of cluster '" + iClusterName + "' to the server '"
             + iServerName + "', because the server has no that cluster (sharding)");
 

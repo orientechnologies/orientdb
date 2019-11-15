@@ -26,15 +26,13 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -61,7 +59,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     try {
       final ODatabaseDocumentInternal db = getDatabase();
       execInSeparateDatabase(new OCallable() {
-        @Override public Object call(Object iArgument) {
+        @Override
+        public Object call(Object iArgument) {
           return execDb = db.copy();
         }
       });
@@ -127,7 +126,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     final OCommandResultListener listener = request.getResultListener();
     if (listener instanceof OLiveResultListener) {
       execInSeparateDatabase(new OCallable() {
-        @Override public Object call(Object iArgument) {
+        @Override
+        public Object call(Object iArgument) {
           execDb.activateOnCurrentThread();
           ((OLiveResultListener) listener).onLiveResult(token, iOp);
           return null;
@@ -156,7 +156,9 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     } catch (OSecurityException ignore) {
       return false;
     }
-    return ORestrictedAccessHook.isAllowed((ODatabaseDocumentInternal) execDb, (ODocument) value.getRecord(), ORestrictedOperation.ALLOW_READ, false);
+    OSecurityInternal security = ((ODatabaseDocumentInternal) execDb).getSharedContext().getSecurity();
+    boolean allowedByPolicy = security.canRead((ODatabaseSession) execDb, value.getRecord());
+    return allowedByPolicy && ORestrictedAccessHook.isAllowed((ODatabaseDocumentInternal) execDb, (ODocument) value.getRecord(), ORestrictedOperation.ALLOW_READ, false);
   }
 
   private boolean matchesFilters(OIdentifiable value) {
@@ -200,7 +202,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       final String clusterName = execDb.getClusterNameById(value.getIdentity().getClusterId());
       if (clusterName != null) {
         for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-          if (clusterName.equalsIgnoreCase(cluster)) {//make it case insensitive in 3.0?
+          if (clusterName.equalsIgnoreCase(cluster)) { //make it case insensitive in 3.0?
             return true;
           }
         }
@@ -226,7 +228,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
   }
 
-  @Override public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
+  @Override
+  public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
     final OCommandRequestText requestText = (OCommandRequestText) iRequest;
     final String originalText = requestText.getText();
     final String remainingText = requestText.getText().trim().substring(5).trim();
@@ -238,7 +241,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.NONE;
   }
 

@@ -54,7 +54,9 @@ public class GraphRecoveringTest {
     public void onRepairedVertex(ODocument vertex) {
       repairedVertices++;
     }
-  };
+  }
+
+  ;
 
   private void init(OrientBaseGraph g, boolean lightweight) {
     g.setUseLightweightEdges(lightweight);
@@ -135,8 +137,10 @@ public class GraphRecoveringTest {
       Assert.assertEquals(eventListener.scannedEdges, 3);
       Assert.assertEquals(eventListener.removedEdges, 3);
       Assert.assertEquals(eventListener.scannedVertices, 3);
-      Assert.assertEquals(eventListener.scannedLinks, 6);
-      Assert.assertEquals(eventListener.removedLinks, 6);
+      //This is 3 because 3 referred by the edge are cleaned by the edge delete
+      Assert.assertEquals(eventListener.scannedLinks, 3);
+      //This is 3 because 3 referred by the edge are cleaned by the edge delete
+      Assert.assertEquals(eventListener.removedLinks, 3);
       Assert.assertEquals(eventListener.repairedVertices, 3);
 
     } finally {
@@ -164,9 +168,12 @@ public class GraphRecoveringTest {
       Assert.assertEquals(eventListener.scannedEdges, 3);
       Assert.assertEquals(eventListener.removedEdges, 3);
       Assert.assertEquals(eventListener.scannedVertices, 3);
-      Assert.assertEquals(eventListener.scannedLinks, 3);
-      Assert.assertEquals(eventListener.removedLinks, 3);
-      Assert.assertEquals(eventListener.repairedVertices, 3);
+      //This is 0 because the delete edge does the cleanup
+      Assert.assertEquals(eventListener.scannedLinks, 0);
+      //This is 0 because the delete edge does the cleanup
+      Assert.assertEquals(eventListener.removedLinks, 0);
+      //This is 0 because the delete edge does the cleanup
+      Assert.assertEquals(eventListener.repairedVertices, 0);
 
     } finally {
       g.shutdown();
@@ -187,7 +194,7 @@ public class GraphRecoveringTest {
         if (key == 0)
           record.field("out_", record);
         else if (key == 1)
-          record.field("in_E1", new ORecordId(100, 200));
+          record.field("in_E1", new ORecordId(5, 20000000));
         else if (key == 2)
           record.field("out_E2", record);
 

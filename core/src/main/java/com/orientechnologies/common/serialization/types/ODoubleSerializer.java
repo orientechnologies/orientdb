@@ -67,20 +67,28 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   }
 
   public void serializeNative(final double object, final byte[] stream, final int startPosition, final Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     CONVERTER.putLong(stream, startPosition, Double.doubleToLongBits(object), ByteOrder.nativeOrder());
   }
 
   public double deserializeNative(byte[] stream, int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return Double.longBitsToDouble(CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
   @Override
   public void serializeNativeObject(final Double object, final byte[] stream, final int startPosition, final Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     CONVERTER.putLong(stream, startPosition, Double.doubleToLongBits(object), ByteOrder.nativeOrder());
   }
 
   @Override
   public Double deserializeNativeObject(byte[] stream, int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return Double.longBitsToDouble(CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
@@ -136,4 +144,12 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return DOUBLE_SIZE;
   }
+
+  private static void checkBoundaries(byte[] stream, int startPosition) {
+    if (startPosition + DOUBLE_SIZE > stream.length) {
+      throw new IllegalStateException(
+          "Requested stream size is " + (startPosition + DOUBLE_SIZE) + " but provided stream has size " + stream.length);
+    }
+  }
+
 }

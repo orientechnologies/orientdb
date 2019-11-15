@@ -231,9 +231,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
     // EMBEDDED LITERALS
 
-    if (map instanceof ORecordElement)
-      ((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
-
     for (String item : items) {
       if (item != null && !item.isEmpty()) {
         final List<String> entries = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR, true, false);
@@ -251,7 +248,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
                     || iSourceDocument.fieldType(iName) != OType.EMBEDDEDMAP) && isConvertToLinkedMap(map, linkedType)) {
                   // CONVERT IT TO A LAZY MAP
                   map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
-                  ((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
                 } else if (map instanceof ORecordLazyMap && linkedType != OType.LINK) {
                   map = new OTrackedMap<Object>(iSourceDocument, map, null);
                 }
@@ -282,9 +278,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
       }
     }
-
-    if (map instanceof ORecordElement)
-      ((ORecordElement) map).setInternalStatus(STATUS.LOADED);
 
     return map;
   }
@@ -444,14 +437,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     case EMBEDDED:
       if (iValue instanceof ORecord) {
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-        toString((ORecord) iValue, iOutput, null, false, true);
+        toString((ORecord) iValue, iOutput, null, true);
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
       } else if (iValue instanceof ODocumentSerializable) {
         final ODocument doc = ((ODocumentSerializable) iValue).toDocument();
         doc.field(ODocumentSerializable.CLASS_NAME, iValue.getClass().getName());
 
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-        toString(doc, iOutput, null, false, true);
+        toString(doc, iOutput, null, true);
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
 
       } else if (iValue != null)
@@ -521,7 +514,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
               record = null;
             }
             iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-            toString(record, iOutput, null, false, true);
+            toString(record, iOutput, null, true);
             iOutput.append(OStringSerializerHelper.EMBEDDED_END);
           } else if (o.getValue() instanceof Set<?>) {
             // SUB SET
@@ -554,10 +547,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       return null;
 
     // REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
-    final String value =
-        iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN || iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN ?
-            iValue.substring(1, iValue.length() - 1) :
-            iValue;
+    final String value;
+    if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN || iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN) {
+      value = iValue.substring(1, iValue.length() - 1);
+    } else {
+      value = iValue;
+    }
 
     Collection<?> coll;
     if (iLinkedType == OType.LINK) {
@@ -577,9 +572,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       return coll;
 
     OType linkedType;
-
-    if (coll instanceof ORecordElement)
-      ((ORecordElement) coll).setInternalStatus(STATUS.UNMARSHALLING);
 
     final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true, false);
     for (String item : items) {
@@ -631,9 +623,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
       ((Collection<Object>) coll).add(objectToAdd);
     }
-
-    if (coll instanceof ORecordElement)
-      ((ORecordElement) coll).setInternalStatus(STATUS.LOADED);
 
     return coll;
   }
@@ -696,7 +685,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (linkedType == OType.EMBEDDED && o instanceof OIdentifiable)
         toString((ORecord) ((OIdentifiable) o).getRecord(), iOutput, null);
       else if (linkedType != OType.LINK && (linkedClass != null || doc != null)) {
-        toString(doc, iOutput, null, false, true);
+        toString(doc, iOutput, null, true);
       } else {
         // EMBEDDED LITERALS
         if (iLinkedType == null) {

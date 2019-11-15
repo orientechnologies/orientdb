@@ -16,29 +16,31 @@ import java.util.Optional;
  */
 public abstract class AbstractUnrollStep extends AbstractExecutionStep {
 
-
-  OResultSet        lastResult      = null;
-  Iterator<OResult> nextSubsequence = null;
-  OResult           nextElement     = null;
+  private OResultSet        lastResult      = null;
+  private Iterator<OResult> nextSubsequence = null;
+  private OResult           nextElement     = null;
 
   public AbstractUnrollStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 
-  @Override public void reset() {
+  @Override
+  public void reset() {
     this.lastResult = null;
     this.nextSubsequence = null;
     this.nextElement = null;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
     return new OResultSet() {
-      long localCount = 0;
+      private long localCount = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (localCount >= nRecords) {
           return false;
         }
@@ -51,7 +53,8 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
         return true;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (localCount >= nRecords) {
           throw new IllegalStateException();
         }
@@ -69,15 +72,18 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };

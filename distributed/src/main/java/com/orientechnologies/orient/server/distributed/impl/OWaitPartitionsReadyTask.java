@@ -9,19 +9,13 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
-import java.util.function.Function;
 
 public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
-  private final    CyclicBarrier started;
-  private final    ORemoteTask   toRun;
-  private final    CyclicBarrier finished;
-  private volatile boolean       hasResponse = false;
+  private volatile boolean      hasResponse = false;
+  private final    OExecuteOnce execute;
 
-  public OWaitPartitionsReadyTask(CyclicBarrier started, ORemoteTask toRun, CyclicBarrier finished) {
-    this.started = started;
-    this.toRun = toRun;
-    this.finished = finished;
+  public OWaitPartitionsReadyTask(OExecuteOnce execute) {
+    this.execute = execute;
   }
 
   @Override
@@ -37,14 +31,11 @@ public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
-    Object result = null;
-    if (started.await() == 0) {
-      result = toRun.execute(requestId, iServer, iManager, database);
-      hasResponse = toRun.hasResponse();
+    if (execute.execute(requestId, iServer, iManager, database)) {
+      this.hasResponse = execute.getToRun().hasResponse();
+      return execute.getResult();
     }
-    finished.await();
-
-    return result;
+    return null;
   }
 
   @Override
@@ -54,7 +45,7 @@ public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
 
   @Override
   public String toString() {
-    return "Barrier on: " + toRun.toString();
+    return "Blocking thread for: " + execute.getToRun().toString();
   }
 
   @Override
@@ -64,7 +55,7 @@ public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
 
   @Override
   public boolean isUsingDatabase() {
-    return toRun.isUsingDatabase();
+    return execute.getToRun().isUsingDatabase();
   }
 
 }

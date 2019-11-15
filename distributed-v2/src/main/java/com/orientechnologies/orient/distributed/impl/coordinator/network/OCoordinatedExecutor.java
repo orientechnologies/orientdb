@@ -1,29 +1,24 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
-import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 
 public interface OCoordinatedExecutor {
 
-  void executeOperationRequest(OOperationRequest request);
+  void executeOperationRequest(ONodeIdentity sender, OOperationRequest request);
 
-  void executeOperationResponse(OOperationResponse response);
+  void executeOperationResponse(ONodeIdentity sender, OOperationResponse response);
 
-  void executeSubmitResponse(ONetworkSubmitResponse response);
+  void executeSubmitResponse(ONodeIdentity sender, ONetworkSubmitResponse response);
 
-  void executeSubmitRequest(ONetworkSubmitRequest request);
+  void executeSubmitRequest(ONodeIdentity sender, ONetworkSubmitRequest request);
 
-  void executeStructuralOperationRequest(OStructuralOperationRequest request);
+  void executeStructuralSubmitRequest(ONodeIdentity sender, ONetworkStructuralSubmitRequest request);
 
-  void executeStructuralOperationResponse(OStructuralOperationResponse response);
+  void executeStructuralSubmitResponse(ONodeIdentity sender, ONetworkStructuralSubmitResponse response);
 
-  void executeStructuralSubmitRequest(ONetworkStructuralSubmitRequest request);
+  void executePropagate(ONodeIdentity sender, ONetworkPropagate propagate);
 
-  void executeStructuralSubmitResponse(ONetworkStructuralSubmitResponse response);
+  void executeConfirm(ONodeIdentity sender, ONetworkConfirm confirm);
 
-  void executePropagate(ONetworkPropagate propagate);
-
-  void executeConfirm(ONetworkConfirm confirm);
-
-  void executeAck(ONetworkAck ack);
+  void executeAck(ONodeIdentity sender, ONetworkAck ack);
 }

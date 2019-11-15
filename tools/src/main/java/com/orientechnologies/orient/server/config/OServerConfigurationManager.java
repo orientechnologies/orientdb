@@ -33,13 +33,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Server configuration manager. It manages the orientdb-server-config.xml file.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerConfigurationManager {
-  private final OServerConfigurationLoaderXml configurationLoader;
-  private OServerConfiguration                configuration;
-  private Map<String, OServerUserConfiguration> ephemeralUsers = new ConcurrentHashMap<String, OServerUserConfiguration>();
+  private final OServerConfigurationLoaderXml         configurationLoader;
+  private       OServerConfiguration                  configuration;
+  private       Map<String, OServerUserConfiguration> ephemeralUsers = new ConcurrentHashMap<String, OServerUserConfiguration>();
 
   public OServerConfigurationManager(final InputStream iInputStream) throws IOException {
     configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iInputStream);
@@ -60,7 +60,8 @@ public class OServerConfigurationManager {
     return configuration;
   }
 
-  public OServerConfigurationManager setUser(final String iServerUserName, final String iServerUserPasswd, final String iPermissions) {
+  public OServerConfigurationManager setUser(final String iServerUserName, final String iServerUserPasswd,
+      final String iPermissions) {
     if (iServerUserName == null || iServerUserName.length() == 0)
       throw new IllegalArgumentException("User name is null or empty");
 
@@ -107,9 +108,8 @@ public class OServerConfigurationManager {
     configurationLoader.save(configuration);
   }
 
-  public OServerUserConfiguration setEphemeralUser(final String username, final String password, final String resources)
-  {
-  	 OServerUserConfiguration userCfg = new OServerUserConfiguration(username, password, resources);
+  public OServerUserConfiguration setEphemeralUser(final String username, final String password, final String resources) {
+    OServerUserConfiguration userCfg = new OServerUserConfiguration(username, password, resources);
     ephemeralUsers.put(username, userCfg);
     return userCfg;
   }
@@ -184,9 +184,9 @@ public class OServerConfigurationManager {
     }
 
     for (OServerUserConfiguration user : ephemeralUsers.values()) {
-    	result.add(user);
+      result.add(user);
     }
-    
+
     return result;
   }
 

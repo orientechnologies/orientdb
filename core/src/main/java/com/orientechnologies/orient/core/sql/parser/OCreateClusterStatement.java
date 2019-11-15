@@ -72,7 +72,7 @@ public class OCreateClusterStatement extends ODDLStatement {
         finalId = db.addCluster(name.getStringValue());
       } else {
         result.setProperty("requestedId", requestedId);
-        finalId = db.addCluster(name.getStringValue(), requestedId, null);
+        finalId = db.addCluster(name.getStringValue(), requestedId);
       }
     }
     result.setProperty("finalId", finalId);

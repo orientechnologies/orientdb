@@ -29,10 +29,10 @@ import java.util.Iterator;
  */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
 
-  private          OServer                            server;
-  private volatile OHazelcastPlugin                   plugin;
-  private volatile boolean                            coordinator = false;
-  private volatile String                             coordinatorName;
+  private          OServer          server;
+  private volatile OHazelcastPlugin plugin;
+  private volatile boolean          coordinator = false;
+  private volatile String           coordinatorName;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -54,14 +54,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isEnabled()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isRunning()) {
       return new OSharedContextEmbedded(storage, this);
     }
     return new OSharedContextDistributed(storage, this);
   }
 
   protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isEnabled()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isRunning()) {
       return new ODatabaseDocumentEmbedded(storage);
     }
     plugin.registerNewDatabaseIfNeeded(storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
@@ -69,7 +69,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isEnabled()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isRunning()) {
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
     plugin.registerNewDatabaseIfNeeded(storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
@@ -97,7 +97,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
           storages.remove(dbName);
         }
-        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize);
+        storage = (OAbstractPaginatedStorage) disk
+            .createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {

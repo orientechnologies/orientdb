@@ -37,7 +37,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     }
 
     return new OResultSet() {
-      int localNext = 0;
+      private int localNext = 0;
 
       @Override
       public boolean hasNext() {
@@ -65,7 +65,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override
@@ -91,10 +91,10 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     finalResults.addAll(aggregateResults.values());
     aggregateResults.clear();
     for (OResultInternal item : finalResults) {
-      for (String name : item.getPropertyNames()) {
-        Object prevVal = item.getProperty(name);
+      for (String name : item.getTemporaryProperties()) {
+        Object prevVal = item.getTemporaryProperty(name);
         if (prevVal instanceof AggregationContext) {
-          item.setProperty(name, ((AggregationContext) prevVal).getFinalValue());
+          item.setTemporaryProperty(name, ((AggregationContext) prevVal).getFinalValue());
         }
       }
     }
@@ -119,10 +119,10 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
       for (OProjectionItem proj : this.projection.getItems()) {
         String alias = proj.getProjectionAlias().getStringValue();
         if (proj.isAggregate()) {
-          AggregationContext aggrCtx = preAggr.getProperty(alias);
+          AggregationContext aggrCtx = (AggregationContext) preAggr.getTemporaryProperty(alias);
           if (aggrCtx == null) {
             aggrCtx = proj.getAggregationContext(ctx);
-            preAggr.setProperty(alias, aggrCtx);
+            preAggr.setTemporaryProperty(alias, aggrCtx);
           }
           aggrCtx.apply(next, ctx);
         } else {

@@ -43,11 +43,11 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       }
       ((OResultInternal) item).setMetadata("$path", path);
 
-      if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
-        tryAddEntryPoint(item, ctx);
+      if (item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
+        tryAddEntryPointAtTheEnd(item, ctx);
         traversed.add(item.getElement().get().getIdentity());
       } else if (item.getProperty("@rid") != null && item.getProperty("@rid") instanceof OIdentifiable) {
-        tryAddEntryPoint(item, ctx);
+        tryAddEntryPointAtTheEnd(item, ctx);
         traversed.add(((OIdentifiable) item.getProperty("@rid")).getIdentity());
       }
     }
@@ -188,6 +188,18 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
   private void tryAddEntryPoint(OResult res, OCommandContext ctx) {
     if (whileClause == null || whileClause.matchesFilters(res, ctx)) {
       this.entryPoints.add(0, res);
+    }
+
+    if (res.isElement()) {
+      traversed.add(res.getElement().get().getIdentity());
+    } else if (res.getProperty("@rid") != null && res.getProperty("@rid") instanceof OIdentifiable) {
+      traversed.add(((OIdentifiable) res.getProperty("@rid")).getIdentity());
+    }
+  }
+
+  private void tryAddEntryPointAtTheEnd(OResult res, OCommandContext ctx) {
+    if (whileClause == null || whileClause.matchesFilters(res, ctx)) {
+      this.entryPoints.add(res);
     }
 
     if (res.isElement()) {

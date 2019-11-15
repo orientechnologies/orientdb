@@ -24,15 +24,15 @@ package com.orientechnologies.common.hash;
  * @since 13.08.12
  */
 public class OMurmurHash3 {
-  static class State {
-    long h1;
-    long h2;
+  private static class State {
+    private long h1;
+    private long h2;
 
-    long k1;
-    long k2;
+    private long k1;
+    private long k2;
 
-    long c1;
-    long c2;
+    private long c1;
+    private long c2;
   }
 
   static long getblock(byte[] key, int i) {

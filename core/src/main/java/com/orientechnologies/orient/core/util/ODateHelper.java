@@ -37,15 +37,25 @@ public class ODateHelper {
     return Calendar.getInstance(getDatabaseTimeZone());
   }
 
+  public static Calendar getDatabaseCalendar(final ODatabaseDocumentInternal db) {
+    return Calendar.getInstance(getDatabaseTimeZone(db));
+  }
+
   public static TimeZone getDatabaseTimeZone() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    return getDatabaseTimeZone(ODatabaseRecordThreadLocal.instance().getIfDefined());
+  }
+
+  public static TimeZone getDatabaseTimeZone(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getTimeZone();
     return TimeZone.getDefault();
   }
 
   public static DateFormat getDateFormatInstance() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    return getDateFormatInstance(ODatabaseRecordThreadLocal.instance().getIfDefined());
+  }
+
+  public static DateFormat getDateFormatInstance(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateFormatInstance();
     else
@@ -53,7 +63,10 @@ public class ODateHelper {
   }
 
   public static String getDateFormat() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    return getDateFormat(ODatabaseRecordThreadLocal.instance().getIfDefined());
+  }
+
+  public static String getDateFormat(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateFormat();
     else
@@ -61,7 +74,10 @@ public class ODateHelper {
   }
 
   public static DateFormat getDateTimeFormatInstance() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    return getDateTimeFormatInstance(ODatabaseRecordThreadLocal.instance().getIfDefined());
+  }
+
+  public static DateFormat getDateTimeFormatInstance(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateTimeFormatInstance();
     else
@@ -69,7 +85,10 @@ public class ODateHelper {
   }
 
   public static String getDateTimeFormat() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    return getDateTimeFormat(ODatabaseRecordThreadLocal.instance().getIfDefined());
+  }
+
+  public static String getDateTimeFormat(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateTimeFormat();
     else
@@ -77,6 +96,6 @@ public class ODateHelper {
   }
 
   public static Date now() {
-    return getDatabaseCalendar().getTime();
+    return new Date();
   }
 }

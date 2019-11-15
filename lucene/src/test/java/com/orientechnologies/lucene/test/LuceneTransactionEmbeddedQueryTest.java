@@ -13,11 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -66,7 +67,7 @@ public class LuceneTransactionEmbeddedQueryTest {
     }
   }
 
-  protected void createSchema(ODatabaseDocumentTx db) {
+  protected void createSchema(ODatabaseDocumentInternal db) {
     final OClass c1 = db.createVertexClass("C1");
     c1.createProperty("p1", OType.EMBEDDEDLIST, OType.STRING);
     c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] { "p1" });
@@ -74,7 +75,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
   @Test
   public void txRemoveTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:updateTxTest");
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:updateTxTest");
     db.create();
     createSchema(db);
     try {
@@ -83,7 +84,7 @@ public class LuceneTransactionEmbeddedQueryTest {
       ODocument doc = new ODocument("c1");
       doc.field("p1", new String[] { "abc" });
 
-      OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
       db.save(doc);
 
@@ -92,14 +93,14 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, vertices.size());
 
-      Assert.assertEquals(2, index.getSize());
+      Assert.assertEquals(1, index.getSize());
       db.commit();
 
       query = "select from C1 where p1 lucene \"abc\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
       Assert.assertEquals(1, vertices.size());
-      Assert.assertEquals(2, index.getSize());
+      Assert.assertEquals(1, index.getSize());
 
       db.begin();
 
@@ -120,7 +121,7 @@ public class LuceneTransactionEmbeddedQueryTest {
         i++;
       }
       Assert.assertEquals(0, i);
-      Assert.assertEquals(1, index.getSize());
+      Assert.assertEquals(0, index.getSize());
 
       db.rollback();
 
@@ -129,7 +130,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, vertices.size());
 
-      Assert.assertEquals(2, index.getSize());
+      Assert.assertEquals(1, index.getSize());
     } finally {
       db.drop();
     }
@@ -138,14 +139,14 @@ public class LuceneTransactionEmbeddedQueryTest {
   @Test
   public void txUpdateTest() {
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:updateTxTest");
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:updateTxTest");
     db.create();
     createSchema(db);
     try {
 
-      OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
-      Assert.assertEquals(1, index.getSize());
+      Assert.assertEquals(0, index.getSize());
 
       db.begin();
 
@@ -159,7 +160,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(vertices.size(), 1);
 
-      Assert.assertEquals(3, index.getSize());
+      Assert.assertEquals(2, index.getSize());
 
       db.commit();
 
@@ -170,7 +171,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, vertices.size());
       Assert.assertEquals(2, coll.size());
-      Assert.assertEquals(3, index.getSize());
+      Assert.assertEquals(2, index.getSize());
 
       db.begin();
 
@@ -195,7 +196,7 @@ public class LuceneTransactionEmbeddedQueryTest {
       }
       Assert.assertEquals(i, 1);
 
-      Assert.assertEquals(2, index.getSize());
+      Assert.assertEquals(1, index.getSize());
 
       query = "select from C1 where p1 lucene \"update\"";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -212,7 +213,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, vertices.size());
 
-      Assert.assertEquals(3, index.getSize());
+      Assert.assertEquals(2, index.getSize());
     } finally {
       db.drop();
     }
@@ -222,13 +223,13 @@ public class LuceneTransactionEmbeddedQueryTest {
   @Test
   public void txUpdateTestComplex() {
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:updateTxTest");
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:updateTxTest");
     db.create();
     createSchema(db);
     try {
-      OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
-      Assert.assertEquals(1, index.getSize());
+      Assert.assertEquals(0, index.getSize());
 
       db.begin();
 
@@ -265,7 +266,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, i);
       Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
-      Assert.assertEquals(3, index.getSize());
+      Assert.assertEquals(2, index.getSize());
 
       query = "select from C1 where p1 lucene \"removed\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -281,7 +282,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(2, vertices.size());
 
-      Assert.assertEquals(3, index.getSize());
+      Assert.assertEquals(2, index.getSize());
     } finally {
       db.drop();
     }

@@ -61,10 +61,7 @@
         </module>
         -->
         <module name="RightCurly">
-            <property name="option" value="alone"/>
-            <property name="tokens" value="CLASS_DEF, METHOD_DEF, CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, LITERAL_DO, STATIC_INIT, INSTANCE_INIT"/>
         </module>
-        <!--
         <module name="WhitespaceAround">
             <property name="allowEmptyConstructors" value="true"/>
             <property name="allowEmptyMethods" value="true"/>
@@ -75,7 +72,6 @@
             <message key="ws.notPreceded"
                      value="WhitespaceAround: ''{0}'' is not preceded with whitespace."/>
         </module>
-        -->
         <module name="OneStatementPerLine"/>
         <module name="MultipleVariableDeclarations"/>
         <module name="ArrayTypeStyle"/>
@@ -88,14 +84,13 @@
         <!--
         <module name="UpperEll"/>
         -->
-        <!--
         <module name="ModifierOrder"/>
-        -->
-        <!--
+
         <module name="EmptyLineSeparator">
             <property name="allowNoEmptyLineBetweenFields" value="true"/>
+            <property name="tokens" value="IMPORT, STATIC_IMPORT, CLASS_DEF, INTERFACE_DEF, ENUM_DEF, STATIC_INIT, INSTANCE_INIT, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
         </module>
-        -->
+
         <module name="SeparatorWrap">
             <property name="tokens" value="DOT"/>
             <property name="option" value="nl"/>
@@ -164,16 +159,16 @@
             <message key="ws.notPreceded"
                      value="GenericWhitespace ''{0}'' is not preceded with whitespace."/>
         </module>
-        <!--
+
         <module name="Indentation">
             <property name="basicOffset" value="2"/>
             <property name="braceAdjustment" value="0"/>
-            <property name="caseIndent" value="2"/>
+            <property name="caseIndent" value="0"/>
             <property name="throwsIndent" value="2"/>
-            <property name="lineWrappingIndentation" value="2"/>
-            <property name="arrayInitIndent" value="2"/>
+            <property name="lineWrappingIndentation" value="4"/>
+            <property name="arrayInitIndent" value="4"/>
         </module>
-        -->
+
         <!--
         <module name="AbbreviationAsWordInName">
             <property name="ignoreFinal" value="false"/>
@@ -194,18 +189,13 @@
         </module>
 	-->
         <module name="MethodParamPad"/>
-        <!--
         <module name="OperatorWrap">
             <property name="option" value="NL"/>
             <property name="tokens" value="BAND, BOR, BSR, BXOR, DIV, EQUAL, GE, GT, LAND, LE, LITERAL_INSTANCEOF, LOR, LT, MINUS, MOD, NOT_EQUAL, PLUS, QUESTION, SL, SR, STAR "/>
         </module>
-        -->
         <module name="AnnotationLocation">
-            <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF"/>
-        </module>
-        <module name="AnnotationLocation">
-            <property name="tokens" value="VARIABLE_DEF"/>
-            <property name="allowSamelineMultipleAnnotations" value="true"/>
+            <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
+            <property name="allowSamelineSingleParameterlessAnnotation" value="false"/>
         </module>
         <!--
         <module name="NonEmptyAtclauseDescription"/>
@@ -255,5 +245,9 @@
         <!--
         <module name="CommentsIndentation"/>
         -->
+        <module name="VisibilityModifier">
+            <property name="protectedAllowed" value="true"/>
+            <property name="publicMemberPattern" value=".*"/>
+        </module>
     </module>
 </module>

@@ -34,6 +34,7 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.*;
@@ -42,20 +43,20 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OClientConnection {
-  private final int  id;
-  private final long since;
-  private Set<ONetworkProtocol> protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
+  private final    int                       id;
+  private final    long                      since;
+  private          Set<ONetworkProtocol>     protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
   private volatile ONetworkProtocol          protocol;
   private volatile ODatabaseDocumentInternal database;
   private volatile OServerUserConfiguration  serverUser;
-  private ONetworkProtocolData   data  = new ONetworkProtocolData();
-  private OClientConnectionStats stats = new OClientConnectionStats();
-  private Lock                   lock  = new ReentrantLock();
-  private Boolean                tokenBased;
-  private byte[]                 tokenBytes;
-  private OToken                 token;
-  private boolean                disconnectOnAfter;
-  private OBinaryRequestExecutor executor;
+  private          ONetworkProtocolData      data      = new ONetworkProtocolData();
+  private          OClientConnectionStats    stats     = new OClientConnectionStats();
+  private          Lock                      lock      = new ReentrantLock();
+  private          Boolean                   tokenBased;
+  private          byte[]                    tokenBytes;
+  private          OToken                    token;
+  private          boolean                   disconnectOnAfter;
+  private          OBinaryRequestExecutor    executor;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) {
     this.id = id;
@@ -96,10 +97,13 @@ public class OClientConnection {
 
   @Override
   public String toString() {
-    return "OClientConnection [id=" + getId() + ", source=" + (
-        getProtocol() != null && getProtocol().getChannel() != null && getProtocol().getChannel().socket != null ?
-            getProtocol().getChannel().socket.getRemoteSocketAddress() :
-            "?") + ", since=" + getSince() + "]";
+    Object address;
+    if (getProtocol() != null && getProtocol().getChannel() != null && getProtocol().getChannel().socket != null) {
+      address = getProtocol().getChannel().socket.getRemoteSocketAddress();
+    } else {
+      address = "?";
+    }
+    return "OClientConnection [id=" + getId() + ", source=" + address + ", since=" + getSince() + "]";
   }
 
   /**

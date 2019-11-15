@@ -42,6 +42,7 @@ public class TruncateClassTest extends DocumentDBBaseTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testTruncateClass() {
+    checkEmbeddedDB();
 
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
@@ -122,6 +123,7 @@ public class TruncateClassTest extends DocumentDBBaseTest {
 
   @Test
   public void testTruncateVertexClassSubclassesWithIndex() {
+    checkEmbeddedDB();
 
     database.command(new OCommandSQL("create class TestTruncateVertexClassSuperclassWithIndex")).execute();
     database.command(new OCommandSQL("create property TestTruncateVertexClassSuperclassWithIndex.name STRING")).execute();
@@ -136,21 +138,18 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'")).execute();
     database.command(new OCommandSQL("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'")).execute();
 
-    List<?> result = database.query(new OSQLSynchQuery("select from index:TestTruncateVertexClassSuperclassWithIndex_index"));
-    Assert.assertEquals(result.size(), 2);
+    final OIndex index = getIndex("TestTruncateVertexClassSuperclassWithIndex_index");
+    Assert.assertEquals(index.getSize(), 2);
 
     database.command(new OCommandSQL("truncate class TestTruncateVertexClassSubclassWithIndex")).execute();
-    result = database.query(new OSQLSynchQuery("select from index:TestTruncateVertexClassSuperclassWithIndex_index"));
-    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(index.getSize(), 1);
 
     database.command(new OCommandSQL("truncate class TestTruncateVertexClassSuperclassWithIndex polymorphic")).execute();
-    result = database.query(new OSQLSynchQuery("select from index:TestTruncateVertexClassSuperclassWithIndex_index"));
-    Assert.assertEquals(result.size(), 0);
-
+    Assert.assertEquals(index.getSize(), 0);
   }
 
   private OIndex<?> getOrCreateIndex(OClass testClass) {
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("test_class_by_data");
+    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
     if (index == null) {
       testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
       index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");

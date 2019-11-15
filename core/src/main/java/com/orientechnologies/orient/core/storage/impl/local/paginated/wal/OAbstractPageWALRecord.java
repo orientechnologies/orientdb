@@ -42,37 +42,15 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
-    offset = super.toStream(content, offset);
-
-    OLongSerializer.INSTANCE.serializeNative(pageIndex, content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    OLongSerializer.INSTANCE.serializeNative(fileId, content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    return offset;
-  }
-
-  @Override
-  public void toStream(ByteBuffer buffer) {
-    super.toStream(buffer);
-
+  protected void serializeToByteBuffer(ByteBuffer buffer) {
     buffer.putLong(pageIndex);
     buffer.putLong(fileId);
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
-    offset = super.fromStream(content, offset);
-
-    pageIndex = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    fileId = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    return offset;
+  protected void deserializeFromByteBuffer(ByteBuffer buffer) {
+    pageIndex = buffer.getLong();
+    fileId = buffer.getLong();
   }
 
   @Override

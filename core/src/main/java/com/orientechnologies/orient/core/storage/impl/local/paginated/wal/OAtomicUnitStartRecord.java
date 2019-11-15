@@ -44,31 +44,13 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord {
   }
 
   @Override
-  public int toStream(final byte[] content, int offset) {
-    offset = super.toStream(content, offset);
-
-    content[offset] = isRollbackSupported ? (byte) 1 : 0;
-    offset++;
-
-    return offset;
-
-  }
-
-  @Override
-  public void toStream(final ByteBuffer buffer) {
-    super.toStream(buffer);
-
+  protected void serializeToByteBuffer(ByteBuffer buffer) {
     buffer.put(isRollbackSupported ? (byte) 1 : 0);
   }
 
   @Override
-  public int fromStream(final byte[] content, int offset) {
-    offset = super.fromStream(content, offset);
-
-    isRollbackSupported = content[offset] > 0;
-    offset++;
-
-    return offset;
+  protected void deserializeFromByteBuffer(ByteBuffer buffer) {
+    isRollbackSupported = buffer.get() > 0;
   }
 
   @Override
@@ -82,7 +64,7 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.ATOMIC_UNIT_START_RECORD;
   }
 

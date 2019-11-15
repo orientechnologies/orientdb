@@ -43,33 +43,31 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * to/from record/links.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings({ "serial" })
-public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMultiValue {
-  protected final byte                recordType;
-  protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType = MULTIVALUE_CONTENT_TYPE.EMPTY;
-  protected boolean autoConvertToRecord = true;
-  protected boolean marshalling         = false;
-  protected boolean ridOnly             = false;
+public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORecordLazyMultiValue {
+  protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType         = MULTIVALUE_CONTENT_TYPE.EMPTY;
+  protected boolean                                         autoConvertToRecord = true;
+  protected boolean                                         ridOnly             = false;
 
   public ORecordLazyList() {
     super(null);
-    this.recordType = ODocument.RECORD_TYPE;
   }
 
-  public ORecordLazyList(final ODocument iSourceRecord) {
+  public ORecordLazyList(final ORecordElement iSourceRecord) {
     super(iSourceRecord);
     if (iSourceRecord != null) {
-      this.recordType = ORecordInternal.getRecordType(iSourceRecord);
-      if (!iSourceRecord.isLazyLoad())
+      ORecordElement source = iSourceRecord;
+      while (!(source instanceof ODocument)) {
+        source = source.getOwner();
+      }
+      if (!((ODocument) source).isLazyLoad())
         // SET AS NON-LAZY LOAD THE COLLECTION TOO
         autoConvertToRecord = false;
-    } else
-      this.recordType = ODocument.RECORD_TYPE;
+    }
   }
 
-  public ORecordLazyList(final ODocument iSourceRecord, final Collection<? extends OIdentifiable> iOrigin) {
+  public ORecordLazyList(final ORecordElement iSourceRecord, final Collection<? extends OIdentifiable> iOrigin) {
     this(iSourceRecord);
     if (iOrigin != null && !iOrigin.isEmpty())
       addAll(iOrigin);
@@ -134,7 +132,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   public OLazyIterator<OIdentifiable> iterator() {
     lazyLoad(false);
     return new OLazyRecordIterator(sourceRecord, new OLazyIteratorListWrapper<OIdentifiable>(super.listIterator()),
-        autoConvertToRecord && getOwner().getInternalStatus() != STATUS.MARSHALLING);
+        autoConvertToRecord);
   }
 
   @Override
@@ -256,20 +254,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     return super.size();
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  public <RET> RET setDirty() {
-    if (!marshalling)
-      return (RET) super.setDirty();
-    return (RET) this;
-  }
-
-  @Override
-  public void setDirtyNoChanged() {
-    if (!marshalling)
-      super.setDirtyNoChanged();
-  }
-
   @Override
   public Object[] toArray() {
     convertLinks2Records();
@@ -334,10 +318,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     return ORecordMultiValueHelper.toString(this);
   }
 
-  public byte getRecordType() {
-    return recordType;
-  }
-
   public ORecordLazyList copy(final ODocument iSourceRecord) {
     final ORecordLazyList copy = new ORecordLazyList(iSourceRecord);
     copy.contentType = contentType;
@@ -350,19 +330,12 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     return copy;
   }
 
-
   public boolean lazyLoad(final boolean iInvalidateStream) {
     return true;
   }
 
   public boolean detach() {
     return convertRecords2Links();
-  }
-
-  @Override
-  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, OIdentifiable> event) {
-    if (!marshalling)
-      super.fireCollectionChangedEvent(event);
   }
 
   /**
@@ -384,7 +357,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     if (o != null && o instanceof ORecordId) {
       final ORecordId rid = (ORecordId) o;
 
-      marshalling = true;
       try {
         ORecord record = rid.getRecord();
         if (record != null) {
@@ -395,8 +367,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
       } catch (ORecordNotFoundException ignore) {
         // IGNORE THIS
-      } finally {
-        marshalling = false;
       }
     }
   }
@@ -417,15 +387,12 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
     if (o != null && o instanceof OIdentifiable && ((OIdentifiable) o).getIdentity().isPersistent()) {
       if (o instanceof ORecord && !((ORecord) o).isDirty()) {
-        marshalling = true;
         try {
-          super.set(iIndex, ((ORecord) o).getIdentity());
+          super.setInternal(iIndex, ((ORecord) o).getIdentity());
           // CONVERTED
           return true;
         } catch (ORecordNotFoundException ignore) {
           // IGNORE THIS
-        } finally {
-          marshalling = false;
         }
       } else if (o instanceof ORID)
         // ALREADY CONVERTED
@@ -445,6 +412,11 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
       }
     }
     return removed;
+  }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    //not needed do nothing
   }
 
 }

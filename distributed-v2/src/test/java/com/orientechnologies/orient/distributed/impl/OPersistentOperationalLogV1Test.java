@@ -2,15 +2,19 @@ package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLogEntry;
 import com.orientechnologies.orient.distributed.impl.coordinator.mocktx.OPhase1Tx;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1Test {
@@ -21,12 +25,12 @@ public class OPersistentOperationalLogV1Test {
     Path file = Files.createTempDirectory(".");
     try {
       OPersistentOperationalLogV1 oplog = new OPersistentOperationalLogV1(file.toString(),
-          (id) -> factory.createOperationRequest(id));
+              (id) -> factory.createOperationRequest(id));
+      oplog.setLeader(true, 0);
       OLogId logId = null;
       for (int i = 0; i < 10; i++) {
         OPhase1Tx req = new OPhase1Tx();
         logId = oplog.log(req);
-        oplog.logReceived(logId, req);
       }
       oplog.close();
       oplog = new OPersistentOperationalLogV1(file.toString(), (id) -> factory.createOperationRequest(id));
@@ -52,7 +56,7 @@ public class OPersistentOperationalLogV1Test {
       DataOutputStream outStream = new DataOutputStream(out);
       for (int i = 0; i < 3; i++) {
         OPhase1Tx item = new OPhase1Tx();
-        OLogId id = log.log(item);
+        OLogId id = log.createLogId();
         log.writeRecord(outStream, id, item);
       }
       ByteArrayInputStream input = new ByteArrayInputStream(out.toByteArray());
@@ -78,17 +82,16 @@ public class OPersistentOperationalLogV1Test {
 
     Path file = Files.createTempDirectory(".");
     OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
-
+    log.setLeader(true, 0);
     try {
-      int totLogEntries = 50_000;
+      int totLogEntries = 500;
       for (int i = 0; i < totLogEntries; i++) {
         OPhase1Tx item = new OPhase1Tx();
-        OLogId id = log.log(item);
-        log.logReceived(id, item);
+        log.log(item);
       }
 
-      int nextEntry = 10_000;
-      Iterator<OOperationLogEntry> iteartor = log.iterate(new OLogId(nextEntry), new OLogId(totLogEntries - 1));
+      long nextEntry = 100;
+      Iterator<OOperationLogEntry> iteartor = log.iterate(nextEntry, totLogEntries - 1);
       while (nextEntry < totLogEntries) {
         OOperationLogEntry item = iteartor.next();
         Assert.assertEquals(nextEntry++, item.getLogId().getId());
@@ -108,18 +111,17 @@ public class OPersistentOperationalLogV1Test {
 
     Path file = Files.createTempDirectory(".");
     OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
-
+    log.setLeader(true, 0);
     try {
-      int totLogEntries = 50_000;
+      int totLogEntries = 500;
 
       for (int i = 0; i < totLogEntries; i++) {
         OPhase1Tx item = new OPhase1Tx();
-        OLogId id = log.log(item);
-        log.logReceived(id, item);
+        log.log(item);
       }
 
-      Iterator<OOperationLogEntry> iteartor = log.iterate(new OLogId(10_000), new OLogId(40_000 - 1));
-      for (int i = 10_000; i < 40_000; i++) {
+      Iterator<OOperationLogEntry> iteartor = log.iterate(100, 400 - 1);
+      for (int i = 100; i < 400; i++) {
         OOperationLogEntry item = iteartor.next();
         Assert.assertEquals(i, item.getLogId().getId());
       }
@@ -133,4 +135,373 @@ public class OPersistentOperationalLogV1Test {
     }
   }
 
+
+  @Test
+  public void testRemoveAfter1() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+    try {
+      int totLogEntries = 100;
+
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(10, 0, 0));
+
+      Assert.assertEquals(OOperationLog.LogIdStatus.PRESENT, status);
+
+      Iterator<OOperationLogEntry> iteartor = log.iterate(0, 100);
+      for (int i = 0; i <= 10; i++) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(i, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
+
+      for (int i = 0; i < 5; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+
+      iteartor = log.iterate(0, 100);
+      for (int i = 0; i <= 15; i++) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(i, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
+
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+  @Test
+  public void testRemoveAfter2() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+    try {
+      int totLogEntries = 100;
+
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(100, 0, 0));
+
+      Assert.assertEquals(OOperationLog.LogIdStatus.FUTURE, status);
+
+      Iterator<OOperationLogEntry> iteartor = log.iterate(0, 100);
+      for (int i = 0; i < 100; i++) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(i, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+
+  @Test
+  public void testRemoveAfter3() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+
+    try {
+      int totLogEntries = 100;
+
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(-5, 0, 0));
+
+      Assert.assertEquals(OOperationLog.LogIdStatus.TOO_OLD, status);
+
+      Iterator<OOperationLogEntry> iteartor = log.iterate(0, 100);
+
+      Assert.assertFalse(iteartor.hasNext());
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+
+  @Test
+  public void testRemoveAfter4() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+
+    try {
+      int totLogEntries = 100;
+
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        log.log(item);
+      }
+      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(10, 0, 0) {
+        @Override
+        public boolean equals(Object o) {
+          return false;
+        }
+      });
+
+      Assert.assertEquals(OOperationLog.LogIdStatus.INVALID, status);
+
+      Iterator<OOperationLogEntry> iteartor = log.iterate(0, 100);
+      for (int i = 0; i < 100; i++) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(i, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+
+  @Test
+  @Ignore
+  public void stressTest() throws IOException {
+
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+    try {
+      final long totLogEntries = 500_000;
+      final int recordSize = 102400;
+
+      long begin = System.currentTimeMillis();
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx() {
+          @Override
+          public void serialize(DataOutput output) throws IOException {
+            output.write(new byte[recordSize]);
+          }
+        };
+        log.log(item);
+      }
+      System.out.println("Elapsed (ms): " + (System.currentTimeMillis() - begin));
+      System.out.println("Entries per record: " + totLogEntries / ((System.currentTimeMillis() - begin) / 1000));
+      System.out.println("Kb/s: " + recordSize * totLogEntries / (System.currentTimeMillis() - begin));
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+
+  @Test
+  @Ignore
+  public void stressTestMt() throws IOException {
+
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+    try {
+      final long totLogEntries = 1_000;
+      final int recordSize = 1024;
+      final int nThreads = 8;
+      final List<Thread> threads = new ArrayList<>();
+
+      long begin = System.currentTimeMillis();
+
+      for (int iThread = 0; iThread < nThreads; iThread++) {
+
+        Thread thread = new Thread() {
+          @Override
+          public void run() {
+
+            for (int i = 0; i < totLogEntries; i++) {
+              OPhase1Tx item = new OPhase1Tx() {
+                @Override
+                public void serialize(DataOutput output) throws IOException {
+                  output.write(new byte[(int) (recordSize * 2 * Math.random())]);
+                }
+              };
+              log.log(item);
+              if (i % 100 == 0) {
+                System.out.println("flushed " + i);
+              }
+            }
+          }
+        };
+        threads.add(thread);
+        thread.start();
+      }
+
+      threads.forEach(x -> {
+        try {
+          x.join();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      });
+
+
+      System.out.println("Elapsed (ms): " + (System.currentTimeMillis() - begin));
+      System.out.println("Entries per second: " + totLogEntries * nThreads / ((System.currentTimeMillis() - begin) / 1000));
+      System.out.println("Kb/s: " + totLogEntries * recordSize * nThreads / (System.currentTimeMillis() - begin));
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+  @Test
+  public void testLogReceived() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(false, 0);
+
+    Assert.assertTrue(log.logReceived(new OLogId(0, 0, 0), new OPhase1Tx()));
+    Assert.assertFalse(log.logReceived(new OLogId(0, 0, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(1, 0, 0), new OPhase1Tx()));
+    Assert.assertFalse(log.logReceived(new OLogId(1, 1, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(1, 1, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(2, 1, 1), new OPhase1Tx()));
+    Assert.assertFalse(log.logReceived(new OLogId(3, 1, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(3, 1, 1), new OPhase1Tx()));
+  }
+
+  @Test
+  public void testStartWithEmptyLog() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(false, 0);
+
+    Assert.assertFalse(log.logReceived(new OLogId(100, 4, 0), new OPhase1Tx()));
+  }
+
+  @Test
+  public void testLog() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+
+    OLogId logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(0L, logId.getId());
+    Assert.assertEquals(0L, logId.getTerm());
+
+    logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(1L, logId.getId());
+    Assert.assertEquals(0L, logId.getTerm());
+    Assert.assertEquals(0L, logId.getPreviousIdTerm());
+
+    log.setLeader(true, 1);
+
+    logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(2L, logId.getId());
+    Assert.assertEquals(1L, logId.getTerm());
+    Assert.assertEquals(0L, logId.getPreviousIdTerm());
+
+    logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(3L, logId.getId());
+    Assert.assertEquals(1L, logId.getTerm());
+    Assert.assertEquals(1L, logId.getPreviousIdTerm());
+
+    log.setLeader(false, 2);
+
+    Assert.assertFalse(log.logReceived(new OLogId(4, 2, 0), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(4, 2, 1), new OPhase1Tx()));
+
+    log.setLeader(true, 3);
+
+    logId = log.log(new OPhase1Tx());
+    Assert.assertEquals(5L, logId.getId());
+    Assert.assertEquals(3L, logId.getTerm());
+    Assert.assertEquals(2L, logId.getPreviousIdTerm());
+
+    log.log(new OPhase1Tx());//6
+    log.log(new OPhase1Tx());//7
+
+    log.setLeader(false, 4);
+    Assert.assertFalse(log.logReceived(new OLogId(6, 4, 3), new OPhase1Tx()));
+
+
+    OLogId last = log.lastPersistentLog();
+    Assert.assertEquals(5L, last.getId());
+    Assert.assertEquals(3L, last.getTerm());
+    Assert.assertEquals(2L, last.getPreviousIdTerm());
+  }
+
+  @Test
+  public void testRecover1() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+
+    log.log(new OPhase1Tx());
+    log.log(new OPhase1Tx());
+    log.log(new OPhase1Tx());
+
+
+    OLogId lastLogId = log.log(new OPhase1Tx());
+
+    log.close();
+
+    log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+    Assert.assertEquals(lastLogId, log.lastPersistentLog());
+
+
+  }
+
+  @Test
+  public void testRecover2() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+
+    log.log(new OPhase1Tx());
+    log.log(new OPhase1Tx());
+    log.log(new OPhase1Tx());
+
+
+    OLogId lastLogId = log.log(new OPhase1Tx());
+
+    log.close();
+
+    File logFile = new File(log.calculateLogFileFullPath(0));
+
+    Assert.assertTrue(logFile.exists());
+    FileWriter writer = new FileWriter(logFile, true);
+    writer.write("foobar");
+    writer.flush();
+    writer.close();
+
+
+    log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    log.setLeader(true, 0);
+    Assert.assertEquals(lastLogId, log.lastPersistentLog());
+
+
+  }
 }
+

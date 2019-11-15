@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
@@ -61,7 +60,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.*;
 
@@ -104,7 +103,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   protected OMicroTransaction microTransaction = null;
 
-  protected Map<String, OResultSet> activeQueries = new HashMap<>();
+  protected Map<String, OResultSet>             activeQueries = new HashMap<>();
+  private   Map<UUID, OBonsaiCollectionPointer> collectionsChanges;
 
   protected ODatabaseDocumentAbstract() {
     // DO NOTHING IS FOR EXTENDED OBJECTS
@@ -362,87 +362,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific,
-      final int iOperation) {
-    if (user != null) {
-      try {
-        user.allow(resourceGeneric, resourceSpecific, iOperation);
-      } catch (OSecurityAccessException e) {
-
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(this, "User '%s' tried to access the reserved resource '%s.%s', operation '%s'", getUser(), resourceGeneric,
-                  resourceSpecific, iOperation);
-
-        throw e;
-      }
-    }
-    return (DB) this;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
-      final Object... iResourcesSpecific) {
-
-    if (user != null) {
-      try {
-        if (iResourcesSpecific.length != 0) {
-          for (Object target : iResourcesSpecific) {
-            if (target != null) {
-              user.allow(iResourceGeneric, target.toString(), iOperation);
-            } else
-              user.allow(iResourceGeneric, null, iOperation);
-          }
-        } else
-          user.allow(iResourceGeneric, null, iOperation);
-      } catch (OSecurityAccessException e) {
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(this, "[checkSecurity] User '%s' tried to access the reserved resource '%s', target(s) '%s', operation '%s'",
-                  getUser(), iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
-
-        throw e;
-      }
-    }
-    return (DB) this;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
-      final Object iResourceSpecific) {
-    checkOpenness();
-    if (user != null) {
-      try {
-        if (iResourceSpecific != null)
-          user.allow(iResourceGeneric, iResourceSpecific.toString(), iOperation);
-        else
-          user.allow(iResourceGeneric, null, iOperation);
-      } catch (OSecurityAccessException e) {
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(this, "[checkSecurity] User '%s' tried to access the reserved resource '%s', target '%s', operation '%s'",
-                  getUser(), iResourceGeneric, iResourceSpecific, iOperation);
-
-        throw e;
-      }
-    }
-    return (DB) this;
-  }
-
-  public void checkClusterSecurity(final int operation, final OIdentifiable record, String cluster) {
-    if (cluster == null) {
-      cluster = getClusterNameById(record.getIdentity().getClusterId());
-    }
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, operation, cluster);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public ODatabaseInternal<?> getDatabaseOwner() {
     ODatabaseInternal<?> current = databaseOwner;
@@ -521,8 +440,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (user instanceof OUser) {
       OMetadata metadata = getMetadata();
       if (metadata != null) {
-        final OSecurity security = metadata.getSecurity();
-        this.user = new OImmutableUser(security.getVersion(), (OUser) user);
+        final OSecurityInternal security = sharedContext.getSecurity();
+        this.user = new OImmutableUser(security.getVersion(this), (OUser) user);
       } else
         this.user = new OImmutableUser(-1, (OUser) user);
     } else
@@ -536,11 +455,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         OMetadata metadata = getMetadata();
 
         if (metadata != null) {
-          final OSecurity security = metadata.getSecurity();
-          OUser secGetUser = security.getUser(user.getName());
+          final OSecurityInternal security = sharedContext.getSecurity();
+          OUser secGetUser = security.getUser(this, user.getName());
 
           if (secGetUser != null)
-            user = new OImmutableUser(security.getVersion(), secGetUser);
+            user = new OImmutableUser(security.getVersion(this), secGetUser);
           else
             user = new OImmutableUser(-1, new OUser());
         } else
@@ -566,9 +485,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /**
    * {@inheritDoc}
    */
+  @Deprecated
   public ODictionary<ORecord> getDictionary() {
     checkOpenness();
-    return metadata.getIndexManager().getDictionary();
+    return metadata.getIndexManagerInternal().getDictionary(this);
   }
 
   /**
@@ -900,13 +820,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
+  public int addCluster(final String iClusterName, final int iRequestedId) {
     checkIfActive();
-    return getStorage().addCluster(iClusterName, iRequestedId, iParameters);
+    return getStorage().addCluster(iClusterName, iRequestedId);
   }
 
   @Override
-  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+  public boolean dropCluster(final String iClusterName) {
     checkIfActive();
     final int clusterId = getClusterIdByName(iClusterName);
     OSchemaProxy schema = metadata.getSchema();
@@ -917,25 +837,41 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       schema.removeBlobCluster(iClusterName);
     getLocalCache().freeCluster(clusterId);
     checkForClusterPermissions(iClusterName);
-    return getStorage().dropCluster(iClusterName, iTruncate);
+    return getStorage().dropCluster(iClusterName);
   }
 
   @Override
-  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+  public boolean dropCluster(final int clusterId) {
     checkIfActive();
 
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(iClusterId));
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(clusterId));
 
     OSchemaProxy schema = metadata.getSchema();
-    final OClass clazz = schema.getClassByClusterId(iClusterId);
+    final OClass clazz = schema.getClassByClusterId(clusterId);
     if (clazz != null)
-      clazz.removeClusterId(iClusterId);
-    getLocalCache().freeCluster(iClusterId);
-    if (schema.getBlobClusters().contains(iClusterId))
-      schema.removeBlobCluster(getClusterNameById(iClusterId));
+      clazz.removeClusterId(clusterId);
+    getLocalCache().freeCluster(clusterId);
+    if (schema.getBlobClusters().contains(clusterId))
+      schema.removeBlobCluster(getClusterNameById(clusterId));
 
-    checkForClusterPermissions(getClusterNameById(iClusterId));
-    return getStorage().dropCluster(iClusterId, iTruncate);
+    checkForClusterPermissions(getClusterNameById(clusterId));
+
+    final String clusterName = getClusterNameById(clusterId);
+    if (clusterName == null) {
+      return false;
+    }
+
+    final ORecordIteratorCluster<ODocument> iteratorCluster = browseCluster(clusterName);
+    if (iteratorCluster == null) {
+      return false;
+    }
+
+    while (iteratorCluster.hasNext()) {
+      final ODocument document = iteratorCluster.next();
+      document.delete();
+    }
+
+    return getStorage().dropCluster(clusterId);
   }
 
   public void checkForClusterPermissions(final String iClusterName) {
@@ -1114,17 +1050,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public boolean hide(ORID rid) {
-    checkOpenness();
-    checkIfActive();
-
-    if (currentTx.isActive())
-      throw new ODatabaseException("This operation can be executed only in non transaction mode");
-
-    return executeHideRecord(rid, OPERATION_MODE.SYNCHRONOUS);
-  }
-
-  @Override
   public OBinarySerializerFactory getSerializerFactory() {
     return componentsFactory.binarySerializerFactory;
   }
@@ -1250,46 +1175,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
     }
     return rid.getClusterId();
-  }
-
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not use.
-   *
-   * @Internal
-   */
-  public boolean executeHideRecord(OIdentifiable record, final OPERATION_MODE iMode) {
-    checkOpenness();
-    checkIfActive();
-
-    final ORecordId rid = (ORecordId) record.getIdentity();
-
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot hide record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
-
-    if (!rid.isValid())
-      return false;
-
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.getClusterId()));
-
-    getMetadata().makeThreadLocalSchemaSnapshot();
-    if (record instanceof ODocument)
-      ODocumentInternal.checkClass((ODocument) record, this);
-    ORecordSerializationContext.pushContext();
-    try {
-
-      final OStorageOperationResult<Boolean> operationResult;
-      operationResult = getStorage().hideRecord(rid, iMode.ordinal(), null);
-
-      // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-      if (!operationResult.isMoved())
-        getLocalCache().deleteRecord(rid);
-
-      return operationResult.getResult();
-    } finally {
-      ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
-    }
   }
 
   public ODatabaseDocumentAbstract begin() {
@@ -1429,17 +1314,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * Creates a new ODocument.
    */
   public ODocument newInstance() {
-    return new ODocument();
+    return new ODocument(this);
   }
 
   @Override
   public OBlob newBlob(byte[] bytes) {
-    return new ORecordBytes(bytes);
+    return new ORecordBytes(this, bytes);
   }
 
   @Override
   public OBlob newBlob() {
-    return new ORecordBytes();
+    return new ORecordBytes(this);
   }
 
   /**
@@ -1451,7 +1336,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public ODocument newInstance(final String iClassName) {
-    return new ODocument(iClassName);
+    return new ODocument(this, iClassName);
+  }
+
+  @Override
+  public OElement newEmbeddedElement() {
+    return new ODocumentEmbedded(this);
+  }
+
+  @Override
+  public OElement newEmbeddedElement(String className) {
+    return new ODocumentEmbedded(className, this);
   }
 
   @Override
@@ -1469,12 +1364,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public OVertex newVertex(final String iClassName) {
-    OClass cl = getClass(iClassName);
-    if (cl == null || !cl.isVertexType()) {
-      throw new IllegalArgumentException("" + iClassName + " is not a vertex class");
-    }
-    OVertex doc = new OVertexDocument(cl);
-    return doc;
+    return new OVertexDocument(this, iClassName);
+  }
+
+  private OEdge newEdgeInternal(final String iClassName) {
+    return new OEdgeDocument(this, iClassName);
   }
 
   @Override
@@ -1573,7 +1467,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           OVertexDelegate.createLink(from.getRecord(), to.getRecord(), outFieldName);
           OVertexDelegate.createLink(to.getRecord(), from.getRecord(), inFieldName);
         } else {
-          edge = newInstance(iClassName).asEdge().get();
+          edge = newEdgeInternal(iClassName);
           edge.setProperty("out", currentVertex.getRecord());
           edge.setProperty("in", inDocument.getRecord());
 
@@ -1597,7 +1491,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
           // IN-VERTEX ---> OUT-VERTEX/EDGE
           OVertexDelegate.createLink(inDocument, edge.getRecord(), inFieldName);
-
         }
 
         // OK
@@ -1609,22 +1502,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           outDocument.reload();
         else if (inDocument != null)
           inDocument.reload();
-      } catch (RuntimeException e) {
-        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
-        try {
-          edge.delete();
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "Error during edge deletion", ex);
-        }
-        throw e;
-      } catch (Exception e) {
-        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
-        try {
-          edge.delete();
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "Error during edge deletion", ex);
-        }
-        throw new IllegalStateException("Error on addEdge in non tx environment", e);
       }
     }
     return edge;
@@ -1639,7 +1516,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (prop == null) {
       return false;
     }
-    if(prop.getLinkedClass() == null ){
+    if (prop.getLinkedClass() == null) {
       return false;
     }
     return linkedClass.isSubClassOf(prop.getLinkedClass());
@@ -1842,14 +1719,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         iRecord = iRecord.getRecord();
       }
     }
-
-    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
-    if (iRecord instanceof OElement && dirtyManager != null && dirtyManager.getReferences() != null && !dirtyManager.getReferences()
-        .isEmpty()) {
-      if ((((OElement) iRecord).isVertex() || ((OElement) iRecord).isEdge()) && !getTransaction().isActive() && inHook.isEmpty()) {
-        return saveGraph(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-      }
-    }
     return saveInternal(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
@@ -1884,6 +1753,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
     }
 
+    if (!getSerializer().equals(ORecordInternal.getRecordSerializer(doc))) {
+      ORecordInternal.setRecordSerializer(doc, getSerializer());
+    }
     doc = (ODocument) currentTx
         .saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
@@ -2198,35 +2070,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return getStorage().incrementalBackup(path, null);
   }
 
-  @Override
-  @Deprecated
-  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResource, final int iOperation) {
-    final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
-    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
-
-    if (resourceSpecific == null || resourceSpecific.equals("*"))
-      checkSecurity(resourceGeneric, null, iOperation);
-
-    return checkSecurity(resourceGeneric, resourceSpecific, iOperation);
-  }
-
-  @Override
-  @Deprecated
-  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
-      final Object iResourceSpecific) {
-    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
-    if (iResourceSpecific == null || iResourceSpecific.equals("*"))
-      return checkSecurity(resourceGeneric, iOperation, (Object) null);
-
-    return checkSecurity(resourceGeneric, iOperation, iResourceSpecific);
-  }
-
-  @Override
-  @Deprecated
-  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
-      final Object... iResourcesSpecific) {
-    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
-    return checkSecurity(resourceGeneric, iOperation, iResourcesSpecific);
+  public void checkClusterSecurity(final int operation, final OIdentifiable record, String cluster) {
+    if (cluster == null) {
+      cluster = getClusterNameById(record.getIdentity().getClusterId());
+    }
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, operation, cluster);
   }
 
   /**
@@ -2408,57 +2256,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     throw lastException;
   }
 
-  private void bindPropertiesToContext(OContextConfiguration configuration, final Map<String, Object> iProperties) {
-    final String connectionStrategy = iProperties != null ? (String) iProperties.get("connectionStrategy") : null;
-    if (connectionStrategy != null)
-      configuration.setValue(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
-
-    final String compressionMethod = iProperties != null ?
-        (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase(Locale.ENGLISH)) :
-        null;
-    if (compressionMethod != null)
-      // SAVE COMPRESSION METHOD IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
-
-    final String encryptionMethod = iProperties != null ?
-        (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase(Locale.ENGLISH)) :
-        null;
-    if (encryptionMethod != null)
-      // SAVE ENCRYPTION METHOD IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
-
-    final String encryptionKey = iProperties != null ?
-        (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase(Locale.ENGLISH)) :
-        null;
-    if (encryptionKey != null)
-      // SAVE ENCRYPTION KEY IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
-  }
-
-  private void bindPropertiesToContextGlobal(OContextConfiguration configuration,
-      final Map<OGlobalConfiguration, Object> iProperties) {
-    final String connectionStrategy = iProperties != null ? (String) iProperties.get("connectionStrategy") : null;
-    if (connectionStrategy != null)
-      configuration.setValue(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
-
-    final String compressionMethod =
-        iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD) : null;
-    if (compressionMethod != null)
-      // SAVE COMPRESSION METHOD IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
-
-    final String encryptionMethod =
-        iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD) : null;
-    if (encryptionMethod != null)
-      // SAVE ENCRYPTION METHOD IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
-
-    final String encryptionKey = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY) : null;
-    if (encryptionKey != null)
-      // SAVE ENCRYPTION KEY IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
-  }
-
   public boolean isUseLightweightEdges() {
     final List<OStorageEntryConfiguration> custom = (List<OStorageEntryConfiguration>) this.get(ATTRIBUTES.CUSTOM);
     for (OStorageEntryConfiguration c : custom) {
@@ -2565,6 +2362,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (!recordId.isPersistent()) {
       throw new ODatabaseException("Impossible to lock an not persistent record");
     }
+  }
+
+  public Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges() {
+    if (collectionsChanges == null) {
+      collectionsChanges = new HashMap<>();
+    }
+    return collectionsChanges;
   }
 
 }

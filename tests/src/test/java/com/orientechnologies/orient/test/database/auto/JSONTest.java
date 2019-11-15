@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
@@ -441,12 +442,12 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testJsonToStream() {
     String doc1Json = "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
     ODocument doc1 = new ODocument().fromJSON(doc1Json);
-    String doc1String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc1, false));
+    String doc1String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc1));
     Assert.assertEquals(doc1Json, "{" + doc1String + "}");
 
     String doc2Json = "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
     ODocument doc2 = new ODocument().fromJSON(doc2Json);
-    String doc2String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc2, false));
+    String doc2String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc2));
     Assert.assertEquals(doc2Json, "{" + doc2String + "}");
   }
 

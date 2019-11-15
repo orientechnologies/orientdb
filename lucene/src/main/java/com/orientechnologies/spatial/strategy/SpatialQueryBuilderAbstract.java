@@ -32,11 +32,11 @@ import java.util.Map;
  */
 public abstract class SpatialQueryBuilderAbstract {
 
-  public final static String GEO_FILTER   = "geo_filter";
-  public final static String SHAPE        = "shape";
-  public final static String SHAPE_TYPE   = "type";
-  public final static String COORDINATES  = "coordinates";
-  public final static String MAX_DISTANCE = "maxDistance";
+  public static final String GEO_FILTER   = "geo_filter";
+  public static final String SHAPE        = "shape";
+  public static final String SHAPE_TYPE   = "type";
+  public static final String COORDINATES  = "coordinates";
+  public static final String MAX_DISTANCE = "maxDistance";
   protected OLuceneSpatialIndexContainer manager;
   protected OShapeBuilder                factory;
 

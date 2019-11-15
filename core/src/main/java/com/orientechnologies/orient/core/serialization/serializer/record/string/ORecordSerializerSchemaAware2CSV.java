@@ -149,9 +149,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           boolean setFieldType = false;
 
           // SEARCH FOR A CONFIGURED PROPERTY
-          prop = ODocumentInternal.getImmutableSchemaClass(record) != null ?
-              ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName) :
-              null;
+          if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+            prop = ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName);
+          } else {
+            prop = null;
+          }
           if (prop != null && prop.getType() != OType.ANY) {
             // RECOGNIZED PROPERTY
             type = prop.getType();
@@ -258,8 +260,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  public byte[] toStream(ORecord iRecord, boolean iOnlyDelta) {
-    final byte[] result = super.toStream(iRecord, iOnlyDelta);
+  public byte[] toStream(ORecord iRecord) {
+    final byte[] result = super.toStream(iRecord);
     if (result == null || result.length > 0)
       return result;
 
@@ -287,8 +289,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat, final boolean iOnlyDelta,
-      final boolean autoDetectCollectionType) {
+  protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat, final boolean autoDetectCollectionType) {
     if (iRecord == null)
       throw new OSerializationException("Expected a record but was null");
 
@@ -297,7 +298,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     final ODocument record = (ODocument) iRecord;
 
-    if (!iOnlyDelta && ODocumentInternal.getImmutableSchemaClass(record) != null) {
+    if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
       iOutput.append(ODocumentInternal.getImmutableSchemaClass(record).getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
     }
@@ -310,7 +311,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     String fieldClassName;
     int i = 0;
 
-    final String[] fieldNames = iOnlyDelta && record.isTrackingChanges() ? record.getDirtyFields() : record.fieldNames();
+    final String[] fieldNames = record.fieldNames();
 
     // MARSHALL ALL THE FIELDS OR DELTA IF TRACKING IS ENABLED
     for (String fieldName : fieldNames) {
@@ -319,9 +320,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
       // SEARCH FOR A CONFIGURED PROPERTY
-      prop = ODocumentInternal.getImmutableSchemaClass(record) != null ?
-          ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName) :
-          null;
+      if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+        prop = ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName);
+      } else {
+        prop = null;
+      }
       fieldClassName = getClassName(fieldValue);
 
       type = record.fieldType(fieldName);
@@ -553,18 +556,4 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     return NAME;
   }
 
-  @Override
-  public <RET> RET deserializeFieldFromRoot(byte[] record, String iFieldName) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[] record, int offset, String iFieldName, int serializerVersion) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }  
-  
-  @Override
-  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion) {
-    return getFieldNamesRoot(reference, iSource);
-  }
 }

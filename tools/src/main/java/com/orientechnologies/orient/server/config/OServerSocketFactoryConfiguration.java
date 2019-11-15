@@ -25,21 +25,21 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(propOrder = { "parameters", "implementation", "name" })
 public class OServerSocketFactoryConfiguration {
 
-	public OServerSocketFactoryConfiguration() {
-	}
+  public OServerSocketFactoryConfiguration() {
+  }
 
-	public OServerSocketFactoryConfiguration(String name, String implementation) {
-		this.name = name;
-		this.implementation = implementation;
-	}
+  public OServerSocketFactoryConfiguration(String name, String implementation) {
+    this.name = name;
+    this.implementation = implementation;
+  }
 
-	@XmlAttribute(required = true)
-	public String name;
+  @XmlAttribute(required = true)
+  public String name;
 
-	@XmlAttribute(required = true)
-	public String implementation;
+  @XmlAttribute(required = true)
+  public String implementation;
 
-	@XmlElementWrapper
-	@XmlElementRef(type = OServerParameterConfiguration.class)
-	public OServerParameterConfiguration[] parameters;
+  @XmlElementWrapper
+  @XmlElementRef(type = OServerParameterConfiguration.class)
+  public OServerParameterConfiguration[] parameters;
 }

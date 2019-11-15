@@ -2,13 +2,18 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,6 +22,7 @@ import java.util.stream.Collectors;
  */
 public class OResultInternal implements OResult {
   protected Map<String, Object> content = new LinkedHashMap<>();
+  protected Map<String, Object> temporaryContent;
   protected Map<String, Object> metadata;
   protected OIdentifiable       element;
 
@@ -31,11 +37,59 @@ public class OResultInternal implements OResult {
     if (value instanceof Optional) {
       value = ((Optional) value).orElse(null);
     }
+    checkType(value);
     if (value instanceof OResult && ((OResult) value).isElement()) {
       content.put(name, ((OResult) value).getElement().get());
     } else {
       content.put(name, value);
     }
+  }
+
+  private void checkType(Object value) {
+    if (value == null) {
+      return;
+    }
+    if (OType.isSimpleType(value) || value instanceof Character) {
+      return;
+    }
+    if (value instanceof OIdentifiable) {
+      return;
+    }
+    if (value instanceof OResult) {
+      return;
+    }
+    if (value instanceof Collection || value instanceof Map) {
+      return;
+    }
+    if (value instanceof OSerializableStream || value instanceof Serializable) {
+      return;
+    }
+    throw new IllegalArgumentException("Invalid property value for OResult: " + value + " - " + value.getClass().getName());
+  }
+
+  public void setTemporaryProperty(String name, Object value) {
+    if (temporaryContent == null) {
+      temporaryContent = new HashMap<>();
+    }
+    if (value instanceof Optional) {
+      value = ((Optional) value).orElse(null);
+    }
+    if (value instanceof OResult && ((OResult) value).isElement()) {
+      temporaryContent.put(name, ((OResult) value).getElement().get());
+    } else {
+      temporaryContent.put(name, value);
+    }
+  }
+
+  public Object getTemporaryProperty(String name) {
+    if (name == null || temporaryContent == null) {
+      return null;
+    }
+    return temporaryContent.get(name);
+  }
+
+  public Set<String> getTemporaryProperties() {
+    return temporaryContent == null ? Collections.emptySet() : temporaryContent.keySet();
   }
 
   public void removeProperty(String name) {
@@ -159,68 +213,20 @@ public class OResultInternal implements OResult {
   }
 
   private boolean isEmbeddedSet(Object input) {
-    if (input instanceof Set) {
-      for (Object o : (Set) input) {
-        if (o instanceof OElement && !((OElement) o).getIdentity().isPersistent()) {
-          return true;
-        }
-        if (isEmbeddedList(o)) {
-          return true;
-        }
-        if (isEmbeddedSet(o)) {
-          return true;
-        }
-        if (isEmbeddedMap(o)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return OType.getTypeByValue(input) == OType.EMBEDDEDSET && input instanceof Set;
   }
 
   private boolean isEmbeddedMap(Object input) {
-    if (input instanceof Map) {
-      for (Object o : ((Map) input).values()) {
-        if (o instanceof OElement && !((OElement) o).getIdentity().isPersistent()) {
-          return true;
-        }
-        if (isEmbeddedList(o)) {
-          return true;
-        }
-        if (isEmbeddedSet(o)) {
-          return true;
-        }
-        if (isEmbeddedMap(o)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return OType.getTypeByValue(input) == OType.EMBEDDEDMAP && input instanceof Map;
   }
 
   private boolean isEmbeddedList(Object input) {
-    if (input instanceof List) {
-      for (Object o : (List) input) {
-        if (o instanceof OElement && !((OElement) o).getIdentity().isPersistent()) {
-          return true;
-        }
-        if (isEmbeddedList(o)) {
-          return true;
-        }
-        if (isEmbeddedSet(o)) {
-          return true;
-        }
-        if (isEmbeddedMap(o)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return OType.getTypeByValue(input) == OType.EMBEDDEDLIST && input instanceof List;
   }
 
   public Set<String> getPropertyNames() {
     Set<String> result = new LinkedHashSet<>();
-    if (element != null) {
+    if (element != null && !(element instanceof ORecordBytes)) {
       result.addAll(((ODocument) element.getRecord()).getPropertyNames());
     }
     result.addAll(content.keySet());
@@ -231,7 +237,7 @@ public class OResultInternal implements OResult {
     if (element != null && ((ODocument) element.getRecord()).containsField(propName)) {
       return true;
     }
-    return content.keySet().contains(propName);
+    return content.containsKey(propName);
   }
 
   @Override
@@ -325,7 +331,7 @@ public class OResultInternal implements OResult {
     if (isBlob()) {
       return Optional.ofNullable(this.element.getRecord());
     }
-    return null;
+    return Optional.empty();
   }
 
   @Override

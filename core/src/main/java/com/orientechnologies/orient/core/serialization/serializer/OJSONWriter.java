@@ -116,12 +116,14 @@ public class OJSONWriter {
         int size = Array.getLength(iValue);
         if (iFormat != null && iFormat.contains("shallow"))
           buffer.append(size);
-        else
-          for (int i = 0; i<size; ++i) {
-            if (i>0)
+        else {
+          for (int i = 0; i < size; ++i) {
+            if (i > 0) {
               buffer.append(",");
+            }
             buffer.append(writeValue(Array.get(iValue, i), iFormat));
           }
+        }
         buffer.append(']');
 
       }
@@ -143,9 +145,9 @@ public class OJSONWriter {
       buffer.append(writeValue(entry.getValue(), iFormat));
       buffer.append('}');
     } else if (iValue instanceof Date) {
-      if (iFormat.indexOf("dateAsLong")>-1)
+      if (iFormat.indexOf("dateAsLong") > -1) {
         buffer.append(((Date) iValue).getTime());
-      else {
+      } else {
         buffer.append('"');
         buffer.append(ODateHelper.getDateTimeFormatInstance().format(iValue));
         buffer.append('"');
@@ -159,10 +161,11 @@ public class OJSONWriter {
       iteratorToJSON(((Iterable<?>) iValue).iterator(), iFormat, buffer);
 
     else {
-      if(valueType == null)
+      if (valueType == null) {
         valueType = OType.getTypeByValue(iValue);
-      
-      if(valueType == OType.CUSTOM){
+      }
+
+      if (valueType == OType.CUSTOM) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream object = new ObjectOutputStream(baos);
         object.writeObject(iValue);
@@ -170,7 +173,7 @@ public class OJSONWriter {
         buffer.append('"');
         buffer.append(Base64.getEncoder().encodeToString(baos.toByteArray()));
         buffer.append('"');
-      }else {
+      } else {
         // TREAT IT AS STRING
         final String v = iValue.toString();
         buffer.append('"');
@@ -199,8 +202,9 @@ public class OJSONWriter {
       }
     } else {
       for (int i = 0; it.hasNext(); ++i) {
-        if (i>0)
+        if (i > 0) {
           buffer.append(",");
+        }
         buffer.append(writeValue(it.next(), iFormat));
       }
     }
@@ -228,8 +232,9 @@ public class OJSONWriter {
               try {
                 objectJson = iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
 
-                if (counter++>0)
+                if (counter++ > 0) {
                   buffer.append(",");
+                }
 
                 buffer.append(objectJson);
               } catch (Exception e) {
@@ -258,8 +263,9 @@ public class OJSONWriter {
         Entry<?, ?> entry;
         for (Iterator<?> it = iMap.entrySet().iterator(); it.hasNext(); ++i) {
           entry = (Entry<?, ?>) it.next();
-          if (i>0)
+          if (i > 0) {
             buffer.append(",");
+          }
           buffer.append(writeValue(entry.getKey(), iFormat));
           buffer.append(":");
           buffer.append(writeValue(entry.getValue(), iFormat));
@@ -378,9 +384,9 @@ public class OJSONWriter {
   }
 
   public OJSONWriter writeObjects(int iIdentLevel, boolean iNewLine, final String iName, Object[]... iPairs) throws IOException {
-    for (int i = 0; i<iPairs.length; ++i) {
+    for (int i = 0; i < iPairs.length; ++i) {
       beginObject(iIdentLevel, true, iName);
-      for (int k = 0; k<iPairs[i].length; ) {
+      for (int k = 0; k < iPairs[i].length; ) {
         writeAttribute(iIdentLevel + 1, false, (String) iPairs[i][k++], iPairs[i][k++], format);
       }
       endObject(iIdentLevel, false);
@@ -402,6 +408,7 @@ public class OJSONWriter {
       final String iFormat) throws IOException {
     return writeAttribute(iIdentLevel, iNewLine, iName, iValue, iFormat, null);
   }
+
   public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
       final String iFormat,OType valueType) throws IOException {
     if (!firstAttribute)
@@ -484,13 +491,16 @@ public class OJSONWriter {
   }
 
   private OJSONWriter format(final int iIdentLevel, final boolean iNewLine) throws IOException {
-    if (iIdentLevel>-1) {
-      if (iNewLine)
+    if (iIdentLevel > -1) {
+      if (iNewLine) {
         newline();
+      }
 
-      if (prettyPrint)
-        for (int i = 0; i<iIdentLevel; ++i)
+      if (prettyPrint) {
+        for (int i = 0; i < iIdentLevel; ++i) {
           out.append("  ");
+        }
+      }
     }
 
     return this;

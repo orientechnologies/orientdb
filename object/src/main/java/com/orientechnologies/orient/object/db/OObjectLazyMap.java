@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.object.db;
 
 import java.io.Serializable;
@@ -35,15 +35,15 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
-public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Serializable,
-    OObjectLazyMultivalueElement<Map<Object, TYPE>>, OLazyObjectMapInterface<TYPE> {
-  private static final long                serialVersionUID = -7071023580831419958L;
+public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
+    implements Serializable, OObjectLazyMultivalueElement<Map<Object, TYPE>>, OLazyObjectMapInterface<TYPE> {
+  private static final long serialVersionUID = -7071023580831419958L;
 
   private final ProxyObject                sourceRecord;
   private final Map<Object, OIdentifiable> underlying;
-  private String                           fetchPlan;
-  private boolean                          converted        = false;
-  private boolean                          convertToRecord  = true;
+  private       String                     fetchPlan;
+  private       boolean                    converted       = false;
+  private       boolean                    convertToRecord = true;
   private final boolean                    orphanRemoval;
 
   public OObjectLazyMap(final Object iSourceRecord, final Map<Object, OIdentifiable> iRecordMap, final boolean orphanRemoval) {
@@ -174,14 +174,11 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
     convert((String) iKey);
     return super.get(iKey);
   }
-  
-  public Object getOrDefault(Object key, Object defaultValue) 
-  {
-	 String keyAsString = String.valueOf(key);
-	 Object valueToReturn;
-     return (((valueToReturn = this.get(keyAsString)) != null) || this.containsKey(keyAsString))
-			  ? valueToReturn
-			  : defaultValue;
+
+  public Object getOrDefault(Object key, Object defaultValue) {
+    String keyAsString = String.valueOf(key);
+    Object valueToReturn;
+    return (((valueToReturn = this.get(keyAsString)) != null) || this.containsKey(keyAsString)) ? valueToReturn : defaultValue;
   }
 
   @Override
@@ -258,13 +255,13 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
       return;
 
     for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet())
-      super.put(e.getKey(),
-          getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
+      super.put(e.getKey(), getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
 
     converted = true;
   }
 
-  protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+  protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
     if (converted || !convertToRecord)
       return;
 

@@ -120,9 +120,10 @@ public class OEdgeDelegate implements OEdge {
   }
 
   public OEdge delete() {
-    deleteLinks(this);
     if (element != null) {
       element.delete();
+    } else {
+      deleteLinks(this);
     }
     return this;
   }
@@ -136,17 +137,16 @@ public class OEdgeDelegate implements OEdge {
     if (to != null) {
       OVertexDelegate.detachIncomingEdge(to, delegate);
     }
-    if (from != null) {
-      from.save();
-    }
-    if (to != null) {
-      to.save();
-    }
   }
 
   @Override
   public <RET> RET getProperty(String name) {
     return element == null ? null : element.getProperty(name);
+  }
+
+  @Override
+  public boolean hasProperty(String propertyName) {
+    return element == null ? false : element.hasProperty(propertyName);
   }
 
   @Override
@@ -453,7 +453,6 @@ public class OEdgeDelegate implements OEdge {
       element.save();
     } else {
       vIn.save();
-      vOut.save();
     }
     return (RET) this;
   }
@@ -464,7 +463,6 @@ public class OEdgeDelegate implements OEdge {
       element.save(iCluster);
     } else {
       vIn.save();
-      vOut.save();
     }
     return (RET) this;
   }
@@ -475,7 +473,6 @@ public class OEdgeDelegate implements OEdge {
       element.save(forceCreate);
     } else {
       vIn.save();
-      vOut.save();
     }
     return (RET) this;
   }
@@ -486,7 +483,6 @@ public class OEdgeDelegate implements OEdge {
       element.save(iCluster, forceCreate);
     } else {
       vIn.save();
-      vOut.save();
     }
     return (RET) this;
   }

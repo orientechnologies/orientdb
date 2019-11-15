@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public interface ODatabaseDocument extends ODatabase<ORecord> {
 
-  final static String TYPE = "document";
+  String TYPE = "document";
 
   /**
    * Browses all the records of the specified class and also all the subclasses. If you've a class Vehicle and Car that extends
@@ -334,6 +334,11 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
   OElement newElement();
 
   OElement newElement(final String className);
+
+  OElement newEmbeddedElement();
+
+  OElement newEmbeddedElement(final String className);
+
 
   /**
    * Creates a new Edge of type E

@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
@@ -44,6 +45,9 @@ public class OContainsAnyCondition extends OBooleanExpression {
           if (((Collection) left).contains(next)) {
             return true;
           }
+          if(next instanceof OResult && ((OResult) next).isElement() && ((Collection) left).contains(((OResult) next).toElement())){
+            return true;
+          }
         }
       }
       return false;
@@ -64,6 +68,11 @@ public class OContainsAnyCondition extends OBooleanExpression {
         while (leftIterator.hasNext()) {
           Object rightItem = leftIterator.next();
           if (leftItem != null && leftItem.equals(rightItem)) {
+            return true;
+          }
+          Object leftElem = leftItem instanceof OResult && ((OResult) leftItem).isElement() ? ((OResult) leftItem).getElement().get() : rightItem;
+          Object rightElem = rightItem instanceof OResult && ((OResult) rightItem).isElement() ? ((OResult) rightItem).getElement().get() : rightItem;
+          if (leftElem != null && leftElem.equals(rightElem)) {
             return true;
           }
         }

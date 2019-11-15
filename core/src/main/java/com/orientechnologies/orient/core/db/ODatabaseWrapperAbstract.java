@@ -251,9 +251,9 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     return underlying.getClusterRecordSizeByName(iClusterName);
   }
 
-  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId) {
     checkOpenness();
-    return underlying.addCluster(iClusterName, iRequestedId, iParameters);
+    return underlying.addCluster(iClusterName, iRequestedId);
   }
 
   public int addCluster(final String iClusterName, final Object... iParameters) {
@@ -261,14 +261,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     return underlying.addCluster(iClusterName, iParameters);
   }
 
-  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+  public boolean dropCluster(final String iClusterName) {
     getLocalCache().freeCluster(getClusterIdByName(iClusterName));
-    return underlying.dropCluster(iClusterName, iTruncate);
+    return underlying.dropCluster(iClusterName);
   }
 
-  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+  public boolean dropCluster(final int iClusterId) {
     getLocalCache().freeCluster(iClusterId);
-    return underlying.dropCluster(iClusterId, true);
+    return underlying.dropCluster(iClusterId);
   }
 
   public int getDefaultClusterId() {

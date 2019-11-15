@@ -31,13 +31,12 @@ import java.util.List;
 
 /**
  * Index implementation bound to one schema class property.
- * 
  */
 public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
-  private static final long serialVersionUID = 7395728581151922197L;
-  protected String className;
-  protected String field;
-  protected OType  keyType;
+  private static final long   serialVersionUID = 7395728581151922197L;
+  protected            String className;
+  protected            String field;
+  protected            OType  keyType;
 
   public OPropertyIndexDefinition(final String iClassName, final String iField, final OType iType) {
     super();
@@ -141,14 +140,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
 
   @Override
   public final ODocument toStream() {
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-
-    try {
-      serializeToStream();
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
-
+    serializeToStream();
     return document;
   }
 
@@ -177,7 +169,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @param indexName
    * @param indexType
    */
@@ -186,12 +178,12 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   protected StringBuilder createIndexDDLWithFieldType(String indexName, String indexType, String engine) {
-    final StringBuilder ddl = createIndexDDLWithoutFieldType(indexName, indexType,engine);
+    final StringBuilder ddl = createIndexDDLWithoutFieldType(indexName, indexType, engine);
     ddl.append(' ').append(keyType.name());
     return ddl;
   }
 
-  protected StringBuilder createIndexDDLWithoutFieldType(final String indexName, final String indexType,final String engine) {
+  protected StringBuilder createIndexDDLWithoutFieldType(final String indexName, final String indexType, final String engine) {
     final StringBuilder ddl = new StringBuilder("create index `");
 
     ddl.append(indexName).append("` on `");

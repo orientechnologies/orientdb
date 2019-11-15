@@ -35,12 +35,12 @@ import java.util.Map;
 public class OGraphRepair {
 
   private class ORepairStats {
-    long scannedEdges     = 0;
-    long removedEdges     = 0;
-    long scannedVertices  = 0;
-    long scannedLinks     = 0;
-    long removedLinks     = 0;
-    long repairedVertices = 0;
+    private long scannedEdges     = 0;
+    private long removedEdges     = 0;
+    private long scannedVertices  = 0;
+    private long scannedLinks     = 0;
+    private long removedLinks     = 0;
+    private long repairedVertices = 0;
   }
 
   private OStorageRecoverEventListener eventListener;

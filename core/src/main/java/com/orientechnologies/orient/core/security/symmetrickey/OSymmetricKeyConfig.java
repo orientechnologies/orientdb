@@ -21,14 +21,22 @@ package com.orientechnologies.orient.core.security.symmetrickey;
 
 public interface OSymmetricKeyConfig {
   String getKeyString();
+
   String getKeyFile();
+
   String getKeyAlgorithm();
+
   String getKeystoreFile();
+
   String getKeystorePassword();
+
   String getKeystoreKeyAlias();
+
   String getKeystoreKeyPassword();
   
   boolean usesKeyString();
+
   boolean usesKeyFile();
+
   boolean usesKeystore();
 }

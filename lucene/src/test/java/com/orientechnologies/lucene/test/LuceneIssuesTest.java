@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -8,6 +9,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -16,17 +18,14 @@ import java.util.List;
 public class LuceneIssuesTest extends BaseLuceneTest {
 
   @Test
-  public void testGh_7382() throws Exception {
+  public void testGh_7382() {
 
     InputStream stream = ClassLoader.getSystemResourceAsStream("testGh_7382.osql");
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>(
-        "select server,date from index:class_7382_multi WHERE key = 'server:206012226875414 AND date:[201703120000 TO  201703120001]' "));
-
-    Assertions.assertThat(results).hasSize(1);
-
+    final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "class_7382_multi");
+    Assertions.assertThat((Collection) index.get("server:206012226875414 AND date:[201703120000 TO  201703120001]")).hasSize(1);
   }
 
   @Test
@@ -48,28 +47,18 @@ public class LuceneIssuesTest extends BaseLuceneTest {
   }
 
   @Test
-  public void testGh_issue7513() throws Exception {
+  public void testGh_issue7513() {
 
     InputStream stream = ClassLoader.getSystemResourceAsStream("testGh_7513.osql");
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    List<ODocument> documents = db
-        .query(new OSQLSynchQuery<Object>("select rid from index:Item.content where key lucene 'Харько~0.2' limit 3 "));
-
-    Assertions.assertThat(documents).hasSize(3);
-    documents = db
-        .query(new OSQLSynchQuery<Object>("select expand(rid) from index:Item.content where key lucene 'Харько~0.2' limit 3 "));
-
-    Assertions.assertThat(documents).hasSize(3);
-    documents = db.query(new OSQLSynchQuery<Object>("select * from index:Item.content where key lucene 'Харько~0.2' limit 3 "));
-
-    Assertions.assertThat(documents).hasSize(3);
-
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Item.content");
+    Assertions.assertThat(((Collection) index.get("'Харько~0.2")).size() >= 3).isTrue();
   }
 
   @Test
-  public void test_ph8929() throws Exception {
+  public void test_ph8929() {
 
     InputStream stream = ClassLoader.getSystemResourceAsStream("testPh_8929.osql");
 

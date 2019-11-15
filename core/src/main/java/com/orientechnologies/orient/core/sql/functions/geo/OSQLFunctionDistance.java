@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 public class OSQLFunctionDistance extends OSQLFunctionAbstract {
   public static final String NAME = "distance";
 
-  private final static double EARTH_RADIUS = 6371;
+  private static final double EARTH_RADIUS = 6371;
 
   public OSQLFunctionDistance() {
     super(NAME, 4, 5);

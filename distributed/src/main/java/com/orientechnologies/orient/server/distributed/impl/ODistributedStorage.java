@@ -21,109 +21,55 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.ODistributedCommand;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.OAsynchDistributedOperation;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfigurationChangedException;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
 import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordIfNotLatestTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OScriptTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.concurrent.BlockingQueue;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -216,9 +162,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
 
-    final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ?
-        ((OCommandExecutorSQLDelegate) executor).getDelegate() :
-        executor;
+    final OCommandExecutor exec;
+    if (executor instanceof OCommandExecutorSQLDelegate) {
+      exec = ((OCommandExecutorSQLDelegate) executor).getDelegate();
+    } else {
+      exec = executor;
+    }
 
     if (!exec.isIdempotent()) {
       resetLastValidBackup();
@@ -284,9 +233,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             results = executeOnServers(iCommand, exec, involvedClusters, nodeClusterMap);
           }
 
-          final OCommandExecutorSQLSelect select = exec instanceof OCommandExecutorSQLSelect ?
-              (OCommandExecutorSQLSelect) exec :
-              null;
+          final OCommandExecutorSQLSelect select;
+          if (exec instanceof OCommandExecutorSQLSelect) {
+            select = (OCommandExecutorSQLSelect) exec;
+          } else {
+            select = null;
+          }
 
           if (select != null && select.isAnyFunctionAggregates() && !select.hasGroupBy()) {
             result = mergeResultByAggregation(select, results);
@@ -301,9 +253,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             undoCommandOnLocalServer(iCommand);
 
         } else {
-          final OAbstractCommandTask task = iCommand instanceof OCommandScript ?
-              new OScriptTask(iCommand) :
-              new OSQLCommandTask(iCommand, new HashSet<String>());
+          final OAbstractCommandTask task;
+          if (iCommand instanceof OCommandScript) {
+            task = new OScriptTask(iCommand);
+          } else {
+            task = new OSQLCommandTask(iCommand, new HashSet<String>());
+          }
           task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
           final Set<String> nodes = dbCfg.getServers(involvedClusters);
@@ -455,9 +410,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       } else {
 
-        final OAbstractCommandTask task = iCommand instanceof OCommandScript ?
-            new OScriptTask(iCommand) :
-            new OSQLCommandTask(iCommand, c.getValue());
+        final OAbstractCommandTask task;
+        if (iCommand instanceof OCommandScript) {
+          task = new OScriptTask(iCommand);
+        } else {
+          task = new OSQLCommandTask(iCommand, c.getValue());
+        }
         task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
         nodes.clear();
@@ -732,18 +690,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return wrapped.getSBtreeCollectionManager();
   }
 
-  @Override
-  public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
-    return wrapped.recyclePosition(iRecordId, iContent, iVersion, iRecordType);
-  }
-
   public int getConfigurationUpdated() {
     return distributedConfiguration.getVersion();
-  }
-
-  @Override
-  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -763,6 +711,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   public OCluster getClusterByName(final String iName) {
     return wrapped.getClusterByName(iName);
+  }
+
+  @Override
+  public String getClusterName(final int clusterId) {
+    return wrapped.getClusterName(clusterId);
+  }
+
+  @Override
+  public boolean setClusterAttribute(final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
+    return wrapped.setClusterAttribute(id, attribute, value);
   }
 
   @Override
@@ -939,7 +897,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                   });
         } catch (Exception e) {
           // RETRY
-          wrapped.dropCluster(iClusterName, false);
+          wrapped.dropCluster(iClusterName);
 
           try {
             Thread.sleep(300);
@@ -954,7 +912,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               "Error on creating cluster '%s' on distributed nodes: ids are different (local=%d and remote=%d). Local clusters %s. Retrying %d/%d...",
               iClusterName, clId.get(), ((Integer) result).intValue(), getClusterNames(), retry, 10);
 
-          wrapped.dropCluster(clId.get(), false);
+          wrapped.dropCluster(clId.get());
 
           // REMOVE ON REMOTE NODES TOO
           cmd.setLength(0);
@@ -984,7 +942,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId) {
     resetLastValidBackup();
     for (int retry = 0; retry < 10; ++retry) {
       final AtomicInteger clId = new AtomicInteger();
@@ -1005,7 +963,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                   new OCallable<Object, OModifiableDistributedConfiguration>() {
                     @Override
                     public Object call(OModifiableDistributedConfiguration iArgument) {
-                      clId.set(wrapped.addCluster(iClusterName, iRequestedId, iParameters));
+                      clId.set(wrapped.addCluster(iClusterName, iRequestedId));
 
                       final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
                       commandSQL.addExcludedNode(getNodeId());
@@ -1014,7 +972,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                   });
         } catch (Exception e) {
           // RETRY
-          wrapped.dropCluster(iClusterName, false);
+          wrapped.dropCluster(iClusterName);
 
           try {
             Thread.sleep(300);
@@ -1029,7 +987,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               "Error on creating cluster '%s' on distributed nodes: ids are different (local=%d and remote=%d). Local clusters %s. Retrying %d/%d...",
               iClusterName, clId.get(), ((Integer) result).intValue(), getClusterNames(), retry, 10);
 
-          wrapped.dropCluster(clId.get(), false);
+          wrapped.dropCluster(clId.get());
 
           // REMOVE ON REMOTE NODES TOO
           cmd.setLength(0);
@@ -1049,50 +1007,38 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           continue;
         }
       } else
-        clId.set(wrapped.addCluster(iClusterName, iRequestedId, iParameters));
+        clId.set(wrapped.addCluster(iClusterName, iRequestedId));
       return clId.get();
     }
 
     throw new ODistributedException(
         "Error on creating cluster '" + iClusterName + "' on distributed nodes: local and remote ids assigned are different");
   }
-  
-  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+
+  public boolean dropCluster(final String iClusterName) {
     resetLastValidBackup();
     final AtomicBoolean clId = new AtomicBoolean();
 
     if (!isLocalEnv()) {
-
-      final StringBuilder cmd = new StringBuilder();
-      if (iTruncate) {
-        cmd.append("truncate cluster `");
-      } else {
-        cmd.append("create cluster `");
-      }
-      cmd.append(iClusterName);
-      cmd.append("`");
-
       // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
       dManager.executeInDistributedDatabaseLock(getName(), 20000, dManager.getDatabaseConfiguration(getName()).modify(),
           new OCallable<Object, OModifiableDistributedConfiguration>() {
             @Override
             public Object call(OModifiableDistributedConfiguration iArgument) {
-              clId.set(wrapped.dropCluster(iClusterName, iTruncate));
+              clId.set(wrapped.dropCluster(iClusterName));
 
-              final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-              commandSQL.addExcludedNode(getNodeId());
-              return command(commandSQL);
+              return null;
             }
           });
       return clId.get();
     } else
-      return wrapped.dropCluster(iClusterName, iTruncate);
+      return wrapped.dropCluster(iClusterName);
   }
 
   @Override
-  public boolean dropCluster(final int iId, final boolean iTruncate) {
+  public boolean dropCluster(final int iId) {
     resetLastValidBackup();
-    return wrapped.dropCluster(iId, iTruncate);
+    return wrapped.dropCluster(iId);
   }
 
   @Override
@@ -1312,7 +1258,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   public void release() {
     if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE) {
       // RESTORE PREVIOUS STATUS
-      getLocalDistributedDatabase().setOnline();;
+      getLocalDistributedDatabase().setOnline();
+      ;
     }
 
     getFreezableStorage().release();

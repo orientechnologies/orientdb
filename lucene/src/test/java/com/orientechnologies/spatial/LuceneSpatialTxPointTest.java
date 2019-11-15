@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.spatial;
@@ -127,10 +127,9 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
 
     Assert.assertEquals(1, docs.size());
 
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.location");
-
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(1, index.getSize());
 
   }
 
@@ -155,9 +154,9 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
 
     db.commit();
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.location");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
-    Assert.assertEquals(3, index.getSize());
+    Assert.assertEquals(2, index.getSize());
 
   }
 

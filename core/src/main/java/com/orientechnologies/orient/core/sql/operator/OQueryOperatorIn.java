@@ -71,7 +71,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       else
         inParams = Collections.singleton(inKeyValue);
 
-      if (inParams instanceof OLegacyResultSet) {//manage IN (subquery)
+      if (inParams instanceof OLegacyResultSet) { //manage IN (subquery)
         Set newInParams = new HashSet();
         for (Object o : ((OLegacyResultSet) inParams)) {
           if (o instanceof ODocument && ((ODocument) o).getIdentity().getClusterId() < -1) {

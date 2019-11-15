@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.config.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.OServerSocketFactory;
@@ -105,15 +106,11 @@ public class OServer {
   private              OrientDBInternal                               databases;
   protected            Date                                           startedOn              = new Date();
 
-  public OServer()
-      throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
-      MBeanRegistrationException, NotCompliantMBeanException {
+  public OServer() {
     this(!Orient.instance().isInsideWebContainer());
   }
 
-  public OServer(boolean shutdownEngineOnExit)
-      throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
-      MBeanRegistrationException, NotCompliantMBeanException {
+  public OServer(boolean shutdownEngineOnExit) {
     final boolean insideWebContainer = Orient.instance().isInsideWebContainer();
 
     if (insideWebContainer && shutdownEngineOnExit) {
@@ -144,9 +141,7 @@ public class OServer {
   }
 
   public static OServer startFromFileConfig(String config)
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
-      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
-      IllegalAccessException {
+      throws ClassNotFoundException, InstantiationException, IOException, IllegalAccessException {
     OServer server = new OServer(false);
     server.startup(config);
     server.activate();
@@ -154,9 +149,7 @@ public class OServer {
   }
 
   public static OServer startFromClasspathConfig(String config)
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
-      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
-      IllegalAccessException {
+      throws ClassNotFoundException, InstantiationException, IOException, IllegalAccessException {
     OServer server = new OServer(false);
     server.startup(Thread.currentThread().getContextClassLoader().getResourceAsStream(config));
     server.activate();
@@ -164,9 +157,7 @@ public class OServer {
   }
 
   public static OServer startFromStreamConfig(InputStream config)
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
-      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
-      IllegalAccessException {
+      throws ClassNotFoundException, InstantiationException, IOException, IllegalAccessException {
     OServer server = new OServer(false);
     server.startup(config);
     server.activate();
@@ -287,9 +278,7 @@ public class OServer {
     return null;
   }
 
-  public OServer startup()
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
-      InvocationTargetException, NoSuchMethodException {
+  public OServer startup() throws OConfigurationException {
     String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
     if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
       config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
@@ -301,9 +290,7 @@ public class OServer {
     return this;
   }
 
-  public OServer startup(final File iConfigurationFile)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
-      InvocationTargetException, NoSuchMethodException {
+  public OServer startup(final File iConfigurationFile) throws OConfigurationException {
     // Startup function split to allow pre-activation changes
     try {
       serverCfg = new OServerConfigurationManager(iConfigurationFile);
@@ -316,15 +303,11 @@ public class OServer {
     }
   }
 
-  public OServer startup(final String iConfiguration)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
-      InvocationTargetException, NoSuchMethodException, IOException {
+  public OServer startup(final String iConfiguration) throws IOException {
     return startup(new ByteArrayInputStream(iConfiguration.getBytes()));
   }
 
-  public OServer startup(final InputStream iInputStream)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
-      InvocationTargetException, NoSuchMethodException, IOException {
+  public OServer startup(final InputStream iInputStream) throws IOException {
     if (iInputStream == null)
       throw new OConfigurationException("Configuration file is null");
 
@@ -335,13 +318,12 @@ public class OServer {
   }
 
   public OServer startup(final OServerConfiguration iConfiguration)
-      throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
+      throws IllegalArgumentException, SecurityException, IOException {
     serverCfg = new OServerConfigurationManager(iConfiguration);
     return startupFromConfiguration();
   }
 
-  public OServer startupFromConfiguration()
-      throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
+  public OServer startupFromConfiguration() throws IOException {
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
     Orient.instance();
@@ -375,13 +357,27 @@ public class OServer {
       databaseDirectory += "/";
 
     OrientDBConfig config = OrientDBConfig.builder().fromContext(contextConfiguration).build();
+
     if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY)) {
+
       databases = ODatabaseDocumentTxInternal.getOrCreateEmbeddedFactory(this.databaseDirectory, config);
     } else {
-      try {
-        databases = OrientDBInternal.distributed(this.databaseDirectory, config);
-      } catch (ODatabaseException ex) {
-        databases = OrientDBInternal.embedded(this.databaseDirectory, config);
+      OServerConfiguration configuration = getConfiguration();
+
+      if (configuration.distributed != null && configuration.distributed.enabled) {
+        try {
+          OrientDBConfig orientDBConfig = ODistributedConfig
+              .buildConfig(contextConfiguration, ODistributedConfig.fromEnv(configuration.distributed));
+          databases = OrientDBInternal.distributed(this.databaseDirectory, orientDBConfig);
+        } catch (ODatabaseException ex) {
+          databases = OrientDBInternal.embedded(this.databaseDirectory, config);
+        }
+      } else {
+        try {
+          databases = OrientDBInternal.distributed(this.databaseDirectory, config);
+        } catch (ODatabaseException ex) {
+          databases = OrientDBInternal.embedded(this.databaseDirectory, config);
+        }
       }
     }
 
@@ -481,19 +477,7 @@ public class OServer {
 
       OLogManager.instance().info(this, "OrientDB Studio available at $ANSI{blue http://%s/studio/index.html}", httpAddress);
       OLogManager.instance().info(this, "$ANSI{green:italic OrientDB Server is active} v" + OConstants.getVersion() + ".");
-    } catch (ClassNotFoundException e) {
-      databases.close();
-      running = false;
-      throw e;
-    } catch (InstantiationException e) {
-      databases.close();
-      running = false;
-      throw e;
-    } catch (IllegalAccessException e) {
-      databases.close();
-      running = false;
-      throw e;
-    } catch (RuntimeException e) {
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | RuntimeException e) {
       databases.close();
       running = false;
       throw e;

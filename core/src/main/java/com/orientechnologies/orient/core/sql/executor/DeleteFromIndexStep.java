@@ -20,11 +20,11 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   private final   OBooleanExpression ridCondition;
   private final   boolean            orderAsc;
 
-  Map.Entry<Object, OIdentifiable> nextEntry = null;
+  private Map.Entry<Object, OIdentifiable> nextEntry = null;
 
-  OBooleanExpression condition;
+  private OBooleanExpression condition;
 
-  private boolean inited = false;
+  private boolean      inited = false;
   private OIndexCursor cursor;
 
   private long cost = 0;
@@ -50,7 +50,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     init();
 
     return new OResultSet() {
-      int localCount = 0;
+      private int localCount = 0;
 
       @Override
       public boolean hasNext() {
@@ -92,7 +92,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override
@@ -383,11 +383,8 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }
-    result += (condition == null ?
-        "" :
-        ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ?
-            "" :
-            " and " + additional)));
+    String additional = this.additional == null ? "" : " and " + this.additional;
+    result += (condition == null ? "" : ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + additional));
     return result;
   }
 

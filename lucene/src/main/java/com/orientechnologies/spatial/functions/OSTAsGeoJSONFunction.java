@@ -30,7 +30,7 @@ public class OSTAsGeoJSONFunction extends OSQLFunctionAbstract {
 
   public static final String NAME = "ST_AsGeoJSON";
 
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  private OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSTAsGeoJSONFunction() {
     super(NAME, 1, 1);

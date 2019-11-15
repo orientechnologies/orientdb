@@ -146,9 +146,9 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   private final AtomicLong[] readBufferDrainAtWriteCount;
 
   /**
-   * Read buffers are used to lot {@link #acquire(Object)} operations when item is not switched from closed to open states.
-   * So in cases when amount of items inside of {@link #lruList} is not going to be changed, but only information about recency
-   * of items should be modified.
+   * Read buffers are used to lot {@link #acquire(Object)} operations when item is not switched from closed to open states. So in
+   * cases when amount of items inside of {@link #lruList} is not going to be changed, but only information about recency of items
+   * should be modified.
    */
   private final AtomicReference<OClosableEntry<K, V>>[][] readBuffers;
 
@@ -168,9 +168,9 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   private final ConcurrentHashMap<K, OClosableEntry<K, V>> data = new ConcurrentHashMap<K, OClosableEntry<K, V>>();
 
   /**
-   * Buffer which contains operation which includes changes of states from closed to open, and from any state to retired.
-   * In other words this buffer contains information about operations which affect amount of items inside of {@link #lruList} and
-   * those operations can not be lost.
+   * Buffer which contains operation which includes changes of states from closed to open, and from any state to retired. In other
+   * words this buffer contains information about operations which affect amount of items inside of {@link #lruList} and those
+   * operations can not be lost.
    */
   private final ConcurrentLinkedQueue<Runnable> stateBuffer = new ConcurrentLinkedQueue<Runnable>();
 
@@ -222,8 +222,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
-   * Adds item to the container.
-   * Item should be in open state.
+   * Adds item to the container. Item should be in open state.
    *
    * @param key  Key associated with given item.
    * @param item Item associated with passed in key.
@@ -269,9 +268,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
-   * Acquires item associated with passed in key in container.
-   * It is guarantied that item will not be closed if limit of open items will be exceeded and container will close rarely used
-   * items.
+   * Acquires item associated with passed in key in container. It is guarantied that item will not be closed if limit of open items
+   * will be exceeded and container will close rarely used items.
    *
    * @param key Key associated with item
    *
@@ -280,6 +278,10 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   public OClosableEntry<K, V> acquire(K key) throws InterruptedException {
     checkOpenFilesLimit();
 
+    return doAcquireEntry(key);
+  }
+
+  private OClosableEntry<K, V> doAcquireEntry(K key) {
     final OClosableEntry<K, V> entry = data.get(key);
 
     if (entry == null)
@@ -312,11 +314,20 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     return entry;
   }
 
+  public OClosableEntry<K, V> tryAcquire(K key) throws InterruptedException {
+    final boolean ok = tryCheckOpenFilesLimit();
+    if (!ok) {
+      return null;
+    }
+
+    return doAcquireEntry(key);
+  }
+
   /**
    * Checks if containers limit of open files is reached.
    * <p>
-   * In such case execution of threads which add or acquire items is stopped and they wait till buffers will be emptied
-   * and nubmer of open files will be inside limit.
+   * In such case execution of threads which add or acquire items is stopped and they wait till buffers will be emptied and nubmer
+   * of open files will be inside limit.
    */
   private void checkOpenFilesLimit() throws InterruptedException {
     CountDownLatch ol = openLatch.get();
@@ -343,9 +354,37 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     }
   }
 
+  private boolean tryCheckOpenFilesLimit() throws InterruptedException {
+    CountDownLatch ol = openLatch.get();
+    if (ol != null)
+      ol.await();
+
+    while (openFiles.get() > openLimit) {
+      final CountDownLatch latch = new CountDownLatch(1);
+
+      //make other threads to wait till we evict entries and close evicted open files
+      if (openLatch.compareAndSet(null, latch)) {
+        emptyBuffers();
+
+        final boolean result = openFiles.get() <= openLimit;
+        latch.countDown();
+        openLatch.set(null);
+
+        return result;
+      } else {
+        ol = openLatch.get();
+
+        if (ol != null)
+          ol.await();
+      }
+    }
+
+    return true;
+  }
+
   /**
-   * Releases item acquired by call of {@link #acquire(Object)} method.
-   * After this call container is free to close given item if limit of open files exceeded and this item is rarely used.
+   * Releases item acquired by call of {@link #acquire(Object)} method. After this call container is free to close given item if
+   * limit of open files exceeded and this item is rarely used.
    *
    * @param entry Entry to release
    */
@@ -400,8 +439,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
-   * Closes item related to passed in key.
-   * Item will be closed if it exists and is not acquired.
+   * Closes item related to passed in key. Item will be closed if it exists and is not acquired.
    *
    * @param key Key related to item that has going to be closed.
    *
@@ -507,8 +545,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
-   * Read content of write buffer and adds/removes LRU entries to update internal statistic.
-   * Method has to be wrapped by LRU lock.
+   * Read content of write buffer and adds/removes LRU entries to update internal statistic. Method has to be wrapped by LRU lock.
    */
   private void emptyWriteBuffer() {
     Runnable task = stateBuffer.poll();
@@ -519,8 +556,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
-   * Read content of all read buffers and reorder elements inside of LRU list to update internal statistic.
-   * Method has to be wrapped by LRU lock.
+   * Read content of all read buffers and reorder elements inside of LRU list to update internal statistic. Method has to be wrapped
+   * by LRU lock.
    */
   private void emptyReadBuffers() {
     for (int n = 0; n < NUMBER_OF_READ_BUFFERS; n++) {
@@ -553,6 +590,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     try {
       emptyWriteBuffer();
       emptyReadBuffers();
+
+      evict();
     } finally {
       lruLock.unlock();
     }
@@ -600,8 +639,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
-   * Method is used to log operations which change content of the container.
-   * Such changes should be flushed immediately to update content of LRU list.
+   * Method is used to log operations which change content of the container. Such changes should be flushed immediately to update
+   * content of LRU list.
    *
    * @param task Task which contains code is used to manipulate LRU list
    */
@@ -612,8 +651,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
-   * Method is used to log operations which do not change LRU list content but affect order of items inside of LRU list.
-   * Such changes may be delayed till buffer will be full.
+   * Method is used to log operations which do not change LRU list content but affect order of items inside of LRU list. Such
+   * changes may be delayed till buffer will be full.
    *
    * @param entry Entry which was affected by operation.
    */
@@ -624,7 +663,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
-   * Adds entry to the read buffer with selected index and returns amount of writes to this buffer since creation of this container.
+   * Adds entry to the read buffer with selected index and returns amount of writes to this buffer since creation of this
+   * container.
    *
    * @param entry       LRU entry to add.
    * @param bufferIndex Index of buffer

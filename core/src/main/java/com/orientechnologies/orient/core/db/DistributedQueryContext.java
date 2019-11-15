@@ -9,9 +9,9 @@ import java.util.List;
  * Created by luigidellaquila on 28/06/17.
  */
 public class DistributedQueryContext {
-  String     queryId;
-  ODatabase  db;
-  OResultSet resultSet;
+  private String     queryId;
+  private ODatabase  db;
+  private OResultSet resultSet;
 
   public String getQueryId() {
     return queryId;

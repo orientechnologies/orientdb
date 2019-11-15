@@ -75,19 +75,27 @@ public class OCharSerializer implements OBinarySerializer<Character> {
 
   @Override
   public void serializeNativeObject(Character object, byte[] stream, int startPosition, Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
   @Override
   public Character deserializeNativeObject(final byte[] stream, final int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return BINARY_CONVERTER.getChar(stream, startPosition, ByteOrder.nativeOrder());
   }
 
   public void serializeNative(final char object, final byte[] stream, final int startPosition, final Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
   public char deserializeNative(final byte[] stream, final int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return BINARY_CONVERTER.getChar(stream, startPosition, ByteOrder.nativeOrder());
   }
 
@@ -142,5 +150,12 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return CHAR_SIZE;
+  }
+
+  private static void checkBoundaries(byte[] stream, int startPosition) {
+    if (startPosition + CHAR_SIZE > stream.length) {
+      throw new IllegalStateException(
+          "Requested stream size is " + (startPosition + CHAR_SIZE) + " but provided stream has size " + stream.length);
+    }
   }
 }

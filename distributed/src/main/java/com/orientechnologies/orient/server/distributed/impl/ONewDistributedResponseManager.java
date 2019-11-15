@@ -79,7 +79,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public long getSynchTimeout() {
-    return 0;
+    return timeout;
   }
 
   @Override
@@ -112,14 +112,13 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return null;
   }
 
-
-  public String getNodeNameFromPayload(OTransactionResultPayload payload){
+  public String getNodeNameFromPayload(OTransactionResultPayload payload) {
     return this.payloadToNode.get(payload);
   }
 
   @Override
   public int getQuorum() {
-    return 0;
+    return quorum;
   }
 
   public synchronized boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName) {
@@ -175,14 +174,14 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   @Override
   public boolean collectResponse(ODistributedResponse response) {
     if (response.getPayload() instanceof OTransactionPhase1TaskResult) {
-      return collectResponse((OTransactionPhase1TaskResult) response.getPayload(), response.getSenderNodeName());
+      return collectResponse((OTransactionPhase1TaskResult) response.getPayload(), response.getExecutorNodeName());
     } else if (response.getPayload() instanceof RuntimeException) {
       return collectResponse(new OTransactionPhase1TaskResult(new OTxException((RuntimeException) response.getPayload())),
-          response.getSenderNodeName());
+          response.getExecutorNodeName());
     } else {
       return collectResponse(
           new OTransactionPhase1TaskResult(new OTxException(new ODistributedException("unknown payload:" + response.getPayload()))),
-          response.getSenderNodeName());
+          response.getExecutorNodeName());
     }
   }
 

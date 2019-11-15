@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 
 import java.util.*;
@@ -15,8 +17,8 @@ public class OrderByStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  List<OResult> cachedResult = null;
-  int           nextElement  = 0;
+  private List<OResult> cachedResult = null;
+  private int           nextElement  = 0;
 
   public OrderByStep(OOrderBy orderBy, OCommandContext ctx, boolean profilingEnabled) {
     this(orderBy, null, ctx, profilingEnabled);
@@ -39,8 +41,8 @@ public class OrderByStep extends AbstractExecutionStep {
     }
 
     return new OResultSet() {
-      int currentBatchReturned = 0;
-      int offset = nextElement;
+      private int currentBatchReturned = 0;
+      private int offset = nextElement;
 
       @Override
       public boolean hasNext() {
@@ -92,7 +94,7 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   private void init(OExecutionStepInternal p, OCommandContext ctx) {
-
+    final long maxElementsAllowed = OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
     boolean sorted = true;
     do {
       OResultSet lastBatch = p.syncPull(ctx, 100);
@@ -107,6 +109,13 @@ public class OrderByStep extends AbstractExecutionStep {
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           cachedResult.add(item);
+          if (maxElementsAllowed >= 0 && maxElementsAllowed < cachedResult.size()) {
+            this.cachedResult.clear();
+            throw new OCommandExecutionException(
+                "Limit of allowed elements for in-heap ORDER BY in a single query exceeded (" + maxElementsAllowed
+                    + ") . You can set " + OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getKey()
+                    + " to increase this limit");
+          }
           sorted = false;
           //compact, only at twice as the buffer, to avoid to do it at each add
           if (this.maxResults != null && maxResults * 2 < cachedResult.size()) {

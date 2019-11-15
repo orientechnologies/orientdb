@@ -86,8 +86,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected volatile HazelcastInstance hazelcastInstance;
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
-  protected OHazelcastDistributedMap       configurationMap;
-  private   OSignalHandler.OSignalListener signalListener;
+  protected        OHazelcastDistributedMap       configurationMap;
+  private          OSignalHandler.OSignalListener signalListener;
+  private volatile boolean                        running = false;
 
   public OHazelcastPlugin() {
   }
@@ -121,6 +122,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (!enabled)
       return;
 
+    running = true;
     if (serverInstance.getDatabases() instanceof OrientDBDistributed)
       ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
 
@@ -533,6 +535,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void shutdown() {
     if (!enabled)
       return;
+    running = false;
     OSignalHandler signalHandler = Orient.instance().getSignalHandler();
     if (signalHandler != null)
       signalHandler.unregisterListener(signalListener);
@@ -828,17 +831,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     List<String> hosts = new ArrayList<>();
     for (Member member : activeNodes.values()) {
       ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true);
-      final String nodeStatus = memberConfig.field("status");
+      if (memberConfig != null) {
+        final String nodeStatus = memberConfig.field("status");
 
-      if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
-        final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
-        if (listeners != null)
-          for (Map<String, Object> listener : listeners) {
-            if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
-              String url = (String) listener.get("listen");
-              hosts.add(url);
+        if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
+          final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
+          if (listeners != null)
+            for (Map<String, Object> listener : listeners) {
+              if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
+                String url = (String) listener.get("listen");
+                hosts.add(url);
+              }
             }
-          }
+        }
       }
     }
     serverInstance.getPushManager().pushDistributedConfig(databaseName, hosts);
@@ -1298,9 +1303,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // NOT YET STARTED
       return null;
 
-    final ODocument doc = (ODocument) (useCache ?
-        configurationMap.getLocalCachedValue(CONFIG_NODE_PREFIX + iNodeId) :
-        configurationMap.get(CONFIG_NODE_PREFIX + iNodeId));
+    final ODocument doc;
+    if (useCache) {
+      doc = (ODocument) configurationMap.getLocalCachedValue(CONFIG_NODE_PREFIX + iNodeId);
+    } else {
+      doc = (ODocument) configurationMap.get(CONFIG_NODE_PREFIX + iNodeId);
+    }
 
     if (doc == null)
       ODistributedServerLog.debug(this, nodeName, null, DIRECTION.OUT, "Cannot find node with id '%s'", iNodeId);
@@ -1312,9 +1320,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(iDatabaseName)) {
       // CHECK THE SERVER STATUS
-      return getActiveServers().contains(iNode) ?
-          ODistributedServerManager.DB_STATUS.ONLINE :
-          ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
+      if (getActiveServers().contains(iNode)) {
+        return DB_STATUS.ONLINE;
+      } else {
+        return DB_STATUS.NOT_AVAILABLE;
+      }
     }
 
     final DB_STATUS status = (DB_STATUS) configurationMap
@@ -1325,9 +1335,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName, final boolean useCache) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(iDatabaseName)) {
       // CHECK THE SERVER STATUS
-      return getActiveServers().contains(iNode) ?
-          ODistributedServerManager.DB_STATUS.ONLINE :
-          ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
+      if (getActiveServers().contains(iNode)) {
+        return DB_STATUS.ONLINE;
+      } else {
+        return DB_STATUS.NOT_AVAILABLE;
+      }
     }
 
     final String key = OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;
@@ -1383,8 +1395,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
         try {
-          if(!installDatabase(true, databaseName, false,
-              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean())){
+          if (!installDatabase(true, databaseName, false,
+              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean())) {
             setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
           }
         } catch (Exception e) {
@@ -1774,4 +1786,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     OLogManager.instance().info(this, "Distributed Lock Manager server is '%s'", lockManagerServer);
   }
 
+  public boolean isRunning() {
+    return enabled && running;
+  }
 }

@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 
@@ -83,10 +83,10 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
     if (name == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final ODatabaseDocument database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     if (name.equals("*")) {
       long totalIndexed = 0;
-      for (OIndex<?> idx : database.getMetadata().getIndexManager().getIndexes()) {
+      for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (idx.isAutomatic())
           totalIndexed += idx.rebuild();
       }
@@ -94,13 +94,13 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
       return totalIndexed;
 
     } else {
-      final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(name);
+      final OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database, name);
       if (idx == null)
         throw new OCommandExecutionException("Index '" + name + "' not found");
 
       if (!idx.isAutomatic())
-        throw new OCommandExecutionException("Cannot rebuild index '" + name
-            + "' because it's manual and there aren't indications of what to index");
+        throw new OCommandExecutionException(
+            "Cannot rebuild index '" + name + "' because it's manual and there aren't indications of what to index");
 
       return idx.rebuild();
     }

@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.test.database.speed;
@@ -25,11 +25,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import com.tinkerpop.blueprints.impls.orient.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -37,16 +33,16 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Creates medium connected vertices, to test how RIDBag threshold impact on performance.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 
 @Test(enabled = false)
 public class GraphInsertSpeedMTTest extends OrientMultiThreadTest {
-  protected static final String      URL     = "plocal:target/databases/graphspeedtest";
-  protected final OrientGraphFactory factory = new OrientGraphFactory(URL);
-  protected static final AtomicLong  counter = new AtomicLong();
-  protected final static int         EDGES   = 15;
+  protected static final String             URL     = "plocal:target/databases/graphspeedtest";
+  protected final        OrientGraphFactory factory = new OrientGraphFactory(URL);
+  protected static final AtomicLong         counter = new AtomicLong();
+  protected final static int                EDGES   = 15;
 
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
@@ -131,7 +127,8 @@ public class GraphInsertSpeedMTTest extends OrientMultiThreadTest {
       System.out.println("Created " + (total));
       Assert.assertEquals(total, threadCycles);
 
-      final long indexedItems = graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.uid").getSize();
+      final long indexedItems = graph.getRawGraph().getMetadata().getIndexManagerInternal()
+          .getIndex(graph.getRawGraph(), "Client.uid").getSize();
       System.out.println("\nTotal indexed objects after the test: " + indexedItems);
 
     } finally {

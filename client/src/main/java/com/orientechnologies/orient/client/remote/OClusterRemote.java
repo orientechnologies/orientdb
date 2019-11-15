@@ -45,7 +45,7 @@ public class OClusterRemote implements OCluster {
    * @see com.orientechnologies.orient.core.storage.OCluster#configure(com.orientechnologies.orient.core.storage.OStorage, int,
    * java.lang.String, java.lang.String, int, java.lang.Object[])
    */
-  public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) {
+  public void configure(int iId, String iClusterName) {
     id = iId;
     name = iClusterName;
   }
@@ -66,7 +66,7 @@ public class OClusterRemote implements OCluster {
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#create(int)
    */
-  public void create(int iStartSize) throws IOException {
+  public void create() throws IOException {
 
   }
 
@@ -107,11 +107,6 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
-    throw new UnsupportedOperationException("recyclePosition");
-  }
-
-  @Override
   public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException {
     throw new UnsupportedOperationException("readRecord");
   }
@@ -120,6 +115,21 @@ public class OClusterRemote implements OCluster {
   public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion)
       throws IOException, ORecordNotFoundException {
     throw new UnsupportedOperationException("readRecordIfVersionIsNotLatest");
+  }
+
+  @Override
+  public void setClusterName(final String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setRecordConflictStrategy(final String conflictStrategy) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setEncryption(final String encryptionName, final String encryptionKey) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -137,9 +147,6 @@ public class OClusterRemote implements OCluster {
   @Override
   public String encryption() {
     throw new UnsupportedOperationException("encryption");
-  }
-
-  public void truncate() throws IOException {
   }
 
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
@@ -221,23 +228,8 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public float recordGrowFactor() {
-    throw new UnsupportedOperationException("recordGrowFactor()");
-  }
-
-  @Override
-  public float recordOverflowGrowFactor() {
-    throw new UnsupportedOperationException("recordOverflowGrowFactor()");
-  }
-
-  @Override
   public String compression() {
     throw new UnsupportedOperationException("compression()");
-  }
-
-  @Override
-  public boolean hideRecord(long position) {
-    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
   }
 
   @Override

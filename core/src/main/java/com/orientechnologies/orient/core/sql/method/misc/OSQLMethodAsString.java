@@ -20,21 +20,20 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
- *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodAsString extends OAbstractSQLMethod {
 
-    public static final String NAME = "asstring";
+  public static final String NAME = "asstring";
 
-    public OSQLMethodAsString() {
-        super(NAME);
-    }
+  public OSQLMethodAsString() {
+    super(NAME);
+  }
 
-    @Override
-    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-        ioResult = ioResult != null ? ioResult.toString() : null;
-        return ioResult;
-    }
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    ioResult = ioResult != null ? ioResult.toString() : null;
+    return ioResult;
+  }
 }

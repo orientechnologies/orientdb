@@ -46,7 +46,7 @@ import java.util.List;
 
 public class OLuceneWithinOperator extends OQueryTargetOperator {
 
-  OShapeBuilderLegacy<Shape> shapeFactory = OShapeBuilderLegacyImpl.INSTANCE;
+  private OShapeBuilderLegacy<Shape> shapeFactory = OShapeBuilderLegacyImpl.INSTANCE;
 
   public OLuceneWithinOperator() {
     super("WITHIN", 5, false);

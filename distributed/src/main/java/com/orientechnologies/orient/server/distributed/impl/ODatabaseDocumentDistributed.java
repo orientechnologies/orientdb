@@ -2,47 +2,40 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
 import com.orientechnologies.orient.core.exception.*;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -52,16 +45,12 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
@@ -265,148 +254,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return distributedManager.removeNodeFromConfiguration(serverName, databaseName, false, true);
   }
 
-  @Override
-  public Map<String, Object> syncCluster(String clusterName) {
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, "sync", ORole.PERMISSION_UPDATE);
-
-    if (distributedManager == null || !distributedManager.isEnabled())
-      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
-    final String databaseName = getName();
-
-    final ODistributedConfiguration cfg = distributedManager.getDatabaseConfiguration(databaseName);
-    OServer serverInstance = distributedManager.getServerInstance();
-    final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
-
-    final String nodeName = distributedManager.getLocalNodeName();
-
-    final List<String> nodesWhereClusterIsCfg = cfg.getServers(clusterName, null);
-    nodesWhereClusterIsCfg.remove(nodeName);
-
-    if (nodesWhereClusterIsCfg.isEmpty())
-      throw new OCommandExecutionException(
-          "Cannot synchronize cluster '" + clusterName + "' because is not configured on any running nodes");
-
-    final OSyncClusterTask task = new OSyncClusterTask(clusterName);
-    final ODistributedResponse response = distributedManager
-        .sendRequest(databaseName, null, nodesWhereClusterIsCfg, task, distributedManager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-
-    final Map<String, Object> results = (Map<String, Object>) response.getPayload();
-
-    File tempFile = null;
-    FileOutputStream out = null;
-    try {
-      tempFile = new File(Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + "_toInstall.zip");
-      if (tempFile.exists())
-        tempFile.delete();
-      else
-        tempFile.getParentFile().mkdirs();
-      tempFile.createNewFile();
-
-      long fileSize = 0;
-      out = new FileOutputStream(tempFile, false);
-      for (Map.Entry<String, Object> r : results.entrySet()) {
-        final Object value = r.getValue();
-
-        if (value instanceof Boolean) {
-          continue;
-        } else if (value instanceof Throwable) {
-          ODistributedServerLog
-              .error(null, nodeName, r.getKey(), ODistributedServerLog.DIRECTION.IN, "error on installing cluster %s in %s",
-                  (Exception) value, databaseName, dbPath);
-        } else if (value instanceof ODistributedDatabaseChunk) {
-          ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
-
-          // DELETE ANY PREVIOUS .COMPLETED FILE
-          final File completedFile = new File(tempFile.getAbsolutePath() + ".completed");
-          if (completedFile.exists())
-            completedFile.delete();
-
-          fileSize = writeDatabaseChunk(nodeName, 1, chunk, out);
-          for (int chunkNum = 2; !chunk.last; chunkNum++) {
-            final Object result = distributedManager.sendRequest(databaseName, null, OMultiValue.getSingletonList(r.getKey()),
-                new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, chunk.gzipCompressed),
-                distributedManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-
-            if (result instanceof Boolean)
-              continue;
-            else if (result instanceof Exception) {
-              ODistributedServerLog.error(null, nodeName, r.getKey(), ODistributedServerLog.DIRECTION.IN,
-                  "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
-            } else if (result instanceof ODistributedDatabaseChunk) {
-              chunk = (ODistributedDatabaseChunk) result;
-
-              fileSize += writeDatabaseChunk(nodeName, chunkNum, chunk, out);
-            }
-          }
-
-          out.flush();
-
-          // CREATE THE .COMPLETED FILE TO SIGNAL EOF
-          new File(tempFile.getAbsolutePath() + ".completed").createNewFile();
-        }
-      }
-
-      final String tempDirectoryPath = Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + "_toInstall";
-      final File tempDirectory = new File(tempDirectoryPath);
-      tempDirectory.mkdirs();
-
-      OZIPCompressionUtil.uncompressDirectory(new FileInputStream(tempFile), tempDirectory.getAbsolutePath(), null);
-
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      final boolean openDatabaseHere = db == null;
-      if (db == null)
-        db = serverInstance.openDatabase("plocal:" + dbPath, "", "", null, true);
-
-      try {
-
-        final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) db.getStorage().getUnderlying();
-
-        // TODO: FREEZE COULD IT NOT NEEDED
-        stg.freeze(false);
-        try {
-
-          final OPaginatedCluster cluster = (OPaginatedCluster) stg.getClusterByName(clusterName);
-
-          final File tempClusterFile = new File(tempDirectoryPath + "/" + clusterName + OPaginatedCluster.DEF_EXTENSION);
-
-          cluster.replaceFile(tempClusterFile);
-
-        } finally {
-          stg.release();
-        }
-
-        db.getLocalCache().invalidate();
-
-      } finally {
-        if (openDatabaseHere)
-          db.close();
-      }
-
-      Map<String, Object> result = new HashMap<>();
-      result.put("fileSize", fileSize);
-      result.put("message", "Cluster correctly replaced");
-      result.put("result", true);
-      return result;
-
-    } catch (Exception e) {
-      ODistributedServerLog
-          .error(null, nodeName, null, ODistributedServerLog.DIRECTION.NONE, "error on transferring database '%s' to '%s'", e,
-              databaseName, tempFile);
-      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
-    } finally {
-      try {
-        if (out != null) {
-          out.flush();
-          out.close();
-        }
-      } catch (IOException e) {
-      }
-    }
-
-  }
-
   protected static long writeDatabaseChunk(final String iNodeName, final int iChunkId, final ODistributedDatabaseChunk chunk,
       final FileOutputStream out) throws IOException {
 
@@ -577,15 +424,17 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
     Set<String> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
-      OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
+      OIndex<?> index = getMetadata().getIndexManagerInternal().getIndex(this, change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType()) || OClass.INDEX_TYPE.DICTIONARY.name().equals(index.getType())
           || OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(index.getType())) {
+
+        String name = index.getName();
         for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-          keys.add(String.valueOf(changesPerKey.key));
+          keys.add(name + "#" + changesPerKey.key);
         }
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
-          keys.add("null");
+          keys.add(name + "#null");
         }
       }
     }
@@ -640,7 +489,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
       /// ?? do i've to save this state as well ?
       txContext.setStatus(TIMEDOUT);
-      localDistributedDatabase.registerTxContext(requestId, txContext);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw ex;
     } catch (ORecordDuplicatedException ex) {
       txContext.setStatus(FAILED);
@@ -680,6 +529,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
+        } catch (RuntimeException | Error e) {
+          Orient.instance().submit(() -> {
+            getDistributedManager().installDatabase(false, getName(), true, true);
+          });
+          throw e;
         } finally {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
@@ -726,6 +580,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
           return true;
+        } catch (RuntimeException | Error e) {
+          Orient.instance().submit(() -> {
+            getDistributedManager().installDatabase(false, getName(), true, true);
+          });
+          throw e;
         } finally {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
@@ -856,91 +715,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
-  }
-
-  public void afterCreateOperations(final OIdentifiable id) {
-    if (id instanceof ODocument) {
-      ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
-      if (clazz != null) {
-        OClassIndexManager.checkIndexesAfterCreate(doc, this);
-        if (clazz.isFunction()) {
-          this.getSharedContext().getFunctionLibrary().createdFunction(doc);
-          Orient.instance().getScriptManager().close(this.getName());
-        }
-        if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
-        }
-        if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
-        }
-        if (clazz.isScheduler()) {
-          getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
-        }
-        if (clazz.isTriggered()) {
-          OClassTrigger.onRecordAfterCreate(doc, this);
-        }
-        OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
-        OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
-      }
-    }
-    callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
-  }
-
-  public void afterUpdateOperations(final OIdentifiable id) {
-    if (id instanceof ODocument) {
-      ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
-      if (clazz != null) {
-        OClassIndexManager.checkIndexesAfterUpdate((ODocument) id, this);
-        if (clazz.isFunction()) {
-          this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
-          Orient.instance().getScriptManager().close(this.getName());
-        }
-        if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
-        }
-        if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
-        }
-        if (clazz.isTriggered()) {
-          OClassTrigger.onRecordAfterUpdate(doc, this);
-        }
-        OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
-        OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
-      }
-    }
-    callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
-  }
-
-  public void afterDeleteOperations(final OIdentifiable id) {
-    if (id instanceof ODocument) {
-      ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
-      if (clazz != null) {
-        OClassIndexManager.checkIndexesAfterDelete(doc, this);
-        if (clazz.isFunction()) {
-          this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
-          Orient.instance().getScriptManager().close(this.getName());
-        }
-        if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
-        }
-        if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
-        }
-        if (clazz.isScheduler()) {
-          final String eventName = doc.field(OScheduledEvent.PROP_NAME);
-          getSharedContext().getScheduler().removeEventInternal(eventName);
-        }
-        if (clazz.isTriggered()) {
-          OClassTrigger.onRecordAfterDelete(doc, this);
-        }
-      }
-      OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
-      OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);
-    }
-    callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
   }
 
   @Override

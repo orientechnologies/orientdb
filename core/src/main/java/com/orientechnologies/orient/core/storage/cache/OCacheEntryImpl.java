@@ -3,19 +3,23 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by tglman on 23/06/16.
  */
-public class OCacheEntryImpl implements OCacheEntry {
+public final class OCacheEntryImpl implements OCacheEntry {
   private static final int FROZEN = -1;
   private static final int DEAD   = -2;
 
   private       OCachePointer dataPointer;
   private final long          fileId;
-  private final long          pageIndex;
+  private final int           pageIndex;
 
   private final AtomicInteger usagesCount = new AtomicInteger();
   private final AtomicInteger state       = new AtomicInteger();
@@ -25,11 +29,66 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   private LRUList container;
 
-  public OCacheEntryImpl(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
+  /**
+   * Protected by page lock inside disk cache
+   */
+  private boolean allocatedPage;
+
+  /**
+   * Protected by page lock inside disk cache
+   */
+  private List<PageOperationRecord> pageOperationRecords;
+
+  private int hash;
+
+  public OCacheEntryImpl(final long fileId, final int pageIndex, final OCachePointer dataPointer) {
+    if (fileId < 0) {
+      throw new IllegalStateException("File id has invalid value " + fileId);
+    }
+
+    if (pageIndex < 0) {
+      throw new IllegalStateException("Page index has invalid value " + pageIndex);
+    }
+
     this.fileId = fileId;
     this.pageIndex = pageIndex;
 
     this.dataPointer = dataPointer;
+  }
+
+  @Override
+  public List<PageOperationRecord> getPageOperations() {
+    if (pageOperationRecords == null) {
+      return Collections.emptyList();
+    }
+
+    return pageOperationRecords;
+  }
+
+  @Override
+  public void clearPageOperations() {
+    pageOperationRecords = null;
+  }
+
+  @Override
+  public void addPageOperationRecord(PageOperationRecord pageOperationRecord) {
+    if (pageOperationRecords == null) {
+      pageOperationRecords = new ArrayList<>();
+    }
+
+    pageOperationRecords.add(pageOperationRecord);
+  }
+
+  public boolean isNewlyAllocatedPage() {
+    return allocatedPage;
+  }
+
+  public void markAllocated() {
+    allocatedPage = true;
+  }
+
+  public void clearAllocationFlag() {
+    allocatedPage = false;
   }
 
   @Override
@@ -53,7 +112,7 @@ public class OCacheEntryImpl implements OCacheEntry {
   }
 
   @Override
-  public long getPageIndex() {
+  public int getPageIndex() {
     return pageIndex;
   }
 
@@ -229,13 +288,13 @@ public class OCacheEntryImpl implements OCacheEntry {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
 
-    final OCacheEntryImpl that = (OCacheEntryImpl) o;
+    OCacheEntryImpl that = (OCacheEntryImpl) o;
 
     if (fileId != that.fileId)
       return false;
@@ -244,9 +303,16 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public int hashCode() {
+    if (hash != 0) {
+      return hash;
+    }
+
     int result = (int) (fileId ^ (fileId >>> 32));
-    result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
-    return result;
+    result = 31 * result + pageIndex;
+
+    hash = result;
+
+    return hash;
   }
 
   @Override

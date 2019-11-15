@@ -27,13 +27,11 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -52,14 +50,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -73,7 +64,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   protected static final String                    CONFIG_MAP_RID  = "mapRid";
   private static final   String                    CONFIG_CLUSTERS = "clusters";
-  final                  String                    type;
+  protected final        String                    type;
   protected final        ODocument                 metadata;
   protected final        OAbstractPaginatedStorage storage;
   private final          String                    databaseName;
@@ -81,8 +72,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   private final          OReadersWriterSpinLock    rwLock          = new OReadersWriterSpinLock();
   private final          AtomicLong                rebuildVersion  = new AtomicLong();
   private final          int                       version;
-  volatile               IndexConfiguration        configuration;
-  String valueContainerAlgorithm;
+  protected volatile     IndexConfiguration        configuration;
+  protected              String                    valueContainerAlgorithm;
 
   protected int indexId    = -1;
   protected int apiVersion = -1;
@@ -92,7 +83,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   private volatile OIndexDefinition    indexDefinition;
   private volatile boolean             rebuilding       = false;
   private          Map<String, String> engineProperties = new HashMap<>();
-  final            int                 binaryFormatVersion;
+  protected final  int                 binaryFormatVersion;
 
   public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
       final ODocument metadata, final int version, final OStorage storage, int binaryFormatVersion) {
@@ -289,7 +280,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         if (indexId == -1) {
           indexId = storage
               .loadExternalIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(), true,
-                  version, 1, this instanceof OIndexMultiValues, getEngineProperties());
+                  version, 1, this instanceof OIndexMultiValues, getEngineProperties(), metadata);
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
 
@@ -526,11 +517,25 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @deprecated Manual indexes are deprecated and will be removed
+   */
+  @Override
+  @Deprecated
   public OIndex<T> clear() {
     acquireSharedLock();
     try {
       while (true)
         try {
+          final boolean manualIndexesAreUsed =
+              indexDefinition == null || indexDefinition.getClassName() == null || indexDefinition.getFields() == null
+                  || indexDefinition.getFields().isEmpty();
+          if (manualIndexesAreUsed) {
+            OIndexAbstract.manualIndexesWarning();
+          }
+
           storage.clearIndex(indexId);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
@@ -548,6 +553,23 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       while (true)
         try {
+          final OIndexKeyCursor indexCursor = keyCursor();
+
+          Object key = indexCursor.next(-1);
+          while (key != null) {
+            Object entry = get(key);
+            if (entry instanceof Collection) {
+              //noinspection unchecked
+              for (final OIdentifiable entryItem : (Collection<OIdentifiable>) entry) {
+                remove(key, entryItem);
+              }
+            } else {
+              remove(key, (OIdentifiable) entry);
+            }
+
+            key = indexCursor.next(-1);
+          }
+
           storage.deleteIndexEngine(indexId);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
@@ -556,8 +578,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
       // REMOVE THE INDEX ALSO FROM CLASS MAP
       if (getDatabase().getMetadata() != null)
-        //noinspection deprecation
-        getDatabase().getMetadata().getIndexManager().removeClassPropertyIndex(this);
+        getDatabase().getMetadata().getIndexManagerInternal().removeClassPropertyIndex(this);
 
       removeValuesContainer();
       return this;
@@ -675,10 +696,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
    * Interprets transaction index changes for a certain key. Override it to customize index behaviour on interpreting index changes.
    * This may be viewed as an optimization, but in some cases this is a requirement. For example, if you put multiple values under
    * the same key during the transaction for single-valued/unique index, but remove all of them except one before commit, there is
-   * no point in throwing {@link com.orientechnologies.orient.core.storage.ORecordDuplicatedException} while applying index changes.
+   * no point in throwing {@link com.orientechnologies.orient.core.storage.ORecordDuplicatedException} while applying index
+   * changes.
    *
    * @param changes the changes to interpret.
-   *
    * @return the interpreted index key changes.
    */
   protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
@@ -1020,7 +1041,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   protected static class IndexConfiguration {
-    final ODocument document;
+    protected final ODocument document;
 
     public IndexConfiguration(ODocument document) {
       this.document = document;
@@ -1055,4 +1076,20 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
     }
   }
+
+  public static void manualIndexesWarning() {
+    if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
+      throw new OManualIndexesAreProhibited(
+          "Manual indexes are deprecated , not supported any more and will be removed in next versions if you still want to use them, "
+              + "please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey() + "` to `true`");
+    }
+
+    if (OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES_WARNING.getValueAsBoolean()) {
+      OLogManager.instance().warn(OIndexAbstract.class, "Seems you use manual indexes. "
+          + "Manual indexes are deprecated , not supported any more and will be removed in next versions if you do not want "
+          + "to see warning, please set global property `" + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES_WARNING.getKey()
+          + "` to `false`");
+    }
+  }
+
 }

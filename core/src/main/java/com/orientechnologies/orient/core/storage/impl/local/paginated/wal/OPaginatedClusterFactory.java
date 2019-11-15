@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.cluster.v0.OPaginatedClusterV0;
 import com.orientechnologies.orient.core.storage.cluster.v1.OPaginatedClusterV1;
+import com.orientechnologies.orient.core.storage.cluster.v2.OPaginatedClusterV2;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
@@ -45,6 +46,8 @@ public final class OPaginatedClusterFactory {
       return new OPaginatedClusterV0(name, storage);
     case 1:
       return new OPaginatedClusterV1(name, storage);
+    case 2:
+      return new OPaginatedClusterV2(name, storage);
     default:
       throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
     }
@@ -57,6 +60,8 @@ public final class OPaginatedClusterFactory {
       throw new IllegalStateException("Version 0 of cluster is not supported with given configuration");
     case 1:
       return new OPaginatedClusterV1(name, dataExtension, cpmExtension, storage);
+    case 2:
+      return new OPaginatedClusterV2(name, dataExtension, cpmExtension, storage);
     default:
       throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
     }

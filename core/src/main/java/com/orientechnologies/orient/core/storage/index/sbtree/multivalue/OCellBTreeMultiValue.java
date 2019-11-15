@@ -18,17 +18,11 @@ public interface OCellBTreeMultiValue<K> {
 
   void close();
 
-  void clear() throws IOException;
-
   void delete() throws IOException;
-
-  void deleteWithoutLoad() throws IOException;
 
   void load(String name, int keySize, OType[] keyTypes, OBinarySerializer<K> keySerializer, OEncryption encryption);
 
   long size();
-
-  boolean remove(K key) throws IOException;
 
   boolean remove(K key, ORID value) throws IOException;
 

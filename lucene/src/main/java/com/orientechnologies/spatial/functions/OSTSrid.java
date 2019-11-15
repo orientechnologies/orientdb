@@ -30,7 +30,7 @@ public class OSTSrid extends OSQLFunctionAbstract {
 
   public static final String NAME = "st_srid";
 
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  private OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSTSrid() {
     super(NAME, 1, 1);

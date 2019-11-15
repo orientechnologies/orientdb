@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
 import com.orientechnologies.orient.test.TestFactory;
@@ -87,7 +88,7 @@ public class ConcurrentQueriesTest extends DocumentDBBaseTest {
     database.getMetadata().getSchema().createClass("Concurrent");
 
     for (int i = 0; i < 1000; ++i) {
-      database.newInstance("Concurrent").field("test", i).save();
+      database.<ODocument>newInstance("Concurrent").field("test", i).save();
     }
   }
 

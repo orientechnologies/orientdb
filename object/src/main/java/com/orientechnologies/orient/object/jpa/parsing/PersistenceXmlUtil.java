@@ -53,13 +53,16 @@ public final class PersistenceXmlUtil {
    */
   public static final String            PERSISTENCE_NS_URI        = "http://java.sun.com/xml/ns/persistence";
 
-  private final static SchemaFactory    schemaFactory             = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
-  private final static SAXParserFactory parserFactory             = SAXParserFactory.newInstance();
+  private static final SchemaFactory    schemaFactory             = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
+  private static final SAXParserFactory parserFactory             = SAXParserFactory.newInstance();
+
   static {
     parserFactory.setNamespaceAware(true);
   }
+
   /** The persistence xml root */
   public static final String            PERSISTENCE_XML_ROOT      = "META-INF/";
+
   public static final String            PERSISTENCE_XML_BASE_NAME = "persistence.xml";
   /** The persistence XSD location */
   public static final String            PERSISTENCE_XSD_DIR       = PERSISTENCE_XML_ROOT + "persistence/";

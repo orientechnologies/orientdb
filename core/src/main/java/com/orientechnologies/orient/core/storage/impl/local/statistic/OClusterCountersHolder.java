@@ -26,12 +26,12 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
   /**
    * Amount of all created records.
    */
-  long createdRecords;
+  protected long createdRecords;
 
   /**
    * Total time is needed to create all records
    */
-  long timeRecordCreation;
+  protected long timeRecordCreation;
 
   private long createRecordPages;
 
@@ -44,12 +44,12 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
   /**
    * Amount of all deleted records
    */
-  long deletedRecords;
+  protected long deletedRecords;
 
   /**
    * Total time is needed to delete all records
    */
-  long timeRecordDeletion;
+  protected long timeRecordDeletion;
 
   private long deleteRecordPages;
 
@@ -62,12 +62,12 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
   /**
    * Amount of all updated records
    */
-  long updatedRecords;
+  protected long updatedRecords;
 
   /**
    * Total time which is needed to update all records
    */
-  long timeRecordUpdate;
+  protected long timeRecordUpdate;
 
   private long updateRecordPages;
 
@@ -80,12 +80,12 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
   /**
    * Amount of all read records
    */
-  long readRecords;
+  protected long readRecords;
 
   /**
    * Total time which is needed to read all records.
    */
-  long timeRecordRead;
+  protected long timeRecordRead;
 
   private long readRecordPages;
 

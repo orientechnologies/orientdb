@@ -1,14 +1,12 @@
 package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
@@ -16,24 +14,15 @@ import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLimitReachedException;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -163,7 +152,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
     OSessionOperationId id = new OSessionOperationId();
-    id.init();
     OSequenceActionCoordinatorSubmit submitAction = new OSequenceActionCoordinatorSubmit(action);
     Future<OSubmitResponse> future = submitContext.send(id, submitAction);
     try {
@@ -193,15 +181,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private void distributedCommitV2(OTransactionInternal iTx) {
     OTransactionSubmit ts = new OTransactionSubmit(iTx.getRecordOperations(),
-        OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx), iTx.isUseDeltas());
+        OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx));
     if (ts.isEmpty()) {
       return;
     }
 
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
     OSessionOperationId id = new OSessionOperationId();
-    id.init();
-
     Future<OSubmitResponse> future = submitContext.send(id, ts);
     try {
       OTransactionResponse response = (OTransactionResponse) future.get();
@@ -242,8 +228,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void txFirstPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
-      List<OIndexOperationRequest> indexes, boolean useDeltas) {
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>(), useDeltas);
+      List<OIndexOperationRequest> indexes) {
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>());
     tx.begin(operations, indexes);
     firstPhaseDataChecks(tx);
   }
@@ -251,7 +237,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public OTransactionOptimisticDistributed txSecondPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
       List<OIndexOperationRequest> indexes, boolean success) {
     //MAKE delta be used by default
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>(), false);
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>());
     tx.begin(operations, indexes);
     try {
       if (success) {
@@ -318,91 +304,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
-  public void afterCreateOperations(final OIdentifiable id) {
-    if (id instanceof ODocument) {
-      ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
-      if (clazz != null) {
-        OClassIndexManager.checkIndexesAfterCreate(doc, this);
-        if (clazz.isFunction()) {
-          this.getSharedContext().getFunctionLibrary().createdFunction(doc);
-          Orient.instance().getScriptManager().close(this.getName());
-        }
-        if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
-        }
-        if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
-        }
-        if (clazz.isScheduler()) {
-          getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
-        }
-        if (clazz.isTriggered()) {
-          OClassTrigger.onRecordAfterCreate(doc, this);
-        }
-        OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
-        OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
-      }
-    }
-    callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
-  }
-
-  public void afterUpdateOperations(final OIdentifiable id) {
-    if (id instanceof ODocument) {
-      ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
-      if (clazz != null) {
-        OClassIndexManager.checkIndexesAfterUpdate((ODocument) id, this);
-        if (clazz.isFunction()) {
-          this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
-          Orient.instance().getScriptManager().close(this.getName());
-        }
-        if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
-        }
-        if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
-        }
-        if (clazz.isTriggered()) {
-          OClassTrigger.onRecordAfterUpdate(doc, this);
-        }
-        OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
-        OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
-      }
-    }
-    callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
-  }
-
-  public void afterDeleteOperations(final OIdentifiable id) {
-    if (id instanceof ODocument) {
-      ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
-      if (clazz != null) {
-        OClassIndexManager.checkIndexesAfterDelete(doc, this);
-        if (clazz.isFunction()) {
-          this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
-          Orient.instance().getScriptManager().close(this.getName());
-        }
-        if (clazz.isOuser() || clazz.isOrole()) {
-          getMetadata().getSecurity().incrementVersion();
-        }
-        if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
-        }
-        if (clazz.isScheduler()) {
-          final String eventName = doc.field(OScheduledEvent.PROP_NAME);
-          getSharedContext().getScheduler().removeEventInternal(eventName);
-        }
-        if (clazz.isTriggered()) {
-          OClassTrigger.onRecordAfterDelete(doc, this);
-        }
-      }
-      OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
-      OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);
-    }
-    callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
-  }
-
   @Override
   public OView getViewFromCluster(int cluster) {
     OImmutableSchema schema = getMetadata().getImmutableSchemaSnapshot();
@@ -436,7 +337,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId) {
     if (isRunLocal()) {
       final StringBuilder cmd = new StringBuilder("create cluster `");
       cmd.append(iClusterName);
@@ -446,42 +347,30 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       sendDDLCommand(cmd.toString());
       return iRequestedId;
     } else {
-      return super.addCluster(iClusterName, iRequestedId, iParameters);
+      return super.addCluster(iClusterName, iRequestedId);
     }
   }
 
   @Override
-  public boolean dropCluster(String iClusterName, boolean iTruncate) {
+  public boolean dropCluster(String clusterName) {
     if (isRunLocal()) {
-      final StringBuilder cmd = new StringBuilder();
-      if (iTruncate) {
-        cmd.append("truncate cluster `");
-      } else {
-        cmd.append("create cluster `");
-      }
-      cmd.append(iClusterName);
-      cmd.append("`");
-      sendDDLCommand(cmd.toString());
+      final String cmd = "drop cluster `" + clusterName + "`";
+      sendDDLCommand(cmd);
       return true;
     } else {
-      return super.dropCluster(iClusterName, iTruncate);
+      return super.dropCluster(clusterName);
     }
   }
 
   @Override
-  public boolean dropCluster(int iClusterId, boolean iTruncate) {
+  public boolean dropCluster(int clusterId) {
     if (isRunLocal()) {
-      final StringBuilder cmd = new StringBuilder();
-      if (iTruncate) {
-        cmd.append("truncate cluster ");
-      } else {
-        cmd.append("create cluster ");
-      }
-      cmd.append(iClusterId);
-      sendDDLCommand(cmd.toString());
+      final String cmd = "drop cluster " + clusterId + "";
+      sendDDLCommand(cmd);
+      sendDDLCommand(cmd);
       return true;
     } else {
-      return super.dropCluster(iClusterId, iTruncate);
+      return super.dropCluster(clusterId);
     }
   }
 

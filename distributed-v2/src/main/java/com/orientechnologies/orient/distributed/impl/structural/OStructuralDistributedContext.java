@@ -3,13 +3,18 @@ package com.orientechnologies.orient.distributed.impl.structural;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
+import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 
+import java.util.HashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class OStructuralDistributedContext {
   private OStructuralSubmitContext submitContext;
@@ -17,6 +22,13 @@ public class OStructuralDistributedContext {
   private OrientDBDistributed      context;
   private OStructuralLeader        leader;
   private OStructuralFollower      follower;
+
+  /**
+   * used in client->follower->leader communication pattern
+   * to guarantee that op N is executed AFTER op N-1 is ALREADY propagated to the slave
+   * eg. create database VS open database
+   */
+  private OSessionOperationId      last;
 
   public OStructuralDistributedContext(OrientDBDistributed context) {
     this.context = context;
@@ -28,7 +40,7 @@ public class OStructuralDistributedContext {
 
   private void initOpLog() {
     this.opLog = OPersistentOperationalLogV1
-        .newInstance("OSystem", context, (x) -> context.getCoordinateMessagesFactory().createStructuralOperationRequest(x));
+        .newInstance("OSystem", context, (x) -> OCoordinateMessagesFactory.createRaftOperation(x));
   }
 
   public OStructuralSubmitContext getSubmitContext() {
@@ -47,7 +59,7 @@ public class OStructuralDistributedContext {
     return follower;
   }
 
-  public synchronized void makeLeader(ONodeIdentity identity, OStructuralSharedConfiguration sharedConfiguration) {
+  public synchronized void makeLeader(ONodeIdentity identity) {
     if (leader == null) {
       leader = new OStructuralLeader(Executors.newSingleThreadExecutor(), opLog, context);
     }
@@ -75,4 +87,33 @@ public class OStructuralDistributedContext {
       leader.receiveSubmit(senderNode, operationId, request);
     }
   }
+
+  private synchronized OSessionOperationId nextOpId() {
+    if (last == null) {
+      last = new OSessionOperationId(context.getNodeIdentity().getId());
+    } else {
+      last = last.next();
+    }
+    return last;
+  }
+
+  private synchronized OSessionOperationId getLastOpId() {
+    return last;
+  }
+
+  public Future<OStructuralSubmitResponse> forward(OStructuralSubmitRequest request) {
+    return getSubmitContext().send(nextOpId(), request);
+  }
+
+  public void waitApplyLastRequest() {
+    OSessionOperationId lastOpId = getLastOpId();
+    if (lastOpId != null) {
+      follower.waitForExecution(lastOpId);
+    }
+  }
+
+  public OStructuralSubmitResponse forwardAndWait(OStructuralSubmitRequest request) {
+    return getSubmitContext().sendAndWait(nextOpId(), request);
+  }
+
 }

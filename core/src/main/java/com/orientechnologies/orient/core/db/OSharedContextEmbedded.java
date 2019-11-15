@@ -72,7 +72,7 @@ public class OSharedContextEmbedded extends OSharedContext {
         indexManager.load(database);
         //The Immutable snapshot should be after index and schema that require and before everything else that use it
         schema.forceSnapshot(database);
-        security.load();
+        security.load(database);
         functionLibrary.load(database);
         scheduler.load(database);
         sequenceLibrary.load(database);
@@ -91,7 +91,7 @@ public class OSharedContextEmbedded extends OSharedContext {
   public synchronized void close() {
     viewManager.close();
     schema.close();
-    security.close(false);
+    security.close();
     indexManager.close();
     functionLibrary.close();
     scheduler.close();
@@ -102,7 +102,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
-    loaded =false;
+    loaded = false;
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
@@ -110,7 +110,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     indexManager.reload();
     //The Immutable snapshot should be after index and schema that require and before everything else that use it
     schema.forceSnapshot(database);
-    security.load();
+    security.load(database);
     functionLibrary.load(database);
     sequenceLibrary.load(database);
     commandCache.clear();
@@ -120,10 +120,10 @@ public class OSharedContextEmbedded extends OSharedContext {
   public synchronized void create(ODatabaseDocumentInternal database) {
     schema.create(database);
     indexManager.create(database);
-    security.create();
+    security.create(database);
     functionLibrary.create(database);
     sequenceLibrary.create(database);
-    security.createClassTrigger();
+    security.createClassTrigger(database);
     scheduler.create(database);
     schema.forceSnapshot(database);
 

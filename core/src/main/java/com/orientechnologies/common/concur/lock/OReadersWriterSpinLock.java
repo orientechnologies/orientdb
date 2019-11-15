@@ -251,7 +251,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     }
   }
 
-  private final static class WNode {
+  private static final class WNode {
     private final ConcurrentHashMap<Thread, Boolean> waitingReaders = new ConcurrentHashMap<Thread, Boolean>();
 
     private volatile boolean locked = true;

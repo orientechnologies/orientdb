@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
@@ -80,7 +80,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     doc.field("name", "Test");
     doc.field("bar", "abc");
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Foo.bar");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
 
     db.save(doc);
 
@@ -99,7 +99,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     Assert.assertEquals(coll.size(), 0);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getSize(), 0);
     vertices.close();
     db.rollback();
 
@@ -108,14 +108,14 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getSize(), 1);
     vertices.close();
   }
 
   @Test
   public void txUpdateTest() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Foo.bar");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
     OClass c1 = db.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();
@@ -181,7 +181,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Foo.bar");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
     OClass c1 = db.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();

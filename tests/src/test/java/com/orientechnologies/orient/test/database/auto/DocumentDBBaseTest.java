@@ -1,17 +1,17 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 7/3/14
  */
 @Test
-public abstract class DocumentDBBaseTest extends BaseTest<ODatabaseDocumentTx> {
+public abstract class DocumentDBBaseTest extends BaseTest<ODatabaseDocumentInternal> {
   protected DocumentDBBaseTest() {
   }
 
@@ -25,7 +25,7 @@ public abstract class DocumentDBBaseTest extends BaseTest<ODatabaseDocumentTx> {
     super(url, prefix);
   }
 
-  protected ODatabaseDocumentTx createDatabaseInstance(String url) {
+  protected ODatabaseDocumentInternal createDatabaseInstance(String url) {
     return new ODatabaseDocumentTx(url);
   }
 }

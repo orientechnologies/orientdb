@@ -40,8 +40,8 @@ public class OHashIndexMTSpeedTest extends TestCase {
     databaseDocumentTx.create();
 
     ODocument metadata = new ODocument().field("partitions", concurrencyLevel);
-    final OIndex<?> userIndex = databaseDocumentTx.getMetadata().getIndexManager()
-        .createIndex("User.id", "UNIQUE", new OSimpleKeyIndexDefinition(OType.LONG), new int[0], null, metadata,
+    final OIndex<?> userIndex = databaseDocumentTx.getMetadata().getIndexManagerInternal()
+        .createIndex(databaseDocumentTx, "User.id", "UNIQUE", new OSimpleKeyIndexDefinition(OType.LONG), new int[0], null, metadata,
             "AUTOSHARDING");
 
     Orient.instance().scheduleTask(new Runnable() {
@@ -51,7 +51,7 @@ public class OHashIndexMTSpeedTest extends TestCase {
       public void run() {
         db.activateOnCurrentThread();
 
-        final OIndex<?> index = db.getMetadata().getIndexManager().getIndex("User.id");
+        final OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "User.id");
 
         final long count = index.getKeySize();
         System.out.println(String.format("entries=%d %d/sec", count, ((count - lastCount) * 1000 / 2000)));
@@ -74,7 +74,7 @@ public class OHashIndexMTSpeedTest extends TestCase {
           if (threadId == concurrencyLevel - 1)
             totalPerThread += total % concurrencyLevel;
 
-          final OIndex<?> index = db.getMetadata().getIndexManager().getIndex("User.id");
+          final OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "User.id");
 
           for (long k = totalPerThread * threadId; k < totalPerThread * (threadId + 1); ++k) {
             index.put(k, new ORecordId(0, k));
@@ -93,7 +93,7 @@ public class OHashIndexMTSpeedTest extends TestCase {
       threads[i].join();
     }
 
-    final OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("User.id");
+    final OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManagerInternal().getIndex(databaseDocumentTx, "User.id");
     final long foundKeys = index.getKeySize();
 
     databaseDocumentTx.activateOnCurrentThread();

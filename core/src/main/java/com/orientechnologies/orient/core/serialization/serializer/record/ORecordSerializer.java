@@ -26,21 +26,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public interface ORecordSerializer {
   ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields);
 
-  byte[] toStream(ORecord iSource, boolean iOnlyDelta);
-
-  byte[] writeClassOnly(ORecord iSource);
+  byte[] toStream(ORecord iSource);
 
   int getCurrentVersion();
 
   int getMinSupportedVersion();
 
-  String[] getFieldNamesRoot(ODocument reference, byte[] iSource);  
-  String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion);
+  String[] getFieldNames(ODocument reference, byte[] iSource);
 
   boolean getSupportBinaryEvaluate();
 
   String getName();
-  
-  <RET> RET deserializeFieldFromRoot(byte[]record, String iFieldName);
-  <RET> RET deserializeFieldFromEmbedded(byte[]record, int offsetOfDocumentInBytes, String iFieldName, int serializerVersion);
+
 }

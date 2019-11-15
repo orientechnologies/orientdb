@@ -21,7 +21,7 @@ package com.orientechnologies.common.util;
  * @author Anrey Lomakin
  * @since 2.2
  */
-public class ORawPair<V1, V2> {
+public final class ORawPair<V1, V2> {
   private final V1 first;
   private final V2 second;
 

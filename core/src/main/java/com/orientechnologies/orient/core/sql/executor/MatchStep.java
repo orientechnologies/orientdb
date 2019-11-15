@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.parser.OFieldMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.OMultiMatchPathItem;
 
 import java.util.Map;
@@ -13,10 +14,10 @@ import java.util.Optional;
 public class MatchStep extends AbstractExecutionStep {
   protected final EdgeTraversal edge;
 
-  OResultSet         upstream;
-  OResult            lastUpstreamRecord;
-  MatchEdgeTraverser traverser;
-  OResult            nextResult;
+  private OResultSet         upstream;
+  private OResult            lastUpstreamRecord;
+  private MatchEdgeTraverser traverser;
+  private OResult            nextResult;
 
   public MatchStep(OCommandContext context, EdgeTraversal edge, boolean profilingEnabled) {
     super(context, profilingEnabled);
@@ -34,7 +35,7 @@ public class MatchStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     return new OResultSet() {
-      int localCount = 0;
+      private int localCount = 0;
 
       @Override
       public boolean hasNext() {
@@ -75,7 +76,7 @@ public class MatchStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override
@@ -121,6 +122,8 @@ public class MatchStep extends AbstractExecutionStep {
   protected MatchEdgeTraverser createTraverser(OResult lastUpstreamRecord) {
     if (edge.edge.item instanceof OMultiMatchPathItem) {
       return new MatchMultiEdgeTraverser(lastUpstreamRecord, edge);
+    } else if (edge.edge.item instanceof OFieldMatchPathItem) {
+      return new MatchFieldTraverser(lastUpstreamRecord, edge);
     } else if (edge.out) {
       return new MatchEdgeTraverser(lastUpstreamRecord, edge);
     } else {
@@ -142,7 +145,12 @@ public class MatchStep extends AbstractExecutionStep {
     result.append(spaces);
     result.append("  ");
     result.append("{" + edge.edge.out.alias + "}");
-    result.append(edge.edge.item.getMethod());
+    if (edge.edge.item instanceof OFieldMatchPathItem) {
+      result.append(".");
+      result.append(((OFieldMatchPathItem) edge.edge.item).getField());
+    } else {
+      result.append(edge.edge.item.getMethod());
+    }
     result.append("{" + edge.edge.in.alias + "}");
     return result.toString();
   }

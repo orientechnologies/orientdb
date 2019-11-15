@@ -64,7 +64,7 @@ public class ODropClusterStatement extends ODDLStatement {
     }
     ((OMetadataInternal) database.getMetadata()).getCommandCache().invalidateResultsOfCluster(clusterName);
 
-    database.dropCluster(clusterId, true);
+    database.dropCluster(clusterId);
 
     OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();

@@ -1,16 +1,17 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.junit.Assert; import org.junit.Test;
-
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
-
 public class OAtomicUnitEndRecordTest {
+  @Test
   public void recordMetadataSerializationTest() throws IOException {
     ORecordOperationMetadata recordOperationMetadata = new ORecordOperationMetadata();
     recordOperationMetadata.addRid(new ORecordId(10, 42));
@@ -37,6 +38,7 @@ public class OAtomicUnitEndRecordTest {
     Assert.assertEquals(recordOperationMetadataD.getValue(), recordOperationMetadata.getValue());
   }
 
+  @Test
   public void recordNoMetadataSerializationTest() throws IOException {
     OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecord(OOperationUnitId.generateId(), false, null);
     int arraySize = atomicUnitEndRecord.serializedSize() + 1;

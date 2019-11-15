@@ -50,29 +50,29 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedResponseManagerImpl implements ODistributedResponseManager {
-  public static final  int    ADDITIONAL_TIMEOUT_CLUSTER_SHAPE = 10000;
-  private static final String NO_RESPONSE                      = "waiting-for-response";
-  private final ODistributedServerManager dManager;
-  private final ODistributedRequest       request;
-  private final long                      sentOn;
-  private final Set<String>               nodesConcurInQuorum;
-  private final HashMap<String, Object> responses = new HashMap<String, Object>();
-  private final boolean groupResponsesByResult;
-  private final List<List<ODistributedResponse>> responseGroups = new ArrayList<List<ODistributedResponse>>();
-  private final OCallable<Void, ODistributedResponseManager> endCallback;
-  private       int                                          totalExpectedResponses;
-  private final long                                         synchTimeout;
-  private final long                                         totalTimeout;
-  private final Lock           synchronousResponsesLock    = new ReentrantLock();
-  private final CountDownLatch synchronousResponsesArrived = new CountDownLatch(1);
-  private final int                  quorum;
-  private final boolean              waitForLocalNode;
-  private       ODistributedResponse localResponse;
-  private volatile int receivedResponses = 0;
-  private volatile boolean receivedCurrentNode;
-  private       ODistributedResponse quorumResponse  = null;
-  private final Set<String>          followupToNodes = new HashSet<String>();
-  private       AtomicBoolean        canceled        = new AtomicBoolean(false);
+  public static final  int                                          ADDITIONAL_TIMEOUT_CLUSTER_SHAPE = 10000;
+  private static final String                                       NO_RESPONSE                      = "waiting-for-response";
+  private final        ODistributedServerManager                    dManager;
+  private final        ODistributedRequest                          request;
+  private final        long                                         sentOn;
+  private final        Set<String>                                  nodesConcurInQuorum;
+  private final        HashMap<String, Object>                      responses                        = new HashMap<String, Object>();
+  private final        boolean                                      groupResponsesByResult;
+  private final        List<List<ODistributedResponse>>             responseGroups                   = new ArrayList<List<ODistributedResponse>>();
+  private final        OCallable<Void, ODistributedResponseManager> endCallback;
+  private              int                                          totalExpectedResponses;
+  private final        long                                         synchTimeout;
+  private final        long                                         totalTimeout;
+  private final        Lock                                         synchronousResponsesLock         = new ReentrantLock();
+  private final        CountDownLatch                               synchronousResponsesArrived      = new CountDownLatch(1);
+  private final        int                                          quorum;
+  private final        boolean                                      waitForLocalNode;
+  private              ODistributedResponse                         localResponse;
+  private volatile     int                                          receivedResponses                = 0;
+  private volatile     boolean                                      receivedCurrentNode;
+  private              ODistributedResponse                         quorumResponse                   = null;
+  private final        Set<String>                                  followupToNodes                  = new HashSet<String>();
+  private              AtomicBoolean                                canceled                         = new AtomicBoolean(false);
 
   public ODistributedResponseManagerImpl(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final Set<String> iNodesConcurInQuorum, final int iTotalExpectedResponses,
@@ -954,9 +954,12 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
             if (quorumResponse != null && !quorumResponse.equals(response)) {
               // SEND FIX
-              final Object payload = response instanceof ODistributedResponse ?
-                  ((ODistributedResponse) response).getPayload() :
-                  null;
+              final Object payload;
+              if (response instanceof ODistributedResponse) {
+                payload = ((ODistributedResponse) response).getPayload();
+              } else {
+                payload = null;
+              }
 
               final ORemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask())
                   .getFixTask(request, request.getTask(), payload, quorumResponse.getPayload(), s, dManager);

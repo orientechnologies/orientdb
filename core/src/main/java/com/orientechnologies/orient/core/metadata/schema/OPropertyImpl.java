@@ -21,24 +21,23 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.text.ParseException;
 import java.util.*;
@@ -52,7 +51,7 @@ public abstract class OPropertyImpl implements OProperty {
   protected final   OClassImpl owner;
   protected         OType      linkedType;
   protected         OClass     linkedClass;
-  transient private String     linkedClassName;
+  private transient String     linkedClassName;
 
   protected String              description;
   protected boolean             mandatory;
@@ -181,18 +180,19 @@ public abstract class OPropertyImpl implements OProperty {
   /**
    * Remove the index on property
    *
-   * @deprecated Use {@link OIndexManager#dropIndex(String)} instead.
+   * @deprecated Use SQL command instead.
    */
   @Deprecated
   public OPropertyImpl dropIndexes() {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
     acquireSchemaReadLock();
     try {
-      final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+      final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
       final ArrayList<OIndex<?>> relatedIndexes = new ArrayList<OIndex<?>>();
-      for (final OIndex<?> index : indexManager.getClassIndexes(owner.getName())) {
+      for (final OIndex<?> index : indexManager.getClassIndexes(database, owner.getName())) {
         final OIndexDefinition definition = index.getDefinition();
 
         if (OCollections.indexOf(definition.getFields(), globalRef.getName(), new OCaseInsentiveComparator()) > -1) {
@@ -206,7 +206,7 @@ public abstract class OPropertyImpl implements OProperty {
       }
 
       for (final OIndex<?> index : relatedIndexes)
-        getDatabase().getMetadata().getIndexManager().dropIndex(index.getName());
+        database.getMetadata().getIndexManagerInternal().dropIndex(database, index.getName());
 
       return this;
     } finally {
@@ -650,9 +650,11 @@ public abstract class OPropertyImpl implements OProperty {
     regexp = (String) (document.containsField("regexp") ? document.field("regexp") : null);
     linkedClassName = (String) (document.containsField("linkedClass") ? document.field("linkedClass") : null);
     linkedType = document.field("linkedType") != null ? OType.getById(((Integer) document.field("linkedType")).byteValue()) : null;
-    customFields = (Map<String, String>) (document.containsField("customFields") ?
-        document.field("customFields", OType.EMBEDDEDMAP) :
-        null);
+    if (document.containsField("customFields")) {
+      customFields = document.field("customFields", OType.EMBEDDEDMAP);
+    } else {
+      customFields = null;
+    }
     description = (String) (document.containsField("description") ? document.field("description") : null);
   }
 
@@ -674,38 +676,31 @@ public abstract class OPropertyImpl implements OProperty {
   }
 
   public ODocument toStream() {
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    document.field("name", getName());
+    document.field("type", getType().id);
+    document.field("globalId", globalRef.getId());
+    document.field("mandatory", mandatory);
+    document.field("readonly", readonly);
+    document.field("notNull", notNull);
+    document.field("defaultValue", defaultValue);
 
-    try {
-      document.field("name", getName());
-      document.field("type", getType().id);
-      document.field("globalId", globalRef.getId());
-      document.field("mandatory", mandatory);
-      document.field("readonly", readonly);
-      document.field("notNull", notNull);
-      document.field("defaultValue", defaultValue);
-
-      document.field("min", min);
-      document.field("max", max);
-      if (regexp != null) {
-        document.field("regexp", regexp);
-      } else {
-        document.removeField("regexp");
-      }
-      if (linkedType != null)
-        document.field("linkedType", linkedType.id);
-      if (linkedClass != null || linkedClassName != null)
-        document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
-
-      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-      if (collate != null) {
-        document.field("collate", collate.getName());
-      }
-      document.field("description", description);
-
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+    document.field("min", min);
+    document.field("max", max);
+    if (regexp != null) {
+      document.field("regexp", regexp);
+    } else {
+      document.removeField("regexp");
     }
+    if (linkedType != null)
+      document.field("linkedType", linkedType.id);
+    if (linkedClass != null || linkedClassName != null)
+      document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
+
+    document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
+    if (collate != null) {
+      document.field("collate", collate.getName());
+    }
+    document.field("description", description);
     return document;
   }
 
@@ -771,38 +766,33 @@ public abstract class OPropertyImpl implements OProperty {
 
   public ODocument toNetworkStream() {
     ODocument document = new ODocument();
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    document.setTrackingChanges(false);
+    document.field("name", getName());
+    document.field("type", getType().id);
+    document.field("globalId", globalRef.getId());
+    document.field("mandatory", mandatory);
+    document.field("readonly", readonly);
+    document.field("notNull", notNull);
+    document.field("defaultValue", defaultValue);
 
-    try {
-      document.field("name", getName());
-      document.field("type", getType().id);
-      document.field("globalId", globalRef.getId());
-      document.field("mandatory", mandatory);
-      document.field("readonly", readonly);
-      document.field("notNull", notNull);
-      document.field("defaultValue", defaultValue);
-
-      document.field("min", min);
-      document.field("max", max);
-      if (regexp != null) {
-        document.field("regexp", regexp);
-      } else {
-        document.removeField("regexp");
-      }
-      if (linkedType != null)
-        document.field("linkedType", linkedType.id);
-      if (linkedClass != null || linkedClassName != null)
-        document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
-
-      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-      if (collate != null) {
-        document.field("collate", collate.getName());
-      }
-      document.field("description", description);
-
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+    document.field("min", min);
+    document.field("max", max);
+    if (regexp != null) {
+      document.field("regexp", regexp);
+    } else {
+      document.removeField("regexp");
     }
+    if (linkedType != null)
+      document.field("linkedType", linkedType.id);
+    if (linkedClass != null || linkedClassName != null)
+      document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
+
+    document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
+    if (collate != null) {
+      document.field("collate", collate.getName());
+    }
+    document.field("description", description);
+
     return document;
   }
 

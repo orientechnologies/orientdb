@@ -40,7 +40,7 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
 
     return new OResultSet() {
 
-      int currentElement = 0;
+      private int currentElement = 0;
 
       @Override
       public boolean hasNext() {
@@ -87,7 +87,7 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

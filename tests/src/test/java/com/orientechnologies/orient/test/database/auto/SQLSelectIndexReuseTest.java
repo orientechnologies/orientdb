@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-import org.testng.annotations.Optional;
-
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.*;
+
+import java.util.*;
 
 @Test(groups = { "index" })
 public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
@@ -2507,10 +2506,10 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
       klazz.createIndex("a", "NOTUNIQUE", "a");
     }
 
-    database.newInstance("CountFunctionWithNotUniqueIndexTest").field("a", "a").field("b", "b").save();
-    database.newInstance("CountFunctionWithNotUniqueIndexTest").field("a", "a").field("b", "b").save();
-    database.newInstance("CountFunctionWithNotUniqueIndexTest").field("a", "a").field("b", "e").save();
-    database.newInstance("CountFunctionWithNotUniqueIndexTest").field("a", "c").field("b", "c").save();
+    database.<ODocument>newInstance("CountFunctionWithNotUniqueIndexTest").field("a", "a").field("b", "b").save();
+    database.<ODocument>newInstance("CountFunctionWithNotUniqueIndexTest").field("a", "a").field("b", "b").save();
+    database.<ODocument>newInstance("CountFunctionWithNotUniqueIndexTest").field("a", "a").field("b", "e").save();
+    database.<ODocument>newInstance("CountFunctionWithNotUniqueIndexTest").field("a", "c").field("b", "c").save();
 
     ODocument result = (ODocument) database.query(
         new OSQLSynchQuery<ODocument>("select count(*) from CountFunctionWithNotUniqueIndexTest where a = 'a' and b = 'c'")).get(0);
@@ -2532,10 +2531,10 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
       klazz.createIndex("testCountFunctionWithUniqueIndex", "NOTUNIQUE", "a");
     }
 
-    database.newInstance("CountFunctionWithUniqueIndexTest").field("a", "a").field("b", "c").save();
-    database.newInstance("CountFunctionWithUniqueIndexTest").field("a", "a").field("b", "c").save();
-    database.newInstance("CountFunctionWithUniqueIndexTest").field("a", "a").field("b", "e").save();
-    ODocument doc = database.newInstance("CountFunctionWithUniqueIndexTest").field("a", "a").field("b", "b").save();
+    database.<ODocument>newInstance("CountFunctionWithUniqueIndexTest").field("a", "a").field("b", "c").save();
+    database.<ODocument>newInstance("CountFunctionWithUniqueIndexTest").field("a", "a").field("b", "c").save();
+    database.<ODocument>newInstance("CountFunctionWithUniqueIndexTest").field("a", "a").field("b", "e").save();
+    ODocument doc = database.<ODocument>newInstance("CountFunctionWithUniqueIndexTest").field("a", "a").field("b", "b").save();
 
     ODocument result = (ODocument) database.query(
         new OSQLSynchQuery<ODocument>("select count(*) from CountFunctionWithUniqueIndexTest where a = 'a' and b = 'c'")).get(0);

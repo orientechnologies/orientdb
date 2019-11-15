@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -40,14 +39,18 @@ public class OStructuralConfigurationSerDeTest {
     OStructuralNodeDatabase database1 = new OStructuralNodeDatabase(UUID.randomUUID(), "two",
         OStructuralNodeDatabase.NodeMode.ACTIVE);
     nodeConfiguration.addDatabase(database1);
-    configuration.getSharedConfiguration().addNode(nodeConfiguration);
+    OStructuralSharedConfiguration config = configuration.modifySharedConfiguration();
+    config.addNode(nodeConfiguration);
+    configuration.update(config);
 
     OStructuralNodeConfiguration nodeConfiguration1 = new OStructuralNodeConfiguration(ONodeIdentity.generate("node3"));
     OStructuralNodeDatabase database2 = new OStructuralNodeDatabase(UUID.randomUUID(), "one",
         OStructuralNodeDatabase.NodeMode.ACTIVE);
     nodeConfiguration1.addDatabase(database2);
 
-    configuration.getSharedConfiguration().addNode(nodeConfiguration1);
+    OStructuralSharedConfiguration config1 = configuration.modifySharedConfiguration();
+    config1.addNode(nodeConfiguration1);
+    configuration.update(config1);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     configuration.discSerialize(new DataOutputStream(outputStream));
 
@@ -55,8 +58,8 @@ public class OStructuralConfigurationSerDeTest {
     configuration1.discDeserialize(new DataInputStream(new ByteArrayInputStream(outputStream.toByteArray())));
 
     assertEquals(configuration1.getCurrentNodeIdentity(), configuration.getCurrentNodeIdentity());
-    assertEquals(configuration1.getSharedConfiguration().listNodes().size(),
-        configuration.getSharedConfiguration().listNodes().size());
+    assertEquals(configuration1.readSharedConfiguration().listNodes().size(),
+        configuration.readSharedConfiguration().listNodes().size());
 
   }
 

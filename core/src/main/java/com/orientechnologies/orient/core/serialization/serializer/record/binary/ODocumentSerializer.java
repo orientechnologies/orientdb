@@ -21,32 +21,28 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ODocumentSerializer {
 
-  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  void serialize(ODocument document, BytesContainer bytes);
 
-  void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
-
-  HelperClasses.Tuple<Integer, Integer> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
+  int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType, OImmutableSchema schema,
+      OPropertyEncryption encryption);
 
   void deserialize(ODocument document, BytesContainer bytes);
 
-  void deserializeWithClassName(ODocument document, BytesContainer bytes);
-
   void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
 
-  void deserializePartialWithClassName(ODocument document, BytesContainer bytes, String[] iFields);
+  Object deserializeValue(BytesContainer bytes, OType type, ORecordElement owner);
 
-  Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
-
-  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName);
-
-  OBinaryField deserializeFieldWithClassName(BytesContainer bytes, OClass iClass, String iFieldName);
+  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName, boolean embedded, OImmutableSchema schema,
+      OPropertyEncryption encryption);
 
   OBinaryComparator getComparator();
 
@@ -54,16 +50,14 @@ public interface ODocumentSerializer {
    * Returns the array of field names with no values.
    *
    * @param reference TODO
+   * @param embedded
    */
-  String[] getFieldNames(ODocument reference, BytesContainer iBytes, boolean readClassName);
+  String[] getFieldNames(ODocument reference, BytesContainer iBytes, boolean embedded);
 
   boolean isSerializingClassNameByDefault();
 
-  boolean isSerializingClassNameForEmbedded();
-
-  <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion);
-
-  HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes);
+  <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, OImmutableSchema schema,
+      OPropertyEncryption encryption);
 
   void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo,
       OImmutableSchema schema);

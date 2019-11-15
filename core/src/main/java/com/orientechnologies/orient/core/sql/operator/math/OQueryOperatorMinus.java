@@ -69,7 +69,7 @@ public class OQueryOperatorMinus extends OQueryOperator {
       else if (Double.class.equals(maxPrecisionClass))
         return l.doubleValue() - r.doubleValue();
       else if (BigDecimal.class.equals(maxPrecisionClass)) {
-          return (OQueryOperatorMultiply.toBigDecimal(l)).subtract(OQueryOperatorMultiply.toBigDecimal(r));
+        return (OQueryOperatorMultiply.toBigDecimal(l)).subtract(OQueryOperatorMultiply.toBigDecimal(r));
       }
     }
 

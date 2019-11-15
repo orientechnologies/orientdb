@@ -11,7 +11,9 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -69,8 +71,15 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
+        request.setRecord(ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
+        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+        break;
       case ORecordOperation.UPDATED:
-        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
+        if (request.getRecordType() == ODocument.RECORD_TYPE) {
+          request.setRecord(ODocumentSerializerDelta.instance().serializeDelta((ODocument) txEntry.getRecord()));
+        } else {
+          request.setRecord(ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
+        }
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.DELETED:
@@ -94,7 +103,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     convert(database);
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops, false);
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
     //No need to increase the lock timeout here with the retry because this retries are not deadlock retries
     OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     if (res1 == null) {
@@ -162,19 +171,34 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
       ORecord record = null;
       switch (type) {
-      case ORecordOperation.CREATED:
-      case ORecordOperation.UPDATED: {
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+      case ORecordOperation.CREATED: {
+        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        break;
       }
-      break;
-      case ORecordOperation.DELETED:
-        record = database.getRecord(req.getId());
+      case ORecordOperation.UPDATED: {
+        if (req.getRecordType() == ODocument.RECORD_TYPE) {
+          record = database.load(req.getId());
+          ODocumentSerializerDelta.instance().deserializeDelta(req.getRecord(), (ODocument) record);
+          /// Got record with empty deltas, at this level we mark the record dirty anyway.
+          if (record.isDirty()) {
+            ODocumentSerializerDelta.instance().deserializeDelta(req.getRecord(), (ODocument) record);
+          }
+          record.setDirty();
+        } else {
+          record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
+          ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        }
+        break;
+      }
+      case ORecordOperation.DELETED: {
+        record = database.load(req.getId());
         if (record == null) {
           record = Orient.instance().getRecordFactoryManager()
               .newInstance(req.getRecordType(), req.getId().getClusterId(), database);
         }
         break;
+      }
       }
       ORecordInternal.setIdentity(record, (ORecordId) req.getId());
       ORecordInternal.setVersion(record, req.getVersion());
@@ -205,7 +229,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   public void init(OTransactionInternal operations) {
     for (Map.Entry<String, OTransactionIndexChanges> indexOp : operations.getIndexOperations().entrySet()) {
-      if (indexOp.getValue().resolveAssociatedIndex(indexOp.getKey(), operations.getDatabase().getMetadata().getIndexManager())
+      final ODatabaseDocumentInternal database = operations.getDatabase();
+      if (indexOp.getValue().resolveAssociatedIndex(indexOp.getKey(), database.getMetadata().getIndexManagerInternal(), database)
           .isUnique()) {
         quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
         break;

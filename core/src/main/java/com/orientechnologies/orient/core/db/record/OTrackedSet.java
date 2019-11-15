@@ -17,39 +17,43 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.core.db.record;
 
-import java.io.Serializable;
-import java.util.*;
+package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
+
+import java.io.Serializable;
+import java.util.*;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
  * the set is changed.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("serial")
-public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
-  protected final ORecord                       sourceRecord;
-  private final boolean                         embeddedCollection;
-  protected Class<?>                            genericClass;
-  private STATUS                                status          = STATUS.NOT_LOADED;
-  private List<OMultiValueChangeListener<T, T>> changeListeners;
+public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
+  protected final ORecordElement sourceRecord;
+  private final   boolean        embeddedCollection;
+  protected       Class<?>       genericClass;
+  private         boolean        dirty            = false;
+  private         boolean        transactionDirty = false;
 
-  public OTrackedSet(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
+  private OSimpleMultiValueTracker<T, T> tracker = new OSimpleMultiValueTracker<>(this);
+
+  public OTrackedSet(final ORecordElement iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
-    if (iOrigin != null && !iOrigin.isEmpty())
+    if (iOrigin != null && !iOrigin.isEmpty()) {
       addAll(iOrigin);
+    }
   }
 
-  public OTrackedSet(final ORecord iSourceRecord) {
+  public OTrackedSet(final ORecordElement iSourceRecord) {
     this.sourceRecord = iSourceRecord;
     embeddedCollection = this.getClass().equals(OTrackedSet.class);
   }
@@ -62,6 +66,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @Override
   public Iterator<T> iterator() {
     return new Iterator<T>() {
+      private T current;
       private final Iterator<T> underlying = OTrackedSet.super.iterator();
 
       @Override
@@ -71,46 +76,59 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
       @Override
       public T next() {
-        return underlying.next();
+        current = underlying.next();
+        return current;
       }
 
       @Override
       public void remove() {
         underlying.remove();
-        setDirty();
+        removeEvent(current);
       }
     };
   }
 
-  public boolean add(final T e) {
-    if (super.add(e)) {
-      addOwnerToEmbeddedDoc(e);
-
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
-      addNested(e);
-      return true;
+  @Override
+  public boolean addAll(Collection<? extends T> c) {
+    boolean convert = false;
+    if (c instanceof OAutoConvertToRecord) {
+      convert = ((OAutoConvertToRecord) c).isAutoConvertToRecord();
+      ((OAutoConvertToRecord) c).setAutoConvertToRecord(false);
+    }
+    boolean modified = false;
+    for (T o : c) {
+      if (add(o)) {
+        modified = true;
+      }
     }
 
+    if (c instanceof OAutoConvertToRecord) {
+      ((OAutoConvertToRecord) c).setAutoConvertToRecord(convert);
+    }
+    return modified;
+  }
+
+  public boolean add(final T e) {
+    if (super.add(e)) {
+      addEvent(e);
+      return true;
+    }
     return false;
   }
 
-  private void addNested(T element) {
-    if (element instanceof OTrackedMultiValue) {
-      ((OTrackedMultiValue) element)
-          .addChangeListener(new ONestedValueChangeListener((ODocument) sourceRecord, this, (OTrackedMultiValue) element));
+  public boolean addInternal(final T e) {
+    if (super.add(e)) {
+      addOwnerToEmbeddedDoc(e);
+      return true;
     }
+    return false;
   }
-
 
   @SuppressWarnings("unchecked")
   @Override
   public boolean remove(final Object o) {
     if (super.remove(o)) {
-      if (o instanceof ODocument)
-        ODocumentInternal.removeOwner((ODocument) o, this);
-
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) o, null, (T) o));
-      removeNested(o);
+      removeEvent((T) o);
       return true;
     }
     return false;
@@ -118,79 +136,69 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   @Override
   public void clear() {
-    final Set<T> origValues;
-    if (changeListeners == null )
-      origValues = null;
-    else
-      origValues = new HashSet<T>(this);
-
-    if (origValues == null) {
-      for (final T item : this) {
-        if (item instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) item, this);
-      }
+    for (final T item : this) {
+      removeEvent(item);
     }
-
     super.clear();
-
-    if (origValues != null) {
-      for (final T item : origValues) {
-        if (item instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) item, this);
-
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
-        removeNested(item);
-      }
-
-    } else
-      setDirty();
   }
 
+  private void addEvent(T added) {
+    addOwnerToEmbeddedDoc(added);
 
-  private void removeNested(Object element){
-    if(element instanceof OTrackedMultiValue){
-      //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
+    if (tracker.isEnabled()) {
+      tracker.add(added, added);
+    } else {
+      setDirty();
+    }
+  }
+
+  private void updateEvent(T oldValue, T newValue) {
+    if (oldValue instanceof ODocument) {
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    }
+
+    addOwnerToEmbeddedDoc(newValue);
+
+    if (tracker.isEnabled()) {
+      tracker.updated(oldValue, newValue, oldValue);
+    } else {
+      setDirty();
+    }
+  }
+
+  private void removeEvent(T removed) {
+    if (removed instanceof ODocument) {
+      ODocumentInternal.removeOwner((ODocument) removed, this);
+    }
+    if (tracker.isEnabled()) {
+      tracker.remove(removed, removed);
+    } else {
+      setDirty();
     }
   }
 
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
+    if (sourceRecord != null) {
       sourceRecord.setDirty();
+    }
+    this.dirty = true;
+    this.transactionDirty = true;
     return this;
   }
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+    if (sourceRecord != null) {
       sourceRecord.setDirtyNoChanged();
-  }
-
-  public STATUS getInternalStatus() {
-    return status;
-  }
-
-  public void setInternalStatus(final STATUS iStatus) {
-    status = iStatus;
-  }
-
-  public void addChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
-    if(changeListeners == null)
-      changeListeners = new LinkedList<OMultiValueChangeListener<T, T>>();
-    changeListeners.add(changeListener);
-  }
-
-  public void removeRecordChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
-    if (changeListeners != null)
-      changeListeners.remove(changeListener);
+    }
   }
 
   public Set<T> returnOriginalState(final List<OMultiValueChangeEvent<T, T>> multiValueChangeEvents) {
     final Set<T> reverted = new HashSet<T>(this);
 
-    final ListIterator<OMultiValueChangeEvent<T, T>> listIterator = multiValueChangeEvents.listIterator(multiValueChangeEvents
-        .size());
+    final ListIterator<OMultiValueChangeEvent<T, T>> listIterator = multiValueChangeEvents
+        .listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<T, T> event = listIterator.previous();
@@ -213,19 +221,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     return genericClass;
   }
 
-  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
-    if (status == STATUS.UNMARSHALLING)
-      return;
-
-    setDirty();
-    if (changeListeners != null) {
-      for (final OMultiValueChangeListener<T, T> changeListener : changeListeners) {
-        if (changeListener != null)
-          changeListener.onAfterRecordChanged(event);
-      }
-    }
-  }
-
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid()) {
       ODocumentInternal.addOwner((ODocument) e, this);
@@ -241,6 +236,58 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     super.remove(event.getKey());
     super.add((T) newValue);
-    addNested((T) newValue);
+  }
+
+  public void enableTracking(ORecordElement parent) {
+    if (!tracker.isEnabled()) {
+      this.tracker.enable();
+      if (this instanceof ORecordLazyMultiValue) {
+        OTrackedMultiValue.nestedEnabled(((ORecordLazyMultiValue) this).rawIterator(), this);
+      } else {
+        OTrackedMultiValue.nestedEnabled(this.iterator(), this);
+      }
+    }
+  }
+
+  public void disableTracking(ORecordElement document) {
+    if (tracker.isEnabled()) {
+      this.tracker.disable();
+      if (this instanceof ORecordLazyMultiValue) {
+        OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
+      } else {
+        OTrackedMultiValue.nestedDisable(this.iterator(), this);
+      }
+    }
+    this.dirty = false;
+  }
+
+  @Override
+  public void transactionClear() {
+    tracker.transactionClear();
+    if (this instanceof ORecordLazyMultiValue) {
+      OTrackedMultiValue.nestedTransactionClear(((ORecordLazyMultiValue) this).rawIterator());
+    } else {
+      OTrackedMultiValue.nestedTransactionClear(this.iterator());
+    }
+    this.transactionDirty = false;
+  }
+
+  @Override
+  public boolean isModified() {
+    return dirty;
+  }
+
+  @Override
+  public boolean isTransactionModified() {
+    return transactionDirty;
+  }
+
+  @Override
+  public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
+    return tracker.getTimeLine();
+  }
+
+  public OMultiValueChangeTimeLine<T, T> getTransactionTimeLine() {
+    return tracker.getTransactionTimeLine();
   }
 }

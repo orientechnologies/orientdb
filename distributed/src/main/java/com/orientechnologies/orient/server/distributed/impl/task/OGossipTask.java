@@ -51,7 +51,7 @@ public class OGossipTask extends OAbstractRemoteTask {
   private long timestamp = System.currentTimeMillis();
   private String lockManagerServer;
 
-  private final static SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
+  private static final SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
 
   public OGossipTask() {
   }

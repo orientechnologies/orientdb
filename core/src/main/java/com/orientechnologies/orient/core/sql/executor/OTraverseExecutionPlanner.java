@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 public class OTraverseExecutionPlanner {
 
   private List<OTraverseProjectionItem> projections = null;
-  private OFromClause target;
+  private OFromClause                   target;
 
   private OWhereClause whileClause;
 
@@ -36,9 +37,11 @@ public class OTraverseExecutionPlanner {
 
   public OTraverseExecutionPlanner(OTraverseStatement statement) {
     //copying the content, so that it can be manipulated and optimized
-    this.projections = statement.getProjections() == null ?
-        null :
-        statement.getProjections().stream().map(x -> x.copy()).collect(Collectors.toList());
+    if (statement.getProjections() == null) {
+      this.projections = null;
+    } else {
+      this.projections = statement.getProjections().stream().map(x -> x.copy()).collect(Collectors.toList());
+    }
 
     this.target = statement.getTarget();
     this.whileClause = statement.getWhileClause() == null ? null : statement.getWhileClause().copy();
@@ -109,7 +112,8 @@ public class OTraverseExecutionPlanner {
 
   }
 
-  private void handleInputParamAsTarget(OSelectExecutionPlan result, OInputParameter inputParam, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleInputParamAsTarget(OSelectExecutionPlan result, OInputParameter inputParam, OCommandContext ctx,
+      boolean profilingEnabled) {
     Object paramValue = inputParam.getValue(ctx.getInputParameters());
     if (paramValue == null) {
       result.chain(new EmptyStep(ctx, profilingEnabled));//nothing to return
@@ -168,9 +172,11 @@ public class OTraverseExecutionPlanner {
     result.chain(new EmptyDataGeneratorStep(1, ctx, profilingEnabled));
   }
 
-  private void handleIndexAsTarget(OSelectExecutionPlan result, OIndexIdentifier indexIdentifier, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleIndexAsTarget(OSelectExecutionPlan result, OIndexIdentifier indexIdentifier, OCommandContext ctx,
+      boolean profilingEnabled) {
     String indexName = indexIdentifier.getIndexName();
-    OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (index == null) {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
@@ -203,7 +209,8 @@ public class OTraverseExecutionPlanner {
     }
   }
 
-  private void handleMetadataAsTarget(OSelectExecutionPlan plan, OMetadataIdentifier metadata, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleMetadataAsTarget(OSelectExecutionPlan plan, OMetadataIdentifier metadata, OCommandContext ctx,
+      boolean profilingEnabled) {
     ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
     String schemaRecordIdAsString = null;
     if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_SCHEMA)) {
@@ -226,15 +233,18 @@ public class OTraverseExecutionPlanner {
     plan.chain(new FetchFromRidsStep(actualRids, ctx, profilingEnabled));
   }
 
-  private void handleClassAsTarget(OSelectExecutionPlan plan, OFromClause queryTarget, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleClassAsTarget(OSelectExecutionPlan plan, OFromClause queryTarget, OCommandContext ctx,
+      boolean profilingEnabled) {
     OIdentifier identifier = queryTarget.getItem().getIdentifier();
 
     Boolean orderByRidAsc = null;//null: no order. true: asc, false:desc
-    FetchFromClassExecutionStep fetcher = new FetchFromClassExecutionStep(identifier.getStringValue(), null, ctx, orderByRidAsc, profilingEnabled);
+    FetchFromClassExecutionStep fetcher = new FetchFromClassExecutionStep(identifier.getStringValue(), null, ctx, orderByRidAsc,
+        profilingEnabled);
     plan.chain(fetcher);
   }
 
-  private void handleClustersAsTarget(OSelectExecutionPlan plan, List<OCluster> clusters, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleClustersAsTarget(OSelectExecutionPlan plan, List<OCluster> clusters, OCommandContext ctx,
+      boolean profilingEnabled) {
     ODatabase db = ctx.getDatabase();
     Boolean orderByRidAsc = null;//null: no order. true: asc, false:desc
     if (clusters.size() == 1) {
@@ -271,7 +281,8 @@ public class OTraverseExecutionPlanner {
     }
   }
 
-  private void handleSubqueryAsTarget(OSelectExecutionPlan plan, OStatement subQuery, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleSubqueryAsTarget(OSelectExecutionPlan plan, OStatement subQuery, OCommandContext ctx,
+      boolean profilingEnabled) {
     OBasicCommandContext subCtx = new OBasicCommandContext();
     subCtx.setDatabase(ctx.getDatabase());
     subCtx.setParent(ctx);

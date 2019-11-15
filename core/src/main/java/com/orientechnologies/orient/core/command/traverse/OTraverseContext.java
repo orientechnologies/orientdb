@@ -179,23 +179,28 @@ public class OTraverseContext extends OBasicCommandContext {
       deque = new ArrayDeque<OTraverseAbstractProcess<?>>(memory.getUnderlying());
     }
 
-    @Override public OTraverseAbstractProcess<?> next() {
+    @Override
+    public OTraverseAbstractProcess<?> next() {
       return deque.peek();
     }
 
-    @Override public void dropFrame() {
+    @Override
+    public void dropFrame() {
       deque.removeFirst();
     }
 
-    @Override public void clear() {
+    @Override
+    public void clear() {
       deque.clear();
     }
 
-    @Override public boolean isEmpty() {
+    @Override
+    public boolean isEmpty() {
       return deque.isEmpty();
     }
 
-    @Override public Collection<OTraverseAbstractProcess<?>> getUnderlying() {
+    @Override
+    public Collection<OTraverseAbstractProcess<?>> getUnderlying() {
       return deque;
     }
   }
@@ -209,7 +214,8 @@ public class OTraverseContext extends OBasicCommandContext {
       super(memory);
     }
 
-    @Override public void add(final OTraverseAbstractProcess<?> iProcess) {
+    @Override
+    public void add(final OTraverseAbstractProcess<?> iProcess) {
       deque.push(iProcess);
     }
   }
@@ -219,7 +225,8 @@ public class OTraverseContext extends OBasicCommandContext {
       super(memory);
     }
 
-    @Override public void add(final OTraverseAbstractProcess<?> iProcess) {
+    @Override
+    public void add(final OTraverseAbstractProcess<?> iProcess) {
       deque.addLast(iProcess);
     }
 

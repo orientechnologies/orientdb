@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
@@ -75,7 +75,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
     ODocument doc = new ODocument("c1");
     doc.field("p1", new String[] { "abc" });
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
     db.save(doc);
 
@@ -84,13 +84,13 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getSize(), 1);
     db.commit();
 
     vertices = db.command(query);
 
     assertThat(vertices).hasSize(1);
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getSize(), 1);
 
     db.begin();
 
@@ -110,7 +110,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
       i++;
     }
     Assert.assertEquals(i, 0);
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getSize(), 0);
 
     db.rollback();
 
@@ -118,14 +118,14 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getSize(), 1);
   }
 
   @Test
   @Ignore
   public void txUpdateTest() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
     Assert.assertEquals(index.getSize(), 0);
 
@@ -180,7 +180,6 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-
     Assert.assertEquals(index.getSize(), 2);
 
   }
@@ -188,9 +187,9 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getSize(), 0);
 
     db.begin();
 
@@ -227,7 +226,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     Assert.assertEquals(i, 1);
     Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
-    Assert.assertEquals(index.getSize(), 3);
+    Assert.assertEquals(index.getSize(), 2);
 
     query = "select from C1 where p1 lucene \"removed\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -243,7 +242,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     Assert.assertEquals(vertices.size(), 2);
 
-    Assert.assertEquals(index.getSize(), 3);
+    Assert.assertEquals(index.getSize(), 2);
 
   }
 

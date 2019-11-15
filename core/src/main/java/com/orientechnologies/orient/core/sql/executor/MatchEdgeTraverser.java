@@ -8,22 +8,16 @@ import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 23/09/16.
  */
 public class MatchEdgeTraverser {
-  protected OResult        sourceRecord;
-  protected EdgeTraversal  edge;
-  protected OMatchPathItem item;
-
-  Iterator<OResultInternal> downstream;
+  protected OResult                   sourceRecord;
+  protected EdgeTraversal             edge;
+  protected OMatchPathItem            item;
+  protected Iterator<OResultInternal> downstream;
 
   public MatchEdgeTraverser(OResult lastUpstreamRecord, EdgeTraversal edge) {
     this.sourceRecord = lastUpstreamRecord;
@@ -127,7 +121,7 @@ public class MatchEdgeTraverser {
 
     Iterable<OResultInternal> result;
 
-    if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
+    if (whileCondition == null && maxDepth == null) { // in this case starting point is not returned and only one level depth is
       // evaluated
 
       Iterable<OResultInternal> queryResult = traversePatternEdge(startingPoint, iCommandContext);
@@ -140,7 +134,7 @@ public class MatchEdgeTraverser {
 
         return new Iterator() {
 
-          OResultInternal nextElement = null;
+          private OResultInternal nextElement = null;
 
           @Override
           public boolean hasNext() {
@@ -180,7 +174,7 @@ public class MatchEdgeTraverser {
         };
       };
 
-    } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
+    } else { // in this case also zero level (starting point) is considered and traversal depth is given by the while condition
       result = new ArrayList<>();
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");

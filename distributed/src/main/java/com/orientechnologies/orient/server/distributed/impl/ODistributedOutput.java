@@ -31,11 +31,14 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Formats information about distributed cfg.
@@ -448,7 +451,7 @@ public class ODistributedOutput {
 
         final String serverName = m.field("name");
         buffer.append(serverName);
-        buffer.append((Object)m.field("status"));
+        buffer.append((Object) m.field("status"));
 
         final Collection<String> databases = m.field("databases");
         if (databases != null) {
@@ -537,9 +540,12 @@ public class ODistributedOutput {
     final String localNodeName = manager.getLocalNodeName();
 
     // READ DEFAULT CFG (CLUSTER=*)
-    final String defaultWQ = cfg.isLocalDataCenterWriteQuorum() ?
-        ODistributedConfiguration.QUORUM_LOCAL_DC :
-        "" + cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
+    final String defaultWQ;
+    if (cfg.isLocalDataCenterWriteQuorum()) {
+      defaultWQ = ODistributedConfiguration.QUORUM_LOCAL_DC;
+    } else {
+      defaultWQ = "" + cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
+    }
     final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
     final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
     final List<String> defaultServers = cfg.getConfiguredServers(ODistributedConfiguration.ALL_WILDCARD);
@@ -548,9 +554,12 @@ public class ODistributedOutput {
     final Set<String> allServers = new HashSet<String>();
 
     for (String cluster : cfg.getClusterNames()) {
-      final String wQ = cfg.isLocalDataCenterWriteQuorum() ?
-          ODistributedConfiguration.QUORUM_LOCAL_DC :
-          "" + cfg.getWriteQuorum(cluster, totalConfiguredServers, localNodeName);
+      final String wQ;
+      if (cfg.isLocalDataCenterWriteQuorum()) {
+        wQ = ODistributedConfiguration.QUORUM_LOCAL_DC;
+      } else {
+        wQ = "" + cfg.getWriteQuorum(cluster, totalConfiguredServers, localNodeName);
+      }
       final int rQ = cfg.getReadQuorum(cluster, totalConfiguredServers, localNodeName);
       final String owner = cfg.getClusterOwner(cluster);
       final List<String> servers = cfg.getConfiguredServers(cluster);
@@ -690,5 +699,57 @@ public class ODistributedOutput {
     table.writeRecords(rows, -1);
     buffer.append("\n");
     return buffer.toString();
+  }
+
+  public static Object formatNewRecordLocks(final ODistributedAbstractPlugin manager, final String db) {
+    final List<ODocument> rows = getRequestsStatus(manager, db);
+
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("HA RECORD LOCKS FOR DATABASE '" + db + "'");
+    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
+      @Override
+      public void onMessage(final String text, final Object... args) {
+        buffer.append(String.format(text, args));
+      }
+    });
+    table.setColumnHidden("#");
+
+    table.writeRecords(rows, -1);
+    buffer.append("\n");
+
+    return buffer.toString();
+  }
+
+  public static List<ODocument> getRequestsStatus(final ODistributedAbstractPlugin manager, final String db) {
+    final List<ODocument> rows = new ArrayList<ODocument>();
+
+    ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts = manager.getMessageService().getDatabase(db)
+        .getActiveTxContexts();
+
+    if (activeTxContexts != null) {
+      for (Map.Entry<ODistributedRequestId, ODistributedTxContext> entries : activeTxContexts.entrySet()) {
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
+
+        ODistributedRequestId key = entries.getKey();
+        ODistributedTxContext value = entries.getValue();
+
+        if (value instanceof ONewDistributedTxContextImpl) {
+
+          ONewDistributedTxContextImpl context = (ONewDistributedTxContextImpl) value;
+
+          final ODocument row = new ODocument();
+
+          row.field("requestID", entries.getKey().getMessageId());
+          row.field("startedOn", dateFormat.format(new Date(entries.getValue().getStartedOn())));
+          row.field("status", context.getStatus().toString());
+          row.field("records", context.getLockedRids().stream().map(Object::toString).collect(Collectors.toList()));
+
+          rows.add(row);
+        }
+
+      }
+    }
+    return rows;
   }
 }

@@ -239,23 +239,65 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
             }
           }
 
-          long lastCreateRecordsSec = lastCreateRecords == 0 ?
-              msFromLastDump < 1000 ? 1 : 0 :
-              (lastCreateRecords - statsCreateRecords) / (msFromLastDump / 1000);
-          long lastReadRecordsSec =
-              lastReadRecords == 0 ? 0 : msFromLastDump < 1000 ? 1 : (lastReadRecords - statsReadRecords) / (msFromLastDump / 1000);
-          long lastUpdateRecordsSec = lastUpdateRecords == 0 || msFromLastDump < 1000 ?
-              0 :
-              (lastUpdateRecords - statsUpdateRecords) / (msFromLastDump / 1000);
-          long lastDeleteRecordsSec = lastDeleteRecords == 0 ?
-              0 :
-              msFromLastDump < 1000 ? 1 : (lastDeleteRecords - statsDeleteRecords) / (msFromLastDump / 1000);
-          long lastCommandsSec =
-              lastCommands == 0 ? 0 : msFromLastDump < 1000 ? 1 : (lastCommands - statsCommands) / (msFromLastDump / 1000);
-          long lastTxCommitSec =
-              lastTxCommit == 0 ? 0 : msFromLastDump < 1000 ? 1 : (lastTxCommit - statsTxCommit) / (msFromLastDump / 1000);
-          long lastTxRollbackSec =
-              lastTxRollback == 0 ? 0 : msFromLastDump < 1000 ? 1 : (lastTxRollback - statsTxRollback) / (msFromLastDump / 1000);
+          long lastCreateRecordsSec;
+          if (lastCreateRecords == 0) {
+            lastCreateRecordsSec = msFromLastDump < 1000 ? 1 : 0;
+          } else {
+            lastCreateRecordsSec = (lastCreateRecords - statsCreateRecords) / (msFromLastDump / 1000);
+          }
+
+          long lastReadRecordsSec;
+          if (msFromLastDump < 1000) {
+            lastReadRecordsSec = lastReadRecords == 0 ? 0 : 1;
+          } else if (lastReadRecords == 0) {
+            lastReadRecordsSec = 0;
+          } else {
+            lastReadRecordsSec = (lastReadRecords - statsReadRecords) / (msFromLastDump / 1000);
+          }
+
+          long lastUpdateRecordsSec;
+          if (lastUpdateRecords == 0 || msFromLastDump < 1000) {
+            lastUpdateRecordsSec = 0;
+          } else {
+            lastUpdateRecordsSec = (lastUpdateRecords - statsUpdateRecords) / (msFromLastDump / 1000);
+          }
+
+          long lastDeleteRecordsSec;
+          if (lastDeleteRecords == 0) {
+            lastDeleteRecordsSec = 0;
+          } else if (msFromLastDump < 1000) {
+            lastDeleteRecordsSec = 1;
+          } else {
+            lastDeleteRecordsSec = (lastDeleteRecords - statsDeleteRecords) / (msFromLastDump / 1000);
+          }
+
+          long lastCommandsSec;
+          if (lastCommands == 0) {
+            lastCommandsSec = 0;
+          } else if (msFromLastDump < 1000) {
+            lastCommandsSec = 1;
+          } else {
+            lastCommandsSec = (lastCommands - statsCommands) / (msFromLastDump / 1000);
+          }
+
+          long lastTxCommitSec;
+          if (lastTxCommit == 0) {
+            lastTxCommitSec = 0;
+          } else if (msFromLastDump < 1000) {
+            lastTxCommitSec = 1;
+          } else {
+            lastTxCommitSec = (lastTxCommit - statsTxCommit) / (msFromLastDump / 1000);
+          }
+
+          long lastTxRollbackSec;
+          if (lastTxRollback == 0) {
+            lastTxRollbackSec = 0;
+          } else if (msFromLastDump < 1000) {
+            lastTxRollbackSec = 1;
+          } else {
+            lastTxRollbackSec = (lastTxRollback - statsTxRollback) / (msFromLastDump / 1000);
+
+          }
 
           buffer.append(String.format(
               "\nCRUD: C(%d %d/sec) R(%d %d/sec) U(%d %d/sec) D(%d %d/sec) - COMMANDS (%d %d/sec) - TX: COMMIT(%d %d/sec) ROLLBACK(%d %d/sec)",

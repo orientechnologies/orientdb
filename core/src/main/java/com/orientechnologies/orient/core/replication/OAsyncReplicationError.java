@@ -25,7 +25,7 @@ package com.orientechnologies.orient.core.replication;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OAsyncReplicationError {
-  enum ACTION {IGNORE, RETRY}
+  enum ACTION { IGNORE, RETRY }
 
   /**
    * Callback called in case of error during asynchronous replication.

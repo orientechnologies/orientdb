@@ -3,10 +3,7 @@ package com.orientechnologies.lucene.integration;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
@@ -111,7 +108,7 @@ public class OLuceneIndexCrashRestoreIT {
   @Test
   public void testEntriesAddition() throws Exception {
     List<DataPropagationTask> futures = new ArrayList<>();
-    ODatabaseSession db;
+    ODatabaseDocumentInternal db;
     OResultSet res;
     try {
       createSchema(databasePool);
@@ -130,7 +127,7 @@ public class OLuceneIndexCrashRestoreIT {
         System.out.println("Wait for 30 seconds");
         TimeUnit.SECONDS.sleep(30);
 
-        db = databasePool.acquire();
+        db = (ODatabaseDocumentInternal) databasePool.acquire();
         //wildcard will not work
         res = db.query("select from Person where name lucene 'Robert' ");
         assertThat(res).hasSize(0);
@@ -182,10 +179,10 @@ public class OLuceneIndexCrashRestoreIT {
     databasePool = new ODatabasePool(orientdb, "testLuceneCrash", "admin", "admin");
 
     //test query
-    db = databasePool.acquire();
+    db = (ODatabaseDocumentInternal) databasePool.acquire();
     db.getMetadata().reload();
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Person.name");
+    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.name");
     assertThat(index).isNotNull();
 
     //sometimes the metadata is null!!!!!
@@ -229,7 +226,7 @@ public class OLuceneIndexCrashRestoreIT {
 
   private void createSchema(ODatabasePool pool) {
 
-    final ODatabaseSession db = pool.acquire();
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) pool.acquire();
 
     System.out.println("create index for db:: " + db.getURL());
     db.command("Create class Person");
@@ -239,9 +236,9 @@ public class OLuceneIndexCrashRestoreIT {
         "Create index Person.name on Person(name) FULLTEXT ENGINE LUCENE METADATA {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}");
     db.command(
         "Create index Person.surname on Person(surname) FULLTEXT ENGINE LUCENE METADATA {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}");
-    db.getMetadata().getIndexManager().reload();
+    db.getMetadata().getIndexManagerInternal().reload();
 
-    System.out.println(db.getMetadata().getIndexManager().getIndex("Person.name").getConfiguration().toJSON());
+    System.out.println(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.name").getConfiguration().toJSON());
     db.close();
   }
 

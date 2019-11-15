@@ -39,44 +39,33 @@ import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueInd
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLog;
+import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogGL;
+import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogNoOP;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedStorageDirtyFlag;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import net.jpountz.xxhash.XXHash64;
+import net.jpountz.xxhash.XXHashFactory;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -86,17 +75,22 @@ import java.util.zip.ZipOutputStream;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
+  protected static final long   IV_SEED = 234120934;
+  private static final   String IV_EXT  = ".iv";
+
+  @SuppressWarnings("WeakerAccess")
+  protected static final String IV_NAME = "data" + IV_EXT;
 
   private static final String[] ALL_FILE_EXTENSIONS = { ".cm", ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
-      ".oem", ".oet", ".fl", OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION, OCASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+      ".oem", ".oet", ".fl", IV_EXT, CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION, CASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION,
       OSBTreeCollectionManagerShared.DEFAULT_EXTENSION, OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
-      O2QCache.CACHE_STATISTIC_FILE_EXTENSION, OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
-      OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION, OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION,
-      OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION, OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION,
-      OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION };
+      OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION, OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
+      OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION, OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION,
+      OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION, OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION,
+      DoubleWriteLogGL.EXTENSION };
 
   private static final int ONE_KB = 1024;
 
@@ -111,30 +105,33 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private final int deleteMaxRetries;
   private final int deleteWaitTime;
 
-  private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private final Path                                         storagePath;
-  private final OClosableLinkedContainer<Long, OFileClassic> files;
+  private final Path                                  storagePath;
+  private final OClosableLinkedContainer<Long, OFile> files;
 
   private Future<?> fuzzyCheckpointTask;
 
   private final long walMaxSegSize;
+  private final long doubleWriteLogMaxSegSize;
 
   private final AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
+  protected volatile byte[] iv;
+
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id,
-      final OReadCache readCache, final OClosableLinkedContainer<Long, OFileClassic> files, final long walMaxSegSize) {
+      final OReadCache readCache, final OClosableLinkedContainer<Long, OFile> files, final long walMaxSegSize,
+      long doubleWriteLogMaxSegSize) {
     super(name, filePath, mode, id);
 
     this.walMaxSegSize = walMaxSegSize;
     this.files = files;
+    this.doubleWriteLogMaxSegSize = doubleWriteLogMaxSegSize;
     this.readCache = readCache;
 
-    final String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
+    final String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new java.io.File(url).getPath()));
 
     storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
-    variableParser = new OStorageVariableParser(storagePath);
 
     deleteMaxRetries = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
     deleteWaitTime = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
@@ -149,8 +146,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       stateLock.acquireWriteLock();
       try {
         final Path storageFolder = storagePath;
-        if (!Files.exists(storageFolder))
+        if (!Files.exists(storageFolder)) {
           Files.createDirectories(storageFolder);
+        }
 
         super.create(contextConfiguration);
       } finally {
@@ -168,7 +166,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   protected final String normalizeName(final String name) {
     final int firstIndexOf = name.lastIndexOf('/');
-    final int secondIndexOf = name.lastIndexOf(File.separator);
+    final int secondIndexOf = name.lastIndexOf(java.io.File.separator);
 
     if (firstIndexOf >= 0 || secondIndexOf >= 0)
       return name.substring(Math.max(firstIndexOf, secondIndexOf) + 1);
@@ -199,10 +197,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   public final Path getStoragePath() {
     return storagePath;
-  }
-
-  public OStorageVariableParser getVariableParser() {
-    return variableParser;
   }
 
   @Override
@@ -238,8 +232,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               zos.setComment("OrientDB Backup executed on " + new Date());
               zos.setLevel(compressionLevel);
 
-              final List<String> names = OZIPCompressionUtil.compressDirectory(storagePath.toString(), zos,
-                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION, ".lock" }, iOutput);
+              final List<String> names = OZIPCompressionUtil
+                  .compressDirectory(storagePath.toString(), zos, new String[] { ".fl", ".lock", DoubleWriteLogGL.EXTENSION },
+                      iOutput);
               OPaginatedStorageDirtyFlag.addFileToArchive(zos, "dirty.fl");
               names.add("dirty.fl");
               return names;
@@ -276,11 +271,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         close(true, false);
       try {
         stateLock.acquireWriteLock();
-        final File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
-        final File[] storageFiles = dbDir.listFiles();
+        final java.io.File dbDir = new java.io.File(
+            OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
+        final java.io.File[] storageFiles = dbDir.listFiles();
         if (storageFiles != null) {
           // TRY TO DELETE ALL THE FILES
-          for (final File f : storageFiles) {
+          for (final java.io.File f : storageFiles) {
             // DELETE ONLY THE SUPPORTED FILES
             for (final String ext : ALL_FILE_EXTENSIONS)
               if (f.getPath().endsWith(ext)) {
@@ -292,24 +288,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         }
 
         OZIPCompressionUtil.uncompressDirectory(in, storagePath.toString(), iListener);
-
-        final Path cacheStateFile = storagePath.resolve(O2QCache.CACHE_STATE_FILE);
-        if (Files.exists(cacheStateFile)) {
-          String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
-          OLogManager.instance().warn(this, message);
-          if (iListener != null)
-            iListener.onMessage('\n' + message);
-
-          try {
-            Files.deleteIfExists(cacheStateFile); // delete it, if it still exists
-          } catch (final IOException e) {
-            message =
-                "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
-            OLogManager.instance().warn(this, message, e);
-            if (iListener != null)
-              iListener.onMessage('\n' + message);
-          }
-        }
 
         if (callable != null)
           try {
@@ -335,7 +313,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   protected OLogSequenceNumber copyWALToIncrementalBackup(final ZipOutputStream zipOutputStream, final long startSegment)
       throws IOException {
 
-    File[] nonActiveSegments;
+    java.io.File[] nonActiveSegments;
 
     OLogSequenceNumber lastLSN;
     final long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
@@ -348,7 +326,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       getAtomicOperationsManager().releaseAtomicOperations(freezeId);
     }
 
-    for (final File nonActiveSegment : nonActiveSegments) {
+    for (final java.io.File nonActiveSegment : nonActiveSegments) {
       try (final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment)) {
         try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream)) {
           final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
@@ -372,8 +350,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected File createWalTempDirectory() {
-    final File walDirectory = new File(storagePath.toFile(), "walIncrementalBackupRestoreDirectory");
+  protected java.io.File createWalTempDirectory() {
+    final java.io.File walDirectory = new java.io.File(storagePath.toFile(), "walIncrementalBackupRestoreDirectory");
 
     if (walDirectory.exists()) {
       OFileUtils.deleteRecursively(walDirectory);
@@ -386,13 +364,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void addFileToDirectory(final String name, final InputStream stream, final File directory) throws IOException {
+  protected void addFileToDirectory(final String name, final InputStream stream, final java.io.File directory) throws IOException {
     final byte[] buffer = new byte[4096];
 
     int rb = -1;
     int bl = 0;
 
-    final File walBackupFile = new File(directory, name);
+    final java.io.File walBackupFile = new java.io.File(directory, name);
     try (final FileOutputStream outputStream = new FileOutputStream(walBackupFile)) {
       try (final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream)) {
         do {
@@ -409,12 +387,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected OWriteAheadLog createWalFromIBUFiles(final File directory, final OContextConfiguration contextConfiguration,
-      final Locale locale) throws IOException {
+  protected OWriteAheadLog createWalFromIBUFiles(final java.io.File directory, final OContextConfiguration contextConfiguration,
+      final Locale locale, byte[] iv) throws IOException {
+    final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+    final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
 
-    return new OCASDiskWriteAheadLog(name, storagePath, directory.toPath(),
+    return new CASDiskWriteAheadLog(name, storagePath, directory.toPath(),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE), aesKey, iv,
         contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60 * 1_000_000_000L,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L, 10, true, locale,
         OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
@@ -496,8 +476,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   public static void deleteFilesFromDisc(String name, int maxRetries, int waitTime, String databaseDirectory) {
-    File dbDir;// GET REAL DIRECTORY
-    dbDir = new File(databaseDirectory);
+    java.io.File dbDir;// GET REAL DIRECTORY
+    dbDir = new java.io.File(databaseDirectory);
     if (!dbDir.exists() || !dbDir.isDirectory())
       dbDir = dbDir.getParentFile();
 
@@ -506,12 +486,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       if (dbDir != null && dbDir.exists() && dbDir.isDirectory()) {
         int notDeletedFiles = 0;
 
-        final File[] storageFiles = dbDir.listFiles();
+        final java.io.File[] storageFiles = dbDir.listFiles();
         if (storageFiles == null)
           continue;
 
         // TRY TO DELETE ALL THE FILES
-        for (final File f : storageFiles) {
+        for (final java.io.File f : storageFiles) {
           // DELETE ONLY THE SUPPORTED FILES
           for (final String ext : ALL_FILE_EXTENSIONS)
             if (f.getPath().endsWith(ext)) {
@@ -562,71 +542,126 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration) throws IOException, InterruptedException {
-    if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
-      fuzzyCheckpointTask = fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
-          contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL),
-          contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL), TimeUnit.SECONDS);
+  protected void initIv() throws IOException {
+    try (final RandomAccessFile ivFile = new RandomAccessFile(storagePath.resolve(IV_NAME).toAbsolutePath().toFile(), "rw")) {
+      final byte[] iv = new byte[16];
 
-      final String configWalPath = contextConfiguration.getValueAsString(OGlobalConfiguration.WAL_LOCATION);
-      final Path walPath;
-      if (configWalPath == null) {
-        walPath = null;
-      } else {
-        walPath = Paths.get(configWalPath);
+      final SecureRandom random = new SecureRandom();
+      random.nextBytes(iv);
+
+      final XXHashFactory hashFactory = XXHashFactory.fastestInstance();
+      final XXHash64 hash64 = hashFactory.hash64();
+
+      final long hash = hash64.hash(iv, 0, iv.length, IV_SEED);
+      ivFile.write(iv);
+      ivFile.writeLong(hash);
+      ivFile.getFD().sync();
+
+      this.iv = iv;
+    }
+  }
+
+  @Override
+  protected void readIv() throws IOException {
+    final Path ivPath = storagePath.resolve(IV_NAME).toAbsolutePath();
+    if (!Files.exists(ivPath)) {
+      OLogManager.instance().info(this, "IV file is absent, will create new one.");
+      initIv();
+      return;
+    }
+
+    try (final RandomAccessFile ivFile = new RandomAccessFile(ivPath.toFile(), "r")) {
+      final byte[] iv = new byte[16];
+      ivFile.readFully(iv);
+
+      final long storedHash = ivFile.readLong();
+
+      final XXHashFactory hashFactory = XXHashFactory.fastestInstance();
+      final XXHash64 hash64 = hashFactory.hash64();
+
+      final long expectedHash = hash64.hash(iv, 0, iv.length, IV_SEED);
+      if (storedHash != expectedHash) {
+        throw new OStorageException("iv data are broken");
       }
 
-      final OCASDiskWriteAheadLog diskWriteAheadLog = new OCASDiskWriteAheadLog(name, storagePath, walPath,
-          contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
-          contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
-          contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60 * 1_000_000_000L, walMaxSegSize, 10,
-          true, Locale.getDefault(), contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_MAX_SIZE) * 1024 * 1024,
-          contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT) * 1024 * 1024,
-          contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
-          contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
-          contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
-          contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
-          contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
+      this.iv = iv;
+    }
+  }
 
-      diskWriteAheadLog.addLowDiskSpaceListener(this);
-      writeAheadLog = diskWriteAheadLog;
-      writeAheadLog.addFullCheckpointListener(this);
+  @Override
+  protected byte[] getIv() {
+    return iv;
+  }
 
-      diskWriteAheadLog.addSegmentOverflowListener((segment) -> {
-        if (status != STATUS.OPEN) {
+  @Override
+  protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration) throws IOException, InterruptedException {
+    final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+    final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+
+    fuzzyCheckpointTask = fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL), TimeUnit.SECONDS);
+
+    final String configWalPath = contextConfiguration.getValueAsString(OGlobalConfiguration.WAL_LOCATION);
+    final Path walPath;
+    if (configWalPath == null) {
+      walPath = null;
+    } else {
+      walPath = Paths.get(configWalPath);
+    }
+
+    final CASDiskWriteAheadLog diskWriteAheadLog = new CASDiskWriteAheadLog(name, storagePath, walPath,
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE), aesKey, iv,
+        contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60 * 1_000_000_000L, walMaxSegSize, 10,
+        true, Locale.getDefault(), contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_MAX_SIZE) * 1024 * 1024,
+        contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT) * 1024 * 1024,
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
+
+    diskWriteAheadLog.addLowDiskSpaceListener(this);
+    writeAheadLog = diskWriteAheadLog;
+    writeAheadLog.addFullCheckpointListener(this);
+
+    diskWriteAheadLog.addSegmentOverflowListener((segment) -> {
+      if (status != STATUS.OPEN) {
+        return;
+      }
+
+      final Future<Void> oldAppender = segmentAppender.get();
+      if (oldAppender == null || oldAppender.isDone()) {
+        final Future<Void> appender = segmentAdderExecutor.submit(new SegmentAdder(segment, diskWriteAheadLog));
+
+        if (segmentAppender.compareAndSet(oldAppender, appender)) {
           return;
         }
 
-        final Future<Void> oldAppender = segmentAppender.get();
-        if (oldAppender == null || oldAppender.isDone()) {
-          final Future<Void> appender = segmentAdderExecutor.submit(new SegmentAdder(segment, diskWriteAheadLog));
-
-          if (segmentAppender.compareAndSet(oldAppender, appender)) {
-            return;
-          }
-
-          appender.cancel(false);
-        }
-      });
-    } else {
-      writeAheadLog = null;
-    }
+        appender.cancel(false);
+      }
+    });
 
     final int pageSize = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE) * ONE_KB;
     final long diskCacheSize = contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_SIZE) * 1024 * 1024;
     final long writeCacheSize = (long) (contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PART) / 100.0
         * diskCacheSize);
-    final boolean printCacheStatistics = contextConfiguration
-        .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS);
-    final int statisticsPrintInterval = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL);
 
-    final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog,
+    final DoubleWriteLog doubleWriteLog;
+    if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_USE_DOUBLE_WRITE_LOG)) {
+      doubleWriteLog = new DoubleWriteLogGL(doubleWriteLogMaxSegSize);
+    } else {
+      doubleWriteLog = new DoubleWriteLogNoOP();
+    }
+
+    final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(null), writeAheadLog, doubleWriteLog,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize, storagePath, getName(),
         OStringSerializer.INSTANCE, files, getId(),
-        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class),
-        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC), printCacheStatistics,
-        statisticsPrintInterval);
+        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), iv, aesKey,
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.DISK_WRITE_CACHE_USE_ASYNC_IO));
 
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();
@@ -669,10 +704,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   private final class SegmentAdder implements Callable<Void> {
-    private final long                  segment;
-    private final OCASDiskWriteAheadLog wal;
+    private final long                 segment;
+    private final CASDiskWriteAheadLog wal;
 
-    SegmentAdder(final long segment, final OCASDiskWriteAheadLog wal) {
+    SegmentAdder(final long segment, final CASDiskWriteAheadLog wal) {
       this.segment = segment;
       this.wal = wal;
     }
@@ -709,7 +744,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     }
   }
 
-  private final static class SegmentAppenderFactory implements ThreadFactory {
+  private static final class SegmentAppenderFactory implements ThreadFactory {
     SegmentAppenderFactory() {
     }
 

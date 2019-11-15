@@ -75,9 +75,8 @@ public interface OTransactionInternal extends OBasicTransaction {
 
   /**
    * Retrieve if log is enabled for the transaction
-   *
-   * @return
    */
+  @Deprecated
   boolean isUsingLog();
 
   /**
@@ -92,8 +91,6 @@ public interface OTransactionInternal extends OBasicTransaction {
   Set<ORID> getLockedRecords();
 
   void setDatabase(ODatabaseDocumentInternal database);
-
-  boolean isUseDeltas();
 
   default boolean isSequenceTransaction() {
     for (ORecordOperation txEntry : getRecordOperations()) {

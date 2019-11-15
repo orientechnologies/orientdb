@@ -40,6 +40,8 @@ public interface OIndexEngine extends OBaseIndexEngine {
 
   void update(Object key, OIndexKeyUpdater<Object> updater) throws IOException;
 
+  boolean remove(Object key) throws IOException;
+
   /**
    * Puts the given value under the given key into this index engine. Validates the operation using the provided validator.
    *

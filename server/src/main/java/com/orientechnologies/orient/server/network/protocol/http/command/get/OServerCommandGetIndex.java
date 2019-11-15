@@ -19,8 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -40,12 +39,12 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
 
     iRequest.data.commandInfo = "Index get";
 
-    ODatabaseDocument db = null;
+    ODatabaseDocumentInternal db = null;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(urlParts[2]);
+      final OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, urlParts[2]);
       if (index == null)
         throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
 
@@ -74,16 +73,20 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
         buffer.append(']');
 
         if (isJsonResponse(iResponse)) {
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+          iResponse
+              .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
         } else {
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString(), null);
+          iResponse
+              .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString(),
+                  null);
         }
 
       }
     } finally {
       if (db != null)
         db.close();
-    } return false;
+    }
+    return false;
   }
 
   @Override

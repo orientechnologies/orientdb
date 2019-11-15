@@ -8,26 +8,22 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class OPersistentOperationalLogIterator implements Iterator<OOperationLogEntry> {
-  private final OLogId                      from;
-  private final OLogId                      to;
+  private final Long from;
+  private final long to;
   private final OPersistentOperationalLogV1 opLog;
 
-  long nextIdToLoad;
-
-  OOperationLogEntry nextEntry;
+  private long nextIdToLoad;
+  private OOperationLogEntry nextEntry;
   private DataInputStream stream;
 
-  public OPersistentOperationalLogIterator(OPersistentOperationalLogV1 opLog, OLogId from, OLogId to) {
+  public OPersistentOperationalLogIterator(OPersistentOperationalLogV1 opLog, Long from, long to) {
     this.opLog = opLog;
     this.from = from;
     this.to = to;
-    if (to == null) {
-      throw new IllegalArgumentException("'to' value cannot be null");
-    }
     if (from == null) {
       nextIdToLoad = 0L;
     } else {
-      nextIdToLoad = from.getId();
+      nextIdToLoad = from;
     }
   }
 
@@ -54,15 +50,18 @@ public class OPersistentOperationalLogIterator implements Iterator<OOperationLog
 
   private void loadNext() {
     nextEntry = null;
-    if (nextIdToLoad > to.getId()) {
+    if (nextIdToLoad > to) {
       return;
     }
     if (stream == null || nextIdToLoad % OPersistentOperationalLogV1.LOG_ENTRIES_PER_FILE == 0) {
       initStream();
+      if (stream == null) {
+        return;
+      }
     }
     do {
       nextEntry = opLog.readRecord(stream);
-    } while (nextEntry != null && nextEntry.getLogId().getId() < from.getId());
+    } while (from != null && nextEntry != null && nextEntry.getLogId().getId() < from);
 
     nextIdToLoad++;
 
@@ -77,6 +76,9 @@ public class OPersistentOperationalLogIterator implements Iterator<OOperationLog
     }
     int fileSuffix = (int) (nextIdToLoad / OPersistentOperationalLogV1.LOG_ENTRIES_PER_FILE);
     File file = new File(opLog.calculateLogFileFullPath(fileSuffix));
+    if (!file.exists()) {
+      return;
+    }
     try {
       this.stream = new DataInputStream(new FileInputStream(file));
     } catch (FileNotFoundException e) {

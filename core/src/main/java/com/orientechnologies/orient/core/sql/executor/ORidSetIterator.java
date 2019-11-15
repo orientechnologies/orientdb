@@ -11,19 +11,21 @@ import java.util.Iterator;
 public class ORidSetIterator implements Iterator<ORID> {
 
   private ORidSet set;
-  int  currentCluster = -1;
-  long currentId      = -1;
+  private int     currentCluster = -1;
+  private long    currentId      = -1;
 
-  ORidSetIterator(ORidSet set) {
+  protected ORidSetIterator(ORidSet set) {
     this.set = set;
     fetchNext();
   }
 
-  @Override public boolean hasNext() {
+  @Override
+  public boolean hasNext() {
     return currentCluster >= 0;
   }
 
-  @Override public ORID next() {
+  @Override
+  public ORID next() {
     if (!hasNext()) {
       throw new IllegalStateException();
     }

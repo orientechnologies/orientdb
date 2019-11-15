@@ -77,7 +77,7 @@ public class OTraversePath {
     return EMPTY_PATH;
   }
 
-  private static abstract class PathItem {
+  private abstract static class PathItem {
     protected final PathItem parentItem;
     protected final int      depth;
 

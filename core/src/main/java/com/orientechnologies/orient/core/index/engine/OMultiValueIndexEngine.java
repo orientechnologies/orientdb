@@ -8,4 +8,9 @@ public interface OMultiValueIndexEngine extends OV1IndexEngine {
   boolean remove(Object key, ORID value);
 
   Collection<ORID> get(Object key);
+
+  @Override
+  default boolean isMultiValue() {
+    return true;
+  }
 }

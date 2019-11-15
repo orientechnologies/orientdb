@@ -25,8 +25,8 @@ import org.locationtech.spatial4j.shape.Shape;
  */
 public class OSTEqualsFunction extends OSQLFunctionAbstract {
 
-  public static final String NAME = "st_equals";
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  public static final String        NAME    = "st_equals";
+  private             OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSTEqualsFunction() {
     super(NAME, 2, 2);
@@ -39,7 +39,7 @@ public class OSTEqualsFunction extends OSQLFunctionAbstract {
 
     Shape shape1 = factory.fromObject(iParams[1]);
 
-    return factory.operation().isEquals(shape,shape1);
+    return factory.operation().isEquals(shape, shape1);
 
   }
 

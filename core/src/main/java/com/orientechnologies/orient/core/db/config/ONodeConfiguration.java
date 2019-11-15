@@ -9,7 +9,8 @@ public class ONodeConfiguration {
   private String                 groupPassword;
   private int                    quorum;
   private Integer                tcpPort;
-  private OMulticastConfguration multicast = new OMulticastConfguration();
+  private OMulticastConfguration multicast;
+  private OUDPUnicastConfiguration udpUnicast;
 
   protected ONodeConfiguration() {
   }
@@ -22,6 +23,16 @@ public class ONodeConfiguration {
     this.quorum = quorum;
     this.tcpPort = tcpPort;
     this.multicast = multicast;
+  }
+
+  protected ONodeConfiguration(String nodeName, String groupName, String groupPassword, int quorum, Integer tcpPort,
+                               OUDPUnicastConfiguration unicastConfig) {
+    this.nodeName = nodeName;
+    this.groupName = groupName;
+    this.groupPassword = groupPassword;
+    this.quorum = quorum;
+    this.tcpPort = tcpPort;
+    this.udpUnicast = unicastConfig;
   }
 
   public int getQuorum() {
@@ -52,7 +63,7 @@ public class ONodeConfiguration {
     return groupPassword;
   }
 
-  protected void setGroupPassword(String groupPassword) {
+  public void setGroupPassword(String groupPassword) {
     this.groupPassword = groupPassword;
   }
 
@@ -72,4 +83,7 @@ public class ONodeConfiguration {
     return nodeName;
   }
 
+  public OUDPUnicastConfiguration getUdpUnicast() {
+    return udpUnicast;
+  }
 }

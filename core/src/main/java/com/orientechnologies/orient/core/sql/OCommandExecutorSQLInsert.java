@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -43,15 +44,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -83,9 +76,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-      // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
 
       final ODatabaseDocument database = getDatabase();
@@ -216,7 +207,10 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
       if (newRecords == null)
         throw new OCommandExecutionException("No key/value found");
 
-      final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+      OIndexAbstract.manualIndexesWarning();
+
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
@@ -380,7 +374,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
     final Object res = OSQLHelper.getValue(returnExpression, item, this.getContext());
     if (res instanceof OIdentifiable)
       return res;
-    else {// wrapping doc
+    else { // wrapping doc
       final ODocument wrappingDoc = new ODocument("result", res);
       wrappingDoc.field("rid", item.getIdentity());// passing record id.In many cases usable on client side
       wrappingDoc.field("version", item.getVersion());// passing record version

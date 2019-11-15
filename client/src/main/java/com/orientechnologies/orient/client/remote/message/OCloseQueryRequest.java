@@ -32,7 +32,7 @@ import java.io.IOException;
 
 public final class OCloseQueryRequest implements OBinaryRequest<OCloseQueryResponse> {
 
-  String queryId;
+  private String queryId;
 
   public OCloseQueryRequest(String queryId) {
     this.queryId = queryId;
@@ -41,7 +41,8 @@ public final class OCloseQueryRequest implements OBinaryRequest<OCloseQueryRespo
   public OCloseQueryRequest() {
   }
 
-  @Override public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
+  @Override
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     network.writeString(queryId);
   }
 
@@ -49,19 +50,23 @@ public final class OCloseQueryRequest implements OBinaryRequest<OCloseQueryRespo
     this.queryId = channel.readString();
   }
 
-  @Override public byte getCommand() {
+  @Override
+  public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_CLOSE_QUERY;
   }
 
-  @Override public String getDescription() {
+  @Override
+  public String getDescription() {
     return "Close remote query";
   }
 
-  @Override public OCloseQueryResponse createResponse() {
+  @Override
+  public OCloseQueryResponse createResponse() {
     return new OCloseQueryResponse();
   }
 
-  @Override public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.closeQuery(this);
   }
 

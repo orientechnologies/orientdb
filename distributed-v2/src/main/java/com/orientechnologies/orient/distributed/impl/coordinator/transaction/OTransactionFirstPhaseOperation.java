@@ -5,14 +5,11 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
-import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
@@ -31,10 +28,9 @@ import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordin
 
 public class OTransactionFirstPhaseOperation implements ONodeRequest {
 
-  private OSessionOperationId           operationId;
-  private List<ORecordOperationRequest> operations;
-  private List<OIndexOperationRequest>  indexes;
-  protected static final boolean        useDeltas = false;
+  private                OSessionOperationId           operationId;
+  private                List<ORecordOperationRequest> operations;
+  private                List<OIndexOperationRequest>  indexes;
 
   public OTransactionFirstPhaseOperation(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
       List<OIndexOperationRequest> indexes) {
@@ -52,7 +48,7 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
       ODatabaseDocumentInternal session) {
     ONodeResponse response;
     try {
-      ((ODatabaseDocumentDistributed) session).txFirstPhase(operationId, operations, indexes, useDeltas);
+      ((ODatabaseDocumentDistributed) session).txFirstPhase(operationId, operations, indexes);
       response = new OTransactionFirstPhaseResult(Type.SUCCESS, null);
 
     } catch (OConcurrentModificationException ex) {
@@ -81,21 +77,13 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
       ORecord record = null;
       switch (type) {
       case ORecordOperation.CREATED:
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
         break;
       case ORecordOperation.UPDATED: {
         OIdentifiable updateRecord;
-        if (useDeltas) {
-          ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
-          updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
-          ORecordOperation op = new ORecordOperation(updateRecord, type);
-          ops.add(op);
-        }
-        else{
-          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
-          ORecordInternal.setRecordSerializer(record, database.getSerializer());
-        }
+        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
+        ORecordInternal.setRecordSerializer(record, database.getSerializer());
       }
       break;
       case ORecordOperation.DELETED:
@@ -106,8 +94,7 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
         }
         break;
       }
-      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED ||
-          (type == ORecordOperation.UPDATED && !useDeltas)){
+      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED || (type == ORecordOperation.UPDATED)) {
         ORecordInternal.setIdentity(record, (ORecordId) req.getId());
         ORecordInternal.setVersion(record, req.getVersion());
         ORecordOperation op = new ORecordOperation(record, type);

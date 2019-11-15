@@ -53,13 +53,7 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.ControlledRealTimeReopenThread;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
@@ -68,12 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -87,30 +76,33 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   public static final String RID = "RID";
   public static final String KEY = "KEY";
 
-  private final AtomicLong      lastAccess;
-  private       SearcherManager searcherManager;
-  OIndexDefinition indexDefinition;
-  protected String                                        name;
-  private   ControlledRealTimeReopenThread<IndexSearcher> nrt;
-  protected ODocument                                     metadata;
-  protected Version                                       version;
-  Map<String, Boolean> collectionFields = new HashMap<>();
-  private          TimerTask        commitTask;
-  private          AtomicBoolean    closed;
-  private          OStorage         storage;
-  private volatile long             reopenToken;
-  private          Analyzer         indexAnalyzer;
-  private          Analyzer         queryAnalyzer;
-  private volatile OLuceneDirectory directory;
-  private          IndexWriter      indexWriter;
-  private          long             flushIndexInterval;
-  private          long             closeAfterInterval;
-  private          long             firstFlushAfter;
+  private final    AtomicLong                                    lastAccess;
+  private          SearcherManager                               searcherManager;
+  protected        OIndexDefinition                              indexDefinition;
+  protected        String                                        name;
+  private          ControlledRealTimeReopenThread<IndexSearcher> nrt;
+  protected        ODocument                                     metadata;
+  protected        Version                                       version;
+  protected        Map<String, Boolean>                          collectionFields = new HashMap<>();
+  private          TimerTask                                     commitTask;
+  private          AtomicBoolean                                 closed;
+  private          OStorage                                      storage;
+  private volatile long                                          reopenToken;
+  private          Analyzer                                      indexAnalyzer;
+  private          Analyzer                                      queryAnalyzer;
+  private volatile OLuceneDirectory                              directory;
+  private          IndexWriter                                   indexWriter;
+  private          long                                          flushIndexInterval;
+  private          long                                          closeAfterInterval;
+  private          long                                          firstFlushAfter;
 
   private Lock openCloseLock;
 
-  public OLuceneIndexEngineAbstract(OStorage storage, String name) {
+  private final int id;
+
+  public OLuceneIndexEngineAbstract(int id, OStorage storage, String name) {
     super(true, 0, true);
+    this.id = id;
 
     this.storage = storage;
     this.name = name;
@@ -120,6 +112,11 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     closed = new AtomicBoolean(true);
 
     openCloseLock = new ReentrantLock();
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   protected void updateLastAccess() {
@@ -321,8 +318,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
   }
 
   @Override
@@ -462,7 +458,8 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     try {
       IndexReader reader = searcher.getIndexReader();
 
-      return changes == null ? reader.numDocs() : reader.numDocs() + changes.numDocs();
+      //we subtract metadata document added during open
+      return changes == null ? reader.numDocs() - 1 : reader.numDocs() + changes.numDocs() - 1;
     } finally {
 
       release(searcher);
@@ -486,20 +483,6 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
       return OLuceneIndexType.createDeleteQuery(value, indexDefinition.getFields(), key);
     }
     return OLuceneIndexType.createQueryId(value);
-  }
-
-  @Override
-  public void deleteWithoutLoad(String indexName) {
-    try {
-      OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
-
-      directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
-
-      internalDelete();
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error during deletion of Lucene index " + name), e);
-    }
-
   }
 
   private void internalDelete() throws IOException {

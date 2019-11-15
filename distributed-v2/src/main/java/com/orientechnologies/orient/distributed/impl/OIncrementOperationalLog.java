@@ -9,25 +9,35 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OIncrementOperationalLog implements OOperationLog {
-  private AtomicLong inc = new AtomicLong(0);
+
+  private long       term = 0;
+  private AtomicLong inc  = new AtomicLong(term);
+  private OLogId     lastLog;
 
   @Override
   public OLogId log(OLogRequest request) {
-    return new OLogId(inc.incrementAndGet());
+    lastLog = new OLogId(inc.incrementAndGet(), term, lastLog == null ? -1 : lastLog.getTerm());
+    return lastLog;
   }
 
   @Override
-  public void logReceived(OLogId logId, OLogRequest request) {
-
+  public boolean logReceived(OLogId logId, OLogRequest request) {
+    lastLog = logId;
+    return true;
   }
 
   @Override
   public OLogId lastPersistentLog() {
-    return new OLogId(inc.get());
+    return lastLog == null ? new OLogId(inc.get(), -1, -1) : lastLog;
   }
 
   @Override
-  public Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to) {
+  public Iterator<OOperationLogEntry> iterate(long from, long to) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Iterator<OOperationLogEntry> searchFrom(OLogId from) {
     throw new UnsupportedOperationException();
   }
 
@@ -37,7 +47,13 @@ public class OIncrementOperationalLog implements OOperationLog {
   }
 
   @Override
-  public void removeAfter(OLogId lastValid) {
+  public LogIdStatus removeAfter(OLogId lastValid) {
     inc.set(lastValid.getId());
+    return LogIdStatus.PRESENT;
+  }
+
+  @Override
+  public void setLeader(boolean master, long term) {
+    this.term = term;
   }
 }

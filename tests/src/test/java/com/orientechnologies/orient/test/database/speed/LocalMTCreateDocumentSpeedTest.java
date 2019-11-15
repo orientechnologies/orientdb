@@ -1,24 +1,21 @@
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
-
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
-import com.orientechnologies.orient.core.id.ORecordId;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -40,8 +37,6 @@ public class LocalMTCreateDocumentSpeedTest {
 
   @BeforeClass
   public void init() {
-    OGlobalConfiguration.USE_WAL.setValue(false);
-
     database = new ODatabaseDocumentTx(System.getProperty("url"));
     database.setSerializer(new ORecordSerializerBinary());
 
@@ -106,7 +101,6 @@ public class LocalMTCreateDocumentSpeedTest {
   public void deinit() {
     if (database != null)
       database.drop();
-    OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
   private final class Saver implements Callable<Long> {

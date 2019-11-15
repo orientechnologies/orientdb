@@ -160,9 +160,8 @@ public abstract class OChannelBinary extends OChannel implements OChannelDataInp
 
     final int len = in.readInt();
     if (len > maxChunkSize) {
-      throw OException.wrapException(new OIOException(
-          "Impossible to read a chunk of length:" + len + " max allowed chunk length:" + maxChunkSize
-              + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
+      throw new IOException("Impossible to read a chunk of length:" + len + " max allowed chunk length:" + maxChunkSize
+          + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings ");
     }
     updateMetricReceivedBytes(OBinaryProtocol.SIZE_INT + len);
 
@@ -273,9 +272,8 @@ public abstract class OChannelBinary extends OChannel implements OChannelDataInp
       updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT);
     } else {
       if (iLength > maxChunkSize) {
-        throw OException.wrapException(new OIOException(
-            "Impossible to write a chunk of length:" + iLength + " max allowed chunk length:" + maxChunkSize
-                + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
+        throw new IOException("Impossible to write a chunk of length:" + iLength + " max allowed chunk length:" + maxChunkSize
+            + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings ");
       }
 
       out.writeInt(iLength);

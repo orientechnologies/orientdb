@@ -73,4 +73,6 @@ public interface OWALChanges {
    * @return the offset+read bytes.
    */
   int fromStream(int offset, byte[] stream);
+
+  void fromStream(final ByteBuffer buffer);
 }

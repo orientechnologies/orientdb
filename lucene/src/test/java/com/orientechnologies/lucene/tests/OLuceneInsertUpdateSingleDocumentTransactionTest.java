@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,6 +70,6 @@ public class OLuceneInsertUpdateSingleDocumentTransactionTest extends OLuceneBas
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Collection<?> coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(2, coll.size());
-    Assert.assertEquals(3, idx.getSize());
+    Assert.assertEquals(2, idx.getSize());
   }
 }

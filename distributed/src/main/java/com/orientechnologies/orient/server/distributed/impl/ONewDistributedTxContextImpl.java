@@ -59,7 +59,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       recordLockManager.lock(rid);
     } catch (OLockException ex) {
       this.unlock();
-      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, null, recordLockManager.getTimeout());
+      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, recordLockManager.getTimeout());
     }
     lockedRids.add(rid);
   }
@@ -72,7 +72,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       recordLockManager.lock(rid, timeout);
     } catch (OLockException ex) {
       this.unlock();
-      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, null, timeout);
+      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, timeout);
     }
     lockedRids.add(rid);
   }
@@ -136,6 +136,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public Set<ORecordId> cancel(ODistributedServerManager current, ODatabaseDocumentInternal database) {
+    destroy();
     return null;
   }
 
@@ -155,6 +156,10 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   public Status getStatus() {
     return status;
+  }
+
+  public List<ORID> getLockedRids() {
+    return lockedRids;
   }
 
 }

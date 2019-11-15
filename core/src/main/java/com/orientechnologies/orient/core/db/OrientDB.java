@@ -306,7 +306,7 @@ public class OrientDB implements AutoCloseable {
    *
    * @return boolean true if is open false otherwise.
    */
-  public boolean isOpen(){
+  public boolean isOpen() {
     return this.internal.isOpen();
   }
 
@@ -338,7 +338,7 @@ public class OrientDB implements AutoCloseable {
     return cachedPools.computeIfAbsent(internalPool, key -> new ODatabasePool(this, internalPool));
   }
 
-  public OrientDBInternal getInternal() {
+  OrientDBInternal getInternal() {
     return internal;
   }
 }

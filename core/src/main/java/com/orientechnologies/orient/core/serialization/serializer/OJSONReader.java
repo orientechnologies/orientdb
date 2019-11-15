@@ -125,6 +125,7 @@ public class OJSONReader {
     readNext(iUntil, iInclude, DEFAULT_JUMP, null);
     return this;
   }
+
   public OJSONReader readNext(final char[] iUntil, final boolean iInclude, final char[] iJumpChars, final char[] iSkipChars)
       throws IOException, ParseException {
     readNext(iUntil, iInclude, iJumpChars, iSkipChars, true);

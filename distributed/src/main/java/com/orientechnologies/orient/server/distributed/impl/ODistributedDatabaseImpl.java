@@ -319,12 +319,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         // if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
             "Request %s on database '%s' waiting for all the previous requests to be completed", request, databaseName);
-        CyclicBarrier started = new CyclicBarrier(involvedWorkerQueues.size());
-        CyclicBarrier finished = new CyclicBarrier(involvedWorkerQueues.size());
+        CountDownLatch started = new CountDownLatch(involvedWorkerQueues.size());
+        OExecuteOnce once = new OExecuteOnce(started, task);
         // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHRONIZED
         for (int queue : involvedWorkerQueues) {
           ODistributedWorker worker = workerThreads.get(queue);
-          OWaitPartitionsReadyTask waitRequest = new OWaitPartitionsReadyTask(started, task, finished);
+          OWaitPartitionsReadyTask waitRequest = new OWaitPartitionsReadyTask(once);
 
           final ODistributedRequest syncRequest = new ODistributedRequest(null, request.getId().getNodeId(),
               request.getId().getMessageId(), databaseName, waitRequest);
@@ -457,10 +457,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           .getNodesConcurInQuorum(manager, cfg, iRequest, iNodes, databaseName, localResult);
 
       // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE NODES
-      final int availableNodes = checkNodesAreOnline ?
-          manager.getNodesWithStatus(iNodes, databaseName, ODistributedServerManager.DB_STATUS.ONLINE,
-              ODistributedServerManager.DB_STATUS.BACKUP, ODistributedServerManager.DB_STATUS.SYNCHRONIZING) :
-          iNodes.size();
+      final int availableNodes;
+      if (checkNodesAreOnline) {
+        availableNodes = manager.getNodesWithStatus(iNodes, databaseName, ODistributedServerManager.DB_STATUS.ONLINE,
+            ODistributedServerManager.DB_STATUS.BACKUP, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+      } else {
+        availableNodes = iNodes.size();
+      }
 
       final int expectedResponses = localResult != null ? availableNodes + 1 : availableNodes;
 
@@ -557,10 +560,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
+      String names = iClusterNames != null ? "." + iClusterNames : "";
       throw OException.wrapException(new ODistributedException(
-          "Error on executing distributed request (" + iRequest + ") against database '" + databaseName + (iClusterNames != null ?
-              "." + iClusterNames :
-              "") + "' to nodes " + iNodes), e);
+          "Error on executing distributed request (" + iRequest + ") against database '" + databaseName + names + "' to nodes " + iNodes), e);
     } finally {
       if (iAfterSentCallback != null && !afterSendCallBackCalled)
         iAfterSentCallback.call(iRequest.getId());
@@ -682,7 +684,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     if (currentLock != null)
-      throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, null, timeout);
+      throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, timeout);
 
     return newLock;
   }
@@ -1369,6 +1371,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     return buffer.toString();
+  }
+
+  public ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> getActiveTxContexts() {
+    return activeTxContexts;
   }
 
 }

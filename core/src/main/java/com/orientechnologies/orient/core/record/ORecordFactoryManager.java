@@ -41,7 +41,7 @@ public class ORecordFactoryManager {
   protected final Class<? extends ORecord>[] recordTypes     = new Class[Byte.MAX_VALUE];
   protected final ORecordFactory[]           recordFactories = new ORecordFactory[Byte.MAX_VALUE];
 
-  private enum RecType {RECORD, VERTEX, EDGE}
+  private enum RecType { RECORD, VERTEX, EDGE }
 
   public interface ORecordFactory {
     ORecord newRecord(int cluster, ODatabaseDocumentInternal database);
@@ -51,10 +51,10 @@ public class ORecordFactoryManager {
     declareRecordType(ODocument.RECORD_TYPE, "document", ODocument.class, (cluster, database) -> {
       if (database != null && cluster >= 0) {
         if (database.isClusterVertex(cluster)) {
-          return new OVertexDocument();
+          return new OVertexDocument(database);
         } else if (database.isClusterEdge(cluster)) {
-          return new OEdgeDocument();
-        } else if(database.isClusterView(cluster)){
+          return new OEdgeDocument(database);
+        } else if (database.isClusterView(cluster)) {
           return new OViewDocument(database, cluster);
         }
       }

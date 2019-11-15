@@ -21,12 +21,13 @@ public class WhileMatchStep extends AbstractUnrollStep {
     this.condition = condition;
   }
 
-  @Override protected Collection<OResult> unroll(OResult doc, OCommandContext iContext) {
+  @Override
+  protected Collection<OResult> unroll(OResult doc, OCommandContext iContext) {
     body.reset(iContext);
     List<OResult> result = new ArrayList<>();
     OResultSet block = body.fetchNext(100);
-    while(block.hasNext()){
-      while(block.hasNext()){
+    while (block.hasNext()) {
+      while (block.hasNext()) {
         result.add(block.next());
       }
       block = body.fetchNext(100);
@@ -34,7 +35,8 @@ public class WhileMatchStep extends AbstractUnrollStep {
     return result;
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String indentStep = OExecutionStepInternal.getIndent(1, indent);
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
@@ -49,8 +51,7 @@ public class WhileMatchStep extends AbstractUnrollStep {
     result.append(spaces);
     result.append("  DO\n");
 
-
-    result.append(body.prettyPrint(depth+1, indent));
+    result.append(body.prettyPrint(depth + 1, indent));
     result.append("\n");
 
     result.append(spaces);

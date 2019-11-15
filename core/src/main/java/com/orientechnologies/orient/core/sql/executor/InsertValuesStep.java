@@ -19,7 +19,7 @@ public class InsertValuesStep extends AbstractExecutionStep {
   private final List<OIdentifier>       identifiers;
   private final List<List<OExpression>> values;
 
-  int nextValueSet = 0;
+  private int nextValueSet = 0;
 
   public InsertValuesStep(List<OIdentifier> identifierList, List<List<OExpression>> valueExpressions, OCommandContext ctx,
       boolean profilingEnabled) {
@@ -69,7 +69,7 @@ public class InsertValuesStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

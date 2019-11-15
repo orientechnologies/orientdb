@@ -539,7 +539,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
   }
 
   public void testMultiplePut() {
-    final ODocument v = database.newInstance("V").save();
+    final ODocument v = database.<ODocument>newInstance("V").save();
 
     Integer records = database
         .command(new OCommandSQL("UPDATE " + v.getIdentity() + " PUT embmap = \"test\", \"Luca\" PUT embmap = \"test2\", \"Alex\""))

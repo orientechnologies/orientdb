@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
@@ -30,29 +29,20 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityResourceProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.nio.channels.UnsupportedAddressTypeException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -61,9 +51,9 @@ import java.util.Set;
  * @author Artem Orobets added composite index managemement
  */
 public class OIndexManagerShared extends OIndexManagerAbstract {
-  private volatile transient Thread   recreateIndexesThread = null;
-  private volatile           boolean  rebuildCompleted      = false;
-  private final              OStorage storage;
+  private transient volatile Thread recreateIndexesThread = null;
+  private volatile boolean rebuildCompleted = false;
+  private final OStorage storage;
 
   public OIndexManagerShared(OStorage storage) {
     super();
@@ -79,12 +69,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
    * @param clusterIdsToIndex ids of clusters that index should track for changes.
    * @param progressListener  listener to track task progress.
    * @param metadata          document with additional properties that can be used by index engine.
-   *
    * @return a newly created index instance
    */
   public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
-      final OIndexDefinition indexDefinition, final int[] clusterIdsToIndex, OProgressListener progressListener,
-      ODocument metadata) {
+                               final OIndexDefinition indexDefinition, final int[] clusterIdsToIndex, OProgressListener progressListener,
+                               ODocument metadata) {
     return createIndex(database, iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null);
   }
 
@@ -100,12 +89,20 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
    * @param progressListener  listener to track task progress.
    * @param metadata          document with additional properties that can be used by index engine.
    * @param algorithm         tip to an index factory what algorithm to use
-   *
    * @return a newly created index instance
    */
   public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, String type,
-      final OIndexDefinition indexDefinition, final int[] clusterIdsToIndex, OProgressListener progressListener, ODocument metadata,
-      String algorithm) {
+                               final OIndexDefinition indexDefinition, final int[] clusterIdsToIndex, OProgressListener progressListener, ODocument metadata,
+                               String algorithm) {
+
+    final boolean manualIndexesAreUsed =
+            indexDefinition == null || indexDefinition.getClassName() == null || indexDefinition.getFields() == null || indexDefinition
+                    .getFields().isEmpty();
+    if (manualIndexesAreUsed) {
+      OIndexAbstract.manualIndexesWarning();
+    } else {
+      checkSecurityConstraintsForIndexCreate(database, indexDefinition);
+    }
     if (database.getTransaction().isActive())
       throw new IllegalStateException("Cannot create a new index inside a transaction");
 
@@ -157,7 +154,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         indexDefinition.setNullValuesIgnored(false);
       } else {
         indexDefinition.setNullValuesIgnored(
-            database.getConfiguration().getValueAsBoolean(OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT));
+                database.getConfiguration().getValueAsBoolean(OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT));
       }
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
@@ -181,6 +178,45 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     notifyInvolvedClasses(database, clusterIdsToIndex);
 
     return preProcessBeforeReturn(database, index);
+  }
+
+  private void checkSecurityConstraintsForIndexCreate(ODatabaseDocumentInternal database, OIndexDefinition indexDefinition) {
+
+    OSecurityInternal security = database.getSharedContext().getSecurity();
+
+    String indexClass = indexDefinition.getClassName();
+    List<String> indexedFields = indexDefinition.getFields();
+    if (indexedFields.size() == 1) {
+      return;
+    }
+
+    Set<String> classesToCheck = new HashSet<>();
+    classesToCheck.add(indexClass);
+    OClass clazz = database.getClass(indexClass);
+    if (clazz == null) {
+      return;
+    }
+    clazz.getAllSubclasses()
+            .forEach(x -> classesToCheck.add(x.getName()));
+    clazz.getAllSuperClasses()
+            .forEach(x -> classesToCheck.add(x.getName()));
+    Set<OSecurityResourceProperty> allFilteredProperties = security.getAllFilteredProperties(database);
+
+    for (String className : classesToCheck) {
+      Set<OSecurityResourceProperty> indexedAndFilteredProperties = allFilteredProperties.stream()
+              .filter(x -> x.getClassName().equalsIgnoreCase(className))
+              .filter(x -> indexedFields.contains(x.getPropertyName()))
+              .collect(Collectors.toSet());
+
+      if (indexedAndFilteredProperties.size() > 0) {
+        throw new OIndexException("Cannot create index on " + indexClass + "["
+                + (indexedAndFilteredProperties.stream()
+                .map(x -> x.getPropertyName())
+                .collect(Collectors.joining(", ")))
+                + " because of existing column security rules"
+        );
+      }
+    }
   }
 
   protected void notifyInvolvedClasses(ODatabaseDocumentInternal database, int[] clusterIdsToIndex) {
@@ -215,7 +251,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   private static String chooseContainerAlgorithm(String type) {
     final String valueContainerAlgorithm;
     if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(type)
-        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(type) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(type)) {
+            || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(type) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(type)) {
       valueContainerAlgorithm = ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER;
     } else {
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
@@ -253,10 +289,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
         notifyInvolvedClasses(database, clusterIdsToIndex);
       }
-    } catch (OException e) {
-      indexes.put(iIndexName, idx);
-      reload();
-      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -270,19 +302,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   public ODocument toStream() {
     internalAcquireExclusiveLock();
     try {
-      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+      final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
 
-      try {
-        final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
-
-        for (final OIndex<?> i : this.indexes.values()) {
-          indexes.add(((OIndexInternal<?>) i).updateConfiguration());
-        }
-        document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
-
-      } finally {
-        document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      for (final OIndex<?> i : this.indexes.values()) {
+        indexes.add(((OIndexInternal<?>) i).updateConfiguration());
       }
+      document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
       document.setDirty();
 
       return document;
@@ -315,10 +340,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       database.getMetadata().reload();
     }
 
-  }
-
-  public void recreateIndexes() {
-    throw new UnsupportedAddressTypeException();
   }
 
   public void waitTillIndexRestore() {
@@ -367,15 +388,15 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           final ODocument d = indexConfigurationIterator.next();
           try {
             final int indexVersion =
-                d.field(OIndexInternal.INDEX_VERSION) == null ? 1 : (Integer) d.field(OIndexInternal.INDEX_VERSION);
+                    d.field(OIndexInternal.INDEX_VERSION) == null ? 1 : (Integer) d.field(OIndexInternal.INDEX_VERSION);
 
             final OIndexMetadata newIndexMetadata = OIndexAbstract
-                .loadMetadataInternal(d, d.field(OIndexInternal.CONFIG_TYPE), d.field(OIndexInternal.ALGORITHM),
-                    d.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+                    .loadMetadataInternal(d, d.field(OIndexInternal.CONFIG_TYPE), d.field(OIndexInternal.ALGORITHM),
+                            d.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             index = OIndexes
-                .createIndex(getStorage(), newIndexMetadata.getName(), newIndexMetadata.getType(), newIndexMetadata.getAlgorithm(),
-                    newIndexMetadata.getValueContainerAlgorithm(), d.field(OIndexInternal.METADATA), indexVersion);
+                    .createIndex(getStorage(), newIndexMetadata.getName(), newIndexMetadata.getType(), newIndexMetadata.getAlgorithm(),
+                            newIndexMetadata.getValueContainerAlgorithm(), d.field(OIndexInternal.METADATA), indexVersion);
 
             final String normalizedName = newIndexMetadata.getName();
 
@@ -478,20 +499,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     ODocument document = new ODocument();
     internalAcquireExclusiveLock();
     try {
-      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+      document.setTrackingChanges(false);
+      final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
 
-      try {
-        final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
-
-        for (final OIndex<?> i : this.indexes.values()) {
-          indexes.add(((OIndexInternal<?>) i).updateConfiguration().copy());
-        }
-        document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
-
-      } finally {
-        document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      for (final OIndex<?> i : this.indexes.values()) {
+        indexes.add(((OIndexInternal<?>) i).updateConfiguration().copy());
       }
-      document.setDirty();
+      document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
 
       return document;
     } finally {
@@ -502,8 +516,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
   private class RecreateIndexesTask implements Runnable {
     private final OSharedContext ctx;
-    private       int            ok;
-    private       int            errors;
+    private int ok;
+    private int errors;
 
     public RecreateIndexesTask(OSharedContext ctx) {
       this.ctx = ctx;
@@ -560,7 +574,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         }
       }
 
-      db.getMetadata().getIndexManager().save();
+      db.getMetadata().getIndexManagerInternal().save();
 
       rebuildCompleted = true;
 
@@ -582,51 +596,32 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       if (automatic) {
         if (durable) {
           OLogManager.instance().info(this, "Index '%s' is a durable automatic index and will be added as is without rebuilding",
-              indexMetadata.getName());
+                  indexMetadata.getName());
           addIndexAsIs(indexDocument, index, db);
         } else {
           OLogManager.instance()
-              .info(this, "Index '%s' is a non-durable automatic index and must be rebuilt", indexMetadata.getName());
-          rebuildNonDurableAutomaticIndex(indexDocument, index, indexMetadata, indexDefinition, db);
+                  .info(this, "Index '%s' is a non-durable automatic index and must be rebuilt", indexMetadata.getName());
+          rebuildNonDurableAutomaticIndex(indexDocument, index, indexMetadata, indexDefinition);
         }
       } else {
         if (durable) {
           OLogManager.instance()
-              .info(this, "Index '%s' is a durable non-automatic index and will be added as is without rebuilding",
-                  indexMetadata.getName());
+                  .info(this, "Index '%s' is a durable non-automatic index and will be added as is without rebuilding",
+                          indexMetadata.getName());
           addIndexAsIs(indexDocument, index, db);
         } else {
           OLogManager.instance()
-              .info(this, "Index '%s' is a non-durable non-automatic index and will be added as is without rebuilding",
-                  indexMetadata.getName());
+                  .info(this, "Index '%s' is a non-durable non-automatic index and will be added as is without rebuilding",
+                          indexMetadata.getName());
           addIndexAsIs(indexDocument, index, db);
         }
       }
     }
 
     private void rebuildNonDurableAutomaticIndex(ODocument indexDocument, OIndexInternal<?> index, OIndexMetadata indexMetadata,
-        OIndexDefinition indexDefinition, ODatabaseDocumentEmbedded database) {
-      try {
-        index.loadFromConfiguration(indexDocument);
-        index.delete();
-      } catch (Exception e) {
-        OLogManager.instance()
-            .error(this, "Error on removing index '%s' on rebuilding. Trying to remove index files.", e, index.getName());
-
-        // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
-        for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
-          try {
-            final OIndexFactory indexFactory = it.next();
-            final OBaseIndexEngine engine = indexFactory
-                .createIndexEngine(index.getAlgorithm(), index.getName(), false, storage, 0, 1,
-                    indexDefinition.getTypes().length > 1, null);
-
-            engine.deleteWithoutLoad(index.getName());
-          } catch (Exception e2) {
-            OLogManager.instance().error(this, "Error during deletion of index engine %s", e2, index.getName());
-          }
-        }
-      }
+                                                 OIndexDefinition indexDefinition) {
+      index.loadFromConfiguration(indexDocument);
+      index.delete();
 
       final String indexName = indexMetadata.getName();
       final Set<String> clusters = indexMetadata.getClustersToIndex();
@@ -652,7 +647,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       } else {
         errors++;
         OLogManager.instance().error(this, "Information about index was restored incorrectly, following data were loaded : "
-            + "index name '%s', index definition '%s', clusters %s, type %s", null, indexName, indexDefinition, clusters, type);
+                + "index name '%s', index definition '%s', clusters %s, type %s", null, indexName, indexDefinition, clusters, type);
       }
     }
 

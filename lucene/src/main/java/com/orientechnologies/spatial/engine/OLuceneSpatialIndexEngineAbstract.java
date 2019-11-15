@@ -57,8 +57,8 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   protected OSpatialStrategyFactory strategyFactory;
   protected SpatialQueryBuilder     queryStrategy;
 
-  public OLuceneSpatialIndexEngineAbstract(OStorage storage, String indexName, OShapeBuilder factory) {
-    super(storage, indexName);
+  public OLuceneSpatialIndexEngineAbstract(OStorage storage, String indexName, int id, OShapeBuilder factory) {
+    super(id, storage, indexName);
     this.ctx = factory.context();
     this.factory = factory;
     strategyFactory = new OSpatialStrategyFactory(factory);

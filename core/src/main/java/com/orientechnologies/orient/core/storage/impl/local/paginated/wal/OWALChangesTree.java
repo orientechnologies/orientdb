@@ -7,12 +7,7 @@ import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 public class OWALChangesTree implements OWALChanges {
   private static final boolean BLACK = false;
@@ -191,6 +186,11 @@ public class OWALChangesTree implements OWALChanges {
   @Override
   public void setByteValue(ByteBuffer buffer, byte value, int offset) {
     add(new byte[] { value }, offset);
+  }
+
+  @Override
+  public void fromStream(ByteBuffer buffer) {
+    throw new UnsupportedOperationException();
   }
 
   public void add(byte[] value, int start) {

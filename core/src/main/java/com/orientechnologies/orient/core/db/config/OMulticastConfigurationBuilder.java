@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.db.config;
 
 public class OMulticastConfigurationBuilder {
 
-  OMulticastConfguration confguration = new OMulticastConfguration();
+  private OMulticastConfguration confguration = new OMulticastConfguration();
 
   public OMulticastConfigurationBuilder setEnabled(boolean enabled) {
     confguration.setEnabled(enabled);

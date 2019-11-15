@@ -68,19 +68,27 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
 
   @Override
   public void serializeNativeObject(Float object, byte[] stream, int startPosition, Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
   }
 
   @Override
   public Float deserializeNativeObject(byte[] stream, int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
   public void serializeNative(final float object, final byte[] stream, final int startPosition, final Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
   }
 
   public float deserializeNative(final byte[] stream, final int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
@@ -135,5 +143,12 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return FLOAT_SIZE;
+  }
+
+  private static void checkBoundaries(byte[] stream, int startPosition) {
+    if (startPosition + FLOAT_SIZE > stream.length) {
+      throw new IllegalStateException(
+          "Requested stream size is " + (startPosition + FLOAT_SIZE) + " but provided stream has size " + stream.length);
+    }
   }
 }

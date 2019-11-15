@@ -86,24 +86,24 @@ public class ScalableRWLock implements ReadWriteLock, java.io.Serializable {
   private static final long serialVersionUID = -7552055681918630764L;
 
   // Definition of an invalid thread-id (must be negative)
-  private final static int             SRWL_STATE_NOT_WRITING = 0;
-  private final static int             SRWL_STATE_WRITING     = 1;
-  private final static int             SRWL_STATE_NOT_READING = 0;
-  private final static int             SRWL_STATE_READING     = 1;
-  private final static AtomicInteger[] dummyArray             = new AtomicInteger[0];
+  private static final int             SRWL_STATE_NOT_WRITING = 0;
+  private static final int             SRWL_STATE_WRITING     = 1;
+  private static final int             SRWL_STATE_NOT_READING = 0;
+  private static final int             SRWL_STATE_READING     = 1;
+  private static final AtomicInteger[] dummyArray             = new AtomicInteger[0];
 
   /**
    * List of Reader's states that the Writer will scan when attempting to
    * acquire the lock in write-mode
    */
-  private transient final ConcurrentLinkedQueue<AtomicInteger> readersStateList;
+  private final transient ConcurrentLinkedQueue<AtomicInteger> readersStateList;
 
   /**
    * The thread-id of the Writer currently holding the lock in write-mode, or
    * SRWL_INVALID_TID if there is no Writer holding or attempting to acquire
    * the lock in write mode.
    */
-  private transient final StampedLock stampedLock;
+  private final transient StampedLock stampedLock;
 
   /**
    * Thread-local reference to the current thread's ReadersEntry instance.
@@ -111,9 +111,9 @@ public class ScalableRWLock implements ReadWriteLock, java.io.Serializable {
    * to determine where to store its own state, and the number of reentrant
    * read lock loops for that particular thread.
    */
-  private transient final ThreadLocal<ReadersEntry> entry;
+  private final transient ThreadLocal<ReadersEntry> entry;
 
-  private transient final AtomicReference<AtomicInteger[]> readersStateArrayRef;
+  private final transient AtomicReference<AtomicInteger[]> readersStateArrayRef;
 
   /**
    * The lock returned by method {@link ScalableRWLock#readLock}.

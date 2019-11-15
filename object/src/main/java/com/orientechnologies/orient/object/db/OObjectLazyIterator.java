@@ -46,7 +46,7 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
   private final OObjectDatabaseTx          database;
   private final Iterator<? extends Object> underlying;
   private       String                     fetchPlan;
-  final private boolean                    autoConvert2Object;
+  private final boolean                    autoConvert2Object;
   private       OIdentifiable              currentElement;
   private boolean orphanRemoval = false;
 

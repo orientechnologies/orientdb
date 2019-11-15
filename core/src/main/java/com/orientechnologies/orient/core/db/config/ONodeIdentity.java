@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
 
-public class ONodeIdentity {
+public class ONodeIdentity implements Cloneable {
   private String id;
   private String name;
 

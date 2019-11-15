@@ -28,95 +28,37 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
-import com.orientechnologies.orient.core.db.record.ODetachable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.delta.ODeltaDocumentFieldType;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
-import com.orientechnologies.orient.core.delta.UpdateTypeValueType;
-import com.orientechnologies.orient.core.delta.ValueType;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordListener;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
+import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
+import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -129,25 +71,35 @@ public class ODocument extends ORecordAbstract
   public static final    byte     RECORD_TYPE      = 'd';
   protected static final String[] EMPTY_STRINGS    = new String[] {};
   private static final   long     serialVersionUID = 1L;
-  protected              int      fieldSize;
+
+  protected int fieldSize;
 
   protected Map<String, ODocumentEntry> fields;
 
-  protected           boolean                             trackingChanges        = true;
-  protected           boolean                             ordered                = true;
-  protected           boolean                             lazyLoad               = true;
-  protected           boolean                             allowChainedAccess     = true;
-  protected transient List<WeakReference<ORecordElement>> owners                 = null;
-  protected           OImmutableSchema                    schema;
-  private             String                              className;
-  private             OImmutableClass                     immutableClazz;
-  private             int                                 immutableSchemaVersion = 1;
+  protected           boolean                       trackingChanges        = true;
+  protected           boolean                       ordered                = true;
+  protected           boolean                       lazyLoad               = true;
+  protected           boolean                       allowChainedAccess     = true;
+  protected transient WeakReference<ORecordElement> owner                  = null;
+  protected           OImmutableSchema              schema;
+  private             String                        className;
+  private             OImmutableClass               immutableClazz;
+  private             int                           immutableSchemaVersion = 1;
+  protected           OPropertyAccess               propertyAccess;
+  protected           OPropertyEncryption           propertyEncryption;
 
   /**
    * Internal constructor used on unmarshalling.
    */
   public ODocument() {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
+  }
+
+  /**
+   * Internal constructor used on unmarshalling.
+   */
+  public ODocument(ODatabaseSession database) {
+    setup((ODatabaseDocumentInternal) database);
   }
 
   /**
@@ -159,7 +111,7 @@ public class ODocument extends ORecordAbstract
   @Deprecated
   public ODocument(final byte[] iSource) {
     source = iSource;
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   /**
@@ -172,7 +124,7 @@ public class ODocument extends ORecordAbstract
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     OIOUtils.copyStream(iSource, out, -1);
     source = out.toByteArray();
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
 
   /**
@@ -182,7 +134,7 @@ public class ODocument extends ORecordAbstract
    * @param iRID Record Id
    */
   public ODocument(final ORID iRID) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     recordId = (ORecordId) iRID;
     status = STATUS.NOT_LOADED;
     dirty = false;
@@ -220,7 +172,18 @@ public class ODocument extends ORecordAbstract
    * @param iClassName Class name
    */
   public ODocument(final String iClassName) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
+    setClassName(iClassName);
+  }
+
+  /**
+   * Creates a new instance in memory of the specified class. New instances are not persistent until {@link #save()} is called.
+   *
+   * @param session    the session the instance will be attached to
+   * @param iClassName Class name
+   */
+  public ODocument(ODatabaseSession session, final String iClassName) {
+    setup((ODatabaseDocumentInternal) session);
     setClassName(iClassName);
   }
 
@@ -240,7 +203,7 @@ public class ODocument extends ORecordAbstract
    * @param iFields Array of field pairs
    */
   public ODocument(final Object[] iFields) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     if (iFields != null && iFields.length > 0)
       for (int i = 0; i < iFields.length; i += 2) {
         field(iFields[i].toString(), iFields[i + 1]);
@@ -253,7 +216,7 @@ public class ODocument extends ORecordAbstract
    * @param iFieldMap Map of Object/Object
    */
   public ODocument(final Map<?, Object> iFieldMap) {
-    setup();
+    setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     if (iFieldMap != null && !iFieldMap.isEmpty())
       for (Entry<?, Object> entry : iFieldMap.entrySet()) {
         field(entry.getKey().toString(), entry.getValue());
@@ -323,27 +286,34 @@ public class ODocument extends ORecordAbstract
     return Optional.ofNullable(getSchemaClass());
   }
 
-  @Override
-  public Set<String> getPropertyNames() {
+  private Stream<String> calculatePropertyNames() {
     checkForLoading();
 
     if (status == ORecordElement.STATUS.LOADED && source != null && ODatabaseRecordThreadLocal.instance().isDefined()
         && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = recordFormat.getFieldNamesRoot(this, source);
+      final String[] fieldNames = recordFormat.getFieldNames(this, source);
       if (fieldNames != null) {
-        Set<String> result = new HashSet<>();
-        Collections.addAll(result, fieldNames);
-        return result;
+        if (propertyAccess != null) {
+          return Arrays.stream(fieldNames).filter((e) -> propertyAccess.isReadable(e));
+        } else {
+          return Arrays.stream(fieldNames);
+        }
       }
     }
 
     checkForFields();
 
     if (fields == null || fields.size() == 0)
-      return Collections.EMPTY_SET;
+      return Stream.empty();
 
-    return fields.entrySet().stream().filter(s -> s.getValue().exist()).map(Entry::getKey).collect(Collectors.toSet());
+    return fields.entrySet().stream()
+        .filter(s -> s.getValue().exists() && (propertyAccess == null || propertyAccess.isReadable(s.getKey()))).map(Entry::getKey);
+  }
+
+  @Override
+  public Set<String> getPropertyNames() {
+    return calculatePropertyNames().collect(Collectors.toSet());
   }
 
   /**
@@ -351,7 +321,6 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFieldName The field name, it can contain any character (it's not evaluated as an expression, as in #eval()
    * @param <RET>
-   *
    * @return the field value. Null if the field does not exist.
    */
   public <RET> RET getProperty(final String iFieldName) {
@@ -373,9 +342,9 @@ public class ODocument extends ORecordAbstract
           ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
         }
         ODocumentEntry entry = fields.get(iFieldName);
-        removeCollectionChangeListener(entry, entry.value);
+        entry.disableTracking(this, entry.value);
         entry.value = value;
-        addCollectionChangeListener(entry);
+        entry.enableTracking(this);
       }
     }
 
@@ -395,7 +364,6 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFieldName The field name, it can contain any character (it's not evaluated as an expression, as in #eval()
    * @param <RET>
-   *
    * @return the field value. Null if the field does not exist.
    */
   protected <RET> RET getRawProperty(final String iFieldName) {
@@ -466,12 +434,12 @@ public class ODocument extends ORecordAbstract
       entry = new ODocumentEntry();
       fieldSize++;
       fields.put(iPropetyName, entry);
-      entry.setCreated(true);
+      entry.markCreated();
       knownProperty = false;
       oldValue = null;
       oldType = null;
     } else {
-      knownProperty = entry.exist();
+      knownProperty = entry.exists();
       oldValue = entry.value;
       oldType = entry.type;
     }
@@ -540,20 +508,18 @@ public class ODocument extends ORecordAbstract
       if (iPropertyValue == null || fieldType != null || oldType != OType.getTypeByValue(iPropertyValue))
         entry.type = fieldType;
     }
-    removeCollectionChangeListener(entry, oldValue);
+    entry.disableTracking(this, oldValue);
     entry.value = iPropertyValue;
-    if (!entry.exist()) {
-      entry.setExist(true);
+    if (!entry.exists()) {
+      entry.setExists(true);
       fieldSize++;
     }
-    addCollectionChangeListener(entry);
+    entry.enableTracking(this);
 
-    if (status != STATUS.UNMARSHALLING) {
-      setDirty();
-      if (!entry.isChanged()) {
-        entry.original = oldValue;
-        entry.setChanged(true);
-      }
+    setDirty();
+    if (!entry.isChanged()) {
+      entry.original = oldValue;
+      entry.markChanged();
     }
   }
 
@@ -571,19 +537,18 @@ public class ODocument extends ORecordAbstract
     if (entry == null)
       return null;
     Object oldValue = entry.value;
-    if (entry.exist() && trackingChanges) {
+    if (entry.exists() && trackingChanges) {
       // SAVE THE OLD VALUE IN A SEPARATE MAP
       if (entry.original == null)
         entry.original = entry.value;
       entry.value = null;
-      entry.setExist(false);
-      entry.setChanged(true);
+      entry.setExists(false);
+      entry.markChanged();
     } else {
       fields.remove(iFieldName);
     }
     fieldSize--;
-
-    removeCollectionChangeListener(entry, oldValue);
+    entry.disableTracking(this, oldValue);
     if (oldValue instanceof OIdentifiable)
       unTrack((OIdentifiable) oldValue);
     if (oldValue instanceof ORidBag)
@@ -592,10 +557,27 @@ public class ODocument extends ORecordAbstract
     return (RET) oldValue;
   }
 
+  protected static void validateFieldsSecurity(ODatabaseDocumentInternal internal, ODocument iRecord) throws OValidationException {
+    if (internal == null) {
+      return;
+    }
+    OSecurityInternal security = internal.getSharedContext().getSecurity();
+    for (Entry<String, ODocumentEntry> mapEntry : iRecord.fields.entrySet()) {
+      ODocumentEntry entry = mapEntry.getValue();
+      if (entry != null && (entry.isChanged() || entry.isTrackedModified())) {
+        if (!security.isAllowedWrite(internal, iRecord, mapEntry.getKey())) {
+          throw new OSecurityException(String
+              .format("Change of field '%s' is not allowed for user '%s'", iRecord.getClassName() + "." + mapEntry.getKey(),
+                  internal.getUser().getName()));
+        }
+      }
+    }
+  }
+
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord.fields.get(p.getName());
-    if (entry != null && entry.exist()) {
+    if (entry != null && entry.exists()) {
       // AVOID CONVERSIONS: FASTER!
       fieldValue = entry.value;
 
@@ -755,7 +737,7 @@ public class ODocument extends ORecordAbstract
     }
 
     if (p.isReadonly() && !ORecordVersionHelper.isTombstone(iRecord.getVersion())) {
-      if (entry != null && (entry.changed || entry.timeLine != null) && !entry.created) {
+      if (entry != null && (entry.isChanged() || entry.isTrackedModified()) && !entry.isCreated()) {
         // check if the field is actually changed by equal.
         // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
         Object orgVal = entry.original;
@@ -770,12 +752,12 @@ public class ODocument extends ORecordAbstract
 
   protected static void validateLinkCollection(final OProperty property, Iterable<Object> values, ODocumentEntry value) {
     if (property.getLinkedClass() != null) {
-      if (value.timeLine != null) {
-        List<OMultiValueChangeEvent<Object, Object>> event = value.timeLine.getMultiValueChangeEvents();
+      if (value.getTimeLine() != null) {
+        List<OMultiValueChangeEvent<Object, Object>> event = value.getTimeLine().getMultiValueChangeEvents();
         for (OMultiValueChangeEvent object : event) {
           if (object.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD
               || object.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE && object.getValue() != null)
-            validateLink(property, object.getValue(), OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+            validateLink(property, object.getValue(), true);
         }
       } else {
         boolean autoconvert = false;
@@ -784,7 +766,7 @@ public class ODocument extends ORecordAbstract
           ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
         }
         for (Object object : values) {
-          validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+          validateLink(property, object, true);
         }
         if (values instanceof ORecordLazyMultiValue)
           ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);
@@ -909,10 +891,7 @@ public class ODocument extends ORecordAbstract
     destination.immutableClazz = null;
 
     destination.trackingChanges = trackingChanges;
-    if (owners != null)
-      destination.owners = new ArrayList<>(owners);
-    else
-      destination.owners = null;
+    destination.owner = owner;
 
     if (fields != null) {
       destination.fields = fields instanceof LinkedHashMap ? new LinkedHashMap<>() : new HashMap<>();
@@ -937,6 +916,7 @@ public class ODocument extends ORecordAbstract
    *
    * @return placeholder of this document
    */
+  @Deprecated
   public ORecord placeholder() {
     final ODocument cloned = new ODocument();
     cloned.source = null;
@@ -1026,7 +1006,7 @@ public class ODocument extends ORecordAbstract
   @Override
   public byte[] toStream() {
     if (recordFormat == null)
-      setup();
+      setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     return toStream(false);
   }
 
@@ -1088,32 +1068,7 @@ public class ODocument extends ORecordAbstract
    * Returns the set of field names.
    */
   public String[] fieldNames() {
-    checkForLoading();
-
-    if (status == ORecordElement.STATUS.LOADED && source != null && ODatabaseRecordThreadLocal.instance().isDefined()
-        && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
-      // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = recordFormat.getFieldNamesRoot(this, source);
-      if (fieldNames != null)
-        return fieldNames;
-    }
-
-    checkForFields();
-
-    if (fields == null || fields.size() == 0)
-      return EMPTY_STRINGS;
-    final List<String> names = new ArrayList<>(fields.size());
-    for (Entry<String, ODocumentEntry> entry : fields.entrySet()) {
-      if (entry.getValue().exist())
-        names.add(entry.getKey());
-    }
-    return names.toArray(new String[names.size()]);
-  }
-
-  private Set<String> arrayToSet(String[] fieldNames) {
-    Set<String> result = new HashSet<>();
-    Collections.addAll(result, fieldNames);
-    return result;
+    return calculatePropertyNames().collect(Collectors.toList()).toArray(new String[] {});
   }
 
   /**
@@ -1122,12 +1077,12 @@ public class ODocument extends ORecordAbstract
   public Object[] fieldValues() {
     checkForLoading();
     checkForFields();
-    Object[] res = new Object[fields.size()];
-    int i = 0;
-    for (ODocumentEntry entry : fields.values()) {
-      res[i++] = entry.value;
+    final List<Object> res = new ArrayList<>(fields.size());
+    for (Map.Entry<String, ODocumentEntry> entry : fields.entrySet()) {
+      if (entry.getValue().exists() && (propertyAccess == null || propertyAccess.isReadable(entry.getKey())))
+        res.add(entry.getValue().value);
     }
-    return res;
+    return res.toArray();
   }
 
   public <RET> RET rawField(final String iFieldName) {
@@ -1141,11 +1096,7 @@ public class ODocument extends ORecordAbstract
 
     // OPTIMIZATION
     if (!allowChainedAccess || (iFieldName.charAt(0) != '@' && OStringSerializerHelper.indexOf(iFieldName, 0, '.', '[') == -1)) {
-      ODocumentEntry entry = fields.get(iFieldName);
-      if (entry != null && entry.exist())
-        return (RET) entry.value;
-      else
-        return null;
+      return (RET) accessProperty(iFieldName);
     }
 
     // NOT FOUND, PARSE THE FIELD NAME
@@ -1157,9 +1108,7 @@ public class ODocument extends ORecordAbstract
    * 100");</code>
    *
    * @param iExpression SQL expression to evaluate.
-   *
    * @return The result of expression
-   *
    * @throws OQueryParsingException in case the expression is not valid
    */
   public Object eval(final String iExpression) {
@@ -1172,9 +1121,7 @@ public class ODocument extends ORecordAbstract
    * = doc.eval("amount * (100+$vat) / 100", context); </code>
    *
    * @param iExpression SQL expression to evaluate.
-   *
    * @return The result of expression
-   *
    * @throws OQueryParsingException in case the expression is not valid
    */
   public Object eval(final String iExpression, final OCommandContext iContext) {
@@ -1185,7 +1132,6 @@ public class ODocument extends ORecordAbstract
    * Reads the field value.
    *
    * @param iFieldName field name
-   *
    * @return field value if defined, otherwise null
    */
   @Override
@@ -1205,9 +1151,9 @@ public class ODocument extends ORecordAbstract
         }
         if (!iFieldName.contains(".")) {
           ODocumentEntry entry = fields.get(iFieldName);
-          removeCollectionChangeListener(entry, entry.value);
+          entry.disableTracking(this, entry.value);
           entry.value = value;
-          addCollectionChangeListener(entry);
+          entry.enableTracking(this);
         }
       }
     }
@@ -1221,7 +1167,6 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFieldName field name
    * @param iFieldType Forced type.
-   *
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName, final Class<?> iFieldType) {
@@ -1238,7 +1183,6 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFieldName field name
    * @param iFieldType Forced type.
-   *
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName, final OType iFieldType) {
@@ -1280,7 +1224,6 @@ public class ODocument extends ORecordAbstract
    * @param iFieldName     field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this
    *                       feature call {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue field value
-   *
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public ODocument field(final String iFieldName, Object iPropertyValue) {
@@ -1338,7 +1281,6 @@ public class ODocument extends ORecordAbstract
    *                       feature call {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue field value.
    * @param iFieldType     Forced type (not auto-determined)
-   *
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain. If the updated
    * document is another document (using the dot (.) notation) then the document returned is the changed one or NULL if no document
    * has been found in chain
@@ -1443,12 +1385,12 @@ public class ODocument extends ORecordAbstract
       entry = new ODocumentEntry();
       fieldSize++;
       fields.put(iFieldName, entry);
-      entry.setCreated(true);
+      entry.markCreated();
       knownProperty = false;
       oldValue = null;
       oldType = null;
     } else {
-      knownProperty = entry.exist();
+      knownProperty = entry.exists();
       oldValue = entry.value;
       oldType = entry.type;
     }
@@ -1523,20 +1465,18 @@ public class ODocument extends ORecordAbstract
       if (iPropertyValue == null || fieldType != null || oldType != OType.getTypeByValue(iPropertyValue))
         entry.type = fieldType;
     }
-    removeCollectionChangeListener(entry, oldValue);
+    entry.disableTracking(this, oldValue);
     entry.value = iPropertyValue;
-    if (!entry.exist()) {
-      entry.setExist(true);
+    if (!entry.exists()) {
+      entry.setExists(true);
       fieldSize++;
     }
-    addCollectionChangeListener(entry);
+    entry.enableTracking(this);
 
-    if (status != STATUS.UNMARSHALLING) {
-      setDirty();
-      if (!entry.isChanged()) {
-        entry.original = oldValue;
-        entry.setChanged(true);
-      }
+    setDirty();
+    if (!entry.isChanged()) {
+      entry.original = oldValue;
+      entry.markChanged();
     }
 
     return this;
@@ -1560,19 +1500,19 @@ public class ODocument extends ORecordAbstract
     if (entry == null)
       return null;
     Object oldValue = entry.value;
-    if (entry.exist() && trackingChanges) {
+    if (entry.exists() && trackingChanges) {
       // SAVE THE OLD VALUE IN A SEPARATE MAP
       if (entry.original == null)
         entry.original = entry.value;
       entry.value = null;
-      entry.setExist(false);
-      entry.setChanged(true);
+      entry.setExists(false);
+      entry.markChanged();
     } else {
       fields.remove(iFieldName);
     }
     fieldSize--;
 
-    removeCollectionChangeListener(entry, oldValue);
+    entry.disableTracking(this, oldValue);
     if (oldValue instanceof OIdentifiable)
       unTrack((OIdentifiable) oldValue);
     if (oldValue instanceof ORidBag)
@@ -1590,7 +1530,6 @@ public class ODocument extends ORecordAbstract
    *                                            false, the missed properties in the "other" document will be removed by original
    *                                            document
    * @param iMergeSingleItemsOfMultiValueFields If true, merges single items of multi field fields (collections, maps, arrays, etc)
-   *
    * @return
    */
   public ODocument merge(final ODocument iOther, boolean iUpdateOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
@@ -1603,265 +1542,6 @@ public class ODocument extends ORecordAbstract
     return mergeMap(iOther.fields, iUpdateOnlyMode, iMergeSingleItemsOfMultiValueFields);
   }
 
-  private static boolean valuesDiffersInClass(Object val1, Object val2) {
-    if (val1.getClass().equals(val2.getClass())) {
-      return false;
-    }
-    if ((val1 instanceof ODocument && val2 instanceof ODocumentDelta) || (val1 instanceof ODocumentDelta
-        && val2 instanceof ODocument))
-      return false;
-
-    return true;
-  }
-
-  private static void mergeDocumentToDocument(final ODocument to, final ODocumentDelta from) {
-    for (Map.Entry<String, ValueType> field : from.fields()) {
-      final String fieldName = field.getKey();
-      final ODocumentDelta updateDoc = from.field(fieldName).getValue();
-      Object deltaVal = updateDoc.field("v").getValue();
-      UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(updateDoc.field("t").getValue());
-
-      if (deltaType == UpdateDeltaValueType.UPDATE || deltaType == UpdateDeltaValueType.CHANGE) {
-        if (!(deltaVal instanceof ODocumentDelta) || !to.fields.keySet().contains(fieldName) || valuesDiffersInClass(
-            to.fields.get(fieldName).value, deltaVal)) {
-          to.field(fieldName, deltaVal);
-        } else {
-          final ODocumentDelta fromDocField = (ODocumentDelta) deltaVal;
-          final ODocument toDocField = (ODocument) to.field(fieldName);
-          ValueType toNestedValueType = new ValueType(toDocField, OType.EMBEDDED);
-          ValueType fromNestedValueType = new ValueType(fromDocField, ODeltaDocumentFieldType.DELTA_RECORD);
-          mergeUpdateTree(toNestedValueType, fromNestedValueType);
-        }
-      } else if (deltaType == UpdateDeltaValueType.LIST_UPDATE) {
-        List deltaList = (List) deltaVal;
-        List originalList = to.field(fieldName);
-        OType toLinkedType = HelperClasses.getLinkedType(to, to.fieldType(fieldName), fieldName);
-        //we want to treat ANY as null, because elements remain of unknown type
-        if (toLinkedType == OType.ANY) {
-          toLinkedType = null;
-        }
-        int removed = 0;
-        for (int i = 0; i < deltaList.size(); i++) {
-          ODocumentDelta deltaUpdateListElement = (ODocumentDelta) deltaList.get(i);
-          UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t").getValue());
-          Object val;
-          int index;
-          switch (listElementUpdateType) {
-          case LIST_ELEMENT_ADD:
-            val = deltaUpdateListElement.field("v").getValue();
-            originalList.add(val);
-            break;
-          case LIST_ELEMENT_CHANGE:
-            val = deltaUpdateListElement.field("v").getValue();
-            index = deltaUpdateListElement.field("i").getValue();
-            originalList.set(index, val);
-            break;
-          case LIST_ELEMENT_REMOVE:
-            index = deltaUpdateListElement.field("i").getValue();
-            originalList.remove(index - removed++);
-            break;
-          case LIST_ELEMENT_UPDATE:
-            ValueType deltaValueType = deltaUpdateListElement.field("v");
-            index = deltaUpdateListElement.field("i").getValue();
-            Object originalVal = originalList.get(index);
-            //here deltaDeltaVal can be null, then we want to use valDoc. This is case with list of documents
-            ODocumentDelta deltaObj = deltaValueType.getValue();
-            if (deltaObj.field("t") == null) {
-              //in this case some document field should be updated, and in that case update type is not set
-              deltaType = UpdateDeltaValueType.UNKNOWN;
-            } else {
-              deltaType = UpdateDeltaValueType.fromOrd(deltaObj.field("t").getValue());
-            }
-            ValueType deltaPassObject = deltaValueType;
-            if (deltaType == UpdateDeltaValueType.LIST_UPDATE || deltaType == UpdateDeltaValueType.UPDATE) {
-              deltaPassObject = deltaObj.field("v");
-            }
-            ValueType originalValueType = new ValueType(originalVal,
-                toLinkedType != null ? toLinkedType : ODeltaDocumentFieldType.getTypeByValue(originalVal));
-            Object merged = mergeUpdateTree(originalValueType, deltaPassObject);
-            originalList.set(index, merged);
-            break;
-          }
-        }
-      } else if (deltaType == UpdateDeltaValueType.RIDBAG_UPDATE) {
-        List deltaList = (List) deltaVal;
-        ORidBag originalRidbag = to.field(fieldName);
-        for (int i = 0; i < deltaList.size(); i++) {
-          ODocumentDelta deltaUpdateListElement = (ODocumentDelta) deltaList.get(i);
-          UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t").getValue());
-          OIdentifiable val;
-          int index;
-          switch (listElementUpdateType) {
-          case LIST_ELEMENT_ADD:
-            val = deltaUpdateListElement.field("v").getValue();
-            originalRidbag.add(val);
-            break;
-          case LIST_ELEMENT_CHANGE:
-            val = deltaUpdateListElement.field("v").getValue();
-            index = deltaUpdateListElement.field("i").getValue();
-            originalRidbag.changeValue(index, val);
-            break;
-          case LIST_ELEMENT_REMOVE:
-            val = deltaUpdateListElement.field("v").getValue();
-            originalRidbag.remove(val);
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  private static void mergeListToList(List toList, List fromList) {
-    int removed = 0;
-    for (int i = 0; i < fromList.size(); i++) {
-      Object fromElement = fromList.get(i);
-      if (fromElement instanceof ODocumentDelta) {
-        ODocumentDelta fromDoc = (ODocumentDelta) fromElement;
-        UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
-        if (type == UpdateDeltaValueType.LIST_ELEMENT_ADD) {
-          Object addVal = fromDoc.field("v").getValue();
-          toList.add(addVal);
-          continue;
-        }
-        int index = fromDoc.field("i").getValue();
-        if (type == UpdateDeltaValueType.LIST_ELEMENT_CHANGE) {
-          Object val = fromDoc.field("v").getValue();
-          toList.set(index, val);
-          continue;
-        }
-        if (type == UpdateDeltaValueType.LIST_ELEMENT_REMOVE) {
-          toList.remove(index - removed++);
-          continue;
-        }
-        Object toElement = toList.get(index);
-
-        ValueType fromValueTypeNested = new ValueType(fromDoc, ODeltaDocumentFieldType.DELTA_RECORD);
-        if (type == UpdateDeltaValueType.LIST_ELEMENT_UPDATE) {
-          fromValueTypeNested = fromDoc.field("v");
-        }
-        fromDoc = fromValueTypeNested.getValue();
-        if (fromDoc.field("t") == null) {
-          //this is the case when updating field, in this case update type is not set
-          type = UpdateDeltaValueType.UNKNOWN;
-        } else {
-          type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
-        }
-        if (type == UpdateDeltaValueType.CHANGE) {
-          toElement = fromDoc.field("v").getValue();
-        } else {
-          if (type == UpdateDeltaValueType.LIST_UPDATE || type == UpdateDeltaValueType.UPDATE) {
-            fromValueTypeNested = fromDoc.field("v");
-          }
-          ValueType toValueTypeNested = new ValueType(toElement, ODeltaDocumentFieldType.getTypeByValue(toElement));
-          toElement = mergeUpdateTree(toValueTypeNested, fromValueTypeNested);
-        }
-        toList.set(index, toElement);
-      } else {
-        //this should never happend, this is invalid delta
-        throw new IllegalStateException("Inavlid delta");
-      }
-    }
-  }
-
-  //process in depth first
-  private static Object mergeUpdateTree(ValueType toValueType, final ValueType fromValueType) {
-    OTypeInterface toType = toValueType.getType();
-    OTypeInterface fromType = fromValueType.getType();
-    Object toObj = toValueType.getValue();
-    Object fromObj = fromValueType.getValue();
-    if (toObj instanceof ODocument && fromObj instanceof ODocumentDelta) {
-      ODocument to = (ODocument) toObj;
-      ODocumentDelta from = (ODocumentDelta) fromObj;
-      mergeDocumentToDocument(to, from);
-    }
-    //here processing nested lists
-    else if (fromType.isList() && toType.isList()) {
-      //this case should only happen with list of documents
-      List fromList = (List) fromObj;
-      List toList = (List) toObj;
-      mergeListToList(toList, fromList);
-    } else if (fromObj instanceof ODocumentDelta) {
-      ODocumentDelta from = (ODocumentDelta) fromObj;
-      toObj = from.field("v").getValue();
-    } else {
-      toObj = fromObj;
-    }
-
-    return toObj;
-  }
-
-  protected ODocument mergeUpdateDelta(final ODocumentDelta iOther) {
-    if (iOther == null) {
-      return this;
-    }
-
-    checkForLoading();
-    checkForFields();
-
-    ValueType mergeTo = new ValueType(this, OType.EMBEDDED);
-    ValueType mergeFrom = new ValueType(iOther, ODeltaDocumentFieldType.DELTA_RECORD);
-
-    mergeUpdateTree(mergeTo, mergeFrom);
-
-    return this;
-  }
-
-  private static void mergeDeleteTree(final ODocument to, final ODocumentDelta from) {
-    for (Map.Entry<String, ValueType> field : from.fields()) {
-      final String fieldName = field.getKey();
-      final ValueType fieldValueType = field.getValue();
-      Object fieldVal = fieldValueType.getValue();
-      if ((!(fieldVal instanceof ODocumentDelta) && !(fieldVal instanceof List)) || (fieldVal instanceof ODocumentDelta
-          && ((ODocumentDelta) fieldVal).isLeaf())) {
-        to.removeField(fieldName);
-      } else if (fieldVal instanceof List) {
-        List<ODocumentDelta> fieldList = (List<ODocumentDelta>) fieldVal;
-        List toFieldList = to.field(fieldName);
-        for (ODocumentDelta deltaElement : fieldList) {
-          int index = deltaElement.field("i").getValue();
-          if (toFieldList.size() > index) {
-            Object toElement = toFieldList.get(index);
-            if (toElement instanceof ODocument) {
-              ODocumentDelta fromElement = deltaElement.field("v").getValue();
-              mergeDeleteTree((ODocument) toElement, fromElement);
-            }
-          }
-        }
-      } else {
-        //then it is ODocumentDelta
-        if (to.fields.keySet().contains(fieldName)) {
-          ODocumentDelta fromDoc = (ODocumentDelta) fieldVal;
-          Object toVal = to.field(fieldName);
-          if (toVal instanceof ODocument) {
-            ODocument toDoc = (ODocument) toVal;
-            mergeDeleteTree(toDoc, fromDoc);
-          }
-        }
-      }
-    }
-  }
-
-  protected ODocument mergeDeleteDelta(final ODocumentDelta iOther) {
-    if (iOther == null) {
-      return this;
-    }
-
-    checkForLoading();
-    checkForFields();
-
-    mergeDeleteTree(this, iOther);
-
-    return this;
-  }
-
-  public ODocument mergeDelta(final ODocumentDelta delta) {
-    ODocumentDelta updateDoc = delta.field("u").getValue();
-    ODocumentDelta deleteDoc = delta.field("d").getValue();
-    mergeUpdateDelta(updateDoc);
-    mergeDeleteDelta(deleteDoc);
-    return this;
-  }
-
   /**
    * Merge current document with the document passed as parameter. If the field already exists then the conflicts are managed based
    * on the value of the parameter 'iUpdateOnlyMode'.
@@ -1871,7 +1551,6 @@ public class ODocument extends ORecordAbstract
    *                                            false, the missed properties in the "other" document will be removed by original
    *                                            document
    * @param iMergeSingleItemsOfMultiValueFields If true, merges single items of multi field fields (collections, maps, arrays, etc)
-   *
    * @return
    */
   public ODocument merge(final Map<String, Object> iOther, final boolean iUpdateOnlyMode,
@@ -1892,7 +1571,7 @@ public class ODocument extends ORecordAbstract
 
     final Set<String> dirtyFields = new HashSet<>();
     for (Entry<String, ODocumentEntry> entry : fields.entrySet()) {
-      if (entry.getValue().isChanged() || entry.getValue().timeLine != null)
+      if (entry.getValue().isChanged() || entry.getValue().isTrackedModified())
         dirtyFields.add(entry.getKey());
     }
     return dirtyFields.toArray(new String[dirtyFields.size()]);
@@ -1914,7 +1593,7 @@ public class ODocument extends ORecordAbstract
 
   public OMultiValueChangeTimeLine<Object, Object> getCollectionTimeLine(final String iFieldName) {
     ODocumentEntry entry = fields != null ? fields.get(iFieldName) : null;
-    return entry != null ? entry.timeLine : null;
+    return entry != null ? entry.getTimeLine() : null;
   }
 
   /**
@@ -1937,7 +1616,7 @@ public class ODocument extends ORecordAbstract
       public boolean hasNext() {
         while (iterator.hasNext()) {
           current = iterator.next();
-          if (current.getValue().exist()) {
+          if (current.getValue().exists() && (propertyAccess == null || propertyAccess.isReadable(current.getKey()))) {
             read = false;
             return true;
           }
@@ -1981,12 +1660,12 @@ public class ODocument extends ORecordAbstract
           if (current.getValue().isChanged())
             current.getValue().original = current.getValue().value;
           current.getValue().value = null;
-          current.getValue().setExist(false);
-          current.getValue().setChanged(true);
+          current.getValue().setExists(false);
+          current.getValue().markChanged();
         } else
           iterator.remove();
         fieldSize--;
-        removeCollectionChangeListener(current.getValue(), current.getValue().value);
+        current.getValue().disableTracking(ODocument.this, current.getValue().value);
       }
     };
   }
@@ -1998,46 +1677,49 @@ public class ODocument extends ORecordAbstract
    */
   @Override
   public boolean containsField(final String iFieldName) {
-    if (iFieldName == null)
+    return hasProperty(iFieldName);
+  }
+
+  /**
+   * Checks if a property exists.
+   *
+   * @return True if exists, otherwise false.
+   */
+  @Override
+  public boolean hasProperty(final String propertyName) {
+    if (propertyName == null)
       return false;
 
     checkForLoading();
-    checkForFields(iFieldName);
-    ODocumentEntry entry = fields.get(iFieldName);
-    return entry != null && entry.exist();
+    if (checkForFields(propertyName) && (propertyAccess == null || propertyAccess.isReadable(propertyName))) {
+      ODocumentEntry entry = fields.get(propertyName);
+      return entry != null && entry.exists();
+    } else {
+      return false;
+    }
   }
 
   /**
    * Returns true if the record has some owner.
    */
   public boolean hasOwners() {
-    return owners != null && !owners.isEmpty();
+    return owner != null && owner.get() != null;
   }
 
   @Override
   public ORecordElement getOwner() {
-    if (owners == null)
+    if (owner == null)
       return null;
-
-    for (WeakReference<ORecordElement> owner : owners) {
-      final ORecordElement e = owner.get();
-      if (e != null)
-        return e;
-    }
-
-    return null;
+    return owner.get();
   }
 
+  @Deprecated
   public Iterable<ORecordElement> getOwners() {
-    if (owners == null)
+    if (owner == null && owner.get() == null)
       return Collections.emptyList();
 
     final List<ORecordElement> result = new ArrayList<>();
-    for (WeakReference<ORecordElement> o : owners) {
-      if (o.get() != null)
-        result.add(o.get());
-    }
-
+    result.add(owner.get());
     return result;
   }
 
@@ -2046,14 +1728,9 @@ public class ODocument extends ORecordAbstract
    */
   @Override
   public ORecordAbstract setDirty() {
-    if (owners != null) {
+    if (owner != null && owner.get() != null) {
       // PROPAGATES TO THE OWNER
-      ORecordElement e;
-      for (WeakReference<ORecordElement> o : owners) {
-        e = o.get();
-        if (e != null)
-          e.setDirty();
-      }
+      owner.get().setDirty();
     } else if (!isDirty())
       getDirtyManager().setDirty(this);
 
@@ -2091,14 +1768,9 @@ public class ODocument extends ORecordAbstract
 
   @Override
   public void setDirtyNoChanged() {
-    if (owners != null) {
+    if (owner != null && owner.get() != null) {
       // PROPAGATES TO THE OWNER
-      ORecordElement e;
-      for (WeakReference<ORecordElement> o : owners) {
-        e = o.get();
-        if (e != null)
-          e.setDirtyNoChanged();
-      }
+      owner.get().setDirtyNoChanged();
     }
 
     getDirtyManager().setDirty(this);
@@ -2138,8 +1810,13 @@ public class ODocument extends ORecordAbstract
     checkForFields(iFieldName);
 
     ODocumentEntry entry = fields.get(iFieldName);
-    if (entry != null)
-      return entry.type;
+    if (entry != null) {
+      if (propertyAccess == null || propertyAccess.isReadable(iFieldName)) {
+        return entry.type;
+      } else {
+        return null;
+      }
+    }
 
     return null;
   }
@@ -2157,14 +1834,13 @@ public class ODocument extends ORecordAbstract
    * <p> The following code will clear all data from specified document. </p> <code> doc.clear(); doc.save(); </code>
    *
    * @return this
-   *
    * @see #reset()
    */
   @Override
   public ODocument clear() {
     super.clear();
     internalReset();
-    owners = null;
+    owner = null;
     return this;
   }
 
@@ -2177,7 +1853,6 @@ public class ODocument extends ORecordAbstract
    * <p> IMPORTANT! This can be used only if no transactions are begun. </p>
    *
    * @return this
-   *
    * @throws IllegalStateException if transaction is begun.
    * @see #clear()
    */
@@ -2195,7 +1870,7 @@ public class ODocument extends ORecordAbstract
 
     internalReset();
 
-    owners = null;
+    owner = null;
     return this;
   }
 
@@ -2212,13 +1887,10 @@ public class ODocument extends ORecordAbstract
       while (vals.hasNext()) {
         Entry<String, ODocumentEntry> next = vals.next();
         ODocumentEntry val = next.getValue();
-        if (val.created) {
+        if (val.isCreated()) {
           vals.remove();
-        } else if (val.changed) {
-          val.value = val.original;
-          val.changed = false;
-          val.original = null;
-          val.exist = true;
+        } else {
+          val.undo();
         }
       }
       fieldSize = fields.size();
@@ -2234,14 +1906,10 @@ public class ODocument extends ORecordAbstract
     if (fields != null) {
       final ODocumentEntry value = fields.get(field);
       if (value != null) {
-        if (value.created) {
+        if (value.isCreated()) {
           fields.remove(field);
-        }
-        if (value.changed) {
-          value.value = value.original;
-          value.original = null;
-          value.changed = false;
-          value.exist = true;
+        } else {
+          value.undo();
         }
       }
     }
@@ -2274,7 +1942,6 @@ public class ODocument extends ORecordAbstract
    * com.orientechnologies.orient.core.index.OClassIndexManager} to determine what fields are changed to update indexes.
    *
    * @param iTrackingChanges True to enable it, otherwise false
-   *
    * @return this
    */
   public ODocument setTrackingChanges(final boolean iTrackingChanges) {
@@ -2284,13 +1951,10 @@ public class ODocument extends ORecordAbstract
       Iterator<Entry<String, ODocumentEntry>> iter = fields.entrySet().iterator();
       while (iter.hasNext()) {
         Entry<String, ODocumentEntry> cur = iter.next();
-        if (!cur.getValue().exist())
+        if (!cur.getValue().exists()) {
           iter.remove();
-        else {
-          cur.getValue().setCreated(false);
-          cur.getValue().setChanged(false);
-          cur.getValue().original = null;
-          cur.getValue().timeLine = null;
+        } else {
+          cur.getValue().clear();
         }
       }
       removeAllCollectionChangeListeners();
@@ -2306,20 +1970,30 @@ public class ODocument extends ORecordAbstract
       Iterator<Entry<String, ODocumentEntry>> iter = fields.entrySet().iterator();
       while (iter.hasNext()) {
         Entry<String, ODocumentEntry> cur = iter.next();
-        if (!cur.getValue().exist())
-          iter.remove();
-        else {
-          cur.getValue().setCreated(false);
-          cur.getValue().setChanged(false);
-          cur.getValue().original = null;
-          cur.getValue().timeLine = null;
-
-          if (cur.getValue().changeListener == null && cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
-            addCollectionChangeListener(cur.getValue());
-          }
+        if (cur.getValue().exists()) {
+          cur.getValue().clear();
+          cur.getValue().enableTracking(this);
+        } else {
+          cur.getValue().clearNotExists();
         }
       }
     }
+  }
+
+  protected void clearTransactionTrackData() {
+    if (fields != null) {
+      // FREE RESOURCES
+      Iterator<Entry<String, ODocumentEntry>> iter = fields.entrySet().iterator();
+      while (iter.hasNext()) {
+        Entry<String, ODocumentEntry> cur = iter.next();
+        if (cur.getValue().exists()) {
+          cur.getValue().transactionClear();
+        } else {
+          iter.remove();
+        }
+      }
+    }
+
   }
 
   public boolean isOrdered() {
@@ -2384,7 +2058,7 @@ public class ODocument extends ORecordAbstract
   }
 
   public boolean isEmbedded() {
-    return owners != null && !owners.isEmpty();
+    return owner != null;
   }
 
   /**
@@ -2484,7 +2158,7 @@ public class ODocument extends ORecordAbstract
     }
 
     if (recordFormat == null)
-      setup();
+      setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
 
     status = ORecordElement.STATUS.UNMARSHALLING;
     try {
@@ -2524,7 +2198,7 @@ public class ODocument extends ORecordAbstract
     stream.write(idBuffer);
     stream.writeInt(recordVersion);
 
-    final byte[] content = serializer.toStream(this, false);
+    final byte[] content = serializer.toStream(this);
     stream.writeInt(content.length);
     stream.write(content);
 
@@ -2670,8 +2344,13 @@ public class ODocument extends ORecordAbstract
 
     autoConvertValues();
 
-    if (ODatabaseRecordThreadLocal.instance().isDefined() && !getDatabase().isValidationEnabled())
+    ODatabaseDocumentInternal internal = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (internal != null) {
+      validateFieldsSecurity(internal, this);
+    }
+    if (internal != null && !internal.isValidationEnabled()) {
       return;
+    }
 
     final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
     if (immutableSchemaClass != null) {
@@ -2719,6 +2398,9 @@ public class ODocument extends ORecordAbstract
 
       boolean first = true;
       for (Entry<String, ODocumentEntry> f : fields.entrySet()) {
+        if (propertyAccess != null && !propertyAccess.isReadable(f.getKey())) {
+          continue;
+        }
         buffer.append(first ? '{' : ',');
         buffer.append(f.getKey());
         buffer.append(':');
@@ -2768,16 +2450,21 @@ public class ODocument extends ORecordAbstract
 
     for (String f : iOther.keySet()) {
       ODocumentEntry docEntry = iOther.get(f);
-      if (!docEntry.exist()) {
+      if (!docEntry.exists()) {
         continue;
       }
       final Object otherValue = docEntry.value;
 
       ODocumentEntry curValue = fields.get(f);
 
-      if (curValue != null && curValue.exist()) {
+      if (curValue != null && curValue.exists()) {
         final Object value = curValue.value;
         if (iMergeSingleItemsOfMultiValueFields) {
+          boolean autoConvert = false;
+          if (otherValue instanceof OAutoConvertToRecord) {
+            autoConvert = ((OAutoConvertToRecord) otherValue).isAutoConvertToRecord();
+            ((OAutoConvertToRecord) otherValue).setAutoConvertToRecord(false);
+          }
           if (value instanceof Map<?, ?>) {
             final Map<String, Object> map = (Map<String, Object>) value;
             final Map<String, Object> otherMap = (Map<String, Object>) otherValue;
@@ -2785,14 +2472,20 @@ public class ODocument extends ORecordAbstract
             for (Entry<String, Object> entry : otherMap.entrySet()) {
               map.put(entry.getKey(), entry.getValue());
             }
+            if (otherValue instanceof OAutoConvertToRecord) {
+              ((OAutoConvertToRecord) otherValue).setAutoConvertToRecord(autoConvert);
+            }
+
             continue;
           } else if (OMultiValue.isMultiValue(value) && !(value instanceof ORidBag)) {
             for (Object item : OMultiValue.getMultiValueIterable(otherValue)) {
               if (!OMultiValue.contains(value, item))
                 OMultiValue.add(value, item);
             }
-
             // JUMP RAW REPLACE
+            if (otherValue instanceof OAutoConvertToRecord) {
+              ((OAutoConvertToRecord) otherValue).setAutoConvertToRecord(autoConvert);
+            }
             continue;
           }
         }
@@ -2811,7 +2504,7 @@ public class ODocument extends ORecordAbstract
     if (!iUpdateOnlyMode) {
       // REMOVE PROPERTIES NOT FOUND IN OTHER DOC
       for (String f : fieldNames())
-        if (!iOther.containsKey(f) || !iOther.get(f).exist())
+        if (!iOther.containsKey(f) || !iOther.get(f).exists())
           removeField(f);
     }
 
@@ -2901,10 +2594,10 @@ public class ODocument extends ORecordAbstract
       fields = ordered ? new LinkedHashMap<>() : new HashMap<>();
 
     ODocumentEntry entry = getOrCreate(iFieldName);
-    removeCollectionChangeListener(entry, entry.value);
+    entry.disableTracking(this, entry.value);
     entry.value = iFieldValue;
     entry.type = iFieldType;
-    addCollectionChangeListener(entry);
+    entry.enableTracking(this);
     if (iFieldValue instanceof OIdentifiable && !((OIdentifiable) iFieldValue).getIdentity().isPersistent())
       track((OIdentifiable) iFieldValue);
   }
@@ -2938,7 +2631,7 @@ public class ODocument extends ORecordAbstract
         if (entry == null) {
           continue;
         }
-        if (!entry.created && !entry.changed) {
+        if (!entry.isCreated() && !entry.isChanged()) {
           continue;
         }
         Object value = entry.value;
@@ -2946,6 +2639,17 @@ public class ODocument extends ORecordAbstract
           continue;
         }
         try {
+          if (type == OType.LINKBAG && entry.value != null && !(entry.value instanceof ORidBag)
+              && entry.value instanceof Collection) {
+            ORidBag newValue = new ORidBag();
+            for (Object o : ((Collection) entry.value)) {
+              if (!(o instanceof OIdentifiable)) {
+                throw new OValidationException("Invalid value in ridbag: " + o);
+              }
+              newValue.add((OIdentifiable) o);
+            }
+            entry.value = newValue;
+          }
           if (type == OType.LINKMAP) {
             if (entry.value instanceof Map) {
               Map<String, Object> map = (Map) entry.value;
@@ -3010,7 +2714,7 @@ public class ODocument extends ORecordAbstract
     if (entry == null || linkedClass == null) {
       return;
     }
-    if (!entry.created && !entry.changed) {
+    if (!entry.isCreated() && !entry.isChanged()) {
       return;
     }
     Object value = entry.value;
@@ -3027,7 +2731,7 @@ public class ODocument extends ORecordAbstract
               "impossible to convert value of field \"" + prop.getName() + "\", incompatible with " + linkedClass);
         }
       } else if (value instanceof Map) {
-        removeCollectionChangeListener(entry, value);
+        entry.disableTracking(this, value);
         ODocument newValue = new ODocument(linkedClass);
         newValue.fromMap((Map) value);
         entry.value = newValue;
@@ -3043,17 +2747,7 @@ public class ODocument extends ORecordAbstract
   }
 
   private void replaceListenerOnAutoconvert(final ODocumentEntry entry, Object oldValue) {
-    if (entry.changeListener != null) {
-      // A listener was there, remove on the old value add it to the new value.
-      final OTrackedMultiValue<Object, Object> oldMultiValue = (OTrackedMultiValue<Object, Object>) oldValue;
-      oldMultiValue.removeRecordChangeListener(entry.changeListener);
-      ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(entry.changeListener);
-    } else {
-      // no listener was there add it only to the new value
-      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(this, entry);
-      ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(listener);
-      entry.changeListener = listener;
-    }
+    entry.replaceListener(this, oldValue);
   }
 
   protected byte[] toStream(final boolean iOnlyDelta) {
@@ -3061,11 +2755,10 @@ public class ODocument extends ORecordAbstract
     status = STATUS.MARSHALLING;
     try {
       if (source == null)
-        source = recordFormat.toStream(this, iOnlyDelta);
+        source = recordFormat.toStream(this);
     } finally {
       status = prev;
     }
-    invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
     return source;
   }
@@ -3084,39 +2777,17 @@ public class ODocument extends ORecordAbstract
   protected void addOwner(final ORecordElement iOwner) {
     if (iOwner == null)
       return;
-    if (owners == null) {
-      owners = new ArrayList<>();
+    if (owner == null) {
       if (dirtyManager != null && this.getIdentity().isNew())
         dirtyManager.removeNew(this);
     }
-
-    boolean found = false;
-    Iterator<WeakReference<ORecordElement>> ref = owners.iterator();
-    while (ref.hasNext()) {
-      final ORecordElement e = ref.next().get();
-      if (e == iOwner) {
-        found = true;
-        break;
-      } else if (e == null)
-        ref.remove();
-    }
-
-    if (!found)
-      this.owners.add(new WeakReference<>(iOwner));
+    this.owner = new WeakReference<>(iOwner);
 
   }
 
   protected void removeOwner(final ORecordElement iRecordElement) {
-    if (owners != null) {
-      // PROPAGATES TO THE OWNER
-      ORecordElement e;
-      for (int i = 0; i < owners.size(); ++i) {
-        e = owners.get(i).get();
-        if (e == iRecordElement) {
-          owners.remove(i);
-          break;
-        }
-      }
+    if (owner != null && owner.get() == iRecordElement) {
+      owner = null;
     }
   }
 
@@ -3124,15 +2795,19 @@ public class ODocument extends ORecordAbstract
     if (fields == null)
       return;
     for (Map.Entry<String, ODocumentEntry> fieldEntry : fields.entrySet()) {
-      final Object fieldValue = fieldEntry.getValue().value;
+      ODocumentEntry entry = fieldEntry.getValue();
+      final Object fieldValue = entry.value;
       if (fieldValue instanceof ORidBag) {
+        if (isEmbedded()) {
+          throw new ODatabaseException("RidBag are supported only at document root");
+        }
         ((ORidBag) fieldValue).checkAndConvert();
       }
       if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
         continue;
-      if (addCollectionChangeListener(fieldEntry.getValue())) {
-        if (fieldEntry.getValue().timeLine != null && !fieldEntry.getValue().timeLine.getMultiValueChangeEvents().isEmpty()) {
-          checkTimelineTrackable(fieldEntry.getValue().timeLine, (OTrackedMultiValue) fieldEntry.getValue().value);
+      if (entry.enableTracking(this)) {
+        if (entry.getTimeLine() != null && !entry.getTimeLine().getMultiValueChangeEvents().isEmpty()) {
+          checkTimelineTrackable(entry.getTimeLine(), (OTrackedMultiValue) entry.value);
         }
         continue;
       }
@@ -3142,7 +2817,7 @@ public class ODocument extends ORecordAbstract
         continue;
       }
 
-      OType fieldType = fieldEntry.getValue().type;
+      OType fieldType = entry.type;
       if (fieldType == null) {
         OClass clazz = getImmutableSchemaClass();
         if (clazz != null) {
@@ -3158,19 +2833,19 @@ public class ODocument extends ORecordAbstract
       case EMBEDDEDLIST:
         if (fieldValue instanceof List<?>) {
           newValue = new OTrackedList<>(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+          fillTrackedCollection((Collection<Object>) newValue, (ORecordElement) newValue, (Collection<Object>) fieldValue);
         }
         break;
       case EMBEDDEDSET:
         if (fieldValue instanceof Set<?>) {
           newValue = new OTrackedSet<>(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+          fillTrackedCollection((Collection<Object>) newValue, (ORecordElement) newValue, (Collection<Object>) fieldValue);
         }
         break;
       case EMBEDDEDMAP:
         if (fieldValue instanceof Map<?, ?>) {
           newValue = new OTrackedMap<>(this);
-          fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
+          fillTrackedMap((Map<Object, Object>) newValue, (ORecordElement) newValue, (Map<Object, Object>) fieldValue);
         }
         break;
       case LINKLIST:
@@ -3198,8 +2873,8 @@ public class ODocument extends ORecordAbstract
       }
 
       if (newValue != null) {
-        addCollectionChangeListener(fieldEntry.getValue());
-        fieldEntry.getValue().value = newValue;
+        entry.enableTracking(this);
+        entry.value = newValue;
         if (fieldType == OType.LINKSET || fieldType == OType.LINKLIST) {
           boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
           ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
@@ -3227,63 +2902,69 @@ public class ODocument extends ORecordAbstract
     for (OMultiValueChangeEvent<Object, Object> event : events) {
       Object value = event.getValue();
       if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD && !(value instanceof OTrackedMultiValue)) {
-        if (value instanceof Collection) {
-          Collection<Object> newCollection = value instanceof List ? new OTrackedList<>(this) : new OTrackedSet<>(this);
-          fillTrackedCollection(newCollection, (Collection<Object>) value);
+        if (value instanceof List) {
+          OTrackedList newCollection = new OTrackedList<>(this);
+          fillTrackedCollection(newCollection, newCollection, (Collection<Object>) value);
           origin.replace(event, newCollection);
+        } else if (value instanceof Set) {
+          OTrackedSet newCollection = new OTrackedSet<>(this);
+          fillTrackedCollection(newCollection, newCollection, (Collection<Object>) value);
+          origin.replace(event, newCollection);
+
         } else if (value instanceof Map) {
-          Map<Object, Object> newMap = new OTrackedMap<>(this);
-          fillTrackedMap(newMap, (Map<Object, Object>) value);
+          OTrackedMap<Object> newMap = new OTrackedMap<>(this);
+          fillTrackedMap(newMap, newMap, (Map<Object, Object>) value);
           origin.replace(event, newMap);
         }
-      } else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED) {
-        OMultiValueChangeTimeLine nestedTimeline = ((ONestedMultiValueChangeEvent) event).getTimeLine();
-        if (nestedTimeline != null)
-          checkTimelineTrackable(nestedTimeline, (OTrackedMultiValue) value);
       }
     }
   }
 
-  private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {
+  private void fillTrackedCollection(Collection<Object> dest, ORecordElement parent, Collection<Object> source) {
     for (Object cur : source) {
       if (cur instanceof ODocument) {
+        ((ODocument) cur).addOwner((ORecordElement) dest);
         ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
         ((ODocument) cur).clearTrackData();
       } else if (cur instanceof List) {
-        List newList = new OTrackedList<>(this);
-        fillTrackedCollection((Collection) newList, (Collection<Object>) cur);
+        OTrackedList newList = new OTrackedList<>(parent);
+        fillTrackedCollection((Collection) newList, newList, (Collection<Object>) cur);
         cur = newList;
       } else if (cur instanceof Set) {
-        Set<Object> newSet = new OTrackedSet<>(this);
-        fillTrackedCollection(newSet, (Collection<Object>) cur);
+        OTrackedSet<Object> newSet = new OTrackedSet<>(parent);
+        fillTrackedCollection(newSet, newSet, (Collection<Object>) cur);
         cur = newSet;
       } else if (cur instanceof Map) {
-        Map<Object, Object> newMap = new OTrackedMap<>(this);
-        fillTrackedMap(newMap, (Map<Object, Object>) cur);
+        OTrackedMap<Object> newMap = new OTrackedMap<>(parent);
+        fillTrackedMap(newMap, newMap, (Map<Object, Object>) cur);
         cur = newMap;
+      } else if (cur instanceof ORidBag) {
+        throw new ODatabaseException("RidBag are supported only at document root");
       }
       dest.add(cur);
     }
   }
 
-  private void fillTrackedMap(Map<Object, Object> dest, Map<Object, Object> source) {
+  private void fillTrackedMap(Map<Object, Object> dest, ORecordElement parent, Map<Object, Object> source) {
     for (Entry<Object, Object> cur : source.entrySet()) {
       Object value = cur.getValue();
       if (value instanceof ODocument) {
         ((ODocument) value).convertAllMultiValuesToTrackedVersions();
         ((ODocument) value).clearTrackData();
       } else if (cur.getValue() instanceof List) {
-        List<Object> newList = new OTrackedList<>(this);
-        fillTrackedCollection(newList, (Collection<Object>) value);
+        OTrackedList<Object> newList = new OTrackedList<>(parent);
+        fillTrackedCollection(newList, newList, (Collection<Object>) value);
         value = newList;
       } else if (value instanceof Set) {
-        Set<Object> newSet = new OTrackedSet<>(this);
-        fillTrackedCollection(newSet, (Collection<Object>) value);
+        OTrackedSet<Object> newSet = new OTrackedSet<>(parent);
+        fillTrackedCollection(newSet, newSet, (Collection<Object>) value);
         value = newSet;
       } else if (value instanceof Map) {
-        Map<Object, Object> newMap = new OTrackedMap<>(this);
-        fillTrackedMap(newMap, (Map<Object, Object>) value);
+        OTrackedMap<Object> newMap = new OTrackedMap<>(parent);
+        fillTrackedMap(newMap, newMap, (Map<Object, Object>) value);
         value = newMap;
+      } else if (value instanceof ORidBag) {
+        throw new ODatabaseException("RidBag are supported only at document root");
       }
       dest.put(cur.getKey(), value);
     }
@@ -3309,14 +2990,28 @@ public class ODocument extends ORecordAbstract
     return true;
   }
 
+  protected Object accessProperty(final String property) {
+    if (checkForFields(property)) {
+      if (propertyAccess == null || propertyAccess.isReadable(property)) {
+        ODocumentEntry entry = fields.get(property);
+        return entry != null ? entry.value : null;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Internal.
+   *
+   * @param db
    */
   @Override
-  protected void setup() {
-    super.setup();
+  protected void setup(ODatabaseDocumentInternal db) {
+    super.setup(db);
 
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null)
       recordFormat = db.getSerializer();
 
@@ -3351,6 +3046,21 @@ public class ODocument extends ORecordAbstract
   protected Set<Entry<String, ODocumentEntry>> getRawEntries() {
     checkForFields();
     return fields == null ? new HashSet<>() : fields.entrySet();
+  }
+
+  protected List<Entry<String, ODocumentEntry>> getFilteredEntries() {
+    checkForFields();
+    if (fields == null) {
+      return Collections.emptyList();
+    } else if (propertyAccess == null) {
+      return fields.entrySet().stream().filter((x) -> {
+        return x.getValue().exists();
+      }).collect(Collectors.toList());
+    } else {
+      return fields.entrySet().stream().filter((x) -> {
+        return x.getValue().exists() && propertyAccess.isReadable(x.getKey());
+      }).collect(Collectors.toList());
+    }
   }
 
   private void fetchSchemaIfCan() {
@@ -3407,15 +3117,22 @@ public class ODocument extends ORecordAbstract
   private void convertFieldsToClass(final OClass clazz) {
     for (OProperty prop : clazz.properties()) {
       ODocumentEntry entry = fields != null ? fields.get(prop.getName()) : null;
-      if (entry != null && entry.exist()) {
+      if (entry != null && entry.exists()) {
         if (entry.type == null || entry.type != prop.getType()) {
-          boolean preChanged = entry.changed;
-          boolean preCreated = entry.created;
-          ;
+          boolean preChanged = entry.isChanged();
+          boolean preCreated = entry.isCreated();
           field(prop.getName(), entry.value, prop.getType());
           if (recordId.isNew()) {
-            entry.changed = preChanged;
-            entry.created = preCreated;
+            if (preChanged) {
+              entry.markChanged();
+            } else {
+              entry.unmarkChanged();
+            }
+            if (preCreated) {
+              entry.markCreated();
+            } else {
+              entry.unmarkCreated();
+            }
           }
         }
       } else {
@@ -3452,23 +3169,12 @@ public class ODocument extends ORecordAbstract
     return fieldType;
   }
 
-  private boolean addCollectionChangeListener(final ODocumentEntry entry) {
-    if (!(entry.value instanceof OTrackedMultiValue))
-      return false;
-    if (entry.changeListener == null) {
-      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(this, entry);
-      ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(listener);
-      entry.changeListener = listener;
-    }
-    return true;
-  }
-
   private void removeAllCollectionChangeListeners() {
     if (fields == null)
       return;
 
     for (final Map.Entry<String, ODocumentEntry> field : fields.entrySet()) {
-      removeCollectionChangeListener(field.getValue(), field.getValue().value);
+      field.getValue().disableTracking(this, field.getValue().value);
     }
   }
 
@@ -3477,20 +3183,7 @@ public class ODocument extends ORecordAbstract
       return;
 
     for (final Map.Entry<String, ODocumentEntry> field : fields.entrySet()) {
-      addCollectionChangeListener(field.getValue());
-    }
-  }
-
-  private void removeCollectionChangeListener(ODocumentEntry entry, Object fieldValue) {
-    if (entry != null && entry.changeListener != null) {
-      final OMultiValueChangeListener<Object, Object> changeListener = entry.changeListener;
-      entry.changeListener = null;
-      entry.timeLine = null;
-      if (!(fieldValue instanceof OTrackedMultiValue))
-        return;
-
-      final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
-      multiValue.removeRecordChangeListener(changeListener);
+      field.getValue().enableTracking(this);
     }
   }
 
@@ -3526,457 +3219,8 @@ public class ODocument extends ORecordAbstract
       super.unTrack(id);
   }
 
-  private UpdateTypeValueType getUpdateForListWithPreviousValue(Object currentValue, Object previousValue, ODocumentEntry parent,
-      List<Object> ownersTrace, OType currentValueLinkedType, OType previousValueType, OType previousValueLinkedType) {
-    UpdateTypeValueType retVal = null;
-    if (previousValueType.isList()) {
-      retVal = new UpdateTypeValueType();
-      retVal.setUpdateType(UpdateDeltaValueType.LIST_UPDATE);
-      List deltaList = new ArrayList();
-      retVal.setValue(deltaList);
-      retVal.setValueType(OType.EMBEDDEDLIST);
-      //now find a diff
-      List currentList = (List) currentValue;
-      List previousList = (List) previousValue;
-      int i = 0;
-      for (i = 0; i < currentList.size(); i++) {
-        Object currentElement = currentList.get(i);
-        if (i > previousList.size() - 1) {
-          //these elements doesn't have pair in original list
-          ODocumentDelta deltaElement = new ODocumentDelta();
-          deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
-          deltaElement.field("v", new ValueType(currentElement,
-              currentValueLinkedType != null ? currentValueLinkedType : ODeltaDocumentFieldType.getTypeByValue(currentElement)));
-          deltaList.add(deltaElement);
-          continue;
-        }
-        //these elements have pairs in original list, so we need to calculate deltas
-        Object originalElement = previousList.get(i);
-        //check if can we go just with value change
-        OType currentElementType =
-            currentValueLinkedType != null ? currentValueLinkedType : OType.getTypeByClass(currentElement.getClass());
-        OType previousElementType =
-            previousValueLinkedType != null ? previousValueLinkedType : OType.getTypeByClass(originalElement.getClass());
-        if ((currentElementType != previousElementType && currentElementType.isList() != previousElementType.isList()) || (
-            !(currentElement instanceof ODocument) && !(currentElement instanceof List))) {
-          if (!Objects.equals(currentElement, originalElement)) {
-            ODocumentDelta deltaElement = new ODocumentDelta();
-            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(), OType.BYTE));
-            deltaElement.field("v", new ValueType(currentElement, currentElementType));
-            deltaElement.field("i", new ValueType(i, OType.INTEGER));
-            deltaList.add(deltaElement);
-          }
-        } else {
-          if (!Objects.equals(currentElement, originalElement)) {
-            //now we want to go in depth to get delta value
-            ODocumentDelta deltaElement = new ODocumentDelta();
-            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
-
-            //we cann't determine linked type directly from document because this can be double nested collection
-            UpdateTypeValueType delta = getUpdateDeltaValue(currentElement, originalElement, true, parent, ownersTrace,
-                currentElementType, null, previousElementType, null);
-            ODocumentDelta doc = new ODocumentDelta();
-            doc.field("t", new ValueType(delta.getUpdateType().getOrd(), OType.BYTE));
-            doc.field("v", new ValueType(delta.getValue(), delta.getValueType()));
-            deltaElement.field("v", new ValueType(doc, ODeltaDocumentFieldType.DELTA_RECORD));
-            deltaElement.field("i", new ValueType(i, OType.INTEGER));
-            deltaList.add(deltaElement);
-          }
-          //this means that elements are equal so nothig to do
-        }
-      }
-      //these element are contained only in original list , so they should be removed
-      for (int j = i; j < previousList.size(); j++) {
-        ODocumentDelta deltaElement = new ODocumentDelta();
-        deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
-        deltaElement.field("i", new ValueType(j, OType.INTEGER));
-        deltaList.add(deltaElement);
-      }
-    }
-    return retVal;
-  }
-
-  private UpdateTypeValueType getUpdateForRidbagWithPreviousValue(ORidBag currentValue, ORidBag previousValue, boolean changed) {
-    UpdateTypeValueType retVal = null;
-    if (currentValue != null && previousValue != null && currentValue.isEmbedded() && previousValue.isEmbedded() && changed) {
-      retVal = new UpdateTypeValueType();
-      retVal.setUpdateType(UpdateDeltaValueType.RIDBAG_UPDATE);
-      List deltaList = new ArrayList();
-      retVal.setValue(deltaList);
-      retVal.setValueType(OType.EMBEDDEDLIST);
-      //now find a diff
-      int i = 0;
-      Iterator<OIdentifiable> currentRidbagIter = currentValue.rawIterator();
-      Iterator<OIdentifiable> previousRidbagIter = previousValue.rawIterator();
-      while (currentRidbagIter.hasNext()) {
-        OIdentifiable currentElement = currentRidbagIter.next();
-        if (previousRidbagIter.hasNext() == false) {
-          //these elements doesn't have pair in original list
-          ODocumentDelta deltaElement = new ODocumentDelta();
-          deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
-          deltaElement.field("v", new ValueType(currentElement, OType.LINK));
-          deltaList.add(deltaElement);
-          continue;
-        }
-        //these elements have pairs in original list, so we need to calculate deltas
-        OIdentifiable originalElement = previousRidbagIter.next();
-        //check if can we go just with value change
-        if (!Objects.equals(currentElement, originalElement)) {
-          ODocumentDelta deltaElement = new ODocumentDelta();
-          deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(), OType.BYTE));
-          deltaElement.field("v", new ValueType(currentElement, OType.LINK));
-          deltaElement.field("i", new ValueType(i, OType.INTEGER));
-          deltaList.add(deltaElement);
-        }
-        //this means that elements are equal so nothig to do
-        i++;
-      }
-      //these element are contained only in original list , so they should be removed
-      while (previousRidbagIter.hasNext()) {
-        OIdentifiable element = previousRidbagIter.next();
-        ODocumentDelta deltaElement = new ODocumentDelta();
-        deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
-        deltaElement.field("v", new ValueType(element, OType.LINK));
-        deltaList.add(deltaElement);
-        ++i;
-      }
-    }
-    return retVal;
-  }
-
-  private UpdateTypeValueType getUpdateForRidbagWithoutPreviousValue(ORidBag currentValue, ODocumentEntry parent) {
-    UpdateTypeValueType retVal = null;
-    if (currentValue != null && currentValue.isEmbedded() && ODocumentHelper.isChangedRidbag(currentValue, parent)) {
-      retVal = new UpdateTypeValueType();
-      retVal.setUpdateType(UpdateDeltaValueType.RIDBAG_UPDATE);
-      List deltaList = new ArrayList();
-      retVal.setValue(deltaList);
-      retVal.setValueType(OType.EMBEDDEDLIST);
-      //now create diff from multi value change events
-      if (parent.timeLine != null) {
-        List<OMultiValueChangeEvent<Object, Object>> timeline = parent.timeLine.getMultiValueChangeEvents();
-        for (OMultiValueChangeEvent<Object, Object> event : timeline) {
-          if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD) {
-            ODocumentDelta deltaElement = new ODocumentDelta();
-            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
-            deltaElement.field("v", new ValueType(event.getKey(), OType.LINK));
-            deltaList.add(deltaElement);
-          } else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE) {
-            ODocumentDelta deltaElement = new ODocumentDelta();
-            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
-            deltaElement.field("v", new ValueType(event.getKey(), OType.LINK));
-            deltaList.add(deltaElement);
-          }
-        }
-      }
-    }
-    return retVal;
-  }
-
-  private UpdateTypeValueType getUpdateForListWithoutPreviousValue(Object currentValue, ODocumentEntry parent,
-      List<Object> ownersTrace, OType currentValueLinkedType) {
-    List currentList = (List) currentValue;
-    UpdateTypeValueType retVal = new UpdateTypeValueType();
-    retVal.setUpdateType(UpdateDeltaValueType.LIST_UPDATE);
-    List<ODocumentDelta> deltaList = new ArrayList<>();
-    retVal.setValue(deltaList);
-    retVal.setValueType(OType.EMBEDDEDLIST);
-    for (int i = 0; i < currentList.size(); i++) {
-      Object currentElement = currentList.get(i);
-      OType currentElementType = currentValueLinkedType != null ? currentValueLinkedType : OType.getTypeByValue(currentElement);
-      if (currentElement instanceof ODocument) {
-        ODocument currentElementDoc = (ODocument) currentElement;
-        if (currentElementDoc.isChangedInDepth()) {
-          ODocumentDelta listElementDelta = new ODocumentDelta();
-          listElementDelta.field("i", new ValueType(i, OType.INTEGER));
-          listElementDelta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
-          ODocumentDelta deltaUpdate = currentElementDoc.getDeltaFromOriginalForUpdate();
-          listElementDelta.field("v", new ValueType(deltaUpdate, ODeltaDocumentFieldType.DELTA_RECORD));
-          deltaList.add(listElementDelta);
-        }
-      } else if (currentElement instanceof List) {
-        List currentElementAsList = (List) currentElement;
-        if (ODocumentHelper.isChangedCollection(currentElementAsList, parent, new ArrayList<>(ownersTrace), 1)) {
-          ODocumentDelta listElementDelta = new ODocumentDelta();
-          listElementDelta.field("i", new ValueType(i, OType.INTEGER));
-          listElementDelta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
-          UpdateTypeValueType deltaUpdate = getUpdateDeltaValue(currentElementAsList, null, false, parent, ownersTrace,
-              currentElementType, null, null, null);
-          ODocumentDelta deltaValue = new ODocumentDelta();
-          deltaValue.field("t", new ValueType(deltaUpdate.getUpdateType().getOrd(), OType.BYTE));
-          deltaValue.field("v", new ValueType(deltaUpdate.getValue(), deltaUpdate.getValueType()));
-          listElementDelta.field("v", new ValueType(deltaValue, ODeltaDocumentFieldType.DELTA_RECORD));
-          deltaList.add(listElementDelta);
-        }
-      } else {
-        //element
-        OMultiValueChangeEvent.OChangeType changeType = ODocumentHelper
-            .isNestedValueChanged(parent, currentElement, ownersTrace, 1, i);
-        if (changeType != null) {
-          ODocumentDelta deltaElement = new ODocumentDelta();
-          deltaElement.field("v", new ValueType(currentElement, currentElementType));
-          deltaElement.field("i", new ValueType(i, OType.INTEGER));
-          switch (changeType) {
-          case ADD:
-            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
-            break;
-          case UPDATE:
-          case NESTED:
-            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(), OType.BYTE));
-            break;
-          }
-          deltaList.add(deltaElement);
-        }
-      }
-    }
-    List<Integer> indexesToRemove = getRemovedIndexes(parent, currentList, ownersTrace, 1);
-    int counter = 0;
-    for (Integer index : indexesToRemove) {
-      ODocumentDelta removeDleta = new ODocumentDelta();
-      removeDleta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
-      removeDleta.field("i", new ValueType(index + counter++, OType.INTEGER));
-      deltaList.add(removeDleta);
-    }
-    return retVal;
-  }
-
-  private UpdateTypeValueType getUpdateForNestedDocument(Object currentValue) {
-    UpdateTypeValueType retVal = new UpdateTypeValueType();
-    ODocument docVal;
-    if (currentValue instanceof ODocumentSerializable) {
-      docVal = ((ODocumentSerializable) currentValue).toDocument();
-    } else {
-      docVal = (ODocument) currentValue;
-    }
-    retVal.setValue(docVal.getDeltaFromOriginalForUpdate());
-    retVal.setUpdateType(UpdateDeltaValueType.UPDATE);
-    retVal.setValueType(ODeltaDocumentFieldType.DELTA_RECORD);
-    return retVal;
-  }
-
-  //this method is callen only for changed fields or directly and undirectly changed lists
-  private UpdateTypeValueType getUpdateDeltaValue(Object currentValue, Object previousValue, boolean changed, ODocumentEntry parent,
-      List<Object> ownersTrace, OType currentValueType, OType currentValueLinkedType, OType previousValueType,
-      OType previousValueLinkedType) {
-    if (currentValueLinkedType == OType.ANY) {
-      currentValueLinkedType = null;
-    }
-    if (previousValueLinkedType == OType.ANY) {
-      previousValueLinkedType = null;
-    }
-    //TODO review this clause once again
-    ownersTrace.add(currentValue);
-    if (changed || !(currentValue instanceof ODocument)) {
-      //separate processing for embedded lists
-      //if previous value is null we want to send whole list to reduce overhead
-      if (currentValueType.isList() && previousValue != null) {
-        //if previous value differs in type we want to send whole list to reduce overhead
-        UpdateTypeValueType retVal = getUpdateForListWithPreviousValue(currentValue, previousValue, parent, ownersTrace,
-            currentValueLinkedType, previousValueType, previousValueLinkedType);
-        if (retVal != null) {
-          return retVal;
-        }
-      }
-      UpdateTypeValueType retVal = new UpdateTypeValueType();
-      //this means that some list memeber document is changed
-      if (currentValueType.isList() && previousValue == null) {
-        return getUpdateForListWithoutPreviousValue(currentValue, parent, ownersTrace, currentValueLinkedType);
-      }
-
-      if (currentValueType == OType.LINKBAG && previousValue != null && previousValueType == OType.LINKBAG) {
-        ORidBag currentRidbag = (ORidBag) currentValue;
-        ORidBag previousRidbag = (ORidBag) previousValue;
-        UpdateTypeValueType ridBagUpdate = getUpdateForRidbagWithPreviousValue(currentRidbag, previousRidbag, changed);
-        if (ridBagUpdate != null) {
-          return ridBagUpdate;
-        }
-      }
-
-      if (currentValueType == OType.LINKBAG && previousValue == null) {
-        ORidBag currentRidbag = (ORidBag) currentValue;
-        UpdateTypeValueType ridBagUpdate = getUpdateForRidbagWithoutPreviousValue(currentRidbag, parent);
-        if (ridBagUpdate != null) {
-          return ridBagUpdate;
-        }
-      }
-
-      //check for nested document
-      if (currentValueType == OType.LINK && previousValueType != null && previousValueType == OType.LINK) {
-        return getUpdateForNestedDocument(currentValue);
-      }
-
-      //in this case we want to swap values
-      retVal.setValue(currentValue);
-      retVal.setUpdateType(UpdateDeltaValueType.CHANGE);
-      retVal.setValueType(currentValueType);
-      return retVal;
-    } else {
-      return getUpdateForNestedDocument(currentValue);
-    }
-  }
-
-  private static List<Integer> getRemovedIndexes(ONestedMultiValueChangeEvent event, List list, List<Object> ownersTrace,
-      int ownersTraceOffset) {
-    List<Integer> retList = new ArrayList<>();
-    if (event.getTimeLine() != null) {
-      List<OMultiValueChangeEvent<Object, Object>> events = event.getTimeLine().getMultiValueChangeEvents();
-      if (events != null) {
-        for (OMultiValueChangeEvent<Object, Object> nestedEvent : events) {
-          if (ownersTraceOffset < ownersTrace.size() && nestedEvent.getKey() == ownersTrace.get(ownersTraceOffset)
-              && nestedEvent instanceof ONestedMultiValueChangeEvent) {
-            ONestedMultiValueChangeEvent ne = (ONestedMultiValueChangeEvent) nestedEvent;
-            List<Integer> ret = getRemovedIndexes(ne, list, ownersTrace, ownersTraceOffset + 1);
-            if (ret != null) {
-              return ret;
-            }
-          } else if (ownersTraceOffset == ownersTrace.size()) {
-            if (nestedEvent.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE && nestedEvent
-                .getKey() instanceof Integer) {
-              retList.add((Integer) nestedEvent.getKey());
-            }
-          }
-        }
-      }
-    }
-
-    return retList;
-  }
-
-  public static List<Integer> getRemovedIndexes(ODocumentEntry entry, List list, List<Object> ownersTrace, int ownersTraceOffset) {
-    List<Integer> retList = new ArrayList<>();
-    if (entry.timeLine != null) {
-      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
-      if (timeline != null) {
-        for (OMultiValueChangeEvent<Object, Object> event : timeline) {
-          if (ownersTraceOffset < ownersTrace.size() && event.getKey() == ownersTrace.get(ownersTraceOffset)
-              && event instanceof ONestedMultiValueChangeEvent) {
-            ONestedMultiValueChangeEvent nestedEvent = (ONestedMultiValueChangeEvent) event;
-            List<Integer> ret = getRemovedIndexes(nestedEvent, list, ownersTrace, ownersTraceOffset + 1);
-            if (ret != null) {
-              retList.addAll(ret);
-            }
-          } else if (ownersTraceOffset == ownersTrace.size()) {
-            if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE && event.getKey() instanceof Integer) {
-              retList.add((Integer) event.getKey());
-            }
-          }
-        }
-      }
-    }
-
-    return retList;
-  }
-
-  private Object getDeleteDeltaValue(Object currentValue, boolean exist) {
-    //TODO review this clause once again
-    if (!exist || (!(currentValue instanceof ODocument) && !(currentValue instanceof List))) {
-      return currentValue;
-    } else if (currentValue instanceof ODocument) {
-      ODocument docVal;
-      if (currentValue instanceof ODocumentSerializable) {
-        docVal = ((ODocumentSerializable) currentValue).toDocument();
-      } else {
-        docVal = (ODocument) currentValue;
-      }
-      return docVal.getDeltaFromOriginalForDelete();
-    } else if (currentValue instanceof List) {
-      //want to detect all elements where in depth some field is deleted
-      List currentList = (List) currentValue;
-      List<ODocumentDelta> deltaList = new ArrayList<>();
-      for (int i = 0; i < currentList.size(); i++) {
-        Object element = currentList.get(i);
-        Object innerDelta = getDeleteDeltaValue(element, true);
-        if (innerDelta != null) {
-          ODocumentDelta deltaDoc = new ODocumentDelta();
-          deltaDoc.field("i", new ValueType(i, OType.INTEGER));
-          deltaDoc.field("v", new ValueType(innerDelta, ODeltaDocumentFieldType.getTypeByValue(innerDelta)));
-          deltaList.add(deltaDoc);
-        }
-      }
-      if (!deltaList.isEmpty()) {
-        return deltaList;
-      }
-    }
-    return null;
-  }
-
-  private ODocumentDelta getDeltaFromOriginalForUpdate() {
-    return getDeltaFromOriginalForUpdate(new ArrayList<>());
-  }
-
-  private ODocumentDelta getDeltaFromOriginalForUpdate(List<Object> ownersTrace) {
-    ODocumentDelta updated = new ODocumentDelta();
-    //get updated and new records
-    for (Map.Entry<String, ODocumentEntry> fieldVal : fields.entrySet()) {
-      ODocumentEntry val = fieldVal.getValue();
-      if (val.isChangedTree(new ArrayList<Object>(ownersTrace))) {
-        String fieldName = fieldVal.getKey();
-        OType currentFieldType = val.type != null ? val.type : OType.getTypeByValue(val.value);
-        OType currentFieldLinkedType = HelperClasses.getLinkedType(this, currentFieldType, fieldName);
-        OType previousFieldValueType = OType.getTypeByValue(val.original);
-        OType previousFieldValueLinkedType = null;
-        UpdateTypeValueType deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged(), val, ownersTrace,
-            currentFieldType, currentFieldLinkedType, previousFieldValueType, previousFieldValueLinkedType);
-        ODocumentDelta doc = new ODocumentDelta();
-        doc.field("v", new ValueType(deltaValue.getValue(), deltaValue.getValueType()));
-        doc.field("t", new ValueType(deltaValue.getUpdateType().getOrd(), OType.BYTE));
-        updated.field(fieldName, new ValueType(doc, ODeltaDocumentFieldType.DELTA_RECORD));
-      }
-    }
-    return updated;
-  }
-
-  private ODocumentDelta getDeltaFromOriginalForDelete() {
-    ODocumentDelta delete = new ODocumentDelta();
-    //get updated and new records
-    for (Map.Entry<String, ODocumentEntry> fieldVal : fields.entrySet()) {
-      ODocumentEntry val = fieldVal.getValue();
-      if (val.hasNonExistingTree()) {
-        String fieldName = fieldVal.getKey();
-        Object deltaValue = getDeleteDeltaValue(val.value, val.exist());
-        delete.field(fieldName, new ValueType(deltaValue, ODeltaDocumentFieldType.getTypeByValue(deltaValue)));
-      }
-    }
-    if (delete.fields().isEmpty()) {
-      return null;
-    }
-    return delete;
-  }
-
-  public ODocumentDelta getDeltaFromOriginal() {
-    ODocumentDelta ret = new ODocumentDelta();
-    ODocumentDelta updated = getDeltaFromOriginalForUpdate();
-    ret.field("u", new ValueType(updated, ODeltaDocumentFieldType.DELTA_RECORD));
-
-    //get deleted delta
-    ODocumentDelta deleted = getDeltaFromOriginalForDelete();
-    ret.field("d", new ValueType(deleted, ODeltaDocumentFieldType.DELTA_RECORD));
-
-    ORecordId id = (ORecordId) getIdentity();
-    ret.setIdentity(id);
-
-    int version = getVersion();
-    ret.setVersion(version);
-
-    return ret;
-  }
-
-  public boolean isChangedInDepth() {
-    for (Map.Entry<String, ODocumentEntry> field : fields.entrySet()) {
-      if (field.getValue().isChangedTree(new ArrayList<>())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public boolean hasNonExistingInDepth() {
-    for (Map.Entry<String, ODocumentEntry> field : fields.entrySet()) {
-      if (field.getValue().hasNonExistingTree()) {
-        return true;
-      }
-    }
-    return false;
+  protected OImmutableSchema getImmutableSchema() {
+    return schema;
   }
 
 }

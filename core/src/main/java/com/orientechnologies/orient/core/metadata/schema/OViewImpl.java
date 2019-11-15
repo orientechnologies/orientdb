@@ -1,8 +1,9 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.*;
@@ -10,7 +11,7 @@ import java.util.stream.Collectors;
 
 public abstract class OViewImpl extends OClassImpl implements OView {
 
-  private OViewConfig cfg;
+  private OViewConfig  cfg;
   private Set<String>  activeIndexNames   = new HashSet<>();
   private List<String> inactiveIndexNames = new ArrayList<>();
 
@@ -175,11 +176,13 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     acquireSchemaReadLock();
     try {
 
-      final OIndexManager idxManager = getDatabase().getMetadata().getIndexManager();
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
       if (idxManager == null)
         return new HashSet<>();
 
-      return activeIndexNames.stream().map(name -> idxManager.getIndex(name)).filter(Objects::nonNull).collect(Collectors.toSet());
+      return activeIndexNames.stream().map(name -> idxManager.getIndex(database, name)).filter(Objects::nonNull)
+          .collect(Collectors.toSet());
     } finally {
       releaseSchemaReadLock();
     }
@@ -189,12 +192,14 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   public void getClassIndexes(final Collection<OIndex<?>> indexes) {
     acquireSchemaReadLock();
     try {
-      final OIndexManager idxManager = getDatabase().getMetadata().getIndexManager();
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
       if (idxManager == null)
         return;
 
-      activeIndexNames.stream().map(name -> idxManager.getIndex(name)).filter(Objects::nonNull).forEach(x -> indexes.add(x));
-      idxManager.getClassIndexes(name, indexes);
+      activeIndexNames.stream().map(name -> idxManager.getIndex(database, name)).filter(Objects::nonNull)
+          .forEach(indexes::add);
+      idxManager.getClassIndexes(database, name, indexes);
     } finally {
       releaseSchemaReadLock();
     }

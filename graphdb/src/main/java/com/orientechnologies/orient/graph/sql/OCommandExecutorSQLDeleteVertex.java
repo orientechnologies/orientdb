@@ -81,9 +81,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-      // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER TO: " + queryText);
       textRequest.setText(queryText);
       database = getDatabase();
 

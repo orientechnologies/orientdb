@@ -47,6 +47,7 @@
             -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dstorage.diskCache.bufferSize=4096
+            -Dindex.allowManualIndexes=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>

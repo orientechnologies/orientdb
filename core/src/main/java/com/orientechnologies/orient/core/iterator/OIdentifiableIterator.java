@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import java.util.*;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -37,6 +35,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
@@ -69,7 +69,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * Set of RIDs of records which were indicated as broken during cluster iteration. Mainly used during JSON export/import procedure
    * to fix links on broken records.
    */
-  final Set<ORID> brokenRIDs = new HashSet<>();
+  protected final Set<ORID> brokenRIDs = new HashSet<>();
 
   public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase) {
     this(iDatabase, OStorage.LOCKING_STRATEGY.NONE);

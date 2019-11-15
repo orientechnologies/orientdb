@@ -13,8 +13,8 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  int size;
-  int served = 0;
+  private int size;
+  private int served = 0;
 
   public EmptyDataGeneratorStep(int size, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -56,7 +56,7 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override

@@ -8,9 +8,9 @@ import com.tinkerpop.blueprints.Vertex;
 
 public class OrientClassVertexIterator implements Iterator<Vertex> {
   private Iterator<Vertex> iterator;
-  private OClass klass;
+  private OClass           klass;
   private OrientVertex     vertex;
-  private OrientBaseGraph graph;
+  private OrientBaseGraph  graph;
 
   public OrientClassVertexIterator(OrientBaseGraph graph, Iterator<Vertex> iterator, String klass) {
     this.iterator = iterator;
@@ -20,15 +20,14 @@ public class OrientClassVertexIterator implements Iterator<Vertex> {
 
   @Override
   public boolean hasNext() {
-    if(vertex == null) {
+    if (vertex == null) {
       while (iterator.hasNext()) {
         vertex = (OrientVertex) iterator.next();
         if (vertex != null && klass.isSuperClassOf(vertex.getRecord().getSchemaClass())) {
           return true;
         }
       }
-    }
-    else {
+    } else {
       return true;
     }
     return false;

@@ -54,26 +54,22 @@ public interface OHashTable<K, V> {
 
   V remove(K key) throws IOException;
 
-  void clear() throws IOException;
+  Entry<K, V>[] higherEntries(K key);
 
-  OHashIndexBucket.Entry<K, V>[] higherEntries(K key);
-
-  OHashIndexBucket.Entry<K, V>[] higherEntries(K key, int limit);
+  Entry<K, V>[] higherEntries(K key, int limit);
 
   void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption, OHashFunction<K> keyHashFunction,
       final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer);
 
-  void deleteWithoutLoad(String name) throws IOException;
+  Entry<K, V>[] ceilingEntries(K key);
 
-  OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key);
+  Entry<K, V> firstEntry();
 
-  OHashIndexBucket.Entry<K, V> firstEntry();
+  Entry<K, V> lastEntry();
 
-  OHashIndexBucket.Entry<K, V> lastEntry();
+  Entry<K, V>[] lowerEntries(K key);
 
-  OHashIndexBucket.Entry<K, V>[] lowerEntries(K key);
-
-  OHashIndexBucket.Entry<K, V>[] floorEntries(K key);
+  Entry<K, V>[] floorEntries(K key);
 
   long size();
 
@@ -162,6 +158,30 @@ public interface OHashTable<K, V> {
 
     private static boolean greaterThanUnsigned(long longOne, long longTwo) {
       return (longOne + Long.MIN_VALUE) > (longTwo + Long.MIN_VALUE);
+    }
+  }
+
+  class RawEntry {
+    public final byte[] key;
+    public final byte[] value;
+    public final long   hashCode;
+
+    public RawEntry(byte[] key, byte[] value, long hashCode) {
+      this.key = key;
+      this.value = value;
+      this.hashCode = hashCode;
+    }
+  }
+
+  class Entry<K, V> {
+    public final K    key;
+    public final V    value;
+    public final long hashCode;
+
+    public Entry(K key, V value, long hashCode) {
+      this.key = key;
+      this.value = value;
+      this.hashCode = hashCode;
     }
   }
 }

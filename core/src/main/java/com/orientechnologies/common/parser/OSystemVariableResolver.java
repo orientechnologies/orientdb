@@ -49,6 +49,11 @@ public class OSystemVariableResolver implements OVariableParserListener {
   }
 
   public static String resolveVariable(final String variable) {
+    return resolveVariable(variable, null);
+  }
+
+
+  public static String resolveVariable(final String variable, final String iDefault) {
     if (variable == null)
       return null;
 
@@ -58,7 +63,7 @@ public class OSystemVariableResolver implements OVariableParserListener {
       // TRY TO FIND THE VARIABLE BETWEEN SYSTEM'S ENVIRONMENT PROPERTIES
       resolved = System.getenv(variable);
 
-    return resolved;
+    return resolved != null ? resolved : iDefault;
   }
 
   @Override

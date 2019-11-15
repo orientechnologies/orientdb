@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -63,7 +64,10 @@ public class OSchemaDistributed extends OSchemaEmbedded {
 
       sendCommand(database, cmd.toString());
       if (!isRunLocal(database)) {
-        dropClassInternal(database, className);
+        OScenarioThreadLocal.executeAsDistributed(() -> {
+          dropClassInternal(database, className);
+          return null;
+        });
       }
     } else
       dropClassInternal(database, className);

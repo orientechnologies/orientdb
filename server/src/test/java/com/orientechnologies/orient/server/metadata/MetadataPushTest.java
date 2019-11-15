@@ -2,10 +2,7 @@ package com.orientechnologies.orient.server.metadata;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
@@ -29,8 +26,8 @@ public class MetadataPushTest {
   private OrientDB          orientDB;
   private ODatabaseDocument database;
 
-  private OrientDB          secondOrientDB;
-  private ODatabaseDocument secondDatabase;
+  private OrientDB                  secondOrientDB;
+  private ODatabaseDocumentInternal secondDatabase;
 
   @Before
   public void before() throws Exception {
@@ -44,7 +41,7 @@ public class MetadataPushTest {
     database = orientDB.open(MetadataPushTest.class.getSimpleName(), "admin", "admin");
 
     secondOrientDB = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
-    secondDatabase = orientDB.open(MetadataPushTest.class.getSimpleName(), "admin", "admin");
+    secondDatabase = (ODatabaseDocumentInternal) orientDB.open(MetadataPushTest.class.getSimpleName(), "admin", "admin");
 
   }
 
@@ -92,7 +89,7 @@ public class MetadataPushTest {
     //Push done in background for now, do not guarantee update before command return.
     Thread.sleep(500);
     secondDatabase.activateOnCurrentThread();
-    assertTrue(secondDatabase.getMetadata().getIndexManager().existsIndex("X.y"));
+    assertTrue(secondDatabase.getMetadata().getIndexManagerInternal().existsIndex("X.y"));
   }
 
   @Test

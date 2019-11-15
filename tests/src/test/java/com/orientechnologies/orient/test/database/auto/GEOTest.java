@@ -15,25 +15,19 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.List;
+import java.util.Set;
 
 @Test(groups = "sql-select")
 public class GEOTest extends DocumentDBBaseTest {
@@ -84,8 +78,8 @@ public class GEOTest extends DocumentDBBaseTest {
   public void queryDistance() {
     Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
-    List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select from MapPoint where distance(x, y,52.20472, 0.14056 ) <= 30")).execute();
+    List<ODocument> result = database
+        .command(new OSQLSynchQuery<ODocument>("select from MapPoint where distance(x, y,52.20472, 0.14056 ) <= 30")).execute();
 
     Assert.assertTrue(result.size() != 0);
 
@@ -124,13 +118,4 @@ public class GEOTest extends DocumentDBBaseTest {
       lastDistance = d.field("distance");
     }
   }
-
-  @Test(dependsOnMethods = "queryCreatePoints")
-  public void testQueryIndexWithConversionDouble2Float() {
-    List<ODocument> result = database.command(new OCommandSQL("select from index:MapPoint.x where key between 150.00 and 155.45"))
-        .execute();
-    Assert.assertTrue(result.size() > 0);
-
-  }
-
 }

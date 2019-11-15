@@ -7,43 +7,43 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 class OBroadcastMessage {
-  static final int TYPE_PING          = 0;
-  static final int TYPE_LEAVE         = 1;
-  static final int TYPE_KNOWN_SERVERS = 2;
+  protected static final int TYPE_PING          = 0;
+  protected static final int TYPE_LEAVE         = 1;
+  protected static final int TYPE_KNOWN_SERVERS = 2;
 
-  static final int TYPE_START_LEADER_ELECTION = 3;
-  static final int TYPE_VOTE_LEADER_ELECTION  = 4;
-  static final int TYPE_LEADER_ELECTED        = 5;
+  protected static final int TYPE_START_LEADER_ELECTION = 3;
+  protected static final int TYPE_VOTE_LEADER_ELECTION  = 4;
+  protected static final int TYPE_LEADER_ELECTED        = 5;
 
-  static final int ROLE_COORDINATOR = 0;
-  static final int ROLE_REPLICA     = 1;
-  static final int ROLE_UNDEFINED   = 2;
+  protected static final int ROLE_COORDINATOR = 0;
+  protected static final int ROLE_REPLICA     = 1;
+  protected static final int ROLE_UNDEFINED   = 2;
 
-  int           type;
-  ONodeIdentity nodeIdentity;
-  String        group;
-  int           term;
-  int           role;
-  String        connectionUsername;
-  String        connectionPassword;
+  protected int           type;
+  protected ONodeIdentity nodeIdentity;
+  protected String        group;
+  protected int           term;
+  protected int           role;
+  protected String        connectionUsername;
+  protected String        connectionPassword;
 
   //for ping
-  int tcpPort;
+  protected int tcpPort;
 
   // for leader election
-  ONodeIdentity voteForIdentity;
-  String        dbName;
-  long          lastLogId;
+  protected ONodeIdentity voteForIdentity;
+  protected String        dbName;
+  protected long          lastLogId;
 
   //MASTER INFO
 
-  ONodeIdentity leaderIdentity;
-  int           leaderTerm;
-  String        leaderAddress;
-  int           leaderTcpPort;
-  String        leaderConnectionUsername;
-  String        leaderConnectionPassword;
-  long          leaderPing;
+  protected ONodeIdentity leaderIdentity;
+  protected int           leaderTerm;
+  protected String        leaderAddress;
+  protected int           leaderTcpPort;
+  protected String        leaderConnectionUsername;
+  protected String        leaderConnectionPassword;
+  protected long          leaderPing;
 
   public void write(DataOutput output) throws IOException {
     output.writeInt(type);
@@ -52,17 +52,12 @@ class OBroadcastMessage {
     output.writeInt(term);
     output.writeInt(role);
     output.writeInt(tcpPort);
-    output.writeBoolean(connectionUsername != null);
-    if (connectionUsername != null) {
-      output.writeUTF(connectionUsername);
-    }
-    output.writeBoolean(connectionPassword != null);
-    if (connectionPassword != null) {
-      output.writeUTF(connectionPassword);
-    }
+    output.writeLong(lastLogId);
 
     switch (type) {
     case OBroadcastMessage.TYPE_PING:
+      output.writeUTF(connectionUsername);
+      output.writeUTF(connectionPassword);
       if (this.leaderIdentity != null) {
         output.writeByte(1);
         leaderIdentity.serialize(output);
@@ -97,15 +92,12 @@ class OBroadcastMessage {
     term = input.readInt();
     role = input.readInt();
     tcpPort = input.readInt();
-    if (input.readBoolean()) {
-      connectionUsername = input.readUTF();
-    }
-    if (input.readBoolean()) {
-      connectionPassword = input.readUTF();
-    }
+    lastLogId = input.readLong();
 
     switch (type) {
     case OBroadcastMessage.TYPE_PING:
+      connectionUsername = input.readUTF();
+      connectionPassword = input.readUTF();
       byte isThereMaster = input.readByte();
       if (isThereMaster == 1) {
         leaderIdentity = new ONodeIdentity();

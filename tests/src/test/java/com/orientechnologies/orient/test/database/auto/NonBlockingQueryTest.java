@@ -2,17 +2,12 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -42,7 +37,7 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
   @Test
   public void testClone() {
 
-    ODatabaseDocumentTx db = database;
+    ODatabaseDocumentInternal db = database;
 
     db.begin();
     db.command(new OCommandSQL("insert into Foo (a) values ('bar')")).execute();
@@ -57,7 +52,7 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
 
   @Test
   public void testNonBlockingQuery() {
-    ODatabaseDocumentTx db = database;
+    ODatabaseDocumentInternal db = database;
     final AtomicInteger counter = new AtomicInteger(0); // db.begin();
     for (int i = 0; i < 1000; i++) {
       db.command(new OCommandSQL("insert into Foo (a) values ('bar')")).execute();
@@ -98,13 +93,13 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("create property Foo.y integer")).execute();
     database.command(new OCommandSQL("create index Foo_xy_index on Foo (x, y) notunique")).execute();
 
-    ODatabaseDocumentTx db = database;
+    ODatabaseDocumentInternal db = database;
     final AtomicInteger counter = new AtomicInteger(0); // db.begin();
     for (int i = 0; i < 1000; i++) {
       db.command(new OCommandSQL("insert into Foo (a, x, y) values ('bar', ?, ?)")).execute(i, 1000 - i);
     }
-    Future future = db.query(new OSQLNonBlockingQuery<Object>("select from Foo where x=500 and y=500",
-        new OCommandResultListener() {
+    Future future = db
+        .query(new OSQLNonBlockingQuery<Object>("select from Foo where x=500 and y=500", new OCommandResultListener() {
           @Override
           public boolean result(Object iRecord) {
             counter.incrementAndGet();

@@ -189,7 +189,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     final Set<String> clusters = new HashSet<String>();
 
     final OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-    final OIndex<?> idx = metadata.getIndexManager().getIndex(iIndexName);
+    final OIndex<?> idx = metadata.getIndexManagerInternal().getIndex(db, iIndexName);
     if (idx != null && idx.getDefinition() != null) {
       final String clazz = idx.getDefinition().getClassName();
 
@@ -240,9 +240,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
       } catch (Exception e) {
         throwParsingException("Error parsing query: \n" + queryText + "\n" + e.getMessage(), e);
       }
-      OClass clazz = getDatabase().getMetadata().getSchema().getClass("Foo");
-      clazz.setCustom("schemaVersion", "1");
-      String version = clazz.getCustom("schemaVersion");
     }
     return queryText;
   }

@@ -1,17 +1,14 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
@@ -191,18 +188,18 @@ public class OShapeFactory extends OComplexShapeBuilder {
   }
 
   public Geometry toGeometry(Shape shape) {
-	if(shape instanceof ShapeCollection){
-		ShapeCollection<Shape> shapes = (ShapeCollection<Shape>) shape;
-		Geometry[] geometries = new Geometry[shapes.size()];
-	    int i = 0;
-	    for (Shape shapeItem : shapes) {
-	      geometries[i] = SPATIAL_CONTEXT.getGeometryFrom(shapeItem);
-	      i++;
-	    }
-	    return GEOMETRY_FACTORY.createGeometryCollection(geometries);
-	} else {
-		return SPATIAL_CONTEXT.getGeometryFrom(shape);
-	}
+    if (shape instanceof ShapeCollection) {
+      ShapeCollection<Shape> shapes = (ShapeCollection<Shape>) shape;
+      Geometry[] geometries = new Geometry[shapes.size()];
+      int i = 0;
+      for (Shape shapeItem : shapes) {
+        geometries[i] = SPATIAL_CONTEXT.getGeometryFrom(shapeItem);
+        i++;
+      }
+      return GEOMETRY_FACTORY.createGeometryCollection(geometries);
+    } else {
+      return SPATIAL_CONTEXT.getGeometryFrom(shape);
+    }
   }
 
   public ODocument toDoc(Geometry geometry) {
@@ -211,21 +208,21 @@ public class OShapeFactory extends OComplexShapeBuilder {
       Point point1 = context().makePoint(point.getX(), point.getY());
       return toDoc(point1);
     }
-    if(geometry instanceof org.locationtech.jts.geom.GeometryCollection){
-    	org.locationtech.jts.geom.GeometryCollection gc = (org.locationtech.jts.geom.GeometryCollection) geometry;
-    	List<Shape> shapes = new ArrayList<Shape>();
-    	for(int i = 0; i < gc.getNumGeometries(); i++){
-    		Geometry geo = gc.getGeometryN(i);
-    		Shape shape = null;
-    		if (geo instanceof org.locationtech.jts.geom.Point) {
-				org.locationtech.jts.geom.Point point = (org.locationtech.jts.geom.Point) geo;
-				shape = context().makePoint(point.getX(), point.getY());
-			} else {
-				shape = SPATIAL_CONTEXT.makeShape(geo);
-			}
-    		shapes.add(shape);
-    	}
-    	return toDoc(new ShapeCollection<Shape>(shapes, SPATIAL_CONTEXT));
+    if (geometry instanceof org.locationtech.jts.geom.GeometryCollection) {
+      org.locationtech.jts.geom.GeometryCollection gc = (org.locationtech.jts.geom.GeometryCollection) geometry;
+      List<Shape> shapes = new ArrayList<Shape>();
+      for (int i = 0; i < gc.getNumGeometries(); i++) {
+        Geometry geo = gc.getGeometryN(i);
+        Shape shape = null;
+        if (geo instanceof org.locationtech.jts.geom.Point) {
+          org.locationtech.jts.geom.Point point = (org.locationtech.jts.geom.Point) geo;
+          shape = context().makePoint(point.getX(), point.getY());
+        } else {
+          shape = SPATIAL_CONTEXT.makeShape(geo);
+        }
+        shapes.add(shape);
+      }
+      return toDoc(new ShapeCollection<Shape>(shapes, SPATIAL_CONTEXT));
     }
     return toDoc(SPATIAL_CONTEXT.makeShape(geometry));
   }
@@ -237,6 +234,5 @@ public class OShapeFactory extends OComplexShapeBuilder {
   public void registerFactory(OShapeBuilder factory) {
     factories.put(factory.getName(), factory);
   }
-
 
 }

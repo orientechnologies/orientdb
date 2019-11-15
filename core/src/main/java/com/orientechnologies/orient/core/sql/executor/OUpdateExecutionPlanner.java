@@ -38,9 +38,11 @@ public class OUpdateExecutionPlanner {
     }
     this.target = oUpdateStatement.getTarget().copy();
     this.whereClause = oUpdateStatement.getWhereClause() == null ? null : oUpdateStatement.getWhereClause().copy();
-    this.operations = oUpdateStatement.getOperations() == null ?
-        null :
-        oUpdateStatement.getOperations().stream().map(x -> x.copy()).collect(Collectors.toList());
+    if (oUpdateStatement.getOperations() == null) {
+      this.operations = null;
+    } else {
+      this.operations = oUpdateStatement.getOperations().stream().map(x -> x.copy()).collect(Collectors.toList());
+    }
     this.upsert = oUpdateStatement.isUpsert();
 
     this.returnBefore = oUpdateStatement.isReturnBefore();
@@ -56,7 +58,7 @@ public class OUpdateExecutionPlanner {
     OUpdateExecutionPlan result = new OUpdateExecutionPlan(ctx);
 
     handleTarget(result, ctx, this.target, this.whereClause, this.timeout, enableProfiling);
-    if(updateEdge){
+    if (updateEdge) {
       result.chain(new CheckRecordTypeStep(ctx, "E", enableProfiling));
     }
     handleUpsert(result, ctx, this.target, this.whereClause, this.upsert, enableProfiling);
@@ -149,8 +151,8 @@ public class OUpdateExecutionPlanner {
         switch (op.getType()) {
         case OUpdateOperations.TYPE_SET:
           plan.chain(new UpdateSetStep(op.getUpdateItems(), ctx, profilingEnabled));
-          if(updateEdge){
-            plan.chain(new UpdateEdgePointersStep( ctx, profilingEnabled));
+          if (updateEdge) {
+            plan.chain(new UpdateEdgePointersStep(ctx, profilingEnabled));
           }
           break;
         case OUpdateOperations.TYPE_REMOVE:

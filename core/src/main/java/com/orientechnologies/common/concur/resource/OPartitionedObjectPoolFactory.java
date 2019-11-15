@@ -12,26 +12,24 @@ import java.util.Iterator;
 
 /**
  * This is internal API, do not use it.
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 15/12/14
  */
 public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract {
-  private volatile int                                                maxPartitions    = Runtime.getRuntime().availableProcessors() << 3;
-  private volatile int                                                maxPoolSize      = 64;
-  private boolean                                                     closed           = false;
+  private volatile int     maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private volatile int     maxPoolSize   = 64;
+  private          boolean closed        = false;
 
   private final ConcurrentLinkedHashMap<K, OPartitionedObjectPool<T>> poolStore;
   private final ObjectFactoryFactory<K, T>                            objectFactoryFactory;
 
-  private final EvictionListener<K, OPartitionedObjectPool<T>>        evictionListener = new EvictionListener<K, OPartitionedObjectPool<T>>() {
-                                                                                         @Override
-                                                                                         public void onEviction(
-                                                                                             K key,
-                                                                                             OPartitionedObjectPool<T> partitionedObjectPool) {
-                                                                                           partitionedObjectPool.close();
-                                                                                         }
-                                                                                       };
+  private final EvictionListener<K, OPartitionedObjectPool<T>> evictionListener = new EvictionListener<K, OPartitionedObjectPool<T>>() {
+    @Override
+    public void onEviction(K key, OPartitionedObjectPool<T> partitionedObjectPool) {
+      partitionedObjectPool.close();
+    }
+  };
 
   public OPartitionedObjectPoolFactory(final ObjectFactoryFactory<K, T> objectFactoryFactory) {
     this(objectFactoryFactory, 100);

@@ -374,13 +374,14 @@ public class OConsoleApplication {
     Method lastMethodInvoked = null;
     final StringBuilder lastCommandInvoked = new StringBuilder(1024);
 
-    String commandLowerCase = "";
+    StringBuilder commandLowerCaseBuilder = new StringBuilder();
     for (int i = 0; i < commandWords.length; i++) {
       if (i > 0) {
-        commandLowerCase += " ";
+        commandLowerCaseBuilder.append(" ");
       }
-      commandLowerCase += commandWords[i].toLowerCase(Locale.ENGLISH);
+      commandLowerCaseBuilder.append(commandWords[i].toLowerCase(Locale.ENGLISH));
     }
+    String commandLowerCase = commandLowerCaseBuilder.toString();
 
     for (Entry<Method, Object> entry : getConsoleMethods().entrySet()) {
       final Method m = entry.getKey();
@@ -487,9 +488,6 @@ public class OConsoleApplication {
       // COMMENT: JUMP IT
       return null;
 
-    Method lastMethodInvoked = null;
-    final StringBuilder lastCommandInvoked = new StringBuilder(1024);
-
     final String commandLowerCase = iCommand.toLowerCase(Locale.ENGLISH);
 
     final Map<Method, Object> methodMap = getConsoleMethods();
@@ -550,9 +548,6 @@ public class OConsoleApplication {
       } else
         return m;
     }
-
-    if (lastMethodInvoked != null)
-      syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
 
     error("\n!Unrecognized command: '%s'", iCommand);
     return null;

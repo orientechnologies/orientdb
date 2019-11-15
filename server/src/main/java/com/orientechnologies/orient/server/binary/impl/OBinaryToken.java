@@ -151,7 +151,7 @@ public class OBinaryToken implements OToken {
 
   @Override
   public boolean isNowValid() {
-    long now =System.currentTimeMillis();
+    long now = System.currentTimeMillis();
     return getExpiry() > now;
   }
   

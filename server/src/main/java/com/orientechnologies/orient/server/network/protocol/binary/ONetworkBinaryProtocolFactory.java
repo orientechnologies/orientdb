@@ -42,6 +42,8 @@ public class ONetworkBinaryProtocolFactory {
     switch (protocolVersion) {
     case 37:
       return ONetworkBinaryProtocolFactory::createRequest37;
+    case 38:
+      return ONetworkBinaryProtocolFactory::createRequest38;
     default:
       return ONetworkBinaryProtocolFactory::createRequest;
     }
@@ -51,7 +53,6 @@ public class ONetworkBinaryProtocolFactory {
    * Legacy Protocol < 37
    *
    * @param requestType
-   *
    * @return
    */
   private static OBinaryRequest<? extends OBinaryResponse> createRequest(int requestType) {
@@ -127,9 +128,6 @@ public class ONetworkBinaryProtocolFactory {
 
     case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
       return new ODeleteRecordRequest();
-
-    case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
-      return new OHideRecordRequest();
 
     case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
       return new OHigherPhysicalPositionsRequest();
@@ -207,7 +205,6 @@ public class ONetworkBinaryProtocolFactory {
    * Protocol 37
    *
    * @param requestType
-   *
    * @return
    */
   public static OBinaryRequest<? extends OBinaryResponse> createRequest37(int requestType) {
@@ -312,9 +309,6 @@ public class ONetworkBinaryProtocolFactory {
     case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
       return new ODeleteRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
-      return new OHideRecordRequest();
-
     case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
       return new OHigherPhysicalPositionsRequest();
 
@@ -381,6 +375,32 @@ public class ONetworkBinaryProtocolFactory {
       return new ODistributedConnectRequest();
     default:
       throw new ODatabaseException("binary protocol command with code: " + requestType + " for protocol version 37");
+    }
+  }
+
+  /**
+   * Protocol 38
+   *
+   * @param requestType
+   * @return
+   */
+  public static OBinaryRequest<? extends OBinaryResponse> createRequest38(int requestType) {
+    switch (requestType) {
+
+    case OChannelBinaryProtocol.REQUEST_TX_FETCH:
+      return new OFetchTransaction38Request();
+
+    case OChannelBinaryProtocol.REQUEST_TX_REBEGIN:
+      return new ORebeginTransaction38Request();
+
+    case OChannelBinaryProtocol.REQUEST_TX_BEGIN:
+      return new OBeginTransaction38Request();
+
+    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+      return new OCommit38Request();
+
+    default:
+      return createRequest37(requestType);
     }
   }
 }

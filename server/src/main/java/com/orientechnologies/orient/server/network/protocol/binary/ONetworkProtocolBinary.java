@@ -136,6 +136,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   @Override
   public void shutdown() {
+
     sendShutdown();
     channel.close();
 
@@ -153,17 +154,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   private boolean isCoordinated(int requestType) {
-    return requestType == OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_OPERATION_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_OPERATION_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_ACK_RESPONSE
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_CONFIRM_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_PROPAGATE_REQUEST;
+    return requestType == OChannelBinaryProtocol.COORDINATED_DISTRIBUTED_MESSAGE;
   }
 
   @Override
@@ -326,7 +317,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             }
             exception = t;
           } catch (Error err) {
-            connection.release();
+            if (connection != null) {
+              connection.release();
+            }
             throw err;
           }
         }
@@ -355,6 +348,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } catch (IOException e) {
             OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
             sendShutdown();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error while binary response serialization", e);
+            sendShutdown();
+            throw e;
           } finally {
             afterOperationRequest(connection);
           }
@@ -386,7 +383,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           // THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR COMPATIBILITY IT'S ONLY IF THERE
           // IS NO CONNECTION
           shutdown();
-          throw new OIOException("Found unknown session " + clientTxId);
+          throw new ONetworkProtocolException("Found unknown session " + clientTxId);
         }
         connection = server.getClientConnectionManager().connect(this);
         connection.getData().sessionId = clientTxId;
@@ -627,6 +624,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         byte[] renewedToken = null;
         if (connection != null && connection.getToken() != null) {
           renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
+          if (renewedToken.length > 0) {
+            connection.setTokenBytes(renewedToken);
+          }
         }
         channel.writeBytes(renewedToken);
         channel.writeByte((byte) requestType);
@@ -740,6 +740,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       byte[] renewedToken = null;
       if (connection != null && connection.getToken() != null) {
         renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
+        if (renewedToken.length > 0) {
+          connection.setTokenBytes(renewedToken);
+        }
       }
       channel.writeBytes(renewedToken);
       channel.writeByte((byte) requestType);
@@ -822,7 +825,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         .equals(name))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      stream = ser.toStream(iRecord, false);
+      stream = ser.toStream(iRecord);
     } else
       stream = iRecord.toStream();
 
@@ -852,7 +855,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected static int trimCsvSerializedContent(OClientConnection connection, final byte[] stream) {
     int realLength = stream.length;
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (db != null && db instanceof ODatabaseDocument) {
+    if (db != null) {
       if (ORecordSerializerSchemaAware2CSV.NAME.equals(connection.getData().getSerializationImpl())) {
         // TRIM TAILING SPACES (DUE TO OVERSIZE)
         for (int i = stream.length - 1; i > -1; --i) {

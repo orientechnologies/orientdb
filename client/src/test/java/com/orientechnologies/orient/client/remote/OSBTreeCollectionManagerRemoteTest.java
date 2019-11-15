@@ -58,7 +58,7 @@ public class OSBTreeCollectionManagerRemoteTest {
     when(networkSerializerMock.readCollectionPointer(Mockito.<OChannelBinaryAsynchClient>any()))
         .thenReturn(new OBonsaiCollectionPointer(EXPECTED_FILE_ID, EXPECTED_ROOT_POINTER));
 
-    OSBTreeBonsaiRemote<OIdentifiable, Integer> tree = remoteManager.createTree(EXPECTED_CLUSTER_ID);
+    OSBTreeBonsaiRemote<OIdentifiable, Integer> tree = remoteManager.createEdgeTree(EXPECTED_CLUSTER_ID);
 
     assertNotNull(tree);
     assertEquals(tree.getFileId(), EXPECTED_FILE_ID);

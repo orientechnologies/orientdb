@@ -27,11 +27,11 @@ public class FindReferencesStep extends AbstractExecutionStep {
   private final List<OIdentifier> classes;
   private final List<OCluster>    clusters;
 
-  boolean inited = false;
-  Set<ORID>                        ridsToFind;
-  ORecordIteratorCluster           currentIterator;
-  Iterator<ORecordIteratorCluster> clusterIterators;
-  OResultInternal                  nextResult;
+  private boolean                          inited = false;
+  private Set<ORID>                        ridsToFind;
+  private ORecordIteratorCluster           currentIterator;
+  private Iterator<ORecordIteratorCluster> clusterIterators;
+  private OResultInternal                  nextResult;
 
   public FindReferencesStep(List<OIdentifier> classes, List<OCluster> clusters, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -68,7 +68,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return Optional.empty();
       }
 
       @Override
@@ -146,8 +146,9 @@ public class FindReferencesStep extends AbstractExecutionStep {
       }
     }
 
-    List<ORecordIteratorCluster> iterators = targetClusterNames.stream().map(
-        clusterName -> new ORecordIteratorCluster((ODatabaseDocumentInternal) db, db.getClusterIdByName(clusterName))).collect(Collectors.toList());
+    List<ORecordIteratorCluster> iterators = targetClusterNames.stream()
+        .map(clusterName -> new ORecordIteratorCluster((ODatabaseDocumentInternal) db, db.getClusterIdByName(clusterName)))
+        .collect(Collectors.toList());
     this.clusterIterators = iterators.iterator();
   }
 

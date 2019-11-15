@@ -77,19 +77,27 @@ public class OShortSerializer implements OBinarySerializer<Short> {
 
   @Override
   public void serializeNativeObject(final Short object, final byte[] stream, final int startPosition, final Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
   @Override
   public Short deserializeNativeObject(byte[] stream, int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return CONVERTER.getShort(stream, startPosition, ByteOrder.nativeOrder());
   }
 
   public void serializeNative(final short object, final byte[] stream, final int startPosition, final Object... hints) {
+    checkBoundaries(stream, startPosition);
+
     CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
   public short deserializeNative(byte[] stream, int startPosition) {
+    checkBoundaries(stream, startPosition);
+
     return CONVERTER.getShort(stream, startPosition, ByteOrder.nativeOrder());
   }
 
@@ -144,5 +152,12 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return SHORT_SIZE;
+  }
+
+  private static void checkBoundaries(byte[] stream, int startPosition) {
+    if (startPosition + SHORT_SIZE > stream.length) {
+      throw new IllegalStateException(
+          "Requested stream size is " + (startPosition + SHORT_SIZE) + " but provided stream has size " + stream.length);
+    }
   }
 }

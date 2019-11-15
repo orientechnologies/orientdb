@@ -90,7 +90,7 @@ public class TestTransactionFlow {
       txOps = tx.getRecordOperations();
       Map<String, OTransactionIndexChanges> indexOperations = tx.getIndexOperations();
       indexes = OTransactionSubmit.genIndexes(indexOperations, tx);
-      submit = new OTransactionSubmit(txOps, indexes, false);
+      submit = new OTransactionSubmit(txOps, indexes);
     }
 
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(),

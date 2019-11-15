@@ -8,39 +8,46 @@ import java.util.List;
  */
 public class OInfoExecutionStep implements OExecutionStep {
 
-  String name;
-  String type;
-  String javaType;
-  String targetNode;
-  String description;
-  long   cost;
-  List<OExecutionStep> subSteps = new ArrayList<>();
+  private String               name;
+  private String               type;
+  private String               javaType;
+  private String               targetNode;
+  private String               description;
+  private long                 cost;
+  private List<OExecutionStep> subSteps = new ArrayList<>();
 
-  @Override public String getName() {
+  @Override
+  public String getName() {
     return name;
   }
 
-  @Override public String getType() {
+  @Override
+  public String getType() {
     return type;
   }
 
-  @Override public String getTargetNode() {
+  @Override
+  public String getTargetNode() {
     return targetNode;
   }
 
-  @Override public String getDescription() {
+  @Override
+  public String getDescription() {
     return description;
   }
 
-  @Override public List<OExecutionStep> getSubSteps() {
+  @Override
+  public List<OExecutionStep> getSubSteps() {
     return subSteps;
   }
 
-  @Override public long getCost() {
+  @Override
+  public long getCost() {
     return cost;
   }
 
-  @Override public OResult toResult() {
+  @Override
+  public OResult toResult() {
     return null;
   }
 

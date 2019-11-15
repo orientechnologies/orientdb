@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
@@ -84,13 +84,13 @@ public abstract class OSBTreeCollectionManagerAbstract
     GLOBAL_LOCKS = locks;
   }
 
-  private final int                                                      evictionThreshold;
-  private final int                                                      cacheMaxSize;
-  private final int                                                      shift;
-  private final int                                                      mask;
-  private final Object[]                                                 locks;
-  private final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
-  private final OStorage                                                 storage;
+  private final   int                                                      evictionThreshold;
+  private final   int                                                      cacheMaxSize;
+  private final   int                                                      shift;
+  private final   int                                                      mask;
+  private final   Object[]                                                 locks;
+  protected final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
+  private final   OStorage                                                 storage;
 
   public OSBTreeCollectionManagerAbstract(OStorage storage) {
     this(GLOBAL_TREE_CACHE, storage, GLOBAL_EVICTION_THRESHOLD, GLOBAL_CACHE_MAX_SIZE, GLOBAL_LOCKS);
@@ -155,7 +155,7 @@ public abstract class OSBTreeCollectionManagerAbstract
 
   @Override
   public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) throws IOException {
-    OSBTreeBonsai<OIdentifiable, Integer> tree = createTree(clusterId);
+    OSBTreeBonsai<OIdentifiable, Integer> tree = createEdgeTree(clusterId);
     return tree.getCollectionPointer();
   }
 
@@ -171,6 +171,7 @@ public abstract class OSBTreeCollectionManagerAbstract
       SBTreeBonsaiContainer container = treeCache.get(cacheKey);
       if (container != null) {
         container.usagesCounter++;
+        container.lastAccessTime = System.currentTimeMillis();
         tree = container.tree;
       } else {
         tree = loadTree(collectionPointer);
@@ -179,6 +180,7 @@ public abstract class OSBTreeCollectionManagerAbstract
 
           container = new SBTreeBonsaiContainer(tree);
           container.usagesCounter++;
+          container.lastAccessTime = System.currentTimeMillis();
 
           treeCache.put(cacheKey, container);
         }
@@ -201,6 +203,7 @@ public abstract class OSBTreeCollectionManagerAbstract
       assert container != null;
       container.usagesCounter--;
       assert container.usagesCounter >= 0;
+      container.lastAccessTime = System.currentTimeMillis();
     }
 
     evict();
@@ -249,7 +252,24 @@ public abstract class OSBTreeCollectionManagerAbstract
     treeCache.keySet().removeIf(cacheKey -> cacheKey.storage == storage);
   }
 
-  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createTree(int clusterId) throws IOException;
+  void clearClusterCache(final long fileId, String fileName) {
+    treeCache.entrySet().removeIf(entry -> {
+      final CacheKey key = entry.getKey();
+
+      if (key.storage == storage && key.pointer.getFileId() == fileId) {
+        final SBTreeBonsaiContainer container = entry.getValue();
+        if (container.usagesCounter > 0) {
+          throw new IllegalStateException("Ridbags of file " + fileName + " can not be cleared because some of them are in use");
+        }
+
+        return true;
+      }
+
+      return false;
+    });
+  }
+
+  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createEdgeTree(int clusterId) throws IOException;
 
   protected abstract OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer);
 
@@ -257,23 +277,24 @@ public abstract class OSBTreeCollectionManagerAbstract
     return treeCache.size();
   }
 
-  private Object treesSubsetLock(CacheKey cacheKey) {
+  protected Object treesSubsetLock(CacheKey cacheKey) {
     final int hashCode = cacheKey.hashCode();
     final int index = (hashCode >>> shift) & mask;
 
     return locks[index];
   }
 
-  private static final class SBTreeBonsaiContainer {
-    private final OSBTreeBonsai<OIdentifiable, Integer> tree;
-    private int usagesCounter = 0;
+  protected static final class SBTreeBonsaiContainer {
+    private final      OSBTreeBonsai<OIdentifiable, Integer> tree;
+    protected volatile int                                   usagesCounter  = 0;
+    protected volatile long                                  lastAccessTime = 0;
 
     private SBTreeBonsaiContainer(OSBTreeBonsai<OIdentifiable, Integer> tree) {
       this.tree = tree;
     }
   }
 
-  private static final class CacheKey {
+  protected static final class CacheKey {
     private final OStorage                 storage;
     private final OBonsaiCollectionPointer pointer;
 

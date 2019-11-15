@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -40,6 +41,10 @@ public class OStatementCache {
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
+    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+      return false;
+    }
+
     synchronized (map) {
       return map.containsKey(statement);
     }
@@ -69,6 +74,10 @@ public class OStatementCache {
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
   public OStatement get(String statement) {
+    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+      return parse(statement);
+    }
+
     OStatement result;
     synchronized (map) {
       //LRU
@@ -145,6 +154,10 @@ public class OStatementCache {
   }
 
   public void clear() {
+    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+      return;
+    }
+
     synchronized (map) {
       map.clear();
     }

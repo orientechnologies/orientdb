@@ -53,8 +53,8 @@ public class ODropViewStatementExecutionTest {
 
   @Test
   public void testIfExists() {
-    String className = "testIfExistsClass";
-    String viewName = "testIfExists";
+    String className = "ODropViewStatementExecutionTestTestIfExistsClass";
+    String viewName = "ODropViewStatementExecutionTestTestIfExists";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
     schema.createView(viewName, "SELECT FROM " + className);

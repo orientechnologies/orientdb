@@ -254,6 +254,29 @@ public class OWALPageChangesPortion implements OWALChanges {
     return offset;
   }
 
+  @Override
+  public void fromStream(ByteBuffer buffer) {
+    int chunkLength = buffer.getShort();
+
+    for (int c = 0; c < chunkLength; c++) {
+      int i = buffer.get();
+      int j = buffer.get();
+
+      if (pageChunks == null) {
+        pageChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
+      }
+      if (pageChunks[i] == null) {
+        pageChunks[i] = new byte[PORTION_SIZE][];
+      }
+
+      if (pageChunks[i][j] == null) {
+        pageChunks[i][j] = new byte[CHUNK_SIZE];
+      }
+
+      buffer.get(pageChunks[i][j]);
+    }
+  }
+
   private void readData(ByteBuffer pointer, int offset, byte[] data) {
     if (pageChunks == null) {
       if (pointer != null) {

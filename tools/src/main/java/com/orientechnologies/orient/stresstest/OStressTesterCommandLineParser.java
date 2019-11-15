@@ -37,27 +37,27 @@ public class OStressTesterCommandLineParser {
   public static final String TEMP_DATABASE_NAME             = "stress-test-db-";
   public static final String CONSOLE_REMOTE_PASSWORD_PROMPT = "OrientDB Server (%s:%d) - Please insert the root password to create the test database: ";
 
-  public final static String OPTION_CONCURRENCY                    = "c";
-  public final static String OPTION_MODE                           = "m";
-  public final static String OPTION_WORKLOAD                       = "w";
-  public final static String OPTION_TRANSACTIONS                   = "tx";
-  public final static String OPTION_DELAY                          = "delay";
-  public final static String OPTION_KEEP_DATABASE_AFTER_TEST       = "k";
-  public final static String OPTION_OUTPUT_FILE                    = "o";
+  public static final String OPTION_CONCURRENCY                    = "c";
+  public static final String OPTION_MODE                           = "m";
+  public static final String OPTION_WORKLOAD                       = "w";
+  public static final String OPTION_TRANSACTIONS                   = "tx";
+  public static final String OPTION_DELAY                          = "delay";
+  public static final String OPTION_KEEP_DATABASE_AFTER_TEST       = "k";
+  public static final String OPTION_OUTPUT_FILE                    = "o";
   public static final String OPTION_PLOCAL_PATH                    = "d";
-  public final static String OPTION_LOAD_BALANCING                 = "lb";
-  public final static String OPTION_DBNAME                         = "db";
-  public final static String OPTION_CHECK_DATABASE                 = "chk";
-  public final static String OPTION_ROOT_PASSWORD                  = "root-password";
+  public static final String OPTION_LOAD_BALANCING                 = "lb";
+  public static final String OPTION_DBNAME                         = "db";
+  public static final String OPTION_CHECK_DATABASE                 = "chk";
+  public static final String OPTION_ROOT_PASSWORD                  = "root-password";
   public static final String ERROR_OPENING_CONSOLE                 =
       "An error has occurred opening the console. Please supply the root password as the -" + OPTION_ROOT_PASSWORD + " parameter.";
-  public final static String OPTION_REMOTE_IP                      = "remote-ip";
-  public final static String OPTION_HA_METRICS                     = "ha-metrics";
+  public static final String OPTION_REMOTE_IP                      = "remote-ip";
+  public static final String OPTION_HA_METRICS                     = "ha-metrics";
   public static final String COMMAND_LINE_PARSER_MISSING_REMOTE_IP =
       "The mode is [" + OStressTester.OMode.REMOTE + "] but the param --" + OPTION_REMOTE_IP + " wasn't passed.";
-  public final static String OPTION_REMOTE_PORT                    = "remote-port";
+  public static final String OPTION_REMOTE_PORT                    = "remote-port";
 
-  public final static String MAIN_OPTIONS =
+  public static final String MAIN_OPTIONS =
       OPTION_MODE + OPTION_CONCURRENCY + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_DELAY + OPTION_OUTPUT_FILE
           + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST + OPTION_CHECK_DATABASE + OPTION_LOAD_BALANCING + OPTION_DBNAME;
 
@@ -110,9 +110,11 @@ public class OStressTesterCommandLineParser {
     settings.remoteIp = options.get(OPTION_REMOTE_IP);
     settings.haMetrics = options.get(OPTION_HA_METRICS) != null ? Boolean.parseBoolean(options.get(OPTION_HA_METRICS)) : false;
     settings.workloadCfg = options.get(OPTION_WORKLOAD);
-    settings.keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null ?
-        Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) :
-        false;
+    if (options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null) {
+      settings.keepDatabaseAfterTest = Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST));
+    } else {
+      settings.keepDatabaseAfterTest = false;
+    }
     settings.remotePort = 2424;
     settings.checkDatabase = Boolean.parseBoolean(options.get(OPTION_CHECK_DATABASE));
     if (options.get(OPTION_LOAD_BALANCING) != null)

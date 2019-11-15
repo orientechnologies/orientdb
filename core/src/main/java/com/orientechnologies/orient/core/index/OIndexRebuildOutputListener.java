@@ -29,10 +29,10 @@ import com.orientechnologies.common.log.OLogManager;
  * 
  */
 public class OIndexRebuildOutputListener implements OProgressListener {
-  long                 startTime;
-  long                 lastDump;
-  long                 lastCounter = 0;
-  boolean              rebuild     = false;
+  private long    startTime;
+  private long    lastDump;
+  private long    lastCounter = 0;
+  private boolean rebuild     = false;
 
   private final OIndex idx;
 

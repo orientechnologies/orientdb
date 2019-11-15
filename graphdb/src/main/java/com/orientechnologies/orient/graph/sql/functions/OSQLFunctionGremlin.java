@@ -68,12 +68,12 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
           @Override
           public boolean call(final ScriptEngine iEngine, final OrientBaseGraph iGraph) {
-            if( iCurrentRecord == null )
+            if ( iCurrentRecord == null )
               // IGNORE PRE-PROCESSING
               return true;
 
             final ODocument document = (ODocument) iCurrentRecord;
-            OClass clazz =ODocumentInternal.getImmutableSchemaClass(document);
+            OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
             if (clazz != null && clazz.isSubClassOf(OrientEdgeType.CLASS_NAME)) {
               // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
               OrientEdge graphElement = (OrientEdge) new OrientElementIterable<OrientEdge>(iGraph, Arrays

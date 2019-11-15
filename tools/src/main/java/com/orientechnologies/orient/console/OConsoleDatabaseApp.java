@@ -41,25 +41,12 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.db.OrientDBRemote;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.tool.OBonsaiTreeRepair;
-import com.orientechnologies.orient.core.db.tool.OCheckIndexTool;
-import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
-import com.orientechnologies.orient.core.db.tool.OGraphRepair;
+import com.orientechnologies.orient.core.db.tool.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
@@ -101,31 +88,11 @@ import com.orientechnologies.orient.core.util.OURLHelper;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -427,14 +394,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     message("\nDropping cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
 
-    boolean result = currentDatabase.dropCluster(iClusterName, false);
+    boolean result = currentDatabase.dropCluster(iClusterName);
 
     if (!result) {
       // TRY TO GET AS CLUSTER ID
       try {
         int clusterId = Integer.parseInt(iClusterName);
         if (clusterId > -1) {
-          result = currentDatabase.dropCluster(clusterId, true);
+          result = currentDatabase.dropCluster(clusterId);
         }
       } catch (Exception ignored) {
       }
@@ -1272,10 +1239,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       if (currentResultSet.size() == 0)
         throw new OSystemException("No result set where to find the requested record. Execute a query first.");
 
-      if (currentResultSet.size() <= recNumber)
-        throw new OSystemException("The record requested is not part of current result set (0" + (currentResultSet.size() > 0 ?
-            "-" + (currentResultSet.size() - 1) :
-            "") + ")");
+      if (currentResultSet.size() <= recNumber) {
+        String resultSize = currentResultSet.size() > 0 ? "-" + (currentResultSet.size() - 1) : "";
+        throw new OSystemException("The record requested is not part of current result set (0" + resultSize + ")");
+      }
 
       setCurrentRecord(recNumber);
     }
@@ -1669,12 +1636,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       int totalIndexes = 0;
       long totalRecords = 0;
 
-      final List<OIndex<?>> indexes = new ArrayList<OIndex<?>>(currentDatabase.getMetadata().getIndexManager().getIndexes());
-      Collections.sort(indexes, new Comparator<OIndex<?>>() {
-        public int compare(OIndex<?> o1, OIndex<?> o2) {
-          return o1.getName().compareToIgnoreCase(o2.getName());
-        }
-      });
+      final List<OIndex<?>> indexes = new ArrayList<OIndex<?>>(
+          currentDatabase.getMetadata().getIndexManagerInternal().getIndexes(currentDatabase));
+      Collections.sort(indexes, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
       long totalIndexedRecords = 0;
 
@@ -2086,7 +2050,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     final boolean fix_links = iOptions == null || iOptions.contains("--fix-links");
     if (fix_links) {
       // REPAIR DATABASE AT LOW LEVEL
-      repairDatabase(iOptions);
+      boolean verbose = iOptions != null && iOptions.contains("-v");
+
+      new ODatabaseRepair().setDatabase(currentDatabase).setOutputListener(new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
+          message(iText);
+        }
+      }).setVerbose(verbose).run();
     }
 
     if (!currentDatabase.getURL().startsWith("plocal")) {
@@ -3000,8 +2971,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     tableFormatter.writeRecords(currentResultSet, limit);
   }
 
-  private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand, final String iMessage,
+  private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand, final String iMessageSuccess,
       final boolean iIncludeResult) {
+    final String iMessageFailure = "\nCommand failed.\n";
     checkForDatabase();
 
     if (iReceivedCommand == null)
@@ -3020,9 +2992,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     float elapsedSeconds = getElapsedSecs(start);
 
     if (iIncludeResult)
-      message(iMessage, result, elapsedSeconds);
+      message(iMessageSuccess, result, elapsedSeconds);
     else
-      message(iMessage, elapsedSeconds);
+      message(iMessageFailure, elapsedSeconds);
 
     return result;
   }

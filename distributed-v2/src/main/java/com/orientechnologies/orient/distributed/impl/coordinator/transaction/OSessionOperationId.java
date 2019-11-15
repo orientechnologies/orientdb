@@ -7,25 +7,33 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class OSessionOperationId {
-  private UUID uuid;
+  private String nodeId;
+  private long   sequential;
 
   public OSessionOperationId() {
-    init();
+    // TODO: remove this and replace with correct initialization.
+    nodeId = UUID.randomUUID().toString();
+    sequential = 0;
   }
 
-  public void init() {
-    uuid = UUID.randomUUID();
+  public OSessionOperationId(String nodeId) {
+    this.nodeId = nodeId;
+    this.sequential = 0;
+  }
+
+  protected OSessionOperationId(String nodeId, long sequential) {
+    this.nodeId = nodeId;
+    this.sequential = sequential;
   }
 
   public void serialize(DataOutput output) throws IOException {
-    output.writeLong(uuid.getMostSignificantBits());
-    output.writeLong(uuid.getLeastSignificantBits());
+    output.writeUTF(nodeId);
+    output.writeLong(sequential);
   }
 
   public void deserialize(DataInput input) throws IOException {
-    long most = input.readLong();
-    long least = input.readLong();
-    this.uuid = new UUID(most, least);
+    this.nodeId = input.readUTF();
+    this.sequential = input.readLong();
   }
 
   @Override
@@ -35,12 +43,27 @@ public class OSessionOperationId {
     if (o == null || getClass() != o.getClass())
       return false;
     OSessionOperationId that = (OSessionOperationId) o;
-    return Objects.equals(uuid, that.uuid);
+    return Objects.equals(nodeId, that.nodeId);
   }
 
   @Override
   public int hashCode() {
+    return Objects.hash(nodeId);
+  }
 
-    return Objects.hash(uuid);
+  public OSessionOperationId next() {
+    long next = sequential;
+    if (next == Long.MAX_VALUE) {
+      next = 0;
+    }
+    return new OSessionOperationId(this.nodeId, next);
+  }
+
+  public long getSequential() {
+    return sequential;
+  }
+
+  public String getNodeId() {
+    return nodeId;
   }
 }

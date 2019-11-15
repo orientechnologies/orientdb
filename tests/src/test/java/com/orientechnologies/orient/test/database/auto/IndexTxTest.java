@@ -1,15 +1,16 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,9 +27,10 @@ public class IndexTxTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
 
-    database.command(new OCommandSQL("create class IndexTxTestClass")).execute();
-    database.command(new OCommandSQL("create property IndexTxTestClass.name string")).execute();
-    database.command(new OCommandSQL("create index IndexTxTestIndex on IndexTxTestClass (name) unique METADATA {ignoreNullValues:true}")).execute();
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass cls = schema.createClass("IndexTxTestClass");
+    cls.createProperty("name", OType.STRING);
+    cls.createIndex("IndexTxTestIndex", OClass.INDEX_TYPE.UNIQUE, "name");
   }
 
   @BeforeMethod
@@ -36,14 +38,16 @@ public class IndexTxTest extends DocumentDBBaseTest {
     super.beforeMethod();
 
     final OSchema schema = database.getMetadata().getSchema();
-    schema.reload();
-    database.getStorage().reload();
-
-    schema.getClass("IndexTxTestClass").truncate();
+    final OClass cls = schema.getClass("IndexTxTestClass");
+    if (cls != null) {
+      cls.truncate();
+    }
   }
 
   @Test
-  public void testIndexCrossReferencedDocuments() throws Exception {
+  public void testIndexCrossReferencedDocuments() {
+    checkEmbeddedDB();
+
     database.begin();
 
     final ODocument doc1 = new ODocument("IndexTxTestClass");
@@ -62,17 +66,22 @@ public class IndexTxTest extends DocumentDBBaseTest {
 
     database.commit();
 
-    Map<String, ORID> expectedResult = new HashMap<String, ORID>();
+    Map<String, ORID> expectedResult = new HashMap<>();
     expectedResult.put("doc1", doc1.getIdentity());
     expectedResult.put("doc2", doc2.getIdentity());
 
-    final List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from index:IndexTxTestIndex"));
-    for (ODocument o : result) {
-      final String key = o.rawField("key");
+    OIndex index = getIndex("IndexTxTestIndex");
+    OIndexKeyCursor keyCursor = index.keyCursor();
+    String key = (String) keyCursor.next(-1);
+
+    while (key != null) {
       final ORID expectedValue = expectedResult.get(key);
-      final ORID value = o.rawField("rid");
+      final ORID value = (ORID) index.get(key);
+
       Assert.assertTrue(value.isPersistent());
       Assert.assertEquals(value, expectedValue);
+
+      key = (String) keyCursor.next(-1);
     }
   }
 }

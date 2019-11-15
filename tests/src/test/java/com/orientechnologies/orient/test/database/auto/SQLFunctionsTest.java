@@ -37,14 +37,7 @@ import org.testng.annotations.Test;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Test(groups = "sql-select")
 public class SQLFunctionsTest extends DocumentDBBaseTest {
@@ -130,8 +123,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     OUser admin = database.getMetadata().getSecurity().getUser("admin");
     OUser reader = database.getMetadata().getSecurity().getUser("reader");
 
-    ORole byPassRestrictedRole = database.getMetadata().getSecurity().createRole("byPassRestrictedRole",
-        ORole.ALLOW_MODES.DENY_ALL_BUT);
+    ORole byPassRestrictedRole = database.getMetadata().getSecurity()
+        .createRole("byPassRestrictedRole", ORole.ALLOW_MODES.DENY_ALL_BUT);
     byPassRestrictedRole.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ);
     byPassRestrictedRole.save();
 
@@ -176,8 +169,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     OClass indexed = database.getMetadata().getSchema().getOrCreateClass("Indexed");
     indexed.createProperty("key", OType.STRING);
     indexed.createIndex("keyed", OClass.INDEX_TYPE.NOTUNIQUE, "key");
-    database.newInstance("Indexed").field("key", "one").save();
-    database.newInstance("Indexed").field("key", "two").save();
+    database.<ODocument>newInstance("Indexed").field("key", "one").save();
+    database.<ODocument>newInstance("Indexed").field("key", "two").save();
 
     List<ODocument> result = database
         .command(new OSQLSynchQuery<ODocument>("select count(*) as total from Indexed where key > 'one'")).execute();
@@ -446,8 +439,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
   @Test
   public void queryAsLong() {
     long moreThanInteger = 1 + (long) Integer.MAX_VALUE;
-    String sql = "select numberString.asLong() as value from ( select '" + moreThanInteger
-        + "' as numberString from Account ) limit 1";
+    String sql =
+        "select numberString.asLong() as value from ( select '" + moreThanInteger + "' as numberString from Account ) limit 1";
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(sql)).execute();
 
     Assert.assertEquals(result.size(), 1);

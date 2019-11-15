@@ -8,13 +8,18 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -213,6 +218,36 @@ public class RemoteQuerySupportTest {
     assertNotNull(item.getProperty("map"));
     assertEquals(((Map<String, OResult>) item.getProperty("map")).size(), 1);
     assertEquals(((Map<String, OResult>) item.getProperty("map")).get("key").getProperty("one"), "value");
+  }
+
+  @Test
+  public void testCommandWithTX() {
+
+    session.begin();
+
+    session.command("insert into Some set prop = 'value'");
+
+    ORecord record;
+
+    try (OResultSet resultSet = session.command("insert into Some set prop = 'value'")) {
+      record = resultSet.next().getRecord().get();
+    }
+
+    session.commit();
+
+    Assert.assertTrue(record.getIdentity().isPersistent());
+
+  }
+
+  @Test(expected = OSerializationException.class)
+  public void testBrokenParameter() {
+    try {
+      session.query("select from Some where prop= ?", new Object()).close();
+    } catch (RuntimeException e) {
+      //should be possible to run a query after without getting the server stuck
+      session.query("select from Some where prop= ?", new ORecordId(10, 10)).close();
+      throw e;
+    }
   }
 
   @After

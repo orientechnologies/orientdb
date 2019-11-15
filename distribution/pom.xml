@@ -205,7 +205,7 @@
                                 <filter></filter>
                             </filters>
                             <ignoreDirFormatExtensions>false</ignoreDirFormatExtensions>
-                            <tarLongFileMode>gnu</tarLongFileMode>
+                            <tarLongFileMode>posix</tarLongFileMode>
                         </configuration>
                     </execution>
                 </executions>
@@ -269,6 +269,94 @@
                 </plugins>
             </build>
 
+        </profile>
+
+        <profile>
+            <id>ci</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>ci</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+                <exclude.test.2>empty.java</exclude.test.2>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/OCommunityEditionSingleNodeIT.java</exclude>
+                                <exclude>**/OGitHubIssuesIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationAttractionsIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationBusinessOpportunitiesIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationCustomersIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationFriendshipIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationLocationsIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationOrdersIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationPolymorphismIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationProfileIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationRecommendationsIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationReviewsIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationServicesIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationShortestPathsIT.java</exclude>
+                                <exclude>**/ODemoDbFromDocumentationTraversesIT.java</exclude>
+                                <exclude>**/ODemoDbGroupByTestIT.java</exclude>
+                                <exclude>**/ODemoDbMetadataConsistencyIT.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>integration_docker</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>integration_docker</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+                <exclude.test.2>empty.java</exclude.test.2>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <excludes>
+                                <include>**/OCommunityEditionSingleNodeIT.java</include>
+                                <include>**/OGitHubIssuesIT.java</include>
+                                <include>**/ODemoDbFromDocumentationAttractionsIT.java</include>
+                                <include>**/ODemoDbFromDocumentationBusinessOpportunitiesIT.java</include>
+                                <include>**/ODemoDbFromDocumentationCustomersIT.java</include>
+                                <include>**/ODemoDbFromDocumentationFriendshipIT.java</include>
+                                <include>**/ODemoDbFromDocumentationLocationsIT.java</include>
+                                <include>**/ODemoDbFromDocumentationOrdersIT.java</include>
+                                <include>**/ODemoDbFromDocumentationPolymorphismIT.java</include>
+                                <include>**/ODemoDbFromDocumentationProfileIT.java</include>
+                                <include>**/ODemoDbFromDocumentationRecommendationsIT.java</include>
+                                <include>**/ODemoDbFromDocumentationReviewsIT.java</include>
+                                <include>**/ODemoDbFromDocumentationServicesIT.java</include>
+                                <include>**/ODemoDbFromDocumentationShortestPathsIT.java</include>
+                                <include>**/ODemoDbFromDocumentationTraversesIT.java</include>
+                                <include>**/ODemoDbGroupByTestIT.java</include>
+                                <include>**/ODemoDbMetadataConsistencyIT.java</include>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
     </profiles>

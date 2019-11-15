@@ -18,9 +18,6 @@ public class ONestedMultiValueChangeEvent<K, V> extends OMultiValueChangeEvent<K
     super(OChangeType.NESTED, key, value, oldValue);
   }
 
-  public ONestedMultiValueChangeEvent(K key, V value, V oldValue, boolean changesOwnerContent) {
-    super(OChangeType.NESTED, key, value, oldValue, changesOwnerContent);
-  }
 
   public OMultiValueChangeTimeLine getTimeLine() {
     return timeLine;

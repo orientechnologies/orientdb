@@ -44,10 +44,7 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.sql.parser.OStatementCache;
-import com.orientechnologies.orient.core.sql.parser.OrientSql;
-import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.io.ByteArrayInputStream;
@@ -86,13 +83,35 @@ public class OSQLEngine {
     }
   }
 
+  public static OOrBlock parsePredicate(String predicate) throws OCommandSQLParsingException {
+    final InputStream is = new ByteArrayInputStream(predicate.getBytes());
+    try {
+      final OrientSql osql = new OrientSql(is);
+      OOrBlock result = osql.OrBlock();
+      return result;
+    } catch (ParseException e) {
+      throw new OCommandSQLParsingException(e, "");
+    }
+  }
+
+  public static OSecurityResourceSegment parseSecurityResource(String exp) {
+    final InputStream is = new ByteArrayInputStream(exp.getBytes());
+    try {
+      final OrientSql osql = new OrientSql(is);
+      OSecurityResourceSegment result = osql.SecurityResourceSegment();
+      return result;
+    } catch (ParseException e) {
+      throw new OCommandSQLParsingException(e, "");
+    }
+  }
+
   /**
    * internal use only, to sort operators.
    */
   private static final class Pair {
 
-    final OQueryOperator before;
-    final OQueryOperator after;
+    private final OQueryOperator before;
+    private final OQueryOperator after;
 
     public Pair(final OQueryOperator before, final OQueryOperator after) {
       this.before = before;

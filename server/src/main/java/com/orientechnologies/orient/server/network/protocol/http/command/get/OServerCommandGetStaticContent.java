@@ -133,10 +133,10 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
           stream.finish();
           byte[] compressedBytes = bytesOutput.toByteArray();
           iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, staticContent.type,
-              new ByteArrayInputStream(compressedBytes), compressedBytes.length, null, new HashMap<String, String>() {{
-                put("Content-Encoding", "gzip");
-              }
-          });
+              new ByteArrayInputStream(compressedBytes), compressedBytes.length, null, new HashMap<String, String>() {
+                {
+                  put("Content-Encoding", "gzip");
+                }});
         } finally {
           stream.close();
           bytesOutput.close();

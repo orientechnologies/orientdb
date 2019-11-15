@@ -20,6 +20,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneFullTextIndexEngine;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -102,10 +103,10 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OBaseIndexEngine createIndexEngine(String algorithm, String indexName, Boolean durableInNonTxMode, OStorage storage,
-      int version, int apiVersion, boolean multiValue, Map<String, String> engineProperties) {
+  public OBaseIndexEngine createIndexEngine(int indexId, String algorithm, String indexName, Boolean durableInNonTxMode,
+      OStorage storage, int version, int apiVersion, boolean multiValue, Map<String, String> engineProperties) {
 
-    return new OLuceneFullTextIndexEngine(storage, indexName);
+    return new OLuceneFullTextIndexEngine(storage, indexName, indexId);
 
   }
 
@@ -139,7 +140,9 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
       OLogManager.instance().debug(this, "Dropping Lucene indexes...");
 
-      db.getMetadata().getIndexManager().getIndexes().stream().filter(idx -> idx.getInternal() instanceof OLuceneFullTextIndex)
+      final ODatabaseDocumentInternal internal = (ODatabaseDocumentInternal) db;
+      internal.getMetadata().getIndexManagerInternal().getIndexes(internal).stream()
+          .filter(idx -> idx.getInternal() instanceof OLuceneFullTextIndex)
           .peek(idx -> OLogManager.instance().debug(this, "deleting index " + idx.getName())).forEach(idx -> idx.delete());
 
     } catch (Exception e) {

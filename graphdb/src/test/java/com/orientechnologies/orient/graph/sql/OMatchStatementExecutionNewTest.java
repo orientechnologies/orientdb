@@ -2059,6 +2059,58 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
+
+  @Test
+  public void testPathTraversal() {
+    String clazz = "testPathTraversal";
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
+
+    OVertex v1 = db.newVertex(clazz);
+    v1.setProperty("name", "a");
+    v1.save();
+
+    OVertex v2 = db.newVertex(clazz);
+    v2.setProperty("name", "b");
+    v2.save();
+
+    OVertex v3 = db.newVertex(clazz);
+    v3.setProperty("name", "c");
+    v3.save();
+
+    v1.setProperty("next", v2);
+    v2.setProperty("next", v3);
+
+    v1.save();
+    v2.save();
+
+    String query = "MATCH { class:" + clazz + ", as:a}.next{as:b, where:(name ='b')}";
+    query += " RETURN a.name as a, b.name as b";
+
+    OResultSet result = db.query(query);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertEquals("a", item.getProperty("a"));
+    Assert.assertEquals("b", item.getProperty("b"));
+
+    Assert.assertFalse(result.hasNext());
+
+    result.close();
+
+
+    query = "MATCH { class:" + clazz + ", as:a, where:(name ='a')}.next{as:b}";
+    query += " RETURN a.name as a, b.name as b";
+
+    result = db.query(query);
+    Assert.assertTrue(result.hasNext());
+    item = result.next();
+    Assert.assertEquals("a", item.getProperty("a"));
+    Assert.assertEquals("b", item.getProperty("b"));
+
+    Assert.assertFalse(result.hasNext());
+
+    result.close();
+  }
+
   private OResultSet getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");

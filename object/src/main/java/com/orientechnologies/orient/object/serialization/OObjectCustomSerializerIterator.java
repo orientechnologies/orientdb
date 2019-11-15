@@ -24,38 +24,37 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 /**
  * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
  * avoiding to call setDirty() by hand.
- * 
+ *
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
  */
 @SuppressWarnings({ "unchecked" })
 public class OObjectCustomSerializerIterator<TYPE> implements Iterator<TYPE>, Serializable {
-	private static final long									serialVersionUID	= -4012483076050044405L;
+  private static final long serialVersionUID = -4012483076050044405L;
 
-	private final ORecord									sourceRecord;
-	private final Iterator<? extends Object>	underlying;
-	private final Class<?>										deserializeClass;
+  private final ORecord                    sourceRecord;
+  private final Iterator<? extends Object> underlying;
+  private final Class<?>                   deserializeClass;
 
-	public OObjectCustomSerializerIterator(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
-			final Iterator<? extends Object> iIterator) {
-		this.sourceRecord = iSourceRecord;
-		this.underlying = iIterator;
-		this.deserializeClass = iDeserializeClass;
-	}
+  public OObjectCustomSerializerIterator(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
+      final Iterator<? extends Object> iIterator) {
+    this.sourceRecord = iSourceRecord;
+    this.underlying = iIterator;
+    this.deserializeClass = iDeserializeClass;
+  }
 
-	public TYPE next() {
-		final Object value = underlying.next();
-		return (TYPE) OObjectEntitySerializer.deserializeFieldValue(deserializeClass, value);
-	}
+  public TYPE next() {
+    final Object value = underlying.next();
+    return (TYPE) OObjectEntitySerializer.deserializeFieldValue(deserializeClass, value);
+  }
 
-	public boolean hasNext() {
-		return underlying.hasNext();
-	}
+  public boolean hasNext() {
+    return underlying.hasNext();
+  }
 
-	public void remove() {
-		underlying.remove();
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
-	}
+  public void remove() {
+    underlying.remove();
+    if (sourceRecord != null)
+      sourceRecord.setDirty();
+  }
 
 }

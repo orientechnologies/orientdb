@@ -48,23 +48,23 @@ import java.util.Set;
  * Custom implementation of TTY reader. Supports arrow keys + history.
  */
 public class TTYConsoleReader implements OConsoleReader {
-  public final static  int    HORIZONTAL_TAB_CHAR = 9;
-  public final static  int    NEW_LINE_CHAR       = 10;
-  public final static  int    VERTICAL_TAB_CHAR   = 11;
-  public final static  int    ESC                 = 27;
-  public final static  int    UNIT_SEPARATOR_CHAR = 31;
-  public final static  int    CTRL                = 53;
-  public final static  int    SEMICOLON           = 59;
-  public final static  int    UP_CHAR             = 65;
-  public final static  int    DOWN_CHAR           = 66;
-  public final static  int    RIGHT_CHAR          = 67;
-  public final static  int    LEFT_CHAR           = 68;
-  public final static  int    END_CHAR            = 70;
-  public final static  int    BEGIN_CHAR          = 72;
-  public final static  int    BACKSLASH           = 92;
-  public final static  int    DEL_CHAR            = 126;
-  public final static  int    BACKSPACE_CHAR      = 127;
-  private final static int    MAX_HISTORY_ENTRIES = 50;
+  public static final  int    HORIZONTAL_TAB_CHAR = 9;
+  public static final  int    NEW_LINE_CHAR       = 10;
+  public static final  int    VERTICAL_TAB_CHAR   = 11;
+  public static final  int    ESC                 = 27;
+  public static final  int    UNIT_SEPARATOR_CHAR = 31;
+  public static final  int    CTRL                = 53;
+  public static final  int    SEMICOLON           = 59;
+  public static final  int    UP_CHAR             = 65;
+  public static final  int    DOWN_CHAR           = 66;
+  public static final  int    RIGHT_CHAR          = 67;
+  public static final  int    LEFT_CHAR           = 68;
+  public static final  int    END_CHAR            = 70;
+  public static final  int    BEGIN_CHAR          = 72;
+  public static final  int    BACKSLASH           = 92;
+  public static final  int    DEL_CHAR            = 126;
+  public static final  int    BACKSPACE_CHAR      = 127;
+  private static final int    MAX_HISTORY_ENTRIES = 50;
   private static final Object signalLock          = new Object();
   private static       String HISTORY_FILE_NAME   = ".orientdb_history";
   private static       String ORIENTDB_HOME_DIR   = ".orientdb";
@@ -359,36 +359,37 @@ public class TTYConsoleReader implements OConsoleReader {
       String[] bufferComponents = buffer.toString().split(" ");
       String[] suggestionComponents;
       Set<String> bufferPart = new HashSet<String>();
-      String suggestionPart = null;
+      StringBuilder suggestionPart = null;
       boolean appendSpace = true;
       for (String suggestion : suggestions) {
         suggestionComponents = suggestion.split(" ");
         hintBuffer.append("* " + suggestion + " ");
         hintBuffer.append("\n");
-        suggestionPart = "";
+        suggestionPart = new StringBuilder();
         if (bufferComponents.length == 0 || buffer.length() == 0) {
           suggestionPart = null;
         } else if (bufferComponents.length == 1) {
           bufferPart.add(suggestionComponents[0]);
           if (bufferPart.size() > 1) {
-            suggestionPart = bufferComponents[0];
+            suggestionPart = new StringBuilder(bufferComponents[0]);
             appendSpace = false;
           } else {
-            suggestionPart = suggestionComponents[0];
+            suggestionPart = new StringBuilder(suggestionComponents[0]);
           }
         } else {
           bufferPart.add(suggestionComponents[bufferComponents.length - 1]);
           if (bufferPart.size() > 1) {
             for (int i = 0; i < bufferComponents.length; i++) {
-              suggestionPart += bufferComponents[i];
+              suggestionPart.append(bufferComponents[i]);
               if (i < (bufferComponents.length - 1)) {
-                suggestionPart += " ";
+                suggestionPart.append(" ");
               }
               appendSpace = false;
             }
           } else {
             for (int i = 0; i < suggestionComponents.length; i++) {
-              suggestionPart += suggestionComponents[i] + " ";
+              suggestionPart.append(suggestionComponents[i]);
+              suggestionPart.append(" ");
             }
           }
         }

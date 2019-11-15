@@ -52,8 +52,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   protected static final int TOT_RECORDS         = 100;
   protected static final int TOT_RECORDS_COMPANY = 10;
 
-  protected long    startRecordNumber;
-  String            base64;
+  protected long startRecordNumber;
+  String base64;
   private ODocument record;
 
   @Parameters(value = "url")
@@ -87,7 +87,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     // DELETE ALL THE RECORDS IN THE CLUSTER
     while (database.countClusterElements("Account") > 0)
-      for (ODocument rec : database.browseCluster("Account"))
+      for (ODocument rec : database.<ODocument>browseCluster("Account"))
         if (rec != null)
           rec.delete();
 
@@ -155,7 +155,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       ids.add(i);
 
     ORecordIteratorCluster<ODocument> it = database.browseCluster("Account");
-    for (it.last(); it.hasPrevious();) {
+    for (it.last(); it.hasPrevious(); ) {
       ODocument rec = it.previous();
 
       if (rec != null) {
@@ -181,7 +181,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
   public void update() {
     int i = 0;
-    for (ODocument rec : database.browseCluster("Account")) {
+    for (ODocument rec : database.<ODocument>browseCluster("Account")) {
 
       if (i % 2 == 0)
         rec.field("location", "Spain");
@@ -196,7 +196,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "update")
   public void testUpdate() {
-    for (ODocument rec : database.browseCluster("Account")) {
+    for (ODocument rec : database.<ODocument>browseCluster("Account")) {
       int price = ((Number) rec.field("price")).intValue();
       Assert.assertTrue(price - 100 >= 0);
 
@@ -209,6 +209,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testUpdate")
   public void testDoubleChanges() {
+    checkEmbeddedDB();
+
     ODocument vDoc = database.newInstance();
     vDoc.setClassName("Profile");
     vDoc.field("nick", "JayM1").field("name", "Jay").field("surname", "Miner");
@@ -269,8 +271,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testUnderscoreField() {
     ODocument vDoc = database.newInstance();
     vDoc.setClassName("Profile");
-    vDoc.field("nick", "MostFamousJack").field("name", "Kiefer").field("surname", "Sutherland").field("tag_list",
-        new String[] { "actor", "myth" });
+    vDoc.field("nick", "MostFamousJack").field("name", "Kiefer").field("surname", "Sutherland")
+        .field("tag_list", new String[] { "actor", "myth" });
     vDoc.save();
 
     List<ODocument> result = database
@@ -327,7 +329,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testUnderscoreField")
   public void testUpdateLazyDirtyPropagation() {
-    for (ODocument rec : database.browseCluster("Profile")) {
+    for (ODocument rec : database.<ODocument>browseCluster("Profile")) {
       Assert.assertFalse(rec.isDirty());
 
       Collection<?> followers = rec.field("followers");
@@ -449,8 +451,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     // The link between jamie and tyrion is not saved properly
     ODocument tyrionDoc = new ODocument("PersonTest");
-    tyrionDoc.fromJSON("{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"relationship\":\"brother\",\"contact\":"
-        + jaimeDoc.toJSON() + "}}");
+    tyrionDoc.fromJSON(
+        "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"relationship\":\"brother\",\"contact\":" + jaimeDoc.toJSON()
+            + "}}");
     tyrionDoc.save();
 
     // System.out.println("The saved documents are:");
@@ -577,13 +580,13 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testCreate")
   public void testBrowseClassHasNextTwice() {
     ODocument doc1 = null;
-    for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext();) {
+    for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext(); ) {
       doc1 = itDoc.next();
       break;
     }
 
     ODocument doc2 = null;
-    for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext();) {
+    for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext(); ) {
       itDoc.hasNext();
       doc2 = itDoc.next();
       break;
@@ -713,19 +716,19 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     bank.field("name", "MyBankChained");
 
     // EMBEDDED
-    ODocument embedded = database.newInstance("Account").field("name", "embedded1");
+    ODocument embedded = database.<ODocument>newInstance("Account").field("name", "embedded1");
     bank.field("embedded", embedded, OType.EMBEDDED);
 
-    ODocument[] embeddeds = new ODocument[] { database.newInstance("Account").field("name", "embedded2"),
-        database.newInstance("Account").field("name", "embedded3") };
+    ODocument[] embeddeds = new ODocument[] { database.<ODocument>newInstance("Account").field("name", "embedded2"),
+        database.<ODocument>newInstance("Account").field("name", "embedded3") };
     bank.field("embeddeds", embeddeds, OType.EMBEDDEDLIST);
 
     // LINKED
-    ODocument linked = database.newInstance("Account").field("name", "linked1");
+    ODocument linked = database.<ODocument>newInstance("Account").field("name", "linked1");
     bank.field("linked", linked);
 
-    ODocument[] linkeds = new ODocument[] { database.newInstance("Account").field("name", "linked2"),
-        database.newInstance("Account").field("name", "linked3") };
+    ODocument[] linkeds = new ODocument[] { database.<ODocument>newInstance("Account").field("name", "linked2"),
+        database.<ODocument>newInstance("Account").field("name", "linked3") };
     bank.field("linkeds", linkeds, OType.LINKLIST);
 
     bank.save();
@@ -777,7 +780,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         .getBytes();
     ODocument doc = (ODocument) ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(streamOrigin, new ODocument(), null);
     doc.field("out");
-    final byte[] streamDest = ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc, false);
+    final byte[] streamDest = ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc);
     Assert.assertEquals(streamOrigin, streamDest);
     ODatabaseDocumentTx.setDefaultSerializer(current);
     oldDb.setSerializer(dbser);
@@ -959,7 +962,6 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     }
     return doc;
   }
-
 
   @Test
   public void testAny() {

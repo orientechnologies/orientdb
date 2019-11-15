@@ -39,13 +39,14 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseInternal<ORecord> {
@@ -166,23 +167,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   void setUseLightweightEdges(boolean b);
 
-  /**
-   * yep before in Hides records content by putting tombstone on the records position but does not delete record itself.
-   * <p>
-   * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
-   * method can be used only if there is no active transaction in database.
-   *
-   * @param rid record id.
-   *
-   * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
-   *
-   * @throws java.lang.UnsupportedOperationException                              In case current version of cluster does not
-   *                                                                              support given operation.
-   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException if record is already deleted/hidden.
-   */
-
-  boolean hide(ORID rid);
-
   ODatabaseDocumentInternal cleanOutRecord(ORID rid, int version);
 
   default void realClose() {
@@ -202,15 +186,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
    */
   default boolean sync(boolean forceDeployment, boolean tryWithDelta) {
     return false;
-  }
-
-  /**
-   * synchronizes a cluster with the rest of the network (if in distributed mode).
-   *
-   * @return true if the database was synchronized, false otherwise
-   */
-  default Map<String, Object> syncCluster(String clusterName) {
-    return null;
   }
 
   default Map<String, Object> getHaStatus(boolean servers, boolean db, boolean latency, boolean messages) {
@@ -273,4 +248,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   default boolean isDistributed() {
     return false;
   }
+
+  Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges();
 }

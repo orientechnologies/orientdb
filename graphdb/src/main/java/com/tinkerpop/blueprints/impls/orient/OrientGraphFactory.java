@@ -293,7 +293,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
 
     final ODatabaseDocument db = new ODatabaseDocumentTx(url);
     if (properties != null) {
-       properties.entrySet().forEach(e -> db.setProperty(e.getKey(), e.getValue()));
+      properties.entrySet().forEach(e -> db.setProperty(e.getKey(), e.getValue()));
     }
 
     if (!db.getURL().startsWith("remote:") && !db.exists()) {

@@ -20,11 +20,11 @@
 package com.orientechnologies.orient.core.engine;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.jna.ONative;
+import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 
 import java.util.Locale;
 
@@ -112,7 +112,7 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(diskCacheInMB);
     } else {
       // LOW MEMORY: SET IT TO 256MB ONLY
-      diskCacheInMB = O2QCache.MIN_CACHE_SIZE;
+      diskCacheInMB = OReadCache.MIN_CACHE_SIZE;
       OLogManager.instance().warnNoDb(null,
           "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx "
               + "setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + diskCacheInMB + "MB",

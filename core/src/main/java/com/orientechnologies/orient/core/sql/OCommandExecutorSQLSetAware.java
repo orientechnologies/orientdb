@@ -93,21 +93,21 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     if (iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
       String clusterName = iTarget.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()).trim();
       ODatabaseDocumentInternal db = getDatabase();
-      if(clusterName.startsWith("[") && clusterName.endsWith("]")) {
-        String[] clusterNames = clusterName.substring(1, clusterName.length()-1).split(",");
+      if (clusterName.startsWith("[") && clusterName.endsWith("]")) {
+        String[] clusterNames = clusterName.substring(1, clusterName.length() - 1).split(",");
         OClass candidateClass = null;
-        for(String cName:clusterNames){
+        for (String cName : clusterNames) {
           OCluster aCluster = db.getStorage().getClusterByName(cName.trim());
-          if(aCluster == null){
+          if (aCluster == null) {
             return null;
           }
           OClass aClass = db.getMetadata().getSchema().getClassByClusterId(aCluster.getId());
-          if(aClass == null){
+          if (aClass == null) {
             return null;
           }
-          if(candidateClass == null || candidateClass.equals(aClass) || candidateClass.isSubClassOf(aClass)){
+          if (candidateClass == null || candidateClass.equals(aClass) || candidateClass.isSubClassOf(aClass)) {
             candidateClass = aClass;
-          }else if(!candidateClass.isSuperClassOf(aClass)){
+          } else if (!candidateClass.isSuperClassOf(aClass)) {
             return null;
           }
         }

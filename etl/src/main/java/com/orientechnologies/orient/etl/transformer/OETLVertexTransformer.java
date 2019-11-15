@@ -26,8 +26,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 
 public class OETLVertexTransformer extends OETLAbstractTransformer {
-  private String vertexClass;
-  private String clusterName;
+  private String  vertexClass;
+  private String  clusterName;
   private boolean skipDuplicates = false;
 
   @Override
@@ -75,7 +75,7 @@ public class OETLVertexTransformer extends OETLAbstractTransformer {
 
     doc.setClassName(vertexClass);
 
-    final OVertex v = new OVertexDelegate(doc);
+    final OVertex v = doc.asVertex().get();
 
     return v;
   }

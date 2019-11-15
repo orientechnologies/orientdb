@@ -5,7 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -34,7 +34,7 @@ public class ODropPropertyStatement extends ODDLStatement {
 
   @Override public OResultSet executeDDL(OCommandContext ctx) {
     OInternalResultSet rs = new OInternalResultSet();
-    final ODatabase database = ctx.getDatabase();
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className.getStringValue());
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
@@ -84,9 +84,9 @@ public class ODropPropertyStatement extends ODDLStatement {
     return rs;
   }
 
-  private List<OIndex<?>> relatedIndexes(final String fieldName, ODatabase database) {
+  private List<OIndex<?>> relatedIndexes(final String fieldName, ODatabaseDocumentInternal database) {
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>();
-    for (final OIndex<?> oIndex : database.getMetadata().getIndexManager().getClassIndexes(className.getStringValue())) {
+    for (final OIndex<?> oIndex : database.getMetadata().getIndexManagerInternal().getClassIndexes(database, className.getStringValue())) {
       if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseInsentiveComparator()) > -1) {
         result.add(oIndex);
       }

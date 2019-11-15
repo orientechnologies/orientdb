@@ -136,10 +136,9 @@ public class OSequenceCached extends OSequence {
         return nextWork();
       }
     } else {
-      try{
+      try {
         return sendSequenceActionSetAndNext(currentValue);
-      }
-      catch (InterruptedException | ExecutionException exc){
+      } catch (InterruptedException | ExecutionException exc) {
         OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
@@ -154,8 +153,8 @@ public class OSequenceCached extends OSequence {
   @Override
   public long next() throws OSequenceLimitReachedException, ODatabaseException {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
-    if (shouldGoOverDistributted) {      
-      return nextWithNewCurrentValue(cacheStart, true);      
+    if (shouldGoOverDistributted) {
+      return nextWithNewCurrentValue(cacheStart, true);
     }
     return nextWork();
   }

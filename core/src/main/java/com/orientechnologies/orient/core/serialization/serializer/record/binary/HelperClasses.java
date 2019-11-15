@@ -29,38 +29,23 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
-import com.orientechnologies.orient.core.delta.ODeltaDocumentFieldType;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author mdjurovi
@@ -78,30 +63,6 @@ public class HelperClasses {
     Tuple(T1 firstVal, T2 secondVal) {
       this.firstVal = firstVal;
       this.secondVal = secondVal;
-    }
-
-    public T1 getFirstVal() {
-      return firstVal;
-    }
-
-    public T2 getSecondVal() {
-      return secondVal;
-    }
-  }
-
-  public static class Triple<T1, T2, T3> {// extends Tuple<T1, T2>{
-    private final T1 firstVal;
-    private final T2 secondVal;
-    private final T3 thirdVal;
-
-    public Triple(T1 firstVal, T2 secondVal, T3 thirdVal) {
-      this.firstVal = firstVal;
-      this.secondVal = secondVal;
-      this.thirdVal = thirdVal;
-    }
-
-    public T3 getThirdVal() {
-      return thirdVal;
     }
 
     public T1 getFirstVal() {
@@ -132,27 +93,11 @@ public class HelperClasses {
     return OType.getById(readByte(bytes));
   }
 
-  public static OTypeInterface readDeltaDocumentType(final BytesContainer bytes) {
-    return ODeltaDocumentFieldType.getFromId(readByte(bytes));
-  }
-
-//  public static ODeltaDocumentFieldType getDeltaTypeFromType(OType type){
-//    if (type == null){
-//      return null;
-//    }
-//    return ODeltaDocumentFieldType.getFromId(type.getId());
-//  }
-
   public static void writeOType(BytesContainer bytes, int pos, OType type) {
     bytes.bytes[pos] = (byte) type.getId();
   }
 
-  public static void writeType(BytesContainer bytes, OTypeInterface type) {
-    int pos = bytes.alloc(1);
-    bytes.bytes[pos] = (byte) type.getId();
-  }
-
-  public static void writeType(BytesContainer bytes, ODeltaDocumentFieldType type) {
+  public static void writeType(BytesContainer bytes, OType type) {
     int pos = bytes.alloc(1);
     bytes.bytes[pos] = (byte) type.getId();
   }
@@ -283,18 +228,6 @@ public class HelperClasses {
     return type;
   }
 
-  public static OTypeInterface getDeltaTypeFromValueEmbedded(final Object fieldValue) {
-    if (fieldValue instanceof ODocumentDelta) {
-      return ODeltaDocumentFieldType.DELTA_RECORD;
-    }
-
-    OType type = getTypeFromValueEmbedded(fieldValue);
-    if (type == null) {
-      return null;
-    }
-    return type;
-  }
-
   public static int writeLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> value) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
 
@@ -370,29 +303,21 @@ public class HelperClasses {
     }
   }
 
-  public static Map<Object, OIdentifiable> readLinkMap(final BytesContainer bytes, final ODocument document,
+  public static Map<Object, OIdentifiable> readLinkMap(final BytesContainer bytes, final ORecordElement owner,
       boolean justRunThrough) {
     int size = OVarIntSerializer.readAsInteger(bytes);
     ORecordLazyMap result = null;
     if (!justRunThrough)
-      result = new ORecordLazyMap(document);
-
-    result.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-
-      while ((size--) > 0) {
-        final String key = readString(bytes);
-        final ORecordId value = readOptimizedLink(bytes, justRunThrough);
-        if (value.equals(NULL_RECORD_ID))
-          result.put(key, null);
-        else
-          result.put(key, value);
-      }
-      return result;
-
-    } finally {
-      result.setInternalStatus(ORecordElement.STATUS.LOADED);
+      result = new ORecordLazyMap(owner);
+    while ((size--) > 0) {
+      final String key = readString(bytes);
+      final ORecordId value = readOptimizedLink(bytes, justRunThrough);
+      if (value.equals(NULL_RECORD_ID))
+        result.putInternal(key, null);
+      else
+        result.putInternal(key, value);
     }
+    return result;
   }
 
   public static void writeByte(BytesContainer bytes, byte val) {
@@ -530,7 +455,7 @@ public class HelperClasses {
       ridbag.getDelegate().setSize(size);
       for (int i = 0; i < size; i++) {
         OIdentifiable record = readLinkOptimizedEmbedded(bytes);
-        ((OEmbeddedRidBag) ridbag.getDelegate()).addEntry(record);
+        ((OEmbeddedRidBag) ridbag.getDelegate()).addInternal(record);
       }
     } else {
       long fileId = OVarIntSerializer.readAsLong(bytes);
@@ -588,12 +513,11 @@ public class HelperClasses {
     return ChangeSerializationHelper.createChangeInstance(type, change);
   }
 
-  public static OType getLinkedType(ODocument document, OType type, String key) {
+  public static OType getLinkedType(OClass clazz, OType type, String key) {
     if (type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDMAP)
       return null;
-    OClass immutableClass = ODocumentInternal.getImmutableSchemaClass(document);
-    if (immutableClass != null) {
-      OProperty prop = immutableClass.getProperty(key);
+    if (clazz != null) {
+      OProperty prop = clazz.getProperty(key);
       if (prop != null) {
         return prop.getLinkedType();
       }

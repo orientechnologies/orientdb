@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unchecked")
 public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiable>> {
-  protected final static String QUERY_GET = "select expand( rid ) from index:`%s` where key = ?";
+  protected static final String QUERY_GET = "select expand( rid ) from index:`%s` where key = ?";
 
   public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {

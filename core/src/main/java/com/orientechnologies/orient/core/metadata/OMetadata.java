@@ -16,22 +16,14 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.security.OIdentity;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.schedule.OScheduler;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -49,6 +41,10 @@ public interface OMetadata {
 
   OSecurity getSecurity();
 
+  /**
+   * @deprecated Manual indexes are deprecated and will be removed
+   */
+  @Deprecated
   OIndexManager getIndexManager();
 
   @Deprecated

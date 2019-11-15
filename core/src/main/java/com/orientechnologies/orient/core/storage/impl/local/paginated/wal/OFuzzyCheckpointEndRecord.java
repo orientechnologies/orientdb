@@ -55,7 +55,7 @@ public class OFuzzyCheckpointEndRecord extends OAbstractWALRecord {
   }
 
   @Override
-  public byte getId() {
+  public int getId() {
     return WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
   }
 }

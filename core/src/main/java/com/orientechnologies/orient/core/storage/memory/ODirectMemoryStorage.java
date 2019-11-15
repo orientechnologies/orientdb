@@ -53,12 +53,8 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration) throws IOException {
-    if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
-      if (writeAheadLog == null) {
-        writeAheadLog = new OMemoryWriteAheadLog();
-      }
-    } else {
-      writeAheadLog = null;
+    if (writeAheadLog == null) {
+      writeAheadLog = new OMemoryWriteAheadLog();
     }
 
     final ODirectMemoryOnlyDiskCache diskCache = new ODirectMemoryOnlyDiskCache(
@@ -106,6 +102,19 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
+  protected void readIv() throws IOException {
+  }
+
+  @Override
+  protected byte[] getIv() {
+    return new byte[0];
+  }
+
+  @Override
+  protected void initIv() throws IOException {
+  }
+
+  @Override
   public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
     try {
@@ -121,8 +130,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iListener)
-      throws IOException {
+      final OCommandOutputListener iListener) throws IOException {
     try {
       throw new UnsupportedOperationException();
     } catch (final RuntimeException e) {
@@ -156,7 +164,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected OWriteAheadLog createWalFromIBUFiles(final File directory, final OContextConfiguration contextConfiguration,
-      final Locale locale) throws IOException {
+      final Locale locale, byte[] iv) throws IOException {
     return null;
   }
 

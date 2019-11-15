@@ -44,7 +44,7 @@ import java.util.UUID;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public final static int    CHUNK_MAX_SIZE = 8388608;    // 8MB
+  public static final int    CHUNK_MAX_SIZE = 8388608;    // 8MB
   public static final String DEPLOYDB       = "deploydb.";
   public static final int    FACTORYID      = 14;
 

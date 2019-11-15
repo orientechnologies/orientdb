@@ -2,11 +2,15 @@ package com.orientechnologies.orient.distributed.impl.structural.raft;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
+import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.OReadStructuralSharedConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralSharedConfiguration;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Optional;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.NODE_JOIN_REQUEST;
 
@@ -23,7 +27,9 @@ public class ONodeJoin implements ORaftOperation {
 
   @Override
   public void apply(OrientDBDistributed context) {
-    context.getStructuralConfiguration().getSharedConfiguration().addNode(new OStructuralNodeConfiguration(nodeIdentity));
+    OStructuralSharedConfiguration config = context.getStructuralConfiguration().modifySharedConfiguration();
+    config.addNode(new OStructuralNodeConfiguration(nodeIdentity));
+    context.getStructuralConfiguration().update(config);
   }
 
   @Override
@@ -40,5 +46,10 @@ public class ONodeJoin implements ORaftOperation {
   public void deserialize(DataInput input) throws IOException {
     this.nodeIdentity = new ONodeIdentity();
     this.nodeIdentity.deserialize(input);
+  }
+
+  @Override
+  public Optional<OSessionOperationId> getRequesterSequential() {
+    return Optional.empty();
   }
 }

@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.sql.parser.OSkip;
 public class SkipExecutionStep extends AbstractExecutionStep {
   private final OSkip skip;
 
-  int skipped = 0;
+  private int skipped = 0;
 
   private boolean finished;
 
@@ -19,7 +19,8 @@ public class SkipExecutionStep extends AbstractExecutionStep {
     this.skip = skip;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (finished == true) {
       return new OInternalResultSet();//empty
     }
@@ -41,15 +42,18 @@ public class SkipExecutionStep extends AbstractExecutionStep {
 
   }
 
-  @Override public void sendTimeout() {
+  @Override
+  public void sendTimeout() {
 
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     prev.ifPresent(x -> x.close());
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ SKIP (" + skip.toString() + ")";
   }
 

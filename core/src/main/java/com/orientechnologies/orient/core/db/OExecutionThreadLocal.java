@@ -32,8 +32,8 @@ import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
  */
 public class OExecutionThreadLocal extends ThreadLocal<OExecutionThreadLocal.OExecutionThreadData> {
   public class OExecutionThreadData {
-    volatile public OAsyncReplicationOk    onAsyncReplicationOk;
-    volatile public OAsyncReplicationError onAsyncReplicationError;
+    public volatile OAsyncReplicationOk    onAsyncReplicationOk;
+    public volatile OAsyncReplicationError onAsyncReplicationError;
   }
 
   @Override

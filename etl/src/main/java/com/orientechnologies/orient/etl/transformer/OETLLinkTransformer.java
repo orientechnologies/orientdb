@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -86,11 +87,11 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
       // RESOLVE SINGLE JOINS
       final Collection<Object> singleJoinsResult = new ArrayList<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(joinRuntimeValue)) {
-        singleJoinsResult.add(lookup(db, o, true));
+        singleJoinsResult.add(lookup((ODatabaseDocumentInternal) db, o, true));
       }
       result = singleJoinsResult;
     } else
-      result = lookup(db, joinRuntimeValue, true);
+      result = lookup((ODatabaseDocumentInternal) db, joinRuntimeValue, true);
 
     log(Level.FINE, "joinRuntimeValue=%s, lookupResult=%s", joinRuntimeValue, result);
 
@@ -153,6 +154,8 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
 
     // SET THE TRANSFORMED FIELD BACK
     doc.field(linkFieldName, result);
+
+    doc.save();
 
     log(Level.FINE, "set %s=%s in document=%s", linkFieldName, result, input);
 

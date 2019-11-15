@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRemote;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -20,7 +21,7 @@ public class OSharedContextRemote extends OSharedContext {
     this.orientDB = orientDBRemote;
     this.storage = storage;
     schema = new OSchemaRemote();
-    security = OSecurityManager.instance().newSecurity();
+    security = new OSecurityRemote(OSecurityManager.instance().newSecurity());
     indexManager = new OIndexManagerRemote(storage);
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl();
@@ -36,7 +37,7 @@ public class OSharedContextRemote extends OSharedContext {
         indexManager.load(database);
         //The Immutable snapshot should be after index and schema that require and before everything else that use it
         schema.forceSnapshot(database);
-        security.load();
+        security.load(database);
         sequenceLibrary.load(database);
         schema.onPostIndexManagement();
         loaded = true;
@@ -51,7 +52,7 @@ public class OSharedContextRemote extends OSharedContext {
   @Override
   public synchronized void close() {
     schema.close();
-    security.close(false);
+    security.close();
     indexManager.close();
     sequenceLibrary.close();
     loaded = false;
@@ -62,7 +63,7 @@ public class OSharedContextRemote extends OSharedContext {
     indexManager.reload();
     //The Immutable snapshot should be after index and schema that require and before everything else that use it
     schema.forceSnapshot(database);
-    security.load();
+    security.load(database);
     scheduler.load(database);
     sequenceLibrary.load(database);
     functionLibrary.load(database);

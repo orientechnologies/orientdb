@@ -7,12 +7,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.cache.chm.readbuffer.BoundedBuffer;
 import com.orientechnologies.orient.core.storage.cache.chm.readbuffer.Buffer;
 import com.orientechnologies.orient.core.storage.cache.chm.writequeue.MPSCLinkedQueue;
@@ -30,15 +25,13 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Disk cache based on ConcurrentHashMap and eviction policy which is asynchronously processed
- * by handling set of events logged in lock free event buffer.
- * This feature first was introduced in Caffeine framework https://github.com/ben-manes/caffeine and
- * in ConcurrentLinkedHashMap library https://github.com/ben-manes/concurrentlinkedhashmap .
- * The difference is that if consumption of memory in cache is bigger than 1% disk cache is switched from
- * asynchronous processing of stream of events to synchronous processing. But that is true only for threads
- * which cause loading of additional pages from write cache to disk cache.
- * Window TinyLFU policy is used as cache eviction policy because it prevents usage of ghost entries and
- * as result considerably decrease usage of heap memory.
+ * Disk cache based on ConcurrentHashMap and eviction policy which is asynchronously processed by handling set of events logged in
+ * lock free event buffer. This feature first was introduced in Caffeine framework https://github.com/ben-manes/caffeine and in
+ * ConcurrentLinkedHashMap library https://github.com/ben-manes/concurrentlinkedhashmap . The difference is that if consumption of
+ * memory in cache is bigger than 1% disk cache is switched from asynchronous processing of stream of events to synchronous
+ * processing. But that is true only for threads which cause loading of additional pages from write cache to disk cache. Window
+ * TinyLFU policy is used as cache eviction policy because it prevents usage of ghost entries and as result considerably decrease
+ * usage of heap memory.
  */
 public final class AsyncReadCache implements OReadCache {
   private static final int NCPU                   = Runtime.getRuntime().availableProcessors();
@@ -98,7 +91,7 @@ public final class AsyncReadCache implements OReadCache {
 
   @Override
   public final OCacheEntry loadForWrite(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums, final OLogSequenceNumber startLSN) {
+      final OWriteCache writeCache, final boolean verifyChecksums, final OLogSequenceNumber startLSN) {
     final OCacheEntry cacheEntry = doLoad(fileId, (int) pageIndex, writeCache, verifyChecksums);
 
     if (cacheEntry != null) {
@@ -111,7 +104,7 @@ public final class AsyncReadCache implements OReadCache {
 
   @Override
   public final OCacheEntry loadForRead(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums) {
+      final OWriteCache writeCache, final boolean verifyChecksums) {
     return doLoad(fileId, (int) pageIndex, writeCache, verifyChecksums);
   }
 
@@ -147,13 +140,13 @@ public final class AsyncReadCache implements OReadCache {
         cacheEntry = data.compute(pageKey, (page, entry) -> {
           if (entry == null) {
             try {
-              final OCachePointer[] pointers = writeCache.load(fileId, pageIndex, 1, new OModifiableBoolean(), verifyChecksums);
-              if (pointers.length == 0) {
+              final OCachePointer pointer = writeCache.load(fileId, pageIndex, new OModifiableBoolean(), verifyChecksums);
+              if (pointer == null) {
                 return null;
               }
 
               cacheSize.incrementAndGet();
-              return new OCacheEntryImpl(page.getFileId(), page.getPageIndex(), pointers[0]);
+              return new OCacheEntryImpl(page.getFileId(), page.getPageIndex(), pointer);
             } catch (final IOException e) {
               throw OException
                   .wrapException(new OStorageException("Error during loading of page " + pageIndex + " for file " + fileId), e);
@@ -227,15 +220,23 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   @Override
-  public final void releaseFromWrite(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
+  public final void releaseFromWrite(final OCacheEntry cacheEntry, final OWriteCache writeCache, final boolean changed) {
     final OCachePointer cachePointer = cacheEntry.getCachePointer();
     assert cachePointer != null;
 
     final PageKey pageKey = new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex());
-    data.compute(pageKey, (page, entry) -> {
-      writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
-      return entry;//may be absent if page in pinned pages, in such case we use map as virtual lock
-    });
+    if (cacheEntry.isNewlyAllocatedPage() || changed) {
+      if (cacheEntry.isNewlyAllocatedPage()) {
+        cacheEntry.clearAllocationFlag();
+      }
+
+      data.compute(pageKey, (page, entry) -> {
+        writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
+        return entry;//may be absent if page in pinned pages, in such case we use map as virtual lock
+      });
+
+      cacheEntry.clearPageOperations();
+    }
 
     //We need to release exclusive lock from cache pointer after we put it into the write cache so both "dirty pages" of write
     //cache and write cache itself will contain actual values simultaneously. But because cache entry can be cleared after we put it back to the
@@ -255,21 +256,17 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   @Override
-  public final void pinPage(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
-    //do nothing
-  }
-
-  @Override
   public final OCacheEntry allocateNewPage(long fileId, final OWriteCache writeCache, final OLogSequenceNumber startLSN)
       throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
     final int newPageIndex = writeCache.allocateNewPage(fileId);
     final OCacheEntry cacheEntry = addNewPagePointerToTheCache(fileId, newPageIndex);
 
-    if (cacheEntry != null) {
-      cacheEntry.acquireExclusiveLock();
-      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
-    }
+    cacheEntry.acquireExclusiveLock();
+    cacheEntry.markAllocated();
+    cacheEntry.clearPageOperations();
+
+    writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
 
     return cacheEntry;
   }
@@ -461,16 +458,6 @@ public final class AsyncReadCache implements OReadCache {
     }
 
     writeCache.close();
-  }
-
-  @Override
-  public final void loadCacheState(final OWriteCache writeCache) {
-    //do nothing
-  }
-
-  @Override
-  public final void storeCacheState(final OWriteCache writeCache) {
-    //do nothing
   }
 
   private void clearFile(final long fileId, final int filledUpTo, final OWriteCache writeCache) {

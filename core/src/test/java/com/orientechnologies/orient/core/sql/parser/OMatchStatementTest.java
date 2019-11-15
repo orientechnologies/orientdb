@@ -216,6 +216,13 @@ public class OMatchStatementTest {
     checkRightSyntax("MATCH {class: 'V', as: foo}-->{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
   }
 
+  @Test
+  public void testFieldTraversal() {
+    checkRightSyntax("MATCH {class: 'V', as: foo}.toBar{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
+    checkRightSyntax("MATCH {class: 'V', as: foo}.toBar{as:bar}.out(){as:c} RETURN foo.name, bar.name skip 10 limit 10");
+    checkRightSyntax("MATCH {class: 'V', as: foo}.toBar.baz{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
+    checkRightSyntax("MATCH {class: 'V', as: foo}.toBar.out(){as:bar} RETURN foo.name, bar.name skip 10 limit 10");
+  }
 
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());

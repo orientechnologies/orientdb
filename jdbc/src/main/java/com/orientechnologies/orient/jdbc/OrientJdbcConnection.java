@@ -15,10 +15,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
@@ -231,7 +228,7 @@ public class OrientJdbcConnection implements Connection {
   }
 
   public DatabaseMetaData getMetaData() throws SQLException {
-    return new OrientJdbcDatabaseMetaData(this, getDatabase());
+    return new OrientJdbcDatabaseMetaData(this, (ODatabaseDocumentInternal) getDatabase());
   }
 
   public int getTransactionIsolation() throws SQLException {

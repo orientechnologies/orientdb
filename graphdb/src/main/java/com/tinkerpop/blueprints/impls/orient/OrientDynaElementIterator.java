@@ -73,7 +73,7 @@ class OrientDynaElementIterator implements Iterator<Object> {
         currentElement = graph.getVertex(currentDocument);
     }
 
-    if(currentElement==null){
+    if (currentElement == null) {
       return current;
     }
 

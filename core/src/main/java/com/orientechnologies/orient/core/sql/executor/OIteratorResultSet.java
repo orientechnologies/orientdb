@@ -17,11 +17,13 @@ public class OIteratorResultSet implements OResultSet {
     this.iterator = iter;
   }
 
-  @Override public boolean hasNext() {
+  @Override
+  public boolean hasNext() {
     return iterator.hasNext();
   }
 
-  @Override public OResult next() {
+  @Override
+  public OResult next() {
     Object val = iterator.next();
     if (val instanceof OResult) {
       return (OResult) val;
@@ -36,15 +38,18 @@ public class OIteratorResultSet implements OResultSet {
     return result;
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
 
   }
 
-  @Override public Optional<OExecutionPlan> getExecutionPlan() {
+  @Override
+  public Optional<OExecutionPlan> getExecutionPlan() {
     return Optional.empty();
   }
 
-  @Override public Map<String, Long> getQueryStats() {
+  @Override
+  public Map<String, Long> getQueryStats() {
     return new HashMap<>();
   }
 
