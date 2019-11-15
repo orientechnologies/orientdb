@@ -43,7 +43,7 @@ public class OBackupTask implements OBackupListener {
     schedule();
   }
 
-  protected void schedule() {
+  private void schedule() {
 
     if (strategy.isEnabled()) {
       Date nextExecution = strategy.scheduleNextExecution(this);
