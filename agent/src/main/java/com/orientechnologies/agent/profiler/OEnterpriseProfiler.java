@@ -499,7 +499,7 @@
       return result;
     }
 
-    protected void init() {
+    private void init() {
       registerHookValue(getSystemMetric("config.cpus"), "Number of CPUs", METRIC_TYPE.SIZE, new OProfilerHookValue() {
         @Override
         public Object getValue() {
