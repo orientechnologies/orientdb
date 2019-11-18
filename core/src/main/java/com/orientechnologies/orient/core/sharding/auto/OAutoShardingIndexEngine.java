@@ -318,11 +318,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public int getVersion() {
-    return version;
-  }
-
-  @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

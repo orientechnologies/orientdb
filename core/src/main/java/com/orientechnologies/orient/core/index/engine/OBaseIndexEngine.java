@@ -55,8 +55,6 @@ public interface OBaseIndexEngine {
 
   boolean hasRangeQuerySupport();
 
-  int getVersion();
-
   int getEngineAPIVersion();
 
   String getName();

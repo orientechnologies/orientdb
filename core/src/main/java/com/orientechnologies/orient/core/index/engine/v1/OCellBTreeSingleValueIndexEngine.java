@@ -39,7 +39,7 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
 
     if (version < 3) {
       this.sbTree = new CellBTreeSingleValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
-    } else if (version == 3) {
+    } else if (version == 3 || version == 4) {
       this.sbTree = new CellBTreeSingleValueV3<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid tree version " + version);

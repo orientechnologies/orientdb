@@ -570,11 +570,6 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
-  public int getVersion() {
-    return 0;
-  }
-
-  @Override
   public String getName() {
     return name;
   }

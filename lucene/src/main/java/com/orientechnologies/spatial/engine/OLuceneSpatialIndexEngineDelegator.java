@@ -215,11 +215,6 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public int getVersion() {
-    return version;
-  }
-
-  @Override
   public String getName() {
     return delegate.getName();
   }

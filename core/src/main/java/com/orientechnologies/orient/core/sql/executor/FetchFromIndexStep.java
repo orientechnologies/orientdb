@@ -669,7 +669,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return (Collection) rightValue;
   }
 
-  private Object toBetweenIndexKey(OIndexDefinition definition, Object rightValue) {
+  private static Object toBetweenIndexKey(OIndexDefinition definition, Object rightValue) {
     if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
       if (((Collection) rightValue).size() > 0) {
         rightValue = ((Collection) rightValue).iterator().next();
@@ -678,11 +678,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       }
     }
 
-    rightValue = definition.createValue(rightValue);
-
-    if (definition.getFields().size() > 1 && !(rightValue instanceof Collection)) {
-      rightValue = Collections.singleton(rightValue);
+    if (rightValue instanceof Collection) {
+      rightValue = definition.createValue(((Collection) rightValue).toArray());
+    } else {
+      rightValue = definition.createValue(rightValue);
     }
+
     return rightValue;
   }
 

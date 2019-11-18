@@ -148,11 +148,6 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public int getVersion() {
-    return version;
-  }
-
-  @Override
   public void clear() {
     try {
       doClearTree();

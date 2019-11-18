@@ -28,8 +28,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine {
-  private static final int BINARY_VERSION = 4;
+public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine, OCellBTreeIndexEngine {
 
   public static final  String DATA_FILE_EXTENSION        = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
@@ -281,8 +280,8 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     } else if (key != null) {
       assert svTree != null;
 
-      final OCompositeKey firstKey = createCompositeKey(key, new ORecordId(0, 0));
-      final OCompositeKey lastKey = createCompositeKey(key, new ORecordId(Integer.MAX_VALUE, Long.MAX_VALUE));
+      final OCompositeKey firstKey = convertToCompositeKey(key);
+      final OCompositeKey lastKey = convertToCompositeKey(key);
 
       final Spliterator<ORawPair<OCompositeKey, ORID>> spliterator = svTree
           .iterateEntriesBetween(firstKey, true, lastKey, true, true);
@@ -290,7 +289,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     } else {
       assert nullTree != null;
       final Spliterator<ORawPair<OIdentifiable, ORID>> cursor = nullTree
-          .iterateEntriesBetween(new ORecordId(0, 0), true, new ORecordId(Integer.MAX_VALUE, Long.MAX_VALUE), true, true);
+          .iterateEntriesBetween(new ORecordId(0, 0), true, new ORecordId(Short.MAX_VALUE, Long.MAX_VALUE), true, true);
 
       return StreamSupport.stream(cursor, false).map((pair) -> pair.second).collect(Collectors.toList());
     }
@@ -334,7 +333,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
         return new NullCursor();
       }
 
-      return new SVTreeIndexCursor(svTree.iterateEntriesMajor(lastKey, true, false));
+      return new SVTreeIndexCursor(svTree.iterateEntriesMinor(lastKey, true, false));
     }
   }
 
@@ -450,28 +449,18 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     }
 
     assert svTree != null;
-    final OCompositeKey firstKey = createFirstKey(rangeFrom, fromInclusive);
-    final OCompositeKey lastKey = createLastKey(rangeTo, toInclusive);
+    final OCompositeKey firstKey = convertToCompositeKey(rangeFrom);
+    final OCompositeKey lastKey = convertToCompositeKey(rangeTo);
 
     return new SVTreeIndexCursor(svTree.iterateEntriesBetween(firstKey, fromInclusive, lastKey, toInclusive, ascSortOrder));
   }
 
-  private static OCompositeKey createLastKey(Object rangeTo, boolean toInclusive) {
-    final OCompositeKey lastKey;
-    if (toInclusive) {
-      lastKey = createCompositeKey(rangeTo, new ORecordId(Integer.MAX_VALUE, Long.MAX_VALUE));
+  private static OCompositeKey convertToCompositeKey(Object rangeFrom) {
+    OCompositeKey firstKey;
+    if (rangeFrom instanceof OCompositeKey) {
+      firstKey = (OCompositeKey) rangeFrom;
     } else {
-      lastKey = createCompositeKey(rangeTo, new ORecordId(0, 0));
-    }
-    return lastKey;
-  }
-
-  private static OCompositeKey createFirstKey(Object rangeFrom, boolean fromInclusive) {
-    final OCompositeKey firstKey;
-    if (fromInclusive) {
-      firstKey = createCompositeKey(rangeFrom, new ORecordId(0, 0));
-    } else {
-      firstKey = createCompositeKey(rangeFrom, new ORecordId(Integer.MAX_VALUE, Long.MAX_VALUE));
+      firstKey = new OCompositeKey(rangeFrom);
     }
     return firstKey;
   }
@@ -483,7 +472,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     }
     assert svTree != null;
 
-    final OCompositeKey firstKey = createFirstKey(fromKey, isInclusive);
+    final OCompositeKey firstKey = convertToCompositeKey(fromKey);
     return new SVTreeIndexCursor(svTree.iterateEntriesMajor(firstKey, isInclusive, ascSortOrder));
   }
 
@@ -495,7 +484,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
     assert svTree != null;
 
-    final OCompositeKey lastKey = createLastKey(toKey, isInclusive);
+    final OCompositeKey lastKey = convertToCompositeKey(toKey);
     return new SVTreeIndexCursor(svTree.iterateEntriesMinor(lastKey, isInclusive, ascSortOrder));
   }
 
@@ -583,11 +572,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   @Override
   public boolean hasRangeQuerySupport() {
     return true;
-  }
-
-  @Override
-  public int getVersion() {
-    return BINARY_VERSION;
   }
 
   @Override
