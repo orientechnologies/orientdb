@@ -169,16 +169,18 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OIdentifiable firstKey = nullTree.firstKey();
       final OIdentifiable lastKey = nullTree.lastKey();
 
-      final Spliterator<ORawPair<OIdentifiable, ORID>> spliterator = nullTree
-          .iterateEntriesBetween(firstKey, true, lastKey, true, true);
+      if (firstKey != null && lastKey != null) {
+        final Spliterator<ORawPair<OIdentifiable, ORID>> spliterator = nullTree
+            .iterateEntriesBetween(firstKey, true, lastKey, true, true);
 
-      StreamSupport.stream(spliterator, false).forEach((pair) -> {
-        try {
-          nullTree.remove(pair.first);
-        } catch (IOException e) {
-          throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
-        }
-      });
+        StreamSupport.stream(spliterator, false).forEach((pair) -> {
+          try {
+            nullTree.remove(pair.first);
+          } catch (IOException e) {
+            throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
+          }
+        });
+      }
     }
   }
 
