@@ -554,13 +554,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       while (true)
         try {
-          final Object firstKey = getFirstKey();
-          final Object lastKey = getLastKey();
-          if (firstKey != null && lastKey != null) {
-            final IndexCursor cursor = iterateEntriesBetween(firstKey, true, lastKey, true, true);
-            //noinspection ObjectAllocationInLoop
-            StreamSupport.stream(cursor, false).forEach((pair) -> remove(pair.first, pair.second));
-          }
+          //noinspection ObjectAllocationInLoop
+          StreamSupport.stream(cursor(), false).forEach((pair) -> {
+            remove(pair.first, pair.second);
+          });
 
           storage.deleteIndexEngine(indexId);
           break;
