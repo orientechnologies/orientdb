@@ -1472,6 +1472,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
         releasePageFromRead(atomicOperation, cacheEntry);
       }
 
+      lastLSN = null;
       return false;
     }
 
@@ -1546,7 +1547,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
     private void fetchNextCachePortion() {
       final K lastKey;
       if (dataCache.isEmpty()) {
-        lastKey = fromKey;
+        lastKey = null;
       } else {
         lastKey = dataCache.get(dataCache.size() - 1).first;
       }
@@ -1634,7 +1635,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
               if (toKey != null && (toKeyInclusive
                   ? comparator.compare(entry.key, toKey) > 0
                   : comparator.compare(entry.key, toKey) >= 0)) {
-                break;
+                return true;
               }
 
               //noinspection ObjectAllocationInLoop
@@ -1665,6 +1666,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
         releasePageFromRead(atomicOperation, cacheEntry);
       }
 
+      lastLSN = null;
       return false;
     }
 
@@ -1738,7 +1740,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
     private void fetchNextCachePortion() {
       final K lastKey;
       if (dataCache.isEmpty()) {
-        lastKey = fromKey;
+        lastKey = null;
       } else {
         lastKey = dataCache.get(dataCache.size() - 1).first;
       }
@@ -1768,7 +1770,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
 
                 if (searchResult.itemIndex >= 0) {
                   if (toKeyInclusive) {
-                    itemIndex = searchResult.itemIndex + 1;
+                    itemIndex = searchResult.itemIndex;
                   } else {
                     itemIndex = searchResult.itemIndex - 1;
                   }
@@ -1817,8 +1819,12 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
         if (lastLSN == null || bucket.getLSN().equals(lastLSN)) {
           while (true) {
             final int bucketSize = bucket.size();
-            if (itemIndex < 0) {
+            if (itemIndex == Integer.MIN_VALUE) {
               itemIndex = bucketSize;
+            } else if (itemIndex == -1) {
+              return true;
+            } else if (itemIndex < 0) {
+              throw new IllegalStateException("Invalid value of item index");
             }
 
             lastLSN = bucket.getLSN();
@@ -1830,7 +1836,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
               if (fromKey != null && (fromKeyInclusive
                   ? comparator.compare(entry.key, fromKey) < 0
                   : comparator.compare(entry.key, fromKey) <= 0)) {
-                break;
+                return true;
               }
 
               //noinspection ObjectAllocationInLoop
@@ -1839,6 +1845,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
 
             if (itemIndex < 0) {
               pageIndex = (int) bucket.getLeftSibling();
+              itemIndex = Integer.MIN_VALUE;
             }
 
             if (dataCache.size() < SPLITERATOR_CACHE_SIZE) {
@@ -1860,6 +1867,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
         releasePageFromRead(atomicOperation, cacheEntry);
       }
 
+      lastLSN = null;
       return false;
     }
 

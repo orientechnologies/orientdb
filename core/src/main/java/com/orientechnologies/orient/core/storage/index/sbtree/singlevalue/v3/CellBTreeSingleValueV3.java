@@ -1479,6 +1479,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         releasePageFromRead(atomicOperation, cacheEntry);
       }
 
+      lastLSN = null;
       return false;
     }
 
@@ -1673,6 +1674,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         releasePageFromRead(atomicOperation, cacheEntry);
       }
 
+      lastLSN = null;
       return false;
     }
 
@@ -1776,7 +1778,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
 
                 if (searchResult.itemIndex >= 0) {
                   if (toKeyInclusive) {
-                    itemIndex = searchResult.itemIndex + 1;
+                    itemIndex = searchResult.itemIndex;
                   } else {
                     itemIndex = searchResult.itemIndex - 1;
                   }
@@ -1826,8 +1828,12 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         if (lastLSN == null || bucket.getLSN().equals(lastLSN)) {
           while (true) {
             final int bucketSize = bucket.size();
-            if (itemIndex < 0) {
+            if (itemIndex == Integer.MIN_VALUE) {
               itemIndex = bucketSize;
+            } else if (itemIndex == -1) {
+              return true;
+            } else if (itemIndex < 0) {
+              throw new IllegalStateException("Invalid value of item index");
             }
 
             lastLSN = bucket.getLSN();
@@ -1848,6 +1854,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
 
             if (itemIndex < 0) {
               pageIndex = (int) bucket.getLeftSibling();
+              itemIndex = Integer.MIN_VALUE;
             }
 
             if (dataCache.size() < SPLITERATOR_CACHE_SIZE) {
@@ -1869,6 +1876,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         releasePageFromRead(atomicOperation, cacheEntry);
       }
 
+      lastLSN = null;
       return false;
     }
 
