@@ -1406,7 +1406,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
         try {
           final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
-          while (keysCache.size() < prefetchSize) {
+          while (true) {
             if (pageIndex == -1) {
               break;
             }
@@ -1424,6 +1424,11 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
               if (itemIndex >= bucket.size()) {
                 pageIndex = bucket.getRightSibling();
                 itemIndex = 0;
+
+                if (keysCache.size() >= prefetchSize) {
+                  break;
+                }
+
                 continue;
               }
 
