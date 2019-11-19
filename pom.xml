@@ -523,7 +523,9 @@
                 <version>0.8.5</version>
                 <configuration>
                     <excludes>
-                        **/*OrientSqlTokenManager*
+                        <exclude>
+                            **/*OrientSqlTokenManager*
+                        </exclude>
                     </excludes>
                 </configuration>
                 <executions>
