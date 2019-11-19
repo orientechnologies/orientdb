@@ -92,7 +92,6 @@ public final class OrientGraph implements OGraph {
   public static final String CONFIG_MAX_PARTITION_SIZE = "orient-max-partitionsize";
   public static final String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
-  protected       boolean                connectionFailed;
   protected       ODatabaseDocument      database;
   protected final Features               features;
   protected final Configuration          configuration;
@@ -136,7 +135,6 @@ public final class OrientGraph implements OGraph {
     this.password = password;
     this.database = database;
     this.configuration = configuration;
-    this.connectionFailed = false;
     if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
       this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
       this.tx = new OrientTransaction(this);
@@ -157,7 +155,6 @@ public final class OrientGraph implements OGraph {
     this.database = factory.getDatabase(true, true);
     this.user = "";
     this.password = "";
-    this.connectionFailed = false;
     makeActive();
     this.configuration = configuration;
     if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
@@ -188,28 +185,6 @@ public final class OrientGraph implements OGraph {
 
   public void makeActive() {
     makeActiveDb();
-
-    if (this.connectionFailed) {
-      this.connectionFailed = false;
-      try {
-        this.database = this.factory.getDatabase(true, true);
-        makeActiveDb();
-      } catch (OException e) {
-        OLogManager.instance().info(this, "Recreation of connection resulted in exception", e);
-      }
-    }
-  }
-
-  private <R> R executeWithConnectionCheck(Supplier<R> toExecute) {
-    try {
-      R result = toExecute.get();
-      this.connectionFailed = false;
-      return result;
-    } catch (OException e) {
-      this.connectionFailed = true;
-      OLogManager.instance().info(this, "Error during db request", e);
-      throw e;
-    }
   }
 
   private <R> R executeOutsideTx(Function<ODatabaseDocument, R> lamba) {
@@ -235,68 +210,56 @@ public final class OrientGraph implements OGraph {
   @Override
   public Vertex addVertex(Object... keyValues) {
     this.tx().readWrite();
-    return executeWithConnectionCheck(() -> {
-      makeActive();
+    makeActive();
 
-      ElementHelper.legalPropertyKeyValueArray(keyValues);
-      if (ElementHelper.getIdValue(keyValues).isPresent())
-        throw Vertex.Exceptions.userSuppliedIdsNotSupported();
+    ElementHelper.legalPropertyKeyValueArray(keyValues);
+    if (ElementHelper.getIdValue(keyValues).isPresent())
+      throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
-      String label = ElementHelper.getLabelValue(keyValues).orElse(OClass.VERTEX_CLASS_NAME);
-      OrientVertex vertex = elementFactory().createVertex(label);
-      vertex.property(keyValues);
+    String label = ElementHelper.getLabelValue(keyValues).orElse(OClass.VERTEX_CLASS_NAME);
+    OrientVertex vertex = elementFactory().createVertex(label);
+    vertex.property(keyValues);
 
-      vertex.save();
-      return vertex;
-    });
+    vertex.save();
+    return vertex;
   }
 
   public OGremlinResultSet executeSql(String sql, Object... params) {
     this.tx().readWrite();
-    return executeWithConnectionCheck(() -> {
-      makeActive();
-      OResultSet resultSet = database.command(sql, params);
-      return new OGremlinResultSet(this, resultSet);
-    });
+    makeActive();
+    OResultSet resultSet = database.command(sql, params);
+    return new OGremlinResultSet(this, resultSet);
   }
 
   public OGremlinResultSet executeSql(String sql, Map params) {
-    return executeWithConnectionCheck(() -> {
-      makeActive();
-      OResultSet resultSet = database.command(sql, params);
-      return new OGremlinResultSet(this, resultSet);
-    });
+    makeActive();
+    OResultSet resultSet = database.command(sql, params);
+    return new OGremlinResultSet(this, resultSet);
   }
 
   public OGremlinResultSet querySql(String sql, Object... params) {
     this.tx().readWrite();
-    return executeWithConnectionCheck(() -> {
-      makeActive();
-      OResultSet resultSet = database.query(sql, params);
-      return new OGremlinResultSet(this, resultSet);
-    });
+    makeActive();
+    OResultSet resultSet = database.query(sql, params);
+    return new OGremlinResultSet(this, resultSet);
   }
 
   public OGremlinResultSet querySql(String sql, Map params) {
-    return executeWithConnectionCheck(() -> {
-      makeActive();
-      OResultSet resultSet = database.query(sql, params);
-      return new OGremlinResultSet(this, resultSet);
-    });
+    makeActive();
+    OResultSet resultSet = database.query(sql, params);
+    return new OGremlinResultSet(this, resultSet);
   }
 
   public OGremlinResultSet execute(String language, String script, Map params) {
 
-    return executeWithConnectionCheck(() -> {
-      makeActive();
-      OResultSet resultSet = database.execute(language, script, params);
-      return new OGremlinResultSet(this, resultSet);
-    });
+    makeActive();
+    OResultSet resultSet = database.execute(language, script, params);
+    return new OGremlinResultSet(this, resultSet);
   }
 
   @Deprecated
   public Object executeCommand(OCommandRequest command) {
-    return executeWithConnectionCheck(() -> command.execute());
+    return command.execute();
   }
 
   @Override
@@ -317,11 +280,9 @@ public final class OrientGraph implements OGraph {
   @Override
   public Iterator<Vertex> vertices(Object... vertexIds) {
     this.tx().readWrite();
-    return executeWithConnectionCheck(() -> {
-      makeActive();
-      return elements(OClass.VERTEX_CLASS_NAME, r -> elementFactory().wrapVertex(getRawDocument(r).asVertex()
-          .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get a Vertex from document %s", r)))), vertexIds);
-    });
+    makeActive();
+    return elements(OClass.VERTEX_CLASS_NAME, r -> elementFactory().wrapVertex(getRawDocument(r).asVertex()
+        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get a Vertex from document %s", r)))), vertexIds);
   }
 
   /**
@@ -395,22 +356,20 @@ public final class OrientGraph implements OGraph {
 
   private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(OIndex<Object> index,
       Iterator<Object> valuesIter, BiFunction<OrientGraph, OIdentifiable, ElementType> newElement) {
-    return executeWithConnectionCheck(() -> {
-      makeActive();
+    makeActive();
 
-      if (index == null) {
-        return Collections.<ElementType>emptyList().stream();
+    if (index == null) {
+      return Collections.<ElementType>emptyList().stream();
+    } else {
+      if (!valuesIter.hasNext()) {
+        return index.cursor().toValues().stream().map(id -> newElement.apply(this, id));
       } else {
-        if (!valuesIter.hasNext()) {
-          return index.cursor().toValues().stream().map(id -> newElement.apply(this, id));
-        } else {
-          Stream<Object> convertedValues = StreamUtils.asStream(valuesIter).map(value -> convertValue(index, value));
-          Stream<OIdentifiable> ids = convertedValues.flatMap(v -> lookupInIndex(index, v)).filter(r -> r != null);
-          Stream<ORecord> records = ids.map(id -> id.getRecord());
-          return records.map(r -> newElement.apply(this, getRawDocument(r)));
-        }
+        Stream<Object> convertedValues = StreamUtils.asStream(valuesIter).map(value -> convertValue(index, value));
+        Stream<OIdentifiable> ids = convertedValues.flatMap(v -> lookupInIndex(index, v)).filter(r -> r != null);
+        Stream<ORecord> records = ids.map(id -> id.getRecord());
+        return records.map(r -> newElement.apply(this, getRawDocument(r)));
       }
-    });
+    }
   }
 
   private Stream<OIdentifiable> lookupInIndex(OIndex<Object> index, Object value) {
@@ -479,11 +438,9 @@ public final class OrientGraph implements OGraph {
   @Override
   public Iterator<Edge> edges(Object... edgeIds) {
     this.tx().readWrite();
-    return executeWithConnectionCheck(() -> {
-      makeActive();
-      return elements(OClass.EDGE_CLASS_NAME, r -> elementFactory().wrapEdge(getRawDocument(r).asEdge()
-          .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get an Edge from document %s", r)))), edgeIds);
-    });
+    makeActive();
+    return elements(OClass.EDGE_CLASS_NAME, r -> elementFactory().wrapEdge(getRawDocument(r).asEdge()
+        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get an Edge from document %s", r)))), edgeIds);
   }
 
   protected <A extends Element> Iterator<A> elements(String elementClass, Function<ORecord, A> toA, Object... elementIds) {
