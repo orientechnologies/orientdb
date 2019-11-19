@@ -352,7 +352,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     public int characteristics() {
       return NONNULL | ORDERED;
     }
-}
+  }
 
   private static class NullCursor implements IndexCursor {
 
