@@ -1415,6 +1415,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
                 pageIndex = bucketSearchResult.pageIndex;
                 itemIndex = bucketSearchResult.itemIndex;
 
+                lastLSN = null;
                 readKeysFromBuckets(atomicOperation);
               }
             } else {
@@ -1427,6 +1428,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
                 itemIndex = -bucketSearchResult.itemIndex - 1;
               }
 
+              lastLSN = null;
               readKeysFromBuckets(atomicOperation);
             }
           }
@@ -1448,29 +1450,29 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         CellBTreeSingleValueBucketV3<K> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
         if (lastLSN == null || bucket.getLSN().equals(lastLSN)) {
           while (true) {
-            final int bucketSize = bucket.size();
+            int bucketSize = bucket.size();
+            if (itemIndex >= bucketSize) {
+
+              pageIndex = (int) bucket.getRightSibling();
+              if (pageIndex < 0) {
+                return true;
+              }
+
+              releasePageFromRead(atomicOperation, cacheEntry);
+              bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+
+              itemIndex = 0;
+
+              bucketSize = bucket.size();
+            }
+
             lastLSN = bucket.getLSN();
 
             for (; itemIndex < bucketSize && keysCache.size() < SPLITERATOR_CACHE_SIZE; itemIndex++) {
               keysCache.add(bucket.getKey(itemIndex, keySerializer));
             }
 
-            if (itemIndex >= bucketSize) {
-              pageIndex = (int) bucket.getRightSibling();
-              itemIndex = 0;
-            }
-
-            if (keysCache.size() < SPLITERATOR_CACHE_SIZE) {
-              if (pageIndex < 0) {
-                return true;
-              } else {
-                releasePageFromRead(atomicOperation, cacheEntry);
-
-                cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-                //noinspection ObjectAllocationInLoop
-                bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
-              }
-            } else {
+            if (keysCache.size() >= SPLITERATOR_CACHE_SIZE) {
               return true;
             }
           }
@@ -1602,6 +1604,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
                 }
               }
 
+              lastLSN = null;
               readKeysFromBuckets(atomicOperation);
             } else {
               final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
@@ -1613,6 +1616,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
                 itemIndex = -bucketSearchResult.itemIndex - 1;
               }
 
+              lastLSN = null;
               readKeysFromBuckets(atomicOperation);
             }
           }
@@ -1633,7 +1637,23 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         CellBTreeSingleValueBucketV3<K> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
         if (lastLSN == null || bucket.getLSN().equals(lastLSN)) {
           while (true) {
-            final int bucketSize = bucket.size();
+            int bucketSize = bucket.size();
+            if (itemIndex >= bucketSize) {
+              pageIndex = (int) bucket.getRightSibling();
+
+              if (pageIndex < 0) {
+                return true;
+              }
+
+              itemIndex = 0;
+              releasePageFromRead(atomicOperation, cacheEntry);
+
+              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+              bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+
+              bucketSize = bucket.size();
+            }
+
             lastLSN = bucket.getLSN();
 
             for (; itemIndex < bucketSize && dataCache.size() < SPLITERATOR_CACHE_SIZE; itemIndex++) {
@@ -1650,22 +1670,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
               dataCache.add(new ORawPair<>(entry.key, entry.value));
             }
 
-            if (itemIndex >= bucketSize) {
-              pageIndex = (int) bucket.getRightSibling();
-              itemIndex = 0;
-            }
-
-            if (dataCache.size() < SPLITERATOR_CACHE_SIZE) {
-              if (pageIndex < 0) {
-                return true;
-              } else {
-                releasePageFromRead(atomicOperation, cacheEntry);
-
-                cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-                //noinspection ObjectAllocationInLoop
-                bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
-              }
-            } else {
+            if (dataCache.size() >= SPLITERATOR_CACHE_SIZE) {
               return true;
             }
           }
@@ -1674,7 +1679,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         releasePageFromRead(atomicOperation, cacheEntry);
       }
 
-      lastLSN = null;
       return false;
     }
 
@@ -1796,6 +1800,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
                 }
               }
 
+              lastLSN = null;
               readKeysFromBuckets(atomicOperation);
             } else {
               final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
@@ -1807,6 +1812,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
                 itemIndex = -bucketSearchResult.itemIndex - 2;
               }
 
+              lastLSN = null;
               readKeysFromBuckets(atomicOperation);
             }
           }
@@ -1827,13 +1833,19 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         CellBTreeSingleValueBucketV3<K> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
         if (lastLSN == null || bucket.getLSN().equals(lastLSN)) {
           while (true) {
-            final int bucketSize = bucket.size();
-            if (itemIndex == Integer.MIN_VALUE) {
-              itemIndex = bucketSize;
-            } else if (itemIndex == -1) {
-              return true;
-            } else if (itemIndex < 0) {
-              throw new IllegalStateException("Invalid value of item index");
+            if (itemIndex < 0) {
+              pageIndex = (int) bucket.getLeftSibling();
+
+              if (pageIndex < 0) {
+                return true;
+              }
+
+              releasePageFromRead(atomicOperation, cacheEntry);
+
+              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+              bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+              final int bucketSize = bucket.size();
+              itemIndex = bucketSize - 1;
             }
 
             lastLSN = bucket.getLSN();
@@ -1852,22 +1864,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
               dataCache.add(new ORawPair<>(entry.key, entry.value));
             }
 
-            if (itemIndex < 0) {
-              pageIndex = (int) bucket.getLeftSibling();
-              itemIndex = Integer.MIN_VALUE;
-            }
-
-            if (dataCache.size() < SPLITERATOR_CACHE_SIZE) {
-              if (pageIndex < 0) {
-                return true;
-              } else {
-                releasePageFromRead(atomicOperation, cacheEntry);
-
-                cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-                //noinspection ObjectAllocationInLoop
-                bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
-              }
-            } else {
+            if (dataCache.size() >= SPLITERATOR_CACHE_SIZE) {
               return true;
             }
           }
@@ -1876,7 +1873,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         releasePageFromRead(atomicOperation, cacheEntry);
       }
 
-      lastLSN = null;
       return false;
     }
 

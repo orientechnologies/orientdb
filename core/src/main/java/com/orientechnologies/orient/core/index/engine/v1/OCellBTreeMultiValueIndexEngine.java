@@ -550,7 +550,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     assert nullTree != null;
 
     int count = 0;
-    if (svTree.size() > 0) {
+    if (nullTree.size() > 0) {
       count++;
     }
 
