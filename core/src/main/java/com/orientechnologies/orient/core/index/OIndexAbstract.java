@@ -557,6 +557,14 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
           remove(pair.first, pair.second);
         });
 
+        final Object value = get(null);
+        if (value instanceof Collection) {
+          for (Object nullValue : (Collection) value) {
+            remove(null, (OIdentifiable) value);
+          }
+        } else {
+          remove(null, (OIdentifiable) value);
+        }
         storage.deleteIndexEngine(indexId);
         break;
       } catch (OInvalidIndexEngineIdException ignore) {
