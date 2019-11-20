@@ -289,10 +289,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
   }
 
-  private void installRegistry() {
-
-  }
-
   protected void installProfiler() {
     final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
 

@@ -34,10 +34,6 @@ public class OEventLogMailExecutor extends OEventLogExecutor {
 
   }
 
-  private void createDefaultLogDownServer() {
-
-  }
-
   @Override
   public void execute(ODocument source, ODocument when, ODocument what) {
 

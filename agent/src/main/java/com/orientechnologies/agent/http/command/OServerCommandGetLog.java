@@ -168,12 +168,6 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
     return false;
   }
 
-  private boolean isCurrentNode(ODistributedServerManager manager, String node) {
-
-    return node.equalsIgnoreCase(manager.getLocalNodeName());
-
-  }
-
   private void insertFromFile(String value, String size, String logType, Date dFrom, Date dTo, File[] files,
                               List<ODocument> subdocuments, String line, String dayToDoc, String hour, String typeToDoc, String info, ODocument doc,
                               File file) throws FileNotFoundException, IOException {
@@ -232,19 +226,6 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
     } finally {
       Utils.safeClose(this, br, in);
     }
-  }
-
-  private Time setTimeFromParameter(String hourFrom) throws UnsupportedEncodingException {
-    Time hFrom;
-    hourFrom = URLDecoder.decode(hourFrom, "UTF-8");
-    String[] splitHourFrom = hourFrom.split(" ");
-    String[] hoursMinutes = splitHourFrom[0].split(":");
-    Integer h = new Integer(hoursMinutes[0]);
-    if (splitHourFrom[1].equals("PM"))
-      h = h + 12;
-    Integer m = new Integer(hoursMinutes[1]);
-    hFrom = new Time(h, m, 0);
-    return hFrom;
   }
 
   private Time setTime(String hour) {
