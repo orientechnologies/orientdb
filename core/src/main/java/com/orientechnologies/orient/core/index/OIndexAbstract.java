@@ -560,7 +560,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         final Object value = get(null);
         if (value instanceof Collection) {
           for (Object nullValue : (Collection) value) {
-            remove(null, (OIdentifiable) value);
+            remove(null, (OIdentifiable) nullValue);
           }
         } else {
           remove(null, (OIdentifiable) value);

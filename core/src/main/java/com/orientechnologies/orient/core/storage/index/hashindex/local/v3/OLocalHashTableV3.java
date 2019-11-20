@@ -93,9 +93,8 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
   private KeyHashCodeComparator<K> comparator;
 
-  private       boolean nullKeyIsSupported;
-  private       long    nullBucketFileId = -1;
-  private final String  nullBucketFileExtension;
+  private       long   nullBucketFileId = -1;
+  private final String nullBucketFileExtension;
 
   private long fileStateId;
   private long fileId;
@@ -131,8 +130,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
           this.keyTypes = null;
         }
 
-        this.nullKeyIsSupported = nullKeyIsSupported;
-
         this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), getFullName(), storage);
 
         fileStateId = addFile(atomicOperation, getName() + metadataConfigurationFileExtension);
@@ -157,9 +154,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
         initHashTreeState(atomicOperation);
 
-        if (nullKeyIsSupported) {
-          nullBucketFileId = addFile(atomicOperation, getName() + nullBucketFileExtension);
-        }
+        nullBucketFileId = addFile(atomicOperation, getName() + nullBucketFileExtension);
       } finally {
         releaseExclusiveLock();
       }
@@ -178,7 +173,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
-        checkNullSupport(key);
         if (key == null) {
           if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
             return null;
@@ -239,7 +233,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
   public boolean isNullKeyIsSupported() {
     acquireSharedLock();
     try {
-      return nullKeyIsSupported;
+      return true;
     } finally {
       releaseSharedLock();
     }
@@ -262,7 +256,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireExclusiveLock();
       try {
-        checkNullSupport(key);
 
         int sizeDiff = 0;
         if (key != null) {
@@ -452,8 +445,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
         this.keyTypes = null;
       }
 
-      this.nullKeyIsSupported = nullKeyIsSupported;
-
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
       fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
@@ -471,9 +462,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
         releasePageFromRead(atomicOperation, hashStateEntry);
       }
 
-      if (nullKeyIsSupported) {
-        nullBucketFileId = openFile(atomicOperation, name + nullBucketFileExtension);
-      }
+      nullBucketFileId = openFile(atomicOperation, name + nullBucketFileExtension);
 
       fileId = openFile(atomicOperation, getFullName());
     } catch (final IOException e) {
@@ -1048,9 +1037,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
         deleteFile(atomicOperation, fileStateId);
         deleteFile(atomicOperation, fileId);
 
-        if (nullKeyIsSupported) {
-          deleteFile(atomicOperation, nullBucketFileId);
-        }
+        deleteFile(atomicOperation, nullBucketFileId);
       } finally {
         releaseExclusiveLock();
       }
@@ -1097,9 +1084,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
       directory.flush();
 
-      if (nullKeyIsSupported) {
-        writeCache.flush(nullBucketFileId);
-      }
+      writeCache.flush(nullBucketFileId);
     } finally {
       releaseExclusiveLock();
     }
@@ -1116,8 +1101,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireExclusiveLock();
       try {
-        checkNullSupport(key);
-
         if (key != null) {
           @SuppressWarnings("RedundantCast")
           final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
@@ -1303,12 +1286,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       return true;
     }
 
-  }
-
-  private void checkNullSupport(final K key) {
-    if (key == null && !nullKeyIsSupported) {
-      throw new OLocalHashTableV3Exception("Null keys are not supported.", this);
-    }
   }
 
   private void updateNodesAfterSplit(final BucketPath bucketPath, final int nodeIndex, final long[] newNode,
