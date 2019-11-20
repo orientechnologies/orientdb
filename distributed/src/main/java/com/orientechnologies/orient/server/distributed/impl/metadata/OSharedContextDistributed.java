@@ -23,13 +23,10 @@ import com.orientechnologies.orient.server.distributed.impl.ViewManagerDistribut
 /**
  * Created by tglman on 22/06/17.
  */
-public class OSharedContextDistributed extends OSharedContext {
-
-  private ViewManager         viewManager;
+public class OSharedContextDistributed extends OSharedContextEmbedded {
 
   public OSharedContextDistributed(OStorage storage, OrientDBDistributed orientDB) {
-    this.orientDB = orientDB;
-    this.storage = storage;
+    super(storage, orientDB);
     schema = new OSchemaDistributed(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerDistributed(storage);
@@ -47,8 +44,6 @@ public class OSharedContextDistributed extends OSharedContext {
     this.registerListener(executionPlanCache);
 
     queryStats = new OQueryStats();
-
-    this.viewManager = new ViewManagerDistributed(orientDB, storage.getName());
 
   }
 

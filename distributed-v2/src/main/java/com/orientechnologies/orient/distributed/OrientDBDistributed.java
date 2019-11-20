@@ -24,6 +24,7 @@ import com.orientechnologies.orient.distributed.impl.structural.*;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.*;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -48,15 +49,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   private static final String DISTRIBUTED_USER = "distributed_replication";
 
-  private          OServer                                   server;
-  private volatile boolean                                   coordinator      = false;
-  private volatile ONodeIdentity                             coordinatorIdentity;
-  private          OStructuralDistributedContext             structuralDistributedContext;
-  private          ODistributedNetworkManager                networkManager;
-  private volatile boolean                                   distributedReady = false;
-  private final    ConcurrentMap<String, ODistributedStatus> databasesStatus  = new ConcurrentHashMap<>();
-  private          ONodeConfiguration                        nodeConfiguration;
-  private          OStructuralConfiguration                  structuralConfiguration;
+  private          OServer                       server;
+  private volatile boolean                       coordinator      = false;
+  private volatile ONodeIdentity                 coordinatorIdentity;
+  private          OStructuralDistributedContext structuralDistributedContext;
+  private          ODistributedNetworkManager    networkManager;
+  private volatile boolean                       distributedReady = false;
+  private          ONodeConfiguration            nodeConfiguration;
+  private          OStructuralConfiguration      structuralConfiguration;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -212,6 +212,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
+    checkDatabaseReady(name);
     ODatabaseDocumentEmbedded session = super.openNoAuthenticate(name, user);
     checkCoordinator(name);
     return session;
@@ -219,6 +220,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
+    checkDatabaseReady(name);
     ODatabaseDocumentEmbedded session = super.openNoAuthorization(name);
     checkCoordinator(name);
     return session;
@@ -472,13 +474,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     OStructuralSharedConfiguration config = getStructuralConfiguration().modifySharedConfiguration();
     config.addDatabase(database);
     getStructuralConfiguration().update(config);
-    this.databasesStatus.put(database, ODistributedStatus.ONLINE);
     checkCoordinator(database);
     //TODO: double check this notify, it may unblock as well checkReadyForHandleRequests that is not what is expected
     this.notifyAll();
   }
 
   public void internalDropDatabase(String database) {
+    OSharedContextDistributed context = (OSharedContextDistributed) getOrCreateSharedContext(getStorage(database));
+    context.getDistributedContext().close();
     super.drop(database, null, null);
     OStructuralSharedConfiguration config = getStructuralConfiguration().modifySharedConfiguration();
     config.removeDatabase(database);
@@ -486,16 +489,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void checkReadyForHandleRequests() {
-    structuralDistributedContext.waitApplyLastRequest();
-    try {
-      if (!distributedReady) {
-        this.wait(MINUTES.toMillis(1));
-        if (!distributedReady) {
-          throw new ODatabaseException("Server Not Yet Online");
-        }
-      }
-    } catch (InterruptedException e) {
-      throw OException.wrapException(new OInterruptedException("Interrupted while waiting to start"), e);
+    if (structuralDistributedContext != null) {
+      structuralDistributedContext.waitApplyLastRequest();
     }
   }
 
@@ -506,22 +501,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public synchronized void checkDatabaseReady(String database) {
     checkReadyForHandleRequests();
-    try {
-      if (!ODistributedStatus.ONLINE.equals(databasesStatus.get(database))) {
-        this.wait(MINUTES.toMillis(1));
-        if (!distributedReady) {
-          throw new ODatabaseException("Server Not Yet Online");
-        }
-      }
-    } catch (InterruptedException e) {
-      throw OException.wrapException(new OInterruptedException("Interrupted while waiting to start"), e);
-    }
   }
 
   @Override
   public void close() {
     if (structuralDistributedContext != null) {
       structuralDistributedContext.waitApplyLastRequest();
+      OStructuralFollower follower = structuralDistributedContext.getFollower();
+      if (follower != null) {
+        follower.close();
+      }
     }
     if (networkManager != null) {
       this.networkManager.shutdown();

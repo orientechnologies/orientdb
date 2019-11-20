@@ -31,9 +31,11 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   public void executeOperationRequest(ONodeIdentity sender, OOperationRequest request) {
     checkDatabaseReady(request.getDatabase());
     ODistributedContext distributedContext = distributed.getDistributedContext(request.getDatabase());
-    ODistributedExecutor executor = distributedContext.getExecutor();
-    ODistributedMember member = executor.getMember(sender);
-    executor.receive(member, request.getId(), request.getRequest());
+    if (distributedContext != null) {
+      ODistributedExecutor executor = distributedContext.getExecutor();
+      ODistributedMember member = executor.getMember(sender);
+      executor.receive(member, request.getId(), request.getRequest());
+    }
   }
 
   @Override

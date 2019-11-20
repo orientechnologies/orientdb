@@ -553,6 +553,9 @@ public abstract class ONodeManager {
     message.term = leaderStatus.currentTerm;
     message.tcpPort = getConfig().getTcpPort();
     message.type = OBroadcastMessage.TYPE_LEADER_ELECTED;
+    message.connectionUsername = this.internalConfiguration.getConnectionUsername();
+    message.connectionPassword = this.internalConfiguration.getConnectionPassword();
+    // TODO: Double check if the leader is itself
     message.leaderConnectionUsername = this.internalConfiguration.getConnectionUsername();
     message.leaderConnectionPassword = this.internalConfiguration.getConnectionPassword();
 
