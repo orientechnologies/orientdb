@@ -38,7 +38,7 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
 
   @Test
   public void truncateRecord() {
-    if (!database.getMetadata().getSchema().existsClass("Person"))
+    if (!database.getMetadata().getSchema().existsClass("Profile"))
       database.command(new OCommandSQL("create class Profile")).execute();
 
     database.command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)")).execute();
