@@ -220,6 +220,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       updateConfiguration();
     } catch (Exception e) {
       OLogManager.instance().error(this, "Exception during index '%s' creation", e, name);
+      //index is created inside of storage
+      if (indexId >= 0) {
+        delete();
+      }
       throw OException.wrapException(new OIndexException("Cannot create the index '" + name + "'"), e);
     } finally {
       releaseExclusiveLock();
