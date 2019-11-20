@@ -749,7 +749,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
     Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
 
-    while (!valuesIterator.hasNext()) {
+    while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
       if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
         Assert.fail("Unknown value found: " + value);

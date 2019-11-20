@@ -166,7 +166,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(result.size(), 1);
     assertTrue(Arrays.asList("John Smith", "James Bell", "William James").contains(result.get(0).field("name")));
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
   }
 
   @Test
@@ -226,7 +226,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
       assertTrue(expectedNames.contains(aResult.field("name")));
     }
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
   }
 
   @Test
@@ -257,7 +257,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
       assertTrue(expectedNames.contains(aResult.field("name")));
     }
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
   }
 
   @Test

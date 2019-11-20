@@ -222,7 +222,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       OLogManager.instance().error(this, "Exception during index '%s' creation", e, name);
       //index is created inside of storage
       if (indexId >= 0) {
-        delete();
+        doDelete();
       }
       throw OException.wrapException(new OIndexException("Cannot create the index '" + name + "'"), e);
     } finally {
@@ -402,13 +402,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
       try {
         if (indexId >= 0) {
-          storage.deleteIndexEngine(indexId);
+          doDelete();
         }
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during index '%s' delete", e, name);
       }
-
-      removeValuesContainer();
 
       indexId = storage
           .addIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(), true, version, 1,
@@ -540,28 +538,32 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     acquireExclusiveLock();
 
     try {
-      while (true)
-        try {
-          //noinspection ObjectAllocationInLoop
-          StreamSupport.stream(cursor(), false).forEach((pair) -> {
-            remove(pair.first, pair.second);
-          });
-
-          storage.deleteIndexEngine(indexId);
-          break;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-
+      doDelete();
       // REMOVE THE INDEX ALSO FROM CLASS MAP
       if (getDatabase().getMetadata() != null)
         getDatabase().getMetadata().getIndexManagerInternal().removeClassPropertyIndex(this);
 
-      removeValuesContainer();
       return this;
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  private void doDelete() {
+    while (true)
+      try {
+        //noinspection ObjectAllocationInLoop
+        StreamSupport.stream(cursor(), false).forEach((pair) -> {
+          remove(pair.first, pair.second);
+        });
+
+        storage.deleteIndexEngine(indexId);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+
+    removeValuesContainer();
   }
 
   public String getName() {

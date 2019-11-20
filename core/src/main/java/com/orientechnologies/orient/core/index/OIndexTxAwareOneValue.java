@@ -299,7 +299,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     ORID result;
     if (!indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
-      result = super.get(key).getIdentity();
+      result = Optional.ofNullable(super.get(key)).map(OIdentifiable::getIdentity).orElse(null);
     } else {
       // BEGIN FROM EMPTY RESULT SET
       result = null;
