@@ -1459,6 +1459,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
               }
 
               releasePageFromRead(atomicOperation, cacheEntry);
+
+              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
               bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
 
               itemIndex = 0;
