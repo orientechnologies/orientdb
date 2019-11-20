@@ -3,12 +3,15 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.coordinator.network.OCoordinatedExecutor;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedExecutable;
 import com.orientechnologies.orient.distributed.impl.network.binary.OBinaryDistributedMessage;
 import com.orientechnologies.orient.distributed.impl.network.binary.ODistributedChannelBinaryProtocol;
@@ -25,25 +28,23 @@ import java.util.concurrent.ConcurrentMap;
 public class ODistributedNetworkManager implements ODiscoveryListener {
 
   private final ConcurrentMap<ONodeIdentity, ODistributedChannelBinaryProtocol> remoteServers = new ConcurrentHashMap<>();
-  private final OrientDBDistributed                                             orientDB;
   private final ONodeConfiguration                                              config;
   private final ONodeInternalConfiguration                                      internalConfiguration;
   private       ONodeManager                                                    discoveryManager;
-  private       OCoordinatedExecutorMessageHandler                              requestHandler;
+  private       OCoordinatedExecutor                                            requestHandler;
 
-  public ODistributedNetworkManager(OrientDBDistributed orientDB, ONodeConfiguration config,
+  public ODistributedNetworkManager(ODistributedContextContainer orientDB, ONodeConfiguration config,
       ONodeInternalConfiguration internalConfiguration) {
-    this.orientDB = orientDB;
     this.config = config;
     this.internalConfiguration = internalConfiguration;
     this.requestHandler = new OCoordinatedExecutorMessageHandler(orientDB);
   }
 
-  public ODistributedChannelBinaryProtocol getRemoteServer(final ONodeIdentity rNodeName) {
+  private ODistributedChannelBinaryProtocol getRemoteServer(final ONodeIdentity rNodeName) {
     return remoteServers.get(rNodeName);
   }
 
-  public ODistributedChannelBinaryProtocol connectRemoteServer(final ONodeIdentity nodeIdentity, String host, String user,
+  private ODistributedChannelBinaryProtocol connectRemoteServer(final ONodeIdentity nodeIdentity, String host, String user,
       String password) throws IOException {
     // OK
     ORemoteServerController remoteServer = new ORemoteServerController(new ORemoteServerAvailabilityCheck() {
@@ -55,7 +56,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
       @Override
       public void nodeDisconnected(String nodeIdToString) {
         //TODO: Integrate with the discovery manager.
-        ODistributedNetworkManager.this.orientDB.nodeDisconnected(nodeIdentity);
+        ODistributedNetworkManager.this.requestHandler.nodeDisconnected(nodeIdentity);
       }
     }, internalConfiguration.getNodeIdentity().toString(), nodeIdentity.toString(), host, user, password);
     ODistributedChannelBinaryProtocol channel = new ODistributedChannelBinaryProtocol(internalConfiguration.getNodeIdentity(),
@@ -74,17 +75,15 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
       c.close();
   }
 
-  public void closeAll() {
+  private void closeAll() {
     for (ODistributedChannelBinaryProtocol server : remoteServers.values())
       server.close();
     remoteServers.clear();
   }
 
-  public void startup() {
+  public void startup(OSchedulerInternal scheduler, OOperationLog structuralLog) {
     //TODO different strategies for different infrastructures, eg. AWS
-
-    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, orientDB,
-        orientDB.getStructuralDistributedContext().getOpLog());
+    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, scheduler, structuralLog);
     discoveryManager.start();
   }
 
@@ -101,19 +100,18 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     ODistributedChannelBinaryProtocol channel = getRemoteServer(data.getNodeIdentity());
     if (channel == null) {
       try {
-        channel = connectRemoteServer(data.getNodeIdentity(), data.address + ":" + data.port, data.connectionUsername,
+        connectRemoteServer(data.getNodeIdentity(), data.address + ":" + data.port, data.connectionUsername,
             data.connectionPassword);
-        orientDB.nodeConnected(data.getNodeIdentity(), channel);
+
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on establish connection to a new joined node", e);
       }
-    } else {
-      orientDB.nodeConnected(data.getNodeIdentity(), channel);
     }
+    requestHandler.nodeConnected(data.getNodeIdentity());
   }
 
   public void nodeDisconnected(NodeData data) {
-    orientDB.nodeDisconnected(data.getNodeIdentity());
+    requestHandler.nodeDisconnected(data.getNodeIdentity());
     //TODO: Disconnect binary sockets
   }
 
@@ -121,8 +119,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   public void leaderElected(NodeData data) {
     //TODO: Come from a term
     OLogId lastValid = null;
-    requestHandler.setLeader(data.getNodeIdentity());
-    orientDB.setLeader(data.getNodeIdentity(), lastValid);
+    requestHandler.setLeader(data.getNodeIdentity(), lastValid);
   }
 
   public ODistributedChannel getChannel(ONodeIdentity identity) {

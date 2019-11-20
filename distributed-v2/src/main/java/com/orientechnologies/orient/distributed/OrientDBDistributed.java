@@ -12,10 +12,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributedPooled;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
-import com.orientechnologies.orient.distributed.impl.ONodeInternalConfiguration;
+import com.orientechnologies.orient.distributed.impl.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
@@ -45,16 +42,16 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 /**
  * Created by tglman on 08/08/17.
  */
-public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware, OServerLifecycleListener {
+public class OrientDBDistributed extends OrientDBEmbedded
+    implements OServerAware, OServerLifecycleListener, ODistributedContextContainer {
 
   private static final String DISTRIBUTED_USER = "distributed_replication";
 
   private          OServer                       server;
-  private volatile boolean                       coordinator      = false;
+  private volatile boolean                       coordinator = false;
   private volatile ONodeIdentity                 coordinatorIdentity;
   private          OStructuralDistributedContext structuralDistributedContext;
   private          ODistributedNetworkManager    networkManager;
-  private volatile boolean                       distributedReady = false;
   private          ONodeConfiguration            nodeConfiguration;
   private          OStructuralConfiguration      structuralConfiguration;
 
@@ -85,7 +82,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     checkPort();
     structuralDistributedContext = new OStructuralDistributedContext(this);
     networkManager = new ODistributedNetworkManager(this, getNodeConfig(), generateInternalConfiguration());
-    networkManager.startup();
+    networkManager.startup(this, structuralDistributedContext.getOpLog());
 
   }
 
@@ -272,9 +269,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   }
 
-  public synchronized void nodeConnected(ONodeIdentity nodeIdentity, ODistributedChannel channel) {
+  public synchronized void nodeConnected(ONodeIdentity nodeIdentity) {
     if (this.getNodeIdentity().equals(nodeIdentity))
       return;
+    ODistributedChannel channel = networkManager.getChannel(nodeIdentity);
     for (OSharedContext context : sharedContexts.values()) {
       if (isContextToIgnore(context))
         continue;
@@ -467,6 +465,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     networkManager.coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
+
   public synchronized void internalCreateDatabase(OSessionOperationId operationId, String database, String type,
       Map<String, String> configurations) {
     //TODO:INIT CONFIG
@@ -495,7 +494,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void setOnline() {
-    this.distributedReady = true;
     this.notifyAll();
   }
 

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 
 public interface OCoordinatedExecutor {
 
@@ -21,4 +22,11 @@ public interface OCoordinatedExecutor {
   void executeConfirm(ONodeIdentity sender, ONetworkConfirm confirm);
 
   void executeAck(ONodeIdentity sender, ONetworkAck ack);
+
+  void nodeConnected(ONodeIdentity identity);
+
+  void nodeDisconnected(ONodeIdentity identity);
+
+  void setLeader(ONodeIdentity leader, OLogId leaderLastValid);
+
 }

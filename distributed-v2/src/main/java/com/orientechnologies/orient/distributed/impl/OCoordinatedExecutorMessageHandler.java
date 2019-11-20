@@ -3,10 +3,7 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExecutor;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
-import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitContext;
+import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedContext;
@@ -16,10 +13,10 @@ import com.orientechnologies.orient.distributed.impl.structural.raft.OStructural
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 
 public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor {
-  private OrientDBDistributed distributed;
-  private ONodeIdentity       leader;
+  private ODistributedContextContainer distributed;
+  private ONodeIdentity                leader;
 
-  public OCoordinatedExecutorMessageHandler(OrientDBDistributed distributed) {
+  public OCoordinatedExecutorMessageHandler(ODistributedContextContainer distributed) {
     this.distributed = distributed;
   }
 
@@ -119,7 +116,20 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
     }
   }
 
-  public void setLeader(ONodeIdentity leader) {
-    this.leader = leader;
+  @Override
+  public void nodeConnected(ONodeIdentity identity) {
+    distributed.nodeConnected(identity);
   }
+
+  @Override
+  public void nodeDisconnected(ONodeIdentity identity) {
+    distributed.nodeDisconnected(identity);
+  }
+
+  @Override
+  public void setLeader(ONodeIdentity leader, OLogId leaderLastValid) {
+    this.leader = leader;
+    distributed.setLeader(leader, leaderLastValid);
+  }
+
 }
