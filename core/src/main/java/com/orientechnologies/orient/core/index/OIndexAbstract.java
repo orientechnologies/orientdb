@@ -220,23 +220,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       updateConfiguration();
     } catch (Exception e) {
       OLogManager.instance().error(this, "Exception during index '%s' creation", e, name);
-
-      while (true)
-        try {
-          if (indexId >= 0)
-            storage.deleteIndexEngine(indexId);
-          break;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "Exception during index '%s' deletion", ex, name);
-        }
-
-      if (e instanceof OIndexException)
-        throw (OIndexException) e;
-
       throw OException.wrapException(new OIndexException("Cannot create the index '" + name + "'"), e);
-
     } finally {
       releaseExclusiveLock();
     }
