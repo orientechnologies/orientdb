@@ -111,6 +111,10 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -657,8 +661,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           listener.onMessage(
               "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (pageErrors.length > 0 ?
-                  pageErrors.length + " with errors." :
-                  " without errors."));
+                  pageErrors.length + " with errors." : " without errors."));
 
           return pageErrors.length == 0;
         } finally {
@@ -927,9 +930,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        return clusters.get(iClusterId) != null ?
-            new long[] { clusters.get(iClusterId).getFirstPosition(), clusters.get(iClusterId).getLastPosition() } :
-            OCommonConst.EMPTY_LONG_ARRAY;
+        return clusters.get(iClusterId) != null ? new long[] { clusters.get(iClusterId).getFirstPosition(),
+            clusters.get(iClusterId).getLastPosition() } : OCommonConst.EMPTY_LONG_ARRAY;
 
       } catch (final IOException ioe) {
         throw OException.wrapException(new OStorageException("Cannot retrieve information about data range"), ioe);
@@ -1492,8 +1494,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan,
-      final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
+      final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
     try {
       checkOpenness();
       final OCluster cluster;
@@ -1937,11 +1939,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     //
     //  OAbstractPaginatedStorage.commit(com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction)
 
+    final AtomicBoolean txIsCompleted = new AtomicBoolean();
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       txBegun.incrementAndGet();
+
+      final TransactionProfiler transactionProfiler = new TransactionProfiler(5, txIsCompleted, Thread.currentThread());
+      transactionProfiler.task = Orient.instance().scheduleTask(transactionProfiler, 5_000, 5);
 
       final ODatabaseDocumentInternal database = transaction.getDatabase();
       final OIndexManager indexManager = database.getMetadata().getIndexManager();
@@ -2128,6 +2134,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
+    } finally {
+      txIsCompleted.set(true);
     }
   }
 
@@ -6229,5 +6237,80 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public long getLastCloseTime() {
     return lastCloseTime.get();
+  }
+
+  private static final class TransactionProfiler implements Runnable {
+    private final long timesStamp = System.nanoTime();
+
+    private final int                  profilingDelay;
+    private final AtomicBoolean        txIsCompleted;
+    private final Thread               txThread;
+    private final Path                 filePath;
+    private final Map<String, Integer> stackMap = new HashMap<>();
+
+    private boolean firstTime;
+
+    private volatile TimerTask task;
+
+    private TransactionProfiler(int profilingDelay, AtomicBoolean txIsCompleted, Thread txThread) {
+      this.profilingDelay = profilingDelay;
+      this.txIsCompleted = txIsCompleted;
+      this.txThread = txThread;
+
+      filePath = Paths.get(timesStamp + ".sprof").toAbsolutePath();
+    }
+
+    @Override
+    public void run() {
+      if (!txIsCompleted.get() && txThread.isAlive()) {
+        if (firstTime) {
+          OLogManager.instance().infoNoDb(this, "Transaction processing is taking too much time more than " + profilingDelay
+              + " seconds, profiling of the transaction is automatically started. File with name " + filePath
+              + " will be created to keep profiling data.");
+          firstTime = false;
+        }
+
+        final StackTraceElement[] traceElements = txThread.getStackTrace();
+        if (traceElements.length > 0) {
+          final StringBuilder stackData = new StringBuilder();
+          for (final StackTraceElement element : traceElements) {
+            stackData.append(element.getClassName()).append(element.getMethodName()).append(";");
+          }
+
+          stackMap.compute(stackData.toString(), (key, value) -> {
+            if (value == null) {
+              return 1;
+            }
+
+            return value + 1;
+          });
+        }
+      } else {
+        if (!stackMap.isEmpty()) {
+          try (final OutputStream fileStream = Files
+              .newOutputStream(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+            try (final ZipOutputStream zipStream = new ZipOutputStream(fileStream)) {
+              zipStream.putNextEntry(new ZipEntry("profile.dat"));
+
+              final OutputStreamWriter writer = new OutputStreamWriter(zipStream);
+              for (Map.Entry<String, Integer> entry : stackMap.entrySet()) {
+                writer.write(entry.getKey() + " " + entry.getValue());
+              }
+              writer.flush();
+
+              zipStream.closeEntry();
+            }
+          } catch (IOException e) {
+            OLogManager.instance().errorNoDb(this, "Can not create file" + filePath, e);
+          }
+
+          stackMap.clear();
+        }
+
+        if (task != null) {
+          task.cancel();
+        }
+      }
+    }
   }
 }
