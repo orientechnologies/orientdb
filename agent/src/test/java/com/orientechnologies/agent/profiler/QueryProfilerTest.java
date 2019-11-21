@@ -1,5 +1,6 @@
 package com.orientechnologies.agent.profiler;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -51,7 +52,7 @@ public class QueryProfilerTest {
         endLatch.await();
         result.close();
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        OLogManager.instance().warn(this, "Thread interrupted: " + e.getMessage(), e);
       }
 
     }).start();

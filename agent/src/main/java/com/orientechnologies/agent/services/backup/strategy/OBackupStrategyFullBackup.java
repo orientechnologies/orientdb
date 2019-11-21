@@ -22,6 +22,7 @@ import com.orientechnologies.agent.services.backup.OBackupConfig;
 import com.orientechnologies.agent.services.backup.OBackupListener;
 import com.orientechnologies.agent.services.backup.log.OBackupLogger;
 import com.orientechnologies.agent.services.backup.log.OBackupScheduledLog;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
@@ -74,7 +75,7 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
 
         return nextExecution;
       } catch (ParseException e) {
-        e.printStackTrace();
+        OLogManager.instance().warn(this, "Parse exception: " + e.getMessage(), e);
       }
 
     } else {

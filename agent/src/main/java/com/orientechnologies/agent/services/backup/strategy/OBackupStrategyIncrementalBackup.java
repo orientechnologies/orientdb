@@ -21,6 +21,7 @@ package com.orientechnologies.agent.services.backup.strategy;
 import com.orientechnologies.agent.services.backup.OBackupConfig;
 import com.orientechnologies.agent.services.backup.OBackupListener;
 import com.orientechnologies.agent.services.backup.log.*;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
@@ -50,7 +51,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
     try {
       last = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
     } catch (Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().warn(this, "Error getting last backup log: " + e.getMessage(), e);
     }
 
     if (last != null && !Boolean.TRUE.equals(last.getPrevChange())) {
@@ -64,7 +65,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
         begin = lastScheduled.getUnitId();
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().warn(this, "Error getting last backup log: " + e.getMessage(), e);
     }
     String basePath = cfg.field(OBackupConfig.DIRECTORY);
     String dbName = cfg.field(OBackupConfig.DBNAME);
@@ -90,7 +91,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
             unitId = lastCompleted.getUnitId();
           }
         } catch (Exception e) {
-          e.printStackTrace();
+          OLogManager.instance().warn(this, "Error getting last backup log: " + e.getMessage(), e);
         }
         OBackupScheduledLog log = new OBackupScheduledLog(unitId, logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
         log.nextExecution = nextExecution.getTime();
@@ -98,7 +99,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
         listener.onEvent(cfg, log);
         return nextExecution;
       } catch (ParseException e) {
-        e.printStackTrace();
+        OLogManager.instance().warn(this, "Parse error: " + e.getMessage(), e);
       }
 
     } else {
