@@ -6293,7 +6293,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
               final OutputStreamWriter writer = new OutputStreamWriter(zipStream);
               for (Map.Entry<String, Integer> entry : stackMap.entrySet()) {
-                writer.write(entry.getKey() + " " + entry.getValue());
+                writer.write(entry.getKey() + " " + entry.getValue() + "\n");
               }
               writer.flush();
 
