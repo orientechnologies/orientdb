@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -106,13 +107,13 @@ public class StorageBackupMTTest {
       try {
         ODatabaseDocumentTx.closeAll();
       } catch (Exception ex) {
-        ex.printStackTrace();
+        OLogManager.instance().error(this, "", ex);
       }
       if(orientDB.isOpen()){
         try {
           orientDB.close();
         }catch (Exception ex){
-          ex.printStackTrace();
+          OLogManager.instance().error(this, "", ex);
         }
       }
       try {
@@ -124,7 +125,7 @@ public class StorageBackupMTTest {
 
       OFileUtils.deleteRecursively(backupDir);
       } catch (Exception ex){
-        ex.printStackTrace();
+        OLogManager.instance().error(this, "", ex);
       }
     }
   }
@@ -210,13 +211,13 @@ public class StorageBackupMTTest {
         ODatabaseDocumentTx.closeAll();
         OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue(null);
       }catch (Exception ex){
-        ex.printStackTrace();
+        OLogManager.instance().error(this, "", ex);
       }
       if(orientDB.isOpen()){
         try {
           orientDB.close();
         }catch (Exception ex){
-          ex.printStackTrace();
+          OLogManager.instance().error(this, "", ex);
         }
       }
       try{
@@ -228,7 +229,7 @@ public class StorageBackupMTTest {
 
         OFileUtils.deleteRecursively(backupDir);
       }catch (Exception ex){
-        ex.printStackTrace();
+        OLogManager.instance().error(this, "", ex);
       }
     }
 
@@ -260,7 +261,7 @@ public class StorageBackupMTTest {
             System.out.println("Modification prohibited ... wait ...");
             Thread.sleep(1000);
           } catch (Exception | Error e) {
-            e.printStackTrace();
+            OLogManager.instance().error(this, "", e);
             throw e;
           }
         }
@@ -297,13 +298,13 @@ public class StorageBackupMTTest {
 
         }
       } catch (RuntimeException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "", e);
         throw e;
       } catch (Exception e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "", e);
         throw e;
       } catch (Error e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "", e);
         throw e;
       } finally {
         db.close();

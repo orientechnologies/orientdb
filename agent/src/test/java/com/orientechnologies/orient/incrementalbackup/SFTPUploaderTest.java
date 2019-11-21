@@ -237,11 +237,11 @@ public class SFTPUploaderTest extends AbstractUploaderTest {
       success = true;
 
     } catch (JSchException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "", e);
     } catch (SftpException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "", e);
     } catch (Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "", e);
     } finally {
       if (channel != null) {
         channel.disconnect();

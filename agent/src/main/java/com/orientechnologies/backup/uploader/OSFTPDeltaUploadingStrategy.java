@@ -197,7 +197,7 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
       }
 
     } catch (Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error", e);
     }
 
     long end = System.currentTimeMillis();
@@ -260,7 +260,7 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
 
       return tempDir.toString();
     } catch (Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
     }
     return null;
   }

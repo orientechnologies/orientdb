@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.incrementalbackup;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -100,7 +101,7 @@ public abstract class AbstractBackupTest {
               System.out.println("Writer (threadId=" + this.threadId + ") received exception (db=" + graph.getRawGraph().getURL() + ")");
 
               if (retry >= maxRetries)
-                e.printStackTrace();
+                OLogManager.instance().error(this, "max retries reached", e);
 
               break;
             } catch (ODistributedException e) {
@@ -110,7 +111,6 @@ public abstract class AbstractBackupTest {
               }
             } catch (Throwable e) {
               System.out.println("Writer (threadId=" + this.threadId + ") received exception (db=" + graph.getRawGraph().getURL() + ")");
-              e.printStackTrace();
               return null;
             }
           }
@@ -121,7 +121,7 @@ public abstract class AbstractBackupTest {
 
         System.out.println("\nWriter " + name + " END");
       }catch (Exception e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "", e);
       }
       return null;
     }
@@ -205,7 +205,7 @@ public abstract class AbstractBackupTest {
       System.out.println("All writer threads have finished, shutting down readers");
 
     } catch(Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "", e);
     }
   }
 

@@ -1,5 +1,6 @@
 package com.orientechnologies.security.auditing;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -98,7 +99,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
     try {
       Thread.sleep(1000);//let auditing log happen (remove this and make auditing more reliable!!!)
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      OLogManager.instance().warn(this, "Thread interrputed", e);
     }
     String query = "select from OAuditingLog where database = ? and note = ?";
 
@@ -115,7 +116,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
     try {
       Thread.sleep(1000);//let auditing log happen (remove this and make auditing more reliable!!!)
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      OLogManager.instance().warn(this, "Thread interrupted", e);
     }
     result = (List<OResult>) server.getSystemDatabase().execute((res) -> res.stream().collect(Collectors.toList()), query, TESTDB, "I dropped a class: TestClass");
 

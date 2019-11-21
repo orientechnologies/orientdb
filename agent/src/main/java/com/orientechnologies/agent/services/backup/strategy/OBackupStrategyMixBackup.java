@@ -21,6 +21,7 @@ package com.orientechnologies.agent.services.backup.strategy;
 import com.orientechnologies.agent.services.backup.OBackupConfig;
 import com.orientechnologies.agent.services.backup.OBackupListener;
 import com.orientechnologies.agent.services.backup.log.*;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
@@ -54,7 +55,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
     try {
       last = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
     } catch (Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
     }
     return last != null ? last.getPath() : defaultPath();
 
@@ -69,7 +70,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
         begin = last.getUnitId();
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
     }
     String basePath = cfg.field(OBackupConfig.DIRECTORY);
     String dbName = cfg.field(OBackupConfig.DBNAME);
@@ -104,7 +105,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
             isIncremental = false;
           }
         } catch (IOException e) {
-          e.printStackTrace();
+          OLogManager.instance().error(this, "Error " + e.getMessage(), e);
         }
         Date nextExecution = nextIncremental.before(nextFull) ? nextIncremental : nextFull;
         OBackupScheduledLog log = new OBackupScheduledLog(unitId, logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
@@ -113,7 +114,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
         listener.onEvent(cfg, log);
         return nextExecution;
       } catch (ParseException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Parse exception: " + e.getMessage(), e);
       }
       return null;
     } else {

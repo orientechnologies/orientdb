@@ -153,7 +153,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
               try {
                 Thread.sleep(2000);
               } catch (InterruptedException e) {
-                e.printStackTrace();
+                OLogManager.instance().error(this, "Thread interrupted: " + e.getMessage(), e);
               }
               retry++;
               continue;
@@ -163,7 +163,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
               try {
                 plugin.waitUntilNodeOnline();
               } catch (InterruptedException e) {
-                e.printStackTrace();
+                OLogManager.instance().error(this, "Thread interrupted " + e.getMessage(), e);
               }
               manager.registerLifecycleListener(profiler);
               installCommands();

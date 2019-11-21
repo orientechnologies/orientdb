@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.incrementalbackup;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -72,7 +73,7 @@ public abstract class AbstractUploaderTest extends AbstractBackupTest {
       executeWrites(this.dbURL, 1000);
 
     } catch(Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "", e);
       // cleaning all the directories
       this.cleanDirectories();
     } finally {

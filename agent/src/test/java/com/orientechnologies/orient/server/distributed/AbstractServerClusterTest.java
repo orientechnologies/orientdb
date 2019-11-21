@@ -134,7 +134,7 @@ public abstract class AbstractServerClusterTest {
                 server.startServer(getDistributedServerConfiguration(server));
                 onServerStarted(server);
               } catch (Exception e) {
-                e.printStackTrace();
+                OLogManager.instance().error(this, "", e);
               }
             }
           });
@@ -166,7 +166,7 @@ public abstract class AbstractServerClusterTest {
       }
     } catch (Exception e) {
       System.out.println("ERROR: ");
-      e.printStackTrace();
+      OLogManager.instance().error(this, "", e);
       OLogManager.instance().flush();
       throw e;
     } finally {
@@ -220,7 +220,7 @@ public abstract class AbstractServerClusterTest {
       try {
         threads[s].join();
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "", e);
       }
     }
   }

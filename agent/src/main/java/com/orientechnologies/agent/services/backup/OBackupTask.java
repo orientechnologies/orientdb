@@ -54,7 +54,7 @@ public class OBackupTask implements OBackupListener {
           try {
             strategy.doBackup(OBackupTask.this);
           } catch (IOException e) {
-            e.printStackTrace();
+            OLogManager.instance().error(this, "Error " + e.getMessage(), e);
           }
         }
       };

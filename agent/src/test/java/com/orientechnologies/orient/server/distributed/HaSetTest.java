@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -83,7 +84,7 @@ public class HaSetTest extends AbstractServerClusterTest {
       Assert.assertEquals("europe0", distributedManager.getDatabaseConfiguration(getDatabaseName()).getClusterOwner("*"));
 
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "", e);
     }
   }
 

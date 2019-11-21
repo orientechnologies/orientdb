@@ -18,6 +18,7 @@
 package com.orientechnologies.agent.event;
 
 import com.orientechnologies.agent.event.metric.OEventMetricExecutor;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -80,9 +81,9 @@ public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
         try {
           invocableEngine.invokeFunction(name, args);
         } catch (ScriptException e) {
-          e.printStackTrace();
+          OLogManager.instance().error(this, "Error " + e.getMessage(), e);
         } catch (NoSuchMethodException e) {
-          e.printStackTrace();
+          OLogManager.instance().error(this, "Error " + e.getMessage(), e);
         }
       }
     } catch (OCommandScriptException e) {

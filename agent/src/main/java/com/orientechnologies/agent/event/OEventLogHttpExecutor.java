@@ -40,7 +40,7 @@ public class OEventLogHttpExecutor extends OEventLogExecutor {
         Map<String, Object> fillMapResolve = fillMapResolve(source, when);
         executeHttp(what,fillMapResolve);
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error " + e.getMessage(), e);
       }
     }
   }

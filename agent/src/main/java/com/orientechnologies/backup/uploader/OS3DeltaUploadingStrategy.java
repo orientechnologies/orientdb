@@ -252,7 +252,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
       }
       return tempDir.toString();
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
     }
 
     return null;

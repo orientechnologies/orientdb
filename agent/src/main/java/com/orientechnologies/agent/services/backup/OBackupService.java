@@ -115,7 +115,7 @@ public class OBackupService implements OEnterpriseService {
       }
       history.field("logs", docs);
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
     }
     return history;
   }
@@ -148,7 +148,7 @@ public class OBackupService implements OEnterpriseService {
       }
       history.field("logs", docs);
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
     }
     return history;
   }
