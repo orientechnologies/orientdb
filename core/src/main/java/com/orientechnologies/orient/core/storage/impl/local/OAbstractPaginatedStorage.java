@@ -6240,7 +6240,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private static final class TransactionProfiler implements Runnable {
-    private final long timesStamp = System.nanoTime();
 
     private final int                  profilingDelay;
     private final AtomicBoolean        txIsCompleted;
@@ -6257,7 +6256,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       this.txIsCompleted = txIsCompleted;
       this.txThread = txThread;
 
-      filePath = Paths.get(timesStamp + ".sprof").toAbsolutePath();
+      filePath = Paths.get(System.nanoTime() + ".sprof").toAbsolutePath();
     }
 
     @Override
