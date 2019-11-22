@@ -89,7 +89,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     sortedKeys.sort(comparator);
 
-    return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().flatMap((key) -> {
+    return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().map((key) -> {
       final Object collatedKey = getCollatingValue(key);
 
       acquireSharedLock();
@@ -97,7 +97,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
         while (true) {
           try {
             return Optional.ofNullable((ORID) storage.getIndexValue(indexId, collatedKey))
-                .map((rid) -> Stream.of(new ORawPair<>(collatedKey, rid))).orElse(Stream.empty());
+                .map((rid) -> new ORawPair<>(collatedKey, rid)).orElse(null);
           } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
@@ -105,7 +105,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       } finally {
         releaseSharedLock();
       }
-    }));
+    }).filter(Objects::nonNull));
   }
 
   @Override
