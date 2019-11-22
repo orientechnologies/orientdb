@@ -360,7 +360,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>>
       try {
         while (true) {
           try {
-            return ((Collection<ORID>) storage.getIndexValue(indexId, key)).stream().map((rid) -> new ORawPair<>(entryKey, rid));
+            return Optional.ofNullable((Collection<ORID>) storage.getIndexValue(indexId, key))
+                .map((rids) -> rids.stream().map((rid) -> new ORawPair<>(entryKey, rid))).orElse(Stream.empty());
           } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }

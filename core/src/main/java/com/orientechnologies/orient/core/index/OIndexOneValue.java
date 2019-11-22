@@ -91,11 +91,13 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().flatMap((key) -> {
       final Object collatedKey = getCollatingValue(key);
+
       acquireSharedLock();
       try {
         while (true) {
           try {
-            return storage.iterateIndexEntriesBetween(indexId, collatedKey, true, collatedKey, true, true, null);
+            return Optional.ofNullable((ORID) storage.getIndexValue(indexId, collatedKey))
+                .map((rid) -> Stream.of(new ORawPair<>(collatedKey, rid))).orElse(Stream.empty());
           } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
