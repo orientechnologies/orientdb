@@ -302,14 +302,18 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     final Stream<ORawPair<Object, ORID>> backedStream = super
         .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
 
-    return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream));
+    return IndexStreamSecurityDecorator
+        .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
   }
 
   private static Stream<ORawPair<Object, ORID>> mergeTxAndBackedStreams(OTransactionIndexChanges indexChanges,
-      Stream<ORawPair<Object, ORID>> txStream, Stream<ORawPair<Object, ORID>> backedStream) {
+      Stream<ORawPair<Object, ORID>> txStream, Stream<ORawPair<Object, ORID>> backedStream, boolean ascOrder) {
     //noinspection resource
     return Streams.mergeSortedSpliterators(txStream,
-        backedStream.map((entry) -> calculateTxIndexEntry(entry.first, entry.second, indexChanges)).filter(Objects::nonNull));
+        backedStream.map((entry) -> calculateTxIndexEntry(entry.first, entry.second, indexChanges)).filter(Objects::nonNull),
+        (entryOne, entryTwo) -> ascOrder
+            ? ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first)
+            : -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first));
   }
 
   @Override
@@ -342,7 +346,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> backedStream = super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
 
-    return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream));
+    return IndexStreamSecurityDecorator
+        .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
   }
 
   @Override
@@ -374,7 +379,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
     @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> backedCursor = super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
-    return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedCursor));
+    return IndexStreamSecurityDecorator
+        .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedCursor, ascOrder));
   }
 
   @Override
@@ -385,23 +391,16 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       return super.iterateEntries(keys, ascSortOrder);
     }
 
-    final List<Object> sortedKeys = new ArrayList<>(keys.size());
-    for (Object key : keys)
-      sortedKeys.add(getCollatingValue(key));
-    if (ascSortOrder) {
-      sortedKeys.sort(ODefaultComparator.INSTANCE);
-    } else {
-      sortedKeys.sort(Collections.reverseOrder(ODefaultComparator.INSTANCE));
-    }
-
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> txStream = sortedKeys.stream().flatMap((key) -> {
+    final Stream<ORawPair<Object, ORID>> txStream = keys.stream().flatMap((key) -> {
       final Set<OIdentifiable> result = calculateTxValue(key, indexChanges);
       if (result != null) {
-        return result.stream().map((rid) -> new ORawPair<>(key, rid.getIdentity()));
+        return result.stream().map((rid) -> new ORawPair<>((Object) key, rid.getIdentity()));
       }
       return null;
-    }).filter(Objects::nonNull);
+    }).filter(Objects::nonNull).sorted((entryOne, entryTwo) -> ascSortOrder
+        ? ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first)
+        : -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first));
 
     if (indexChanges.cleared) {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
@@ -409,7 +408,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
     @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> backedCursor = super.iterateEntries(keys, ascSortOrder);
-    return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedCursor));
+    return IndexStreamSecurityDecorator
+        .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedCursor, ascSortOrder));
   }
 
   private static ORawPair<Object, ORID> calculateTxIndexEntry(final Object key, final ORID backendValue,

@@ -151,12 +151,12 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       }
 
       if (inKeys == null)
-        return Stream.empty();
+        return null;
 
       if (indexDefinition.getParamCount() == keyParams.size()) {
         stream = index.iterateEntries(inKeys, ascSortOrder);
       } else {
-        return Stream.empty();
+        return null;
       }
     }
 

@@ -102,13 +102,13 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams.subList(0, keyParams.size() - 1));
 
       if (keyOne == null) {
-        return Stream.empty();
+        return null;
       }
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (keyTwo == null) {
-        return Stream.empty();
+        return null;
       }
 
       stream = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);

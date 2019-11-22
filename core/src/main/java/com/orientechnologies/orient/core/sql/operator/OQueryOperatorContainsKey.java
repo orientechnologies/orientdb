@@ -107,7 +107,7 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (keyOne == null) {
-        return Stream.empty();
+        return null;
       }
 
       if (internalIndex.hasRangeQuerySupport()) {
@@ -125,7 +125,7 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
                 .map((identifiable) -> new ORawPair<>(keyOne, identifiable.getIdentity()));
           }
         } else {
-          return Stream.empty();
+          return null;
         }
       }
     }
