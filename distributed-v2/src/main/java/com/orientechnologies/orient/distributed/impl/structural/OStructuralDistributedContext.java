@@ -4,17 +4,15 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 
-import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT;
 
 public class OStructuralDistributedContext {
   private OStructuralSubmitContext submitContext;
@@ -24,17 +22,16 @@ public class OStructuralDistributedContext {
   private OStructuralFollower      follower;
 
   /**
-   * used in client->follower->leader communication pattern
-   * to guarantee that op N is executed AFTER op N-1 is ALREADY propagated to the slave
-   * eg. create database VS open database
+   * used in client->follower->leader communication pattern to guarantee that op N is executed AFTER op N-1 is ALREADY propagated to
+   * the slave eg. create database VS open database
    */
-  private OSessionOperationId      last;
+  private OSessionOperationId last;
 
   public OStructuralDistributedContext(OrientDBDistributed context) {
     this.context = context;
     initOpLog();
-    submitContext = new OStructuralSubmitContextImpl();
-    follower = new OStructuralFollower(Executors.newSingleThreadExecutor(), opLog, context);
+    submitContext = new OStructuralSubmitContextImpl(context);
+    follower = new OStructuralFollower(opLog, context.getNetworkManager(), context);
     leader = null;
   }
 
@@ -61,14 +58,13 @@ public class OStructuralDistributedContext {
 
   public synchronized void makeLeader(ONodeIdentity identity) {
     if (leader == null) {
-      leader = new OStructuralLeader(Executors.newSingleThreadExecutor(), opLog, context);
+      leader = new OStructuralLeader(opLog, context.getNetworkManager(), context);
     }
-    OLoopBackDistributedChannel loopback = new OLoopBackDistributedChannel(identity, submitContext, leader, follower);
-    leader.connected(identity, loopback);
-    this.getSubmitContext().setLeader(loopback);
+    leader.connected(identity);
+    this.getSubmitContext().setLeader(identity);
   }
 
-  public synchronized void setExternalLeader(ODistributedChannel leader) {
+  public synchronized void setExternalLeader(ONodeIdentity leader) {
     if (this.leader != null) {
       this.leader.close();
       this.leader = null;

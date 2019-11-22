@@ -58,7 +58,7 @@ public class ONetworkSubmitRequest implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executeSubmitRequest(sender, this);
+    executor.executeSubmitRequest(sender, database, operationId, request);
   }
 
   public OSessionOperationId getOperationId() {

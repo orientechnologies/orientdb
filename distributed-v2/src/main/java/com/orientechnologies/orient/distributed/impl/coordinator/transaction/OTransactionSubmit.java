@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -15,7 +16,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedLockManager;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
 
 import java.io.DataInput;
@@ -124,7 +124,7 @@ public class OTransactionSubmit implements OSubmitRequest {
   }
 
   @Override
-  public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+  public void begin(ONodeIdentity requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
     ODistributedLockManager lockManager = coordinator.getLockManager();
 
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting

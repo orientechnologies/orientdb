@@ -65,17 +65,15 @@ class OBroadcastMessage {
         output.writeUTF(leaderAddress);
         output.writeInt(leaderTcpPort);
         output.writeLong(leaderPing);
-        output.writeBoolean(leaderConnectionUsername != null);
-        if (leaderConnectionUsername != null) {
-          output.writeUTF(leaderConnectionUsername);
-        }
-        output.writeBoolean(leaderConnectionPassword != null);
-        if (leaderConnectionPassword != null) {
-          output.writeUTF(leaderConnectionPassword);
-        }
+        output.writeUTF(leaderConnectionUsername);
+        output.writeUTF(leaderConnectionPassword);
       } else {
         output.writeByte(0);
       }
+      break;
+    case OBroadcastMessage.TYPE_LEADER_ELECTED:
+      output.writeUTF(connectionPassword);
+      output.writeUTF(connectionUsername);
       break;
     case OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION:
       voteForIdentity.serialize(output);
@@ -95,7 +93,6 @@ class OBroadcastMessage {
     lastLogId = input.readLong();
     connectionUsername = input.readUTF();
     connectionPassword = input.readUTF();
-
     switch (type) {
     case OBroadcastMessage.TYPE_PING:
       byte isThereMaster = input.readByte();
@@ -106,12 +103,8 @@ class OBroadcastMessage {
         leaderAddress = input.readUTF();
         leaderTcpPort = input.readInt();
         leaderPing = input.readLong();
-        if (input.readBoolean()) {
-          leaderConnectionUsername = input.readUTF();
-        }
-        if (input.readBoolean()) {
-          leaderConnectionPassword = input.readUTF();
-        }
+        leaderConnectionUsername = input.readUTF();
+        leaderConnectionPassword = input.readUTF();
       }
       break;
     case OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION:

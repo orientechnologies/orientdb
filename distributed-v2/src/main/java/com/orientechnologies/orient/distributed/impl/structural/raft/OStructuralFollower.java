@@ -2,35 +2,40 @@ package com.orientechnologies.orient.distributed.impl.structural.raft;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
+import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLogEntry;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class OStructuralFollower implements AutoCloseable {
-  private OOperationLog               operationLog;
-  private ExecutorService             executor;
-  private OrientDBDistributed         orientDB;
-  private Map<OLogId, ORaftOperation> pending = new HashMap<>();
-  private OSessionOperationIdWaiter   waiter  = new OSessionOperationIdWaiter();
+  private final ODistributedNetwork         network;
+  private       OOperationLog               operationLog;
+  private       ExecutorService             executor;
+  private       OrientDBDistributed         orientDB;
+  private       Map<OLogId, ORaftOperation> pending = new HashMap<>();
+  private       OSessionOperationIdWaiter   waiter  = new OSessionOperationIdWaiter();
 
-  public OStructuralFollower(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed orientDB) {
+  public OStructuralFollower(OOperationLog operationLog, ODistributedNetwork network, OrientDBDistributed orientDB) {
     this.operationLog = operationLog;
-    this.executor = executor;
+    this.executor = Executors.newSingleThreadExecutor();
     this.orientDB = orientDB;
+    this.network = network;
   }
 
-  public void log(OStructuralDistributedMember member, OLogId logId, ORaftOperation operation) {
+  public void log(ONodeIdentity leader, OLogId logId, ORaftOperation operation) {
     executor.execute(() -> {
       if (operationLog.logReceived(logId, operation)) {
         pending.put(logId, operation);
-        member.ack(logId);
+        network.ack(leader, logId);
       } else {
         resyncOplog();
       }
@@ -86,10 +91,6 @@ public class OStructuralFollower implements AutoCloseable {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-  }
-
-  public OStructuralDistributedMember getMember(ONodeIdentity senderNode) {
-    return new OStructuralDistributedMember(senderNode, orientDB.getNetworkManager().getChannel(senderNode));
   }
 
   public void recover(ORaftOperation request) {

@@ -31,10 +31,10 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumSuccess() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember(new ONodeIdentity("one", "one"), null, null);
-    ODistributedMember member2 = new ODistributedMember(new ONodeIdentity("two", "two"), null, null);
-    ODistributedMember member3 = new ODistributedMember(new ONodeIdentity("three", "three"), null, null);
-    List<ODistributedMember> members = new ArrayList<>();
+    ONodeIdentity member1 = new ONodeIdentity("one", "one");
+    ONodeIdentity member2 = new ONodeIdentity("two", "two");
+    ONodeIdentity member3 = new ONodeIdentity("three", "three");
+    List<ONodeIdentity> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
     members.add(member3);
@@ -56,10 +56,10 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumCME() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember(new ONodeIdentity("one", "one"), null, null);
-    ODistributedMember member2 = new ODistributedMember(new ONodeIdentity("two", "two"), null, null);
-    ODistributedMember member3 = new ODistributedMember(new ONodeIdentity("three", "three"), null, null);
-    List<ODistributedMember> members = new ArrayList<>();
+    ONodeIdentity member1 = new ONodeIdentity("one", "one");
+    ONodeIdentity member2 = new ONodeIdentity("two", "two");
+    ONodeIdentity member3 = new ONodeIdentity("three", "three");
+    List<ONodeIdentity> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
     members.add(member3);
@@ -84,10 +84,10 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumUnique() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember(new ONodeIdentity("one", "one"), null, null);
-    ODistributedMember member2 = new ODistributedMember(new ONodeIdentity("two", "two"), null, null);
-    ODistributedMember member3 = new ODistributedMember(new ONodeIdentity("three", "three"), null, null);
-    List<ODistributedMember> members = new ArrayList<>();
+    ONodeIdentity member1 = new ONodeIdentity("one", "one");
+    ONodeIdentity member2 = new ONodeIdentity("two", "two");
+    ONodeIdentity member3 = new ONodeIdentity("three", "three");
+    List<ONodeIdentity> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
     members.add(member3);

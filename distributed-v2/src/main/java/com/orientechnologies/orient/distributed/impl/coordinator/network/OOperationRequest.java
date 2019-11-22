@@ -50,7 +50,7 @@ public class OOperationRequest implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executeOperationRequest(sender, this);
+    executor.executeOperationRequest(sender, database, id, request);
   }
 
   public OLogId getId() {

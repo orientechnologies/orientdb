@@ -31,7 +31,7 @@ public class ONetworkAck implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executeAck(sender, this);
+    executor.executeAck(sender, logId);
   }
 
   @Override

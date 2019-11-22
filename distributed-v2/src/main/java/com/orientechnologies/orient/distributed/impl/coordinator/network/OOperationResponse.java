@@ -44,7 +44,7 @@ public class OOperationResponse implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executeOperationResponse(sender, this);
+    executor.executeOperationResponse(sender, database, id, response);
   }
 
   @Override

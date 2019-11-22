@@ -12,8 +12,8 @@ import java.io.IOException;
 import static com.orientechnologies.orient.distributed.impl.network.binary.OBinaryDistributedMessage.DISTRIBUTED_PROPAGATE_REQUEST;
 
 public class ONetworkPropagate implements ODistributedMessage {
-  private              OLogId                     id;
-  private              ORaftOperation             operation;
+  private OLogId         id;
+  private ORaftOperation operation;
 
   public ONetworkPropagate() {
   }
@@ -46,7 +46,7 @@ public class ONetworkPropagate implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executePropagate(sender, this);
+    executor.executePropagate(sender, id, operation);
   }
 
   public OLogId getId() {

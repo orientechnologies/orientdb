@@ -31,7 +31,7 @@ public class ONetworkConfirm implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executeConfirm(sender, this);
+    executor.executeConfirm(sender, id);
   }
 
   @Override
