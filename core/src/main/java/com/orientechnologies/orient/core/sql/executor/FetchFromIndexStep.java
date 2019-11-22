@@ -396,18 +396,14 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         if (from == null && to == null) {
           //manage null value explicitly, as the index API does not seem to work correctly in this case
           stream = getStreamForNullKey();
-          cursorToIterator();
         } else {
           stream = index.iterateEntriesBetween(from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
-          cursorToIterator();
         }
 
       } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
         stream = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
-        cursorToIterator();
       } else if (isFullTextIndex(index) || isFullTextHashIndex(index)) {
         stream = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
-        cursorToIterator();
       } else {
         throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
       }
