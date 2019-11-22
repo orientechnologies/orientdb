@@ -80,8 +80,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void onAfterActivate() {
     structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this);
     checkPort();
+    ONodeInternalConfiguration conf = generateInternalConfiguration();
+    networkManager = new ODistributedNetworkManager(this, getNodeConfig(), conf);
     structuralDistributedContext = new OStructuralDistributedContext(this);
-    networkManager = new ODistributedNetworkManager(this, getNodeConfig(), generateInternalConfiguration());
     networkManager.startup(this, structuralDistributedContext.getOpLog());
 
   }

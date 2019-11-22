@@ -618,7 +618,7 @@ public abstract class ONodeManager {
       assert message.voteForIdentity.getId() != null;
     }
     // assert message.dbName != null;
-    assert message.lastLogId >= 0;
+    //assert message.lastLogId >= 0;
 
     //MASTER INFO
     if (message.leaderIdentity != null) {
