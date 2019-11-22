@@ -6287,7 +6287,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } else {
         if (!stackMap.isEmpty()) {
           try (final OutputStream fileStream = Files
-              .newOutputStream(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+              .newOutputStream(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
             try (final ZipOutputStream zipStream = new ZipOutputStream(fileStream)) {
               zipStream.putNextEntry(new ZipEntry("profile.dat"));
 
