@@ -53,11 +53,11 @@ class OBroadcastMessage {
     output.writeInt(role);
     output.writeInt(tcpPort);
     output.writeLong(lastLogId);
+    output.writeUTF(connectionUsername);
+    output.writeUTF(connectionPassword);
 
     switch (type) {
     case OBroadcastMessage.TYPE_PING:
-      output.writeUTF(connectionUsername);
-      output.writeUTF(connectionPassword);
       if (this.leaderIdentity != null) {
         output.writeByte(1);
         leaderIdentity.serialize(output);
@@ -93,11 +93,11 @@ class OBroadcastMessage {
     role = input.readInt();
     tcpPort = input.readInt();
     lastLogId = input.readLong();
+    connectionUsername = input.readUTF();
+    connectionPassword = input.readUTF();
 
     switch (type) {
     case OBroadcastMessage.TYPE_PING:
-      connectionUsername = input.readUTF();
-      connectionPassword = input.readUTF();
       byte isThereMaster = input.readByte();
       if (isThereMaster == 1) {
         leaderIdentity = new ONodeIdentity();
