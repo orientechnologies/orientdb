@@ -355,11 +355,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>>
     return sortedKeys.stream().flatMap((key) -> {
       key = getCollatingValue(key);
 
+      final Object entryKey = key;
       acquireSharedLock();
       try {
         while (true) {
           try {
-            return storage.iterateIndexEntriesBetween(indexId, key, true, key, true, ascSortOrder, MultiValuesTransformer.INSTANCE);
+            return ((Collection<ORID>) storage.getIndexValue(indexId, key)).stream().map((rid) -> new ORawPair<>(entryKey, rid));
           } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
