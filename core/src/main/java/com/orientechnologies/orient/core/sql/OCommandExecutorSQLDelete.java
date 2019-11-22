@@ -45,7 +45,10 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL UPDATE command.
@@ -230,7 +233,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
           return total;
         } else {
           // RETURNS ALL THE DELETED RECORDS
-          Iterator<ORawPair<Object, ORID>> cursor = Spliterators.iterator(index.cursor());
+          Iterator<ORawPair<Object, ORID>> cursor = index.stream().iterator();
 
           while (cursor.hasNext()) {
             final ORawPair<Object, ORID> entry = cursor.next();

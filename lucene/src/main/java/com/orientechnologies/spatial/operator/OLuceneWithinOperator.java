@@ -1,30 +1,25 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
 package com.orientechnologies.spatial.operator;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.operator.OLuceneOperatorUtil;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexCursor;
-import com.orientechnologies.orient.core.index.IndexCursorCollectionValue;
-import com.orientechnologies.orient.core.index.IndexCursorSingleValue;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -43,6 +38,7 @@ import org.locationtech.spatial4j.shape.SpatialRelation;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class OLuceneWithinOperator extends OQueryTargetOperator {
 
@@ -79,17 +75,23 @@ public class OLuceneWithinOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      boolean ascSortOrder) {
 
     Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setOperation(SpatialOperation.IsWithin));
 
     iContext.setVariable("$luceneIndex", true);
 
-    if (indexResult == null || indexResult instanceof OIdentifiable)
-      return new IndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+    if (indexResult == null) {
+      return Stream.empty();
+    }
+    if (indexResult instanceof OIdentifiable) {
+      return Stream.of(new ORawPair<>(new OSpatialCompositeKey(keyParams), ((OIdentifiable) indexResult).getIdentity()));
+    }
 
-    return new IndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(keyParams));
-
+    //noinspection unchecked
+    return ((Collection<OIdentifiable>) indexResult).stream()
+        .map((identifiable) -> new ORawPair<>(new OSpatialCompositeKey(keyParams), identifiable.getIdentity()));
   }
 
   @Override

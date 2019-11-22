@@ -20,13 +20,16 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex instance.
@@ -108,18 +111,18 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
-      boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
+      boolean toInclusive, boolean ascOrder) {
     return delegate.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     return delegate.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     return delegate.iterateEntriesMinor(toKey, toInclusive, ascOrder);
   }
 
@@ -197,10 +200,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 
     final OIndexAbstractDelegate<?> that = (OIndexAbstractDelegate<?>) o;
 
-    if (!delegate.equals(that.delegate))
-      return false;
-
-    return true;
+    return delegate.equals(that.delegate);
   }
 
   @Override
@@ -209,7 +209,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntries(Collection<?> keys, boolean ascSortOrder) {
     return delegate.iterateEntries(keys, ascSortOrder);
   }
 
@@ -256,18 +256,18 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public IndexCursor cursor() {
-    return delegate.cursor();
+  public Stream<ORawPair<Object, ORID>> stream() {
+    return delegate.stream();
   }
 
   @Override
-  public IndexCursor descCursor() {
+  public Stream<ORawPair<Object, ORID>> descCursor() {
     return delegate.descCursor();
   }
 
   @Override
-  public IndexKeySpliterator keySpliterator() {
-    return delegate.keySpliterator();
+  public Stream<Object> keyStream() {
+    return delegate.keyStream();
   }
 
   @Override

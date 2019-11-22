@@ -18,6 +18,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class CellBTreeMultiValueV2TestIT {
   private CellBTreeMultiValueV2<String> multiValueTree;
@@ -775,8 +776,8 @@ public class CellBTreeMultiValueV2TestIT {
     Assert.assertEquals(multiValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(multiValueTree.lastKey(), keyValues.lastKey());
 
-    final Spliterator<String> cursor = multiValueTree.keySpliterator();
-    final Iterator<String> indexIterator = Spliterators.iterator(cursor);
+    final Stream<String> stream = multiValueTree.keyStream();
+    final Iterator<String> indexIterator = stream.iterator();
 
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = indexIterator.next();
@@ -923,8 +924,8 @@ public class CellBTreeMultiValueV2TestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 1) + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final Spliterator<ORawPair<String, ORID>> cursor = multiValueTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = Spliterators.iterator(cursor);
+      final Stream<ORawPair<String, ORID>> stream = multiValueTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<String, Integer>> iterator;
       if (ascSortOrder) {
@@ -975,8 +976,8 @@ public class CellBTreeMultiValueV2TestIT {
         toKey = toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final Spliterator<ORawPair<String, ORID>> cursor = multiValueTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = Spliterators.iterator(cursor);
+      final Stream<ORawPair<String, ORID>> stream = multiValueTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<String, Integer>> iterator;
       if (ascSortOrder) {
@@ -1043,9 +1044,9 @@ public class CellBTreeMultiValueV2TestIT {
         fromKey = toKey;
       }
 
-      Spliterator<ORawPair<String, ORID>> cursor = multiValueTree
+      Stream<ORawPair<String, ORID>> stream = multiValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = Spliterators.iterator(cursor);
+      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<String, Integer>> iterator;
       if (ascSortOrder) {

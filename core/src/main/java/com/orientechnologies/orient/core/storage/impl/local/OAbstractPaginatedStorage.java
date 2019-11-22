@@ -33,10 +33,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.common.util.OUncaughtExceptionHandler;
+import com.orientechnologies.common.util.*;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -121,6 +118,7 @@ import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -1092,7 +1090,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @SuppressWarnings("WeakerAccess")
   protected void serializeDeltaContent(OutputStream stream, OCommandOutputListener outputListener, SortedSet<ORID> sortedRids,
       OLogSequenceNumber lsn) {
     try {
@@ -1946,7 +1943,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 final ORecordId oldRID = rid.copy();
 
                 final Integer clusterOverride = clusterOverrides.get(recordOperation);
-                final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
+                final int clusterId = Optional.ofNullable(clusterOverride).orElseGet(rid::getClusterId);
 
                 final OCluster cluster = getClusterById(clusterId);
 
@@ -2158,7 +2155,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         final int keySize = determineKeySize(indexDefinition);
-        final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
+        final OType[] keyTypes = Optional.ofNullable(indexDefinition).map(OIndexDefinition::getTypes).orElse(null);
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
 
         final OBaseIndexEngine engine = OIndexes
@@ -3088,7 +3085,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.getLastKey();
   }
 
-  public IndexCursor iterateIndexEntriesBetween(int indexId, final Object rangeFrom, final boolean fromInclusive,
+  public Stream<ORawPair<Object, ORID>> iterateIndexEntriesBetween(int indexId, final Object rangeFrom, final boolean fromInclusive,
       final Object rangeTo, final boolean toInclusive, final boolean ascSortOrder,
       final OBaseIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
@@ -3118,8 +3115,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private IndexCursor doIterateIndexEntriesBetween(final int indexId, final Object rangeFrom, final boolean fromInclusive,
-      final Object rangeTo, final boolean toInclusive, final boolean ascSortOrder,
+  private Stream<ORawPair<Object, ORID>> doIterateIndexEntriesBetween(final int indexId, final Object rangeFrom,
+      final boolean fromInclusive, final Object rangeTo, final boolean toInclusive, final boolean ascSortOrder,
       final OBaseIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
@@ -3129,7 +3126,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
   }
 
-  public IndexCursor iterateIndexEntriesMajor(int indexId, final Object fromKey, final boolean isInclusive,
+  public Stream<ORawPair<Object, ORID>> iterateIndexEntriesMajor(int indexId, final Object fromKey, final boolean isInclusive,
       final boolean ascSortOrder, final OBaseIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
@@ -3158,8 +3155,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private IndexCursor doIterateIndexEntriesMajor(final int indexId, final Object fromKey, final boolean isInclusive,
-      final boolean ascSortOrder, final OBaseIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
+  private Stream<ORawPair<Object, ORID>> doIterateIndexEntriesMajor(final int indexId, final Object fromKey,
+      final boolean isInclusive, final boolean ascSortOrder, final OBaseIndexEngine.ValuesTransformer transformer)
+      throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OBaseIndexEngine engine = indexEngines.get(indexId);
@@ -3168,7 +3166,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
-  public IndexCursor iterateIndexEntriesMinor(int indexId, final Object toKey, final boolean isInclusive,
+  public Stream<ORawPair<Object, ORID>> iterateIndexEntriesMinor(int indexId, final Object toKey, final boolean isInclusive,
       final boolean ascSortOrder, final OBaseIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
@@ -3197,8 +3195,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private IndexCursor doIterateIndexEntriesMinor(final int indexId, final Object toKey, final boolean isInclusive,
-      final boolean ascSortOrder, final OBaseIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
+  private Stream<ORawPair<Object, ORID>> doIterateIndexEntriesMinor(final int indexId, final Object toKey,
+      final boolean isInclusive, final boolean ascSortOrder, final OBaseIndexEngine.ValuesTransformer transformer)
+      throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OBaseIndexEngine engine = indexEngines.get(indexId);
@@ -3207,13 +3206,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 
-  public IndexCursor getIndexCursor(int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
+  public Stream<ORawPair<Object, ORID>> getIndexStream(int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
     try {
       if (transaction.get() != null) {
-        return doGetIndexCursor(indexId, valuesTransformer);
+        return doGetIndexStream(indexId, valuesTransformer);
       }
 
       checkOpenness();
@@ -3221,7 +3220,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-        return doGetIndexCursor(indexId, valuesTransformer);
+        return doGetIndexStream(indexId, valuesTransformer);
       } finally {
         stateLock.releaseReadLock();
       }
@@ -3236,23 +3235,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private IndexCursor doGetIndexCursor(final int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
-      throws OInvalidIndexEngineIdException {
+  private Stream<ORawPair<Object, ORID>> doGetIndexStream(final int indexId,
+      final OBaseIndexEngine.ValuesTransformer valuesTransformer) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OBaseIndexEngine engine = indexEngines.get(indexId);
     assert indexId == engine.getId();
 
-    return engine.cursor(valuesTransformer);
+    return engine.stream(valuesTransformer);
   }
 
-  public IndexCursor getIndexDescCursor(int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
+  public Stream<ORawPair<Object, ORID>> getIndexDescStream(int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
     try {
       if (transaction.get() != null) {
-        return doGetIndexDescCursor(indexId, valuesTransformer);
+        return doGetIndexDescStream(indexId, valuesTransformer);
       }
 
       checkOpenness();
@@ -3260,7 +3259,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-        return doGetIndexDescCursor(indexId, valuesTransformer);
+        return doGetIndexDescStream(indexId, valuesTransformer);
       } finally {
         stateLock.releaseReadLock();
       }
@@ -3275,22 +3274,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private IndexCursor doGetIndexDescCursor(final int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
-      throws OInvalidIndexEngineIdException {
+  private Stream<ORawPair<Object, ORID>> doGetIndexDescStream(final int indexId,
+      final OBaseIndexEngine.ValuesTransformer valuesTransformer) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OBaseIndexEngine engine = indexEngines.get(indexId);
     assert indexId == engine.getId();
 
-    return engine.descCursor(valuesTransformer);
+    return engine.descStream(valuesTransformer);
   }
 
-  public IndexKeySpliterator getIndexKeyCursor(int indexId) throws OInvalidIndexEngineIdException {
+  public Stream<Object> getIndexKeyStream(int indexId) throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
     try {
       if (transaction.get() != null) {
-        return doGetIndexKeyCursor(indexId);
+        return doGetIndexKeyStream(indexId);
       }
 
       checkOpenness();
@@ -3298,7 +3297,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-        return doGetIndexKeyCursor(indexId);
+        return doGetIndexKeyStream(indexId);
       } finally {
         stateLock.releaseReadLock();
       }
@@ -3313,13 +3312,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private IndexKeySpliterator doGetIndexKeyCursor(final int indexId) throws OInvalidIndexEngineIdException {
+  private Stream<Object> doGetIndexKeyStream(final int indexId) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OBaseIndexEngine engine = indexEngines.get(indexId);
     assert indexId == engine.getId();
 
-    return engine.keyCursor();
+    return engine.keyStream();
   }
 
   public long getIndexSize(int indexId, final OBaseIndexEngine.ValuesTransformer transformer)
@@ -3995,7 +3994,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           if (db != null) {
             final OSecurityUser user = db.getUser();
-            final String userString = user != null ? user.toString() : null;
+            final String userString = Optional.ofNullable(user).map(Object::toString).orElse(null);
             Orient.instance().getProfiler()
                 .stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".command." + iCommand,
                     "Command executed against the database", beginTime, "db.*.command.*", null, userString);
@@ -4905,7 +4904,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throws IOException {
     makeStorageDirty();
 
-    final String stringValue = value != null ? value.toString() : null;
+    final String stringValue = Optional.ofNullable(value).map(Object::toString).orElse(null);
     switch (attribute) {
     case NAME:
       Objects.requireNonNull(stringValue);
@@ -4925,7 +4924,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       return setClusterStatus(cluster,
-          OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(getConfiguration().getLocaleInstance())));
+          OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(configuration.getLocaleInstance())));
     }
     //noinspection deprecation
     case ENCRYPTION:
@@ -6285,7 +6284,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private final class WALVacuum implements Runnable {
 
-    WALVacuum() {
+    private WALVacuum() {
     }
 
     @Override

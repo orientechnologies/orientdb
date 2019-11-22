@@ -14,12 +14,14 @@
  */
 package com.orientechnologies.spatial.operator;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.operator.OLuceneOperatorUtil;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,6 +42,7 @@ import org.locationtech.spatial4j.shape.SpatialRelation;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class OLuceneNearOperator extends OQueryTargetOperator {
 
@@ -106,9 +109,8 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
-
-    IndexCursor cursor;
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      boolean ascSortOrder) {
     OIndexDefinition definition = index.getDefinition();
     int idxSize = definition.getFields().size();
     int paramsSize = keyParams.size();
@@ -131,10 +133,15 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
     iContext.setVariable("$luceneIndex", true);
 
     Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setContext(iContext));
-    if (indexResult == null || indexResult instanceof OIdentifiable)
-      return new IndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
-    return new IndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(keyParams));
+    if (indexResult == null) {
+      Stream.empty();
+    }
+    if (indexResult instanceof OIdentifiable) {
+      return Stream.of(new ORawPair<>(new OSpatialCompositeKey(keyParams), ((OIdentifiable) indexResult).getIdentity()));
+    }
 
+    return ((Collection<OIdentifiable>) indexResult).stream()
+        .map((identifiable) -> new ORawPair<>(new OSpatialCompositeKey(keyParams), identifiable.getIdentity()));
   }
 
   @Override

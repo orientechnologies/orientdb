@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -453,8 +452,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
         @SuppressWarnings("ObjectAllocationInLoop")
-        final Iterator<Object> indexKeyIteratorOne = Spliterators
-            .iterator(makeDbCall(databaseOne, (ODbRelatedCall<IndexKeySpliterator>) database -> indexOne.keySpliterator()));
+        final Iterator<Object> indexKeyIteratorOne = makeDbCall(databaseOne,
+            (ODbRelatedCall<Iterator<Object>>) database -> indexOne.keyStream().iterator());
 
         while (makeDbCall(databaseOne, database -> indexKeyIteratorOne.hasNext())) {
           @SuppressWarnings("ObjectAllocationInLoop")

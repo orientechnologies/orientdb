@@ -21,12 +21,15 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Basic interface to handle index.
@@ -36,15 +39,6 @@ import java.util.Set;
 public interface OIndex<T> extends Comparable<OIndex<T>> {
   String MERGE_KEYS = "mergeKeys";
 
-  /**
-   * Creates the index.
-   *
-   * @param name
-   * @param clusterIndexName Cluster name where to place the TreeMap
-   * @param clustersToIndex
-   * @param rebuild
-   * @param progressListener
-   */
   OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener);
 
@@ -130,7 +124,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   /**
    * Flushes in-memory changes to disk.
    */
-  public void flush();
+  void flush();
 
   /**
    * Delete the index.
@@ -155,7 +149,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   /**
    * Returns the engine of the index as string.
    */
-  public String getAlgorithm();
+  String getAlgorithm();
 
   /**
    * Returns binary format version for this index. Index format changes during system development but old formats are supported for
@@ -203,14 +197,14 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   OIndexInternal<T> getInternal();
 
   /**
-   * Returns cursor which presents data associated with passed in keys.
+   * Returns stream which presents data associated with passed in keys.
    *
    * @param keys         Keys data of which should be returned.
-   * @param ascSortOrder Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @param ascSortOrder Flag which determines whether data iterated by stream should be in ascending or descending order.
    *
-   * @return cursor which presents data associated with passed in keys.
+   * @return stream which presents data associated with passed in keys.
    */
-  IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder);
+  Stream<ORawPair<Object, ORID>> iterateEntries(Collection<?> keys, boolean ascSortOrder);
 
   OIndexDefinition getDefinition();
 
@@ -222,45 +216,45 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   Set<String> getClusters();
 
   /**
-   * Returns cursor which presents subset of index data between passed in keys.
+   * Returns stream which presents subset of index data between passed in keys.
    *
    * @param fromKey       Lower border of index data.
    * @param fromInclusive Indicates whether lower border should be inclusive or exclusive.
    * @param toKey         Upper border of index data.
    * @param toInclusive   Indicates whether upper border should be inclusive or exclusive.
-   * @param ascOrder      Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @param ascOrder      Flag which determines whether data iterated by stream should be in ascending or descending order.
    *
    * @return Cursor which presents subset of index data between passed in keys.
    */
-  IndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder);
+  Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder);
 
   /**
-   * Returns cursor which presents subset of data which associated with key which is greater than passed in key.
+   * Returns stream which presents subset of data which associated with key which is greater than passed in key.
    *
    * @param fromKey       Lower border of index data.
    * @param fromInclusive Indicates whether lower border should be inclusive or exclusive.
-   * @param ascOrder      Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @param ascOrder      Flag which determines whether data iterated by stream should be in ascending or descending order.
    *
-   * @return cursor which presents subset of data which associated with key which is greater than passed in key.
+   * @return stream which presents subset of data which associated with key which is greater than passed in key.
    */
-  IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
+  Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
 
   /**
-   * Returns cursor which presents subset of data which associated with key which is less than passed in key.
+   * Returns stream which presents subset of data which associated with key which is less than passed in key.
    *
    * @param toKey       Upper border of index data.
    * @param toInclusive Indicates Indicates whether upper border should be inclusive or exclusive.
-   * @param ascOrder    Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @param ascOrder    Flag which determines whether data iterated by stream should be in ascending or descending order.
    *
-   * @return cursor which presents subset of data which associated with key which is less than passed in key.
+   * @return stream which presents subset of data which associated with key which is less than passed in key.
    */
-  IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
+  Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
 
-  IndexCursor cursor();
+  Stream<ORawPair<Object, ORID>> stream();
 
-  IndexCursor descCursor();
+  Stream<ORawPair<Object, ORID>> descCursor();
 
-  IndexKeySpliterator keySpliterator();
+  Stream<Object> keyStream();
 
   ODocument getMetadata();
 

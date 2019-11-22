@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -10,10 +9,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.Optional;
 import org.testng.annotations.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -84,8 +86,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -122,8 +124,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -163,8 +165,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -212,8 +214,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -256,8 +258,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -293,8 +295,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 3);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -339,8 +341,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 3);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -380,8 +382,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
 
     Assert.assertEquals(index.getSize(), 2);
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -421,8 +423,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
 
     Assert.assertEquals(index.getSize(), 1);
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -457,8 +459,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -491,8 +493,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 1);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();
@@ -579,8 +581,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       OIdentifiable key = (OIdentifiable) keyIterator.next();

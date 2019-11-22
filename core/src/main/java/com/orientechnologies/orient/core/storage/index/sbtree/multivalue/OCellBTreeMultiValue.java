@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Spliterator;
+import java.util.stream.Stream;
 
 public interface OCellBTreeMultiValue<K> {
   void create(OBinarySerializer<K> keySerializer, OType[] keyTypes, int keySize, OEncryption encryption) throws IOException;
@@ -27,17 +27,17 @@ public interface OCellBTreeMultiValue<K> {
 
   boolean remove(K key, ORID value) throws IOException;
 
-  Spliterator<ORawPair<K, ORID>> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, ORID>> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
 
-  Spliterator<ORawPair<K, ORID>> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, ORID>> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
 
   K firstKey();
 
   K lastKey();
 
-  Spliterator<K> keySpliterator();
+  Stream<K> keyStream();
 
-  Spliterator<ORawPair<K, ORID>> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+  Stream<ORawPair<K, ORID>> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
       boolean ascSortOrder);
 
   void acquireAtomicExclusiveLock();

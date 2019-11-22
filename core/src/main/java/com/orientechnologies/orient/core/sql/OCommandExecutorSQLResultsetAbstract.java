@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.StreamSupport;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -93,12 +92,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     private IndexValuesIterator(String indexName, boolean ascOrder) {
       final ODatabaseDocumentInternal database = getDatabase();
       if (ascOrder) {
-        indexValuesIterator = StreamSupport
-            .stream(database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).cursor(), false)
+        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).stream()
             .map((pair) -> pair.second).iterator();
       } else
-        indexValuesIterator = StreamSupport
-            .stream(database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).descCursor(), false)
+        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).descCursor()
             .map((pair) -> pair.second).iterator();
     }
 

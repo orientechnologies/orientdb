@@ -27,7 +27,10 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -43,6 +46,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -324,47 +328,20 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public IndexCursor cursor(final ValuesTransformer valuesTransformer) {
-    return new IndexCursor() {
-      private Iterator<ORawPair<Object, ORID>> iterator = partitions.stream()
-          .flatMap((partition) -> StreamSupport.stream(new HashTableSpliterator(valuesTransformer, partition), false)).iterator();
-
-      @Override
-      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-        if (iterator.hasNext()) {
-          action.accept(iterator.next());
-          return true;
-        }
-
-        return false;
-      }
-
-      @Override
-      public Spliterator<ORawPair<Object, ORID>> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL;
-      }
-    };
+  public Stream<ORawPair<Object, ORID>> stream(final ValuesTransformer valuesTransformer) {
+    //noinspection resource
+    return partitions.stream()
+        .flatMap((partition) -> StreamSupport.stream(new HashTableSpliterator(valuesTransformer, partition), false));
   }
 
   @Override
-  public IndexCursor descCursor(final ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(final ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("descCursor");
   }
 
   @Override
-  public IndexKeySpliterator keyCursor() {
-    return new IndexKeySpliterator() {
-
+  public Stream<Object> keyStream() {
+    return StreamSupport.stream(new Spliterator<Object>() {
       private int nextPartition = 1;
       private OHashTable<Object, Object> hashTable;
       private int nextEntriesIndex;
@@ -427,23 +404,23 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       public int characteristics() {
         return NONNULL;
       }
-    };
+    }, false);
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(final Object rangeFrom, final boolean fromInclusive, final Object rangeTo,
-      final boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(final Object rangeFrom, final boolean fromInclusive,
+      final Object rangeTo, final boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(final Object fromKey, final boolean isInclusive, final boolean ascSortOrder,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(final Object fromKey, final boolean isInclusive, final boolean ascSortOrder,
       ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
@@ -469,7 +446,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   private OHashTable<Object, Object> getPartition(final Object iKey) {
-    final int partitionId = iKey != null ? strategy.getPartitionsId(iKey, partitionSize) : 0;
+    final int partitionId = Optional.ofNullable(iKey).map(key -> strategy.getPartitionsId(key, partitionSize)).orElse(0);
     return partitions.get(partitionId);
   }
 

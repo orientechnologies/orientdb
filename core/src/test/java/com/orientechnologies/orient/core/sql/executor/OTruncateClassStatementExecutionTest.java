@@ -1,9 +1,10 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.IndexCursor;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -18,7 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.*;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -68,8 +69,8 @@ public class OTruncateClassStatementExecutionTest {
 
     Assert.assertEquals(index.getSize(), 6);
 
-    IndexCursor cursor = index.cursor();
-    StreamSupport.stream(cursor, false).forEach((entry) -> {
+    Stream<ORawPair<Object, ORID>> stream = index.stream();
+    stream.forEach((entry) -> {
       Assert.assertTrue(set.contains((Integer) entry.first));
     });
 

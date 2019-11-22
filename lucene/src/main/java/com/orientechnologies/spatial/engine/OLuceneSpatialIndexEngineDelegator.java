@@ -16,6 +16,7 @@ package com.orientechnologies.spatial.engine;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
@@ -23,7 +24,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -39,6 +42,7 @@ import org.apache.lucene.spatial.SpatialStrategy;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Created by Enrico Risa on 04/09/15.
@@ -173,35 +177,34 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return delegate.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return delegate.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return delegate.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public IndexCursor cursor(ValuesTransformer valuesTransformer) {
-    return delegate.cursor(valuesTransformer);
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
+    return delegate.stream(valuesTransformer);
   }
 
   @Override
-  public IndexCursor descCursor(ValuesTransformer valuesTransformer) {
-    return delegate.descCursor(valuesTransformer);
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
+    return delegate.descStream(valuesTransformer);
   }
 
   @Override
-  public IndexKeySpliterator keyCursor() {
-    return delegate.keyCursor();
+  public Stream<Object> keyStream() {
+    return delegate.keyStream();
   }
 
   @Override

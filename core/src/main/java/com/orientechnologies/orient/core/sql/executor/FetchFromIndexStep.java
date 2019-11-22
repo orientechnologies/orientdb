@@ -15,14 +15,18 @@ import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Created by luigidellaquila on 23/07/16.
@@ -40,10 +44,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private long count = 0;
 
   private boolean                          inited = false;
-  private IndexCursor                      cursor;
+  private Stream<ORawPair<Object, ORID>>   stream;
   private Iterator<ORawPair<Object, ORID>> indexIterator;
 
-  private final List<IndexCursor> nextCursors = new ArrayList<>();
+  private final List<Stream<ORawPair<Object, ORID>>> nextStreams = new ArrayList<>();
 
   private OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
   private Iterator                                                   nullKeyIterator;
@@ -155,13 +159,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private void fetchNextEntry() {
     nextEntry = null;
-    if (cursor != null) {
+    if (stream != null) {
       while (!indexIterator.hasNext()) {
-        if (!nextCursors.isEmpty()) {
-          cursor = nextCursors.remove(0);
+        if (!nextStreams.isEmpty()) {
+          stream = nextStreams.remove(0);
           cursorToIterator();
         } else {
-          cursor = null;
+          stream = null;
           indexIterator = null;
           break;
         }
@@ -277,7 +281,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           }
         }
 
-        Iterator<ORawPair<Object, ORID>> localCursor = Spliterators.iterator(createCursor(equals, definition, item, ctx));
+        Iterator<ORawPair<Object, ORID>> localCursor = createCursor(equals, definition, item, ctx).iterator();
         final Object itemRef = item;
         customIterator.add(new Iterator<Map.Entry>() {
           @Override
@@ -313,7 +317,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       }
       customIterator.reset();
     } else {
-      cursor = createCursor(equals, definition, rightValue, ctx);
+      stream = createCursor(equals, definition, rightValue, ctx);
       cursorToIterator();
     }
     fetchNextEntry();
@@ -331,11 +335,11 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private void processFlatIteration() {
-    cursor = isOrderAsc() ? index.cursor() : index.descCursor();
+    stream = isOrderAsc() ? index.stream() : index.descCursor();
     cursorToIterator();
 
     fetchNullKeys();
-    if (cursor != null) {
+    if (stream != null) {
       fetchNextEntry();
     }
   }
@@ -391,35 +395,35 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         Object to = toBetweenIndexKey(indexDef, thirdValue);
         if (from == null && to == null) {
           //manage null value explicitly, as the index API does not seem to work correctly in this case
-          cursor = getCursorForNullKey();
+          stream = getStreamForNullKey();
           cursorToIterator();
         } else {
-          cursor = index.iterateEntriesBetween(from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
+          stream = index.iterateEntriesBetween(from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
           cursorToIterator();
         }
 
       } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
-        cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+        stream = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
         cursorToIterator();
       } else if (isFullTextIndex(index) || isFullTextHashIndex(index)) {
-        cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+        stream = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
         cursorToIterator();
       } else {
         throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
       }
-      nextCursors.add(cursor);
+      nextStreams.add(stream);
 
     }
-    if (nextCursors.size() > 0) {
-      cursor = nextCursors.remove(0);
+    if (nextStreams.size() > 0) {
+      stream = nextStreams.remove(0);
       cursorToIterator();
       fetchNextEntry();
     }
   }
 
   private void cursorToIterator() {
-    if (cursor != null) {
-      indexIterator = Spliterators.iterator(cursor);
+    if (stream != null) {
+      indexIterator = stream.iterator();
     } else {
       indexIterator = null;
     }
@@ -434,68 +438,20 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         .equalsIgnoreCase("LUCENE");
   }
 
-  private IndexCursor getCursorForNullKey() {
+  private Stream<ORawPair<Object, ORID>> getStreamForNullKey() {
     Object result = index.get(null);
 
     if (result == null) {
-      return new IndexCursor() {
-        @Override
-        public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-          return false;
-        }
-
-        @Override
-        public Spliterator<ORawPair<Object, ORID>> trySplit() {
-          return null;
-        }
-
-        @Override
-        public long estimateSize() {
-          return 0;
-        }
-
-        @Override
-        public int characteristics() {
-          return 0;
-        }
-      };
+      return StreamSupport.stream(Spliterators.emptySpliterator(), false);
     }
 
-    if (!(result instanceof Iterable)) {
-      result = Collections.singleton(result);
+    if (result instanceof Collection) {
+      //noinspection resource,unchecked
+      return ((Collection<ORID>) result).stream().map((rid) -> new ORawPair<>(null, rid));
     }
-    final Object r = result;
 
-    IndexCursor cursor = new IndexCursor() {
-      private final Iterator iter = ((Iterable) r).iterator();
-
-      @Override
-      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-        if (!iter.hasNext()) {
-          return false;
-        }
-        Object val = iter.next();
-
-        action.accept(new ORawPair<>(null, ((OIdentifiable) val).getIdentity()));
-        return true;
-      }
-
-      @Override
-      public Spliterator<ORawPair<Object, ORID>> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL | ORDERED;
-      }
-    };
-    return cursor;
+    //noinspection resource
+    return Collections.singletonList((ORID) result).stream().map((rid) -> new ORawPair<>(null, rid));
   }
 
   /**
@@ -630,11 +586,11 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     secondValue = unboxOResult(secondValue);
     Object thirdValue = third.execute((OResult) null, ctx);
     thirdValue = unboxOResult(thirdValue);
-    cursor = index
+    stream = index
         .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
             isOrderAsc());
     cursorToIterator();
-    if (cursor != null) {
+    if (stream != null) {
       fetchNextEntry();
     }
   }
@@ -647,9 +603,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
     }
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
-    cursor = createCursor(operator, definition, rightValue, ctx);
+    stream = createCursor(operator, definition, rightValue, ctx);
     cursorToIterator();
-    if (cursor != null) {
+    if (stream != null) {
       fetchNextEntry();
     }
   }
@@ -687,7 +643,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return rightValue;
   }
 
-  private IndexCursor createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
+  private Stream<ORawPair<Object, ORID>> createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
       OCommandContext ctx) {
     boolean orderAsc = isOrderAsc();
     if (operator instanceof OEqualsCompareOperator || operator instanceof OContainsKeyOperator
@@ -940,7 +896,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     count = 0;
 
     inited = false;
-    cursor = null;
+    stream = null;
     indexIterator = null;
     customIterator = null;
     nullKeyIterator = null;

@@ -25,16 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.Reader;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -417,7 +408,7 @@ public class TTYConsoleReader implements OConsoleReader {
     final int newTotalLength = newPrompt.length() + newText.length();
     final int oldTotalLength = oldPromptLength + oldTextLength;
 
-    // 1. Hide the cursor to reduce flickering.
+    // 1. Hide the stream to reduce flickering.
 
     hideCursor();
 
@@ -439,20 +430,20 @@ public class TTYConsoleReader implements OConsoleReader {
       spaces.append(' ');
     outStream.print(spaces);
 
-    // 5. Reset the cursor to the prompt beginning. We may do navigation relative to the updated console cursor position,
+    // 5. Reset the stream to the prompt beginning. We may do navigation relative to the updated console stream position,
     // but the math becomes too tricky in this case. Feel free to fix this ;)
 
     outStream.print("\r");
     if (newTotalLength > oldTotalLength) {
       if (newTotalLength > maxTotalLength && newTotalLength % consoleWidth == 0) {
-        outStream.print('\n'); // make room for the cursor
+        outStream.print('\n'); // make room for the stream
         moveCursorVertically(-1);
       }
       moveCursorVertically(-getWraps(newPrompt.length(), newText.length() - 1, consoleWidth));
     } else
       moveCursorVertically(-getWraps(oldPromptLength, oldTextLength - 1, consoleWidth));
 
-    // 6. Place the cursor at the right place.
+    // 6. Place the stream at the right place.
 
     moveCursorVertically((newPrompt.length() + cursorPosition) / consoleWidth);
     moveCursorHorizontally((newPrompt.length() + cursorPosition) % consoleWidth);
@@ -464,7 +455,7 @@ public class TTYConsoleReader implements OConsoleReader {
     oldCursorPosition = cursorPosition;
     maxTotalLength = Math.max(newTotalLength, maxTotalLength);
 
-    // 8. Show the cursor.
+    // 8. Show the stream.
 
     showCursor();
   }
@@ -473,7 +464,7 @@ public class TTYConsoleReader implements OConsoleReader {
     final int consoleWidth = getConsoleWidth();
     final int oldTotalLength = oldPromptLength + oldTextLength;
 
-    // 1. Hide the cursor to reduce flickering.
+    // 1. Hide the stream to reduce flickering.
 
     hideCursor();
 
@@ -489,7 +480,7 @@ public class TTYConsoleReader implements OConsoleReader {
       spaces.append(' ');
     outStream.print(spaces);
 
-    // 4. Reset the cursor to the prompt beginning.
+    // 4. Reset the stream to the prompt beginning.
 
     outStream.print("\r");
     moveCursorVertically(-getWraps(oldPromptLength, oldCursorPosition, consoleWidth));
@@ -501,7 +492,7 @@ public class TTYConsoleReader implements OConsoleReader {
     oldCursorPosition = 0;
     maxTotalLength = 0;
 
-    // 6. Show the cursor.
+    // 6. Show the stream.
 
     showCursor();
   }

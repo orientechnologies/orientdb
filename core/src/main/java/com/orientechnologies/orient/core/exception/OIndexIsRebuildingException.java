@@ -17,7 +17,7 @@
 package com.orientechnologies.orient.core.exception;
 
 /**
- * if index which is related to wrapped cursor is being rebuilt.
+ * if index which is related to wrapped stream is being rebuilt.
  *
  * @see com.orientechnologies.orient.core.index.OIndexAbstract#getRebuildVersion()
  */

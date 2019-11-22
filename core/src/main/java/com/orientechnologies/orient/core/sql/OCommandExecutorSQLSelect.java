@@ -86,7 +86,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -1826,11 +1826,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return Math.min(sqlLimit, requestLimit);
   }
 
-  private IndexCursor tryGetOptimizedSortCursor(final OClass iSchemaClass) {
+  private Stream<ORawPair<Object, ORID>> tryGetOptimizedSortStream(final OClass iSchemaClass) {
     if (orderedFields.size() == 0) {
       return null;
     } else {
-      return getOptimizedSortCursor(iSchemaClass);
+      return getOptimizedSortStream(iSchemaClass);
     }
   }
 
@@ -1879,20 +1879,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     int attempted = 0;
     for (OClass subclass : subclasses) {
-      List<IndexCursor> subcursors = getIndexCursors(subclass);
+      List<Stream<ORawPair<Object, ORID>>> substreams = getIndexCursors(subclass);
       fullySorted = fullySorted && fullySortedByIndex;
-      if (subcursors == null || subcursors.size() == 0) {
+      if (substreams == null || substreams.size() == 0) {
         if (attempted > 0) {
           revertSubclassesProfiler(context, attempted);
         }
         return false;
       }
-      for (IndexCursor c : subcursors) {
+      for (Stream<ORawPair<Object, ORID>> c : substreams) {
         if (!fullySortedByIndex) {
           // TODO sort every iterator
         }
         attempted++;
-        cursor.add(StreamSupport.stream(c, false).map((pair) -> (OIdentifiable) pair.second).iterator());
+        cursor.add(c.map((pair) -> (OIdentifiable) pair.second).iterator());
       }
 
     }
@@ -1911,7 +1911,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   @SuppressWarnings("rawtypes")
-  private List<IndexCursor> getIndexCursors(final OClass iSchemaClass) {
+  private List<Stream<ORawPair<Object, ORID>>> getIndexCursors(final OClass iSchemaClass) {
 
     final ODatabaseDocument database = getDatabase();
 
@@ -1923,14 +1923,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     // fetch all possible variants of subqueries that can be used in indexes.
     if (compiledFilter == null) {
-      IndexCursor cursor = tryGetOptimizedSortCursor(iSchemaClass);
-      if (cursor == null) {
+      Stream<ORawPair<Object, ORID>> stream = tryGetOptimizedSortStream(iSchemaClass);
+      if (stream == null) {
         return null;
       }
-      List<IndexCursor> result = new ArrayList<IndexCursor>();
-      result.add(cursor);
+      List<Stream<ORawPair<Object, ORID>>> result = new ArrayList<>();
+      result.add(stream);
       return result;
-
     }
 
     // the main condition is a set of sub-conditions separated by OR operators
@@ -1939,7 +1938,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (conditionHierarchy == null)
       return null;
 
-    List<IndexCursor> cursors = new ArrayList<IndexCursor>();
+    List<Stream<ORawPair<Object, ORID>>> cursors = new ArrayList<>();
 
     boolean indexIsUsedInOrderBy = false;
     List<IndexUsageLog> indexUseAttempts = new ArrayList<IndexUsageLog>();
@@ -2003,7 +2002,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           metricRecorder.recordInvolvedIndexesMetric(index);
 
-          IndexCursor cursor;
+          Stream<ORawPair<Object, ORID>> cursor;
           indexIsUsedInOrderBy =
               orderByOptimizer.canBeUsedByOrderBy(index, orderedFields) && !(index.getInternal() instanceof OChainedIndexProxy);
           try {
@@ -2046,12 +2045,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
       if (!indexUsed) {
-        IndexCursor cursor = tryGetOptimizedSortCursor(iSchemaClass);
-        if (cursor == null) {
+        Stream<ORawPair<Object, ORID>> stream = tryGetOptimizedSortStream(iSchemaClass);
+        if (stream == null) {
           return null;
         }
-        List<IndexCursor> result = new ArrayList<IndexCursor>();
-        result.add(cursor);
+        List<Stream<ORawPair<Object, ORID>>> result = new ArrayList<>();
+        result.add(stream);
         return result;
       }
     }
@@ -2093,7 +2092,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (conditionHierarchy == null)
       return false;
 
-    List<IndexCursor> cursors = new ArrayList<IndexCursor>();
+    List<Stream<ORawPair<Object, ORID>>> streams = new ArrayList<>();
 
     boolean indexIsUsedInOrderBy = false;
     List<IndexUsageLog> indexUseAttempts = new ArrayList<IndexUsageLog>();
@@ -2155,7 +2154,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               }
             }
 
-            IndexCursor cursor;
+            Stream<ORawPair<Object, ORID>> stream;
             indexIsUsedInOrderBy =
                 orderByOptimizer.canBeUsedByOrderBy(index, orderedFields) && !(index.getInternal() instanceof OChainedIndexProxy);
             try {
@@ -2168,8 +2167,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
               context.setVariable("$limit", limit);
 
-              cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
-              if (cursor != null) {
+              stream = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
+              if (stream != null) {
                 metricRecorder.recordInvolvedIndexesMetric(index);
               }
 
@@ -2181,16 +2180,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                   e, index.getName(), request != null && request.getText() != null ? request.getText() : "");
 
               fullySortedByIndex = false;
-              cursors.clear();
+              streams.clear();
               return false;
             }
 
-            if (cursor == null) {
+            if (stream == null) {
               continue;
             }
 
             if (index.getRebuildVersion() == indexRebuildVersion) {
-              cursors.add(cursor);
+              streams.add(stream);
               indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
               indexUsed = true;
               break;
@@ -2205,17 +2204,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
 
-      if (cursors.size() == 0 || lastSearchResult == null) {
+      if (streams.size() == 0 || lastSearchResult == null) {
         return false;
       }
 
-      if (cursors.size() == 1 && canOptimize(conditionHierarchy)) {
+      if (streams.size() == 1 && canOptimize(conditionHierarchy)) {
         filterOptimizer.optimize(compiledFilter, lastSearchResult);
       }
 
       uniqueResult = new ConcurrentHashMap<ORID, ORID>();
 
-      if (cursors.size() == 1 && (compiledFilter == null || compiledFilter.getRootCondition() == null) && groupByFields == null
+      if (streams.size() == 1 && (compiledFilter == null || compiledFilter.getRootCondition() == null) && groupByFields == null
           && projections != null && projections.size() == 1) {
         // OPTIMIZATION: ONE INDEX USED WITH JUST ONE CONDITION: REMOVE THE FILTER
         final Entry<String, Object> entry = projections.entrySet().iterator().next();
@@ -2228,7 +2227,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             final boolean restrictedClasses = isUsingRestrictedClasses();
 
             if (!restrictedClasses) {
-              final Iterator cursor = Spliterators.iterator(cursors.get(0));
+              final Iterator cursor = streams.get(0).iterator();
               long count = 0;
               if (cursor instanceof OSizeable)
                 count = ((OSizeable) cursor).size();
@@ -2253,8 +2252,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
 
-      for (IndexCursor cursor : cursors) {
-        if (!fetchValuesFromIndexCursor(cursor)) {
+      for (Stream<ORawPair<Object, ORID>> stream : streams) {
+        if (!fetchValuesFromIndexStream(stream)) {
           break;
         }
       }
@@ -2327,15 +2326,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * @return true if execution was optimized
    */
   private boolean optimizeSort(OClass iSchemaClass) {
-    IndexCursor cursor = getOptimizedSortCursor(iSchemaClass);
-    if (cursor != null) {
-      fetchValuesFromIndexCursor(cursor);
+    Stream<ORawPair<Object, ORID>> stream = getOptimizedSortStream(iSchemaClass);
+    if (stream != null) {
+      fetchValuesFromIndexStream(stream);
       return true;
     }
     return false;
   }
 
-  private IndexCursor getOptimizedSortCursor(OClass iSchemaClass) {
+  private Stream<ORawPair<Object, ORID>> getOptimizedSortStream(OClass iSchemaClass) {
     final List<String> fieldNames = new ArrayList<String>();
 
     for (OPair<String, String> pair : orderedFields) {
@@ -2364,28 +2363,28 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           return null;
         }
 
-        final List<IndexCursor> cursors = new ArrayList<IndexCursor>();
+        final List<Stream<ORawPair<Object, ORID>>> streams = new ArrayList<>();
 
-        IndexCursor cursor = null;
+        Stream<ORawPair<Object, ORID>> stream = null;
 
         if (key != null) {
           if (ascSortOrder) {
-            cursor = index.iterateEntriesMajor(key, true, true);
+            stream = index.iterateEntriesMajor(key, true, true);
           } else {
-            cursor = index.iterateEntriesMinor(key, true, false);
+            stream = index.iterateEntriesMinor(key, true, false);
           }
         }
 
-        if (cursor != null)
-          cursors.add(cursor);
+        if (stream != null)
+          streams.add(stream);
 
         if (index.getMetadata() != null && !index.getDefinition().isNullValuesIgnored()) {
           Object nullValue = index.get(null);
           if (nullValue != null) {
             if (nullValue instanceof Collection)
-              cursors.add(new IndexCursorCollectionValue((Collection) nullValue, null));
+              streams.add(((Collection<ORID>) nullValue).stream().map((rid) -> new ORawPair<>(null, rid)));
             else
-              cursors.add(new IndexCursorSingleValue((OIdentifiable) nullValue, null));
+              streams.add(Collections.singletonList((ORID) nullValue).stream().map((rid) -> new ORawPair<>(null, rid)));
           }
         }
 
@@ -2405,7 +2404,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             idxNames.add(index.getName());
           }
 
-          return new CompositeIndexCursor(cursors);
+          if (streams.isEmpty()) {
+            return Stream.empty();
+          }
+
+          if (streams.size() == 1) {
+            return streams.get(0);
+          }
+
+          Stream<ORawPair<Object, ORID>> resultStream = streams.get(0);
+          for (int i = 1; i < streams.size(); i++) {
+            resultStream = Stream.concat(resultStream, streams.get(i));
+          }
+
+          return resultStream;
         } else {
           return null;
         }
@@ -2416,12 +2428,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return null;
   }
 
-  private boolean fetchValuesFromIndexCursor(final IndexCursor cursor) {
-    return fetchFromTarget(StreamSupport.stream(cursor, false).map((pair) -> pair.second).iterator());
+  private boolean fetchValuesFromIndexStream(final Stream<ORawPair<Object, ORID>> stream) {
+    return fetchFromTarget(stream.map((pair) -> pair.second).iterator());
   }
 
-  private void fetchEntriesFromIndexCursor(final IndexCursor cursor) {
-    final Iterator<ORawPair<Object, ORID>> iterator = Spliterators.iterator(cursor);
+  private void fetchEntriesFromIndexStream(final Stream<ORawPair<Object, ORID>> stream) {
+    final Iterator<ORawPair<Object, ORID>> iterator = stream.iterator();
 
     while (iterator.hasNext()) {
       final ORawPair<Object, ORID> entryRecord = iterator.next();
@@ -2623,29 +2635,34 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (indexOperator instanceof OQueryOperatorBetween) {
         final Object[] values = (Object[]) compiledFilter.getRootCondition().getRight();
 
-        final IndexCursor cursor = index.iterateEntriesBetween(getIndexKey(index.getDefinition(), values[0], context), true,
-            getIndexKey(index.getDefinition(), values[2], context), true, ascOrder);
-        fetchEntriesFromIndexCursor(cursor);
+        final Stream<ORawPair<Object, ORID>> stream = index
+            .iterateEntriesBetween(getIndexKey(index.getDefinition(), values[0], context), true,
+                getIndexKey(index.getDefinition(), values[2], context), true, ascOrder);
+        fetchEntriesFromIndexStream(stream);
       } else if (indexOperator instanceof OQueryOperatorMajor) {
         final Object value = compiledFilter.getRootCondition().getRight();
 
-        final IndexCursor cursor = index.iterateEntriesMajor(getIndexKey(index.getDefinition(), value, context), false, ascOrder);
-        fetchEntriesFromIndexCursor(cursor);
+        final Stream<ORawPair<Object, ORID>> stream = index
+            .iterateEntriesMajor(getIndexKey(index.getDefinition(), value, context), false, ascOrder);
+        fetchEntriesFromIndexStream(stream);
       } else if (indexOperator instanceof OQueryOperatorMajorEquals) {
         final Object value = compiledFilter.getRootCondition().getRight();
-        final IndexCursor cursor = index.iterateEntriesMajor(getIndexKey(index.getDefinition(), value, context), true, ascOrder);
-        fetchEntriesFromIndexCursor(cursor);
+        final Stream<ORawPair<Object, ORID>> stream = index
+            .iterateEntriesMajor(getIndexKey(index.getDefinition(), value, context), true, ascOrder);
+        fetchEntriesFromIndexStream(stream);
 
       } else if (indexOperator instanceof OQueryOperatorMinor) {
         final Object value = compiledFilter.getRootCondition().getRight();
 
-        IndexCursor cursor = index.iterateEntriesMinor(getIndexKey(index.getDefinition(), value, context), false, ascOrder);
-        fetchEntriesFromIndexCursor(cursor);
+        Stream<ORawPair<Object, ORID>> cursor = index
+            .iterateEntriesMinor(getIndexKey(index.getDefinition(), value, context), false, ascOrder);
+        fetchEntriesFromIndexStream(cursor);
       } else if (indexOperator instanceof OQueryOperatorMinorEquals) {
         final Object value = compiledFilter.getRootCondition().getRight();
 
-        IndexCursor cursor = index.iterateEntriesMinor(getIndexKey(index.getDefinition(), value, context), true, ascOrder);
-        fetchEntriesFromIndexCursor(cursor);
+        Stream<ORawPair<Object, ORID>> stream = index
+            .iterateEntriesMinor(getIndexKey(index.getDefinition(), value, context), true, ascOrder);
+        fetchEntriesFromIndexStream(stream);
       } else if (indexOperator instanceof OQueryOperatorIn) {
         final List<Object> origValues = (List<Object>) compiledFilter.getRootCondition().getRight();
         final List<Object> values = new ArrayList<Object>(origValues.size());
@@ -2658,8 +2675,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           values.add(val);
         }
 
-        IndexCursor cursor = index.iterateEntries(values, true);
-        fetchEntriesFromIndexCursor(cursor);
+        Stream<ORawPair<Object, ORID>> stream = index.iterateEntries(values, true);
+        fetchEntriesFromIndexStream(stream);
       } else {
         final Object right = compiledFilter.getRootCondition().getRight();
         Object keyValue = getIndexKey(index.getDefinition(), right, context);
@@ -2681,8 +2698,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               && ((OCompositeKey) secondKey).getKeys().size() == index.getDefinition().getParamCount()) {
             res = index.get(keyValue);
           } else {
-            IndexCursor cursor = index.iterateEntriesBetween(keyValue, true, secondKey, true, true);
-            fetchEntriesFromIndexCursor(cursor);
+            Stream<ORawPair<Object, ORID>> stream = index.iterateEntriesBetween(keyValue, true, secondKey, true, true);
+            fetchEntriesFromIndexStream(stream);
             return;
           }
 
@@ -2729,14 +2746,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         // ADD ALL THE ITEMS AS RESULT
         if (ascOrder) {
-          final IndexCursor cursor = index.cursor();
-          fetchEntriesFromIndexCursor(cursor);
+          final Stream<ORawPair<Object, ORID>> stream = index.stream();
+          fetchEntriesFromIndexStream(stream);
           fetchNullKeyEntries(index);
         } else {
 
-          final IndexCursor cursor = index.descCursor();
+          final Stream<ORawPair<Object, ORID>> stream = index.descCursor();
           fetchNullKeyEntries(index);
-          fetchEntriesFromIndexCursor(cursor);
+          fetchEntriesFromIndexStream(stream);
         }
       } finally {
         if (indexInternal instanceof OSharedResource) {

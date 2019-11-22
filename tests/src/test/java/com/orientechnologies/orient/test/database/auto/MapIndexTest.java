@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -9,10 +8,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Mapper;
 import org.testng.Assert;
-import org.testng.annotations.Optional;
 import org.testng.annotations.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author LomakiA <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
@@ -75,8 +77,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       String key = (String) keyIterator.next();
@@ -89,8 +91,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -122,8 +124,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
     Assert.assertEquals(keyIndex.getSize(), 2);
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -135,8 +137,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -170,8 +172,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -183,8 +185,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -225,8 +227,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -238,8 +240,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -274,8 +276,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -287,8 +289,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -315,8 +317,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 3);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -328,8 +330,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 3);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -366,8 +368,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 3);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -379,8 +381,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 3);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -412,8 +414,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -425,8 +427,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -453,8 +455,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -467,8 +469,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -504,8 +506,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -517,8 +519,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -549,8 +551,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -562,8 +564,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -591,8 +593,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -604,8 +606,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -642,8 +644,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -655,8 +657,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndex.getSize(), 2);
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -688,8 +690,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
     Assert.assertEquals(keyIndex.getSize(), 3);
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -701,8 +703,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndex.getSize(), 3);
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();
@@ -780,8 +782,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    IndexKeySpliterator keyCursor = keyIndex.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    Stream<Object> keyStream = keyIndex.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -793,8 +795,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    IndexKeySpliterator valueCursor = valueIndex.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    Stream<Object> valueStream = valueIndex.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       Integer value = (Integer) valuesIterator.next();

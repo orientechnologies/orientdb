@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * This is implementation which is based on B+-tree implementation threaded tree. The main differences are:
@@ -591,22 +593,22 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
   }
 
   @Override
-  public Spliterator<ORawPair<K, V>> iterateEntriesMinor(final K key, final boolean inclusive, final boolean ascSortOrder) {
+  public Stream<ORawPair<K, V>> iterateEntriesMinor(final K key, final boolean inclusive, final boolean ascSortOrder) {
 
     if (!ascSortOrder) {
-      return iterateEntriesMinorDesc(key, inclusive);
+      return StreamSupport.stream(iterateEntriesMinorDesc(key, inclusive), false);
     }
 
-    return iterateEntriesMinorAsc(key, inclusive);
+    return StreamSupport.stream(iterateEntriesMinorAsc(key, inclusive), false);
   }
 
   @Override
-  public Spliterator<ORawPair<K, V>> iterateEntriesMajor(final K key, final boolean inclusive, final boolean ascSortOrder) {
+  public Stream<ORawPair<K, V>> iterateEntriesMajor(final K key, final boolean inclusive, final boolean ascSortOrder) {
     if (ascSortOrder) {
-      return iterateEntriesMajorAsc(key, inclusive);
+      return StreamSupport.stream(iterateEntriesMajorAsc(key, inclusive), false);
     }
 
-    return iterateEntriesMajorDesc(key, inclusive);
+    return StreamSupport.stream(iterateEntriesMajorDesc(key, inclusive), false);
   }
 
   @Override
@@ -672,12 +674,12 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
   }
 
   @Override
-  public Spliterator<K> keySpliterator() {
+  public Stream<K> keyStream() {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
       try {
-        return new KeySpliterator();
+        return StreamSupport.stream(new SpliteratorForward(null, null, false, false), false).map((entry) -> entry.first);
       } finally {
         releaseSharedLock();
       }
@@ -687,13 +689,13 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
   }
 
   @Override
-  public Spliterator<ORawPair<K, V>> iterateEntriesBetween(final K keyFrom, final boolean fromInclusive, final K keyTo,
+  public Stream<ORawPair<K, V>> iterateEntriesBetween(final K keyFrom, final boolean fromInclusive, final K keyTo,
       final boolean toInclusive, final boolean ascSortOrder) {
 
     if (ascSortOrder) {
-      return iterateEntriesBetweenAscOrder(keyFrom, fromInclusive, keyTo, toInclusive);
+      return StreamSupport.stream(iterateEntriesBetweenAscOrder(keyFrom, fromInclusive, keyTo, toInclusive), false);
     } else {
-      return iterateEntriesBetweenDescOrder(keyFrom, fromInclusive, keyTo, toInclusive);
+      return StreamSupport.stream(iterateEntriesBetweenDescOrder(keyFrom, fromInclusive, keyTo, toInclusive), false);
     }
   }
 
@@ -1338,165 +1340,6 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
     }
   }
 
-  private final class KeySpliterator implements Spliterator<K> {
-    private long pageIndex = -1;
-    private int  itemIndex = -1;
-
-    private OLogSequenceNumber lastLSN;
-
-    private final List<K>     keysCache    = new ArrayList<>();
-    private       Iterator<K> keysIterator = Collections.emptyIterator();
-
-    private KeySpliterator() {
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super K> action) {
-      if (keysIterator == null) {
-        return false;
-      }
-
-      if (keysIterator.hasNext()) {
-        action.accept(keysIterator.next());
-        return true;
-      }
-
-      fetchNextCachePortion();
-
-      keysIterator = keysCache.iterator();
-
-      if (!keysIterator.hasNext()) {
-        keysIterator = null;
-        return false;
-      }
-
-      action.accept(keysIterator.next());
-
-      return true;
-    }
-
-    private void fetchNextCachePortion() {
-      final K lastKey;
-      if (keysCache.isEmpty()) {
-        lastKey = null;
-      } else {
-        lastKey = keysCache.get(keysCache.size() - 1);
-      }
-
-      keysCache.clear();
-      keysIterator = Collections.emptyIterator();
-
-      atomicOperationsManager.acquireReadLock(OSBTreeV2.this);
-      try {
-        acquireSharedLock();
-        try {
-          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-          if (pageIndex >= 0) {
-            if (readKeysFromBuckets(atomicOperation)) {
-              return;
-            }
-          }
-
-          //this can only happen if page LSN does not equal to stored LSN or index of current iterated page equals to -1
-          //so we only started iteration
-          if (keysCache.isEmpty()) {
-            //iteration just started
-            if (lastKey == null) {
-              final Optional<BucketSearchResult> searchResult = firstItem(atomicOperation);
-              if (searchResult.isPresent()) {
-                final BucketSearchResult bucketSearchResult = searchResult.get();
-
-                pageIndex = bucketSearchResult.getLastPathItem();
-                itemIndex = bucketSearchResult.itemIndex;
-
-                readKeysFromBuckets(atomicOperation);
-              }
-            } else {
-              final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
-
-              pageIndex = bucketSearchResult.getLastPathItem();
-              if (bucketSearchResult.itemIndex >= 0) {
-                itemIndex = bucketSearchResult.itemIndex + 1;
-              } else {
-                itemIndex = -bucketSearchResult.itemIndex - 1;
-              }
-
-              readKeysFromBuckets(atomicOperation);
-            }
-          }
-
-        } finally {
-          releaseSharedLock();
-        }
-      } catch (IOException e) {
-        throw OException.wrapException(new OSBTreeException("Error during element iteration", OSBTreeV2.this), e);
-      } finally {
-        atomicOperationsManager.releaseReadLock(OSBTreeV2.this);
-      }
-    }
-
-    private boolean readKeysFromBuckets(OAtomicOperation atomicOperation) throws IOException {
-      OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
-        OSBTreeBucketV2<K, V> bucket = new OSBTreeBucketV2<>(cacheEntry);
-        if (lastLSN == null || bucket.getLSN().equals(lastLSN)) {
-          while (true) {
-            final int bucketSize = bucket.size();
-            lastLSN = bucket.getLSN();
-
-            for (; itemIndex < bucketSize && keysCache.size() < SPLITERATOR_CACHE_SIZE; itemIndex++) {
-              keysCache.add(bucket.getKey(itemIndex, keySerializer));
-            }
-
-            if (itemIndex >= bucketSize) {
-              pageIndex = (int) bucket.getRightSibling();
-              itemIndex = 0;
-            }
-
-            if (keysCache.size() < SPLITERATOR_CACHE_SIZE) {
-              if (pageIndex < 0) {
-                return true;
-              } else {
-                releasePageFromRead(atomicOperation, cacheEntry);
-
-                cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-                //noinspection ObjectAllocationInLoop
-                bucket = new OSBTreeBucketV2<>(cacheEntry);
-              }
-            } else {
-              return true;
-            }
-          }
-        }
-      } finally {
-        releasePageFromRead(atomicOperation, cacheEntry);
-      }
-
-      lastLSN = null;
-      return false;
-    }
-
-    @Override
-    public Spliterator<K> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return Long.MAX_VALUE;
-    }
-
-    @Override
-    public int characteristics() {
-      return SORTED | NONNULL;
-    }
-
-    @Override
-    public Comparator<? super K> getComparator() {
-      return comparator;
-    }
-  }
-
   private final class SpliteratorForward implements Spliterator<ORawPair<K, V>> {
     private final K       fromKey;
     private final K       toKey;
@@ -1682,7 +1525,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
 
     @Override
     public int characteristics() {
-      return SORTED | NONNULL;
+      return SORTED | NONNULL | ORDERED;
     }
 
     @Override
@@ -1883,7 +1726,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
 
     @Override
     public int characteristics() {
-      return SORTED | NONNULL;
+      return SORTED | NONNULL | ORDERED;
     }
 
     @Override

@@ -8,7 +8,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -23,9 +25,9 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.Cel
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Spliterator;
-import java.util.function.Consumer;
+import java.util.Spliterators;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEngine, OCellBTreeIndexEngine {
@@ -108,7 +110,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   public void delete() {
     try {
       if (mvTree != null) {
-        doClearMBTree();
+        doClearMVTree();
         mvTree.delete();
       } else {
         assert svTree != null;
@@ -123,15 +125,13 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     }
   }
 
-  private void doClearMBTree() throws IOException {
+  private void doClearMVTree() throws IOException {
     assert mvTree != null;
 
     final Object firstKey = mvTree.firstKey();
     final Object lastKey = mvTree.lastKey();
 
-    final Spliterator<ORawPair<Object, ORID>> spliterator = mvTree.iterateEntriesBetween(firstKey, true, lastKey, true, true);
-
-    StreamSupport.stream(spliterator, false).forEach((pair) -> {
+    mvTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).forEach((pair) -> {
       try {
         mvTree.remove(pair.first, pair.second);
       } catch (IOException e) {
@@ -153,10 +153,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OCompositeKey firstKey = svTree.firstKey();
       final OCompositeKey lastKey = svTree.lastKey();
 
-      final Spliterator<ORawPair<OCompositeKey, ORID>> spliterator = svTree
-          .iterateEntriesBetween(firstKey, true, lastKey, true, true);
-
-      StreamSupport.stream(spliterator, false).forEach((pair) -> {
+      svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).forEach((pair) -> {
         try {
           svTree.remove(pair.first);
         } catch (IOException e) {
@@ -170,10 +167,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OIdentifiable lastKey = nullTree.lastKey();
 
       if (firstKey != null && lastKey != null) {
-        final Spliterator<ORawPair<OIdentifiable, ORID>> spliterator = nullTree
-            .iterateEntriesBetween(firstKey, true, lastKey, true, true);
-
-        StreamSupport.stream(spliterator, false).forEach((pair) -> {
+        nullTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).forEach((pair) -> {
           try {
             nullTree.remove(pair.first);
           } catch (IOException e) {
@@ -224,11 +218,9 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
           assert svTree != null;
 
           final OCompositeKey compositeKey = createCompositeKey(key, value);
-          final Spliterator<ORawPair<OCompositeKey, ORID>> spliterator = svTree
-              .iterateEntriesBetween(compositeKey, true, compositeKey, true, true);
 
           final boolean[] removed = new boolean[1];
-          StreamSupport.stream(spliterator, false).forEach((pair) -> {
+          svTree.iterateEntriesBetween(compositeKey, true, compositeKey, true, true).forEach((pair) -> {
             try {
               final boolean result = svTree.remove(pair.first) != null;
               removed[0] = result || removed[0];
@@ -253,7 +245,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   public void clear() {
     try {
       if (mvTree != null) {
-        doClearMBTree();
+        doClearMVTree();
       } else {
         doClearSVTree();
       }
@@ -285,112 +277,73 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OCompositeKey firstKey = convertToCompositeKey(key);
       final OCompositeKey lastKey = convertToCompositeKey(key);
 
-      final Spliterator<ORawPair<OCompositeKey, ORID>> spliterator = svTree
-          .iterateEntriesBetween(firstKey, true, lastKey, true, true);
-      return StreamSupport.stream(spliterator, false).map((pair) -> pair.second).collect(Collectors.toList());
+      return svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).map((pair) -> pair.second)
+          .collect(Collectors.toList());
     } else {
       assert nullTree != null;
-      final Spliterator<ORawPair<OIdentifiable, ORID>> cursor = nullTree
-          .iterateEntriesBetween(new ORecordId(0, 0), true, new ORecordId(Short.MAX_VALUE, Long.MAX_VALUE), true, true);
-
-      return StreamSupport.stream(cursor, false).map((pair) -> pair.second).collect(Collectors.toList());
+      return nullTree.iterateEntriesBetween(new ORecordId(0, 0), true, new ORecordId(Short.MAX_VALUE, Long.MAX_VALUE), true, true)
+          .map((pair) -> pair.second).collect(Collectors.toList());
     }
   }
 
   @Override
-  public IndexCursor cursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
     if (mvTree != null) {
       final Object firstKey = mvTree.firstKey();
       if (firstKey == null) {
-        return new NullCursor();
+        return emptyStream();
       }
 
-      return new MVTreeIndexCursor(mvTree.iterateEntriesMajor(firstKey, true, true));
+      return mvTree.iterateEntriesMajor(firstKey, true, true);
     } else {
       assert svTree != null;
 
       final OCompositeKey firstKey = svTree.firstKey();
       if (firstKey == null) {
-        return new NullCursor();
+        return emptyStream();
       }
 
-      return new SVTreeIndexCursor(svTree.iterateEntriesMajor(firstKey, true, true));
+      return mapSVStream(svTree.iterateEntriesMajor(firstKey, true, true));
     }
   }
 
+  private static Stream<ORawPair<Object, ORID>> mapSVStream(Stream<ORawPair<OCompositeKey, ORID>> stream) {
+    return stream.map((entry) -> new ORawPair<>(extractKey(entry.first), entry.second));
+  }
+
+  private static Stream<ORawPair<Object, ORID>> emptyStream() {
+    return StreamSupport.stream(Spliterators.emptySpliterator(), false);
+  }
+
   @Override
-  public IndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
     if (mvTree != null) {
       final Object lastKey = mvTree.lastKey();
       if (lastKey == null) {
-        return new NullCursor();
+        return emptyStream();
       }
 
-      return new MVTreeIndexCursor(mvTree.iterateEntriesMinor(lastKey, true, false));
+      return mvTree.iterateEntriesMinor(lastKey, true, false);
     } else {
       assert svTree != null;
 
       final OCompositeKey lastKey = svTree.lastKey();
       if (lastKey == null) {
-        return new NullCursor();
+        return emptyStream();
       }
 
-      return new SVTreeIndexCursor(svTree.iterateEntriesMinor(lastKey, true, false));
+      return mapSVStream(svTree.iterateEntriesMinor(lastKey, true, false));
     }
   }
 
   @Override
-  public IndexKeySpliterator keyCursor() {
+  public Stream<Object> keyStream() {
     if (mvTree != null) {
-      return new IndexKeySpliterator() {
-        private final Spliterator<Object> keySpliterator = mvTree.keySpliterator();
-
-        @Override
-        public boolean tryAdvance(Consumer<? super Object> action) {
-          return keySpliterator.tryAdvance(action);
-        }
-
-        @Override
-        public Spliterator<Object> trySplit() {
-          return null;
-        }
-
-        @Override
-        public long estimateSize() {
-          return keySpliterator.estimateSize();
-        }
-
-        @Override
-        public int characteristics() {
-          return NONNULL | ORDERED;
-        }
-      };
+      return mvTree.keyStream();
     }
 
     assert svTree != null;
-    return new IndexKeySpliterator() {
-      private final Spliterator<OCompositeKey> keySpliterator = svTree.keySpliterator();
-
-      @Override
-      public boolean tryAdvance(Consumer<? super Object> action) {
-        return keySpliterator.tryAdvance(OCellBTreeMultiValueIndexEngine::extractKey);
-      }
-
-      @Override
-      public Spliterator<Object> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return keySpliterator.estimateSize();
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL | ORDERED;
-      }
-    };
+    return svTree.keyStream().map(OCellBTreeMultiValueIndexEngine::extractKey);
   }
 
   @Override
@@ -444,17 +397,17 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     if (mvTree != null) {
-      return new MVTreeIndexCursor(mvTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder));
+      return mvTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
     }
 
     assert svTree != null;
     final OCompositeKey firstKey = convertToCompositeKey(rangeFrom);
     final OCompositeKey lastKey = convertToCompositeKey(rangeTo);
 
-    return new SVTreeIndexCursor(svTree.iterateEntriesBetween(firstKey, fromInclusive, lastKey, toInclusive, ascSortOrder));
+    return mapSVStream(svTree.iterateEntriesBetween(firstKey, fromInclusive, lastKey, toInclusive, ascSortOrder));
   }
 
   private static OCompositeKey convertToCompositeKey(Object rangeFrom) {
@@ -468,26 +421,28 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     if (mvTree != null) {
-      return new MVTreeIndexCursor(mvTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder));
+      return mvTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder);
     }
     assert svTree != null;
 
     final OCompositeKey firstKey = convertToCompositeKey(fromKey);
-    return new SVTreeIndexCursor(svTree.iterateEntriesMajor(firstKey, isInclusive, ascSortOrder));
+    return mapSVStream(svTree.iterateEntriesMajor(firstKey, isInclusive, ascSortOrder));
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     if (mvTree != null) {
-      return new MVTreeIndexCursor(mvTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder));
+      return mvTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder);
     }
 
     assert svTree != null;
 
     final OCompositeKey lastKey = convertToCompositeKey(toKey);
-    return new SVTreeIndexCursor(svTree.iterateEntriesMinor(lastKey, isInclusive, ascSortOrder));
+    return mapSVStream(svTree.iterateEntriesMinor(lastKey, isInclusive, ascSortOrder));
   }
 
   @Override
@@ -521,10 +476,8 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       }
 
       if (firstKey != null && lastKey != null) {
-        final Spliterator<ORawPair<Object, ORID>> spliterator = mvTree.iterateEntriesBetween(firstKey, true, lastKey, true, true);
-
         final Object[] prevKey = new Object[] { new Object() };
-        counter += StreamSupport.stream(spliterator, false).filter((pair) -> {
+        counter += mvTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).filter((pair) -> {
           final boolean result = !prevKey[0].equals(pair.first);
           prevKey[0] = pair.first;
           return result;
@@ -557,11 +510,8 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     final OCompositeKey firstKey = svTree.firstKey();
     final OCompositeKey lastKey = svTree.lastKey();
 
-    final Spliterator<ORawPair<OCompositeKey, ORID>> spliterator = svTree
-        .iterateEntriesBetween(firstKey, true, lastKey, true, true);
-
     final Object[] prevKey = new Object[] { new Object() };
-    count += StreamSupport.stream(spliterator, false).filter((pair) -> {
+    count += svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).filter((pair) -> {
       final Object key = extractKey(pair.first);
       final boolean result = !prevKey[0].equals(key);
       prevKey[0] = key;
@@ -594,34 +544,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   @Override
   public String getIndexNameByKey(Object key) {
     return name;
-  }
-
-  private static final class MVTreeIndexCursor implements IndexCursor {
-    private final Spliterator<ORawPair<Object, ORID>> treeSpliterator;
-
-    private MVTreeIndexCursor(Spliterator<ORawPair<Object, ORID>> treeSpliterator) {
-      this.treeSpliterator = treeSpliterator;
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      return treeSpliterator.tryAdvance(action);
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return treeSpliterator.estimateSize();
-    }
-
-    @Override
-    public int characteristics() {
-      return NONNULL | ORDERED;
-    }
   }
 
   private static OType[] calculateTypes(OType[] keyTypes) {
@@ -658,53 +580,4 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     return key;
   }
 
-  private static final class SVTreeIndexCursor implements IndexCursor {
-    private final Spliterator<ORawPair<OCompositeKey, ORID>> treeSpliterator;
-
-    private SVTreeIndexCursor(Spliterator<ORawPair<OCompositeKey, ORID>> treeSpliterator) {
-      this.treeSpliterator = treeSpliterator;
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      return treeSpliterator.tryAdvance((pair) -> action.accept(new ORawPair<>(extractKey(pair.first), pair.second)));
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return treeSpliterator.estimateSize();
-    }
-
-    @Override
-    public int characteristics() {
-      return NONNULL | ORDERED;
-    }
-  }
-
-  private static final class NullCursor implements IndexCursor {
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      return false;
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return 0;
-    }
-
-    @Override
-    public int characteristics() {
-      return 0;
-    }
-  }
 }

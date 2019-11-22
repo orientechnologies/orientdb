@@ -19,11 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,13 +36,13 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * CONTAINSTEXT operator. Look if a text is contained in a property. This is usually used with the FULLTEXT-INDEX for fast lookup at
  * piece of text.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OQueryOperatorContainsText extends OQueryTargetOperator {
   private boolean ignoreCase = true;
@@ -120,7 +123,8 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   }
 
   @Override
-  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      boolean ascSortOrder) {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
     if (indexDefinition.getParamCount() > 1)
@@ -128,21 +132,25 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 
     final OIndex<?> internalIndex = index.getInternal();
 
-    IndexCursor cursor;
+    Stream<ORawPair<Object, ORID>> stream;
     if (internalIndex instanceof OIndexFullText) {
       final Object key = indexDefinition.createValue(keyParams);
       final Object indexResult = index.get(key);
 
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new IndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new IndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
+      if (indexResult == null) {
+        stream = Stream.empty();
+      } else if (indexResult instanceof OIdentifiable) {
+        stream = Stream.of(new ORawPair<>(key, ((OIdentifiable) indexResult).getIdentity()));
+      } else {
+        stream = ((Collection<OIdentifiable>) indexResult).stream()
+            .map((identifiable) -> new ORawPair<>(key, identifiable.getIdentity()));
+      }
     } else
       return null;
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
 
-    return cursor;
+    return stream;
   }
 
   @Override

@@ -734,13 +734,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     dumpRecordDetails();
   }
 
-  @ConsoleCommand(description = "Move the current record cursor to the next one in result set")
+  @ConsoleCommand(description = "Move the current record stream to the next one in result set")
   public void next() {
     setCurrentRecord(currentRecordIdx + 1);
     dumpRecordDetails();
   }
 
-  @ConsoleCommand(description = "Move the current record cursor to the previous one in result set")
+  @ConsoleCommand(description = "Move the current record stream to the previous one in result set")
   public void prev() {
     setCurrentRecord(currentRecordIdx - 1);
     dumpRecordDetails();

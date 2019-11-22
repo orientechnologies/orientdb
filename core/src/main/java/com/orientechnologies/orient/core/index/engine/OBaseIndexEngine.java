@@ -1,10 +1,9 @@
 package com.orientechnologies.orient.core.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexCursor;
-import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -12,6 +11,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public interface OBaseIndexEngine {
   int getId();
@@ -21,7 +21,8 @@ public interface OBaseIndexEngine {
   void flush();
 
   void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) throws IOException;
+      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption)
+      throws IOException;
 
   void delete() throws IOException;
 
@@ -37,19 +38,20 @@ public interface OBaseIndexEngine {
 
   Object getLastKey();
 
-  IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+  Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer);
 
-  IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer);
-
-  IndexCursor iterateEntriesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
+  Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer);
 
-  IndexCursor cursor(ValuesTransformer valuesTransformer);
+  Stream<ORawPair<Object, ORID>> iterateEntriesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer);
 
-  IndexCursor descCursor(ValuesTransformer valuesTransformer);
+  Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer);
 
-  IndexKeySpliterator keyCursor();
+  Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer);
+
+  Stream<Object> keyStream();
 
   long size(ValuesTransformer transformer);
 

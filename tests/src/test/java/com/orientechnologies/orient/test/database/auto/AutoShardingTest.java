@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -31,7 +30,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 /**
  * Tests Auto-Sharding indexes (Since v2.2.0).
@@ -121,9 +120,9 @@ public class AutoShardingTest extends DocumentDBBaseTest {
   public void testKeyCursor() {
     create();
 
-    final IndexKeySpliterator cursor = idx.keySpliterator();
-    Assert.assertNotNull(cursor);
-    Assert.assertEquals(StreamSupport.stream(cursor, false).count(), ITERATIONS);
+    final Stream<Object> stream = idx.keyStream();
+    Assert.assertNotNull(stream);
+    Assert.assertEquals(stream.count(), ITERATIONS);
   }
 
   public void testDrop() {

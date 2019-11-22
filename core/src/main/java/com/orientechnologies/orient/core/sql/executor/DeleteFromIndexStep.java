@@ -5,12 +5,12 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexCursor;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Created by luigidellaquila on 11/08/16.
@@ -25,8 +25,8 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
   private OBooleanExpression condition;
 
-  private boolean     inited = false;
-  private IndexCursor cursor;
+  private boolean                        inited = false;
+  private Stream<ORawPair<Object, ORID>> stream;
 
   private long cost = 0;
 
@@ -120,7 +120,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   }
 
   private ORawPair<Object, ORID> loadNextEntry(OCommandContext commandContext) {
-    final Iterator<ORawPair<Object, ORID>> iterator = Spliterators.iterator(cursor);
+    final Iterator<ORawPair<Object, ORID>> iterator = stream.iterator();
     while (iterator.hasNext()) {
       final ORawPair<Object, ORID> entry = iterator.next();
       if (ridCondition == null) {
@@ -165,7 +165,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   }
 
   private void processFlatIteration() {
-    cursor = isOrderAsc() ? index.cursor() : index.descCursor();
+    stream = isOrderAsc() ? index.stream() : index.descCursor();
   }
 
   private void init(OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
@@ -173,11 +173,11 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     Object thirdValue = toKey.execute((OResult) null, ctx);
     OIndexDefinition indexDef = index.getDefinition();
     if (index.supportsOrderedIterations()) {
-      cursor = index
+      stream = index
           .iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue),
               toKeyIncluded, isOrderAsc());
     } else if (additional == null && allEqualities((OAndBlock) condition)) {
-      cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+      stream = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
     } else {
       throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
     }
@@ -210,7 +210,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
     Object secondValue = second.execute((OResult) null, ctx);
     Object thirdValue = third.execute((OResult) null, ctx);
-    cursor = index
+    stream = index
         .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
             isOrderAsc());
   }
@@ -223,7 +223,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
     }
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
-    cursor = createCursor(operator, definition, rightValue, ctx);
+    stream = createCursor(operator, definition, rightValue, ctx);
   }
 
   private Collection toIndexKey(OIndexDefinition definition, Object rightValue) {
@@ -253,7 +253,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return rightValue;
   }
 
-  private IndexCursor createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
+  private Stream<ORawPair<Object, ORID>> createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
       OCommandContext ctx) {
     boolean orderAsc = isOrderAsc();
     if (operator instanceof OEqualsCompareOperator) {

@@ -23,8 +23,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexCursor;
-import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
@@ -32,8 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Map;
-import java.util.Spliterator;
-import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -133,19 +130,21 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
-    return new EntriesBetweenCursor();
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    throw new UnsupportedOperationException("stream");
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new EntriesMajorCursor();
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    throw new UnsupportedOperationException("stream");
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new EntriesMinorCursor();
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    throw new UnsupportedOperationException("stream");
   }
 
   @Override
@@ -159,88 +158,22 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public IndexCursor cursor(ValuesTransformer valuesTransformer) {
-    throw new UnsupportedOperationException("cursor");
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
+    throw new UnsupportedOperationException("stream");
   }
 
   @Override
-  public IndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public IndexKeySpliterator keyCursor() {
-    throw new UnsupportedOperationException("keySpliterator");
+  public Stream<Object> keyStream() {
+    throw new UnsupportedOperationException("keyStream");
   }
 
   @Override
   public boolean acquireAtomicExclusiveLock(Object key) {
     throw new UnsupportedOperationException("atomic locking is not supported by remote index engine");
-  }
-
-  private static class EntriesBetweenCursor implements IndexCursor {
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      return false;
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return 0;
-    }
-
-    @Override
-    public int characteristics() {
-      return 0;
-    }
-  }
-
-  private static class EntriesMajorCursor implements IndexCursor {
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      return false;
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return 0;
-    }
-
-    @Override
-    public int characteristics() {
-      return 0;
-    }
-  }
-
-  private static class EntriesMinorCursor implements IndexCursor {
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      return false;
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return 0;
-    }
-
-    @Override
-    public int characteristics() {
-      return 0;
-    }
   }
 }

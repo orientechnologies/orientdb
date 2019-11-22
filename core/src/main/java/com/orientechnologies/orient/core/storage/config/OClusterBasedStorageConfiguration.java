@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 public final class OClusterBasedStorageConfiguration implements OStorageConfiguration {
   public static final String MAP_FILE_EXTENSION  = ".ccm";
@@ -159,8 +159,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
       cluster.delete();
 
-      final Spliterator<String> keyCursor = btree.keySpliterator();
-      StreamSupport.stream(keyCursor, false).forEach((key) -> {
+      final Stream<String> keyStream = btree.keyStream();
+      keyStream.forEach((key) -> {
         try {
           btree.remove(key);
         } catch (IOException e) {
@@ -1037,18 +1037,16 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   }
 
   private void preloadConfigurationProperties() {
-    final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
-    final Map<String, String> properties = StreamSupport.stream(cursor, false)
-        .filter((pair) -> pair.first.startsWith(PROPERTY_PREFIX_PROPERTY)).map((entry) -> {
-          final ORawBuffer buffer;
-          try {
-            buffer = cluster.readRecord(entry.second.getClusterPosition(), false);
-            return new ORawPair<>(entry.first.substring(PROPERTY_PREFIX_PROPERTY.length()),
-                deserializeStringValue(buffer.buffer, 0));
-          } catch (IOException e) {
-            throw OException.wrapException(new OStorageException("Can not preload configuration properties"), e);
-          }
-        }).collect(Collectors.toMap((pair) -> pair.first, (pair) -> pair.second));
+    final Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
+    final Map<String, String> properties = stream.filter((pair) -> pair.first.startsWith(PROPERTY_PREFIX_PROPERTY)).map((entry) -> {
+      final ORawBuffer buffer;
+      try {
+        buffer = cluster.readRecord(entry.second.getClusterPosition(), false);
+        return new ORawPair<>(entry.first.substring(PROPERTY_PREFIX_PROPERTY.length()), deserializeStringValue(buffer.buffer, 0));
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Can not preload configuration properties"), e);
+      }
+    }).collect(Collectors.toMap((pair) -> pair.first, (pair) -> pair.second));
 
     cache.put(PROPERTIES, properties);
   }
@@ -1088,12 +1086,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void clearProperties() {
     lock.acquireWriteLock();
     try {
-      final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
+      final Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true);
 
       final List<String> keysToRemove = new ArrayList<>(8);
       final List<ORID> ridsToRemove = new ArrayList<>(8);
 
-      StreamSupport.stream(cursor, false).filter((entry) -> entry.first.startsWith(PROPERTY_PREFIX_PROPERTY)).forEach((entry) -> {
+      stream.filter((entry) -> entry.first.startsWith(PROPERTY_PREFIX_PROPERTY)).forEach((entry) -> {
         keysToRemove.add(entry.first);
         ridsToRemove.add(entry.second);
       });
@@ -1162,8 +1160,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public Set<String> indexEngines() {
     lock.acquireReadLock();
     try {
-      final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
-      return StreamSupport.stream(cursor, false).filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY))
+      final Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
+      return stream.filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY))
           .map((entry) -> entry.first.substring(ENGINE_PREFIX_PROPERTY.length())).collect(Collectors.toSet());
     } finally {
       lock.releaseReadLock();
@@ -1171,9 +1169,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   }
 
   private List<IndexEngineData> loadIndexEngines() {
-    final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
-    return StreamSupport.stream(cursor, false).filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY)).map((entry) -> {
-
+    final Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true);
+    return stream.filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY)).map((entry) -> {
       String name = null;
       try {
         name = entry.first.substring(ENGINE_PREFIX_PROPERTY.length());
@@ -1259,9 +1256,9 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private void preloadClusters() {
     final List<OStorageClusterConfiguration> clusters = new ArrayList<>(1024);
-    final Spliterator<ORawPair<String, ORID>> cursor = btree.iterateEntriesMajor(CLUSTERS_PREFIX_PROPERTY, false, true);
+    final Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(CLUSTERS_PREFIX_PROPERTY, false, true);
 
-    StreamSupport.stream(cursor, false).filter((entry) -> entry.first.startsWith(CLUSTERS_PREFIX_PROPERTY)).forEach((entry) -> {
+    stream.filter((entry) -> entry.first.startsWith(CLUSTERS_PREFIX_PROPERTY)).forEach((entry) -> {
       final int id = Integer.parseInt(entry.first.substring(CLUSTERS_PREFIX_PROPERTY.length()));
 
       try {

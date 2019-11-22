@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexCursor;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -31,6 +30,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Test
 public class TruncateClassTest extends DocumentDBBaseTest {
@@ -70,8 +70,8 @@ public class TruncateClassTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 6);
 
-    IndexCursor cursor = index.cursor();
-    Iterator<ORawPair<Object, ORID>> indexIterator = Spliterators.iterator(cursor);
+    Stream<ORawPair<Object, ORID>> stream = index.stream();
+    Iterator<ORawPair<Object, ORID>> indexIterator = stream.iterator();
 
     while (indexIterator.hasNext()) {
       ORawPair<Object, ORID> entry = indexIterator.next();

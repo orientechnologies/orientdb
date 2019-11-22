@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -24,10 +23,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Collector;
 import org.testng.Assert;
-import org.testng.annotations.Optional;
 import org.testng.annotations.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
 
 @Test(groups = { "index" })
 public class CollectionIndexTest extends ObjectDBBaseTest {
@@ -64,8 +66,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -92,8 +94,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -115,8 +117,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -145,8 +147,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
 
     Assert.assertEquals(index.getSize(), 2);
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -171,8 +173,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -194,8 +196,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 3);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -227,8 +229,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 3);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -254,8 +256,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -286,8 +288,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 1);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -313,8 +315,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -335,8 +337,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     final OIndex index = getIndex("Collector.stringCollection");
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -392,8 +394,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = index.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = index.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();

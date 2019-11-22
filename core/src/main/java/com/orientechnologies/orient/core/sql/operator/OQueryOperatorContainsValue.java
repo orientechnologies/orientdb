@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -37,12 +38,12 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * CONTAINS KEY operator.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls {
 
@@ -59,11 +60,12 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
   }
 
   @Override
-  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
-    IndexCursor cursor;
+    Stream<ORawPair<Object, ORID>> stream;
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;
 
@@ -78,10 +80,14 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
         return null;
 
       final Object indexResult = index.get(key);
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new IndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new IndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
+      if (indexResult == null) {
+        stream = Stream.empty();
+      } else if (indexResult instanceof OIdentifiable) {
+        stream = Stream.of(new ORawPair<>(key, ((OIdentifiable) indexResult).getIdentity()));
+      } else {
+        stream = ((Collection<OIdentifiable>) indexResult).stream()
+            .map((identifiable) -> new ORawPair<>(key, identifiable.getIdentity()));
+      }
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -95,27 +101,31 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (keyOne == null)
-        return null;
+        return Stream.empty();
 
       if (internalIndex.hasRangeQuerySupport()) {
         final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-        cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+        stream = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult = index.get(keyOne);
-          if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new IndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
-          else
-            cursor = new IndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, keyOne);
+          if (indexResult == null) {
+            stream = Stream.empty();
+          } else if (indexResult instanceof OIdentifiable) {
+            stream = Stream.of(new ORawPair<>(keyOne, ((OIdentifiable) indexResult).getIdentity()));
+          } else {
+            stream = ((Collection<OIdentifiable>) indexResult).stream()
+                .map((identifiable) -> new ORawPair<>(keyOne, identifiable.getIdentity()));
+          }
         } else
-          return null;
+          return Stream.empty();
       }
 
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return cursor;
+    return stream;
   }
 
   @Override

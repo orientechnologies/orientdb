@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.io.IOException;
-import java.util.Spliterator;
+import java.util.stream.Stream;
 
 public interface OSBTree<K, V> {
   void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, int keySize,
@@ -37,17 +37,18 @@ public interface OSBTree<K, V> {
 
   V remove(K key) throws IOException;
 
-  Spliterator<ORawPair<K, V>> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, V>> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
 
-  Spliterator<ORawPair<K, V>> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, V>> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
 
   K firstKey();
 
   K lastKey();
 
-  Spliterator<K> keySpliterator();
+  Stream<K> keyStream();
 
-  Spliterator<ORawPair<K, V>> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, V>> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+      boolean ascSortOrder);
 
   void flush();
 

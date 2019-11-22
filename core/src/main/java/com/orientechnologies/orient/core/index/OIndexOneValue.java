@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -78,7 +78,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
-  public IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntries(Collection<?> keys, boolean ascSortOrder) {
     final List<Object> sortedKeys = new ArrayList<>(keys);
     final Comparator<Object> comparator;
 
@@ -89,59 +89,26 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     sortedKeys.sort(comparator);
 
-    return new IndexCursorSecurityDecorator(new IndexCursor() {
-      private final Iterator<?> keysIterator = sortedKeys.iterator();
-
-      @Override
-      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-        OIdentifiable result = null;
-        Object key = null;
-        while (keysIterator.hasNext() && result == null) {
-          key = keysIterator.next();
-          key = getCollatingValue(key);
-
-          acquireSharedLock();
+    return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().flatMap((key) -> {
+      final Object collatedKey = getCollatingValue(key);
+      acquireSharedLock();
+      try {
+        while (true) {
           try {
-            while (true)
-              try {
-                result = (OIdentifiable) storage.getIndexValue(indexId, key);
-                break;
-              } catch (OInvalidIndexEngineIdException ignore) {
-                doReloadIndexEngine();
-              }
-          } finally {
-            releaseSharedLock();
+            return storage.iterateIndexEntriesBetween(indexId, collatedKey, true, collatedKey, true, true, null);
+          } catch (OInvalidIndexEngineIdException ignore) {
+            doReloadIndexEngine();
           }
         }
-
-        if (result == null) {
-          return false;
-        }
-
-        action.accept(new ORawPair<>(key, result.getIdentity()));
-        return true;
+      } finally {
+        releaseSharedLock();
       }
-
-      @Override
-      public Spliterator<ORawPair<Object, ORID>> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL | ORDERED;
-      }
-    }, this);
+    }));
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
-      boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
+      boolean toInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);
 
@@ -149,8 +116,8 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       while (true)
         try {
-          return new IndexCursorSecurityDecorator(
-              storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null), this);
+          return IndexStreamSecurityDecorator.decorateStream(this,
+              storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -160,14 +127,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
     acquireSharedLock();
     try {
       while (true)
         try {
-          return new IndexCursorSecurityDecorator(storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null),
-              this);
+          return IndexStreamSecurityDecorator
+              .decorateStream(this, storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -177,14 +144,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     toKey = getCollatingValue(toKey);
     acquireSharedLock();
     try {
       while (true) {
         try {
-          return new IndexCursorSecurityDecorator(storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null),
-              this);
+          return IndexStreamSecurityDecorator
+              .decorateStream(this, storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -226,12 +193,12 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
-  public IndexCursor cursor() {
+  public Stream<ORawPair<Object, ORID>> stream() {
     acquireSharedLock();
     try {
       while (true) {
         try {
-          return new IndexCursorSecurityDecorator(storage.getIndexCursor(indexId, null), this);
+          return IndexStreamSecurityDecorator.decorateStream(this, storage.getIndexStream(indexId, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -242,12 +209,12 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
-  public IndexCursor descCursor() {
+  public Stream<ORawPair<Object, ORID>> descCursor() {
     acquireSharedLock();
     try {
       while (true) {
         try {
-          return new IndexCursorSecurityDecorator(storage.getIndexDescCursor(indexId, null), this);
+          return IndexStreamSecurityDecorator.decorateStream(this, storage.getIndexDescStream(indexId, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }

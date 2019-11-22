@@ -163,7 +163,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   }
 
   /**
-   * Return the element at the current position and move backward the cursor to the previous position available.
+   * Return the element at the current position and move backward the stream to the previous position available.
    *
    * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
    */
@@ -192,7 +192,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   }
 
   /**
-   * Return the element at the current position and move forward the cursor to the next position available.
+   * Return the element at the current position and move forward the stream to the next position available.
    *
    * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
    */

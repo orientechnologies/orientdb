@@ -20,11 +20,11 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexCursor;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.math.*;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Query Operators. Remember to handle the operator in OQueryItemCondition.
@@ -121,7 +122,7 @@ public abstract class OQueryOperator {
   }
 
   /**
-   * Performs index query and returns index cursor which presents subset of index data which corresponds to result of execution of
+   * Performs index query and returns index stream which presents subset of index data which corresponds to result of execution of
    * given operator.
    *
    * <p/>
@@ -143,9 +144,9 @@ public abstract class OQueryOperator {
    *          Data returned by cursors should be sorted in ascending or descending order.
    * @return Cursor instance if index can be used to evaluate result of execution of given operator and <code>null</code> otherwise.
    */
-  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
       boolean ascSortOrder) {
-    return null;
+    return Stream.empty();
   }
 
   @Override

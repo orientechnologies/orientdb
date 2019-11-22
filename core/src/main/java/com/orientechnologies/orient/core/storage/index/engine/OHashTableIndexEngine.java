@@ -25,7 +25,9 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -45,6 +47,8 @@ import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -258,18 +262,20 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
@@ -284,8 +290,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public IndexCursor cursor(final ValuesTransformer valuesTransformer) {
-    return new IndexCursor() {
+  public Stream<ORawPair<Object, ORID>> stream(final ValuesTransformer valuesTransformer) {
+    return StreamSupport.stream(new Spliterator<ORawPair<Object, ORID>>() {
       private int nextEntriesIndex;
       private OHashTable.Entry<Object, Object>[] entries;
 
@@ -362,12 +368,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       public int characteristics() {
         return NONNULL;
       }
-    };
+    }, false);
   }
 
   @Override
-  public IndexCursor descCursor(final ValuesTransformer valuesTransformer) {
-    return new IndexCursor() {
+  public Stream<ORawPair<Object, ORID>> descStream(final ValuesTransformer valuesTransformer) {
+    return StreamSupport.stream(new Spliterator<ORawPair<Object, ORID>>() {
       private int nextEntriesIndex;
       private OHashTable.Entry<Object, Object>[] entries;
 
@@ -444,12 +450,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       public int characteristics() {
         return NONNULL;
       }
-    };
+    }, false);
   }
 
   @Override
-  public IndexKeySpliterator keyCursor() {
-    return new IndexKeySpliterator() {
+  public Stream<Object> keyStream() {
+    return StreamSupport.stream(new Spliterator<Object>() {
       private int nextEntriesIndex;
       private OHashTable.Entry<Object, Object>[] entries;
 
@@ -495,7 +501,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       public int characteristics() {
         return NONNULL;
       }
-    };
+    }, false);
   }
 
   @Override

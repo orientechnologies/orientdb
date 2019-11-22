@@ -5,12 +5,9 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexCursor;
-import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.engine.OSingleValueIndexEngine;
-import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -19,10 +16,9 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.Cel
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Spliterator;
-import java.util.function.Consumer;
+import java.util.Spliterators;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
@@ -87,8 +83,7 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   private void doClearTree() throws IOException {
-    final Spliterator<Object> spliterator = sbTree.keySpliterator();
-    StreamSupport.stream(spliterator, false).forEach((key) -> {
+    sbTree.keyStream().forEach((key) -> {
       try {
         sbTree.remove(key);
       } catch (IOException e) {
@@ -140,50 +135,32 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public IndexCursor cursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
     final Object firstKey = sbTree.firstKey();
     if (firstKey == null) {
-      return new NullCursor();
+      return emptyStream();
     }
 
-    return new TreeIndexCursor(sbTree.iterateEntriesMajor(firstKey, true, true), valuesTransformer);
+    return sbTree.iterateEntriesMajor(firstKey, true, true);
+  }
+
+  private static Stream<ORawPair<Object, ORID>> emptyStream() {
+    return StreamSupport.stream(Spliterators.emptySpliterator(), false);
   }
 
   @Override
-  public IndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
     final Object lastKey = sbTree.lastKey();
     if (lastKey == null) {
-      return new NullCursor();
+      return emptyStream();
     }
 
-    return new TreeIndexCursor(sbTree.iterateEntriesMinor(lastKey, true, false), valuesTransformer);
+    return sbTree.iterateEntriesMinor(lastKey, true, false);
   }
 
   @Override
-  public IndexKeySpliterator keyCursor() {
-    return new IndexKeySpliterator() {
-      private final Spliterator<Object> treeKeySpliterator = sbTree.keySpliterator();
-
-      @Override
-      public boolean tryAdvance(Consumer<? super Object> action) {
-        return treeKeySpliterator.tryAdvance(action);
-      }
-
-      @Override
-      public Spliterator<Object> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return treeKeySpliterator.estimateSize();
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL | ORDERED;
-      }
-    };
+  public Stream<Object> keyStream() {
+    return sbTree.keyStream();
   }
 
   @Override
@@ -215,20 +192,21 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
-    return new TreeIndexCursor(sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder),
-        transformer);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new TreeIndexCursor(sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder), transformer);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    return sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder);
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new TreeIndexCursor(sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder), transformer);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    return sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder);
   }
 
   @Override
@@ -254,92 +232,5 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   @Override
   public String getIndexNameByKey(Object key) {
     return name;
-  }
-
-  private static final class TreeIndexCursor implements IndexCursor {
-    private final Spliterator<ORawPair<Object, ORID>> treeSpliterator;
-    private final ValuesTransformer                   valuesTransformer;
-
-    private Iterator<ORID> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object         currentKey      = null;
-
-    private TreeIndexCursor(Spliterator<ORawPair<Object, ORID>> treeSpliterator, ValuesTransformer valuesTransformer) {
-      this.treeSpliterator = treeSpliterator;
-      this.valuesTransformer = valuesTransformer;
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      if (valuesTransformer == null) {
-        return treeSpliterator.tryAdvance(action);
-      }
-
-      if (currentIterator == null) {
-        return false;
-      }
-
-      if (currentIterator.hasNext()) {
-        action.accept(new ORawPair<>(currentKey, currentIterator.next()));
-        return true;
-      }
-
-      while (true) {
-        @SuppressWarnings("ObjectAllocationInLoop")
-        final Object[] next = new Object[1];
-
-        @SuppressWarnings("ObjectAllocationInLoop")
-        final boolean result = treeSpliterator.tryAdvance((pair) -> {
-          currentKey = pair.first;
-          next[0] = pair.second;
-        });
-
-        if (!result) {
-          return false;
-        }
-
-        currentIterator = valuesTransformer.transformFromValue(next[0]).iterator();
-        if (currentIterator.hasNext()) {
-          action.accept(new ORawPair<>(currentKey, currentIterator.next()));
-          return true;
-        }
-      }
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return Long.MAX_VALUE;
-    }
-
-    @Override
-    public int characteristics() {
-      return NONNULL | ORDERED;
-    }
-  }
-
-  private static class NullCursor implements IndexCursor {
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      return false;
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return 0;
-    }
-
-    @Override
-    public int characteristics() {
-      return 0;
-    }
   }
 }

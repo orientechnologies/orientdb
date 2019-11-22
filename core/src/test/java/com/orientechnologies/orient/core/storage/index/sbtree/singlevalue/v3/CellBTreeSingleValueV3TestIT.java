@@ -16,6 +16,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class CellBTreeSingleValueV3TestIT {
   private OAbstractPaginatedStorage      storage;
@@ -397,8 +398,8 @@ public class CellBTreeSingleValueV3TestIT {
     Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
 
-    final Spliterator<String> cursor = singleValueTree.keySpliterator();
-    final Iterator<String> indexIterator = Spliterators.iterator(cursor);
+    final Stream<String> stream = singleValueTree.keyStream();
+    final Iterator<String> indexIterator = stream.iterator();
 
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = indexIterator.next();
@@ -563,8 +564,8 @@ public class CellBTreeSingleValueV3TestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final Spliterator<ORawPair<String, ORID>> cursor = singleValueTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = Spliterators.iterator(cursor);
+      final Stream<ORawPair<String, ORID>> stream = singleValueTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<String, ORID>> iterator;
       if (ascSortOrder) {
@@ -604,8 +605,8 @@ public class CellBTreeSingleValueV3TestIT {
         toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final Spliterator<ORawPair<String, ORID>> cursor = singleValueTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = Spliterators.iterator(cursor);
+      final Stream<ORawPair<String, ORID>> stream = singleValueTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<String, ORID>> iterator;
       if (ascSortOrder) {
@@ -661,9 +662,9 @@ public class CellBTreeSingleValueV3TestIT {
         fromKey = toKey;
       }
 
-      Spliterator<ORawPair<String, ORID>> cursor = singleValueTree
+      Stream<ORawPair<String, ORID>> stream = singleValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = Spliterators.iterator(cursor);
+      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<String, ORID>> iterator;
       if (ascSortOrder) {

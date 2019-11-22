@@ -16,9 +16,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.Spliterator;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -50,8 +49,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @After
   public void afterClass() throws Exception {
-    final Spliterator<OCompositeKey> keyCursor = localSBTree.keySpliterator();
-    StreamSupport.stream(keyCursor, false).forEach((key) -> {
+    final Stream<OCompositeKey> keyStream = localSBTree.keyStream();
+    keyStream.forEach((key) -> {
       try {
         localSBTree.remove(key);
       } catch (IOException e) {
@@ -69,10 +68,10 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateBetweenValuesInclusive() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesBetween(compositeKey(2.0), true, compositeKey(3.0), true, true);
 
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
 
     assertEquals(orids.size(), 18);
 
@@ -82,8 +81,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
       }
     }
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), true, compositeKey(3.0), true, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(2.0), true, compositeKey(3.0), true, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 18);
     for (int i = 2; i <= 3; i++) {
@@ -95,18 +94,18 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateBetweenValuesFromInclusive() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesBetween(compositeKey(2.0), true, compositeKey(3.0), false, true);
 
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 9);
 
     for (int j = 1; j <= 9; j++) {
       assertTrue(orids.contains(new ORecordId(2, j)));
     }
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), true, compositeKey(3.0), false, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(2.0), true, compositeKey(3.0), false, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 9);
 
@@ -117,9 +116,9 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateBetweenValuesToInclusive() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesBetween(compositeKey(2.0), false, compositeKey(3.0), true, true);
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
 
     assertEquals(orids.size(), 9);
 
@@ -127,8 +126,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
       assertTrue(orids.contains(new ORecordId(3, i)));
     }
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), false, compositeKey(3.0), true, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(2.0), false, compositeKey(3.0), true, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 9);
 
@@ -139,19 +138,19 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateEntriesNonInclusive() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesBetween(compositeKey(2.0), false, compositeKey(3.0), false, true);
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
 
     assertEquals(orids.size(), 0);
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), false, compositeKey(3.0), false, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(2.0), false, compositeKey(3.0), false, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 0);
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(1.0), false, compositeKey(3.0), false, true);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(1.0), false, compositeKey(3.0), false, true);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 9);
 
@@ -159,8 +158,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
       assertTrue(orids.contains(new ORecordId(2, i)));
     }
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(1.0), false, compositeKey(3.0), false, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(1.0), false, compositeKey(3.0), false, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 9);
 
@@ -171,9 +170,9 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateBetweenValuesInclusivePartialKey() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), true, true);
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
 
     assertEquals(orids.size(), 15);
 
@@ -185,8 +184,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
       }
     }
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), true, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), true, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 15);
 
@@ -201,18 +200,18 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateBetweenValuesFromInclusivePartialKey() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), false, true);
 
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 6);
 
     for (int j = 4; j <= 9; j++) {
       assertTrue(orids.contains(new ORecordId(2, j)));
     }
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), false, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), false, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 6);
 
@@ -223,10 +222,10 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateBetweenValuesToInclusivePartialKey() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), true, true);
 
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 14);
 
     for (int i = 2; i <= 3; i++) {
@@ -237,8 +236,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
       }
     }
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), true, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), true, false);
+    orids = extractRids(stream);
     assertEquals(orids.size(), 14);
 
     for (int i = 2; i <= 3; i++) {
@@ -253,18 +252,18 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateBetweenValuesNonInclusivePartial() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), false, true);
 
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 5);
 
     for (int i = 5; i <= 9; i++) {
       assertTrue(orids.contains(new ORecordId(2, i)));
     }
 
-    cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), false, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), false, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 5);
 
@@ -275,8 +274,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMajorInclusivePartial() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0), true, true);
-    Set<ORID> orids = extractRids(cursor);
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree.iterateEntriesMajor(compositeKey(2.0), true, true);
+    Set<ORID> orids = extractRids(stream);
 
     assertEquals(orids.size(), 18);
 
@@ -285,8 +284,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
-    cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0), true, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesMajor(compositeKey(2.0), true, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 18);
 
@@ -298,16 +297,16 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateMajorNonInclusivePartial() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0), false, true);
-    Set<ORID> orids = extractRids(cursor);
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree.iterateEntriesMajor(compositeKey(2.0), false, true);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 9);
 
     for (int i = 1; i <= 9; i++) {
       assertTrue(orids.contains(new ORecordId(3, i)));
     }
 
-    cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0), false, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesMajor(compositeKey(2.0), false, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 9);
 
@@ -318,9 +317,9 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMajorInclusive() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesMajor(compositeKey(2.0, 3.0), true, true);
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 16);
 
     for (int i = 2; i <= 3; i++)
@@ -330,8 +329,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
-    cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0, 3.0), true, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesMajor(compositeKey(2.0, 3.0), true, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 16);
 
@@ -345,9 +344,9 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMajorNonInclusive() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesMajor(compositeKey(2.0, 3.0), false, true);
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 15);
 
     for (int i = 2; i <= 3; i++)
@@ -357,8 +356,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
-    cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0, 3.0), false, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesMajor(compositeKey(2.0, 3.0), false, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 15);
 
@@ -372,8 +371,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMinorInclusivePartial() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0), true, true);
-    Set<ORID> orids = extractRids(cursor);
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree.iterateEntriesMinor(compositeKey(3.0), true, true);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 27);
 
     for (int i = 1; i <= 3; i++)
@@ -381,8 +380,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
-    cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0), true, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesMinor(compositeKey(3.0), true, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 27);
 
@@ -395,8 +394,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMinorNonInclusivePartial() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0), false, true);
-    Set<ORID> orids = extractRids(cursor);
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree.iterateEntriesMinor(compositeKey(3.0), false, true);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 18);
 
     for (int i = 1; i < 3; i++)
@@ -404,8 +403,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
-    cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0), false, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesMinor(compositeKey(3.0), false, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 18);
 
@@ -417,9 +416,9 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMinorInclusive() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesMinor(compositeKey(3.0, 2.0), true, true);
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 20);
 
     for (int i = 1; i <= 3; i++)
@@ -430,8 +429,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
-    cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0, 2.0), true, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesMinor(compositeKey(3.0, 2.0), true, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 20);
 
@@ -446,9 +445,9 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMinorNonInclusive() {
-    Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor = localSBTree
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
         .iterateEntriesMinor(compositeKey(3.0, 2.0), false, true);
-    Set<ORID> orids = extractRids(cursor);
+    Set<ORID> orids = extractRids(stream);
 
     assertEquals(orids.size(), 19);
 
@@ -457,8 +456,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
-    cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0, 2.0), false, false);
-    orids = extractRids(cursor);
+    stream = localSBTree.iterateEntriesMinor(compositeKey(3.0, 2.0), false, false);
+    orids = extractRids(stream);
 
     assertEquals(orids.size(), 19);
 
@@ -472,8 +471,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
     return new OCompositeKey(Arrays.asList(params));
   }
 
-  private static Set<ORID> extractRids(Spliterator<ORawPair<OCompositeKey, OIdentifiable>> cursor) {
-    return StreamSupport.stream(cursor, false).map((entry) -> entry.second.getIdentity()).collect(Collectors.toSet());
+  private static Set<ORID> extractRids(Stream<ORawPair<OCompositeKey, OIdentifiable>> stream) {
+    return stream.map((entry) -> entry.second.getIdentity()).collect(Collectors.toSet());
   }
 
 }

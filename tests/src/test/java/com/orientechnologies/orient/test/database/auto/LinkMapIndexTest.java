@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexKeySpliterator;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -10,10 +9,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.Optional;
 import org.testng.annotations.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @since 22.03.12
@@ -71,8 +73,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       String key = (String) keyIterator.next();
@@ -85,8 +87,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndexMap.getSize(), 2);
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -124,8 +126,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       String key = (String) keyIterator.next();
@@ -137,8 +139,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -179,8 +181,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -192,8 +194,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -232,8 +234,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -245,8 +247,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -290,8 +292,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -303,8 +305,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -341,8 +343,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 3);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -354,8 +356,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 3);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    final Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -401,8 +403,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 3);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    final Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -415,8 +417,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 3);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -457,8 +459,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    final Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -470,8 +472,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    final Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -508,8 +510,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
 
     Assert.assertEquals(keyIndexMap.getSize(), 2);
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    final Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -521,8 +523,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -568,8 +570,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
     Assert.assertEquals(keyIndexMap.getSize(), 2);
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    final Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -581,8 +583,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    final Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -622,8 +624,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -635,8 +637,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -673,8 +675,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    final Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -686,8 +688,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -733,8 +735,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -746,8 +748,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -788,8 +790,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 3);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    final Iterator<Object> keyIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    final Iterator<Object> keyIterator = keyStream.iterator();
 
     while (keyIterator.hasNext()) {
       String key = (String) keyIterator.next();
@@ -801,8 +803,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 3);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    final Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();
@@ -901,8 +903,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator keyCursor = keyIndexMap.keySpliterator();
-    final Iterator<Object> keysIterator = Spliterators.iterator(keyCursor);
+    final Stream<Object> keyStream = keyIndexMap.keyStream();
+    final Iterator<Object> keysIterator = keyStream.iterator();
 
     while (keysIterator.hasNext()) {
       String key = (String) keysIterator.next();
@@ -914,8 +916,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final IndexKeySpliterator valueCursor = valueIndexMap.keySpliterator();
-    final Iterator<Object> valuesIterator = Spliterators.iterator(valueCursor);
+    final Stream<Object> valueStream = valueIndexMap.keyStream();
+    final Iterator<Object> valuesIterator = valueStream.iterator();
 
     while (valuesIterator.hasNext()) {
       OIdentifiable value = (OIdentifiable) valuesIterator.next();

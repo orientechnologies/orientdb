@@ -26,16 +26,17 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -334,9 +335,8 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
           newKeys.addAll(prepareKeys(nextIndex, currentResult));
         }
       } else {
-        final IndexCursor cursor = currentIndex.iterateEntries(currentKeys, true);
         @SuppressWarnings("ObjectAllocationInLoop")
-        final List<OIdentifiable> keys = StreamSupport.stream(cursor, false).map((pair) -> pair.second)
+        final List<OIdentifiable> keys = currentIndex.iterateEntries(currentKeys, true).map((pair) -> pair.second)
             .collect(Collectors.toList());
         newKeys = prepareKeys(nextIndex, keys);
       }
@@ -357,9 +357,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
         result.addAll(getFromCompositeIndex(key, firstIndex));
       }
     } else {
-      final IndexCursor cursor = firstIndex.iterateEntries(currentKeys, true);
-
-      result = StreamSupport.stream(cursor, false).map((pair) -> pair.second).collect(Collectors.toList());
+      result = firstIndex.iterateEntries(currentKeys, true).map((pair) -> pair.second).collect(Collectors.toList());
     }
 
     updateStatistic(firstIndex);
@@ -368,9 +366,8 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   private static List<ORID> getFromCompositeIndex(Comparable currentKey, OIndex<?> currentIndex) {
-    final IndexCursor cursor = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true);
-
-    return StreamSupport.stream(cursor, false).map((pair) -> pair.second).collect(Collectors.toList());
+    return currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true).map((pair) -> pair.second)
+        .collect(Collectors.toList());
   }
 
   /**
@@ -538,17 +535,17 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
-  public IndexCursor cursor() {
+  public Stream<ORawPair<Object, ORID>> stream() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
   @Override
-  public IndexCursor descCursor() {
+  public Stream<ORawPair<Object, ORID>> descCursor() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
   @Override
-  public IndexKeySpliterator keySpliterator() {
+  public Stream<Object> keyStream() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -562,28 +559,24 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
-  public IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    final IndexCursor internalCursor = lastIndex.iterateEntries(keys, ascSortOrder);
-    return new ExternalIndexCursor(internalCursor);
+  public Stream<ORawPair<Object, ORID>> iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+    return applyTailIndexes(lastIndex.iterateEntries(keys, ascSortOrder));
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
-      boolean ascOrder) {
-    final IndexCursor internalCursor = lastIndex.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
-    return new ExternalIndexCursor(internalCursor);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
+      boolean toInclusive, boolean ascOrder) {
+    return applyTailIndexes(lastIndex.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder));
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    final IndexCursor internalCursor = lastIndex.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
-    return new ExternalIndexCursor(internalCursor);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    return applyTailIndexes(lastIndex.iterateEntriesMajor(fromKey, fromInclusive, ascOrder));
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
-    final IndexCursor internalCursor = lastIndex.iterateEntriesMinor(toKey, toInclusive, ascOrder);
-    return new ExternalIndexCursor(internalCursor);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    return applyTailIndexes(lastIndex.iterateEntriesMinor(toKey, toInclusive, ascOrder));
   }
 
   @Override
@@ -591,76 +584,8 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return false;
   }
 
-  private final class ExternalIndexCursor implements IndexCursor {
-    private final IndexCursor internalCursor;
-
-    private final List<ORID>     queryResult     = new ArrayList<>();
-    private       Iterator<ORID> currentIterator = Collections.emptyIterator();
-
-    private ExternalIndexCursor(IndexCursor internalCursor) {
-      this.internalCursor = internalCursor;
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      if (currentIterator == null) {
-        return false;
-      }
-
-      while (!currentIterator.hasNext()) {
-        @SuppressWarnings("ObjectAllocationInLoop")
-        final ORawPair<Object, ORID>[] rawPair = new ORawPair[1];
-        ORawPair<Object, ORID> entry;
-        //noinspection ObjectAllocationInLoop
-        if (internalCursor.tryAdvance((pair) -> rawPair[0] = pair)) {
-          entry = rawPair[0];
-        } else {
-          entry = null;
-        }
-
-        if (entry == null) {
-          currentIterator = null;
-          return false;
-        }
-
-        queryResult.clear();
-        queryResult.addAll(applyTailIndexes(entry.second));
-
-        //noinspection ObjectAllocationInLoop
-        currentIterator = new Iterator<ORID>() {
-          private final Iterator<ORID> identifiableIterator = queryResult.iterator();
-
-          @Override
-          public boolean hasNext() {
-            return identifiableIterator.hasNext();
-          }
-
-          @Override
-          public ORID next() {
-            return identifiableIterator.next().getIdentity();
-          }
-        };
-      }
-
-      final ORID result = currentIterator.next();
-      action.accept(new ORawPair<>(null, result));
-      return true;
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return Long.MAX_VALUE;
-    }
-
-    @Override
-    public int characteristics() {
-      return NONNULL | ORDERED;
-    }
+  private Stream<ORawPair<Object, ORID>> applyTailIndexes(Stream<ORawPair<Object, ORID>> indexStream) {
+    return indexStream.flatMap((entry) -> applyTailIndexes(entry.second).stream().map((rid) -> new ORawPair<>(null, rid)));
   }
 
   @Override

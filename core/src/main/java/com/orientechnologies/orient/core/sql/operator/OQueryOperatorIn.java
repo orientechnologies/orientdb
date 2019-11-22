@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -34,6 +35,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * IN operator.
@@ -53,11 +55,12 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
   @SuppressWarnings("unchecked")
   @Override
-  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
-    IndexCursor cursor;
+    Stream<ORawPair<Object, ORID>> stream;
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;
 
@@ -109,7 +112,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       if (containsNotCompatibleKey)
         return null;
 
-      cursor = index.iterateEntries(inKeys, ascSortOrder);
+      stream = index.iterateEntries(inKeys, ascSortOrder);
     } else {
       final List<Object> partialKey = new ArrayList<Object>();
       partialKey.addAll(keyParams);
@@ -148,25 +151,17 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       }
 
       if (inKeys == null)
-        return null;
+        return Stream.empty();
 
       if (indexDefinition.getParamCount() == keyParams.size()) {
-        final Object indexResult;
-        indexResult = index.iterateEntries(inKeys, ascSortOrder);
-
-        if (indexResult == null || indexResult instanceof OIdentifiable) {
-          cursor = new IndexCursorSingleValue((OIdentifiable) indexResult, inKeys);
-        } else if (indexResult instanceof IndexCursor) {
-          cursor = (IndexCursor) indexResult;
-        } else {
-          cursor = new IndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, inKeys);
-        }
-      } else
-        return null;
+        stream = index.iterateEntries(inKeys, ascSortOrder);
+      } else {
+        return Stream.empty();
+      }
     }
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
-    return cursor;
+    return stream;
   }
 
   @Override

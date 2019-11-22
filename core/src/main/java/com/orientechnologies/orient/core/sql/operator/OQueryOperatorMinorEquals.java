@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -34,6 +35,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * MINOR EQUALS operator.
@@ -53,7 +55,8 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
 
   @Override
   @SuppressWarnings("unchecked")
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, OCommandContext iContext) {
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
     final Object right = OType.convert(iRight, iLeft.getClass());
     if (right == null)
       return false;
@@ -68,11 +71,12 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
-    IndexCursor cursor;
+    Stream<ORawPair<Object, ORID>> stream;
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
 
@@ -86,7 +90,7 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      cursor = index.iterateEntriesMinor(key, true, ascSortOrder);
+      stream = index.iterateEntriesMinor(key, true, ascSortOrder);
     } else {
       // if we have situation like "field1 = 1 AND field2 <= 2"
       // then we fetch collection which left included boundary is the smallest composite key in the
@@ -97,19 +101,21 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams.subList(0, keyParams.size() - 1));
 
-      if (keyOne == null)
-        return null;
+      if (keyOne == null) {
+        return Stream.empty();
+      }
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-      if (keyTwo == null)
-        return null;
+      if (keyTwo == null) {
+        return Stream.empty();
+      }
 
-      cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+      stream = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return cursor;
+    return stream;
   }
 
   @Override
@@ -123,7 +129,8 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof ORID)
         return (ORID) iRight;
       else {
-        if (iRight instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
+        if (iRight instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iRight)
+            .getValue(null, null, null) instanceof ORID)
           return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
       }
 
@@ -131,8 +138,8 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, 
-          OCommandContext iContext, final ODocumentSerializer serializer) {
+  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, OCommandContext iContext,
+      final ODocumentSerializer serializer) {
     return serializer.getComparator().compare(iFirstField, iSecondField) <= 0;
   }
 

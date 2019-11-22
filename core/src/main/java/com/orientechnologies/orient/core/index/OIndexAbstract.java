@@ -52,7 +52,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 /**
  * Handles indexing when records change. The underlying lock manager for keys can be the {@link OPartitionedLockManager}, the
@@ -83,7 +83,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   private          String              algorithm;
   private volatile OIndexDefinition    indexDefinition;
   private volatile boolean             rebuilding       = false;
-  private          Map<String, String> engineProperties = new HashMap<>();
+  private final    Map<String, String> engineProperties = new HashMap<>();
   protected final  int                 binaryFormatVersion;
 
   public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
@@ -206,7 +206,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       }
 
       indexId = storage.addIndexEngine(name, algorithm, type, indexDefinition, valueSerializer, isAutomatic(), true, version, 1,
-          this instanceof OIndexMultiValues, getEngineProperties(), clustersToIndex, metadata);
+          this instanceof OIndexMultiValues, engineProperties, clustersToIndex, metadata);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
       assert indexId >= 0;
@@ -269,7 +269,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         if (indexId == -1) {
           indexId = storage
               .loadExternalIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(), true,
-                  version, 1, this instanceof OIndexMultiValues, getEngineProperties(), metadata);
+                  version, 1, this instanceof OIndexMultiValues, engineProperties, metadata);
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
 
@@ -280,17 +280,16 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         onIndexEngineChange(indexId);
 
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during load of index '%s'", e, name != null ? name : "null");
+        OLogManager.instance().error(this, "Error during load of index '%s'", e, Optional.ofNullable(name).orElse("null"));
 
         if (isAutomatic()) {
           // AUTOMATIC REBUILD IT
-          OLogManager.instance().warn(this, "Cannot load index '%s' rebuilt it from scratch", getName());
+          OLogManager.instance().warn(this, "Cannot load index '%s' rebuilt it from scratch", name);
           try {
             rebuild();
           } catch (Exception t) {
             OLogManager.instance()
-                .error(this, "Cannot rebuild index '%s' because '" + t + "'. The index will be removed in configuration", e,
-                    getName());
+                .error(this, "Cannot rebuild index '%s' because '" + t + "'. The index will be removed in configuration", e, name);
             // REMOVE IT
             return false;
           }
@@ -410,7 +409,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
       indexId = storage
           .addIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(), true, version, 1,
-              this instanceof OIndexMultiValues, getEngineProperties(), clustersToIndex, metadata);
+              this instanceof OIndexMultiValues, engineProperties, clustersToIndex, metadata);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
       onIndexEngineChange(indexId);
@@ -553,9 +552,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     while (true)
       try {
         //noinspection ObjectAllocationInLoop
-        StreamSupport.stream(cursor(), false).forEach((pair) -> {
-          remove(pair.first, pair.second);
-        });
+        stream().forEach((pair) -> remove(pair.first, pair.second));
 
         final Object value = get(null);
         if (value instanceof Collection) {
@@ -768,12 +765,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   @Override
-  public IndexKeySpliterator keySpliterator() {
+  public Stream<Object> keyStream() {
     acquireSharedLock();
     try {
       while (true)
         try {
-          return storage.getIndexKeyCursor(indexId);
+          return storage.getIndexKeyStream(indexId);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -841,8 +838,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   public Object getCollatingValue(final Object key) {
-    if (key != null && getDefinition() != null)
-      return getDefinition().getCollate().transform(key);
+    if (key != null && indexDefinition != null)
+      return indexDefinition.getCollate().transform(key);
     return key;
   }
 
@@ -983,7 +980,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
       if (atomicOperation == null) {
         try {
-          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          final String fileName = name + OIndexRIDContainer.INDEX_FILE_EXTENSION;
           if (writeCache.exists(fileName)) {
             final long fileId = writeCache.loadFile(fileName);
             readCache.deleteFile(fileId, writeCache);
@@ -993,7 +990,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         }
       } else {
         try {
-          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          final String fileName = name + OIndexRIDContainer.INDEX_FILE_EXTENSION;
           if (atomicOperation.isFileExists(fileName)) {
             final long fileId = atomicOperation.loadFile(fileName);
             atomicOperation.deleteFile(fileId);
@@ -1010,7 +1007,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     while (true)
       try {
         storage.callIndexEngine(false, false, indexId, engine -> {
-          engine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
+          engine.init(name, type, indexDefinition, isAutomatic(), metadata);
           return null;
         });
         break;
@@ -1035,11 +1032,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       this.document = document;
     }
 
-    ODocument getDocument() {
+    private ODocument getDocument() {
       return document;
     }
 
-    synchronized void updateConfiguration(String type, String name, int version, OIndexDefinition indexDefinition,
+    private synchronized void updateConfiguration(String type, String name, int version, OIndexDefinition indexDefinition,
         Set<String> clustersToIndex, String algorithm, String valueContainerAlgorithm) {
       document.field(OIndexInternal.CONFIG_TYPE, type);
       document.field(OIndexInternal.CONFIG_NAME, name);

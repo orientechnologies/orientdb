@@ -28,13 +28,14 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.*;
-import java.util.function.Consumer;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Proxied abstract index.
@@ -357,23 +358,23 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public IndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
-      boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
+      boolean toInclusive, boolean ascOrder) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
-  public IndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
-  public IndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
   @Override
-  public IndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> iterateEntries(Collection<?> keys, boolean ascSortOrder) {
 
     final StringBuilder params = new StringBuilder(128);
     if (!keys.isEmpty()) {
@@ -387,38 +388,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
         .indexQuery(name, String.format(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"),
             keys.toArray());
 
-    final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    res.forEachRemaining(copy::add);
-    res.close();
+    return convertResultSetToIndexStream(res);
+  }
 
-    return new IndexCursor() {
-      @Override
-      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-        if (!copy.hasNext()) {
-          return false;
-        }
-
-        final OResult next = copy.next();
-        action.accept(new ORawPair<>(next.getProperty("key"), next.getProperty("rid")));
-        return true;
-      }
-
-      @Override
-      public Spliterator<ORawPair<Object, ORID>> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
-
-      @Override
-      public int characteristics() {
-        return ORDERED | NONNULL;
-      }
-    };
-
+  private static Stream<ORawPair<Object, ORID>> convertResultSetToIndexStream(OResultSet resultSet) {
+    return resultSet.stream().map((result) -> new ORawPair<>(result.getProperty("key"), result.getProperty("rid")));
   }
 
   @Override
@@ -427,113 +401,22 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public IndexCursor cursor() {
-    OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_ENTRIES, name));
-    final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    result.forEachRemaining(copy::add);
-    result.close();
+  public Stream<ORawPair<Object, ORID>> stream() {
+    OResultSet res = getDatabase().indexQuery(name, String.format(QUERY_ENTRIES, name));
+    return convertResultSetToIndexStream(res);
 
-    return new IndexCursor() {
-
-      @Override
-      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-        if (!copy.hasNext()) {
-          return false;
-        }
-
-        final OResult value = copy.next();
-        action.accept(new ORawPair<>(value.getProperty("key"), value.getProperty("rid")));
-        return true;
-      }
-
-      @Override
-      public Spliterator<ORawPair<Object, ORID>> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL | ORDERED;
-      }
-    };
   }
 
   @Override
-  public IndexCursor descCursor() {
+  public Stream<ORawPair<Object, ORID>> descCursor() {
     final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_ENTRIES_DESC, name));
-    final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    result.forEachRemaining(copy::add);
-    result.close();
-
-    return new IndexCursor() {
-      @Override
-      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-        if (!copy.hasNext()) {
-          return false;
-        }
-
-        final OResult value = copy.next();
-        action.accept(new ORawPair<>(value.getProperty("key"), value.getProperty("rid")));
-        return true;
-      }
-
-      @Override
-      public Spliterator<ORawPair<Object, ORID>> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL | ORDERED;
-      }
-    };
+    return convertResultSetToIndexStream(result);
   }
 
   @Override
-  public IndexKeySpliterator keySpliterator() {
-    final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_KEYS, name));
-    final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    result.forEachRemaining(copy::add);
-    result.close();
-
-    return new IndexKeySpliterator() {
-      @Override
-      public boolean tryAdvance(Consumer<? super Object> action) {
-        if (!copy.hasNext()) {
-          return false;
-        }
-
-        final OResult value = copy.next();
-        action.accept(value.getProperty("key"));
-
-        return true;
-      }
-
-      @Override
-      public Spliterator<Object> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL | ORDERED;
-      }
-    };
+  public Stream<Object> keyStream() {
+    final OResultSet res = getDatabase().indexQuery(name, String.format(QUERY_KEYS, name));
+    return res.stream().map((result) -> result.getProperty("key"));
   }
 
   @Override

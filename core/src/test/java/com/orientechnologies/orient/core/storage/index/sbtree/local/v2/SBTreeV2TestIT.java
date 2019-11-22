@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -608,8 +608,8 @@ public class SBTreeV2TestIT {
 
     Set<OIdentifiable> identifiables = new HashSet<>();
 
-    Spliterator<ORawPair<Integer, OIdentifiable>> cursor = sbTree.iterateEntriesMinor(7200, true, true);
-    cursorToSet(identifiables, cursor);
+    Stream<ORawPair<Integer, OIdentifiable>> stream = sbTree.iterateEntriesMinor(7200, true, true);
+    streamToSet(identifiables, stream);
 
     for (int i = 7200; i >= 6900; i--) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -623,8 +623,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesMinor(7200, true, false);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesMinor(7200, true, false);
+    streamToSet(identifiables, stream);
 
     for (int i = 7200; i >= 6900; i--) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -638,8 +638,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesMajor(1740, true, true);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesMajor(1740, true, true);
+    streamToSet(identifiables, stream);
 
     for (int i = 1740; i < 3440; i++) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -653,8 +653,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesMajor(1740, true, false);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesMajor(1740, true, false);
+    streamToSet(identifiables, stream);
 
     for (int i = 1740; i < 3440; i++) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -668,8 +668,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesBetween(1740, true, 7200, true, true);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesBetween(1740, true, 7200, true, true);
+    streamToSet(identifiables, stream);
 
     for (int i = 1740; i < 3440; i++) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -683,8 +683,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesBetween(1740, true, 7200, true, false);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesBetween(1740, true, 7200, true, false);
+    streamToSet(identifiables, stream);
 
     for (int i = 1740; i < 3440; i++) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -718,8 +718,8 @@ public class SBTreeV2TestIT {
       doNullTesting(nullSBTree);
 
     } finally {
-      final Spliterator<Integer> keyCursor = nullSBTree.keySpliterator();
-      StreamSupport.stream(keyCursor, false).forEach((key) -> {
+      final Stream<Integer> keyStream = nullSBTree.keyStream();
+      keyStream.forEach((key) -> {
         try {
           nullSBTree.remove(key);
         } catch (IOException e) {
@@ -754,9 +754,9 @@ public class SBTreeV2TestIT {
     Assert.assertNull(identifiable);
   }
 
-  private static void cursorToSet(Set<OIdentifiable> identifiables, Spliterator<ORawPair<Integer, OIdentifiable>> cursor) {
+  private static void streamToSet(Set<OIdentifiable> identifiables, Stream<ORawPair<Integer, OIdentifiable>> stream) {
     identifiables.clear();
-    identifiables.addAll(StreamSupport.stream(cursor, false).map((entry) -> entry.second).collect(Collectors.toSet()));
+    identifiables.addAll(stream.map((entry) -> entry.second).collect(Collectors.toSet()));
   }
 
   private void assertIterateMajorEntries(NavigableMap<Integer, ORID> keyValues, Random random, boolean keyInclusive,
@@ -777,8 +777,8 @@ public class SBTreeV2TestIT {
           fromKey = keyValues.floorKey(fromKey);
       }
 
-      final Spliterator<ORawPair<Integer, OIdentifiable>> cursor = sbTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<Integer, OIdentifiable>> indexIterator = Spliterators.iterator(cursor);
+      final Stream<ORawPair<Integer, OIdentifiable>> stream = sbTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<Integer, OIdentifiable>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
       if (ascSortOrder)
@@ -816,8 +816,8 @@ public class SBTreeV2TestIT {
           toKey = keyValues.floorKey(toKey);
       }
 
-      final Spliterator<ORawPair<Integer, OIdentifiable>> cursor = sbTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<Integer, OIdentifiable>> indexIterator = Spliterators.iterator(cursor);
+      final Stream<ORawPair<Integer, OIdentifiable>> stream = sbTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<Integer, OIdentifiable>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
       if (ascSortOrder)
@@ -873,9 +873,9 @@ public class SBTreeV2TestIT {
       if (fromKey > toKey)
         toKey = fromKey;
 
-      Spliterator<ORawPair<Integer, OIdentifiable>> cursor = sbTree
+      Stream<ORawPair<Integer, OIdentifiable>> stream = sbTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
-      final Iterator<ORawPair<Integer, OIdentifiable>> indexIterator = Spliterators.iterator(cursor);
+      final Iterator<ORawPair<Integer, OIdentifiable>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
       if (ascSortOrder)

@@ -17,6 +17,7 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
@@ -27,9 +28,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexCursor;
-import com.orientechnologies.orient.core.index.IndexCursorCollectionValue;
-import com.orientechnologies.orient.core.index.IndexCursorSingleValue;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -45,6 +43,7 @@ import org.apache.lucene.index.memory.MemoryIndex;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
 
@@ -76,7 +75,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public IndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      boolean ascSortOrder) {
     if (!index.getType().toLowerCase().contains("fulltext")) {
       return null;
     }
@@ -87,10 +87,12 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     Set<OIdentifiable> indexResult = (Set<OIdentifiable>) index
         .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()));
 
-    if (indexResult == null)
-      return new IndexCursorSingleValue((OIdentifiable) indexResult, new OLuceneCompositeKey(keyParams));
+    if (indexResult == null) {
+      return Stream.empty();
+    }
 
-    return new IndexCursorCollectionValue(indexResult, new OLuceneCompositeKey(keyParams));
+    return indexResult.stream()
+        .map((identifiable) -> new ORawPair<>(new OLuceneCompositeKey(keyParams), identifiable.getIdentity()));
   }
 
   @Override
