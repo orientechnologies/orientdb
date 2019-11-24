@@ -117,9 +117,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
@@ -135,15 +133,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     implements OLowDiskSpaceListener, OCheckpointRequestListener, OIdentifiableStorage, OBackgroundExceptionListener,
     OFreezableStorageComponent, OPageIsBrokenListener {
   protected static final OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
-  private static final   int                                     RECORD_LOCK_TIMEOUT                = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
+  private static final   OScheduledThreadPoolExecutorWithLogging storageProfilerExecutor;
+
+  private static final int                          RECORD_LOCK_TIMEOUT                = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
       .getValueAsInteger();
-  private static final   int                                     WAL_RESTORE_REPORT_INTERVAL        = 30 * 1000; // milliseconds
-  private static final   Comparator<ORecordOperation>            COMMIT_RECORD_OPERATION_COMPARATOR = Comparator
+  private static final int                          WAL_RESTORE_REPORT_INTERVAL        = 30 * 1000; // milliseconds
+  private static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR = Comparator
       .comparing(o -> o.getRecord().getIdentity());
 
   static {
     fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
     fuzzyCheckpointExecutor.setMaximumPoolSize(1);
+
+    storageProfilerExecutor = new OScheduledThreadPoolExecutorWithLogging(0, new StorageProfilerThreadFactory());
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -1947,7 +1949,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       txBegun.incrementAndGet();
 
       final TransactionProfiler transactionProfiler = new TransactionProfiler(5, txIsCompleted, Thread.currentThread());
-      transactionProfiler.task = Orient.instance().scheduleTask(transactionProfiler, 5_000, 5);
+      transactionProfiler.future = storageProfilerExecutor
+          .scheduleWithFixedDelay(transactionProfiler, 5_000, 5, TimeUnit.MILLISECONDS);
 
       final ODatabaseDocumentInternal database = transaction.getDatabase();
       final OIndexManager indexManager = database.getMetadata().getIndexManager();
@@ -6169,6 +6172,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  private static final class StorageProfilerThreadFactory implements ThreadFactory {
+    @Override
+    public final Thread newThread(final Runnable r) {
+      final Thread thread = new Thread(storageThreadGroup, r);
+      thread.setDaemon(true);
+      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      return thread;
+    }
+  }
+
   private final class WALVacuum implements Runnable {
 
     WALVacuum() {
@@ -6249,7 +6262,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     private boolean firstTime = true;
 
-    private volatile TimerTask task;
+    private volatile Future<?> future;
 
     private TransactionProfiler(int profilingDelay, AtomicBoolean txIsCompleted, Thread txThread) {
       this.profilingDelay = profilingDelay;
@@ -6261,7 +6274,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     @Override
     public void run() {
-      if (!txIsCompleted.get() && txThread.isAlive()) {
+      if (!txIsCompleted.get()) {
         if (firstTime) {
           OLogManager.instance().infoNoDb(this, "Transaction processing is taking too much time more than " + profilingDelay
               + " seconds, profiling of the transaction is automatically started. File with name " + filePath
@@ -6272,7 +6285,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final StackTraceElement[] traceElements = txThread.getStackTrace();
         if (traceElements.length > 0) {
           final StringBuilder stackData = new StringBuilder();
-          for (final StackTraceElement element : traceElements) {
+          for (int i = traceElements.length - 1; i >= 0; i--) {
+            final StackTraceElement element = traceElements[i];
             stackData.append(element.getClassName()).append(element.getMethodName()).append(";");
           }
 
@@ -6301,13 +6315,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           } catch (IOException e) {
             OLogManager.instance().errorNoDb(this, "Can not create file" + filePath, e);
+            if (future != null) {
+              future.cancel(false);
+            }
           }
 
           stackMap.clear();
         }
 
-        if (task != null) {
-          task.cancel();
+        if (future != null) {
+          future.cancel(false);
         }
       }
     }
