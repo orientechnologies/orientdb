@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
@@ -37,7 +38,7 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
   }
 
   @Override
-  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+  public ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
     OTransactionOptimisticDistributed tx = ((ODatabaseDocumentDistributed) session)
         .txSecondPhase(operationId, operations, indexes, success);

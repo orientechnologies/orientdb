@@ -18,11 +18,11 @@ public abstract class ONodeManager {
   protected boolean running = true;
 
   protected final ODiscoveryListener discoveryListener;
-  private         Thread             messageThread;
+  private Thread messageThread;
 
   protected volatile Map<ONodeIdentity, ODiscoveryListener.NodeData> knownServers;
 
-  protected final ONodeConfiguration         config;
+  protected final ONodeConfiguration config;
   protected final ONodeInternalConfiguration internalConfiguration;
 
   private String encryptionAlgorithm = "AES";
@@ -32,19 +32,19 @@ public abstract class ONodeManager {
   protected OOperationLog opLog;
 
   protected long discoveryPingIntervalMillis = 500;//TODO configure
-  protected long checkLeaderIntervalMillis   = 1000;//TODO configure
+  protected long checkLeaderIntervalMillis = 1000;//TODO configure
   /**
    * max time a server can be silent (did not get ping from it) until it is considered inactive, ie. left the network
    */
   protected long maxInactiveServerTimeMillis = 5000;
 
   protected OLeaderElectionStateMachine leaderStatus;
-  private   TimerTask                   discoveryTimer;
-  private   TimerTask                   disconnectTimer;
-  private   TimerTask                   checkerTimer;
+  private TimerTask discoveryTimer;
+  private TimerTask disconnectTimer;
+  private TimerTask checkerTimer;
 
   public ONodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration, int term,
-      OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener, OOperationLog opLog) {
+                      OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener, OOperationLog opLog) {
     this.config = config;
     this.internalConfiguration = internalConfiguration;
     if (config.getGroupName() == null || config.getGroupName().length() == 0) {
@@ -52,7 +52,7 @@ public abstract class ONodeManager {
     }
 
     if (internalConfiguration.getNodeIdentity().getName() == null
-        || internalConfiguration.getNodeIdentity().getName().length() == 0) {
+            || internalConfiguration.getNodeIdentity().getName().length() == 0) {
       throw new IllegalArgumentException("Invalid node name");
     }
     if (internalConfiguration.getNodeIdentity().getId() == null || internalConfiguration.getNodeIdentity().getId().length() == 0) {
@@ -289,7 +289,7 @@ public abstract class ONodeManager {
 
       //Master info
       if (message.leaderIdentity != null && message.leaderTerm >= this.leaderStatus.currentTerm
-          && message.leaderPing + maxInactiveServerTimeMillis > System.currentTimeMillis()) {
+              && message.leaderPing + maxInactiveServerTimeMillis > System.currentTimeMillis()) {
         data = knownServers.get(message.leaderIdentity);
 
         if (data == null) {
@@ -446,6 +446,9 @@ public abstract class ONodeManager {
     message.dbName = dbName;
     message.lastLogId = lastLogId;
     message.type = OBroadcastMessage.TYPE_START_LEADER_ELECTION;
+    message.connectionUsername = this.getInternalConfiguration().getConnectionUsername();
+    message.connectionPassword = this.getInternalConfiguration().getConnectionPassword();
+    message.tcpPort = getConfig().getTcpPort();
 
     try {
       byte[] msg = serializeMessage(message);
@@ -492,7 +495,7 @@ public abstract class ONodeManager {
 
   protected void processReceiveStartElection(OBroadcastMessage message, String fromAddr) {
     if (message.term > leaderStatus.currentTerm && message.term > leaderStatus.lastTermVoted && (opLog == null
-        || message.lastLogId >= opLog.lastPersistentLog().getId())) {
+            || message.lastLogId >= opLog.lastPersistentLog().getId())) {
       //vote, but only once per term!
       leaderStatus.setStatus(OLeaderElectionStateMachine.Status.FOLLOWER);
       leaderStatus.lastTermVoted = message.term;
@@ -512,6 +515,9 @@ public abstract class ONodeManager {
     message.voteForIdentity = toNode;
     message.type = OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION;
     message.lastLogId = opLog == null ? 0 : opLog.lastPersistentLog().getId();
+    message.connectionUsername = this.getInternalConfiguration().getConnectionUsername();
+    message.connectionPassword = this.getInternalConfiguration().getConnectionPassword();
+    message.tcpPort = getConfig().getTcpPort();
 
     try {
       byte[] msg = serializeMessage(message);
@@ -534,6 +540,9 @@ public abstract class ONodeManager {
       data.leader = true;
       data.identity = this.internalConfiguration.getNodeIdentity();
       data.lastPingTimestamp = System.currentTimeMillis();
+      data.connectionUsername = this.getInternalConfiguration().getConnectionUsername();
+      data.connectionPassword = this.getInternalConfiguration().getConnectionPassword();
+      data.port = this.getConfig().getTcpPort();
       discoveryListener.leaderElected(data);
       knownServers.put(this.internalConfiguration.getNodeIdentity(), data);
       sendLeaderElected();
@@ -571,10 +580,12 @@ public abstract class ONodeManager {
   /* =============== NETWORK UTILITIES ================= */
 
   protected byte[] serializeMessage(OBroadcastMessage message) throws Exception {
+    validateMessage(message);
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     message.write(new DataOutputStream(buffer));
     return encrypt(buffer.toByteArray());
   }
+
 
   protected OBroadcastMessage deserializeMessage(byte[] data) throws Exception {
     data = decrypt(data);
@@ -585,6 +596,44 @@ public abstract class ONodeManager {
     message.read(new DataInputStream(new ByteArrayInputStream(data)));
     return message;
   }
+
+  private void validateMessage(OBroadcastMessage message) {
+    assert message.type >= 0 && message.type <= 5;
+    assert message.nodeIdentity != null;
+    assert message.nodeIdentity.getId() != null;
+    assert message.nodeIdentity.getName() != null;
+
+    assert message.group != null;
+    assert message.term >= 0;
+    assert message.role >= 0 && message.role <= 2;
+    assert message.connectionUsername != null;
+    assert message.connectionPassword != null;
+
+    //for ping
+    assert message.tcpPort > 0;
+
+    // for leader election
+    if (message.type == OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION) {
+      assert message.voteForIdentity != null;
+      assert message.voteForIdentity.getId() != null;
+    }
+    // assert message.dbName != null;
+    //assert message.lastLogId >= 0;
+
+    //MASTER INFO
+    if (message.leaderIdentity != null) {
+      assert message.leaderIdentity != null;
+      assert message.leaderIdentity.getId() != null;
+      assert message.leaderTerm >= 0;
+      assert message.leaderAddress != null;
+      assert message.leaderTcpPort > 0;
+      assert message.leaderConnectionUsername != null;
+      assert message.leaderConnectionPassword != null;
+      assert message.leaderPing > 0;
+    }
+
+  }
+
 
   /* =============== ENCRYPTION ================= */
 

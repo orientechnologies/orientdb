@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.mocktx;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 
@@ -15,7 +15,7 @@ public class OSubmitTx implements OSubmitRequest {
   public boolean secondPhase;
 
   @Override
-  public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+  public void begin(ONodeIdentity requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
     coordinator.sendOperation(this, new OPhase1Tx(), new FirstPhaseHandler(this, requester));
   }
 

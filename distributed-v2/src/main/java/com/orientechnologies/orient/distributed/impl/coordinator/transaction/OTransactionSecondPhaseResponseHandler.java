@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.OLockGuard;
 
@@ -8,14 +9,14 @@ import java.util.List;
 public class OTransactionSecondPhaseResponseHandler implements OResponseHandler {
 
   private       OTransactionSubmit  request;
-  private       ODistributedMember  requester;
+  private       ONodeIdentity       requester;
   private final boolean             success;
   private       int                 responseCount = 0;
   private final List<OLockGuard>    guards;
   private       OSessionOperationId operationId;
   private       boolean             replySent     = false;
 
-  public OTransactionSecondPhaseResponseHandler(boolean success, OTransactionSubmit request, ODistributedMember requester,
+  public OTransactionSecondPhaseResponseHandler(boolean success, OTransactionSubmit request, ONodeIdentity requester,
       List<OLockGuard> guards, OSessionOperationId operationId) {
     this.success = success;
     this.request = request;
@@ -25,7 +26,7 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
   }
 
   @Override
-  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeIdentity member,
       ONodeResponse response) {
     responseCount++;
     if (responseCount >= context.getQuorum()) {

@@ -22,7 +22,7 @@ public class ODistributedContext {
   private OSubmitContext                    submitContext;
   private ODistributedCoordinator           coordinator;
   private OClusterPositionAllocatorDatabase allocator;
-  private OrientDBInternal                  context;
+  private OrientDBDistributed               context;
   private String                            databaseName;
   private OOperationLog                     opLog;
 
@@ -30,8 +30,9 @@ public class ODistributedContext {
     this.context = context;
     this.databaseName = storage.getName();
     initOpLog();
-    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), opLog, context, storage.getName());
-    submitContext = new OSubmitContextImpl();
+    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), opLog, context, context.getNetworkManager(),
+        storage.getName());
+    submitContext = new OSubmitContextImpl(context, storage.getName());
     coordinator = null;
 
   }
@@ -57,24 +58,20 @@ public class ODistributedContext {
     if (coordinator == null) {
       allocator = new OClusterPositionAllocatorDatabase(context);
       coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), opLog, new ODistributedLockManagerImpl(),
-          allocator);
-      OLoopBackDistributeMember loopBack = new OLoopBackDistributeMember(nodeName, databaseName, submitContext, coordinator,
-          executor);
-      coordinator.join(loopBack);
-      submitContext.setCoordinator(loopBack);
-      executor.join(loopBack);
+          allocator, this.context.getNetworkManager(), databaseName);
+      coordinator.join(this.context.getNodeIdentity());
+      submitContext.setCoordinator(this.context.getNodeIdentity());
     }
 
   }
 
-  public synchronized void setExternalCoordinator(ODistributedMember lockManager) {
+  public synchronized void setExternalCoordinator(ONodeIdentity lockManager) {
     if (coordinator != null) {
       coordinator.close();
       coordinator = null;
       allocator = null;
     }
     submitContext.setCoordinator(lockManager);
-    executor.join(lockManager);
   }
 
   public synchronized void close() {

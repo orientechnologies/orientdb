@@ -12,10 +12,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributedPooled;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
-import com.orientechnologies.orient.distributed.impl.ONodeInternalConfiguration;
+import com.orientechnologies.orient.distributed.impl.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
@@ -45,16 +42,16 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 /**
  * Created by tglman on 08/08/17.
  */
-public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware, OServerLifecycleListener {
+public class OrientDBDistributed extends OrientDBEmbedded
+    implements OServerAware, OServerLifecycleListener, ODistributedContextContainer {
 
   private static final String DISTRIBUTED_USER = "distributed_replication";
 
   private          OServer                       server;
-  private volatile boolean                       coordinator      = false;
+  private volatile boolean                       coordinator = false;
   private volatile ONodeIdentity                 coordinatorIdentity;
   private          OStructuralDistributedContext structuralDistributedContext;
   private          ODistributedNetworkManager    networkManager;
-  private volatile boolean                       distributedReady = false;
   private          ONodeConfiguration            nodeConfiguration;
   private          OStructuralConfiguration      structuralConfiguration;
 
@@ -83,9 +80,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void onAfterActivate() {
     structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this);
     checkPort();
+    ONodeInternalConfiguration conf = generateInternalConfiguration();
+    networkManager = new ODistributedNetworkManager(this, getNodeConfig(), conf);
     structuralDistributedContext = new OStructuralDistributedContext(this);
-    networkManager = new ODistributedNetworkManager(this, getNodeConfig(), generateInternalConfiguration());
-    networkManager.startup();
+    networkManager.startup(this, structuralDistributedContext.getOpLog());
 
   }
 
@@ -252,46 +250,34 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         if (distributed.getCoordinator() == null) {
           if (coordinator) {
             distributed.makeCoordinator(getNodeIdentity(), shared);
-            for (ONodeIdentity node : networkManager.getRemoteServers()) {
-              ODistributedMember member = new ODistributedMember(node, database, networkManager.getChannel(node));
-              distributed.getCoordinator().join(member);
-            }
           } else {
-            ODistributedMember member = new ODistributedMember(coordinatorIdentity, database,
-                networkManager.getChannel(coordinatorIdentity));
-            distributed.setExternalCoordinator(member);
+            distributed.setExternalCoordinator(coordinatorIdentity);
           }
         }
 
-        for (ONodeIdentity node : networkManager.getRemoteServers()) {
-          ODistributedMember member = new ODistributedMember(node, database, networkManager.getChannel(node));
-          distributed.getExecutor().join(member);
-        }
       }
     }
 
   }
 
-  public synchronized void nodeConnected(ONodeIdentity nodeIdentity, ODistributedChannel channel) {
+  public synchronized void nodeConnected(ONodeIdentity nodeIdentity) {
     if (this.getNodeIdentity().equals(nodeIdentity))
       return;
     for (OSharedContext context : sharedContexts.values()) {
       if (isContextToIgnore(context))
         continue;
       ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-      ODistributedMember member = new ODistributedMember(nodeIdentity, context.getStorage().getName(), channel);
-      distributed.getExecutor().join(member);
       if (coordinator) {
         ODistributedCoordinator c = distributed.getCoordinator();
         if (c == null) {
           distributed.makeCoordinator(getNodeIdentity(), context);
           c = distributed.getCoordinator();
         }
-        c.join(member);
+        c.join(nodeIdentity);
       }
     }
     if (coordinator && structuralDistributedContext.getLeader() != null) {
-      structuralDistributedContext.getLeader().connected(nodeIdentity, channel);
+      structuralDistributedContext.getLeader().connected(nodeIdentity);
       structuralDistributedContext.getLeader().join(nodeIdentity);
     }
   }
@@ -306,11 +292,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (isContextToIgnore(context))
         continue;
       ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-      distributed.getExecutor().leave(distributed.getExecutor().getMember(nodeIdentity));
       if (coordinator) {
         ODistributedCoordinator c = distributed.getCoordinator();
         if (c == null) {
-          c.leave(c.getMember(nodeIdentity));
+          c.leave(nodeIdentity);
         }
 
       }
@@ -331,15 +316,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
           distributed.makeCoordinator(coordinatorIdentity, context);
           for (ONodeIdentity node : networkManager.getRemoteServers()) {
-            ODistributedMember member = new ODistributedMember(node, context.getStorage().getName(),
-                networkManager.getChannel(node));
-            distributed.getCoordinator().join(member);
+            distributed.getCoordinator().join(node);
           }
         }
         structuralDistributedContext.makeLeader(coordinatorIdentity);
 
         for (ONodeIdentity node : networkManager.getRemoteServers()) {
-          structuralDistributedContext.getLeader().connected(node, networkManager.getChannel(node));
+          structuralDistributedContext.getLeader().connected(node);
         }
         structuralDistributedContext.getLeader().join(getNodeIdentity());
         for (ONodeIdentity node : networkManager.getRemoteServers()) {
@@ -348,16 +331,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         this.coordinator = true;
       }
     } else {
-      structuralDistributedContext.setExternalLeader(networkManager.getChannel(coordinatorIdentity));
+      structuralDistributedContext.setExternalLeader(coordinatorIdentity);
       realignToLog(lastValid);
       for (OSharedContext context : sharedContexts.values()) {
         if (isContextToIgnore(context))
           continue;
         ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-        ODistributedMember member = new ODistributedMember(coordinatorIdentity, context.getStorage().getName(),
-            networkManager.getChannel(coordinatorIdentity));
-
-        distributed.setExternalCoordinator(member);
+        distributed.setExternalCoordinator(coordinatorIdentity);
       }
       this.coordinator = false;
     }
@@ -495,7 +475,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void setOnline() {
-    this.distributedReady = true;
     this.notifyAll();
   }
 
@@ -526,7 +505,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return structuralConfiguration;
   }
 
-  public ODistributedNetworkManager getNetworkManager() {
+  public ODistributedNetwork getNetworkManager() {
     return networkManager;
   }
 

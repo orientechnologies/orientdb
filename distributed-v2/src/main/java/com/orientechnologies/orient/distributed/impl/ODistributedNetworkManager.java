@@ -3,47 +3,52 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.network.OCoordinatedExecutor;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedExecutable;
+import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.network.binary.OBinaryDistributedMessage;
 import com.orientechnologies.orient.distributed.impl.network.binary.ODistributedChannelBinaryProtocol;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ODistributedNetworkManager implements ODiscoveryListener {
+public class ODistributedNetworkManager implements ODiscoveryListener, ODistributedNetwork {
 
   private final ConcurrentMap<ONodeIdentity, ODistributedChannelBinaryProtocol> remoteServers = new ConcurrentHashMap<>();
-  private final OrientDBDistributed                                             orientDB;
   private final ONodeConfiguration                                              config;
   private final ONodeInternalConfiguration                                      internalConfiguration;
   private       ONodeManager                                                    discoveryManager;
-  private       OCoordinatedExecutorMessageHandler                              requestHandler;
+  private       OCoordinatedExecutor                                            requestHandler;
 
-  public ODistributedNetworkManager(OrientDBDistributed orientDB, ONodeConfiguration config,
+  public ODistributedNetworkManager(ODistributedContextContainer orientDB, ONodeConfiguration config,
       ONodeInternalConfiguration internalConfiguration) {
-    this.orientDB = orientDB;
     this.config = config;
     this.internalConfiguration = internalConfiguration;
     this.requestHandler = new OCoordinatedExecutorMessageHandler(orientDB);
   }
 
-  public ODistributedChannelBinaryProtocol getRemoteServer(final ONodeIdentity rNodeName) {
+  private ODistributedChannelBinaryProtocol getRemoteServer(final ONodeIdentity rNodeName) {
     return remoteServers.get(rNodeName);
   }
 
-  public ODistributedChannelBinaryProtocol connectRemoteServer(final ONodeIdentity nodeIdentity, String host, String user,
+  private ODistributedChannelBinaryProtocol connectRemoteServer(final ONodeIdentity nodeIdentity, String host, String user,
       String password) throws IOException {
     // OK
     ORemoteServerController remoteServer = new ORemoteServerController(new ORemoteServerAvailabilityCheck() {
@@ -55,7 +60,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
       @Override
       public void nodeDisconnected(String nodeIdToString) {
         //TODO: Integrate with the discovery manager.
-        ODistributedNetworkManager.this.orientDB.nodeDisconnected(nodeIdentity);
+        ODistributedNetworkManager.this.requestHandler.nodeDisconnected(nodeIdentity);
       }
     }, internalConfiguration.getNodeIdentity().toString(), nodeIdentity.toString(), host, user, password);
     ODistributedChannelBinaryProtocol channel = new ODistributedChannelBinaryProtocol(internalConfiguration.getNodeIdentity(),
@@ -74,17 +79,15 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
       c.close();
   }
 
-  public void closeAll() {
+  private void closeAll() {
     for (ODistributedChannelBinaryProtocol server : remoteServers.values())
       server.close();
     remoteServers.clear();
   }
 
-  public void startup() {
+  public void startup(OSchedulerInternal scheduler, OOperationLog structuralLog) {
     //TODO different strategies for different infrastructures, eg. AWS
-
-    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, orientDB,
-        orientDB.getStructuralDistributedContext().getOpLog());
+    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, scheduler, structuralLog);
     discoveryManager.start();
   }
 
@@ -101,19 +104,18 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     ODistributedChannelBinaryProtocol channel = getRemoteServer(data.getNodeIdentity());
     if (channel == null) {
       try {
-        channel = connectRemoteServer(data.getNodeIdentity(), data.address + ":" + data.port, data.connectionUsername,
+        connectRemoteServer(data.getNodeIdentity(), data.address + ":" + data.port, data.connectionUsername,
             data.connectionPassword);
-        orientDB.nodeConnected(data.getNodeIdentity(), channel);
+
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on establish connection to a new joined node", e);
       }
-    } else {
-      orientDB.nodeConnected(data.getNodeIdentity(), channel);
     }
+    requestHandler.nodeConnected(data.getNodeIdentity());
   }
 
   public void nodeDisconnected(NodeData data) {
-    orientDB.nodeDisconnected(data.getNodeIdentity());
+    requestHandler.nodeDisconnected(data.getNodeIdentity());
     //TODO: Disconnect binary sockets
   }
 
@@ -121,8 +123,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   public void leaderElected(NodeData data) {
     //TODO: Come from a term
     OLogId lastValid = null;
-    requestHandler.setLeader(data.getNodeIdentity());
-    orientDB.setLeader(data.getNodeIdentity(), lastValid);
+    requestHandler.setLeader(data.getNodeIdentity(), lastValid);
   }
 
   public ODistributedChannel getChannel(ONodeIdentity identity) {
@@ -144,6 +145,84 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     }
     ODistributedExecutable executable = (ODistributedExecutable) request;
     executable.executeDistributed(requestHandler);
+  }
+
+  public void propagate(Collection<ONodeIdentity> members, OLogId id, ORaftOperation operation) {
+    for (ONodeIdentity member : members) {
+      assert !isSelf(member);
+      getChannel(member).propagate(id, operation);
+    }
+  }
+
+  public void confirm(Collection<ONodeIdentity> members, OLogId id) {
+    for (ONodeIdentity member : members) {
+      assert !isSelf(member);
+      getChannel(member).confirm(id);
+    }
+  }
+
+  public void ack(ONodeIdentity member, OLogId logId) {
+    assert !isSelf(member);
+    getChannel(member).ack(logId);
+  }
+
+  public void submit(ONodeIdentity leader, OSessionOperationId operationId, OStructuralSubmitRequest request) {
+    if (isSelf(leader)) {
+      this.requestHandler.executeStructuralSubmitRequest(leader, operationId, request);
+    } else {
+      getChannel(leader).submit(operationId, request);
+    }
+  }
+
+  public void reply(ONodeIdentity identity, OSessionOperationId operationId, OStructuralSubmitResponse response) {
+    if (isSelf(identity)) {
+      this.requestHandler.executeStructuralSubmitResponse(identity, operationId, response);
+    } else {
+      getChannel(identity).reply(operationId, response);
+    }
+  }
+
+  public void submit(ONodeIdentity leader, String database, OSessionOperationId operationId, OSubmitRequest request) {
+    if (isSelf(leader)) {
+      this.requestHandler.executeSubmitRequest(leader, database, operationId, request);
+    } else {
+      getChannel(leader).submit(database, operationId, request);
+    }
+  }
+
+  private boolean isSelf(ONodeIdentity leader) {
+    return this.internalConfiguration.getNodeIdentity().equals(leader);
+  }
+
+  public void replay(ONodeIdentity to, String database, OSessionOperationId operationId, OSubmitResponse response) {
+    if (isSelf(to)) {
+      this.requestHandler.executeSubmitResponse(to, database, operationId, response);
+    } else {
+      getChannel(to).reply(database, operationId, response);
+    }
+  }
+
+  public void sendResponse(ONodeIdentity member, String database, OLogId opId, ONodeResponse response) {
+    if (isSelf(member)) {
+      this.requestHandler.executeOperationResponse(member, database, opId, response);
+    } else {
+      getChannel(member).sendResponse(database, opId, response);
+    }
+  }
+
+  public void sendRequest(Collection<ONodeIdentity> members, String database, OLogId id, ONodeRequest nodeRequest) {
+    for (ONodeIdentity member : members) {
+      if (isSelf(member)) {
+        this.requestHandler.executeOperationRequest(member, database, id, nodeRequest);
+      } else {
+        getChannel(member).sendRequest(database, id, nodeRequest);
+      }
+    }
+  }
+
+  public void send(ONodeIdentity identity, OFullConfiguration fullConfiguration) {
+    assert !isSelf(identity);
+    getChannel(identity).send(fullConfiguration);
   }
 
 }

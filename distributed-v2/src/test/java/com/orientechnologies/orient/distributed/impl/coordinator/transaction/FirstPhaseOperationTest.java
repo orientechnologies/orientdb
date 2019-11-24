@@ -43,10 +43,7 @@ public class FirstPhaseOperationTest {
   private boolean  backwardCompatible;
 
   @Before
-  public void before()
-      throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException, MBeanRegistrationException,
-      IllegalAccessException, InstanceAlreadyExistsException, NotCompliantMBeanException, ClassNotFoundException,
-      MalformedObjectNameException {
+  public void before() throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
     backwardCompatible = OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.getValueAsBoolean();
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = OServer.startFromClasspathConfig("orientdb-server-config.xml");

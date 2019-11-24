@@ -41,7 +41,7 @@ public class ONetworkStructuralSubmitResponse implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executeStructuralSubmitResponse(sender, this);
+    executor.executeStructuralSubmitResponse(sender, operationId, response);
   }
 
   @Override
