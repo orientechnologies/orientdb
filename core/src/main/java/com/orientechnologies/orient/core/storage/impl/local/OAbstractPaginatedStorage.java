@@ -6247,7 +6247,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     private final Path                 filePath;
     private final Map<String, Integer> stackMap = new HashMap<>();
 
-    private boolean firstTime;
+    private boolean firstTime = true;
 
     private volatile TimerTask task;
 
