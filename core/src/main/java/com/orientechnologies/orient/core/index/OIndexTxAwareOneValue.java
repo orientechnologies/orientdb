@@ -249,12 +249,12 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
         .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
   }
 
-  private static Stream<ORawPair<Object, ORID>> mergeTxAndBackedStreams(OTransactionIndexChanges indexChanges,
+  private Stream<ORawPair<Object, ORID>> mergeTxAndBackedStreams(OTransactionIndexChanges indexChanges,
       Stream<ORawPair<Object, ORID>> txStream, Stream<ORawPair<Object, ORID>> backedStream, boolean ascSortOrder) {
     //noinspection resource
     return Streams.mergeSortedSpliterators(txStream,
-        backedStream.map((entry) -> calculateTxIndexEntry(entry.first, entry.second, indexChanges)).filter(Objects::nonNull),
-        (entryOne, entryTwo) -> ascSortOrder
+        backedStream.map((entry) -> calculateTxIndexEntry(getCollatingValue(entry.first), entry.second, indexChanges))
+            .filter(Objects::nonNull), (entryOne, entryTwo) -> ascSortOrder
             ? ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first)
             : -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first));
   }
@@ -334,10 +334,11 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> txStream = keys.stream().map((key) -> calculateTxIndexEntry(key, null, indexChanges))
-        .filter(Objects::nonNull).sorted((entryOne, entryTwo) -> ascSortOrder
-            ? ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first)
-            : -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first));
+    final Stream<ORawPair<Object, ORID>> txStream = keys.stream()
+        .map((key) -> calculateTxIndexEntry(getCollatingValue(key), null, indexChanges)).filter(Objects::nonNull).sorted(
+            (entryOne, entryTwo) -> ascSortOrder
+                ? ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first)
+                : -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first));
 
     if (indexChanges.cleared) {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
@@ -349,8 +350,9 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
         .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascSortOrder));
   }
 
-  private static ORawPair<Object, ORID> calculateTxIndexEntry(final Object key, final ORID backendValue,
+  private ORawPair<Object, ORID> calculateTxIndexEntry(Object key, final ORID backendValue,
       final OTransactionIndexChanges indexChanges) {
+    key = getCollatingValue(key);
     ORID result = backendValue;
     final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
     if (changesPerKey.entries.isEmpty()) {
