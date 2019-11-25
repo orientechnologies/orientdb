@@ -75,13 +75,18 @@ import java.io.InputStream;
 import java.util.*;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
+        implements ODatabaseLifecycleListener, OPluginLifecycleListener, OServerLifecycleListener, OEnterpriseEndpoint {
+  private static final String  PLUGIN_NAME            = "enterprise-agent";
+  private static final String  PATH_TO_EE_AGENT_PROPS = "/com/orientechnologies/agent.properties";
+  public static final  String  EE                     = "ee.";
+  private static final String  EE_VERSION             = "version";
+  private static final String  LICENSE                = "license";
+  private static final boolean PLUGIN_ENABLED_DEFAULT = false;
 
-    implements ODatabaseLifecycleListener, OPluginLifecycleListener, OServerLifecycleListener, OEnterpriseEndpoint {
-  public static final String     EE                = "ee.";
-  private             String     enterpriseVersion = "";
-  public              OServer    server;
-  private             String     license;
-  private             Properties properties        = new Properties();
+  private String     enterpriseVersion = "";
+  public  OServer    server;
+  private String     license;
+  private Properties properties        = new Properties();
 
   private List<OEnterpriseService> services = new ArrayList<>();
 
@@ -95,22 +100,20 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   @Override
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-    enabled = false;
+  public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
+    enabled = PLUGIN_ENABLED_DEFAULT;
     server = oServer;
 
     enterpriseServer = new OEnterpriseServerImpl(server, this);
-    for (OServerParameterConfiguration p : iParams) {
-      if (p.name.equals("license"))
-        license = p.value;
+    for (final OServerParameterConfiguration paramConfig : iParams) {
+      if (paramConfig.name.equals(LICENSE)) {
+        license = paramConfig.value;
+      }
     }
-
     if (oServer.getPluginManager() != null) {
       oServer.getPluginManager().registerLifecycleListener(this);
     }
-
     registerAndInitServices();
-
   }
 
   private void registerAndInitServices() {
@@ -120,32 +123,27 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     this.services.add(new OBackupService());
     this.services.add(new OSecurityService());
     this.services.forEach((s) -> s.init(this.enterpriseServer));
-
   }
 
   @Override
   public String getName() {
-    return "enterprise-agent";
+    return PLUGIN_NAME;
   }
 
   @Override
   public void startup() {
-
     try {
-      loadProperties();
-
+      loadAgentProperties();
       if (checkLicense() && checkVersion()) {
         server.registerLifecycleListener(this);
         enabled = true;
         installProfiler();
-
         installPlugins();
 
-        Thread installer = new Thread(() -> {
-
+        final Thread installer = new Thread(() -> {
           int retry = 0;
           while (true) {
-            ODistributedServerManager manager = server.getDistributedManager();
+            final ODistributedServerManager manager = server.getDistributedManager();
             if (manager == null) {
               if (retry == 5) {
                 break;
@@ -158,7 +156,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
               retry++;
               continue;
             } else {
-              OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
+              final OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
               nodesManager = new NodesManager(plugin);
               try {
                 plugin.waitUntilNodeOnline();
@@ -169,35 +167,26 @@ public class OEnterpriseAgent extends OServerPluginAbstract
               installCommands();
               break;
             }
-
           }
-
         });
-
         installer.setDaemon(true);
         installer.start();
         Orient.instance().addDbLifecycleListener(this);
-
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       OLogManager.instance().warn(this, "Error loading agent.properties file. EE will be disabled: %s", e.getMessage());
     }
-
   }
 
   @Override
   public void shutdown() {
     if (enabled) {
-
       uninstallCommands();
       uninstallProfiler();
-
       if (server.getPluginManager() != null) {
         server.getPluginManager().unregisterLifecycleListener(this);
       }
-
       Orient.instance().removeDbLifecycleListener(this);
-
     }
   }
 
@@ -249,17 +238,15 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   // TODO SEND CPU METRICS ON configuration request;
   @Override
   public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
-
-    OProfiler profiler = Orient.instance().getProfiler();
-
-    OEngine plocal = Orient.instance().getEngine("plocal");
+    final OProfiler profiler = Orient.instance().getProfiler();
+    final OEngine plocal = Orient.instance().getEngine("plocal");
 
     if (profiler instanceof OEnterpriseProfiler) {
       iConfiguration.field("cpu", ((OEnterpriseProfiler) profiler).cpuUsage());
     }
-
   }
 
+  @Deprecated
   public void installCommands() {
     final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
     if (listener == null)
@@ -272,35 +259,31 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     listener.registerStatelessCommand(new OServerCommandGetDeployDb());
 
     listener.registerStatelessCommand(new OServerCommandGetNode(enterpriseServer));
-
   }
 
   private void uninstallCommands() {
     final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-    if (listener == null)
+    if (listener == null) {
       throw new OConfigurationException("HTTP listener not found");
-
+    }
     listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
     listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
     listener.unregisterStatelessCommand(OServerCommandGetLog.class);
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandGetDeployDb.class);
     listener.unregisterStatelessCommand(OServerCommandGetNode.class);
-
   }
 
   protected void installProfiler() {
     final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
-
     profiler = new OEnterpriseProfiler(60, currentProfiler, server, this);
 
     Orient.instance().setProfiler(profiler);
     Orient.instance().getProfiler().startup();
-    if (currentProfiler.isRecording())
+    if (currentProfiler.isRecording()) {
       profiler.startRecording();
-
+    }
     currentProfiler.shutdown();
-
   }
 
   public void registerListener(OEnterpriseProfilerListener listener) {
@@ -326,7 +309,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   private boolean checkLicense() {
-
     OLogManager.instance().info(this, "");
     OLogManager.instance().info(this, "*****************************************************************************");
     OLogManager.instance().info(this, "*                     ORIENTDB  -  ENTERPRISE EDITION                       *");
@@ -335,45 +317,28 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     OLogManager.instance().info(this, "* For more information look at: http://orientdb.com/orientdb-enterprise/    *");
     OLogManager.instance().info(this, "*****************************************************************************");
     OLogManager.instance().info(this, "");
-
-    Orient.instance().getProfiler()
-        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"), "Enterprise License",
+    Orient.instance().getProfiler().registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"), "Enterprise License",
             OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
-
               @Override
               public Object getValue() {
                 return enterpriseVersion;
               }
             });
-
     return true;
   }
 
-  private void loadProperties() throws IOException {
-    final InputStream inputStream = OEnterpriseAgent.class.getResourceAsStream("/com/orientechnologies/agent.properties");
-
-    try {
+  private void loadAgentProperties() throws IOException {
+    try(final InputStream inputStream = OEnterpriseAgent.class.getResourceAsStream(PATH_TO_EE_AGENT_PROPS);) {
       properties.load(inputStream);
-      enterpriseVersion = properties.getProperty("version");
-
+      enterpriseVersion = properties.getProperty(EE_VERSION);
       if (enterpriseVersion == null || enterpriseVersion.isEmpty()) {
-        throw new IllegalArgumentException("Cannot read the agent version from the agent config file");
-      }
-    } finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        } catch (IOException ignore) {
-          // Ignore
-        }
+        throw new IllegalArgumentException("Cannot read the agent version from the agent config file.");
       }
     }
   }
 
   private boolean checkVersion() {
-
     if (!OConstants.getRawVersion().equalsIgnoreCase(enterpriseVersion)) {
-
       OLogManager.instance()
           .warn(this, "The current agent version %s is not compatible with OrientDB %s. Please use the same version.",
               enterpriseVersion, OConstants.getVersion());
@@ -383,15 +348,13 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   private void installPlugins() {
-
     try {
-
       final OEventPlugin eventPlugin = new OEventPlugin();
       eventPlugin.config(server, null);
       eventPlugin.startup();
       server.getPluginManager()
           .registerPlugin(new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
-    } catch (Exception ex) {
+    } catch (final Exception e) {
     }
   }
 
@@ -428,9 +391,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
   @Override
   public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
-    if (iRequestType == OChannelBinaryProtocol.DISTRIBUTED_REQUEST || iRequestType == OChannelBinaryProtocol.DISTRIBUTED_RESPONSE)
+    if (iRequestType == OChannelBinaryProtocol.DISTRIBUTED_REQUEST || iRequestType == OChannelBinaryProtocol.DISTRIBUTED_RESPONSE) {
       return;
-
+    }
     if (Orient.instance().isRunningDistributed()) {
       final ODatabaseDocumentInternal db = iConnection.getDatabase();
       if (db != null) {
@@ -502,23 +465,18 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   @Override
-  public void haSetDbStatus(ODatabaseDocument database, String nodeName, String status) {
-
+  public void haSetDbStatus(final ODatabaseDocument database, final String nodeName, final String status) {
     database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_UPDATE);
-
     if (!(database instanceof ODatabaseDocumentDistributed)) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
-
     final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
         .getDistributedManager();
-    if (dManager == null || !dManager.isEnabled())
+    if (dManager == null || !dManager.isEnabled()) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
+    }
     final String databaseName = database.getName();
-
-    final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
-
+    dManager.getDatabaseConfiguration(databaseName);
     dManager.setDatabaseStatus(nodeName, databaseName, ODistributedServerManager.DB_STATUS.valueOf(status));
   }
 
@@ -532,13 +490,11 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
     final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
         .getDistributedManager();
-    if (dManager == null || !dManager.isEnabled())
+    if (dManager == null || !dManager.isEnabled()) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
+    }
     final String databaseName = database.getName();
-
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
-
     final OModifiableDistributedConfiguration newCfg = cfg.modify();
     newCfg.setServerRole(serverName, ODistributedConfiguration.ROLES.valueOf(role));
     dManager.updateCachedDatabaseConfiguration(databaseName, newCfg, true);
@@ -547,24 +503,18 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   @Override
   public void haSetOwner(ODatabaseDocument database, String clusterName, String owner) {
     database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_UPDATE);
-
     if (!(database instanceof ODatabaseDocumentDistributed)) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
-
     final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
         .getDistributedManager();
-    if (dManager == null || !dManager.isEnabled())
+    if (dManager == null || !dManager.isEnabled()) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
+    }
     final String databaseName = database.getName();
-
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
-
     final OModifiableDistributedConfiguration newCfg = cfg.modify();
     newCfg.setServerOwner(clusterName, owner);
     dManager.updateCachedDatabaseConfiguration(databaseName, newCfg, true);
-
   }
-
 }

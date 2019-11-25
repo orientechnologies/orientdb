@@ -45,5 +45,4 @@ public abstract class OSQLEnterpriseFunction extends OSQLFunctionAbstract {
   public abstract ORule.ResourceGeneric genericPermission();
 
   public abstract String specificPermission();
-
 }

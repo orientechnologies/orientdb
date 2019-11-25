@@ -11,7 +11,7 @@ public class StudioService implements OEnterpriseService {
   private OEnterpriseServer server;
 
   @Override
-  public void init(OEnterpriseServer server) {
+  public void init(final OEnterpriseServer server) {
     this.server = server;
   }
 

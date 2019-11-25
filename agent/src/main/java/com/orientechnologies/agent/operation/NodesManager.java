@@ -14,9 +14,8 @@ public class NodesManager {
 
   private ODistributedServerManager manager;
 
-  public NodesManager(ODistributedServerManager manager) {
+  public NodesManager(final ODistributedServerManager manager) {
     this.manager = manager;
-
     initCommands();
   }
 
@@ -46,7 +45,7 @@ public class NodesManager {
     return responseManager.getResponses();
   }
 
-  public OperationResponseFromNode send(String nodeName, NodeOperation task) {
+  public OperationResponseFromNode send(final String nodeName, final NodeOperation task) {
     Set<String> nodes = new HashSet<>();
     nodes.add(nodeName);
     OperationResponseManager responseManager = new OperationResponseManager(nodes);
@@ -67,5 +66,4 @@ public class NodesManager {
     }
     return responseManager.getResponses().size() > 0 ? responseManager.getResponses().get(0) : null;
   }
-
 }

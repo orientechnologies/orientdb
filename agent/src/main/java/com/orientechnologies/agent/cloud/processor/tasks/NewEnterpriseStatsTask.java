@@ -16,16 +16,13 @@ import java.util.Optional;
  */
 public class NewEnterpriseStatsTask implements NodeOperation {
   @Override
-  public NodeOperationResponse execute(OServer iServer, ODistributedServerManager iManager) {
-
-    OEnterpriseAgent agent = iServer.getPluginByClass(OEnterpriseAgent.class);
-
-    Optional<OrientDBMetricsService> metrics = agent.getServiceByClass(OrientDBMetricsService.class);
+  public NodeOperationResponse execute(final OServer iServer, final ODistributedServerManager iManager) {
+    final OEnterpriseAgent agent = iServer.getPluginByClass(OEnterpriseAgent.class);
+    final Optional<OrientDBMetricsService> metrics = agent.getServiceByClass(OrientDBMetricsService.class);
 
     if (metrics.isPresent()) {
       return new EnterpriseStatsResponse(metrics.get().toJson());
     }
-
     return new EnterpriseStatsResponse("{}");
   }
 
@@ -43,5 +40,4 @@ public class NewEnterpriseStatsTask implements NodeOperation {
   public int getMessageId() {
     return 2;
   }
-
 }

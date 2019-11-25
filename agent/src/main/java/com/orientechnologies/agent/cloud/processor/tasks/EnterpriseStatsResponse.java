@@ -17,15 +17,12 @@ public class EnterpriseStatsResponse implements NodeOperationResponse {
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
-
+  public void write(final DataOutput out) throws IOException {
     out.writeUTF(this.stats);
-
   }
 
   @Override
-  public void read(DataInput in) throws IOException {
-
+  public void read(final DataInput in) throws IOException {
     this.stats = in.readUTF();
   }
 

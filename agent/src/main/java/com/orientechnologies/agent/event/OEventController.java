@@ -181,7 +181,6 @@ public class OEventController extends Thread {
         }
         break;
       case STAT:
-
         OProfilerEntry stat = profilerData.getStat(type);
 
         if (stat != null) {
@@ -204,7 +203,6 @@ public class OEventController extends Thread {
   }
 
   private Long sumCounters(String type, OProfilerData lastSnapshot, OProfilerData profilerData) {
-
     Long sum = 0l;
     OAbstractProfiler.OProfilerHookStatic dbs = (OAbstractProfiler.OProfilerHookStatic) profilerData
         .getHookValue("system.databases");

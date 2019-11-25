@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
  * Created by Enrico Risa on 16/07/2018.
  */
 public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, ODatabaseLifecycleListener, ODatabaseListener {
-
   private final OEnterpriseAgent agent;
   private       OServer          server;
 
@@ -48,9 +47,9 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
 
   private Map<String, OEnterpriseLocalPaginatedStorage> storages = new ConcurrentHashMap<>();
 
-  private Map<Class<OResultSet>, Function<OResultSet, QueryInfo>> queryInfo = new HashMap<>();
+  // private Map<Class<OResultSet>, Function<OResultSet, QueryInfo>> queryInfo = new HashMap<>();
 
-  public OEnterpriseServerImpl(OServer server, OEnterpriseAgent agent) {
+  public OEnterpriseServerImpl(final OServer server, final OEnterpriseAgent agent) {
     this.server = server;
     this.agent = agent;
     server.getPluginManager().registerPlugin(new OServerPluginInfo("Enterprise Server", null, null, null, this, null, 0, null));
@@ -190,9 +189,8 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   }
 
   @Override
-  public void onOpen(ODatabaseInternal iDatabase) {
-    OStorage storage = iDatabase.getStorage();
-
+  public void onOpen(final ODatabaseInternal iDatabase) {
+    final OStorage storage = iDatabase.getStorage();
     if (storage.getUnderlying() instanceof OEnterpriseLocalPaginatedStorage) {
       OEnterpriseLocalPaginatedStorage s = (OEnterpriseLocalPaginatedStorage) storage.getUnderlying();
       if (storages.putIfAbsent(storage.getName(), s) == null) {
@@ -200,7 +198,6 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
         dbListeners.forEach((l) -> l.onOpen(s));
       }
     }
-
     iDatabase.registerListener(this);
   }
 
@@ -210,16 +207,14 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   }
 
   @Override
-  public void onDrop(ODatabaseInternal iDatabase) {
-
-    OStorage storage = iDatabase.getStorage();
+  public void onDrop(final ODatabaseInternal iDatabase) {
+    final OStorage storage = iDatabase.getStorage();
     if (storage instanceof OEnterpriseLocalPaginatedStorage) {
       if (storages.remove(storage.getName()) != null) {
         OEnterpriseLocalPaginatedStorage s = (OEnterpriseLocalPaginatedStorage) storage;
         dbListeners.forEach((l) -> l.onDrop(s));
       }
     }
-
   }
 
   @Override
@@ -366,10 +361,8 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   }
 
   @Override
-  public Optional<QueryInfo> getQueryInfo(OResultSet resultSet) {
-
-    Optional<QueryInfo> info = Optional.empty();
-
+  public Optional<QueryInfo> getQueryInfo(final OResultSet resultSet) {
+     Optional<QueryInfo> info = Optional.empty();
     if (resultSet instanceof OLocalResultSetLifecycleDecorator) {
       OResultSet oResultSet = ((OLocalResultSetLifecycleDecorator) resultSet).getInternal();
       if (oResultSet instanceof OLocalResultSet) {
@@ -393,7 +386,6 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
             oQueryMetrics.getElapsedTimeMillis()));
       }
     }
-
     return info;
   }
 }

@@ -48,10 +48,10 @@ import java.util.Date;
  * Created by Enrico Risa on 23/11/15.
  */
 public class OEventPlugin extends OServerPluginAbstract implements OServerPluginConfigurable {
+  private static final String PLUGIN_NAME = "ee-events";
+  private static final String configFile  = "${ORIENTDB_HOME}/config/events.json";
 
-  private static final String configFile = "${ORIENTDB_HOME}/config/events.json";
-
-  private String              filePath   = null;
+  private String              configFilePath = null;
 
   private ODocument           configuration;
   private OServer             server;
@@ -66,79 +66,69 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
 
   @Override
   public void changeConfig(ODocument document) {
-
     synchronized (this) {
       ODocument oldConfig = configuration;
       configuration = document;
-
       try {
         writeConfiguration();
       } catch (IOException e) {
         configuration = oldConfig;
         throw OException.wrapException(new OConfigurationException(
-            "Cannot Write EventConfiguration configuration file '" + filePath + "'. Restoring old configuration."), e);
+            "Cannot Write EventConfiguration configuration file '" + configFilePath + "'. Restoring old configuration."), e);
       }
-
     }
   }
 
   public void writeConfiguration() throws IOException {
-
-    final File f = new File(filePath);
-
-    OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
+    final File configFile = new File(configFilePath);
+    OIOUtils.writeFile(configFile, configuration.toJSON("prettyPrint"));
   }
 
   @Override
   public String getName() {
-    return "ee-events";
+    return PLUGIN_NAME;
   }
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
     super.config(oServer, iParams);
-
     this.server = oServer;
 
     configuration = new ODocument();
     configuration.field("events", new ArrayList<ODocument>());
 
-    filePath = OSystemVariableResolver.resolveSystemVariables(configFile, "..");
+    configFilePath = OSystemVariableResolver.resolveSystemVariables(configFile, "..");
 
-    final File f = new File(filePath);
-
-    if (f.exists()) {
+    final File configFile = new File(configFilePath);
+    if (configFile.exists()) {
       // READ THE FILE
       try {
-        final String configurationContent = OIOUtils.readFileAsString(f);
+        final String configurationContent = OIOUtils.readFileAsString(configFile);
         configuration = new ODocument().fromJSON(configurationContent);
-      } catch (IOException e) {
+      } catch (final IOException e) {
         throw OException.wrapException(new OConfigurationException(
-            "Cannot load Events configuration file '" + configFile + "'. Events  Plugin will be disabled"), e);
+            "Cannot load Events configuration file '" + OEventPlugin.configFile + "'. Events  Plugin will be disabled"), e);
       }
     } else {
       try {
-        f.getParentFile().mkdirs();
-        f.createNewFile();
-        OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
+        configFile.getParentFile().mkdirs();
+        configFile.createNewFile();
+        OIOUtils.writeFile(configFile, configuration.toJSON("prettyPrint"));
 
-        OLogManager.instance().info(this, "Events plugin: created configuration to file '%s'", f);
+        OLogManager.instance().info(this, "Events plugin: created configuration to file '%s'", configFile);
       } catch (IOException e) {
         throw OException.wrapException(new OConfigurationException(
-            "Cannot create Events plugin configuration file '" + filePath + "'. Events Plugin will be disabled"), e);
+            "Cannot create Events plugin configuration file '" + configFilePath + "'. Events Plugin will be disabled"), e);
       }
     }
     eventController = new OEventController(this);
     eventController.setDaemon(true);
     eventController.start();
-
   }
 
   @Override
   public void startup() {
-
     final ODistributedServerManager distributedManager = server.getDistributedManager();
-
     Orient.instance().getProfiler().registerListener(new OProfilerListener() {
       @Override
       public void onUpdateCounter(String iName, long counter, long recordingFrom, long recordingTo) {
@@ -153,7 +143,6 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
       @Override
       public void onSnapshotCreated(Object snapshot) {
         eventController.analyzeSnapshot((OProfilerData) snapshot);
-
       }
 
       @Override
@@ -165,7 +154,6 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
       distributedManager.registerLifecycleListener(new ODistributedLifecycleListener() {
         @Override
         public boolean onNodeJoining(String iNode) {
-
           return true;
         }
 
@@ -193,7 +181,6 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
 
   @Override
   public void shutdown() {
-
     eventController.interrupt();
   }
 
@@ -203,24 +190,18 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
    * @param distributedManager
    * @return
    */
-  boolean isLeader(ODistributedServerManager distributedManager) {
-
-    OHazelcastPlugin oHazelcastPlugin = (OHazelcastPlugin) distributedManager;
-
-    Member oldestMember = oHazelcastPlugin.getHazelcastInstance().getCluster().getMembers().iterator().next();
-
+  boolean isLeader(final ODistributedServerManager distributedManager) {
+    final OHazelcastPlugin oHazelcastPlugin = (OHazelcastPlugin) distributedManager;
+    final Member oldestMember = oHazelcastPlugin.getHazelcastInstance().getCluster().getMembers().iterator().next();
     return oldestMember.localMember();
-
   }
 
   public String getNodeName() {
-
     final ODistributedServerManager distributedManager = server.getDistributedManager();
 
     if (distributedManager != null) {
       return distributedManager.getLocalNodeName();
     }
-
     return null;
   }
 }

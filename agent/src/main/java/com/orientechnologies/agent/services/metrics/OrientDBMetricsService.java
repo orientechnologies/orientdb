@@ -28,7 +28,6 @@ import java.util.Optional;
  * Created by Enrico Risa on 13/07/2018.
  */
 public class OrientDBMetricsService implements OEnterpriseService {
-
   private static String PROFILER_SCHEMA = "ProfilerConfig";
 
   OEnterpriseServer       server;

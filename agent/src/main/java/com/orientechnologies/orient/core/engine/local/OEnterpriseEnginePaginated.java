@@ -18,13 +18,9 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
