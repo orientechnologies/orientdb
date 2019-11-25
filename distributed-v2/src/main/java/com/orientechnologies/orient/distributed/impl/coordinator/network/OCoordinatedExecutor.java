@@ -33,4 +33,10 @@ public interface OCoordinatedExecutor {
 
   void setLeader(ONodeIdentity leader, OLogId leaderLastValid);
 
+  void setDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid);
+
+  void ping(ONodeIdentity leader, OLogId leaderLastValid);
+
+  void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid);
+
 }

@@ -225,4 +225,18 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     getChannel(identity).send(fullConfiguration);
   }
 
+  @Override
+  public void sendDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    //TODO
+  }
+
+  @Override
+  public void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    //TODO
+  }
+
+  @Override
+  public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+    //TODO
+  }
 }

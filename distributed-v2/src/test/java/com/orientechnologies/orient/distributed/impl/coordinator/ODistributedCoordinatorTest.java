@@ -328,5 +328,16 @@ public class ODistributedCoordinatorTest {
     public void send(ONodeIdentity identity, OFullConfiguration fullConfiguration) {
 
     }
+    @Override
+    public void sendDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    }
+
+    @Override
+    public void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    }
+
+    @Override
+    public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+    }
   }
 }
