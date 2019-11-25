@@ -362,7 +362,7 @@ public final class OrientGraph implements OGraph {
       return Collections.<ElementType>emptyList().stream();
     } else {
       if (!valuesIter.hasNext()) {
-        return index.cursor().toValues().stream().map(id -> newElement.apply(this, id));
+        return index.stream().map(id -> newElement.apply(this, id.second));
       } else {
         Stream<Object> convertedValues = StreamUtils.asStream(valuesIter).map(value -> convertValue(index, value));
         Stream<OIdentifiable> ids = convertedValues.flatMap(v -> lookupInIndex(index, v)).filter(r -> r != null);
