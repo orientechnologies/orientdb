@@ -2,6 +2,7 @@ package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
 
@@ -216,34 +218,35 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer) {
     return null;
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return null;
   }
 
   @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
     return null;
   }
 
   @Override
-  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
     return null;
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
+  public Stream<Object> keyStream() {
     return null;
   }
 
@@ -255,11 +258,6 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   @Override
   public boolean hasRangeQuerySupport() {
     return false;
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
   }
 
   @Override
