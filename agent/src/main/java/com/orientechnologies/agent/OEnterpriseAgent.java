@@ -378,8 +378,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   public void onAfterStartup(final OServerPlugin plugin) {
-
-    System.out.println("");
+    
   }
 
   public void onBeforeShutdown(final OServerPlugin plugin) {
