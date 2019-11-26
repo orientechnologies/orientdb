@@ -378,7 +378,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   public void onAfterStartup(final OServerPlugin plugin) {
-    
+
   }
 
   public void onBeforeShutdown(final OServerPlugin plugin) {
@@ -390,33 +390,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
   @Override
   public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
-    if (iRequestType == OChannelBinaryProtocol.DISTRIBUTED_REQUEST || iRequestType == OChannelBinaryProtocol.DISTRIBUTED_RESPONSE) {
-      return;
-    }
-    if (Orient.instance().isRunningDistributed()) {
-      final ODatabaseDocumentInternal db = iConnection.getDatabase();
-      if (db != null) {
-        if (((OAbstractPaginatedStorage) db.getStorage().getUnderlying()).isFrozen()) {
-          final ODistributedServerManager manager = server.getDistributedManager();
-          final ODistributedConfiguration dCfg = manager.getDatabaseConfiguration(db.getName());
-          final List<String> masters = dCfg.getMasterServers();
-          masters.remove(manager.getLocalNodeName());
-
-          // FILTER ONLY THE ONLINE SERVERS
-          manager.getNodesWithStatus(masters, db.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
-
-          if (!masters.isEmpty()) {
-            // GET A RANDOM MASTER SERVER TO REDIRECT THE REQUEST
-            final String toServer = masters.get(new Random().nextInt(masters.size()));
-            final String toIPAddress = ODistributedAbstractPlugin
-                .getListeningBinaryAddress(manager.getNodeConfigurationByUuid(manager.getNodeUuidByName(toServer), true));
-
-            throw new ODistributedRedirectException(manager.getLocalNodeName(), toServer, toIPAddress,
-                "The server is frozen (usually because a backup is running). Redirecting the request to another server");
-          }
-        }
-      }
-    }
+    
   }
 
   public boolean isDistributed() {
