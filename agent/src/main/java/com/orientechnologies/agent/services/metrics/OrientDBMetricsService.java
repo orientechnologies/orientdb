@@ -136,52 +136,6 @@ public class OrientDBMetricsService implements OEnterpriseService {
     return settings;
   }
 
-  private OrientDBMetricsSettings loadConfig(final String cfgPath) {
-    OrientDBMetricsSettings settings = null;
-
-    try {
-      if (cfgPath != null) {
-        // Default
-        String jsonFile = OSystemVariableResolver.resolveSystemVariables(cfgPath);
-
-        File file = new File(jsonFile);
-
-        if (file.exists() && file.canRead()) {
-          FileInputStream fis = null;
-
-          try {
-            fis = new FileInputStream(file);
-
-            final byte[] buffer = new byte[(int) file.length()];
-            fis.read(buffer);
-
-            ObjectMapper mapper = new ObjectMapper();
-
-            settings = mapper.readValue(buffer, OrientDBMetricsSettings.class);
-
-          } finally {
-            Utils.safeClose(this, fis);
-          }
-        } else {
-          OLogManager.instance()
-              .warn(this, "OEnterpriseProfilerFactory.loadConfig() Could not access the security JSON file: %s", null, jsonFile);
-        }
-      } else {
-        OLogManager.instance().warn(this, "OEnterpriseProfilerFactory.loadConfig() Configuration file path is null", null);
-      }
-    } catch (Exception ex) {
-      OLogManager.instance().warn(this, "OEnterpriseProfilerFactory.loadConfig()", ex);
-    }
-
-    if (settings == null) {
-      OLogManager.instance().warn(this, "The profiler config file was not found. The profiler will be disabled");
-      settings = new OrientDBMetricsSettings();
-      settings.enabled = false;
-    }
-
-    return settings;
-  }
-
   public OrientDBMetricsSettings getSettings() {
     return settings;
   }
