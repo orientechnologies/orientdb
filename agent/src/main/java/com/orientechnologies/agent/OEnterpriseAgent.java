@@ -78,7 +78,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         implements ODatabaseLifecycleListener, OPluginLifecycleListener, OServerLifecycleListener, OEnterpriseEndpoint {
   private static final String  PLUGIN_NAME            = "enterprise-agent";
   private static final String  PATH_TO_EE_AGENT_PROPS = "/com/orientechnologies/agent.properties";
-  public static final  String  EE                     = "ee.";
   private static final String  EE_VERSION             = "version";
   private static final String  LICENSE                = "license";
   private static final boolean PLUGIN_ENABLED_DEFAULT = false;
@@ -390,7 +389,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
   @Override
   public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
-    
+
   }
 
   public boolean isDistributed() {
