@@ -17,15 +17,14 @@
  */
 package com.orientechnologies.agent;
 
-import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.agent.functions.OAgentProfilerService;
 import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.operation.NodesManager;
-import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.profiler.OEnterpriseProfilerListener;
 import com.orientechnologies.agent.services.OEnterpriseService;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
 import com.orientechnologies.agent.services.security.OSecurityService;
 import com.orientechnologies.agent.services.studio.StudioService;
@@ -38,7 +37,6 @@ import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.enterprise.server.OEnterpriseServerImpl;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -50,9 +48,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
@@ -61,18 +56,19 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OPluginLifecycleListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
         implements ODatabaseLifecycleListener, OPluginLifecycleListener, OServerLifecycleListener, OEnterpriseEndpoint {
@@ -137,8 +133,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         server.registerLifecycleListener(this);
         enabled = true;
         installProfiler();
-        installPlugins();
-
         final Thread installer = new Thread(() -> {
           int retry = 0;
           while (true) {
@@ -346,16 +340,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     return true;
   }
 
-  private void installPlugins() {
-    try {
-      final OEventPlugin eventPlugin = new OEventPlugin();
-      eventPlugin.config(server, null);
-      eventPlugin.startup();
-      server.getPluginManager()
-          .registerPlugin(new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
-    } catch (final Exception e) {
-    }
-  }
+
 
   private void installComponents() {
     if (server.getDistributedManager() != null) {
