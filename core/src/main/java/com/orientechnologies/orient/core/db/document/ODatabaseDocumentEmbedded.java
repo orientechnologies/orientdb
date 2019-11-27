@@ -64,6 +64,7 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -838,6 +839,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       OVertexDelegate.deleteLinks((OVertex) record);
     } else if (record instanceof OEdge) {
       OEdgeDelegate.deleteLinks((OEdge) record);
+    } else if (record instanceof ODocument) {
+      OElement elem = (OElement) record;
+      if (elem.isVertex()) {
+        OVertexDelegate.deleteLinks(elem.asVertex().get());
+      } else if (elem.isEdge()) {
+        OEdgeDelegate.deleteLinks(elem.asEdge().get());
+      }
     }
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
@@ -881,7 +889,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isRestricted()) {
           changed = ORestrictedAccessHook.onRecordBeforeCreate(doc, this);
         }
-        if(clazz.isFunction()){
+        if (clazz.isFunction()) {
           OFunctionLibraryImpl.validateFunctionRecord(doc);
         }
       }
@@ -927,7 +935,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_UPDATE, true))
             throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access");
         }
-        if(clazz.isFunction()){
+        if (clazz.isFunction()) {
           OFunctionLibraryImpl.validateFunctionRecord(doc);
         }
       }
