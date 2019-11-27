@@ -46,7 +46,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
       @Override
       public void run() {
         OLogId logId = operationLog.lastPersistentLog();
-        network.ping(context.getNodeIdentity(), logId);
+        network.notifyLastStructuralOperation(context.getNodeIdentity(), logId);
       }
     }, pingTimeout, pingTimeout);
   }
