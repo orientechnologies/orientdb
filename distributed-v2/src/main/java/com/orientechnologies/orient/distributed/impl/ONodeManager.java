@@ -44,6 +44,9 @@ public abstract class ONodeManager {
   private TimerTask disconnectTimer;
   private TimerTask checkerTimer;
 
+
+  private Map<String, OLogId> databaseLogIds = Collections.synchronizedMap(new LinkedHashMap<>());
+
   public ONodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration, int term,
                       OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener, OOperationLog opLog) {
     this.config = config;
@@ -239,6 +242,10 @@ public abstract class ONodeManager {
       message.leaderIdentity = master.getNodeIdentity();
     }
 
+    //DATABASE PINGS
+
+
+
     return message;
   }
 
@@ -360,9 +367,9 @@ public abstract class ONodeManager {
 
   /* =============== DATABASE PING INFO ================= */
 
-  
+
   public void notifyLastDbOperation(String database, OLogId leaderLastValid) {
-    //TODO
+    databaseLogIds.put(database, leaderLastValid);
   }
 
 

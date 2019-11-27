@@ -337,7 +337,7 @@ public class ODistributedCoordinatorTest {
     }
 
     @Override
-    public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+    public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
     }
   }
 }

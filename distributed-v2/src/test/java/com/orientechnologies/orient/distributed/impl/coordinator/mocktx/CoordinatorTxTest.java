@@ -246,7 +246,7 @@ public class CoordinatorTxTest {
     }
 
     @Override
-    public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+    public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
     }
   }
 
@@ -316,7 +316,7 @@ public class CoordinatorTxTest {
     }
 
     @Override
-    public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+    public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
     }
 
 
