@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class OCellBTreeMultiValueV2TestIT {
-  private OCellBTreeMultiValueV2<String> multiValueTree;
+  private CellBTreeMultiValueV2<String> multiValueTree;
   private OrientDB                       orientDB;
 
   private final String DB_NAME = "localMultiBTreeTest";
@@ -46,7 +46,7 @@ public class OCellBTreeMultiValueV2TestIT {
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
-    multiValueTree = new OCellBTreeMultiValueV2<>("multiBTree", ".sbt", ".nbt", ".mdt",
+    multiValueTree = new CellBTreeMultiValueV2<>("multiBTree", ".sbt", ".nbt", ".mdt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }

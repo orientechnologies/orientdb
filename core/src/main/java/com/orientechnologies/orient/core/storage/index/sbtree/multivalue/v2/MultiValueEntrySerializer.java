@@ -7,12 +7,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 
 import java.nio.ByteBuffer;
 
-public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueEntry> {
+public final class MultiValueEntrySerializer implements OBinarySerializer<MultiValueEntry> {
   public static final int                       ID       = 27;
   public static final MultiValueEntrySerializer INSTANCE = new MultiValueEntrySerializer();
 
   @Override
-  public int getObjectSize(final OMultiValueEntry object, final Object... hints) {
+  public int getObjectSize(final MultiValueEntry object, final Object... hints) {
     return 2 * OLongSerializer.LONG_SIZE + OShortSerializer.SHORT_SIZE;
   }
 
@@ -23,7 +23,7 @@ public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueE
   }
 
   @Override
-  public void serialize(final OMultiValueEntry object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serialize(final MultiValueEntry object, final byte[] stream, final int startPosition, final Object... hints) {
     int pos = startPosition;
     OLongSerializer.INSTANCE.serialize(object.id, stream, pos);
     pos += OLongSerializer.LONG_SIZE;
@@ -35,7 +35,7 @@ public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueE
   }
 
   @Override
-  public OMultiValueEntry deserialize(final byte[] stream, final int startPosition) {
+  public MultiValueEntry deserialize(final byte[] stream, final int startPosition) {
     int pos = startPosition;
     final long id = OLongSerializer.INSTANCE.deserialize(stream, pos);
     pos += OLongSerializer.LONG_SIZE;
@@ -44,7 +44,7 @@ public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueE
     pos += OShortSerializer.SHORT_SIZE;
 
     final long clusterPosition = OLongSerializer.INSTANCE.deserialize(stream, pos);
-    return new OMultiValueEntry(id, clusterId, clusterPosition);
+    return new MultiValueEntry(id, clusterId, clusterPosition);
   }
 
   @Override
@@ -63,7 +63,7 @@ public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueE
   }
 
   @Override
-  public void serializeNativeObject(final OMultiValueEntry object, final byte[] stream, final int startPosition,
+  public void serializeNativeObject(final MultiValueEntry object, final byte[] stream, final int startPosition,
       final Object... hints) {
     int pos = startPosition;
     OLongSerializer.INSTANCE.serializeNative(object.id, stream, pos);
@@ -76,7 +76,7 @@ public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueE
   }
 
   @Override
-  public OMultiValueEntry deserializeNativeObject(final byte[] stream, final int startPosition) {
+  public MultiValueEntry deserializeNativeObject(final byte[] stream, final int startPosition) {
     int pos = startPosition;
     final long id = OLongSerializer.INSTANCE.deserializeNative(stream, pos);
     pos += OLongSerializer.LONG_SIZE;
@@ -85,7 +85,7 @@ public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueE
     pos += OShortSerializer.SHORT_SIZE;
 
     final long clusterPosition = OLongSerializer.INSTANCE.deserializeNative(stream, pos);
-    return new OMultiValueEntry(id, clusterId, clusterPosition);
+    return new MultiValueEntry(id, clusterId, clusterPosition);
   }
 
   @Override
@@ -94,24 +94,24 @@ public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueE
   }
 
   @Override
-  public OMultiValueEntry preprocess(final OMultiValueEntry value, final Object... hints) {
+  public MultiValueEntry preprocess(final MultiValueEntry value, final Object... hints) {
     return value;
   }
 
   @Override
-  public void serializeInByteBufferObject(final OMultiValueEntry object, final ByteBuffer buffer, final Object... hints) {
+  public void serializeInByteBufferObject(final MultiValueEntry object, final ByteBuffer buffer, final Object... hints) {
     buffer.putLong(object.id);
     buffer.putShort((short) object.clusterId);
     buffer.putLong(object.clusterPosition);
   }
 
   @Override
-  public OMultiValueEntry deserializeFromByteBufferObject(final ByteBuffer buffer) {
+  public MultiValueEntry deserializeFromByteBufferObject(final ByteBuffer buffer) {
     final long id = buffer.getLong();
     final int clusterId = buffer.getShort();
     final long clusterPosition = buffer.getLong();
 
-    return new OMultiValueEntry(id, clusterId, clusterPosition);
+    return new MultiValueEntry(id, clusterId, clusterPosition);
   }
 
   @Override
@@ -120,7 +120,7 @@ public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueE
   }
 
   @Override
-  public OMultiValueEntry deserializeFromByteBufferObject(final ByteBuffer buffer, final OWALChanges walChanges, final int offset) {
+  public MultiValueEntry deserializeFromByteBufferObject(final ByteBuffer buffer, final OWALChanges walChanges, final int offset) {
     int position = offset;
 
     final long id = walChanges.getLongValue(buffer, position);
@@ -131,7 +131,7 @@ public class MultiValueEntrySerializer implements OBinarySerializer<OMultiValueE
 
     final long clusterPosition = walChanges.getLongValue(buffer, position);
 
-    return new OMultiValueEntry(id, clusterId, clusterPosition);
+    return new MultiValueEntry(id, clusterId, clusterPosition);
   }
 
   @Override
