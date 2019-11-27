@@ -367,6 +367,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntries(Collection<?> keys, boolean ascSortOrder) {
 
+    @SuppressWarnings("resource")
     String query = (String) keys.stream().findFirst().map(k -> (OCompositeKey) k).map(OCompositeKey::getKeys)
         .orElse(Collections.singletonList("q=*:*")).get(0);
 

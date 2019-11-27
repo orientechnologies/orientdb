@@ -44,7 +44,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
    * Indicates search behavior in case of {@link com.orientechnologies.orient.core.index.OCompositeKey} keys that have less amount
    * of internal keys are used, whether lowest or highest partially matched key should be used. Such keys is allowed to use only in
    */
-  public static enum PartialSearchMode {
+  public enum PartialSearchMode {
     /**
      * Any partially matched key will be used as search result.
      */
@@ -109,6 +109,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     return true;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public OIndexTxAware<T> clear() {
     database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
@@ -142,6 +143,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
         indexFirstKey = firstKey;
 
       if (firstKey != null) {
+        //noinspection unchecked
         if (indexFirstKey != null && ((Comparable) indexFirstKey).compareTo(firstKey) < 0)
           return indexFirstKey;
 
@@ -181,6 +183,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
         indexLastKey = lastKey;
 
       if (lastKey != null) {
+        //noinspection unchecked
         if (indexLastKey != null && ((Comparable) indexLastKey).compareTo(lastKey) > 0)
           return indexLastKey;
 
@@ -193,7 +196,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     }
   }
 
-  protected Object enhanceCompositeKey(Object key, PartialSearchMode partialSearchMode) {
+  private Object enhanceCompositeKey(Object key, PartialSearchMode partialSearchMode) {
     if (!(key instanceof OCompositeKey))
       return key;
 

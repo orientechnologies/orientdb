@@ -308,7 +308,6 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
   private Stream<ORawPair<Object, ORID>> mergeTxAndBackedStreams(OTransactionIndexChanges indexChanges,
       Stream<ORawPair<Object, ORID>> txStream, Stream<ORawPair<Object, ORID>> backedStream, boolean ascOrder) {
-    //noinspection resource
     return Streams.mergeSortedSpliterators(txStream,
         backedStream.map((entry) -> calculateTxIndexEntry(entry.first, entry.second, indexChanges)).filter(Objects::nonNull),
         (entryOne, entryTwo) -> ascOrder

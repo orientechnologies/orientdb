@@ -251,7 +251,6 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
   private Stream<ORawPair<Object, ORID>> mergeTxAndBackedStreams(OTransactionIndexChanges indexChanges,
       Stream<ORawPair<Object, ORID>> txStream, Stream<ORawPair<Object, ORID>> backedStream, boolean ascSortOrder) {
-    //noinspection resource
     return Streams.mergeSortedSpliterators(txStream,
         backedStream.map((entry) -> calculateTxIndexEntry(getCollatingValue(entry.first), entry.second, indexChanges))
             .filter(Objects::nonNull), (entryOne, entryTwo) -> ascSortOrder

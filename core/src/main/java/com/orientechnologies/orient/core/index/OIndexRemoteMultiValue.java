@@ -25,9 +25,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,9 +33,8 @@ import java.util.stream.Collectors;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@SuppressWarnings("unchecked")
 public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiable>> {
-  protected static final String QUERY_GET = "select expand( rid ) from index:`%s` where key = ?";
+  private static final String QUERY_GET = "select expand( rid ) from index:`%s` where key = ?";
 
   public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {
@@ -47,25 +43,9 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
 
   public Collection<OIdentifiable> get(final Object iKey) {
     try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), iKey)) {
+      //noinspection resource
       return result.stream().map((res) -> res.getIdentity().orElse(null)).collect(Collectors.toSet());
     }
-  }
-
-  public Iterator<Entry<Object, Collection<OIdentifiable>>> iterator() {
-    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES, name))) {
-
-      final Map<Object, Collection<OIdentifiable>> map = result.stream()
-          .collect(Collectors.toMap((r) -> r.getProperty("key"), (r) -> r.getProperty("rid")));
-      return map.entrySet().iterator();
-    }
-  }
-
-  public Iterator<OIdentifiable> valuesIterator() {
-    throw new UnsupportedOperationException();
-  }
-
-  public Iterator<OIdentifiable> valuesInverseIterator() {
-    throw new UnsupportedOperationException();
   }
 
   @Override

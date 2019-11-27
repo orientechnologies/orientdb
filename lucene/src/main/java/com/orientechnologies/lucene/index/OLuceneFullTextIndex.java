@@ -18,22 +18,16 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
 
 public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
 
-  public OLuceneFullTextIndex(String name,
-      String typeId,
-      String algorithm,
-      int version, OAbstractPaginatedStorage storage, String valueContainerAlgorithm, ODocument metadata,
-      final int binaryFormatVersion) {
+  public OLuceneFullTextIndex(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
     super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
   }
 
@@ -50,7 +44,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
       }
   }
 
-  public Query buildQuery(final Object query) throws ParseException {
+  public Query buildQuery(final Object query) {
     while (true)
       try {
         return storage.callIndexEngine(false, false, indexId, engine -> {
@@ -78,12 +72,9 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public boolean isCollectionIndex() {
     while (true) {
       try {
-        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Boolean>() {
-          @Override
-          public Boolean callEngine(OBaseIndexEngine engine) {
-            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-            return indexEngine.isCollectionIndex();
-          }
+        return storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+          return indexEngine.isCollectionIndex();
         });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();

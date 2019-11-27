@@ -335,9 +335,10 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
           newKeys.addAll(prepareKeys(nextIndex, currentResult));
         }
       } else {
-        @SuppressWarnings("ObjectAllocationInLoop")
-        final List<OIdentifiable> keys = currentIndex.iterateEntries(currentKeys, true).map((pair) -> pair.second)
-            .collect(Collectors.toList());
+        final List<OIdentifiable> keys;
+        try (Stream<ORawPair<Object, ORID>> stream = currentIndex.iterateEntries(currentKeys, true)) {
+          keys = stream.map((pair) -> pair.second).collect(Collectors.toList());
+        }
         newKeys = prepareKeys(nextIndex, keys);
       }
 
@@ -357,7 +358,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
         result.addAll(getFromCompositeIndex(key, firstIndex));
       }
     } else {
-      result = firstIndex.iterateEntries(currentKeys, true).map((pair) -> pair.second).collect(Collectors.toList());
+      try (Stream<ORawPair<Object, ORID>> stream = firstIndex.iterateEntries(currentKeys, true)) {
+        result = stream.map((pair) -> pair.second).collect(Collectors.toList());
+      }
     }
 
     updateStatistic(firstIndex);
@@ -366,8 +369,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   private static List<ORID> getFromCompositeIndex(Comparable currentKey, OIndex<?> currentIndex) {
-    return currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true).map((pair) -> pair.second)
-        .collect(Collectors.toList());
+    try (Stream<ORawPair<Object, ORID>> stream = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true)) {
+      return stream.map((pair) -> pair.second).collect(Collectors.toList());
+    }
   }
 
   /**
@@ -585,6 +589,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   private Stream<ORawPair<Object, ORID>> applyTailIndexes(Stream<ORawPair<Object, ORID>> indexStream) {
+    //noinspection resource
     return indexStream.flatMap((entry) -> applyTailIndexes(entry.second).stream().map((rid) -> new ORawPair<>(null, rid)));
   }
 

@@ -89,6 +89,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     sortedKeys.sort(comparator);
 
+    //noinspection resource
     return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().map((key) -> {
       final Object collatedKey = getCollatingValue(key);
 

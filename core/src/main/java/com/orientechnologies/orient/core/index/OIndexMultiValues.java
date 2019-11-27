@@ -352,6 +352,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>>
 
     sortedKeys.sort(comparator);
 
+    //noinspection resource
     return sortedKeys.stream().flatMap((key) -> {
       key = getCollatingValue(key);
 
@@ -360,6 +361,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>>
       try {
         while (true) {
           try {
+            //noinspection unchecked,resource
             return Optional.ofNullable((Collection<ORID>) storage.getIndexValue(indexId, key))
                 .map((rids) -> rids.stream().map((rid) -> new ORawPair<>(entryKey, rid))).orElse(Stream.empty());
           } catch (OInvalidIndexEngineIdException ignore) {
