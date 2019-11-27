@@ -1774,14 +1774,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           throw new OStorageException("Cannot create a connection to remote server because url list is empty");
       }
 
-      final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + getName();
-      if (session != null)
-        session.serverURLIndex = this.nextServerToConnect;
-
       this.nextServerToConnect++;
       if (this.nextServerToConnect >= serverURLs.size())
         // RESET INDEX
         this.nextServerToConnect = 0;
+
+      final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + getName();
+      if (session != null)
+        session.serverURLIndex = this.nextServerToConnect;
 
       return serverURL;
     }

@@ -1357,7 +1357,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       }
     }
     OrientDBConfigBuilder builder = OrientDBConfig.builder();
-    final String connectionStrategy = pars != null ? (String) pars.get("connectionStrategy") : null;
+    final String connectionStrategy = pars != null ? (String) pars.get(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY.getKey()) : null;
     if (connectionStrategy != null)
       builder.addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
 
