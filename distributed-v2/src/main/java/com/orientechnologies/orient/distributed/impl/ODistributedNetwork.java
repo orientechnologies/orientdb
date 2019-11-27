@@ -22,7 +22,6 @@ public interface ODistributedNetwork {
    */
   void reply(ONodeIdentity to, OSessionOperationId operationId, OStructuralSubmitResponse response);
 
-
   /**
    * Structural Operation
    */
@@ -38,8 +37,6 @@ public interface ODistributedNetwork {
    */
   void confirm(Collection<ONodeIdentity> to, OLogId id);
 
-
-
   /**
    * Data operation forward
    */
@@ -49,7 +46,6 @@ public interface ODistributedNetwork {
    * Data operation reply
    */
   void replay(ONodeIdentity to, String database, OSessionOperationId operationId, OSubmitResponse response);
-
 
   /**
    * Data Request
@@ -61,11 +57,24 @@ public interface ODistributedNetwork {
    */
   void sendRequest(Collection<ONodeIdentity> to, String database, OLogId id, ONodeRequest request);
 
-
-
   /**
    * Structural Full sync
    */
   void send(ONodeIdentity identity, OFullConfiguration fullConfiguration);
+
+  /**
+   * Structural ping
+   */
+  void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid);
+
+  /**
+   * Database ping
+   */
+  void notifyLastDbOperation(ONodeIdentity leader, String database, OLogId leaderLastValid);
+
+  /**
+   * Notify a node of the election of a new leader for a database
+   */
+  void sendDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid);
 
 }

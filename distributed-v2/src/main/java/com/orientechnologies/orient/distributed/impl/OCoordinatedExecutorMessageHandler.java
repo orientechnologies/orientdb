@@ -131,4 +131,19 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
     distributed.setLeader(leader, leaderLastValid);
   }
 
+  @Override
+  public void setDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    //TODO:
+  }
+
+  @Override
+  public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+    //TODO:
+  }
+
+  @Override
+  public void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    //TODO:
+  }
+
 }

@@ -85,6 +85,7 @@ public class CoordinatorTxTest {
     OSubmitTx submit = new OSubmitTx();
     coordinator.submit(mOne, new OSessionOperationId(), submit);
     /*
+    TODO:
     assertTrue(cOne.latch.await(10, TimeUnit.SECONDS));
     assertTrue(submit.firstPhase);
     assertTrue(submit.secondPhase);
@@ -235,6 +236,18 @@ public class CoordinatorTxTest {
     public void send(ONodeIdentity identity, OFullConfiguration fullConfiguration) {
 
     }
+
+    @Override
+    public void sendDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    }
+
+    @Override
+    public void notifyLastDbOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    }
+
+    @Override
+    public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
+    }
   }
 
   private class MockNetworkNode implements ODistributedNetwork {
@@ -293,6 +306,20 @@ public class CoordinatorTxTest {
     public void send(ONodeIdentity identity, OFullConfiguration fullConfiguration) {
 
     }
+
+    @Override
+    public void sendDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    }
+
+    @Override
+    public void notifyLastDbOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    }
+
+    @Override
+    public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
+    }
+
+
   }
 
 }
