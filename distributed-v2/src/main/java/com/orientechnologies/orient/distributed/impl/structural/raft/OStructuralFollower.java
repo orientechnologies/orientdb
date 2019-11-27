@@ -98,4 +98,14 @@ public class OStructuralFollower implements AutoCloseable {
       request.apply(orientDB);
     });
   }
+
+  public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+    //TODO: verify leader
+    executor.execute(() -> {
+      OLogId lastLogId = operationLog.lastPersistentLog();
+      if (lastLogId == null || leaderLastValid.getId() > lastLogId.getId()) {
+        resyncOplog();
+      }
+    });
+  }
 }

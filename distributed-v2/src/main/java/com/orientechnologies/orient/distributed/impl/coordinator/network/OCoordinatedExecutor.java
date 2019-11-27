@@ -35,8 +35,8 @@ public interface OCoordinatedExecutor {
 
   void setDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid);
 
-  void ping(ONodeIdentity leader, OLogId leaderLastValid);
+  void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid);
 
-  void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid);
+  void notifyLastDatabaseOperation(ONodeIdentity leader, String database, OLogId leaderLastValid);
 
 }
