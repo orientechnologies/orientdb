@@ -592,6 +592,13 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   // PROFILER
 
+  PROFILER_TX_TRIGGER_INTERVAL("profiler.tx.trigger.interval", "Interval in ms. after which transaction is treated as slow and its "
+      + "profiling is started. Zero or negative value means that profiling will not be started for any transaction.", Integer.class,
+      -1, false),
+
+  PROFILER_TX_TRACK_INTERVAL("profiler.tx.track.interval",
+      "Interval in ms. which will be used by profiler to take thread dump of transaction under the monitoring", Integer.class, 3),
+
   PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -728,7 +735,8 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 
-  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache. Zero means cache disabled", Integer.class, 100),
+  STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache. Zero means cache disabled",
+      Integer.class, 100),
 
   // GRAPH
   SQL_GRAPH_CONSISTENCY_MODE("sql.graphConsistencyMode",
