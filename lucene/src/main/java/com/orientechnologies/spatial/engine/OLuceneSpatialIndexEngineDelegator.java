@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
@@ -49,9 +49,7 @@ import java.util.stream.Stream;
  */
 public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, OLuceneSpatialIndexContainer {
 
-  private final Boolean                           durableInNonTxMode;
   private final OStorage                          storage;
-  private final int                               version;
   private final String                            indexName;
   private       OLuceneSpatialIndexEngineAbstract delegate;
   private final int                               id;
@@ -60,9 +58,7 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
     this.id = id;
 
     this.indexName = name;
-    this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
-    this.version = version;
   }
 
   @Override
@@ -79,8 +75,11 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
         } else {
           delegate = new OLuceneGeoSpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
         }
+
+        delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
+      } else {
+        throw new IllegalStateException("Invalid index type " + indexType);
       }
-      delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
     }
 
   }
@@ -183,12 +182,14 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return delegate.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return delegate.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 

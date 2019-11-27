@@ -639,6 +639,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
           return StreamSupport.stream(Spliterators.emptySpliterator(), false);
         }
 
+        //noinspection resource
         return StreamSupport.stream(new CellBTreeSpliteratorForward(null, null, false, false), false).map((entry) -> entry.first);
       } finally {
         releaseSharedLock();

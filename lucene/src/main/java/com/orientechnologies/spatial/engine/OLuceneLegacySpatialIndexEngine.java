@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,7 +57,7 @@ import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_MET
  */
 public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAbstract {
 
-  private OShapeBuilderLegacy legacyBuilder = OShapeBuilderLegacyImpl.INSTANCE;
+  private final OShapeBuilderLegacy legacyBuilder = OShapeBuilderLegacyImpl.INSTANCE;
 
   public OLuceneLegacySpatialIndexEngine(OStorage storage, String indexName, int id, OShapeBuilder factory) {
     super(storage, indexName, id, factory);
@@ -81,14 +81,16 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
 
   }
 
-  public Set<OIdentifiable> searchIntersect(OCompositeKey key, double distance, OCommandContext context, OLuceneTxChanges changes)
+  private Set<OIdentifiable> searchIntersect(OCompositeKey key, double distance, OCommandContext context, OLuceneTxChanges changes)
       throws IOException {
 
-    double lat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
-    double lng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
+    double lat = (Double) OType.convert(key.getKeys().get(0), Double.class);
+    double lng = (Double) OType.convert(key.getKeys().get(1), Double.class);
     SpatialOperation operation = SpatialOperation.Intersects;
 
+    @SuppressWarnings("deprecation")
     Point p = ctx.makePoint(lng, lat);
+    @SuppressWarnings("deprecation")
     SpatialArgs args = new SpatialArgs(operation,
         ctx.makeCircle(lng, lat, DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
     Query filterQuery = strategy.makeQuery(args);
@@ -105,10 +107,9 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
     return new OLuceneResultSet(this, queryContext, EMPTY_METADATA);
   }
 
-  public Set<OIdentifiable> searchWithin(OSpatialCompositeKey key, OCommandContext context, OLuceneTxChanges changes)
-      throws IOException {
+  private Set<OIdentifiable> searchWithin(OSpatialCompositeKey key, OCommandContext context, OLuceneTxChanges changes) {
 
-    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    Set<OIdentifiable> result = new HashSet<>();
 
     Shape shape = legacyBuilder.makeShape(key, ctx);
     if (shape == null)
@@ -133,6 +134,7 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
 
     OSpatialQueryContext spatialContext = (OSpatialQueryContext) queryContext;
     if (spatialContext.spatialArgs != null) {
+      @SuppressWarnings("deprecation")
       Point docPoint = (Point) ctx.readShape(doc.get(strategy.getFieldName()));
       double docDistDEG = ctx.getDistCalc().distance(spatialContext.spatialArgs.getShape().getCenter(), docPoint);
       final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
@@ -168,6 +170,7 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
       updateLastAccess();
       openIfClosed();
       OCompositeKey compositeKey = (OCompositeKey) key;
+      @SuppressWarnings("unchecked")
       Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
       for (OIdentifiable oIdentifiable : container) {
         addDocument(newGeoDocument(oIdentifiable, legacyBuilder.makeShape(compositeKey, ctx)));

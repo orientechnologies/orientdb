@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -19,6 +17,7 @@ public class AlterPropertyTest {
 
   @Before
   public void before() {
+    //noinspection deprecation
     db = new ODatabaseDocumentTx("memory:" + AlterPropertyTest.class.getSimpleName());
     db.create();
   }

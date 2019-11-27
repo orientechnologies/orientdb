@@ -131,13 +131,15 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     final Object firstKey = mvTree.firstKey();
     final Object lastKey = mvTree.lastKey();
 
-    mvTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).forEach((pair) -> {
-      try {
-        mvTree.remove(pair.first, pair.second);
-      } catch (IOException e) {
-        throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
-      }
-    });
+    try (Stream<ORawPair<Object, ORID>> stream = mvTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
+      stream.forEach((pair) -> {
+        try {
+          mvTree.remove(pair.first, pair.second);
+        } catch (IOException e) {
+          throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
+        }
+      });
+    }
 
     final List<ORID> rids = mvTree.get(null);
     for (final ORID rid : rids) {
@@ -153,13 +155,15 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OCompositeKey firstKey = svTree.firstKey();
       final OCompositeKey lastKey = svTree.lastKey();
 
-      svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).forEach((pair) -> {
-        try {
-          svTree.remove(pair.first);
-        } catch (IOException e) {
-          throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
-        }
-      });
+      try (Stream<ORawPair<OCompositeKey, ORID>> stream = svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
+        stream.forEach((pair) -> {
+          try {
+            svTree.remove(pair.first);
+          } catch (IOException e) {
+            throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
+          }
+        });
+      }
     }
 
     {
@@ -167,13 +171,15 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OIdentifiable lastKey = nullTree.lastKey();
 
       if (firstKey != null && lastKey != null) {
-        nullTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).forEach((pair) -> {
-          try {
-            nullTree.remove(pair.first);
-          } catch (IOException e) {
-            throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
-          }
-        });
+        try (Stream<ORawPair<OIdentifiable, ORID>> stream = nullTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
+          stream.forEach((pair) -> {
+            try {
+              nullTree.remove(pair.first);
+            } catch (IOException e) {
+              throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
+            }
+          });
+        }
       }
     }
   }
@@ -220,14 +226,17 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
           final OCompositeKey compositeKey = createCompositeKey(key, value);
 
           final boolean[] removed = new boolean[1];
-          svTree.iterateEntriesBetween(compositeKey, true, compositeKey, true, true).forEach((pair) -> {
-            try {
-              final boolean result = svTree.remove(pair.first) != null;
-              removed[0] = result || removed[0];
-            } catch (final IOException e) {
-              throw OException.wrapException(new OIndexException("Error during remove of entry (" + key + ", " + value + ")"), e);
-            }
-          });
+          try (Stream<ORawPair<OCompositeKey, ORID>> stream = svTree
+              .iterateEntriesBetween(compositeKey, true, compositeKey, true, true)) {
+            stream.forEach((pair) -> {
+              try {
+                final boolean result = svTree.remove(pair.first) != null;
+                removed[0] = result || removed[0];
+              } catch (final IOException e) {
+                throw OException.wrapException(new OIndexException("Error during remove of entry (" + key + ", " + value + ")"), e);
+              }
+            });
+          }
 
           return removed[0];
         } else {
@@ -277,12 +286,15 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OCompositeKey firstKey = convertToCompositeKey(key);
       final OCompositeKey lastKey = convertToCompositeKey(key);
 
-      return svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).map((pair) -> pair.second)
-          .collect(Collectors.toList());
+      try (Stream<ORawPair<OCompositeKey, ORID>> stream = svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
+        return stream.map((pair) -> pair.second).collect(Collectors.toList());
+      }
     } else {
       assert nullTree != null;
-      return nullTree.iterateEntriesBetween(new ORecordId(0, 0), true, new ORecordId(Short.MAX_VALUE, Long.MAX_VALUE), true, true)
-          .map((pair) -> pair.second).collect(Collectors.toList());
+      try (final Stream<ORawPair<OIdentifiable, ORID>> stream = nullTree
+          .iterateEntriesBetween(new ORecordId(0, 0), true, new ORecordId(Short.MAX_VALUE, Long.MAX_VALUE), true, true)) {
+        return stream.map((pair) -> pair.second).collect(Collectors.toList());
+      }
     }
   }
 
@@ -343,6 +355,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     }
 
     assert svTree != null;
+    //noinspection resource
     return svTree.keyStream().map(OCellBTreeMultiValueIndexEngine::extractKey);
   }
 
@@ -477,11 +490,13 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
       if (firstKey != null && lastKey != null) {
         final Object[] prevKey = new Object[] { new Object() };
-        counter += mvTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).filter((pair) -> {
-          final boolean result = !prevKey[0].equals(pair.first);
-          prevKey[0] = pair.first;
-          return result;
-        }).count();
+        try (final Stream<ORawPair<Object, ORID>> stream = mvTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
+          counter += stream.filter((pair) -> {
+            final boolean result = !prevKey[0].equals(pair.first);
+            prevKey[0] = pair.first;
+            return result;
+          }).count();
+        }
       }
 
       return counter;
@@ -511,12 +526,14 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     final OCompositeKey lastKey = svTree.lastKey();
 
     final Object[] prevKey = new Object[] { new Object() };
-    count += svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).filter((pair) -> {
-      final Object key = extractKey(pair.first);
-      final boolean result = !prevKey[0].equals(key);
-      prevKey[0] = key;
-      return result;
-    }).count();
+    try (Stream<ORawPair<OCompositeKey, ORID>> stream = svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
+      count += stream.filter((pair) -> {
+        final Object key = extractKey(pair.first);
+        final boolean result = !prevKey[0].equals(key);
+        prevKey[0] = key;
+        return result;
+      }).count();
+    }
 
     return count;
   }

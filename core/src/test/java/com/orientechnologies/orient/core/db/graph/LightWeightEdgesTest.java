@@ -29,7 +29,7 @@ public class LightWeightEdgesTest {
     orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.create("test", ODatabaseType.MEMORY);
     session = orientDB.open("test", "admin", "admin");
-    session.command("ALTER database custom useLightweightEdges = true");
+    session.command("ALTER database custom useLightweightEdges = true").close();
     session.createVertexClass("Vertex");
     session.createEdgeClass("Edge");
   }

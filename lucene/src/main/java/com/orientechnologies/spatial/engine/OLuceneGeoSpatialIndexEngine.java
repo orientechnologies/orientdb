@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,6 +67,7 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
     openIfClosed();
     try {
       if (key instanceof Map) {
+        //noinspection unchecked
         return newGeoSearch((Map<String, Object>) key, changes);
 
       }
@@ -92,6 +93,7 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
     if (spatialContext.spatialArgs != null) {
       updateLastAccess();
       openIfClosed();
+      @SuppressWarnings("deprecation")
       Point docPoint = (Point) ctx.readShape(doc.get(strategy.getFieldName()));
       double docDistDEG = ctx.getDistCalc().distance(spatialContext.spatialArgs.getShape().getCenter(), docPoint);
       final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
@@ -109,6 +111,7 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
     if (key instanceof OIdentifiable) {
       openIfClosed();
       ODocument location = ((OIdentifiable) key).getRecord();
+      @SuppressWarnings("unchecked")
       Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
       for (OIdentifiable oIdentifiable : container) {
         updateLastAccess();

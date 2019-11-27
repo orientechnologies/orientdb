@@ -2,17 +2,13 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by tglman on 01/12/15.
@@ -23,6 +19,7 @@ public class AlterSuperclassTest {
 
   @Before
   public void before() {
+    //noinspection deprecation
     db = new ODatabaseDocumentTx("memory:" + AlterSuperclassTest.class.getSimpleName());
     db.create();
   }

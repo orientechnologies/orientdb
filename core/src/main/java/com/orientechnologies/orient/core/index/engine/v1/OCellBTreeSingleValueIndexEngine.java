@@ -83,13 +83,15 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   private void doClearTree() throws IOException {
-    sbTree.keyStream().forEach((key) -> {
-      try {
-        sbTree.remove(key);
-      } catch (IOException e) {
-        throw OException.wrapException(new OIndexException("Can not clear index"), e);
-      }
-    });
+    try (Stream<Object> stream = sbTree.keyStream()) {
+      stream.forEach((key) -> {
+        try {
+          sbTree.remove(key);
+        } catch (IOException e) {
+          throw OException.wrapException(new OIndexException("Can not clear index"), e);
+        }
+      });
+    }
 
     sbTree.remove(null);
   }

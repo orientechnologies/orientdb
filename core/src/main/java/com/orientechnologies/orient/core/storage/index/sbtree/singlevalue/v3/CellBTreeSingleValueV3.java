@@ -618,6 +618,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     try {
       acquireSharedLock();
       try {
+        //noinspection resource
         return StreamSupport.stream(new SpliteratorForward(null, null, false, false), false).map((entry) -> entry.first);
       } finally {
         releaseSharedLock();

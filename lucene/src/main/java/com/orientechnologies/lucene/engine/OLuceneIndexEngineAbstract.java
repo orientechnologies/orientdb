@@ -60,6 +60,7 @@ import org.apache.lucene.util.Version;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.*;
@@ -86,8 +87,8 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   protected        Version                                       version;
   protected        Map<String, Boolean>                          collectionFields = new HashMap<>();
   private          TimerTask                                     commitTask;
-  private          AtomicBoolean                                 closed;
-  private          OStorage                                      storage;
+  private final    AtomicBoolean                                 closed;
+  private final    OStorage                                      storage;
   private volatile long                                          reopenToken;
   private          Analyzer                                      indexAnalyzer;
   private          Analyzer                                      queryAnalyzer;
@@ -97,7 +98,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   private          long                                          closeAfterInterval;
   private          long                                          firstFlushAfter;
 
-  private Lock openCloseLock;
+  private final Lock openCloseLock;
 
   private final int id;
 
@@ -177,6 +178,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   private boolean shouldClose() {
+    //noinspection resource
     return !(directory.getDirectory() instanceof RAMDirectory)
         && System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
   }
@@ -199,6 +201,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   private void reOpen() throws IOException {
 
+    //noinspection resource
     if (indexWriter != null && indexWriter.isOpen() && directory.getDirectory() instanceof RAMDirectory) {
       // don't waste time reopening an in memory index
       return;
@@ -207,7 +210,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   }
 
-  protected ODatabaseDocumentInternal getDatabase() {
+  protected static ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
@@ -344,26 +347,31 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   private void deleteIndexFolder(File baseStoragePath) throws IOException {
+    @SuppressWarnings("resource")
     final String[] files = directory.getDirectory().listAll();
     for (String fileName : files) {
+      //noinspection resource
       directory.getDirectory().deleteFile(fileName);
     }
     directory.getDirectory().close();
     String indexPath = directory.getPath();
     if (indexPath != null) {
       File indexDir = new File(indexPath);
-      while (true) {
-        if (Files.isSameFile(FileSystems.getDefault().getPath(baseStoragePath.getCanonicalPath()),
-            FileSystems.getDefault().getPath(indexDir.getCanonicalPath()))) {
-          break;
-        }
-        //delete only if dir is empty, otherwise stop deleting process
-        //last index will remove all upper dirs
-        if (indexDir.listFiles().length == 0) {
-          OFileUtils.deleteRecursively(indexDir, true);
-          indexDir = indexDir.getParentFile();
-        } else {
-          break;
+      try (final FileSystem fileSystem = FileSystems.getDefault()) {
+        while (true) {
+          if (Files.isSameFile(fileSystem.getPath(baseStoragePath.getCanonicalPath()),
+              fileSystem.getPath(indexDir.getCanonicalPath()))) {
+            break;
+          }
+          //delete only if dir is empty, otherwise stop deleting process
+          //last index will remove all upper dirs
+          final File[] indexDirFiles = indexDir.listFiles();
+          if (indexDirFiles != null && indexDirFiles.length == 0) {
+            OFileUtils.deleteRecursively(indexDir, true);
+            indexDir = indexDir.getParentFile();
+          } else {
+            break;
+          }
         }
       }
     }
@@ -457,6 +465,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     openIfClosed();
     IndexSearcher searcher = searcher();
     try {
+      @SuppressWarnings("resource")
       IndexReader reader = searcher.getIndexReader();
 
       //we subtract metadata document added during open

@@ -39,9 +39,9 @@ public class CellBTreeSingleValueV1TestIT {
     orientDB = new OrientDB("plocal:" + buildDirectory, config);
     orientDB.create(dbName, ODatabaseType.PLOCAL);
 
-    final ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
-
-    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    try (ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin")) {
+      storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    }
     singleValueTree = new CellBTreeSingleValueV1<>("singleBTree", ".sbt", ".nbt", storage);
     singleValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
@@ -398,12 +398,13 @@ public class CellBTreeSingleValueV1TestIT {
     Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
 
-    final Stream<String> stream = singleValueTree.keyStream();
-    final Iterator<String> indexIterator = stream.iterator();
-
-    for (String entryKey : keyValues.keySet()) {
-      final String indexKey = indexIterator.next();
-      Assert.assertEquals(entryKey, indexKey);
+    final Iterator<String> indexIterator;
+    try (Stream<String> stream = singleValueTree.keyStream()) {
+      indexIterator = stream.iterator();
+      for (String entryKey : keyValues.keySet()) {
+        final String indexKey = indexIterator.next();
+        Assert.assertEquals(entryKey, indexKey);
+      }
     }
   }
 
@@ -564,27 +565,29 @@ public class CellBTreeSingleValueV1TestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final Stream<ORawPair<String, ORID>> stream = singleValueTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
+      final Iterator<ORawPair<String, ORID>> indexIterator;
+      try (Stream<ORawPair<String, ORID>> stream = singleValueTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder)) {
+        indexIterator = stream.iterator();
+        Iterator<Map.Entry<String, ORID>> iterator;
+        if (ascSortOrder) {
+          iterator = keyValues.tailMap(fromKey, keyInclusive).entrySet().iterator();
+        } else {
+          iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
+        }
 
-      Iterator<Map.Entry<String, ORID>> iterator;
-      if (ascSortOrder) {
-        iterator = keyValues.tailMap(fromKey, keyInclusive).entrySet().iterator();
-      } else {
-        iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
+        while (iterator.hasNext()) {
+          final ORawPair<String, ORID> indexEntry = indexIterator.next();
+          final Map.Entry<String, ORID> entry = iterator.next();
+
+          Assert.assertEquals(indexEntry.first, entry.getKey());
+          Assert.assertEquals(indexEntry.second, entry.getValue());
+        }
+
+        //noinspection ConstantConditions
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertFalse(indexIterator.hasNext());
       }
 
-      while (iterator.hasNext()) {
-        final ORawPair<String, ORID> indexEntry = indexIterator.next();
-        final Map.Entry<String, ORID> entry = iterator.next();
-
-        Assert.assertEquals(indexEntry.first, entry.getKey());
-        Assert.assertEquals(indexEntry.second, entry.getValue());
-      }
-
-      //noinspection ConstantConditions
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertFalse(indexIterator.hasNext());
     }
   }
 
@@ -605,27 +608,29 @@ public class CellBTreeSingleValueV1TestIT {
         toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final Stream<ORawPair<String, ORID>> stream = singleValueTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
+      final Iterator<ORawPair<String, ORID>> indexIterator;
+      try (Stream<ORawPair<String, ORID>> stream = singleValueTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder)) {
+        indexIterator = stream.iterator();
+        Iterator<Map.Entry<String, ORID>> iterator;
+        if (ascSortOrder) {
+          iterator = keyValues.headMap(toKey, keyInclusive).entrySet().iterator();
+        } else {
+          iterator = keyValues.headMap(toKey, keyInclusive).descendingMap().entrySet().iterator();
+        }
 
-      Iterator<Map.Entry<String, ORID>> iterator;
-      if (ascSortOrder) {
-        iterator = keyValues.headMap(toKey, keyInclusive).entrySet().iterator();
-      } else {
-        iterator = keyValues.headMap(toKey, keyInclusive).descendingMap().entrySet().iterator();
+        while (iterator.hasNext()) {
+          ORawPair<String, ORID> indexEntry = indexIterator.next();
+          Map.Entry<String, ORID> entry = iterator.next();
+
+          Assert.assertEquals(indexEntry.first, entry.getKey());
+          Assert.assertEquals(indexEntry.second, entry.getValue());
+        }
+
+        //noinspection ConstantConditions
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertFalse(indexIterator.hasNext());
       }
 
-      while (iterator.hasNext()) {
-        ORawPair<String, ORID> indexEntry = indexIterator.next();
-        Map.Entry<String, ORID> entry = iterator.next();
-
-        Assert.assertEquals(indexEntry.first, entry.getKey());
-        Assert.assertEquals(indexEntry.second, entry.getValue());
-      }
-
-      //noinspection ConstantConditions
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertFalse(indexIterator.hasNext());
     }
   }
 
@@ -662,28 +667,30 @@ public class CellBTreeSingleValueV1TestIT {
         fromKey = toKey;
       }
 
-      Stream<ORawPair<String, ORID>> stream = singleValueTree
-          .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
+      final Iterator<ORawPair<String, ORID>> indexIterator;
+      try (Stream<ORawPair<String, ORID>> stream = singleValueTree
+          .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder)) {
+        indexIterator = stream.iterator();
 
-      Iterator<Map.Entry<String, ORID>> iterator;
-      if (ascSortOrder) {
-        iterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).entrySet().iterator();
-      } else {
-        iterator = keyValues.descendingMap().subMap(toKey, toInclusive, fromKey, fromInclusive).entrySet().iterator();
+        Iterator<Map.Entry<String, ORID>> iterator;
+        if (ascSortOrder) {
+          iterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).entrySet().iterator();
+        } else {
+          iterator = keyValues.descendingMap().subMap(toKey, toInclusive, fromKey, fromInclusive).entrySet().iterator();
+        }
+
+        while (iterator.hasNext()) {
+          ORawPair<String, ORID> indexEntry = indexIterator.next();
+          Assert.assertNotNull(indexEntry);
+
+          Map.Entry<String, ORID> mapEntry = iterator.next();
+          Assert.assertEquals(indexEntry.first, mapEntry.getKey());
+          Assert.assertEquals(indexEntry.second, mapEntry.getValue());
+        }
+        //noinspection ConstantConditions
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertFalse(indexIterator.hasNext());
       }
-
-      while (iterator.hasNext()) {
-        ORawPair<String, ORID> indexEntry = indexIterator.next();
-        Assert.assertNotNull(indexEntry);
-
-        Map.Entry<String, ORID> mapEntry = iterator.next();
-        Assert.assertEquals(indexEntry.first, mapEntry.getKey());
-        Assert.assertEquals(indexEntry.second, mapEntry.getValue());
-      }
-      //noinspection ConstantConditions
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertFalse(indexIterator.hasNext());
     }
   }
 }

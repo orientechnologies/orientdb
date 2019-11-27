@@ -121,6 +121,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
       }
       currentRs = preFetches.get(level);
       currentRs.reset();
+      //noinspection resource
       resultSets.set(level, currentRs);
       currentTuple.set(level, currentRs.next());
       fetchNextRecord(level - 1);
@@ -145,7 +146,9 @@ public class CartesianProductStep extends AbstractExecutionStep {
           nextRecord.setProperty(s, res.getProperty(s));
         }
         if (!completedPrefetch.get(i)) {
+          //noinspection resource
           preFetches.get(i).add(res);
+          //noinspection resource
           if (!resultSets.get(i).hasNext()) {
             completedPrefetch.set(i, true);
           }

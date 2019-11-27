@@ -40,9 +40,9 @@ public class CellBTreeMultiValueV2TestIT {
     orientDB = new OrientDB("plocal:" + buildDirectory, config);
     orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
 
-    final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
-
-    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    try (ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin")) {
+      storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    }
     multiValueTree = new CellBTreeMultiValueV2<>("multiBTree", ".sbt", ".nbt", ".mdt", storage);
     multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
@@ -776,12 +776,12 @@ public class CellBTreeMultiValueV2TestIT {
     Assert.assertEquals(multiValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(multiValueTree.lastKey(), keyValues.lastKey());
 
-    final Stream<String> stream = multiValueTree.keyStream();
-    final Iterator<String> indexIterator = stream.iterator();
-
-    for (String entryKey : keyValues.keySet()) {
-      final String indexKey = indexIterator.next();
-      Assert.assertEquals(entryKey, indexKey);
+    try (Stream<String> stream = multiValueTree.keyStream()) {
+      final Iterator<String> indexIterator = stream.iterator();
+      for (String entryKey : keyValues.keySet()) {
+        final String indexKey = indexIterator.next();
+        Assert.assertEquals(entryKey, indexKey);
+      }
     }
   }
 
@@ -924,38 +924,40 @@ public class CellBTreeMultiValueV2TestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 1) + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final Stream<ORawPair<String, ORID>> stream = multiValueTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
+      final Iterator<ORawPair<String, ORID>> indexIterator;
+      try (Stream<ORawPair<String, ORID>> stream = multiValueTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder)) {
+        indexIterator = stream.iterator();
 
-      Iterator<Map.Entry<String, Integer>> iterator;
-      if (ascSortOrder) {
-        iterator = keyValues.tailMap(fromKey, keyInclusive).entrySet().iterator();
-      } else {
-        iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
-      }
+        Iterator<Map.Entry<String, Integer>> iterator;
+        if (ascSortOrder) {
+          iterator = keyValues.tailMap(fromKey, keyInclusive).entrySet().iterator();
+        } else {
+          iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
+        }
 
-      while (iterator.hasNext()) {
-        ORawPair<String, ORID> indexEntry = indexIterator.next();
-        final Map.Entry<String, Integer> entry = iterator.next();
+        while (iterator.hasNext()) {
+          ORawPair<String, ORID> indexEntry = indexIterator.next();
+          final Map.Entry<String, Integer> entry = iterator.next();
 
-        final int repetition = entry.getValue();
-        final int value = Integer.parseInt(entry.getKey());
-        final ORID expected = new ORecordId(value % 32_000, value);
-
-        Assert.assertEquals(entry.getKey(), indexEntry.first);
-        Assert.assertEquals(expected, indexEntry.second);
-
-        for (int n = 1; n < repetition; n++) {
-          indexEntry = indexIterator.next();
+          final int repetition = entry.getValue();
+          final int value = Integer.parseInt(entry.getKey());
+          final ORID expected = new ORecordId(value % 32_000, value);
 
           Assert.assertEquals(entry.getKey(), indexEntry.first);
           Assert.assertEquals(expected, indexEntry.second);
-        }
-      }
 
-      //noinspection ConstantConditions
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertFalse(indexIterator.hasNext());
+          for (int n = 1; n < repetition; n++) {
+            indexEntry = indexIterator.next();
+
+            Assert.assertEquals(entry.getKey(), indexEntry.first);
+            Assert.assertEquals(expected, indexEntry.second);
+          }
+        }
+
+        //noinspection ConstantConditions
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertFalse(indexIterator.hasNext());
+      }
     }
   }
 
@@ -976,38 +978,39 @@ public class CellBTreeMultiValueV2TestIT {
         toKey = toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final Stream<ORawPair<String, ORID>> stream = multiValueTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
+      final Iterator<ORawPair<String, ORID>> indexIterator;
+      try (Stream<ORawPair<String, ORID>> stream = multiValueTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder)) {
+        indexIterator = stream.iterator();
+        Iterator<Map.Entry<String, Integer>> iterator;
+        if (ascSortOrder) {
+          iterator = keyValues.headMap(toKey, keyInclusive).entrySet().iterator();
+        } else {
+          iterator = keyValues.headMap(toKey, keyInclusive).descendingMap().entrySet().iterator();
+        }
 
-      Iterator<Map.Entry<String, Integer>> iterator;
-      if (ascSortOrder) {
-        iterator = keyValues.headMap(toKey, keyInclusive).entrySet().iterator();
-      } else {
-        iterator = keyValues.headMap(toKey, keyInclusive).descendingMap().entrySet().iterator();
-      }
+        while (iterator.hasNext()) {
+          ORawPair<String, ORID> indexEntry = indexIterator.next();
+          Map.Entry<String, Integer> entry = iterator.next();
 
-      while (iterator.hasNext()) {
-        ORawPair<String, ORID> indexEntry = indexIterator.next();
-        Map.Entry<String, Integer> entry = iterator.next();
-
-        final int repetition = entry.getValue();
-        final int value = Integer.parseInt(entry.getKey());
-        final ORID expected = new ORecordId(value % 32_000, value);
-
-        Assert.assertEquals(entry.getKey(), indexEntry.first);
-        Assert.assertEquals(expected, indexEntry.second);
-
-        for (int n = 1; n < repetition; n++) {
-          indexEntry = indexIterator.next();
+          final int repetition = entry.getValue();
+          final int value = Integer.parseInt(entry.getKey());
+          final ORID expected = new ORecordId(value % 32_000, value);
 
           Assert.assertEquals(entry.getKey(), indexEntry.first);
           Assert.assertEquals(expected, indexEntry.second);
-        }
-      }
 
-      //noinspection ConstantConditions
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertFalse(indexIterator.hasNext());
+          for (int n = 1; n < repetition; n++) {
+            indexEntry = indexIterator.next();
+
+            Assert.assertEquals(entry.getKey(), indexEntry.first);
+            Assert.assertEquals(expected, indexEntry.second);
+          }
+        }
+
+        //noinspection ConstantConditions
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertFalse(indexIterator.hasNext());
+      }
     }
   }
 
@@ -1044,40 +1047,42 @@ public class CellBTreeMultiValueV2TestIT {
         fromKey = toKey;
       }
 
-      Stream<ORawPair<String, ORID>> stream = multiValueTree
-          .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
-      final Iterator<ORawPair<String, ORID>> indexIterator = stream.iterator();
+      final Iterator<ORawPair<String, ORID>> indexIterator;
+      try (Stream<ORawPair<String, ORID>> stream = multiValueTree
+          .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder)) {
+        indexIterator = stream.iterator();
 
-      Iterator<Map.Entry<String, Integer>> iterator;
-      if (ascSortOrder) {
-        iterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).entrySet().iterator();
-      } else {
-        iterator = keyValues.descendingMap().subMap(toKey, toInclusive, fromKey, fromInclusive).entrySet().iterator();
-      }
+        Iterator<Map.Entry<String, Integer>> iterator;
+        if (ascSortOrder) {
+          iterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).entrySet().iterator();
+        } else {
+          iterator = keyValues.descendingMap().subMap(toKey, toInclusive, fromKey, fromInclusive).entrySet().iterator();
+        }
 
-      while (iterator.hasNext()) {
-        ORawPair<String, ORID> indexEntry = indexIterator.next();
-        Assert.assertNotNull(indexEntry);
+        while (iterator.hasNext()) {
+          ORawPair<String, ORID> indexEntry = indexIterator.next();
+          Assert.assertNotNull(indexEntry);
 
-        Map.Entry<String, Integer> entry = iterator.next();
+          Map.Entry<String, Integer> entry = iterator.next();
 
-        final int repetition = entry.getValue();
-        final int value = Integer.parseInt(entry.getKey());
-        final ORID expected = new ORecordId(value % 32_000, value);
-
-        Assert.assertEquals(entry.getKey(), indexEntry.first);
-        Assert.assertEquals(expected, indexEntry.second);
-
-        for (int n = 1; n < repetition; n++) {
-          indexEntry = indexIterator.next();
+          final int repetition = entry.getValue();
+          final int value = Integer.parseInt(entry.getKey());
+          final ORID expected = new ORecordId(value % 32_000, value);
 
           Assert.assertEquals(entry.getKey(), indexEntry.first);
           Assert.assertEquals(expected, indexEntry.second);
+
+          for (int n = 1; n < repetition; n++) {
+            indexEntry = indexIterator.next();
+
+            Assert.assertEquals(entry.getKey(), indexEntry.first);
+            Assert.assertEquals(expected, indexEntry.second);
+          }
         }
+        //noinspection ConstantConditions
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertFalse(indexIterator.hasNext());
       }
-      //noinspection ConstantConditions
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertFalse(indexIterator.hasNext());
     }
   }
 

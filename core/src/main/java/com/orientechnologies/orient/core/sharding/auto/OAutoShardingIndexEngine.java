@@ -64,7 +64,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   private final OAbstractPaginatedStorage        storage;
   private       List<OHashTable<Object, Object>> partitions;
   private       OAutoShardingStrategy            strategy;
-  private final int                              version;
   private final String                           name;
   private       int                              partitionSize;
   private final AtomicLong                       bonsayFileId = new AtomicLong(0);
@@ -74,7 +73,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     this.name = iName;
     this.id = id;
     this.storage = iStorage;
-    this.version = iVersion;
   }
 
   @Override
@@ -117,7 +115,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       }
     }
 
-    engineProperties.put("partitions", "" + partitionSize);
+    engineProperties.put("partitions", String.valueOf(partitionSize));
 
     init();
 
@@ -280,9 +278,10 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       put(key, updated.getValue());
     else if (updated.isRemove()) {
       remove(key);
-    } else if (updated.isNothing()) {
-      //Do Nothing
-    }
+    } else //noinspection StatementWithEmptyBody
+      if (updated.isNothing()) {
+        //Do Nothing
+      }
   }
 
   @SuppressWarnings("unchecked")
@@ -414,13 +413,14 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(final Object fromKey, final boolean isInclusive, final boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(final Object fromKey, final boolean isInclusive,
+      final boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
@@ -463,11 +463,13 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       this.valuesTransformer = valuesTransformer;
       this.hashTable = hashTable;
 
+      @SuppressWarnings("unchecked")
       OHashTable.Entry<Object, Object> firstEntry = hashTable.firstEntry();
       if (firstEntry == null) {
         //noinspection unchecked
         entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
       } else {
+        //noinspection unchecked
         entries = hashTable.ceilingEntries(firstEntry.key);
       }
 
@@ -508,6 +510,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
         nextEntriesIndex++;
 
         if (nextEntriesIndex >= entries.length) {
+          //noinspection unchecked
           entries = hashTable.higherEntries(entries[entries.length - 1].key);
 
           nextEntriesIndex = 0;

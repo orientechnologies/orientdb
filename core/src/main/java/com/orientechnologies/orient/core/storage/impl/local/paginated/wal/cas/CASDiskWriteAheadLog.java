@@ -437,21 +437,22 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     final OModifiableLong walSize = new OModifiableLong();
     if (filterWALFiles) {
+      //noinspection resource
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attributes) -> validateName(path.getFileName().toString(), storageName, locale));
     } else {
+      //noinspection resource
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attrs) -> validateSimpleName(path.getFileName().toString(), locale));
     }
-
-    if (walFiles == null)
-      throw new IllegalStateException(
-          "Location passed in WAL does not exist, or IO error was happened. DB cannot work in durable mode in such case");
-
-    walFiles.forEach((Path path) -> {
-      segments.add(extractSegmentId(path.getFileName().toString()));
-      walSize.increment(path.toFile().length());
-    });
+    try {
+      walFiles.forEach((Path path) -> {
+        segments.add(extractSegmentId(path.getFileName().toString()));
+        walSize.increment(path.toFile().length());
+      });
+    } finally {
+      walFiles.close();
+    }
 
     return walSize.value;
   }

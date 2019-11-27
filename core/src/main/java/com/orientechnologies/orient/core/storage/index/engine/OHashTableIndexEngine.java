@@ -65,15 +65,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   private final OHashTable<Object, Object> hashTable;
   private final AtomicLong                 bonsayFileId = new AtomicLong(0);
 
-  private final int version;
-
   private final String name;
 
   private final int id;
 
   public OHashTableIndexEngine(String name, int id, OAbstractPaginatedStorage storage, int version) {
     this.id = id;
-    this.version = version;
     if (version < 2) {
       throw new IllegalStateException("Unsupported version of hash index");
     } else if (version == 2) {
