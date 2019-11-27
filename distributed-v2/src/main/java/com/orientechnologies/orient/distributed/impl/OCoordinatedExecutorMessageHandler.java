@@ -158,12 +158,12 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   }
 
   @Override
-  public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+  public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
     distributed.getStructuralDistributedContext().getFollower().ping(leader, leaderLastValid);
   }
 
   @Override
-  public void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+  public void notifyLastDatabaseOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
     distributed.getDistributedContext(database).getExecutor().ping(leader, leaderLastValid);
   }
 
