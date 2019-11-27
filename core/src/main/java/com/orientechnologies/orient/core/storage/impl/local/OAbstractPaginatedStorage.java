@@ -1953,7 +1953,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       txBegun.incrementAndGet();
 
-      if (txProfilerInterval > 0) {
+      if (txProfilerTrigger > 0) {
         final TransactionProfiler transactionProfiler = new TransactionProfiler(txProfilerTrigger, txIsCompleted,
             Thread.currentThread());
         transactionProfiler.future = storageProfilerExecutor
