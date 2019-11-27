@@ -46,7 +46,11 @@ public class OLogId implements Comparable<OLogId> {
 
   @Override
   public int compareTo(OLogId o) {
-    return ((Long) this.id).compareTo(o.id);
+    if (this.getTerm() == o.getTerm()) {
+      return ((Long) this.id).compareTo(o.id);
+    } else {
+      return ((Long) this.getTerm()).compareTo(o.getTerm());
+    }
   }
 
 
