@@ -4,6 +4,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 
 import javax.crypto.Cipher;
@@ -357,6 +358,12 @@ public abstract class ONodeManager {
   }
 
 
+  /* =============== DATABASE PING INFO ================= */
+
+  
+  public void notifyLastDbOperation(String database, OLogId leaderLastValid) {
+    //TODO
+  }
 
 
 
@@ -708,4 +715,5 @@ public abstract class ONodeManager {
   public ONodeInternalConfiguration getInternalConfiguration() {
     return internalConfiguration;
   }
+
 }

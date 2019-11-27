@@ -333,7 +333,7 @@ public class ODistributedCoordinatorTest {
     }
 
     @Override
-    public void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    public void notifyLastDbOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
     }
 
     @Override

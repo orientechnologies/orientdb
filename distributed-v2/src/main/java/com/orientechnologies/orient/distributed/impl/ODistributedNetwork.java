@@ -65,12 +65,12 @@ public interface ODistributedNetwork {
   /**
    * Structural ping
    */
-  void ping(ONodeIdentity leader, OLogId leaderLastValid);
+  void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid);
 
   /**
    * Database ping
    */
-  void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid);
+  void notifyLastDbOperation(ONodeIdentity leader, String database, OLogId leaderLastValid);
 
   /**
    * Notify a node of the election of a new leader for a database

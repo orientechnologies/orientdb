@@ -231,12 +231,13 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
   }
 
   @Override
-  public void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+  public void notifyLastDbOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    discoveryManager.notifyLastDbOperation(database, leaderLastValid);
     //TODO
   }
 
   @Override
-  public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+  public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
     //TODO
   }
 }
