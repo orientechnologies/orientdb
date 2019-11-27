@@ -39,8 +39,16 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
     this.context = context;
     this.quorum = context.getStructuralConfiguration().readSharedConfiguration().getQuorum();
     this.timeout = context.getConfigurations().getConfigurations().getValueAsInteger(DISTRIBUTED_TX_EXPIRE_TIMEOUT);
+    long pingTimeout = 1000;// context.getConfigurations().getConfigurations().getValueAsInteger()
     this.nodeIdentity = context.getNodeIdentity();
     this.network = network;
+    this.timer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        OLogId logId = operationLog.lastPersistentLog();
+        network.ping(context.getNodeIdentity(), logId);
+      }
+    }, pingTimeout, pingTimeout);
   }
 
   public void propagateAndApply(ORaftOperation operation, OpFinished finished) {
@@ -84,6 +92,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
 
   @Override
   public void close() {
+    timer.cancel();
     executor.shutdown();
     try {
       executor.awaitTermination(1, TimeUnit.HOURS);

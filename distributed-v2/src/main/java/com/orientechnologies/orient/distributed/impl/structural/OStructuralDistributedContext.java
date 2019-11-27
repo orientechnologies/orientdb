@@ -4,15 +4,14 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 
-import java.util.concurrent.Executors;
+import java.util.Set;
 import java.util.concurrent.Future;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT;
 
 public class OStructuralDistributedContext {
   private OStructuralSubmitContext submitContext;
@@ -56,20 +55,25 @@ public class OStructuralDistributedContext {
     return follower;
   }
 
-  public synchronized void makeLeader(ONodeIdentity identity) {
+  public synchronized void makeLeader(ONodeIdentity identity, Set<ONodeIdentity> activeNodes) {
     if (leader == null) {
       leader = new OStructuralLeader(opLog, context.getNetworkManager(), context);
+      leader.connected(identity);
+      for (ONodeIdentity nodeIdentity : activeNodes) {
+        leader.connected(nodeIdentity);
+        leader.join(nodeIdentity);
+      }
+      this.getSubmitContext().setLeader(identity);
     }
-    leader.connected(identity);
-    this.getSubmitContext().setLeader(identity);
   }
 
-  public synchronized void setExternalLeader(ONodeIdentity leader) {
+  public synchronized void setExternalLeader(ONodeIdentity leader, OLogId leaderLastValid) {
     if (this.leader != null) {
       this.leader.close();
       this.leader = null;
     }
     this.getSubmitContext().setLeader(leader);
+    getFollower().ping(leader, leaderLastValid);
   }
 
   public synchronized void close() {
@@ -112,4 +116,16 @@ public class OStructuralDistributedContext {
     return getSubmitContext().sendAndWait(nextOpId(), request);
   }
 
+  public synchronized void connected(ONodeIdentity nodeIdentity) {
+    if (leader != null) {
+      leader.connected(nodeIdentity);
+      leader.join(nodeIdentity);
+    }
+  }
+
+  public synchronized void disconnected(ONodeIdentity nodeIdentity) {
+    if (leader != null) {
+      leader.disconnected(nodeIdentity);
+    }
+  }
 }

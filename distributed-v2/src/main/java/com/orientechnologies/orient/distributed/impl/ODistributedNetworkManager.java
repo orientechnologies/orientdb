@@ -34,14 +34,16 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
   private final ConcurrentMap<ONodeIdentity, ODistributedChannelBinaryProtocol> remoteServers = new ConcurrentHashMap<>();
   private final ONodeConfiguration                                              config;
   private final ONodeInternalConfiguration                                      internalConfiguration;
+  private final OSchedulerInternal                                              scheduler;
   private       ONodeManager                                                    discoveryManager;
   private       OCoordinatedExecutor                                            requestHandler;
 
-  public ODistributedNetworkManager(ODistributedContextContainer orientDB, ONodeConfiguration config,
-      ONodeInternalConfiguration internalConfiguration) {
+  public ODistributedNetworkManager(OCoordinatedExecutor requestHandler, ONodeConfiguration config,
+      ONodeInternalConfiguration internalConfiguration, OSchedulerInternal scheduler) {
     this.config = config;
     this.internalConfiguration = internalConfiguration;
-    this.requestHandler = new OCoordinatedExecutorMessageHandler(orientDB);
+    this.requestHandler = requestHandler;
+    this.scheduler = scheduler;
   }
 
   private ODistributedChannelBinaryProtocol getRemoteServer(final ONodeIdentity rNodeName) {
@@ -85,7 +87,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     remoteServers.clear();
   }
 
-  public void startup(OSchedulerInternal scheduler, OOperationLog structuralLog) {
+  public void startup(OOperationLog structuralLog) {
     //TODO different strategies for different infrastructures, eg. AWS
     discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, scheduler, structuralLog);
     discoveryManager.start();

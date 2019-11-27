@@ -53,7 +53,7 @@ public class TestTransactionFlow {
   public void before() throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     OrientDBDistributed impl = (OrientDBDistributed) server0.getDatabases();
-    impl.setLeader(impl.getStructuralConfiguration().getCurrentNodeIdentity(), null);
+    //impl.setLeader(impl.getStructuralConfiguration().getCurrentNodeIdentity(), null);
     orientDB = server0.getContext();
     orientDB.create(TestTransactionFlow.class.getSimpleName(), ODatabaseType.MEMORY);
     try (ODatabaseSession session = orientDB.open(TestTransactionFlow.class.getSimpleName(), "admin", "admin")) {

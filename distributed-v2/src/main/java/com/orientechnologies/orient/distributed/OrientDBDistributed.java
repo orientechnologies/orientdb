@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.distributed;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
@@ -33,17 +32,12 @@ import java.io.InputStream;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
-
-import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * Created by tglman on 08/08/17.
  */
-public class OrientDBDistributed extends OrientDBEmbedded
-    implements OServerAware, OServerLifecycleListener, ODistributedContextContainer {
+public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware, OServerLifecycleListener {
 
   private static final String DISTRIBUTED_USER = "distributed_replication";
 
@@ -81,9 +75,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
     structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this);
     checkPort();
     ONodeInternalConfiguration conf = generateInternalConfiguration();
-    networkManager = new ODistributedNetworkManager(this, getNodeConfig(), conf);
+    OCoordinatedExecutorMessageHandler requestHandler = new OCoordinatedExecutorMessageHandler(this);
+    networkManager = new ODistributedNetworkManager(requestHandler, getNodeConfig(), conf, this);
     structuralDistributedContext = new OStructuralDistributedContext(this);
-    networkManager.startup(this, structuralDistributedContext.getOpLog());
+    networkManager.startup(structuralDistributedContext.getOpLog());
 
   }
 
@@ -249,15 +244,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
         ODistributedContext distributed = ((OSharedContextDistributed) shared).getDistributedContext();
         if (distributed.getCoordinator() == null) {
           if (coordinator) {
-            distributed.makeCoordinator(getNodeIdentity(), shared);
+            //distributed.makeCoordinator(getNodeIdentity(), shared);
           } else {
             distributed.setExternalCoordinator(coordinatorIdentity);
           }
         }
-
       }
     }
-
   }
 
   public synchronized void nodeConnected(ONodeIdentity nodeIdentity) {
@@ -267,38 +260,20 @@ public class OrientDBDistributed extends OrientDBEmbedded
       if (isContextToIgnore(context))
         continue;
       ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-      if (coordinator) {
-        ODistributedCoordinator c = distributed.getCoordinator();
-        if (c == null) {
-          distributed.makeCoordinator(getNodeIdentity(), context);
-          c = distributed.getCoordinator();
-        }
-        c.join(nodeIdentity);
-      }
+      distributed.connected(nodeIdentity);
     }
-    if (coordinator && structuralDistributedContext.getLeader() != null) {
-      structuralDistributedContext.getLeader().connected(nodeIdentity);
-      structuralDistributedContext.getLeader().join(nodeIdentity);
-    }
+    structuralDistributedContext.connected(nodeIdentity);
   }
 
   public synchronized void nodeDisconnected(ONodeIdentity nodeIdentity) {
     if (this.getNodeIdentity().equals(nodeIdentity))
       return;
-    if (coordinator) {
-      structuralDistributedContext.getLeader().disconnected(nodeIdentity);
-    }
+    structuralDistributedContext.disconnected(nodeIdentity);
     for (OSharedContext context : sharedContexts.values()) {
       if (isContextToIgnore(context))
         continue;
       ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-      if (coordinator) {
-        ODistributedCoordinator c = distributed.getCoordinator();
-        if (c == null) {
-          c.leave(nodeIdentity);
-        }
-
-      }
+      distributed.disconnected(nodeIdentity);
     }
   }
 
@@ -306,42 +281,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME) || context.getStorage().isClosed();
   }
 
-  public synchronized void setLeader(ONodeIdentity coordinatorIdentity, OLogId lastValid) {
-    this.coordinatorIdentity = coordinatorIdentity;
-    if (getNodeIdentity().equals(coordinatorIdentity)) {
-      if (!this.coordinator) {
-        for (OSharedContext context : sharedContexts.values()) {
-          if (isContextToIgnore(context))
-            continue;
-          ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-          distributed.makeCoordinator(coordinatorIdentity, context);
-          for (ONodeIdentity node : networkManager.getRemoteServers()) {
-            distributed.getCoordinator().join(node);
-          }
-        }
-        structuralDistributedContext.makeLeader(coordinatorIdentity);
-
-        for (ONodeIdentity node : networkManager.getRemoteServers()) {
-          structuralDistributedContext.getLeader().connected(node);
-        }
-        structuralDistributedContext.getLeader().join(getNodeIdentity());
-        for (ONodeIdentity node : networkManager.getRemoteServers()) {
-          structuralDistributedContext.getLeader().join(node);
-        }
-        this.coordinator = true;
-      }
-    } else {
-      structuralDistributedContext.setExternalLeader(coordinatorIdentity);
-      realignToLog(lastValid);
-      for (OSharedContext context : sharedContexts.values()) {
-        if (isContextToIgnore(context))
-          continue;
-        ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-        distributed.setExternalCoordinator(coordinatorIdentity);
-      }
-      this.coordinator = false;
-    }
-    setOnline();
+  public Set<ONodeIdentity> getActiveNodes() {
+    return networkManager.getRemoteServers();
   }
 
   private void realignToLog(OLogId lastValid) {
@@ -509,4 +450,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return networkManager;
   }
 
+  public OSharedContextDistributed getSharedContext(String database) {
+    return (OSharedContextDistributed) sharedContexts.get(database);
+  }
 }

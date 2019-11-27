@@ -51,4 +51,7 @@ public class ODistributedExecutor implements AutoCloseable {
     }
   }
 
+  public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+    //TODO: Impement
+  }
 }
