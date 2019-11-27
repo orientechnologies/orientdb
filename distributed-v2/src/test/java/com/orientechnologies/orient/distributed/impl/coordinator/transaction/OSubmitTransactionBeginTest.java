@@ -6,20 +6,15 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertTrue;
 
 public class OSubmitTransactionBeginTest {
 
@@ -59,16 +54,6 @@ public class OSubmitTransactionBeginTest {
     }
 
     @Override
-    public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
-
-    }
-
-    @Override
-    public void sendRequest(OLogId id, OStructuralNodeRequest request) {
-
-    }
-
-    @Override
     public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
 
     }
@@ -104,7 +89,7 @@ public class OSubmitTransactionBeginTest {
     }
 
     @Override
-    public void send(OFullConfiguration fullConfiguration) {
+    public void send(OOperation fullConfiguration) {
 
     }
   }

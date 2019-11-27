@@ -96,4 +96,8 @@ public class ODistributedContext {
       coordinator.leave(nodeIdentity);
     }
   }
+
+  public OOperationLog getOpLog() {
+    return opLog;
+  }
 }

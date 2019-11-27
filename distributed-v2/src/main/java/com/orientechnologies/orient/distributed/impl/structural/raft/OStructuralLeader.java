@@ -3,14 +3,14 @@ package com.orientechnologies.orient.distributed.impl.structural.raft;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.OReadStructuralSharedConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralConfiguration;
-import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OCreateDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.submit.ODropDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OFullConfiguration;
 
 import java.util.*;
 import java.util.concurrent.*;

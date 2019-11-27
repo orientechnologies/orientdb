@@ -1,16 +1,14 @@
 package com.orientechnologies.orient.distributed.impl.network.binary;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
-import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
-import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
+import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 
 public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
 
@@ -30,14 +28,6 @@ public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
   @Override
   public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
     controller.sendBinaryRequest(new OBinaryDistributedMessage(nodeIdentity, new OOperationResponse(database, id, nodeResponse)));
-  }
-
-  @Override
-  public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
-  }
-
-  @Override
-  public void sendRequest(OLogId id, OStructuralNodeRequest request) {
   }
 
   @Override
@@ -80,7 +70,8 @@ public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
   }
 
   @Override
-  public void send(OFullConfiguration fullConfiguration) {
+  public void send(OOperation fullConfiguration) {
+    controller.sendBinaryRequest(new OBinaryDistributedMessage(nodeIdentity, new ONetworkOperation(fullConfiguration)));
     //TODO:
   }
 

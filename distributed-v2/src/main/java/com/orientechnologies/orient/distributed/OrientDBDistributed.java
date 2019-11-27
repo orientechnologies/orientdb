@@ -17,9 +17,11 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.distributed.impl.structural.*;
-import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.operations.ODatabaseLastOpIdRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OCreateDatabaseSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OCreateDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.submit.ODropDatabaseSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OSyncRequest;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.*;
@@ -41,13 +43,15 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   private static final String DISTRIBUTED_USER = "distributed_replication";
 
-  private          OServer                       server;
-  private volatile boolean                       coordinator = false;
-  private volatile ONodeIdentity                 coordinatorIdentity;
-  private          OStructuralDistributedContext structuralDistributedContext;
-  private          ODistributedNetworkManager    networkManager;
-  private          ONodeConfiguration            nodeConfiguration;
-  private          OStructuralConfiguration      structuralConfiguration;
+  private          OServer                            server;
+  private volatile boolean                            coordinator = false;
+  private volatile ONodeIdentity                      coordinatorIdentity;
+  private          OStructuralDistributedContext      structuralDistributedContext;
+  private          ODistributedNetworkManager         networkManager;
+  private          ONodeConfiguration                 nodeConfiguration;
+  private          OStructuralConfiguration           structuralConfiguration;
+  private          OElectionContext                   elections;
+  private          OCoordinatedExecutorMessageHandler requestHandler;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -75,11 +79,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this);
     checkPort();
     ONodeInternalConfiguration conf = generateInternalConfiguration();
-    OCoordinatedExecutorMessageHandler requestHandler = new OCoordinatedExecutorMessageHandler(this);
+    requestHandler = new OCoordinatedExecutorMessageHandler(this);
     networkManager = new ODistributedNetworkManager(requestHandler, getNodeConfig(), conf, this);
     structuralDistributedContext = new OStructuralDistributedContext(this);
     networkManager.startup(structuralDistributedContext.getOpLog());
-
   }
 
   public void checkPort() {
@@ -201,6 +204,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
     //This initialize the distributed configuration.
     checkCoordinator(name);
+    electLeader(name);
+  }
+
+  private void electLeader(String name) {
+    UUID electionId = elections.startElection(name, 10);
+    getNetworkManager().sendAll(getActiveNodes(), new ODatabaseLastOpIdRequest(name, electionId));
   }
 
   @Override
@@ -452,5 +461,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OSharedContextDistributed getSharedContext(String database) {
     return (OSharedContextDistributed) sharedContexts.get(database);
+  }
+
+  public OElectionContext getElections() {
+    return elections;
+  }
+
+  public OCoordinatedExecutorMessageHandler getRequestHandler() {
+    return requestHandler;
   }
 }

@@ -29,6 +29,7 @@ public class OBinaryDistributedMessage implements OBinaryRequest<OBinaryResponse
   public static final byte DISTRIBUTED_CONFIRM_REQUEST            = 109;
   public static final byte DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST  = 115;
   public static final byte DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE = 116;
+  public static final byte DISTRIBUTED_OPERATION                  = 117;
 
   public OBinaryDistributedMessage() {
 
@@ -54,6 +55,8 @@ public class OBinaryDistributedMessage implements OBinaryRequest<OBinaryResponse
       return new ONetworkAck();
     case DISTRIBUTED_CONFIRM_REQUEST:
       return new ONetworkConfirm();
+    case DISTRIBUTED_OPERATION:
+      return new ONetworkOperation();
     }
     return null;
   }

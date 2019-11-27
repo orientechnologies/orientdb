@@ -2,6 +2,8 @@ package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 
 import java.util.concurrent.Future;
 

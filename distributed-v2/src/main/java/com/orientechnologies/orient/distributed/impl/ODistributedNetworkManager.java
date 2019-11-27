@@ -6,17 +6,15 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.OCoordinatedExecutor;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedExecutable;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.network.binary.OBinaryDistributedMessage;
 import com.orientechnologies.orient.distributed.impl.network.binary.ODistributedChannelBinaryProtocol;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -222,14 +220,21 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     }
   }
 
-  public void send(ONodeIdentity identity, OFullConfiguration fullConfiguration) {
+  public void send(ONodeIdentity identity, OOperation operation) {
     assert !isSelf(identity);
-    getChannel(identity).send(fullConfiguration);
+    getChannel(identity).send(operation);
   }
 
   @Override
-  public void sendDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid) {
-    //TODO
+  public void sendAll(Collection<ONodeIdentity> members, OOperation operation) {
+    for (ONodeIdentity member : members) {
+      if (isSelf(member)) {
+        this.requestHandler.executeOperation(member, operation);
+      } else {
+        getChannel(member).send(operation);
+      }
+    }
+
   }
 
   @Override

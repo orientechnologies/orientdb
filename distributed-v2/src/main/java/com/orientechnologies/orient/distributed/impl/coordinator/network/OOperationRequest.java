@@ -32,7 +32,6 @@ public class OOperationRequest implements ODistributedMessage {
     int requestType = input.readInt();
     request = OCoordinateMessagesFactory.createOperationRequest(requestType);
     request.deserialize(input);
-
   }
 
   @Override

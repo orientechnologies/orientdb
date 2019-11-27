@@ -3,9 +3,9 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 
 import java.util.Collection;
@@ -60,7 +60,12 @@ public interface ODistributedNetwork {
   /**
    * Structural Full sync
    */
-  void send(ONodeIdentity identity, OFullConfiguration fullConfiguration);
+  void send(ONodeIdentity identity, OOperation operation);
+
+  /**
+   * Structural Full sync
+   */
+  void sendAll(Collection<ONodeIdentity> members, OOperation operation);
 
   /**
    * Structural ping
@@ -71,10 +76,5 @@ public interface ODistributedNetwork {
    * Database ping
    */
   void notifyLastDbOperation(ONodeIdentity leader, String database, OLogId leaderLastValid);
-
-  /**
-   * Notify a node of the election of a new leader for a database
-   */
-  void sendDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid);
 
 }

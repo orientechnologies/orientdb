@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 
 public class OLogId implements Comparable<OLogId> {
   private long previousIdTerm;
@@ -39,6 +40,13 @@ public class OLogId implements Comparable<OLogId> {
     }
   }
 
+  public static void serializeOptional(Optional<OLogId> id, DataOutput output) throws IOException {
+    serialize(id.orElse(null), output);
+  }
+
+  public static Optional<OLogId> deserializeOptional(DataInput input) throws IOException {
+    return Optional.ofNullable(deserialize(input));
+  }
 
   public long getId() {
     return id;
@@ -53,7 +61,6 @@ public class OLogId implements Comparable<OLogId> {
     }
   }
 
-
   public long getTerm() {
     return term;
   }
@@ -64,12 +71,12 @@ public class OLogId implements Comparable<OLogId> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     OLogId oLogId = (OLogId) o;
-    return previousIdTerm == oLogId.previousIdTerm
-            && id == oLogId.id
-            && term == oLogId.term;
+    return previousIdTerm == oLogId.previousIdTerm && id == oLogId.id && term == oLogId.term;
   }
 
   @Override

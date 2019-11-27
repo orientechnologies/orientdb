@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distributed.impl.structural;
+package com.orientechnologies.orient.distributed.impl.structural.submit;
 
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralSubmit;
 

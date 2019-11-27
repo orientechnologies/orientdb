@@ -3,7 +3,7 @@ package com.orientechnologies.orient.distributed.impl.coordinator.network;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
 
 import java.io.DataInput;
 import java.io.DataOutput;

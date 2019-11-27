@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -13,35 +12,24 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
-import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.distributed.impl.OIncrementOperationalLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
+import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
+import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @Ignore
 public class TestTransactionFlow {
@@ -136,16 +124,6 @@ public class TestTransactionFlow {
     }
 
     @Override
-    public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
-
-    }
-
-    @Override
-    public void sendRequest(OLogId id, OStructuralNodeRequest request) {
-
-    }
-
-    @Override
     public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
 
     }
@@ -166,7 +144,7 @@ public class TestTransactionFlow {
     }
 
     @Override
-    public void send(OFullConfiguration fullConfiguration) {
+    public void send(OOperation fullConfiguration) {
 
     }
 

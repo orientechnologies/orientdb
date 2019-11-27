@@ -1,12 +1,10 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 
 public interface ODistributedChannel {
   /**
@@ -43,10 +41,6 @@ public interface ODistributedChannel {
    */
   void sendResponse(String database, OLogId id, ONodeResponse nodeResponse);
 
-  void sendResponse(OLogId opId, OStructuralNodeResponse response);
-
-  void sendRequest(OLogId id, OStructuralNodeRequest request);
-
   void reply(OSessionOperationId operationId, OStructuralSubmitResponse response);
 
   void submit(OSessionOperationId operationId, OStructuralSubmitRequest request);
@@ -57,5 +51,5 @@ public interface ODistributedChannel {
 
   void ack(OLogId logId);
 
-  void send(OFullConfiguration fullConfiguration);
+  void send(OOperation fullConfiguration);
 }

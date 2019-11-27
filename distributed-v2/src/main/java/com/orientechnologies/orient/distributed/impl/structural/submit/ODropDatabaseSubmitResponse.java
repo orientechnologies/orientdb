@@ -1,6 +1,6 @@
-package com.orientechnologies.orient.distributed.impl.structural.operations;
+package com.orientechnologies.orient.distributed.impl.structural.submit;
 
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 
 import java.io.DataInput;
 import java.io.DataOutput;

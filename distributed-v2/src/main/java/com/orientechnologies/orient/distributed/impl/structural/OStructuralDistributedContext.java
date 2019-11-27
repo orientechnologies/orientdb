@@ -9,6 +9,8 @@ import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 
 import java.util.Set;
 import java.util.concurrent.Future;

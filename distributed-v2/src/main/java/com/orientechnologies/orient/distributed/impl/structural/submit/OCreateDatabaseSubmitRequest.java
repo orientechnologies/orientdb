@@ -1,10 +1,10 @@
-package com.orientechnologies.orient.distributed.impl.structural.operations;
+package com.orientechnologies.orient.distributed.impl.structural.submit;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.*;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OLeaderContext;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
 
 import java.io.DataInput;
 import java.io.DataOutput;
