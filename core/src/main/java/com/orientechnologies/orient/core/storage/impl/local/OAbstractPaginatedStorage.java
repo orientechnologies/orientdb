@@ -26,13 +26,14 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.AtomicLongOProfilerHookValue;
+import com.orientechnologies.common.profiler.ModifiableLongProfileHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.*;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -114,7 +115,10 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -194,19 +198,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private       boolean                       wereDataRestoredAfterOpen;
   private       UUID                          uuid;
 
-  private final LongAdder fullCheckpointCount = new LongAdder();
+  private long fullCheckpointCount = 0;
 
-  private final AtomicLong recordCreated = new AtomicLong(0);
-  private final AtomicLong recordUpdated = new AtomicLong(0);
-  private final AtomicLong recordRead    = new AtomicLong(0);
-  private final AtomicLong recordDeleted = new AtomicLong(0);
+  private final OModifiableLong recordCreated = new OModifiableLong();
+  private final OModifiableLong recordUpdated = new OModifiableLong();
+  private final OModifiableLong recordRead    = new OModifiableLong();
+  private final OModifiableLong recordDeleted = new OModifiableLong();
 
-  private final AtomicLong recordScanned  = new AtomicLong(0);
-  private final AtomicLong recordRecycled = new AtomicLong(0);
-  private final AtomicLong recordConflict = new AtomicLong(0);
-  private final AtomicLong txBegun        = new AtomicLong(0);
-  private final AtomicLong txCommit       = new AtomicLong(0);
-  private final AtomicLong txRollback     = new AtomicLong(0);
+  private final OModifiableLong recordScanned  = new OModifiableLong();
+  private final OModifiableLong recordRecycled = new OModifiableLong();
+  private final OModifiableLong recordConflict = new OModifiableLong();
+  private final OModifiableLong txBegun        = new OModifiableLong();
+  private final OModifiableLong txCommit       = new OModifiableLong();
+  private final OModifiableLong txRollback     = new OModifiableLong();
 
   private final AtomicInteger sessionCount  = new AtomicInteger(0);
   private final AtomicLong    lastCloseTime = new AtomicLong(System.currentTimeMillis());
@@ -1848,7 +1852,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-      txBegun.incrementAndGet();
+      txBegun.increment();
 
       final ODatabaseDocumentInternal database = transaction.getDatabase();
       final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
@@ -3418,7 +3422,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           OTransactionAbstract.updateCacheFromEntries(clientTx.getDatabase(), clientTx.getRecordOperations(), false);
 
-          txRollback.incrementAndGet();
+          txRollback.increment();
 
         } catch (final IOException e) {
           throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
@@ -3465,7 +3469,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           microTransaction.updateRecordCacheAfterRollback();
 
-          txRollback.incrementAndGet();
+          txRollback.increment();
 
         } catch (final IOException e) {
           throw OException.wrapException(new OStorageException("Error during micro-transaction rollback"), e);
@@ -4249,8 +4253,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @SuppressWarnings("unused")
-  public AtomicLong getRecordScanned() {
-    return recordScanned;
+  public long getRecordScanned() {
+    return recordScanned.value;
   }
 
   @SuppressWarnings("unused")
@@ -4374,7 +4378,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw OException.wrapException(new OStorageException("Error during checkpoint creation for storage " + name), ioe);
       }
 
-      fullCheckpointCount.increment();
+      fullCheckpointCount++;
     } finally {
       if (statistic != null) {
         statistic.stopFullCheckpointTimer();
@@ -4383,7 +4387,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public long getFullCheckpointCount() {
-    return fullCheckpointCount.sum();
+    return fullCheckpointCount;
   }
 
   protected void checkIfStorageDirty() throws IOException {
@@ -4510,7 +4514,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     assert OAtomicOperationsManager.getCurrentOperation() == null;
 
     OTransactionAbstract.updateCacheFromEntries(txi.getDatabase(), recordOperations, true);
-    txCommit.incrementAndGet();
+    txCommit.increment();
   }
 
   private void startStorageTx(final OTransactionInternal clientTx) throws IOException {
@@ -4596,7 +4600,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         OLogManager.instance().debug(this, "Created record %s v.%s size=%d bytes", rid, recordVersion, content.length);
       }
 
-      recordCreated.incrementAndGet();
+      recordCreated.increment();
 
       return new OStorageOperationResult<>(ppos);
     } catch (final IOException ioe) {
@@ -4677,7 +4681,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         OLogManager.instance().debug(this, "Updated record %s v.%s size=%d", rid, newRecordVersion, content.length);
       }
 
-      recordUpdated.incrementAndGet();
+      recordUpdated.increment();
 
       if (contentModified) {
         return new OStorageOperationResult<>(newRecordVersion, content, false);
@@ -4685,7 +4689,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return new OStorageOperationResult<>(newRecordVersion);
       }
     } catch (final OConcurrentModificationException e) {
-      recordConflict.incrementAndGet();
+      recordConflict.increment();
       throw e;
     } catch (final IOException ioe) {
       throw OException
@@ -4707,7 +4711,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
       if (version > -1 && ppos.recordVersion != version) {
-        recordConflict.incrementAndGet();
+        recordConflict.increment();
 
         if (OFastConcurrentModificationException.enabled()) {
           throw OFastConcurrentModificationException.instance();
@@ -4737,7 +4741,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         OLogManager.instance().debug(this, "Deleted record %s v.%s", rid, version);
       }
 
-      recordDeleted.incrementAndGet();
+      recordDeleted.increment();
 
       return new OStorageOperationResult<>(true);
     } catch (final IOException ioe) {
@@ -4756,7 +4760,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             .debug(this, "Read record %s v.%s size=%d bytes", rid, buff.version, buff.buffer != null ? buff.buffer.length : 0);
       }
 
-      recordRead.incrementAndGet();
+      recordRead.increment();
 
       return buff;
     } catch (final IOException e) {
@@ -5875,43 +5879,43 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private void registerProfilerHooks() {
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".createRecord", "Number of created records", OProfiler.METRIC_TYPE.COUNTER,
-            new AtomicLongOProfilerHookValue(recordCreated), "db.*.createRecord");
+            new ModifiableLongProfileHookValue(recordCreated), "db.*.createRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".readRecord", "Number of read records", OProfiler.METRIC_TYPE.COUNTER,
-            new AtomicLongOProfilerHookValue(recordRead), "db.*.readRecord");
+            new ModifiableLongProfileHookValue(recordRead), "db.*.readRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".updateRecord", "Number of updated records", OProfiler.METRIC_TYPE.COUNTER,
-            new AtomicLongOProfilerHookValue(recordUpdated), "db.*.updateRecord");
+            new ModifiableLongProfileHookValue(recordUpdated), "db.*.updateRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".deleteRecord", "Number of deleted records", OProfiler.METRIC_TYPE.COUNTER,
-            new AtomicLongOProfilerHookValue(recordDeleted), "db.*.deleteRecord");
+            new ModifiableLongProfileHookValue(recordDeleted), "db.*.deleteRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".scanRecord", "Number of read scanned", OProfiler.METRIC_TYPE.COUNTER,
-            new AtomicLongOProfilerHookValue(recordScanned), "db.*.scanRecord");
+            new ModifiableLongProfileHookValue(recordScanned), "db.*.scanRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".recyclePosition", "Number of recycled records", OProfiler.METRIC_TYPE.COUNTER,
-            new AtomicLongOProfilerHookValue(recordRecycled), "db.*.recyclePosition");
+            new ModifiableLongProfileHookValue(recordRecycled), "db.*.recyclePosition");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".conflictRecord", "Number of conflicts during updating and deleting records",
-            OProfiler.METRIC_TYPE.COUNTER, new AtomicLongOProfilerHookValue(recordConflict), "db.*.conflictRecord");
+            OProfiler.METRIC_TYPE.COUNTER, new ModifiableLongProfileHookValue(recordConflict), "db.*.conflictRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".txBegun", "Number of transactions begun", OProfiler.METRIC_TYPE.COUNTER,
-            new AtomicLongOProfilerHookValue(txBegun), "db.*.txBegun");
+            new ModifiableLongProfileHookValue(txBegun), "db.*.txBegun");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".txCommit", "Number of committed transactions", OProfiler.METRIC_TYPE.COUNTER,
-            new AtomicLongOProfilerHookValue(txCommit), "db.*.txCommit");
+            new ModifiableLongProfileHookValue(txCommit), "db.*.txCommit");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".txRollback", "Number of rolled back transactions", OProfiler.METRIC_TYPE.COUNTER,
-            new AtomicLongOProfilerHookValue(txRollback), "db.*.txRollback");
+            new ModifiableLongProfileHookValue(txRollback), "db.*.txRollback");
   }
 
   protected final RuntimeException logAndPrepareForRethrow(final RuntimeException runtimeException) {
