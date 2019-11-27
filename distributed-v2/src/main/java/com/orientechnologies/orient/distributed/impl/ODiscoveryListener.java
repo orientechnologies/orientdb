@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 
 public interface ODiscoveryListener {
   static class NodeData {
@@ -26,4 +27,7 @@ public interface ODiscoveryListener {
     //TODO
   }
 
+  default void lastDbOperation(ONodeIdentity leaderIdentity, String database, OLogId logId){
+
+  }
 }

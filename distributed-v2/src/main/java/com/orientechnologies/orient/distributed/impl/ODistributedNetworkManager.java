@@ -235,11 +235,15 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
   @Override
   public void notifyLastDbOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
     discoveryManager.notifyLastDbOperation(database, leaderLastValid);
-    //TODO
   }
 
   @Override
   public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
     //TODO
+  }
+
+  @Override
+  public void lastDbOperation(ONodeIdentity leader, String database, OLogId logId) {
+    requestHandler.notifyLastDatabaseOperation(leader, database, logId);
   }
 }

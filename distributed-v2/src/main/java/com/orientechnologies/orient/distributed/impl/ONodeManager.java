@@ -332,12 +332,11 @@ public abstract class ONodeManager {
           discoveryListener.leaderElected(data);
         }
       }
-    }
-    if (message.databasePings != null) {
-      for (OBroadcastMessage.DatabasePing databasePing : message.databasePings) {
-        //TODO notify database ping!
+      if (message.databasePings != null) {
+        for (OBroadcastMessage.DatabasePing databasePing : message.databasePings) {
+          discoveryListener.lastDbOperation(data.getNodeIdentity(), databasePing.databaseName, databasePing.logId);
+        }
       }
-
     }
   }
 
