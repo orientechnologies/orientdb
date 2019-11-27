@@ -46,6 +46,10 @@ public abstract class ONodeManager {
 
 
   private Map<String, OLogId> databaseLogIds = Collections.synchronizedMap(new LinkedHashMap<>());
+  /**
+   * max number of database log IDs that have to be sent with a single ping
+   */
+  private int maxDbLogsPerPing = 5;
 
   public ONodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration, int term,
                       OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener, OOperationLog opLog) {
@@ -244,6 +248,18 @@ public abstract class ONodeManager {
 
     //DATABASE PINGS
 
+    Iterator<Map.Entry<String, OLogId>> dbLogsIgterator = databaseLogIds.entrySet().iterator();
+    int sent = 0;
+    message.databasePings = new ArrayList<>();
+    while (dbLogsIgterator.hasNext() && sent < maxDbLogsPerPing) {
+      try {
+        Map.Entry<String, OLogId> next = dbLogsIgterator.next();
+        message.databasePings.add(new OBroadcastMessage.DatabasePing(next.getKey(), next.getValue()));
+        sent++;
+      } catch (Exception e) {
+        //ignore
+      }
+    }
 
 
     return message;
@@ -315,8 +331,13 @@ public abstract class ONodeManager {
           discoveryListener.nodeConnected(data);
           discoveryListener.leaderElected(data);
         }
-
       }
+    }
+    if (message.databasePings != null) {
+      for (OBroadcastMessage.DatabasePing databasePing : message.databasePings) {
+        //TODO notify database ping!
+      }
+
     }
   }
 

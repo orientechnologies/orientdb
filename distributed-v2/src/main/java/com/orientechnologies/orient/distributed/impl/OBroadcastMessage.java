@@ -1,49 +1,69 @@
 package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 class OBroadcastMessage {
-  protected static final int TYPE_PING          = 0;
-  protected static final int TYPE_LEAVE         = 1;
+
+  public static class DatabasePing {
+    public DatabasePing() {
+
+    }
+
+    public DatabasePing(String databaseName, OLogId logId) {
+      this.databaseName = databaseName;
+      this.logId = logId;
+    }
+
+    protected String databaseName;
+    protected OLogId logId;
+  }
+
+  protected static final int TYPE_PING = 0;
+  protected static final int TYPE_LEAVE = 1;
   protected static final int TYPE_KNOWN_SERVERS = 2;
 
   protected static final int TYPE_START_LEADER_ELECTION = 3;
-  protected static final int TYPE_VOTE_LEADER_ELECTION  = 4;
-  protected static final int TYPE_LEADER_ELECTED        = 5;
+  protected static final int TYPE_VOTE_LEADER_ELECTION = 4;
+  protected static final int TYPE_LEADER_ELECTED = 5;
 
   protected static final int ROLE_COORDINATOR = 0;
-  protected static final int ROLE_REPLICA     = 1;
-  protected static final int ROLE_UNDEFINED   = 2;
+  protected static final int ROLE_REPLICA = 1;
+  protected static final int ROLE_UNDEFINED = 2;
 
-  protected int           type;
+  protected int type;
   protected ONodeIdentity nodeIdentity;
-  protected String        group;
-  protected int           term;
-  protected int           role;
-  protected String        connectionUsername;
-  protected String        connectionPassword;
+  protected String group;
+  protected int term;
+  protected int role;
+  protected String connectionUsername;
+  protected String connectionPassword;
 
   //for ping
   protected int tcpPort;
 
   // for leader election
   protected ONodeIdentity voteForIdentity;
-  protected String        dbName;
-  protected long          lastLogId;
+  protected String dbName;
+  protected long lastLogId;
 
   //MASTER INFO
 
   protected ONodeIdentity leaderIdentity;
-  protected int           leaderTerm;
-  protected String        leaderAddress;
-  protected int           leaderTcpPort;
-  protected String        leaderConnectionUsername;
-  protected String        leaderConnectionPassword;
-  protected long          leaderPing;
+  protected int leaderTerm;
+  protected String leaderAddress;
+  protected int leaderTcpPort;
+  protected String leaderConnectionUsername;
+  protected String leaderConnectionPassword;
+  protected long leaderPing;
+
+  protected List<DatabasePing> databasePings;
 
   public void write(DataOutput output) throws IOException {
     output.writeInt(type);
@@ -80,6 +100,17 @@ class OBroadcastMessage {
       break;
     }
 
+    //database pings
+    if (databasePings == null) {
+      output.writeInt(0);
+    } else {
+      output.writeInt(databasePings.size());
+      for (DatabasePing databasePing : databasePings) {
+        output.writeUTF(databasePing.databaseName);
+        OLogId.serialize(databasePing.logId, output);
+      }
+    }
+
   }
 
   public void read(DataInput input) throws IOException {
@@ -112,6 +143,16 @@ class OBroadcastMessage {
       voteForIdentity.deserialize(input);
       break;
     }
+
+    //database pings
+    int nDbPings = input.readInt();
+    databasePings = new ArrayList<>();
+    for (int i = 0; i < nDbPings; i++) {
+      String nextDbName = input.readUTF();
+      OLogId logId = OLogId.deserialize(input);
+      databasePings.add(new DatabasePing(nextDbName, logId));
+    }
+
   }
 
   public ODiscoveryListener.NodeData toNodeData() {
