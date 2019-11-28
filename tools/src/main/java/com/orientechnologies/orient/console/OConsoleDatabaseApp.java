@@ -368,6 +368,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     });
 
     final OTableFormatter formatter = new OTableFormatter(this);
+    formatter.setMaxWidthSize(getConsoleWidth());
+    formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
     formatter.writeRecords(resultSet, -1);
 
     out.println();
@@ -1399,6 +1402,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       resultSet.add(new ODocument().field("NAME", "Index-Manager-RID").field("VALUE", dbCfg.getIndexMgrRecordId(), OType.LINK));
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.writeRecords(resultSet, -1);
 
       message("\n");
@@ -1412,6 +1418,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           dbResultSet.add(new ODocument().field("NAME", cfg.name).field("VALUE", cfg.value));
 
         final OTableFormatter dbFormatter = new OTableFormatter(this);
+        formatter.setMaxWidthSize(getConsoleWidth());
+        formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
         dbFormatter.writeRecords(dbResultSet, -1);
       }
     }
@@ -1496,6 +1505,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.writeRecords(resultSet, -1);
     }
 
@@ -1519,6 +1531,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.writeRecords(resultSet, -1);
     }
 
@@ -1541,6 +1556,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.writeRecords(resultSet, -1);
     }
   }
@@ -1600,6 +1618,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.writeRecords(resultSet, -1);
     }
 
@@ -1622,6 +1643,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         }
       }
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.writeRecords(resultSet, -1);
     }
   }
@@ -1682,6 +1706,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.setColumnAlignment("RECORDS", OTableFormatter.ALIGNMENT.RIGHT);
 
       final ODocument footer = new ODocument();
@@ -1791,6 +1818,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.setColumnAlignment("ID", OTableFormatter.ALIGNMENT.RIGHT);
       formatter.setColumnAlignment("COUNT", OTableFormatter.ALIGNMENT.RIGHT);
       formatter.setColumnAlignment("OWNER_SERVER", OTableFormatter.ALIGNMENT.CENTER);
@@ -1879,6 +1909,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.setColumnAlignment("COUNT", OTableFormatter.ALIGNMENT.RIGHT);
 
       final ODocument footer = new ODocument();
@@ -2332,6 +2366,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     final OTableFormatter formatter = new OTableFormatter(this);
+    formatter.setMaxWidthSize(getConsoleWidth());
+    formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
     formatter.writeRecords(resultSet, -1);
 
     message("\n");
@@ -2470,6 +2507,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.writeRecords(resultSet, -1);
 
     } else {
@@ -2487,6 +2527,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.writeRecords(resultSet, -1);
     }
 
@@ -2925,6 +2968,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setMaxWidthSize(getConsoleWidth());
+      formatter.setMaxMultiValueEntries(getMaxMultiValueEntries());
+
       formatter.writeRecords(resultSet, -1);
 
     } else if (currentRecord instanceof OBlob) {
