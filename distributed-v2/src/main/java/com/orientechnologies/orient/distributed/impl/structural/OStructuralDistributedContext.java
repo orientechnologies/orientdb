@@ -66,6 +66,7 @@ public class OStructuralDistributedContext {
         leader.join(nodeIdentity);
       }
       this.getSubmitContext().setLeader(identity);
+      this.context.triggerDatabaseElections();
     }
   }
 

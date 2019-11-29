@@ -35,7 +35,6 @@ public class ODatabaseLastValidResponse implements OOperation {
       context.getNetworkManager()
           .sendAll(context.getActiveNodes(), new ODatabaseLeaderElected(this.database, val.getSender(), val.getId()));
     }
-
   }
 
   @Override

@@ -6,6 +6,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLogEntry;
 
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OIncrementOperationalLog implements OOperationLog {
@@ -37,7 +38,7 @@ public class OIncrementOperationalLog implements OOperationLog {
   }
 
   @Override
-  public Iterator<OOperationLogEntry> searchFrom(OLogId from) {
+  public Optional<Iterator<OOperationLogEntry>> searchFrom(OLogId from) {
     throw new UnsupportedOperationException();
   }
 

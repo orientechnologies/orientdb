@@ -188,16 +188,21 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   }
 
   @Override
-  public void tryResend(ONodeIdentity identity, OLogId logId) {
+  public boolean tryResend(ONodeIdentity identity, OLogId logId) {
     //TODO: this may fail, handle the failure.
-    executor.execute(() -> {
-      //TODO: this in single thread executor may cost too much, find a different implementation
-      Iterator<OOperationLogEntry> iter = operationLog.searchFrom(logId);
-      while (iter.hasNext()) {
-        OOperationLogEntry logEntry = iter.next();
-        network.propagate(Collections.singleton(identity), logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());
-      }
-    });
+    Optional<Iterator<OOperationLogEntry>> res = operationLog.searchFrom(logId);
+    if (res.isPresent()) {
+      Iterator<OOperationLogEntry> iter = res.get();
+      executor.execute(() -> {
+        //TODO: this in single thread executor may cost too much, find a different implementation
+        while (iter.hasNext()) {
+          OOperationLogEntry logEntry = iter.next();
+          network.propagate(Collections.singleton(identity), logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());
+        }
+      });
+      return true;
+    }
+    return false;
   }
 
   @Override

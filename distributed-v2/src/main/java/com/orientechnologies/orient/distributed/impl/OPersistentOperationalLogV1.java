@@ -14,16 +14,17 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 
 import java.io.*;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1 implements OOperationLog {
 
   private OLogRequestFactory factory;
-  private boolean leader;
-  private long term;
-  private AtomicLong lastFlushed = new AtomicLong(-1);
-  private AtomicLong lastWritten = new AtomicLong(-1);
-  private AtomicLong paralledThreads = new AtomicLong(0);
+  private boolean            leader;
+  private long               term;
+  private AtomicLong         lastFlushed     = new AtomicLong(-1);
+  private AtomicLong         lastWritten     = new AtomicLong(-1);
+  private AtomicLong         paralledThreads = new AtomicLong(0);
 
   private OLogId lastId;
 
@@ -32,8 +33,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private static class OpLogInfo {
-    private int currentFileNum;
-    private int firstFileNum;
+    private int  currentFileNum;
+    private int  firstFileNum;
     private long keepUntil;
 
     void fromStream(InputStream stream) {
@@ -64,13 +65,13 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  protected static final long MAGIC = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
-  protected static final String OPLOG_INFO_FILE = "oplog.opl";
-  protected static final String OPLOG_FILE = "oplog_$NUM$.opl";
-  protected static final int LOG_ENTRIES_PER_FILE = 16 * 1024;
+  protected static final long   MAGIC                = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
+  protected static final String OPLOG_INFO_FILE      = "oplog.opl";
+  protected static final String OPLOG_FILE           = "oplog_$NUM$.opl";
+  protected static final int    LOG_ENTRIES_PER_FILE = 16 * 1024;
 
-  private final String storagePath;
-  private OpLogInfo info;
+  private final String    storagePath;
+  private       OpLogInfo info;
 
   private FileOutputStream fileOutput;
   private DataOutputStream stream;
@@ -366,13 +367,11 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   /**
-   * given a logId, checks if it requires a log truncate to be written.
-   * If it does, the log head is truncated until that id and the method returns true
-   * otherwise it returns false.
+   * given a logId, checks if it requires a log truncate to be written. If it does, the log head is truncated until that id and the
+   * method returns true otherwise it returns false.
    *
    * @param logId
-   * @return true if the log was truncated, ie. if this logId did not fit in the current log sequence,
-   * false otherwise
+   * @return true if the log was truncated, ie. if this logId did not fit in the current log sequence, false otherwise
    */
   private boolean tryTruncateLogHead(OLogId logId) {
     OLogId logHead = lastPersistentLog();
@@ -481,9 +480,9 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   @Override
-  public Iterator<OOperationLogEntry> searchFrom(OLogId from) {
+  public Optional<Iterator<OOperationLogEntry>> searchFrom(OLogId from) {
     // TODO: Implement a better search algorithm that take in consideration il term
-    return iterate(from.getId(), lastPersistentLog().getId());
+    return Optional.of(iterate(from.getId(), lastPersistentLog().getId()));
   }
 
   @Override

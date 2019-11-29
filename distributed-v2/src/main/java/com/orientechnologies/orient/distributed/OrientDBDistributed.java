@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.distributed.impl.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.database.sync.ODatabasesSync;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.distributed.impl.structural.*;
@@ -43,15 +44,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   private static final String DISTRIBUTED_USER = "distributed_replication";
 
-  private          OServer                            server;
-  private volatile boolean                            coordinator = false;
-  private volatile ONodeIdentity                      coordinatorIdentity;
-  private          OStructuralDistributedContext      structuralDistributedContext;
-  private          ODistributedNetworkManager         networkManager;
-  private          ONodeConfiguration                 nodeConfiguration;
-  private          OStructuralConfiguration           structuralConfiguration;
-  private          OElectionContext                   elections;
-  private          OCoordinatedExecutorMessageHandler requestHandler;
+  private       OServer                            server;
+  private       OStructuralDistributedContext      structuralDistributedContext;
+  private       ODistributedNetworkManager         networkManager;
+  private       ONodeConfiguration                 nodeConfiguration;
+  private       OStructuralConfiguration           structuralConfiguration;
+  private final OElectionContext                   elections = new OElectionContext();
+  private       OCoordinatedExecutorMessageHandler requestHandler;
+  private final ODatabasesSync                     syncs     = new ODatabasesSync();
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -166,7 +166,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
     ODatabaseDocumentEmbedded instance = openNoAuthorization(dbName);
     instance.close();
-    checkCoordinator(dbName);
     return storage;
   }
 
@@ -177,7 +176,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     //THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
     ODatabaseDocumentEmbedded instance = openNoAuthorization(name);
     instance.close();
-    checkCoordinator(name);
   }
 
   @Override
@@ -186,7 +184,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     //THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
     ODatabaseDocumentEmbedded instance = openNoAuthorization(name);
     instance.close();
-    checkCoordinator(name);
   }
 
   @Override
@@ -202,9 +199,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (!created.isSuccess()) {
       throw new ODatabaseException(created.getError());
     }
-    //This initialize the distributed configuration.
-    checkCoordinator(name);
-    electLeader(name);
   }
 
   private void electLeader(String name) {
@@ -216,7 +210,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
     checkDatabaseReady(name);
     ODatabaseDocumentEmbedded session = super.openNoAuthenticate(name, user);
-    checkCoordinator(name);
     return session;
   }
 
@@ -224,7 +217,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
     checkDatabaseReady(name);
     ODatabaseDocumentEmbedded session = super.openNoAuthorization(name);
-    checkCoordinator(name);
     return session;
 
   }
@@ -233,7 +225,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     checkDatabaseReady(name);
     ODatabaseDocumentInternal session = super.open(name, user, password, config);
-    checkCoordinator(name);
     return session;
   }
 
@@ -241,25 +232,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
     checkDatabaseReady(name);
     ODatabaseDocumentInternal session = super.poolOpen(name, user, password, pool);
-    checkCoordinator(name);
     return session;
 
-  }
-
-  private synchronized void checkCoordinator(String database) {
-    if (!database.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
-      OSharedContext shared = sharedContexts.get(database);
-      if (shared instanceof OSharedContextDistributed) {
-        ODistributedContext distributed = ((OSharedContextDistributed) shared).getDistributedContext();
-        if (distributed.getCoordinator() == null) {
-          if (coordinator) {
-            //distributed.makeCoordinator(getNodeIdentity(), shared);
-          } else {
-            distributed.setExternalCoordinator(coordinatorIdentity);
-          }
-        }
-      }
-    }
   }
 
   public synchronized void nodeConnected(ONodeIdentity nodeIdentity) {
@@ -320,7 +294,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private synchronized void syncDatabase(OStructuralNodeDatabase configuration) {
-
   }
 
   private synchronized void parkDatabase(String database) {
@@ -404,9 +377,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     OStructuralSharedConfiguration config = getStructuralConfiguration().modifySharedConfiguration();
     config.addDatabase(database);
     getStructuralConfiguration().update(config);
-    checkCoordinator(database);
-    //TODO: double check this notify, it may unblock as well checkReadyForHandleRequests that is not what is expected
-    this.notifyAll();
+    electLeader(database);
   }
 
   public void internalDropDatabase(String database) {
@@ -422,10 +393,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (structuralDistributedContext != null) {
       structuralDistributedContext.waitApplyLastRequest();
     }
-  }
-
-  public synchronized void setOnline() {
-    this.notifyAll();
   }
 
   public synchronized void checkDatabaseReady(String database) {
@@ -469,5 +436,23 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OCoordinatedExecutorMessageHandler getRequestHandler() {
     return requestHandler;
+  }
+
+  public void triggerDatabaseElections() {
+    for (String database : listDatabases(null, null)) {
+      // TODO: It may not be needed to elect a new database leader for some databases, they may already have a valid leader
+      // TODO: now just trigger an election for everyone
+      if (database.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
+        electLeader(database);
+      }
+    }
+  }
+
+  public void startFullSync(String database, UUID uuid, boolean incremental) {
+    syncs.startSync(this, database, uuid, incremental);
+  }
+
+  public void syncChunk(String database, UUID uuid, byte[] bytes, int len) {
+    syncs.startChunk(uuid, bytes, len);
   }
 }

@@ -31,10 +31,14 @@ public class ODatabaseLastValidRequest implements OOperation {
 
   @Override
   public void apply(ONodeIdentity sender, OrientDBDistributed context) {
-    Iterator<OOperationLogEntry> res = context.getDistributedContext(this.database).getOpLog().searchFrom(oLogId);
+    Optional<Iterator<OOperationLogEntry>> res = context.getDistributedContext(this.database).getOpLog().searchFrom(oLogId);
     Optional<OLogId> id;
-    if (res.hasNext()) {
-      id = Optional.of(res.next().getLogId());
+    if (res.isPresent()) {
+      if (res.get().hasNext()) {
+        id = Optional.of(res.get().next().getLogId());
+      } else {
+        id = Optional.empty();
+      }
     } else {
       id = Optional.empty();
     }

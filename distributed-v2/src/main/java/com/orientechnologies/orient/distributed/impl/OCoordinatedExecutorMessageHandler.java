@@ -15,9 +15,6 @@ import com.orientechnologies.orient.distributed.impl.structural.operations.OOper
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
-import com.orientechnologies.orient.server.OSystemDatabase;
-
-import java.util.Set;
 
 public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor {
   private OrientDBDistributed distributed;
@@ -138,12 +135,6 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
     } else {
       distributed.getStructuralDistributedContext().setExternalLeader(leader, leaderLastValid);
     }
-    //TODO: to remove this when leader are set from election
-    Set<String> dbs = distributed.listDatabases(null, null);
-    dbs.remove(OSystemDatabase.SYSTEM_DB_NAME);
-    for (String db : dbs) {
-      setDatabaseLeader(leader, db, null);
-    }
   }
 
   @Override
@@ -152,7 +143,7 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
     if (distributed.getNodeIdentity().equals(leader)) {
       context.makeCoordinator(leader, database, leaderLastValid, distributed.getActiveNodes());
     } else {
-      context.setExternalCoordinator(leader);
+      context.setExternalCoordinator(leader, leaderLastValid);
     }
   }
 
@@ -163,7 +154,7 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
 
   @Override
   public void notifyLastDatabaseOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
-    distributed.getDistributedContext(database).getExecutor().ping(leader, leaderLastValid);
+    distributed.getDistributedContext(database).getExecutor().notifyLastValidLog(leader, leaderLastValid);
   }
 
   @Override

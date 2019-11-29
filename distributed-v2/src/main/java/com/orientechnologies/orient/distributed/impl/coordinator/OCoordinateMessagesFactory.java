@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.distributed.impl.database.operations.ODatabaseFullSyncStart;
+import com.orientechnologies.orient.distributed.impl.database.operations.ODatabaseFullSyncChunk;
 import com.orientechnologies.orient.distributed.impl.structural.submit.OSyncRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOperationRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOperationResponse;
@@ -44,6 +46,8 @@ public class OCoordinateMessagesFactory {
   public static final int DATABASE_LAST_VALID_OPLOG_ID_REQUEST  = 32;
   public static final int DATABASE_LAST_VALID_OPLOG_ID_RESPONSE = 33;
   public static final int DATABASE_LEADER_ELECTED               = 34;
+  public static final int DATABASE_FULL_SYNC_START              = 35;
+  public static final int DATABASE_FULL_SYNC_CHUNK              = 36;
 
   public static ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {
@@ -151,6 +155,10 @@ public class OCoordinateMessagesFactory {
       return new ODatabaseLastValidResponse();
     case DATABASE_LEADER_ELECTED:
       return new ODatabaseLeaderElected();
+    case DATABASE_FULL_SYNC_START:
+      return new ODatabaseFullSyncStart();
+    case DATABASE_FULL_SYNC_CHUNK:
+      return new ODatabaseFullSyncChunk();
     }
     return null;
   }

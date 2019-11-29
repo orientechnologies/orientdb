@@ -63,13 +63,14 @@ public class ODistributedContext {
     }
   }
 
-  public synchronized void setExternalCoordinator(ONodeIdentity lockManager) {
+  public synchronized void setExternalCoordinator(ONodeIdentity lockManager, OLogId leaderLastValid) {
     if (coordinator != null) {
       coordinator.close();
       coordinator = null;
       allocator = null;
     }
     submitContext.setCoordinator(lockManager);
+    executor.notifyLastValidLog(lockManager, leaderLastValid);
   }
 
   public synchronized void close() {

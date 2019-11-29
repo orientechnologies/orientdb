@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface OLeaderContext {
-  void tryResend(ONodeIdentity identity, OLogId logId);
+  boolean tryResend(ONodeIdentity identity, OLogId logId);
 
   void sendFullConfiguration(ONodeIdentity identity);
 
