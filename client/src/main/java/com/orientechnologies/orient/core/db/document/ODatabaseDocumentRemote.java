@@ -59,10 +59,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -883,11 +880,22 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
     if (record instanceof OVertex) {
-      reload(record,"in*:2 out*:2");
+      reload(record, "in*:2 out*:2");
       OVertexDelegate.deleteLinks((OVertex) record);
     } else if (record instanceof OEdge) {
-      reload(record,"in:1 out:1");
+      reload(record.getRecord(), "in:1 out:1");
       OEdgeDelegate.deleteLinks((OEdge) record);
+    } else if (record instanceof ODocument) {
+      OElement elem = (OElement) record;
+      if (elem.isVertex()) {
+        OVertex delegate = elem.asVertex().get();
+        reload(delegate.getRecord(), "in*:2 out*:2");
+        OVertexDelegate.deleteLinks(delegate);
+      } else if (elem.isEdge()) {
+        OEdge delegate = elem.asEdge().get();
+        reload(delegate.getRecord(), "in:1 out:1");
+        OEdgeDelegate.deleteLinks(delegate);
+      }
     }
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
