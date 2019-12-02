@@ -27,6 +27,11 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.0.26 - (December, 2 2019)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.0-Release-Notes#3026---2-december-2019
+- Issues: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A3.0.26+is%3Aclosed
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.0.25 - (November, 11 2019)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.0-Release-Notes#3025---11-november-2019
 - Issues: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A3.0.25+is%3Aclosed
