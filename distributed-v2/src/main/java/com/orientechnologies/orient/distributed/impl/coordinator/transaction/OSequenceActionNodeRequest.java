@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLimitReached
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExecutor;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 

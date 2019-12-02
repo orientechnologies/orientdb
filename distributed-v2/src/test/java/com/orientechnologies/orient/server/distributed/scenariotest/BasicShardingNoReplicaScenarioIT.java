@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -63,11 +62,8 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
   @Override
   public void executeTest() throws Exception {
 
-    OHazelcastPlugin manager1 = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
 
-    final OModifiableDistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration(this.getDatabaseName())
-        .modify();
-    ODocument cfg = databaseConfiguration.getDocument();
+    ODocument cfg = new ODocument();
 
     ODatabaseDocumentInternal graphNoTx = null;
     try {
@@ -90,7 +86,6 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
         dCfg.setServerOwner("client_" + serverName, serverName);
       }
-      manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg, true);
 
       final OProperty prop = clientType.createProperty("name", OType.STRING);
       prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);

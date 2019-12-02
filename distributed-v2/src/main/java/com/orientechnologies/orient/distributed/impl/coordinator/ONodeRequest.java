@@ -2,6 +2,8 @@ package com.orientechnologies.orient.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OLogRequest;
 
 import java.io.DataInput;
 import java.io.DataOutput;

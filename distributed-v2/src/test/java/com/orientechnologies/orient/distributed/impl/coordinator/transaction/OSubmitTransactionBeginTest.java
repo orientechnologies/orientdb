@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;

@@ -2,7 +2,9 @@ package com.orientechnologies.orient.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;

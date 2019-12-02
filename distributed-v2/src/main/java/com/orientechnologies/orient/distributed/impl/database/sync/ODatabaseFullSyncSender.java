@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 import com.orientechnologies.orient.distributed.impl.database.operations.ODatabaseFullSyncStart;
 import com.orientechnologies.orient.distributed.impl.database.operations.ODatabaseFullSyncChunk;
 

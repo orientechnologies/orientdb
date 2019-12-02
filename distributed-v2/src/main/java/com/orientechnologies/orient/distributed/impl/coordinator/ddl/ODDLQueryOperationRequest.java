@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.io.DataInput;
 import java.io.DataOutput;

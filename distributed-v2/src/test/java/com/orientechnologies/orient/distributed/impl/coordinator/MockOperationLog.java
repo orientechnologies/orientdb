@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OLogRequest;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
+
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;

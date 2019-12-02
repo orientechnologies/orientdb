@@ -18,6 +18,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OTr
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OExceptionResult;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OUniqueKeyViolationResult;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.io.DataInput;
 import java.io.DataOutput;

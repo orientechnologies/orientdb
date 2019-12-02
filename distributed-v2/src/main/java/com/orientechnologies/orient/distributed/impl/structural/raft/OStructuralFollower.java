@@ -2,11 +2,10 @@ package com.orientechnologies.orient.distributed.impl.structural.raft;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
-import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
-import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLogEntry;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 import java.util.HashMap;

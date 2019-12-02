@@ -6,6 +6,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.Type;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OUniqueKeyViolationResult;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

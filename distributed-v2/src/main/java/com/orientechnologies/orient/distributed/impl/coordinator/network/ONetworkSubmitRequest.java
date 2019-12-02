@@ -9,7 +9,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.orientechnologies.orient.distributed.impl.network.binary.OBinaryDistributedMessage.DISTRIBUTED_SUBMIT_REQUEST;
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_SUBMIT_REQUEST;
 
 public class ONetworkSubmitRequest implements ODistributedMessage {
   private String              database;

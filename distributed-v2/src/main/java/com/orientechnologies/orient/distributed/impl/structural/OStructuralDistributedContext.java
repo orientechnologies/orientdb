@@ -2,10 +2,10 @@ package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
+import com.orientechnologies.orient.distributed.impl.log.OPersistentOperationalLogV1;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
-import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;

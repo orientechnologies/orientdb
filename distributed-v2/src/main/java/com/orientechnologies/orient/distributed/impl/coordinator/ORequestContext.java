@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.util.Collection;
 import java.util.Map;

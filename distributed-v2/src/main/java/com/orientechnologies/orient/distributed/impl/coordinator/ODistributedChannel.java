@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;

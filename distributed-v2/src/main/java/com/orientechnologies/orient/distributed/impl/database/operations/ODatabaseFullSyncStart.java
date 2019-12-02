@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.database.operations;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 
 import java.io.DataInput;

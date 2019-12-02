@@ -3,14 +3,12 @@ package com.orientechnologies.orient.distributed.impl.coordinator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 import com.orientechnologies.orient.distributed.impl.database.operations.ODatabaseSyncRequest;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 

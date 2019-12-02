@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -119,10 +118,6 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
                     Assert.assertTrue("Insert was too fast", inserting);
 
                     banner("STOPPING SERVER " + (SERVERS - 1));
-
-                    ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager())
-                        .stopNode(server.server.getDistributedManager().getLocalNodeName());
-
                     return null;
                   }
                 });

@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.distributed.impl.structural.submit;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OLeaderContext;
 
 import java.io.DataInput;
