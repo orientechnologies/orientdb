@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -493,7 +494,7 @@ public class OMessageHelper {
   }
 
   private static ORecord readDocument(OChannelDataInput channel) throws IOException {
-    ORecordSerializer serializer = ORecordSerializerNetworkV37.INSTANCE;
+    ORecordSerializer serializer = ORecordSerializerNetworkV37Client.INSTANCE;
     final ORecord record = (ORecord) readIdentifiable(channel, serializer);
     return record;
   }

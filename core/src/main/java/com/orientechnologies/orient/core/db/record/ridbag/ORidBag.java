@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.ridbag.ORemoteTreeRidBag;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
@@ -112,6 +113,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   private ORidBag(final byte[] stream) {
     fromStream(stream);
+  }
+
+  public ORidBag(ORidBagDelegate delegate) {
+    this.delegate = delegate;
   }
 
   public static ORidBag fromStream(final String value) {
@@ -589,4 +594,5 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> getTransactionTimeLine() {
     return delegate.getTransactionTimeLine();
   }
+
 }

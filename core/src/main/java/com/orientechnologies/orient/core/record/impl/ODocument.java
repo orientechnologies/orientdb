@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.storage.ridbag.ORemoteTreeRidBag;
 
 import java.io.*;
 import java.lang.ref.WeakReference;
@@ -2598,6 +2599,9 @@ public class ODocument extends ORecordAbstract
     entry.value = iFieldValue;
     entry.type = iFieldType;
     entry.enableTracking(this);
+    if (iFieldValue instanceof ORidBag && ((ORidBag) iFieldValue).getDelegate() instanceof ORemoteTreeRidBag) {
+      ((ORemoteTreeRidBag) (((ORidBag) iFieldValue).getDelegate())).setRecordAndField(recordId, iFieldName);
+    }
     if (iFieldValue instanceof OIdentifiable && !((OIdentifiable) iFieldValue).getIdentity().isPersistent())
       track((OIdentifiable) iFieldValue);
   }

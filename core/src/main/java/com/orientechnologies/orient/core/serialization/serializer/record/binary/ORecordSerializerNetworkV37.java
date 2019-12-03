@@ -59,11 +59,11 @@ import java.util.Map.Entry;
 
 public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
-  public static final  String                      NAME             = "onet_ser_v37";
-  private static final String                      CHARSET_UTF_8    = "UTF-8";
-  private static final ORecordId                   NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
-  private static final long                        MILLISEC_PER_DAY = 86400000;
-  public static final  ORecordSerializerNetworkV37 INSTANCE         = new ORecordSerializerNetworkV37();
+  public static final    String                      NAME             = "onet_ser_v37";
+  private static final   String                      CHARSET_UTF_8    = "UTF-8";
+  protected static final ORecordId                   NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
+  private static final   long                        MILLISEC_PER_DAY = 86400000;
+  public static final    ORecordSerializerNetworkV37 INSTANCE         = new ORecordSerializerNetworkV37();
 
   public ORecordSerializerNetworkV37() {
   }
@@ -371,7 +371,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     }
   }
 
-  private ORidBag readRidBag(BytesContainer bytes) {
+  protected ORidBag readRidBag(BytesContainer bytes) {
     UUID uuid = OUUIDSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
     bytes.skip(OUUIDSerializer.UUID_SIZE);
     if (uuid.getMostSignificantBits() == -1 && uuid.getLeastSignificantBits() == -1)
@@ -477,7 +477,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     return found;
   }
 
-  private OIdentifiable readOptimizedLink(final BytesContainer bytes) {
+  protected OIdentifiable readOptimizedLink(final BytesContainer bytes) {
     ORecordId id = new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
     if (id.isTemporary()) {
       OIdentifiable persRef = id.getRecord();
