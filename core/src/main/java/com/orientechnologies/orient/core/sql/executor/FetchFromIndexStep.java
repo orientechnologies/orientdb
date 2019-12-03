@@ -63,8 +63,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   public FetchFromIndexStep(OIndex index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    //noinspection unchecked
-    this.index = (OIndex) index;
+    this.index = index;
     this.indexName = index.getName();
     this.condition = condition;
     this.additionalRangeCondition = additionalRangeCondition;
@@ -242,8 +241,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private void init(OBooleanExpression condition, ODatabaseDocumentInternal db) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     if (index == null) {
-      //noinspection unchecked
-      index = (OIndex) db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
+      index = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
     }
     try {
       if (index.getDefinition() == null) {

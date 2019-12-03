@@ -113,7 +113,6 @@ public class OWhereClause extends SimpleNode {
             }
           }
           if (nMatchingKeys > 0) {
-            @SuppressWarnings("unchecked")
             long newCount = estimateFromIndex(index, conditions, nMatchingKeys);
             if (newCount < conditionEstimation) {
               conditionEstimation = newCount;
@@ -207,7 +206,6 @@ public class OWhereClause extends SimpleNode {
           }
         }
         if (nMatchingKeys > 0) {
-          @SuppressWarnings("unchecked")
           long newCount = estimateFromIndex(index, conditions, nMatchingKeys);
           if (newCount >= 0 && newCount <= conditionEstimation) {
             conditionEstimation = newCount;

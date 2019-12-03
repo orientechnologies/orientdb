@@ -41,8 +41,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   private DeleteFromIndexStep(OIndex index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OBooleanExpression ridCondition, boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    //noinspection unchecked
-    this.index = (OIndex) index;
+    this.index = index;
     this.condition = condition;
     this.additional = additionalRangeCondition;
     this.ridCondition = ridCondition;
