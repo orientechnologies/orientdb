@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -883,15 +882,15 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final OIndex index = getIndex("Profile.nick");
 
-    Iterator<Object> streamIterator;
-    try (Stream<Object> stream = index.keyStream()) {
+    Iterator<ORawPair<Object, ORID>> streamIterator;
+    try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
       streamIterator = stream.iterator();
       Assert.assertTrue(streamIterator.hasNext());
 
-      ((OIdentifiable) (streamIterator.next())).getRecord().delete();
+      streamIterator.next().second.getRecord().delete();
     }
 
-    try (Stream<Object> stream = index.keyStream()) {
+    try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
       streamIterator = stream.iterator();
       Assert.assertFalse(streamIterator.hasNext());
     }
