@@ -56,10 +56,6 @@ public class ODictionary<T extends Object> {
     index.put(iKey, (OIdentifiable) iValue);
   }
 
-  public boolean containsKey(final String iKey) {
-    return index.contains(iKey);
-  }
-
   public boolean remove(final String iKey) {
     return index.remove(iKey);
   }

@@ -60,15 +60,6 @@ public interface OIndex extends Comparable<OIndex> {
   Object get(Object iKey);
 
   /**
-   * Tells if a key is contained in the index.
-   *
-   * @param iKey The key to search
-   *
-   * @return True if the key is contained, otherwise false
-   */
-  boolean contains(Object iKey);
-
-  /**
    * Inserts a new entry in the index. The behaviour depends by the index implementation.
    *
    * @param iKey   Entry's key

@@ -61,10 +61,6 @@ public class OIndexAbstractDelegate implements OIndex {
     return delegate.get(iKey);
   }
 
-  public boolean contains(final Object iKey) {
-    return delegate.contains(iKey);
-  }
-
   public OIndex put(final Object iKey, final OIdentifiable iValue) {
     checkForKeyType(iKey);
     return delegate.put(iKey, iValue);

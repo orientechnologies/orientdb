@@ -993,12 +993,12 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
     OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
-    Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
+    Assert.assertNotNull(nickIndex.get("NonProxiedObjectToDelete"));
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
     database.delete(database.<Object>detach(loadedProfile, true));
 
-    Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
+    Assert.assertNull(nickIndex.get("NonProxiedObjectToDelete"));
   }
 
   @Test(dependsOnMethods = "testIndexRebuildDuringNonProxiedObjectDelete")
@@ -1011,12 +1011,12 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
     OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
-    Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
+    Assert.assertNotNull(nickIndex.get("NonProxiedObjectToDelete"));
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
     database.delete(database.<Object>detachAll(loadedProfile, true));
 
-    Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
+    Assert.assertNull(nickIndex.get("NonProxiedObjectToDelete"));
   }
 
   @Test(dependsOnMethods = "testIndexRebuildDuringDetachAllNonProxiedObjectDelete")
@@ -1398,11 +1398,11 @@ public class IndexTest extends ObjectDBBaseTest {
     document.field("prop", "keyTwo");
     document.save();
 
-    Assert.assertFalse(notUniqueIndex.contains("RandomKeyOne"));
-    Assert.assertTrue(notUniqueIndex.contains("keyOne"));
+    Assert.assertNull(notUniqueIndex.get("RandomKeyOne"));
+    Assert.assertNotNull(notUniqueIndex.get("keyOne"));
 
-    Assert.assertFalse(notUniqueIndex.contains("RandomKeyTwo"));
-    Assert.assertTrue(notUniqueIndex.contains("keyTwo"));
+    Assert.assertNull(notUniqueIndex.get("RandomKeyTwo"));
+    Assert.assertNotNull(notUniqueIndex.get("keyTwo"));
   }
 
   public void testNullIteration() {

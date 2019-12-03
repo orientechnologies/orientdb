@@ -2481,44 +2481,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public boolean indexContainsKey(int indexId, final Object key) throws OInvalidIndexEngineIdException {
-    indexId = extractInternalId(indexId);
-
-    try {
-      if (transaction.get() != null) {
-        return doIndexContainsKey(indexId, key);
-      }
-
-      checkOpenness();
-
-      stateLock.acquireReadLock();
-      try {
-        checkOpenness();
-
-        return doIndexContainsKey(indexId, key);
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private boolean doIndexContainsKey(final int indexId, final Object key) throws OInvalidIndexEngineIdException {
-    checkIndexId(indexId);
-
-    final OBaseIndexEngine engine = indexEngines.get(indexId);
-    assert indexId == engine.getId();
-
-    return engine.contains(key);
-  }
-
   public boolean removeKeyFromIndex(int indexId, final Object key) throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
