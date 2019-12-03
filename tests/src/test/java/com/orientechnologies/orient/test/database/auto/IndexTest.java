@@ -992,7 +992,7 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
     OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
-    Assert.assertFalse(((Collection) nickIndex.get("NonProxiedObjectToDelete")).isEmpty());
+    Assert.assertNotNull(nickIndex.get("NonProxiedObjectToDelete"));
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
     database.delete(database.<Object>detach(loadedProfile, true));
