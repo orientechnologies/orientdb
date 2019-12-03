@@ -18,20 +18,19 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-//import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterInsertTest;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import com.orientechnologies.orient.distributed.impl.ODistributedStorageEventListener;
 
 import java.util.*;
 import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
+
+//import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
 /**
  * It represents an abstract scenario test.
@@ -636,49 +635,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       }
 
       return null;
-    }
-  }
-
-  class AfterRecordLockDelayer implements ODistributedStorageEventListener {
-
-    private String serverName;
-    private long   delay;
-
-    public AfterRecordLockDelayer(String serverName, long delay) {
-      this.serverName = serverName;
-      this.delay = delay;
-      OLogManager.instance()
-          .info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName, Thread.currentThread().getId());
-    }
-
-    public AfterRecordLockDelayer(String serverName) {
-      this.serverName = serverName;
-      this.delay = DOCUMENT_WRITE_TIMEOUT;
-      OLogManager.instance()
-          .info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName, Thread.currentThread().getId());
-    }
-
-    @Override
-    public void onAfterRecordLock(ORecordId rid) {
-      if (delay > 0)
-        try {
-          OLogManager.instance()
-              .info(this, "Thread [%s-%d] waiting for %dms with locked record [%s]", serverName, Thread.currentThread().getId(),
-                  delay, rid.toString());
-          Thread.sleep(delay);
-
-          OLogManager.instance().info(this, "Thread [%s-%d] finished waiting for %dms with locked record [%s]", serverName,
-              Thread.currentThread().getId(), delay, rid.toString());
-
-          // RESET THE DELAY FOR FURTHER TIMES
-          delay = 0;
-
-        } catch (InterruptedException e) {
-        }
-    }
-
-    @Override
-    public void onAfterRecordUnlock(ORecordId rid) {
     }
   }
 

@@ -1,11 +1,16 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 
 public interface OCoordinatedExecutor {
 
@@ -35,8 +40,9 @@ public interface OCoordinatedExecutor {
 
   void setDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid);
 
-  void ping(ONodeIdentity leader, OLogId leaderLastValid);
+  void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid);
 
-  void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid);
+  void notifyLastDatabaseOperation(ONodeIdentity leader, String database, OLogId leaderLastValid);
 
+  void executeOperation(ONodeIdentity sender, OOperation operation);
 }

@@ -22,12 +22,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -48,7 +43,7 @@ public class FirstPhaseOperationTest {
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = OServer.startFromClasspathConfig("orientdb-server-config.xml");
     OrientDBDistributed impl = (OrientDBDistributed) server.getDatabases();
-    impl.setLeader(impl.getStructuralConfiguration().getCurrentNodeIdentity(), null);
+    // impl.setLeader(impl.getStructuralConfiguration().getCurrentNodeIdentity(), null);
     orientDB = server.getContext();
     orientDB.create(FirstPhaseOperationTest.class.getSimpleName(), ODatabaseType.MEMORY);
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {

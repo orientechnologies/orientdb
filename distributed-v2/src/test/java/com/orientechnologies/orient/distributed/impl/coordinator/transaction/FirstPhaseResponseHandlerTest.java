@@ -2,10 +2,13 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
+import com.orientechnologies.orient.distributed.impl.coordinator.ORequestContext;
+import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.Type;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OUniqueKeyViolationResult;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

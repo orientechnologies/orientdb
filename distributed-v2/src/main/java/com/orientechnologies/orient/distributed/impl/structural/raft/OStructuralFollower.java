@@ -2,12 +2,11 @@ package com.orientechnologies.orient.distributed.impl.structural.raft;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
-import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
-import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLogEntry;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -96,6 +95,16 @@ public class OStructuralFollower implements AutoCloseable {
   public void recover(ORaftOperation request) {
     executor.execute(() -> {
       request.apply(orientDB);
+    });
+  }
+
+  public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
+    //TODO: verify leader
+    executor.execute(() -> {
+      OLogId lastLogId = operationLog.lastPersistentLog();
+      if (lastLogId == null || leaderLastValid.getId() > lastLogId.getId()) {
+        resyncOplog();
+      }
     });
   }
 }

@@ -47,6 +47,18 @@ public class OStructuralSharedConfiguration implements OReadStructuralSharedConf
     }
   }
 
+  @Override
+  public void networkSerialize(DataOutput output) throws IOException {
+    //TODO: Make sure that network become independent to the disc.
+    serialize(output);
+  }
+
+  @Override
+  public void networkDeserialize(DataInput input) throws IOException {
+    //TODO: Make sure that network become independent to the disc.
+    deserialize(input);
+  }
+
   public void addNode(OStructuralNodeConfiguration node) {
     knownNodes.put(node.getIdentity(), node);
   }

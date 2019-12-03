@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -86,8 +85,6 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
         .get("dbstatus." + removedServer + "." + getDatabaseName()), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-    if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
-      serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
 
     lastNodeIsUp.set(true);
 

@@ -22,9 +22,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -129,15 +127,6 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
          */
 
         banner("Test with quorum = 2");
-
-        // checking distributed configuration
-        OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-        OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
-        ODocument cfg = databaseConfiguration.getDocument();
-        cfg.field("writeQuorum", 2);
-        cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
-        assertEquals(2, (int) cfg.field("writeQuorum"));
 
         // network fault on server2
         System.out.println("Network fault on server2.\n");
@@ -252,13 +241,6 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         banner("Test with quorum = 1");
 
         // checking distributed configuration
-        OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-        OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
-        ODocument cfg = databaseConfiguration.getDocument();
-        cfg.field("writeQuorum", 1);
-        cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
-        assertEquals(1, (int) cfg.field("writeQuorum"));
 
         // network fault on server2
         System.out.println("Network fault on server2.\n");

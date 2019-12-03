@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 
 import java.io.File;
 
@@ -36,8 +35,6 @@ public class BareBonesServer {
       server = new OServer(false);
       server.startup(new File(configFileDir, configFileName));
       server.activate();
-      if (server.getPluginByClass(OHazelcastPlugin.class) != null)
-        server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
     } catch (Exception e) {
       OLogManager.instance().error(this, "start", e);
     }

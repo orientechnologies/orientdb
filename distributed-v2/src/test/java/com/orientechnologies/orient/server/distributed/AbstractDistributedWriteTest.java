@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.distributed.impl.ODistributedOutput;
 import org.junit.Assert;
 
 import java.util.*;
@@ -183,8 +182,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     for (ServerRun s : serverInstance) {
       final ODistributedServerManager dManager = s.getServerInstance().getDistributedManager();
       final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(getDatabaseName());
-      final String cfgOutput = ODistributedOutput
-          .formatClusterTable(dManager, getDatabaseName(), cfg, dManager.getAvailableNodes(getDatabaseName()));
+      final String cfgOutput = "";
 
       ODistributedServerLog
           .info(this, s.getServerInstance().getDistributedManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,

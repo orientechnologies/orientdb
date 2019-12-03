@@ -5,15 +5,14 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,9 +23,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class CoordinatorTxTest {
 
@@ -127,16 +123,6 @@ public class CoordinatorTxTest {
     }
 
     @Override
-    public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
-
-    }
-
-    @Override
-    public void sendRequest(OLogId id, OStructuralNodeRequest request) {
-
-    }
-
-    @Override
     public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
 
     }
@@ -173,7 +159,7 @@ public class CoordinatorTxTest {
     }
 
     @Override
-    public void send(OFullConfiguration fullConfiguration) {
+    public void send(OOperation fullConfiguration) {
 
     }
   }
@@ -233,12 +219,13 @@ public class CoordinatorTxTest {
     }
 
     @Override
-    public void send(ONodeIdentity identity, OFullConfiguration fullConfiguration) {
+    public void send(ONodeIdentity identity, OOperation operation) {
 
     }
 
     @Override
-    public void sendDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    public void sendAll(Collection<ONodeIdentity> members, OOperation operation) {
+
     }
 
     @Override
@@ -303,12 +290,13 @@ public class CoordinatorTxTest {
     }
 
     @Override
-    public void send(ONodeIdentity identity, OFullConfiguration fullConfiguration) {
+    public void send(ONodeIdentity identity, OOperation operation) {
 
     }
 
     @Override
-    public void sendDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    public void sendAll(Collection<ONodeIdentity> members, OOperation operation) {
+
     }
 
     @Override

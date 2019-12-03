@@ -2,23 +2,26 @@ package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.network.OCoordinatedExecutor;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedContext;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitContext;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 
 public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor {
-  private ODistributedContextContainer distributed;
-  private ONodeIdentity                leader;
+  private OrientDBDistributed distributed;
+  private ONodeIdentity       leader;
 
-  public OCoordinatedExecutorMessageHandler(ODistributedContextContainer distributed) {
+  public OCoordinatedExecutorMessageHandler(OrientDBDistributed distributed) {
     this.distributed = distributed;
   }
 
@@ -128,22 +131,35 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   @Override
   public void setLeader(ONodeIdentity leader, OLogId leaderLastValid) {
     this.leader = leader;
-    distributed.setLeader(leader, leaderLastValid);
+    if (distributed.getNodeIdentity().equals(leader)) {
+      distributed.getStructuralDistributedContext().makeLeader(leader, distributed.getActiveNodes());
+    } else {
+      distributed.getStructuralDistributedContext().setExternalLeader(leader, leaderLastValid);
+    }
   }
 
   @Override
   public void setDatabaseLeader(ONodeIdentity leader, String database, OLogId leaderLastValid) {
-    //TODO:
+    ODistributedContext context = distributed.getDistributedContext(database);
+    if (distributed.getNodeIdentity().equals(leader)) {
+      context.makeCoordinator(leader, database, leaderLastValid, distributed.getActiveNodes());
+    } else {
+      context.setExternalCoordinator(leader, leaderLastValid);
+    }
   }
 
   @Override
-  public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
-    //TODO:
+  public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
+    distributed.getStructuralDistributedContext().getFollower().ping(leader, leaderLastValid);
   }
 
   @Override
-  public void databasePing(ONodeIdentity leader, String database, OLogId leaderLastValid) {
-    //TODO:
+  public void notifyLastDatabaseOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    distributed.getDistributedContext(database).getExecutor().notifyLastValidLog(leader, leaderLastValid);
   }
 
+  @Override
+  public void executeOperation(ONodeIdentity sender, OOperation operation) {
+    operation.apply(sender, distributed);
+  }
 }

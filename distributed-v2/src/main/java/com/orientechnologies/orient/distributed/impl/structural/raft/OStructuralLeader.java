@@ -2,15 +2,18 @@ package com.orientechnologies.orient.distributed.impl.structural.raft;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedLockManager;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
 import com.orientechnologies.orient.distributed.impl.structural.OReadStructuralSharedConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralConfiguration;
-import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OCreateDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.submit.ODropDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -39,8 +42,16 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
     this.context = context;
     this.quorum = context.getStructuralConfiguration().readSharedConfiguration().getQuorum();
     this.timeout = context.getConfigurations().getConfigurations().getValueAsInteger(DISTRIBUTED_TX_EXPIRE_TIMEOUT);
+    long pingTimeout = 1000;// context.getConfigurations().getConfigurations().getValueAsInteger()
     this.nodeIdentity = context.getNodeIdentity();
     this.network = network;
+    this.timer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        OLogId logId = operationLog.lastPersistentLog();
+        network.notifyLastStructuralOperation(context.getNodeIdentity(), logId);
+      }
+    }, pingTimeout, pingTimeout);
   }
 
   public void propagateAndApply(ORaftOperation operation, OpFinished finished) {
@@ -84,6 +95,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
 
   @Override
   public void close() {
+    timer.cancel();
     executor.shutdown();
     try {
       executor.awaitTermination(1, TimeUnit.HOURS);
@@ -179,16 +191,21 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   }
 
   @Override
-  public void tryResend(ONodeIdentity identity, OLogId logId) {
+  public boolean tryResend(ONodeIdentity identity, OLogId logId) {
     //TODO: this may fail, handle the failure.
-    executor.execute(() -> {
-      //TODO: this in single thread executor may cost too much, find a different implementation
-      Iterator<OOperationLogEntry> iter = operationLog.searchFrom(logId);
-      while (iter.hasNext()) {
-        OOperationLogEntry logEntry = iter.next();
-        network.propagate(Collections.singleton(identity), logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());
-      }
-    });
+    Optional<Iterator<OOperationLogEntry>> res = operationLog.searchFrom(logId);
+    if (res.isPresent()) {
+      Iterator<OOperationLogEntry> iter = res.get();
+      executor.execute(() -> {
+        //TODO: this in single thread executor may cost too much, find a different implementation
+        while (iter.hasNext()) {
+          OOperationLogEntry logEntry = iter.next();
+          network.propagate(Collections.singleton(identity), logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());
+        }
+      });
+      return true;
+    }
+    return false;
   }
 
   @Override

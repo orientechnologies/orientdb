@@ -1,47 +1,52 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
-import com.orientechnologies.orient.distributed.OSyncRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOperationRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOperationResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySubmitResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.*;
-import com.orientechnologies.orient.distributed.impl.structural.*;
+import com.orientechnologies.orient.distributed.impl.database.operations.ODatabaseFullSyncChunk;
+import com.orientechnologies.orient.distributed.impl.database.operations.ODatabaseFullSyncStart;
 import com.orientechnologies.orient.distributed.impl.structural.operations.*;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OCreateDatabase;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ODropDatabase;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ONodeJoin;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.*;
 
 public class OCoordinateMessagesFactory {
-  public static final int TRANSACTION_SUBMIT_REQUEST           = 1;
-  public static final int TRANSACTION_SUBMIT_RESPONSE          = 2;
-  public static final int TRANSACTION_FIRST_PHASE_REQUEST      = 3;
-  public static final int TRANSACTION_FIRST_PHASE_RESPONSE     = 4;
-  public static final int TRANSACTION_SECOND_PHASE_REQUEST     = 5;
-  public static final int TRANSACTION_SECOND_PHASE_RESPONSE    = 6;
-  public static final int SEQUENCE_ACTION_COORDINATOR_SUBMIT   = 7;
-  public static final int SEQUENCE_ACTION_COORDINATOR_RESPONSE = 8;
-  public static final int SEQUENCE_ACTION_NODE_REQUEST         = 9;
-  public static final int SEQUENCE_ACTION_NODE_RESPONSE        = 10;
-  public static final int DDL_QUERY_SUBMIT_REQUEST             = 11;
-  public static final int DDL_QUERY_SUBMIT_RESPONSE            = 12;
-  public static final int DDL_QUERY_NODE_REQUEST               = 13;
-  public static final int DDL_QUERY_NODE_RESPONSE              = 14;
-  public static final int CREATE_DATABASE_SUBMIT_REQUEST       = 15;
-  public static final int CREATE_DATABASE_SUBMIT_RESPONSE      = 16;
-  public static final int CREATE_DATABASE_REQUEST              = 17;
-  public static final int DROP_DATABASE_REQUEST                = 18;
-  public static final int CREATE_DATABASE_RESPONSE             = 19;
-  public static final int NODE_JOIN_REQUEST                    = 20;
-  public static final int CREATE_DATABASE_FINALIZE_REQUEST     = 21;
-  public static final int CREATE_DATABASE_FINALIZE_RESPONSE    = 22;
-  public static final int DROP_DATABASE_SUBMIT_REQUEST         = 23;
-  public static final int DROP_DATABASE_SUBMIT_RESPONSE        = 24;
-  public static final int DROP_DATABASE_RESPONSE               = 25;
-  public static final int CONFIGURATION_FETCH_SUBMIT_REQUEST   = 26;
-  public static final int CONFIGURATION_FETCH_SUBMIT_RESPONSE  = 27;
-  public static final int SYNC_SUBMIT_REQUEST                  = 28;
+  public static final int TRANSACTION_SUBMIT_REQUEST            = 1;
+  public static final int TRANSACTION_SUBMIT_RESPONSE           = 2;
+  public static final int TRANSACTION_FIRST_PHASE_REQUEST       = 3;
+  public static final int TRANSACTION_FIRST_PHASE_RESPONSE      = 4;
+  public static final int TRANSACTION_SECOND_PHASE_REQUEST      = 5;
+  public static final int TRANSACTION_SECOND_PHASE_RESPONSE     = 6;
+  public static final int SEQUENCE_ACTION_COORDINATOR_SUBMIT    = 7;
+  public static final int SEQUENCE_ACTION_COORDINATOR_RESPONSE  = 8;
+  public static final int SEQUENCE_ACTION_NODE_REQUEST          = 9;
+  public static final int SEQUENCE_ACTION_NODE_RESPONSE         = 10;
+  public static final int DDL_QUERY_SUBMIT_REQUEST              = 11;
+  public static final int DDL_QUERY_SUBMIT_RESPONSE             = 12;
+  public static final int DDL_QUERY_NODE_REQUEST                = 13;
+  public static final int DDL_QUERY_NODE_RESPONSE               = 14;
+  public static final int CREATE_DATABASE_SUBMIT_REQUEST        = 15;
+  public static final int CREATE_DATABASE_SUBMIT_RESPONSE       = 16;
+  public static final int CREATE_DATABASE_REQUEST               = 17;
+  public static final int DROP_DATABASE_REQUEST                 = 18;
+  public static final int NODE_JOIN_REQUEST                     = 20;
+  public static final int DROP_DATABASE_SUBMIT_REQUEST          = 23;
+  public static final int DROP_DATABASE_SUBMIT_RESPONSE         = 24;
+  public static final int CONFIGURATION_FETCH_SUBMIT_REQUEST    = 26;
+  public static final int CONFIGURATION_FETCH_SUBMIT_RESPONSE   = 27;
+  public static final int SYNC_SUBMIT_REQUEST                   = 28;
+  public static final int STRUCTURAL_FULL_CONFIGURATION         = 29;
+  public static final int DATABASE_LAST_OPLOG_ID_REQUEST        = 30;
+  public static final int DATABASE_LAST_OPLOG_ID_RESPONSE       = 31;
+  public static final int DATABASE_LAST_VALID_OPLOG_ID_REQUEST  = 32;
+  public static final int DATABASE_LAST_VALID_OPLOG_ID_RESPONSE = 33;
+  public static final int DATABASE_LEADER_ELECTED               = 34;
+  public static final int DATABASE_FULL_SYNC_START              = 35;
+  public static final int DATABASE_FULL_SYNC_CHUNK              = 36;
 
   public static ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {
@@ -133,5 +138,27 @@ public class OCoordinateMessagesFactory {
 
     return null;
 
+  }
+
+  public static OOperation createOperation(int requestType) {
+    switch (requestType) {
+    case STRUCTURAL_FULL_CONFIGURATION:
+      return new OFullConfiguration();
+    case DATABASE_LAST_OPLOG_ID_REQUEST:
+      return new ODatabaseLastOpIdRequest();
+    case DATABASE_LAST_OPLOG_ID_RESPONSE:
+      return new ODatabaseLastOpIdResponse();
+    case DATABASE_LAST_VALID_OPLOG_ID_REQUEST:
+      return new ODatabaseLastValidRequest();
+    case DATABASE_LAST_VALID_OPLOG_ID_RESPONSE:
+      return new ODatabaseLastValidResponse();
+    case DATABASE_LEADER_ELECTED:
+      return new ODatabaseLeaderElected();
+    case DATABASE_FULL_SYNC_START:
+      return new ODatabaseFullSyncStart();
+    case DATABASE_FULL_SYNC_CHUNK:
+      return new ODatabaseFullSyncChunk();
+    }
+    return null;
   }
 }

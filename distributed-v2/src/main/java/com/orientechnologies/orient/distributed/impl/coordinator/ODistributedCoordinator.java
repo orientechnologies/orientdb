@@ -1,10 +1,11 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetwork;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -104,5 +105,26 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   public void leave(ONodeIdentity nodeIdentity) {
     members.remove(nodeIdentity);
+  }
+
+  public boolean requestSync(ONodeIdentity requester, Optional<OLogId> opId) {
+    if (opId.isPresent()) {
+      Optional<Iterator<OOperationLogEntry>> res = operationLog.searchFrom(opId.get());
+      if (res.isPresent()) {
+        Iterator<OOperationLogEntry> iter = res.get();
+        requestExecutor.execute(() -> {
+          while (iter.hasNext()) {
+            OOperationLogEntry logEntry = iter.next();
+            network.sendRequest(Collections.singleton(requester), this.database, logEntry.getLogId(),
+                (ONodeRequest) logEntry.getRequest());
+          }
+        });
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 }
