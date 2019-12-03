@@ -272,11 +272,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Object getLastKey() {
-    throw new UnsupportedOperationException("lastKey");
-  }
-
-  @Override
   public Stream<ORawPair<Object, ORID>> stream(final ValuesTransformer valuesTransformer) {
     return StreamSupport.stream(new Spliterator<ORawPair<Object, ORID>>() {
       private int nextEntriesIndex;

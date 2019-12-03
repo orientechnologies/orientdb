@@ -179,11 +179,6 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public Object getLastKey() {
-    return sbTree.lastKey();
-  }
-
-  @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
       boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);

@@ -505,11 +505,6 @@ public class OChainedIndexProxy<T> implements OIndex {
   }
 
   @Override
-  public Object getLastKey() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
   public int getIndexId() {
     throw new UnsupportedOperationException("Not allowed operation");
   }

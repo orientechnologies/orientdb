@@ -87,11 +87,6 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   }
 
   @Override
-  public Object getLastKey() {
-    return null;
-  }
-
-  @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
       boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return null;

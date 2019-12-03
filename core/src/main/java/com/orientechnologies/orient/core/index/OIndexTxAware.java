@@ -25,8 +25,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -114,46 +112,6 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
   public OIndexTxAware<T> clear() {
     database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
     return this;
-  }
-
-  @Override
-  public Object getLastKey() {
-    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
-    if (indexChanges == null)
-      return delegate.getLastKey();
-
-    Object indexLastKey;
-    if (indexChanges.cleared)
-      indexLastKey = null;
-    else
-      indexLastKey = delegate.getLastKey();
-
-    Object lastKey = indexChanges.getLastKey();
-    while (true) {
-      OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(lastKey);
-
-      for (OTransactionIndexEntry indexEntry : changesPerKey.entries) {
-        if (indexEntry.operation.equals(OPERATION.REMOVE))
-          lastKey = null;
-        else
-          lastKey = changesPerKey.key;
-      }
-
-      if (changesPerKey.key.equals(indexLastKey))
-        indexLastKey = lastKey;
-
-      if (lastKey != null) {
-        //noinspection unchecked
-        if (indexLastKey != null && ((Comparable) indexLastKey).compareTo(lastKey) > 0)
-          return indexLastKey;
-
-        return lastKey;
-      }
-
-      lastKey = indexChanges.getLowerKey(changesPerKey.key);
-      if (lastKey == null)
-        return indexLastKey;
-    }
   }
 
   private Object enhanceCompositeKey(Object key, PartialSearchMode partialSearchMode) {

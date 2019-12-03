@@ -385,16 +385,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public Object getLastKey() {
-    if (mvTree != null) {
-      return mvTree.lastKey();
-    } else {
-      assert svTree != null;
-      return extractKey(svTree.lastKey());
-    }
-  }
-
-  @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
       boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     if (mvTree != null) {

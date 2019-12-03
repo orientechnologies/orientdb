@@ -420,11 +420,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Object getLastKey() {
-    throw new UnsupportedOperationException("lastKey");
-  }
-
-  @Override
   public boolean acquireAtomicExclusiveLock(final Object key) {
     getPartition(key).acquireAtomicExclusiveLock();
     return false;

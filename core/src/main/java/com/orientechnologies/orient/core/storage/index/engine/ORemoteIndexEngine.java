@@ -115,11 +115,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Object getLastKey() {
-    return null;
-  }
-
-  @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
       boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("stream");

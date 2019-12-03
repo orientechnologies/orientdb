@@ -2977,43 +2977,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public Object getIndexLastKey(int indexId) throws OInvalidIndexEngineIdException {
-    indexId = extractInternalId(indexId);
-
-    try {
-      if (transaction.get() != null) {
-        return doGetIndexLastKey(indexId);
-      }
-
-      checkOpenness();
-
-      stateLock.acquireReadLock();
-      try {
-        checkOpenness();
-        return doGetIndexLastKey(indexId);
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private Object doGetIndexLastKey(final int indexId) throws OInvalidIndexEngineIdException {
-    checkIndexId(indexId);
-
-    final OBaseIndexEngine engine = indexEngines.get(indexId);
-    assert indexId == engine.getId();
-
-    return engine.getLastKey();
-  }
-
   public Stream<ORawPair<Object, ORID>> iterateIndexEntriesBetween(int indexId, final Object rangeFrom, final boolean fromInclusive,
       final Object rangeTo, final boolean toInclusive, final boolean ascSortOrder,
       final OBaseIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {

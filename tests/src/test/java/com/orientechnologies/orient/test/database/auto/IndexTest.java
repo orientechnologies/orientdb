@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.DatabaseAbstractTest;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -887,7 +888,7 @@ public class IndexTest extends ObjectDBBaseTest {
       streamIterator = stream.iterator();
       Assert.assertTrue(streamIterator.hasNext());
 
-      ((OIdentifiable) streamIterator.next()).getRecord().delete();
+      ((OIdentifiable) (streamIterator.next())).getRecord().delete();
     }
 
     try (Stream<Object> stream = index.keyStream()) {
@@ -1506,7 +1507,10 @@ public class IndexTest extends ObjectDBBaseTest {
       try (Stream<Object> keyStreamAsc = index.keyStream()) {
         Assert.assertEquals(keyStreamAsc.iterator().next(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
       }
-      Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+
+      try (Stream<ORawPair<Object, ORID>> descStream = index.descStream()) {
+        Assert.assertEquals(descStream.iterator().next().first, new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+      }
     }
 
     final ORID rid = document.getIdentity();
@@ -1578,7 +1582,9 @@ public class IndexTest extends ObjectDBBaseTest {
       try (Stream<Object> keyStream = index.keyStream()) {
         Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
       }
-      Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid4, 12L, 14L, 12));
+      try (Stream<ORawPair<Object, ORID>> descStream = index.descStream()) {
+        Assert.assertEquals(descStream.iterator().next().first, new OCompositeKey((byte) 1, rid4, 12L, 14L, 12));
+      }
     }
 
     database.close();
@@ -1649,7 +1655,9 @@ public class IndexTest extends ObjectDBBaseTest {
       try (Stream<Object> keyStream = index.keyStream()) {
         Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
       }
-      Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+      try (Stream<ORawPair<Object, ORID>> descStream = index.descStream()) {
+        Assert.assertEquals(descStream.iterator().next().first, new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+      }
     }
 
     final ORID rid = document.getIdentity();
@@ -1716,7 +1724,9 @@ public class IndexTest extends ObjectDBBaseTest {
       try (Stream<Object> keyStream = index.keyStream()) {
         Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
       }
-      Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid4, 12L, 14L, 12));
+      try (Stream<ORawPair<Object, ORID>> descStream = index.descStream()) {
+        Assert.assertEquals(descStream.iterator().next().first, new OCompositeKey((byte) 1, rid4, 12L, 14L, 12));
+      }
     }
 
     database.close();

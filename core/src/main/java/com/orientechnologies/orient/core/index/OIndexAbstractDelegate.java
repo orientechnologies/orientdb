@@ -221,11 +221,6 @@ public class OIndexAbstractDelegate implements OIndex {
   }
 
   @Override
-  public Object getLastKey() {
-    return delegate.getLastKey();
-  }
-
-  @Override
   public int getIndexId() {
     return delegate.getIndexId();
   }

@@ -324,11 +324,6 @@ public abstract class OIndexRemote<T> implements OIndex {
   }
 
   @Override
-  public Object getLastKey() {
-    throw new UnsupportedOperationException("getLastKey");
-  }
-
-  @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
       boolean toInclusive, boolean ascOrder) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
