@@ -328,11 +328,6 @@ public abstract class OIndexRemote<T> implements OIndex {
   }
 
   @Override
-  public boolean isRebuilding() {
-    return false;
-  }
-
-  @Override
   public Object getFirstKey() {
     throw new UnsupportedOperationException("getFirstKey");
   }

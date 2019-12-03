@@ -248,13 +248,6 @@ public interface OIndex extends Comparable<OIndex> {
 
   long getRebuildVersion();
 
-  /**
-   * @return Indicates whether index is rebuilding at the moment.
-   *
-   * @see #getRebuildVersion()
-   */
-  boolean isRebuilding();
-
   Object getFirstKey();
 
   Object getLastKey();

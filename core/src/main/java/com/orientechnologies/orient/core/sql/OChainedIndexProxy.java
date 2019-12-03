@@ -574,11 +574,6 @@ public class OChainedIndexProxy<T> implements OIndex {
     return applyTailIndexes(lastIndex.iterateEntriesMinor(toKey, toInclusive, ascOrder));
   }
 
-  @Override
-  public boolean isRebuilding() {
-    return false;
-  }
-
   private Stream<ORawPair<Object, ORID>> applyTailIndexes(Stream<ORawPair<Object, ORID>> indexStream) {
     //noinspection resource
     return indexStream.flatMap((entry) -> applyTailIndexes(entry.second).stream().map((rid) -> new ORawPair<>(null, rid)));

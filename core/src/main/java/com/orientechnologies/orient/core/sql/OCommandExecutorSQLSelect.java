@@ -162,8 +162,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private static final class IndexUsageLog {
-    private OIndex       index;
-    private List<Object> keyParams;
+    private OIndex           index;
+    private List<Object>     keyParams;
     private OIndexDefinition indexDefinition;
 
     IndexUsageLog(OIndex index, List<Object> keyParams, OIndexDefinition indexDefinition) {
@@ -1958,10 +1958,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         for (final OIndex index : involvedIndexes) {
           final long indexRebuildVersion = index.getRebuildVersion();
 
-          if (index.isRebuilding()) {
-            continue;
-          }
-
           final OIndexDefinition indexDefinition = index.getDefinition();
 
           if (searchResult.containsNullValues && indexDefinition.isNullValuesIgnored()) {
@@ -2111,10 +2107,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           // go through all possible index for given set of fields.
           for (final OIndex index : involvedIndexes) {
             final long indexRebuildVersion = index.getRebuildVersion();
-
-            if (index.isRebuilding()) {
-              continue;
-            }
 
             final OIndexDefinition indexDefinition = index.getDefinition();
 
@@ -2346,9 +2338,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     for (OIndex index : indexes) {
       if (orderByOptimizer.canBeUsedByOrderBy(index, orderedFields)) {
         final long indexRebuildVersion = index.getRebuildVersion();
-
-        if (index.isRebuilding())
-          return null;
 
         final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 

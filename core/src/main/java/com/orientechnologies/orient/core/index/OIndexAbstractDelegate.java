@@ -226,11 +226,6 @@ public class OIndexAbstractDelegate implements OIndex {
   }
 
   @Override
-  public boolean isRebuilding() {
-    return delegate.isRebuilding();
-  }
-
-  @Override
   public Object getFirstKey() {
     return delegate.getFirstKey();
   }

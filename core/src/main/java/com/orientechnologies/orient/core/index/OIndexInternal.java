@@ -102,8 +102,6 @@ public interface OIndexInternal extends OIndex {
 
   OIndexMetadata loadMetadata(ODocument iConfig);
 
-  void setRebuildingFlag();
-
   void close();
 
   void preCommit(OIndexAbstract.IndexTxSnapshot snapshots);

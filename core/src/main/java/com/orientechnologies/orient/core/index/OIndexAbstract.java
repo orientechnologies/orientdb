@@ -83,7 +83,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   protected        Set<String>         clustersToIndex  = new HashSet<>();
   private          String              algorithm;
   private volatile OIndexDefinition    indexDefinition;
-  private volatile boolean             rebuilding       = false;
   private final    Map<String, String> engineProperties = new HashMap<>();
   protected final  int                 binaryFormatVersion;
 
@@ -311,11 +310,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   @Override
-  public void setRebuildingFlag() {
-    rebuilding = true;
-  }
-
-  @Override
   public void close() {
 
   }
@@ -368,11 +362,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
     acquireExclusiveLock();
     try {
-      // DO NOT REORDER 2 assignments bellow
-      // see #getRebuildVersion()
-      rebuilding = true;
-      rebuildVersion.incrementAndGet();
-
       try {
         if (indexId >= 0) {
           doDelete();
@@ -396,7 +385,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
         // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
       }
 
-      rebuilding = false;
       throw OException.wrapException(new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex), e);
     } finally {
       releaseExclusiveLock();
@@ -417,8 +405,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
       throw OException.wrapException(new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex), e);
     } finally {
-      rebuilding = false;
-
       if (intentInstalled)
         getDatabase().declareIntent(null);
 
@@ -792,14 +778,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   public String getDatabaseName() {
     return databaseName;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public boolean isRebuilding() {
-    return rebuilding;
   }
 
   protected abstract OBinarySerializer determineValueSerializer();
