@@ -161,13 +161,8 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public Object getFirstKey() {
-    return delegate.getFirstKey();
-  }
-
-  @Override
   public Object getLastKey() {
-    return delegate.getFirstKey();
+    return delegate.getLastKey();
   }
 
   @Override

@@ -32,8 +32,6 @@ public interface OBaseIndexEngine {
 
   Object get(Object key);
 
-  Object getFirstKey();
-
   Object getLastKey();
 
   Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,

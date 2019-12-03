@@ -117,46 +117,6 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
   }
 
   @Override
-  public Object getFirstKey() {
-    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
-    if (indexChanges == null)
-      return delegate.getFirstKey();
-
-    Object indexFirstKey;
-    if (indexChanges.cleared)
-      indexFirstKey = null;
-    else
-      indexFirstKey = delegate.getFirstKey();
-
-    Object firstKey = indexChanges.getFirstKey();
-    while (true) {
-      OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(firstKey);
-
-      for (OTransactionIndexEntry indexEntry : changesPerKey.entries) {
-        if (indexEntry.operation.equals(OPERATION.REMOVE))
-          firstKey = null;
-        else
-          firstKey = changesPerKey.key;
-      }
-
-      if (changesPerKey.key.equals(indexFirstKey))
-        indexFirstKey = firstKey;
-
-      if (firstKey != null) {
-        //noinspection unchecked
-        if (indexFirstKey != null && ((Comparable) indexFirstKey).compareTo(firstKey) < 0)
-          return indexFirstKey;
-
-        return firstKey;
-      }
-
-      firstKey = indexChanges.getHigherKey(changesPerKey.key);
-      if (firstKey == null)
-        return indexFirstKey;
-    }
-  }
-
-  @Override
   public Object getLastKey() {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
     if (indexChanges == null)

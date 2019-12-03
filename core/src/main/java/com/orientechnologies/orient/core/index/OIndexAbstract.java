@@ -315,21 +315,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   @Override
-  public Object getFirstKey() {
-    acquireSharedLock();
-    try {
-      while (true)
-        try {
-          return storage.getIndexFirstKey(indexId);
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
   public Object getLastKey() {
     acquireSharedLock();
     try {

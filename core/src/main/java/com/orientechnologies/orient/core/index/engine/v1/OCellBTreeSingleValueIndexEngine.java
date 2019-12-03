@@ -179,11 +179,6 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public Object getFirstKey() {
-    return sbTree.firstKey();
-  }
-
-  @Override
   public Object getLastKey() {
     return sbTree.lastKey();
   }

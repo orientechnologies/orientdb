@@ -115,11 +115,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Object getFirstKey() {
-    return null;
-  }
-
-  @Override
   public Object getLastKey() {
     return null;
   }

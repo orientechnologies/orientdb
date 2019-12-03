@@ -2977,49 +2977,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public Object getIndexFirstKey(int indexId) throws OInvalidIndexEngineIdException {
-    indexId = extractInternalId(indexId);
-
-    try {
-      if (transaction.get() != null) {
-        return doGetIndexFirstKey(indexId);
-      }
-
-      checkOpenness();
-
-      stateLock.acquireReadLock();
-      try {
-        checkOpenness();
-        return doGetIndexFirstKey(indexId);
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private Object doGetIndexFirstKey(final int indexId) throws OInvalidIndexEngineIdException {
-    checkIndexId(indexId);
-
-    final OBaseIndexEngine engine = indexEngines.get(indexId);
-    assert indexId == engine.getId();
-
-    return engine.getFirstKey();
-  }
-
   public Object getIndexLastKey(int indexId) throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
     try {
       if (transaction.get() != null) {
-        return doGetIndexFirstKey(indexId);
+        return doGetIndexLastKey(indexId);
       }
 
       checkOpenness();

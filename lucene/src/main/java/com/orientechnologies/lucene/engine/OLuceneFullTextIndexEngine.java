@@ -160,11 +160,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public Object getFirstKey() {
-    return null;
-  }
-
-  @Override
   public Object getLastKey() {
     return null;
   }

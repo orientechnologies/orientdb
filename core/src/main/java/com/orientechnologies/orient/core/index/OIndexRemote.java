@@ -328,11 +328,6 @@ public abstract class OIndexRemote<T> implements OIndex {
   }
 
   @Override
-  public Object getFirstKey() {
-    throw new UnsupportedOperationException("getFirstKey");
-  }
-
-  @Override
   public Object getLastKey() {
     throw new UnsupportedOperationException("getLastKey");
   }

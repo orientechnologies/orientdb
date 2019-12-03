@@ -2341,13 +2341,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
-        final Object key;
-        if (ascSortOrder) {
-          key = index.getFirstKey();
-        } else {
-          key = index.getLastKey();
-        }
-
         if (index.getKeySize() == 0) {
           return null;
         }
@@ -2356,12 +2349,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         Stream<ORawPair<Object, ORID>> stream = null;
 
-        if (key != null) {
-          if (ascSortOrder) {
-            stream = index.iterateEntriesMajor(key, true, true);
-          } else {
-            stream = index.iterateEntriesMinor(key, true, false);
-          }
+        if (ascSortOrder) {
+          stream = index.stream();
+        } else {
+          stream = index.descStream();
         }
 
         if (stream != null)

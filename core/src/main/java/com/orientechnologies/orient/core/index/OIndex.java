@@ -248,8 +248,6 @@ public interface OIndex extends Comparable<OIndex> {
 
   long getRebuildVersion();
 
-  Object getFirstKey();
-
   Object getLastKey();
 
   int getIndexId();

@@ -55,6 +55,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
 
@@ -881,12 +882,18 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final OIndex index = getIndex("Profile.nick");
 
-    final String firstKey = (String) index.getFirstKey();
-    Assert.assertNotNull(firstKey);
+    Iterator<Object> streamIterator;
+    try (Stream<Object> stream = index.keyStream()) {
+      streamIterator = stream.iterator();
+      Assert.assertTrue(streamIterator.hasNext());
 
-    ((OIdentifiable) index.get(firstKey)).getRecord().delete();
+      ((OIdentifiable) streamIterator.next()).getRecord().delete();
+    }
 
-    Assert.assertNull(index.get(firstKey));
+    try (Stream<Object> stream = index.keyStream()) {
+      streamIterator = stream.iterator();
+      Assert.assertFalse(streamIterator.hasNext());
+    }
   }
 
   public void createInheritanceIndex() {
@@ -1008,12 +1015,12 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
     OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
-    Assert.assertFalse(((Collection) nickIndex.get("NonProxiedObjectToDelete")).isEmpty());
+    Assert.assertNotNull(nickIndex.get("NonProxiedObjectToDelete"));
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
     database.delete(database.<Object>detachAll(loadedProfile, true));
 
-    Assert.assertTrue(((Collection) nickIndex.get("NonProxiedObjectToDelete")).isEmpty());
+    Assert.assertNull(nickIndex.get("NonProxiedObjectToDelete"));
   }
 
   @Test(dependsOnMethods = "testIndexRebuildDuringDetachAllNonProxiedObjectDelete")
@@ -1496,7 +1503,9 @@ public class IndexTest extends ObjectDBBaseTest {
 
     //we support first and last keys check only for embedded storage
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
+      try (Stream<Object> keyStreamAsc = index.keyStream()) {
+        Assert.assertEquals(keyStreamAsc.iterator().next(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
+      }
       Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
     }
 
@@ -1514,7 +1523,9 @@ public class IndexTest extends ObjectDBBaseTest {
     index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndex");
     Assert.assertEquals(index.getSize(), 1);
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+      try (Stream<Object> keyStream = index.keyStream()) {
+        Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+      }
     }
 
     database.close();
@@ -1531,7 +1542,9 @@ public class IndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 1);
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, null, 12L, 14L, 12));
+      try (Stream<Object> keyStreamAsc = index.keyStream()) {
+        Assert.assertEquals(keyStreamAsc.iterator().next(), new OCompositeKey((byte) 1, null, 12L, 14L, 12));
+      }
     }
 
     database.close();
@@ -1546,7 +1559,9 @@ public class IndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 1);
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      try (Stream<Object> keyStream = index.keyStream()) {
+        Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      }
     }
 
     database.close();
@@ -1560,7 +1575,9 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(index.getSize(), 2);
 
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      try (Stream<Object> keyStream = index.keyStream()) {
+        Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      }
       Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid4, 12L, 14L, 12));
     }
 
@@ -1574,7 +1591,9 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(index.getSize(), 1);
 
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, null, 12L, 14L, 12));
+      try (Stream<Object> keyStream = index.keyStream()) {
+        Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, null, 12L, 14L, 12));
+      }
     }
   }
 
@@ -1627,7 +1646,9 @@ public class IndexTest extends ObjectDBBaseTest {
 
     //we support first and last keys check only for embedded storage
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
+      try (Stream<Object> keyStream = index.keyStream()) {
+        Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
+      }
       Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
     }
 
@@ -1645,7 +1666,9 @@ public class IndexTest extends ObjectDBBaseTest {
     index = database.getMetadata().getIndexManagerInternal().getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getSize(), 1);
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+      try (Stream<Object> keyStream = index.keyStream()) {
+        Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+      }
     }
 
     database.close();
@@ -1674,7 +1697,9 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(index.getSize(), 1);
 
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      try (Stream<Object> keyStream = index.keyStream()) {
+        Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      }
     }
 
     database.close();
@@ -1688,7 +1713,9 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(index.getSize(), 2);
 
     if (!(database.getStorage() instanceof OStorageProxy)) {
-      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      try (Stream<Object> keyStream = index.keyStream()) {
+        Assert.assertEquals(keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      }
       Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid4, 12L, 14L, 12));
     }
 

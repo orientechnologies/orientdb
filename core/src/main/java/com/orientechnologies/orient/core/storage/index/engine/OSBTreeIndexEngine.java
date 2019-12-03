@@ -224,11 +224,6 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Object getFirstKey() {
-    return sbTree.firstKey();
-  }
-
-  @Override
   public Object getLastKey() {
     return sbTree.lastKey();
   }

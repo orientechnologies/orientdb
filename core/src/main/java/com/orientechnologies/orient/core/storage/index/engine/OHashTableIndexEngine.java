@@ -272,11 +272,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Object getFirstKey() {
-    throw new UnsupportedOperationException("firstKey");
-  }
-
-  @Override
   public Object getLastKey() {
     throw new UnsupportedOperationException("lastKey");
   }

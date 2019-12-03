@@ -385,16 +385,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public Object getFirstKey() {
-    if (mvTree != null) {
-      return mvTree.firstKey();
-    } else {
-      assert svTree != null;
-      return extractKey(svTree.firstKey());
-    }
-  }
-
-  @Override
   public Object getLastKey() {
     if (mvTree != null) {
       return mvTree.lastKey();
