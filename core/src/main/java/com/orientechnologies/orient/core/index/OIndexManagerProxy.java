@@ -96,11 +96,6 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     return delegate.getDictionary(database);
   }
 
-  public void flush() {
-    if (delegate != null)
-      delegate.flush();
-  }
-
   public Set<OIndex> getClassInvolvedIndexes(final String className, final Collection<String> fields) {
     return delegate.getClassInvolvedIndexes(database, className, fields);
   }

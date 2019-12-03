@@ -81,7 +81,6 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
 
     db.getMetadata().reload();
     OIndex idx = db.getMetadata().getSchema().getClass("City").getClassIndex("City.name");
-    idx.flush();
     Assert.assertEquals(idx.getSize(), 0);
   }
 

@@ -108,11 +108,6 @@ public interface OIndex extends Comparable<OIndex> {
   long getKeySize();
 
   /**
-   * Flushes in-memory changes to disk.
-   */
-  void flush();
-
-  /**
    * Delete the index.
    *
    * @return The index instance itself to allow in chain calls

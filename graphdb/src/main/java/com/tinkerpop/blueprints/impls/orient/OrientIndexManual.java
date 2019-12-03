@@ -141,7 +141,6 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
 
   public void close() {
     if (underlying != null) {
-      underlying.flush();
       underlying = null;
     }
     graph = null;

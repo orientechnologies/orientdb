@@ -157,9 +157,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return new OIndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
   }
 
-  public void flush() {
-  }
-
   @Override
   public boolean hasRangeQuerySupport() {
 

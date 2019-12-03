@@ -246,10 +246,6 @@ public abstract class OIndexRemote<T> implements OIndex {
     return name;
   }
 
-  @Override
-  public void flush() {
-  }
-
   public String getType() {
     return wrappedType;
   }

@@ -125,11 +125,6 @@ public class OIndexAbstractDelegate implements OIndex {
     return delegate.getSize();
   }
 
-  @Override
-  public void flush() {
-    delegate.flush();
-  }
-
   public OIndex delete() {
     return delegate.delete();
   }

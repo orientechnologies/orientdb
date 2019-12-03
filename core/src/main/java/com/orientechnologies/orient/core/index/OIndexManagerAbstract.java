@@ -173,14 +173,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  public void flush() {
-    for (final OIndex idx : indexes.values()) {
-      OIndexInternal indexInternal = idx.getInternal();
-      if (indexInternal != null)
-        indexInternal.flush();
-    }
-  }
-
   public Collection<? extends OIndex> getIndexes(ODatabaseDocumentInternal database) {
     final Collection<OIndex> rawResult = indexes.values();
     final List<OIndex> result = new ArrayList<>(rawResult.size());

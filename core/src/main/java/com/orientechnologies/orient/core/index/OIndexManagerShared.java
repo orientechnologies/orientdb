@@ -635,7 +635,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         OLogManager.instance().info(this, "Index '%s' was successfully created and rebuild is going to be started", indexName);
 
         index.rebuild(new OIndexRebuildOutputListener(index));
-        index.flush();
 
         setDirty();
 
