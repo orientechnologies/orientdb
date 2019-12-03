@@ -58,6 +58,7 @@ import java.util.*;
 
 import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
 
+@SuppressWarnings("deprecation")
 @Test(groups = { "index" })
 public class IndexTest extends ObjectDBBaseTest {
   @Parameters(value = "url")
@@ -946,8 +947,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
 
-    final OIndex idx = (OIndex) idxManager
-        .getIndex(database.getUnderlying(), "IndexNotUniqueIndexKeySizeIndex");
+    final OIndex idx = idxManager.getIndex(database.getUnderlying(), "IndexNotUniqueIndexKeySizeIndex");
 
     final Set<Integer> keys = new HashSet<Integer>();
     for (int i = 1; i < 100; i++) {
@@ -969,8 +969,7 @@ public class IndexTest extends ObjectDBBaseTest {
     cls.createIndex("IndexNotUniqueIndexSizeIndex", INDEX_TYPE.NOTUNIQUE, "value");
 
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
-    final OIndex idx = (OIndex) idxManager
-        .getIndex(database.getUnderlying(), "IndexNotUniqueIndexSizeIndex");
+    final OIndex idx = idxManager.getIndex(database.getUnderlying(), "IndexNotUniqueIndexSizeIndex");
 
     for (int i = 1; i < 100; i++) {
       final Integer key = (int) Math.log(i);
@@ -993,12 +992,12 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
     OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
-    Assert.assertNotNull(nickIndex.get("NonProxiedObjectToDelete"));
+    Assert.assertFalse(((Collection) nickIndex.get("NonProxiedObjectToDelete")).isEmpty());
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
     database.delete(database.<Object>detach(loadedProfile, true));
 
-    Assert.assertNull(nickIndex.get("NonProxiedObjectToDelete"));
+    Assert.assertTrue(((Collection) nickIndex.get("NonProxiedObjectToDelete")).isEmpty());
   }
 
   @Test(dependsOnMethods = "testIndexRebuildDuringNonProxiedObjectDelete")
@@ -1011,12 +1010,12 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
     OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
-    Assert.assertNotNull(nickIndex.get("NonProxiedObjectToDelete"));
+    Assert.assertFalse(((Collection) nickIndex.get("NonProxiedObjectToDelete")).isEmpty());
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
     database.delete(database.<Object>detachAll(loadedProfile, true));
 
-    Assert.assertNull(nickIndex.get("NonProxiedObjectToDelete"));
+    Assert.assertTrue(((Collection) nickIndex.get("NonProxiedObjectToDelete")).isEmpty());
   }
 
   @Test(dependsOnMethods = "testIndexRebuildDuringDetachAllNonProxiedObjectDelete")
@@ -1398,11 +1397,11 @@ public class IndexTest extends ObjectDBBaseTest {
     document.field("prop", "keyTwo");
     document.save();
 
-    Assert.assertNull(notUniqueIndex.get("RandomKeyOne"));
-    Assert.assertNotNull(notUniqueIndex.get("keyOne"));
+    Assert.assertTrue(((Collection) notUniqueIndex.get("RandomKeyOne")).isEmpty());
+    Assert.assertFalse(((Collection) notUniqueIndex.get("keyOne")).isEmpty());
 
-    Assert.assertNull(notUniqueIndex.get("RandomKeyTwo"));
-    Assert.assertNotNull(notUniqueIndex.get("keyTwo"));
+    Assert.assertTrue(((Collection) notUniqueIndex.get("RandomKeyTwo")).isEmpty());
+    Assert.assertFalse(((Collection) notUniqueIndex.get("keyTwo")).isEmpty());
   }
 
   public void testNullIteration() {
@@ -1465,7 +1464,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ORID rid3 = doc3.getIdentity();
     final ORID rid4 = doc4.getIdentity();
 
-    ODatabaseDocumentInternal database = (ODatabaseDocumentTx) this.database.getUnderlying();
+    ODatabaseDocumentInternal database = this.database.getUnderlying();
 
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("TestMultikeyWithoutField");
