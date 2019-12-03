@@ -466,11 +466,6 @@ public class OChainedIndexProxy<T> implements OIndex {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  @Override
-  public void flush() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
   public OIndex delete() {
     throw new UnsupportedOperationException("Not allowed operation");
   }

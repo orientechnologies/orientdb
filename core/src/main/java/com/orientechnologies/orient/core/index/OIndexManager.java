@@ -190,15 +190,6 @@ public interface OIndexManager {
   ODictionary<ORecord> getDictionary();
 
   /**
-   * Flushes all indexes that is registered in this manager. There might be some changes stored in memory, this method ensures that
-   * all this changed are stored to the disk.
-   *
-   * @deprecated Manual indexes are deprecated and will be removed
-   */
-  @Deprecated
-  void flush();
-
-  /**
    * Returns a record where configurations are saved.
    * <p>
    * IMPORTANT! Only for internal usage.
