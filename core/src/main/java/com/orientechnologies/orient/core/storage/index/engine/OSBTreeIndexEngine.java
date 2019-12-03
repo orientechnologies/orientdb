@@ -133,11 +133,6 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean contains(Object key) {
-    return sbTree.get(key) != null;
-  }
-
-  @Override
   public boolean remove(Object key) {
     try {
       return sbTree.remove(key) != null;

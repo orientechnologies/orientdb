@@ -110,15 +110,6 @@ public abstract class OIndexRemote<T> implements OIndex {
     throw new UnsupportedOperationException();
   }
 
-  public boolean contains(final Object iKey) {
-    try (final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_CONTAINS, name), iKey)) {
-      if (!result.hasNext()) {
-        return false;
-      }
-      return (Long) result.next().getProperty("size") > 0;
-    }
-  }
-
   public long count(final Object iKey) {
     try (final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_COUNT, name), iKey)) {
       if (!result.hasNext()) {

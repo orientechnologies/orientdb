@@ -111,11 +111,6 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public boolean contains(Object key) {
-    return delegate.contains(key);
-  }
-
-  @Override
   public boolean remove(Object key) {
     return delegate.remove(key);
   }

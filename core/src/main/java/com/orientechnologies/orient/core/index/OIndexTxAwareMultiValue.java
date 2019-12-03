@@ -267,12 +267,6 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   }
 
   @Override
-  public boolean contains(final Object key) {
-    final Collection<OIdentifiable> result = get(key);
-    return result != null && !result.isEmpty();
-  }
-
-  @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey,
       final boolean toInclusive, final boolean ascOrder) {
 

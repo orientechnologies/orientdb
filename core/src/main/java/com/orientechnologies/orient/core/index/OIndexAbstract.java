@@ -313,24 +313,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return loadMetadataInternal(config, type, algorithm, valueContainerAlgorithm);
   }
 
-  public boolean contains(Object key) {
-    key = getCollatingValue(key);
-
-    acquireSharedLock();
-    try {
-      assert indexId >= 0;
-
-      while (true)
-        try {
-          return storage.indexContainsKey(indexId, key);
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   /**
    * {@inheritDoc}
    */

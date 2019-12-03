@@ -113,11 +113,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public boolean contains(Object key) {
-    return false;
-  }
-
-  @Override
   public boolean remove(Object key) {
     updateLastAccess();
     openIfClosed();

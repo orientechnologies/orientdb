@@ -171,11 +171,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean contains(Object key) {
-    return hashTable.get(key) != null;
-  }
-
-  @Override
   public boolean remove(Object key) throws IOException {
     return hashTable.remove(key) != null;
   }

@@ -82,11 +82,6 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   }
 
   @Override
-  public boolean contains(Object key) {
-    return false;
-  }
-
-  @Override
   public boolean remove(Object key) {
     return false;
   }

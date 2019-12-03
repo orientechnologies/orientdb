@@ -108,7 +108,7 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     byte[] key2 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2 };
 
     OIndex autoIndex = database.getMetadata().getIndexManagerInternal().getIndex(database, "byteArrayKeyIndex");
-    Assert.assertTrue(autoIndex.contains(key1));
-    Assert.assertTrue(autoIndex.contains(key2));
+    Assert.assertNotNull(autoIndex.get(key1));
+    Assert.assertNotNull(autoIndex.get(key2));
   }
 }

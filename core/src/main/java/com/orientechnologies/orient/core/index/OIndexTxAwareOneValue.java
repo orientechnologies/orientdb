@@ -211,11 +211,6 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   @Override
-  public boolean contains(final Object key) {
-    return get(key) != null;
-  }
-
-  @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey,
       final boolean toInclusive, final boolean ascOrder) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()

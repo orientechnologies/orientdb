@@ -210,11 +210,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public boolean contains(Object key) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean remove(Object key, ORID value) {
     try {
       if (mvTree != null) {

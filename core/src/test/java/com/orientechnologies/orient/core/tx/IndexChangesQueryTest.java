@@ -62,14 +62,14 @@ public class IndexChangesQueryTest {
     doc1.save();
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    Assert.assertTrue(index.contains(1));
-    Assert.assertTrue(index.contains(2));
+    Assert.assertNotNull(index.get(1));
+    Assert.assertNotNull(index.get(2));
 
     database.commit();
 
     Assert.assertEquals(index.getSize(), 2);
-    Assert.assertTrue(index.contains(1));
-    Assert.assertTrue(index.contains(2));
+    Assert.assertNotNull(index.get(1));
+    Assert.assertNotNull(index.get(2));
   }
 
   @Test

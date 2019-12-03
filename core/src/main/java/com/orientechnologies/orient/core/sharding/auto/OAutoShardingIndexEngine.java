@@ -224,11 +224,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean contains(final Object key) {
-    return getPartition(key).get(key) != null;
-  }
-
-  @Override
   public boolean remove(final Object key) {
     try {
       return getPartition(key).remove(key) != null;
