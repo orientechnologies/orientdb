@@ -128,10 +128,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     Orient.instance().setRunningDistributed(true);
 
-    //FORCE TO NEVER CONVERT RIDBAG EMBEDDED TO TREE
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
-    //FORCE TO EVERYTIME CONVERT RIDBAG TREE TO EMBEDDED 
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
