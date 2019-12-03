@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -241,15 +240,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     if (indexId < 0) {
       throw new IllegalStateException("Index " + name + " can not be loaded");
     }
-  }
-
-  public long count(final Object iKey) {
-    final Object result = get(iKey);
-    if (result == null)
-      return 0;
-    else if (OMultiValue.isMultiValue(result))
-      return OMultiValue.getSize(result);
-    return 1;
   }
 
   public boolean loadFromConfiguration(final ODocument config) {

@@ -60,17 +60,6 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     }
   }
 
-  public long count(Object iKey) {
-    iKey = getCollatingValue(iKey);
-
-    acquireSharedLock();
-    try {
-      return get(iKey) == null ? 0 : 1;
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
     return (OIndexOneValue) super

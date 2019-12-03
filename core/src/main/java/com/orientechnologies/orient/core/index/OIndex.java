@@ -103,11 +103,6 @@ public interface OIndex extends Comparable<OIndex> {
   long getSize();
 
   /**
-   * Counts the entries for the key.
-   */
-  long count(Object iKey);
-
-  /**
    * @return Number of keys in index
    */
   long getKeySize();

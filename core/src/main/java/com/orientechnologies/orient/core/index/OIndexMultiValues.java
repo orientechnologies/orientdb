@@ -80,35 +80,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     }
   }
 
-  public long count(Object key) {
-    key = getCollatingValue(key);
-
-    acquireSharedLock();
-    try {
-
-      Collection<ORID> values;
-
-      while (true) {
-        try {
-          //noinspection unchecked
-          values = (Collection<ORID>) storage.getIndexValue(indexId, key);
-          break;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-      }
-
-      if (values == null) {
-        return 0;
-      }
-
-      //noinspection unchecked
-      return OIndexInternal.securityFilterOnRead(this, (Collection) values).size();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   public OIndexMultiValues put(Object key, final OIdentifiable singleValue) {
     key = getCollatingValue(key);
 

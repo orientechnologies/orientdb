@@ -462,11 +462,6 @@ public class OChainedIndexProxy<T> implements OIndex {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  @Override
-  public long count(Object iKey) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
   public long getKeySize() {
     throw new UnsupportedOperationException("Not allowed operation");
   }

@@ -43,7 +43,6 @@ public class OIndexAbstractDelegate implements OIndex {
     this.delegate = iDelegate;
   }
 
-  @SuppressWarnings("unchecked")
   public OIndexInternal getInternal() {
     OIndex internal = delegate;
     while (!(internal instanceof OIndexInternal) && internal != null)
@@ -124,11 +123,6 @@ public class OIndexAbstractDelegate implements OIndex {
 
   public long getSize() {
     return delegate.getSize();
-  }
-
-  @Override
-  public long count(final Object iKey) {
-    return delegate.count(iKey);
   }
 
   @Override

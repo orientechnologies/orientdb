@@ -43,15 +43,15 @@ import java.util.stream.Stream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OIndexRemote<T> implements OIndex {
-  public static final    String QUERY_GET_VALUES_BEETWEN_SELECT                   = "select from index:`%s` where ";
-  private static final   String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
-  private static final   String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
-  private static final   String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION   = "key <= ?";
-  private static final   String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION   = "key < ?";
-  private static final   String QUERY_GET_VALUES_AND_OPERATOR                     = " and ";
-  private static final   String QUERY_GET_VALUES_LIMIT                            = " limit ";
-  protected static final String QUERY_ENTRIES                                     = "select key, rid from index:`%s`";
-  private static final   String QUERY_ENTRIES_DESC                                = "select key, rid from index:`%s` order by key desc";
+  public static final  String QUERY_GET_VALUES_BEETWEN_SELECT                   = "select from index:`%s` where ";
+  private static final String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
+  private static final String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
+  private static final String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION   = "key <= ?";
+  private static final String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION   = "key < ?";
+  private static final String QUERY_GET_VALUES_AND_OPERATOR                     = " and ";
+  private static final String QUERY_GET_VALUES_LIMIT                            = " limit ";
+  private static final String QUERY_ENTRIES                                     = "select key, rid from index:`%s`";
+  private static final String QUERY_ENTRIES_DESC                                = "select key, rid from index:`%s` order by key desc";
 
   private static final String QUERY_ITERATE_ENTRIES = "select from index:`%s` where key in [%s] order by key %s ";
   private static final String QUERY_GET_ENTRIES     = "select from index:`%s` where key in [%s]";
@@ -97,7 +97,7 @@ public abstract class OIndexRemote<T> implements OIndex {
   }
 
   public OIndexRemote<T> delete() {
-    getDatabase().indexQuery(name, String.format(QUERY_DROP, name));
+    getDatabase().indexQuery(name, String.format(QUERY_DROP, name)).close();
     return this;
   }
 
@@ -108,15 +108,6 @@ public abstract class OIndexRemote<T> implements OIndex {
   @Override
   public long getRebuildVersion() {
     throw new UnsupportedOperationException();
-  }
-
-  public long count(final Object iKey) {
-    try (final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_COUNT, name), iKey)) {
-      if (!result.hasNext()) {
-        return 0;
-      }
-      return (Long) result.next().getProperty("size");
-    }
   }
 
   public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
@@ -173,19 +164,21 @@ public abstract class OIndexRemote<T> implements OIndex {
         throw new OIndexException(
             "Cannot remove values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
 
-      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE2, name), iKey, iRID);
-      if (!result.hasNext()) {
-        deleted = 0;
-      } else
-        deleted = result.next().getProperty("count");
-      result.close();
+      try (OResultSet result = getDatabase().command(String.format(QUERY_REMOVE2, name), iKey, iRID)) {
+        if (!result.hasNext()) {
+          deleted = 0;
+        } else {
+          deleted = result.next().getProperty("count");
+        }
+      }
     } else {
-      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), iKey);
-      if (!result.hasNext()) {
-        deleted = 0;
-      } else
-        deleted = result.next().getProperty("count");
-      result.close();
+      try (OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), iKey)) {
+        if (!result.hasNext()) {
+          deleted = 0;
+        } else {
+          deleted = result.next().getProperty("count");
+        }
+      }
     }
     return deleted > 0;
   }
@@ -303,6 +296,7 @@ public abstract class OIndexRemote<T> implements OIndex {
 
     try (OResultSet rs = getDatabase()
         .indexQuery(name, String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray())) {
+      //noinspection resource
       return rs.stream().map((res) -> (ODocument) res.toElement()).collect(Collectors.toList());
     }
 
@@ -383,6 +377,7 @@ public abstract class OIndexRemote<T> implements OIndex {
   }
 
   private static Stream<ORawPair<Object, ORID>> convertResultSetToIndexStream(OResultSet resultSet) {
+    //noinspection resource
     return resultSet.stream().map((result) -> new ORawPair<>(result.getProperty("key"), result.getProperty("rid")));
   }
 
@@ -406,7 +401,9 @@ public abstract class OIndexRemote<T> implements OIndex {
 
   @Override
   public Stream<Object> keyStream() {
+    @SuppressWarnings("resource")
     final OResultSet res = getDatabase().indexQuery(name, String.format(QUERY_KEYS, name));
+    //noinspection resource
     return res.stream().map((result) -> result.getProperty("key"));
   }
 
