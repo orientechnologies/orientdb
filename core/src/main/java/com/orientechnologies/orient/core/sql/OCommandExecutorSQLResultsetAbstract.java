@@ -95,7 +95,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).stream()
             .map((pair) -> pair.second).iterator();
       } else
-        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).descCursor()
+        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).descStream()
             .map((pair) -> pair.second).iterator();
     }
 

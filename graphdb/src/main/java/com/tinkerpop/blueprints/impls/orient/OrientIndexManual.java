@@ -50,8 +50,8 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
   protected static final String SEPARATOR              = "!=!";
 
   protected OrientBaseGraph graph;
-  protected OIndex<?>       underlying;
-  protected OIndex<?>       recordKeyValueIndex;
+  protected OIndex          underlying;
+  protected OIndex          recordKeyValueIndex;
 
   protected Class<? extends Element> indexClass;
 
@@ -62,11 +62,11 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     create(indexName, this.indexClass, iType);
   }
 
-  protected OrientIndexManual(final OrientBaseGraph orientGraph, final OIndex<?> rawIndex) {
+  protected OrientIndexManual(final OrientBaseGraph orientGraph, final OIndex rawIndex) {
     this.graph = orientGraph;
     this.underlying = rawIndex instanceof OIndexTxAwareMultiValue
         ? rawIndex
-        : new OIndexTxAwareMultiValue(orientGraph.getRawGraph(), (OIndex<Collection<OIdentifiable>>) rawIndex);
+        : new OIndexTxAwareMultiValue(orientGraph.getRawGraph(), (OIndex) rawIndex);
 
     final ODocument metadata = rawIndex.getMetadata();
     if (metadata == null) {
@@ -135,7 +135,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     return StringFactory.indexString(this);
   }
 
-  public OIndex<?> getUnderlying() {
+  public OIndex getUnderlying() {
     return underlying;
   }
 
@@ -173,7 +173,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
       iKeyType = OType.STRING;
 
     final ODatabaseDocumentInternal db = graph.getRawGraph();
-    this.recordKeyValueIndex = new OIndexTxAwareOneValue(db, (OIndex<OIdentifiable>) db.getMetadata().getIndexManagerInternal()
+    this.recordKeyValueIndex = new OIndexTxAwareOneValue(db, (OIndex) db.getMetadata().getIndexManagerInternal()
         .createIndex(db, "__@recordmap@___" + indexName, OClass.INDEX_TYPE.DICTIONARY.toString(),
             new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
 
@@ -190,7 +190,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     metadata.field(CONFIG_RECORD_MAP_NAME, recordKeyValueIndex.getName());
 
     // CREATE THE MAP
-    this.underlying = new OIndexTxAwareMultiValue(db, (OIndex<Collection<OIdentifiable>>) db.getMetadata().getIndexManagerInternal()
+    this.underlying = new OIndexTxAwareMultiValue(db, (OIndex) db.getMetadata().getIndexManagerInternal()
         .createIndex(db, indexName, OClass.INDEX_TYPE.NOTUNIQUE.toString(), new OSimpleKeyIndexDefinition(iKeyType), null, null,
             metadata));
 
@@ -218,14 +218,14 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
       recordKeyValueIndex = buildKeyValueIndex(metadata);
     else {
       recordKeyValueIndex = new OIndexTxAwareOneValue(database,
-          (OIndex<OIdentifiable>) database.getMetadata().getIndexManagerInternal().getIndex(database, recordKeyValueMap));
+          (OIndex) database.getMetadata().getIndexManagerInternal().getIndex(database, recordKeyValueMap));
     }
   }
 
-  private OIndex<?> buildKeyValueIndex(final ODocument metadata) {
+  private OIndex buildKeyValueIndex(final ODocument metadata) {
     final ODatabaseDocumentInternal database = graph.getRawGraph();
-    final OIndex<?> recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(),
-        (OIndex<OIdentifiable>) database.getMetadata().getIndexManagerInternal()
+    final OIndex recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(),
+        (OIndex) database.getMetadata().getIndexManagerInternal()
             .createIndex(database, "__@recordmap@___" + underlying.getName(), OClass.INDEX_TYPE.DICTIONARY.toString(),
                 new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
 

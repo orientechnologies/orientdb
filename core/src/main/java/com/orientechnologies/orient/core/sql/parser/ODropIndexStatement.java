@@ -33,7 +33,7 @@ public class ODropIndexStatement extends ODDLStatement {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     OIndexManagerAbstract idxMgr = db.getMetadata().getIndexManagerInternal();
     if (all) {
-      for (OIndex<?> idx : idxMgr.getIndexes(db)) {
+      for (OIndex idx : idxMgr.getIndexes(db)) {
         db.getMetadata().getIndexManagerInternal().dropIndex(db, idx.getName());
         OResultInternal result = new OResultInternal();
         result.setProperty("operation", "drop index");

@@ -1499,13 +1499,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       formatter.writeRecords(resultSet, -1);
     }
 
-    final Set<OIndex<?>> indexes = cls.getClassIndexes();
+    final Set<OIndex> indexes = cls.getClassIndexes();
     if (!indexes.isEmpty()) {
       message("\n\nINDEXES (" + indexes.size() + " altogether)");
 
       final List<ODocument> resultSet = new ArrayList<ODocument>();
 
-      for (final OIndex<?> index : indexes) {
+      for (final OIndex index : indexes) {
         final ODocument row = new ODocument();
         resultSet.add(row);
 
@@ -1603,13 +1603,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       formatter.writeRecords(resultSet, -1);
     }
 
-    final Collection<OIndex<?>> indexes = prop.getAllIndexes();
+    final Collection<OIndex> indexes = prop.getAllIndexes();
     if (!indexes.isEmpty()) {
       message("\n\nINDEXES (" + indexes.size() + " altogether)");
 
       final List<ODocument> resultSet = new ArrayList<ODocument>();
 
-      for (final OIndex<?> index : indexes) {
+      for (final OIndex index : indexes) {
         final ODocument row = new ODocument();
         resultSet.add(row);
 
@@ -1636,13 +1636,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       int totalIndexes = 0;
       long totalRecords = 0;
 
-      final List<OIndex<?>> indexes = new ArrayList<OIndex<?>>(
+      final List<OIndex> indexes = new ArrayList<OIndex>(
           currentDatabase.getMetadata().getIndexManagerInternal().getIndexes(currentDatabase));
       Collections.sort(indexes, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
       long totalIndexedRecords = 0;
 
-      for (final OIndex<?> index : indexes) {
+      for (final OIndex index : indexes) {
         final ODocument row = new ODocument();
         resultSet.add(row);
 

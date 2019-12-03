@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Transactional wrapper for dictionary index. Stores changes locally to the transaction until tx.commit(). All the other operations
@@ -29,7 +28,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OIndexTxAwareDictionary extends OIndexTxAwareOneValue {
-  public OIndexTxAwareDictionary(ODatabaseDocumentInternal iDatabase, OIndex<OIdentifiable> iDelegate) {
+  public OIndexTxAwareDictionary(ODatabaseDocumentInternal iDatabase, OIndex iDelegate) {
     super(iDatabase, iDelegate);
   }
 }

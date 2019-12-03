@@ -288,7 +288,7 @@ public interface OClass extends Comparable<OClass> {
    * @param iType  Index type.
    * @return Class index registered inside of given class ans associated with database index.
    */
-  OIndex<?> createIndex(String iName, INDEX_TYPE iType, String... fields);
+  OIndex createIndex(String iName, INDEX_TYPE iType, String... fields);
 
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance and associated
@@ -299,7 +299,7 @@ public interface OClass extends Comparable<OClass> {
    * @param iType  Index type.
    * @return Class index registered inside of given class ans associated with database index.
    */
-  OIndex<?> createIndex(String iName, String iType, String... fields);
+  OIndex createIndex(String iName, String iType, String... fields);
 
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance.
@@ -310,7 +310,7 @@ public interface OClass extends Comparable<OClass> {
    * @param iProgressListener Progress listener.
    * @return Class index registered inside of given class ans associated with database index.
    */
-  OIndex<?> createIndex(String iName, INDEX_TYPE iType, OProgressListener iProgressListener, String... fields);
+  OIndex createIndex(String iName, INDEX_TYPE iType, OProgressListener iProgressListener, String... fields);
 
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance.
@@ -323,7 +323,7 @@ public interface OClass extends Comparable<OClass> {
    * @param fields            Field names from which index will be created. @return Class index registered inside of given class ans associated with
    *                          database index.
    */
-  OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String algorithm,
+  OIndex createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String algorithm,
       String... fields);
 
   /**
@@ -336,7 +336,7 @@ public interface OClass extends Comparable<OClass> {
    * @param fields            Field names from which index will be created. @return Class index registered inside of given class ans associated with
    *                          database index.
    */
-  OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String... fields);
+  OIndex createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String... fields);
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
@@ -348,7 +348,7 @@ public interface OClass extends Comparable<OClass> {
    * @return list of indexes that contain passed in fields names as their first keys.
    * @see com.orientechnologies.orient.core.index.OIndexDefinition#getParamCount()
    */
-  Set<OIndex<?>> getInvolvedIndexes(Collection<String> fields);
+  Set<OIndex> getInvolvedIndexes(Collection<String> fields);
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
@@ -360,7 +360,7 @@ public interface OClass extends Comparable<OClass> {
    * @return list of indexes that contain passed in fields names as their first keys.
    * @see #getInvolvedIndexes(java.util.Collection)
    */
-  Set<OIndex<?>> getInvolvedIndexes(String... fields);
+  Set<OIndex> getInvolvedIndexes(String... fields);
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
@@ -371,14 +371,14 @@ public interface OClass extends Comparable<OClass> {
    * @return list of indexes that contain passed in fields names as their first keys.
    * @see com.orientechnologies.orient.core.index.OIndexDefinition#getParamCount()
    */
-  Set<OIndex<?>> getClassInvolvedIndexes(Collection<String> fields);
+  Set<OIndex> getClassInvolvedIndexes(Collection<String> fields);
 
   /**
    * @param fields Field names.
    * @return list of indexes that contain passed in fields names as their first keys.
    * @see #getClassInvolvedIndexes(java.util.Collection)
    */
-  Set<OIndex<?>> getClassInvolvedIndexes(String... fields);
+  Set<OIndex> getClassInvolvedIndexes(String... fields);
 
   /**
    * Indicates whether given fields are contained as first key fields in class indexes. Order of fields does not matter. If there
@@ -402,32 +402,32 @@ public interface OClass extends Comparable<OClass> {
    * @param iName Database index name.
    * @return Index instance.
    */
-  OIndex<?> getClassIndex(String iName);
+  OIndex getClassIndex(String iName);
 
   /**
    * @return All indexes for given class, not the inherited ones.
    */
-  Set<OIndex<?>> getClassIndexes();
+  Set<OIndex> getClassIndexes();
 
   /**
    * Internal. Copy all the indexes for given class, not the inherited ones, in the collection received as argument.
    */
-  void getClassIndexes(Collection<OIndex<?>> indexes);
+  void getClassIndexes(Collection<OIndex> indexes);
 
   /**
    * Internal. All indexes for given class and its super classes.
    */
-  void getIndexes(Collection<OIndex<?>> indexes);
+  void getIndexes(Collection<OIndex> indexes);
 
   /**
    * @return All indexes for given class and its super classes.
    */
-  Set<OIndex<?>> getIndexes();
+  Set<OIndex> getIndexes();
 
   /**
    * Returns the auto sharding index configured for the class if any.
    */
-  OIndex<?> getAutoShardingIndex();
+  OIndex getAutoShardingIndex();
 
   /**
    * @return true if this class represents a subclass of an edge class (E)

@@ -78,7 +78,7 @@ public class SQLDropIndexTest {
 
     database.getMetadata().getIndexManagerInternal().reload();
 
-    OIndex<?> index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass")
+    OIndex index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass")
         .getClassIndex("SQLDropIndexTestClass.prop1");
     Assert.assertNotNull(index);
 
@@ -95,7 +95,7 @@ public class SQLDropIndexTest {
         .execute();
     database.getMetadata().getIndexManagerInternal().reload();
 
-    OIndex<?> index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass")
+    OIndex index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass")
         .getClassIndex("SQLDropIndexCompositeIndex");
     Assert.assertNotNull(index);
 
@@ -108,7 +108,7 @@ public class SQLDropIndexTest {
 
   @Test(dependsOnMethods = "testDropCompositeIndex")
   public void testDropIndexWorkedCorrectly() {
-    OIndex<?> index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass")
+    OIndex index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass")
         .getClassIndex("SQLDropIndexTestClass.prop1");
     Assert.assertNull(index);
     index = database.getMetadata().getSchema().getClass("SQLDropIndexTestClass").getClassIndex("SQLDropIndexWithoutClass");

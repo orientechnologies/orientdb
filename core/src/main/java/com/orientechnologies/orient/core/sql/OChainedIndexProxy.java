@@ -55,14 +55,14 @@ import java.util.stream.Stream;
  */
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class OChainedIndexProxy<T> implements OIndex<T> {
-  private final OIndex<T> firstIndex;
+public class OChainedIndexProxy<T> implements OIndex {
+  private final OIndex firstIndex;
 
-  private final List<OIndex<?>> indexChain;
-  private final OIndex<?>       lastIndex;
+  private final List<OIndex> indexChain;
+  private final OIndex       lastIndex;
 
-  private OChainedIndexProxy(List<OIndex<?>> indexChain) {
-    this.firstIndex = (OIndex<T>) indexChain.get(0);
+  private OChainedIndexProxy(List<OIndex> indexChain) {
+    this.firstIndex = indexChain.get(0);
     this.indexChain = Collections.unmodifiableList(indexChain);
     lastIndex = indexChain.get(indexChain.size() - 1);
   }
@@ -79,7 +79,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   public static <T> Collection<OChainedIndexProxy<T>> createProxies(OClass iSchemaClass, OSQLFilterItemField.FieldChain longChain) {
     List<OChainedIndexProxy<T>> proxies = new ArrayList<>();
 
-    for (List<OIndex<?>> indexChain : getIndexesForChain(iSchemaClass, longChain)) {
+    for (List<OIndex> indexChain : getIndexesForChain(iSchemaClass, longChain)) {
       //noinspection ObjectAllocationInLoop
       proxies.add(new OChainedIndexProxy<>(indexChain));
     }
@@ -87,22 +87,22 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return proxies;
   }
 
-  private static boolean isComposite(OIndex<?> currentIndex) {
+  private static boolean isComposite(OIndex currentIndex) {
     return currentIndex.getDefinition().getParamCount() > 1;
   }
 
-  private static Iterable<List<OIndex<?>>> getIndexesForChain(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
-    List<OIndex<?>> baseIndexes = prepareBaseIndexes(iSchemaClass, fieldChain);
+  private static Iterable<List<OIndex>> getIndexesForChain(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
+    List<OIndex> baseIndexes = prepareBaseIndexes(iSchemaClass, fieldChain);
 
     if (baseIndexes == null)
       return Collections.emptyList();
 
-    Collection<OIndex<?>> lastIndexes = prepareLastIndexVariants(iSchemaClass, fieldChain);
+    Collection<OIndex> lastIndexes = prepareLastIndexVariants(iSchemaClass, fieldChain);
 
-    Collection<List<OIndex<?>>> result = new ArrayList<>();
-    for (OIndex<?> lastIndex : lastIndexes) {
+    Collection<List<OIndex>> result = new ArrayList<>();
+    for (OIndex lastIndex : lastIndexes) {
       @SuppressWarnings("ObjectAllocationInLoop")
-      final List<OIndex<?>> indexes = new ArrayList<>(fieldChain.getItemCount());
+      final List<OIndex> indexes = new ArrayList<>(fieldChain.getItemCount());
       indexes.addAll(baseIndexes);
       indexes.add(lastIndex);
 
@@ -112,9 +112,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return result;
   }
 
-  private static Collection<OIndex<?>> prepareLastIndexVariants(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
+  private static Collection<OIndex> prepareLastIndexVariants(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
     OClass oClass = iSchemaClass;
-    final Collection<OIndex<?>> result = new ArrayList<>();
+    final Collection<OIndex> result = new ArrayList<>();
 
     for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
       oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
@@ -123,12 +123,12 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
       }
     }
 
-    final Set<OIndex<?>> involvedIndexes = new TreeSet<>(Comparator.comparingInt(o -> o.getDefinition().getParamCount()));
+    final Set<OIndex> involvedIndexes = new TreeSet<>(Comparator.comparingInt(o -> o.getDefinition().getParamCount()));
 
     involvedIndexes.addAll(oClass.getInvolvedIndexes(fieldChain.getItemName(fieldChain.getItemCount() - 1)));
     final Collection<Class<? extends OIndex>> indexTypes = new HashSet<>(3);
 
-    for (OIndex<?> involvedIndex : involvedIndexes) {
+    for (OIndex involvedIndex : involvedIndexes) {
       if (!indexTypes.contains(involvedIndex.getInternal().getClass())) {
         result.add(involvedIndex);
         indexTypes.add(involvedIndex.getInternal().getClass());
@@ -138,13 +138,13 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return result;
   }
 
-  private static List<OIndex<?>> prepareBaseIndexes(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
-    List<OIndex<?>> result = new ArrayList<>(fieldChain.getItemCount() - 1);
+  private static List<OIndex> prepareBaseIndexes(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
+    List<OIndex> result = new ArrayList<>(fieldChain.getItemCount() - 1);
 
     OClass oClass = iSchemaClass;
     for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
-      final Set<OIndex<?>> involvedIndexes = oClass.getInvolvedIndexes(fieldChain.getItemName(i));
-      final OIndex<?> bestIndex = findBestIndex(involvedIndexes);
+      final Set<OIndex> involvedIndexes = oClass.getInvolvedIndexes(fieldChain.getItemName(i));
+      final OIndex bestIndex = findBestIndex(involvedIndexes);
 
       if (bestIndex == null)
         return null;
@@ -169,16 +169,16 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    *
    * @return the index that fits better as a base index in chain
    */
-  protected static OIndex<?> findBestIndex(Iterable<OIndex<?>> indexes) {
-    OIndex<?> bestIndex = null;
-    for (OIndex<?> index : indexes) {
+  protected static OIndex findBestIndex(Iterable<OIndex> indexes) {
+    OIndex bestIndex = null;
+    for (OIndex index : indexes) {
       if (priorityOfUsage(index) > priorityOfUsage(bestIndex))
         bestIndex = index;
     }
     return bestIndex;
   }
 
-  private static int priorityOfUsage(OIndex<?> index) {
+  private static int priorityOfUsage(OIndex index) {
     if (index == null)
       return -1;
 
@@ -232,7 +232,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    *
    * @return true if index usage is allowed as base index.
    */
-  public static boolean isAppropriateAsBase(OIndex<?> index) {
+  public static boolean isAppropriateAsBase(OIndex index) {
     return priorityOfUsage(index) > 0;
   }
 
@@ -243,14 +243,14 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   public long getRebuildVersion() {
     long rebuildVersion = 0;
 
-    for (OIndex<?> index : indexChain) {
+    for (OIndex index : indexChain) {
       rebuildVersion += index.getRebuildVersion();
     }
 
     return rebuildVersion;
   }
 
-  private static boolean supportNullValues(OIndex<?> index) {
+  private static boolean supportNullValues(OIndex index) {
     final ODocument metadata = index.getMetadata();
     if (metadata == null)
       return false;
@@ -265,7 +265,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   public List<String> getIndexNames() {
     final ArrayList<String> names = new ArrayList<>(indexChain.size());
-    for (OIndex<?> oIndex : indexChain) {
+    for (OIndex oIndex : indexChain) {
       names.add(oIndex.getName());
     }
 
@@ -307,8 +307,8 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   /**
    * Returns internal index of last chain index, because proxy applicable to all operations that last index applicable.
    */
-  public OIndexInternal<T> getInternal() {
-    return (OIndexInternal<T>) lastIndex.getInternal();
+  public OIndexInternal getInternal() {
+    return lastIndex.getInternal();
   }
 
   /**
@@ -319,12 +319,12 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   private List<ORID> applyTailIndexes(final Object lastIndexResult) {
-    final OIndex<?> beforeTheLastIndex = indexChain.get(indexChain.size() - 2);
+    final OIndex beforeTheLastIndex = indexChain.get(indexChain.size() - 2);
     Set<Comparable> currentKeys = prepareKeys(beforeTheLastIndex, lastIndexResult);
 
     for (int j = indexChain.size() - 2; j > 0; j--) {
-      final OIndex<?> currentIndex = indexChain.get(j);
-      final OIndex<?> nextIndex = indexChain.get(j - 1);
+      final OIndex currentIndex = indexChain.get(j);
+      final OIndex nextIndex = indexChain.get(j - 1);
 
       final Set<Comparable> newKeys;
       if (isComposite(currentIndex)) {
@@ -368,7 +368,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return result;
   }
 
-  private static List<ORID> getFromCompositeIndex(Comparable currentKey, OIndex<?> currentIndex) {
+  private static List<ORID> getFromCompositeIndex(Comparable currentKey, OIndex currentIndex) {
     try (Stream<ORawPair<Object, ORID>> stream = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true)) {
       return stream.map((pair) -> pair.second).collect(Collectors.toList());
     }
@@ -382,7 +382,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    *
    * @return keys converted to necessary type.
    */
-  private static Set<Comparable> prepareKeys(OIndex<?> index, Object keys) {
+  private static Set<Comparable> prepareKeys(OIndex index, Object keys) {
     final OIndexDefinition indexDefinition = index.getDefinition();
     if (keys instanceof Collection) {
       final Set<Comparable> newKeys = new TreeSet<>();
@@ -400,7 +400,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    *
    * @param index which usage is registering.
    */
-  private static void updateStatistic(OIndex<?> index) {
+  private static void updateStatistic(OIndex index) {
 
     final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
@@ -422,7 +422,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   //
 
   @Override
-  public OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
+  public OIndex create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -439,7 +439,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public OIndex<T> put(Object iKey, OIdentifiable iValue) {
+  public OIndex put(Object iKey, OIdentifiable iValue) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -458,7 +458,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    */
   @Deprecated
   @Override
-  public OIndex<T> clear() {
+  public OIndex clear() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -480,7 +480,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public OIndex<T> delete() {
+  public OIndex delete() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -544,7 +544,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descCursor() {
+  public Stream<ORawPair<Object, ORID>> descStream() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -594,7 +594,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
-  public int compareTo(OIndex<T> o) {
+  public int compareTo(OIndex o) {
     throw new UnsupportedOperationException();
   }
 }

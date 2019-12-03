@@ -169,7 +169,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     return cfg.getIndexes();
   }
 
-  public Set<OIndex<?>> getClassIndexes() {
+  public Set<OIndex> getClassIndexes() {
     if (activeIndexNames == null || activeIndexNames.isEmpty()) {
       return new HashSet<>();
     }
@@ -189,7 +189,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   }
 
   @Override
-  public void getClassIndexes(final Collection<OIndex<?>> indexes) {
+  public void getClassIndexes(final Collection<OIndex> indexes) {
     acquireSchemaReadLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();

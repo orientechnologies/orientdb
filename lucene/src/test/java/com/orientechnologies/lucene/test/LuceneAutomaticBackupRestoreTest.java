@@ -210,7 +210,7 @@ public class LuceneAutomaticBackupRestoreTest {
 
     assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.name");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
@@ -282,7 +282,7 @@ public class LuceneAutomaticBackupRestoreTest {
 
     assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.name");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());

@@ -232,7 +232,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocumentInternal database = getDatabase();
-    final OIndex<?> idx;
+    final OIndex idx;
     List<OCollate> collatesList = null;
 
     if (collates != null) {

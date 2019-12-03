@@ -27,11 +27,13 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -61,7 +63,7 @@ import java.util.stream.Stream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
+public abstract class OIndexAbstract implements OIndexInternal {
 
   protected static final String                    CONFIG_MAP_RID  = "mapRid";
   private static final   String                    CONFIG_CLUSTERS = "clusters";
@@ -182,7 +184,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
    *
    * @param clusterIndexName Cluster name where to place the TreeMap
    */
-  public OIndexInternal<?> create(final OIndexDefinition indexDefinition, final String clusterIndexName,
+  public OIndexInternal create(final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
       final OBinarySerializer valueSerializer) {
     acquireExclusiveLock();
@@ -510,7 +512,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
    */
   @Override
   @Deprecated
-  public OIndex<T> clear() {
+  public OIndex clear() {
     acquireSharedLock();
     try {
       while (true)
@@ -533,7 +535,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
-  public OIndexInternal<T> delete() {
+  public OIndexInternal delete() {
     acquireExclusiveLock();
 
     try {
@@ -552,7 +554,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     while (true)
       try {
         //noinspection ObjectAllocationInLoop
-        stream().forEach((pair) -> remove(pair.first, pair.second));
+        try (final Stream<ORawPair<Object, ORID>> stream = stream()) {
+          stream.forEach((pair) -> remove(pair.first, pair.second));
+        }
 
         final Object value = get(null);
         if (value instanceof Collection) {
@@ -605,7 +609,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
-  public OIndexInternal<T> getInternal() {
+  public OIndexInternal getInternal() {
     return this;
   }
 
@@ -618,7 +622,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
-  public OIndexAbstract<T> addCluster(final String clusterName) {
+  public OIndexAbstract addCluster(final String clusterName) {
     acquireExclusiveLock();
     try {
       if (clustersToIndex.add(clusterName)) {
@@ -634,7 +638,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
-  public OIndexAbstract<T> removeCluster(String iClusterName) {
+  public OIndexAbstract removeCluster(String iClusterName) {
     acquireExclusiveLock();
     try {
       if (clustersToIndex.remove(iClusterName)) {
@@ -792,7 +796,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       if (o == null || getClass() != o.getClass())
         return false;
 
-      final OIndexAbstract<?> that = (OIndexAbstract<?>) o;
+      final OIndexAbstract that = (OIndexAbstract) o;
 
       return name.equals(that.name);
     } finally {
@@ -869,7 +873,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   @Override
-  public int compareTo(OIndex<T> index) {
+  public int compareTo(OIndex index) {
     acquireSharedLock();
     try {
       final String name = index.getName();

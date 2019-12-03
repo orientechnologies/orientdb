@@ -158,7 +158,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         database.getMetadata().getIndexManagerInternal().reload();
       }
 
-      for (OIndex<?> index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
+      for (OIndex index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (index.isAutomatic())
           indexesToRebuild.add(index.getName());
       }
@@ -431,7 +431,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       if (!dbClass.isSuperClassOf(orole) && !dbClass.isSuperClassOf(ouser) && !dbClass.isSuperClassOf(oidentity)) {
         classesToDrop.put(className, dbClass);
-        for (OIndex<?> index : dbClass.getIndexes()) {
+        for (OIndex index : dbClass.getIndexes()) {
           indexes.add(index.getName());
         }
       }
@@ -496,7 +496,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       listener.onMessage("\n- Index '" + indexName + "'...");
 
-      final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+      final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
 
       long tot = 0;
 

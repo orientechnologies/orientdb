@@ -213,7 +213,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     final ODatabaseDocumentInternal database = getDatabase();
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     for (Map.Entry<String, OTransactionIndexChanges> entry : indexOperations.entrySet()) {
-      final OIndex<?> index = indexManager.getIndex(database, entry.getKey());
+      final OIndex index = indexManager.getIndex(database, entry.getKey());
       if (index == null)
         throw new OTransactionException("Cannot find index '" + entry.getValue() + "' while committing transaction");
 
@@ -570,7 +570,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   }
 
   @Override
-  public void addIndexEntry(OIndex<?> index, String indexName, OTransactionIndexChanges.OPERATION type, Object key,
+  public void addIndexEntry(OIndex index, String indexName, OTransactionIndexChanges.OPERATION type, Object key,
       OIdentifiable value) {
     final OTransactionIndexChanges indexOperation = indexOperations.computeIfAbsent(indexName, k -> new OTransactionIndexChanges());
 
@@ -630,7 +630,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
         indexEntry.value = newRid;
   }
 
-  private static Dependency[] getIndexFieldRidDependencies(OIndex<?> index) {
+  private static Dependency[] getIndexFieldRidDependencies(OIndex index) {
     final OIndexDefinition definition = index.getDefinition();
 
     if (definition == null) // type for untyped index is still not resolved

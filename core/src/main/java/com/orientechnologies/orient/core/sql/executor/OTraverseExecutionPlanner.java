@@ -176,7 +176,7 @@ public class OTraverseExecutionPlanner {
       boolean profilingEnabled) {
     String indexName = indexIdentifier.getIndexName();
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (index == null) {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }

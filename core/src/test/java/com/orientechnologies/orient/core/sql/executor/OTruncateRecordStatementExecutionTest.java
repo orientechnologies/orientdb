@@ -46,9 +46,9 @@ public class OTruncateRecordStatementExecutionTest {
     Assert.assertEquals(truncatedRecords, 1);
 
     OClass cls = database.getMetadata().getSchema().getClass("truncateRecord");
-    Set<OIndex<?>> indexes = cls.getIndexes();
+    Set<OIndex> indexes = cls.getIndexes();
 
-    for (OIndex<?> index : indexes) {
+    for (OIndex index : indexes) {
       index.rebuild();
     }
 

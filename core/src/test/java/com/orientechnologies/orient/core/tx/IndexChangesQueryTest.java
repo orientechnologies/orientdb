@@ -50,7 +50,7 @@ public class IndexChangesQueryTest {
   public void testMultiplePut() {
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     ODocument doc = new ODocument(CLASS_NAME);
@@ -88,7 +88,7 @@ public class IndexChangesQueryTest {
     doc3.field(FIELD_NAME, 2);
     doc3.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     database.commit();

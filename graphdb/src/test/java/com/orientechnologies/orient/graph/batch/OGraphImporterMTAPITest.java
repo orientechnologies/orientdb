@@ -85,8 +85,8 @@ public class OGraphImporterMTAPITest {
           final OrientGraph localGraph = new OrientGraph(dbUrl, "admin", "admin", false);
 
           final ODatabaseDocumentInternal db = localGraph.getRawGraph();
-          final OIndex<?> userIndex = db.getMetadata().getIndexManagerInternal().getIndex(db, "User.uid");
-          final OIndex<?> productIndex = db.getMetadata().getIndexManagerInternal().getIndex(db, "Product.uid");
+          final OIndex userIndex = db.getMetadata().getIndexManagerInternal().getIndex(db, "User.uid");
+          final OIndex productIndex = db.getMetadata().getIndexManagerInternal().getIndex(db, "Product.uid");
 
           localGraph.begin();
           for (int i = 0; ; ++i) {

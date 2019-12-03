@@ -92,7 +92,7 @@ public class OSQLFunctionOut extends OSQLFunctionMoveFiltered {
     if (edgeClass == null) {
       return null;
     }
-    Set<OIndex<?>> indexes = edgeClass.getInvolvedIndexes("out", "in");
+    Set<OIndex> indexes = edgeClass.getInvolvedIndexes("out", "in");
     if (indexes == null || indexes.size() == 0) {
       return null;
     }

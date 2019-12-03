@@ -30,7 +30,7 @@ import java.util.List;
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OOrderByOptimizer {
-  boolean canBeUsedByOrderBy(OIndex<?> index, List<OPair<String, String>> orderedFields) {
+  boolean canBeUsedByOrderBy(OIndex index, List<OPair<String, String>> orderedFields) {
     if (orderedFields.isEmpty())
       return false;
 
@@ -66,7 +66,7 @@ public class OOrderByOptimizer {
    * @param orderedFields
    * @return
    */
-  boolean canBeUsedByOrderByAfterFilter(OIndex<?> index, List<String> equalsFilterFields,
+  boolean canBeUsedByOrderByAfterFilter(OIndex index, List<String> equalsFilterFields,
       List<OPair<String, String>> orderedFields) {
     if (orderedFields.isEmpty())
       return false;

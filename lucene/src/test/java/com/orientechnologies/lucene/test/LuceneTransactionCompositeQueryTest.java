@@ -79,7 +79,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     doc.field("name", "Test");
     doc.field("bar", "abc");
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
 
     db.save(doc);
 
@@ -114,7 +114,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
   @Test
   public void txUpdateTest() {
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
     OClass c1 = db.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();
@@ -177,7 +177,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
     OClass c1 = db.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();

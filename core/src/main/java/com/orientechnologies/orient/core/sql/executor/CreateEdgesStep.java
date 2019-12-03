@@ -36,8 +36,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   private OVertex   currentTo;
   private OEdge     edgeToUpdate;//for upsert
   private boolean   finished = false;
-  private List      toList   = new ArrayList<>();
-  private OIndex<?> uniqueIndex;
+  private List   toList   = new ArrayList<>();
+  private OIndex uniqueIndex;
 
   private boolean inited = false;
 

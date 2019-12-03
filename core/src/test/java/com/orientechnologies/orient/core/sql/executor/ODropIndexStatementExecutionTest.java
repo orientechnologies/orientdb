@@ -30,7 +30,7 @@ public class ODropIndexStatementExecutionTest {
 
   @Test
   public void testPlain() {
-    OIndex<?> index = db.getMetadata().getSchema().createClass("testPlain").createProperty("bar", OType.STRING)
+    OIndex index = db.getMetadata().getSchema().createClass("testPlain").createProperty("bar", OType.STRING)
         .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 
@@ -48,7 +48,7 @@ public class ODropIndexStatementExecutionTest {
 
   @Test
   public void testAll() {
-    OIndex<?> index = db.getMetadata().getSchema().createClass("testAll").createProperty("baz", OType.STRING)
+    OIndex index = db.getMetadata().getSchema().createClass("testAll").createProperty("baz", OType.STRING)
         .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 

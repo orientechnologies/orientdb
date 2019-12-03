@@ -45,7 +45,7 @@ import java.util.stream.Stream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>> {
+public abstract class OIndexMultiValues extends OIndexAbstract {
   OIndexMultiValues(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, final ODocument metadata, final int binaryFormatVersion) {
     super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
@@ -425,7 +425,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>>
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descCursor() {
+  public Stream<ORawPair<Object, ORID>> descStream() {
     acquireSharedLock();
     try {
       while (true) {

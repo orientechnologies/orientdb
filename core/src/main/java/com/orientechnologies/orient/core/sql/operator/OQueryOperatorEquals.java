@@ -170,11 +170,11 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
       boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
-    final OIndexInternal<?> internalIndex = index.getInternal();
+    final OIndexInternal internalIndex = index.getInternal();
     Stream<ORawPair<Object, ORID>> stream;
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;

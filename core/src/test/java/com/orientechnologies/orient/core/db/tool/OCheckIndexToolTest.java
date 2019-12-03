@@ -40,7 +40,7 @@ public class OCheckIndexToolTest {
         doc.save();
       }
 
-      OIndex<?> idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.name");
+      OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.name");
       Object key = idx.getDefinition().createValue("a");
       boolean a = idx.remove(key, rid);
 

@@ -48,7 +48,7 @@ public class LuceneGetSearcherTest extends BaseLuceneTest {
   @Test
   public void testSearcherInstance() {
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db,"Person.isDeleted");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db,"Person.isDeleted");
 
     Assert.assertEquals(true, index.getInternal() instanceof OLuceneIndexNotUnique);
 

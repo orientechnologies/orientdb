@@ -41,7 +41,7 @@ public class DictionaryPutDocumentSpeedTest extends OrientMonoThreadTest {
     String url = System.getProperty("url");
 
     database = new ODatabaseDocumentTx(url).open("admin", "admin");
-    for (OIndex<?> idx : database.getMetadata().getSchema().getClass("Account").getIndexes()) {
+    for (OIndex idx : database.getMetadata().getSchema().getClass("Account").getIndexes()) {
       idx.delete();
     }
 

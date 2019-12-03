@@ -2061,7 +2061,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final Map<OIndex, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<>(8);
 
     for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-      final OIndexInternal<?> index = changes.getAssociatedIndex();
+      final OIndexInternal index = changes.getAssociatedIndex();
       final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
       snapshots.put(index, snapshot);
 
@@ -2071,7 +2071,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-      final OIndexInternal<?> index = changes.getAssociatedIndex();
+      final OIndexInternal index = changes.getAssociatedIndex();
       final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
 
       assert atomicOperation.getCounter() == 1;
@@ -2081,7 +2081,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-        final OIndexInternal<?> index = changes.getAssociatedIndex();
+        final OIndexInternal index = changes.getAssociatedIndex();
         final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
 
         assert atomicOperation.getCounter() == 1;
@@ -2090,7 +2090,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     } finally {
       for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-        final OIndexInternal<?> index = changes.getAssociatedIndex();
+        final OIndexInternal index = changes.getAssociatedIndex();
         final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
 
         assert atomicOperation.getCounter() == 1;
@@ -5826,7 +5826,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     for (final OTransactionIndexChanges changes : indexes.values()) {
       assert changes.changesPerKey instanceof TreeMap;
 
-      final OIndexInternal<?> index = changes.getAssociatedIndex();
+      final OIndexInternal index = changes.getAssociatedIndex();
 
       final List<Object> orderedIndexNames = new ArrayList<>(changes.changesPerKey.keySet());
       if (orderedIndexNames.size() > 1) {
@@ -5867,7 +5867,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     for (final Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
       final String indexName = entry.getKey();
-      final OIndexInternal<?> index = entry.getValue().resolveAssociatedIndex(indexName, manager, db);
+      final OIndexInternal index = entry.getValue().resolveAssociatedIndex(indexName, manager, db);
 
       if (!index.isUnique()) {
         atomicOperationsManager

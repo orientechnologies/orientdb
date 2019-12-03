@@ -87,7 +87,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+  public OIndexInternal createIndex(String name, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
@@ -103,7 +103,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
     throw new OConfigurationException("Unsupported type: " + indexType);
   }
 
-  private OIndexInternal<?> createShardedIndex(final String name, final String indexType, final String valueContainerAlgorithm,
+  private OIndexInternal createShardedIndex(final String name, final String indexType, final String valueContainerAlgorithm,
       final ODocument metadata, final OAbstractPaginatedStorage storage, final int version) {
 
     final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();

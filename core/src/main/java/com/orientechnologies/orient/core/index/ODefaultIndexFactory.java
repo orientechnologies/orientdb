@@ -97,7 +97,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+  public OIndexInternal createIndex(String name, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     if (valueContainerAlgorithm == null) {
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
@@ -111,7 +111,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
         (OAbstractPaginatedStorage) storage.getUnderlying(), version, algorithm);
   }
 
-  private static OIndexInternal<?> createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm,
+  private static OIndexInternal createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm,
       ODocument metadata, OAbstractPaginatedStorage storage, int version, String algorithm) {
 
     final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();

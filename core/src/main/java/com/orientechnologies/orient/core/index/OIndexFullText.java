@@ -242,7 +242,7 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  public OIndexInternal<?> create(OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
+  public OIndexInternal create(OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener, OBinarySerializer valueSerializer) {
 
     if (indexDefinition.getFields().size() > 1) {

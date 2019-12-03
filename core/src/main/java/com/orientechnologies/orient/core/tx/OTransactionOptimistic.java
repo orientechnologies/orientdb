@@ -51,7 +51,6 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
@@ -574,7 +573,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   @Override
-  public void addIndexEntry(OIndex<?> delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
+  public void addIndexEntry(OIndex delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
       OIdentifiable iValue, boolean clientTrackOnly) {
     changed = true;
     super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue, clientTrackOnly);

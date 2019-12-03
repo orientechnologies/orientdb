@@ -117,7 +117,7 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
   @Test
   public void testIndexingLineString() throws IOException {
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Place.location");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Place.location");
 
     Assert.assertEquals(3, index.getSize());
     queryLineString();

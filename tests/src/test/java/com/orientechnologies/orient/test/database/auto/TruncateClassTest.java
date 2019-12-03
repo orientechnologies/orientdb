@@ -48,7 +48,7 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
 
-    final OIndex<?> index = getOrCreateIndex(testClass);
+    final OIndex index = getOrCreateIndex(testClass);
 
     database.command(new OCommandSQL("truncate class test_class")).execute();
 
@@ -70,12 +70,14 @@ public class TruncateClassTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 6);
 
-    Stream<ORawPair<Object, ORID>> stream = index.stream();
-    Iterator<ORawPair<Object, ORID>> indexIterator = stream.iterator();
+    Iterator<ORawPair<Object, ORID>> indexIterator;
+    try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
+      indexIterator = stream.iterator();
 
-    while (indexIterator.hasNext()) {
-      ORawPair<Object, ORID> entry = indexIterator.next();
-      Assert.assertTrue(set.contains((Integer) entry.first));
+      while (indexIterator.hasNext()) {
+        ORawPair<Object, ORID> entry = indexIterator.next();
+        Assert.assertTrue(set.contains((Integer) entry.first));
+      }
     }
 
     schema.dropClass("test_class");
@@ -150,8 +152,8 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     Assert.assertEquals(index.getSize(), 0);
   }
 
-  private OIndex<?> getOrCreateIndex(OClass testClass) {
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
+  private OIndex getOrCreateIndex(OClass testClass) {
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
     if (index == null) {
       testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
       index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");

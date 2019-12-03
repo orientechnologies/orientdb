@@ -75,7 +75,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
       boolean ascSortOrder) {
     if (!index.getType().toLowerCase().contains("fulltext")) {
       return null;
@@ -235,9 +235,9 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
         cls = oClass;
       }
     }
-    Set<OIndex<?>> classInvolvedIndexes = cls.getInvolvedIndexes(fields(iCondition));
+    Set<OIndex> classInvolvedIndexes = cls.getInvolvedIndexes(fields(iCondition));
     OLuceneFullTextIndex idx = null;
-    for (OIndex<?> classInvolvedIndex : classInvolvedIndexes) {
+    for (OIndex classInvolvedIndex : classInvolvedIndexes) {
 
       if (classInvolvedIndex.getInternal() instanceof OLuceneFullTextIndex) {
         idx = (OLuceneFullTextIndex) classInvolvedIndex.getInternal();

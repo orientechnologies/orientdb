@@ -54,9 +54,9 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
     Assert.assertEquals(records.intValue(), 1);
 
     OClass cls = database.getMetadata().getSchema().getClass("Profile");
-    Set<OIndex<?>> indexes = cls.getIndexes();
+    Set<OIndex> indexes = cls.getIndexes();
 
-    for (OIndex<?> index : indexes) {
+    for (OIndex index : indexes) {
       index.rebuild();
     }
 

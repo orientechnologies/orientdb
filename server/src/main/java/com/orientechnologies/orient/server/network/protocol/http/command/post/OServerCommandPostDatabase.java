@@ -240,10 +240,10 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       json.endCollection(1, true);
     }
 
-    final Set<OIndex<?>> indexes = cls.getIndexes();
+    final Set<OIndex> indexes = cls.getIndexes();
     if (!indexes.isEmpty()) {
       json.beginCollection(3, true, "indexes");
-      for (final OIndex<?> index : indexes) {
+      for (final OIndex index : indexes) {
         json.beginObject(4, true, null);
         json.writeAttribute(4, true, "name", index.getName());
         json.writeAttribute(4, true, "type", index.getType());

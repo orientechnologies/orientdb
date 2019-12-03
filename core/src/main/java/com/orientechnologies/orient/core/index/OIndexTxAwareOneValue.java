@@ -179,7 +179,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
   }
 
-  public OIndexTxAwareOneValue(final ODatabaseDocumentInternal iDatabase, final OIndex<OIdentifiable> iDelegate) {
+  public OIndexTxAwareOneValue(final ODatabaseDocumentInternal iDatabase, final OIndex iDelegate) {
     super(iDatabase, iDelegate);
   }
 
@@ -188,14 +188,14 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
-      return super.get(key);
+      return (OIdentifiable) super.get(key);
 
     key = getCollatingValue(key);
 
     ORID result;
     if (!indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
-      result = Optional.ofNullable(super.get(key)).map(OIdentifiable::getIdentity).orElse(null);
+      result = Optional.ofNullable((OIdentifiable)super.get(key)).map(OIdentifiable::getIdentity).orElse(null);
     } else {
       // BEGIN FROM EMPTY RESULT SET
       result = null;

@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.object.dictionary;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -32,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class ODictionaryWrapper extends ODictionary<Object> {
   private ODatabaseObject database;
 
-  public ODictionaryWrapper(final ODatabaseObject iDatabase, OIndex<OIdentifiable> index) {
+  public ODictionaryWrapper(final ODatabaseObject iDatabase, OIndex index) {
     super(index);
     this.database = iDatabase;
   }

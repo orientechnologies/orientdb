@@ -22,22 +22,10 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.metadata.schema.validation.ValidationBinaryComparable;
-import com.orientechnologies.orient.core.metadata.schema.validation.ValidationCollectionComparable;
-import com.orientechnologies.orient.core.metadata.schema.validation.ValidationLinkbagComparable;
-import com.orientechnologies.orient.core.metadata.schema.validation.ValidationMapComparable;
-import com.orientechnologies.orient.core.metadata.schema.validation.ValidationStringComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -289,22 +277,22 @@ public class OImmutableProperty implements OProperty {
   }
 
   @Override
-  public OIndex<?> createIndex(OClass.INDEX_TYPE iType) {
+  public OIndex createIndex(OClass.INDEX_TYPE iType) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OIndex<?> createIndex(String iType) {
+  public OIndex createIndex(String iType) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OIndex<?> createIndex(String iType, ODocument metadata) {
+  public OIndex createIndex(String iType, ODocument metadata) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
+  public OIndex createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
     throw new UnsupportedOperationException();
   }
 
@@ -314,13 +302,13 @@ public class OImmutableProperty implements OProperty {
   }
 
   @Override
-  public Set<OIndex<?>> getIndexes() {
+  public Set<OIndex> getIndexes() {
     return owner.getInvolvedIndexes(name);
   }
 
   @Override
-  public OIndex<?> getIndex() {
-    Set<OIndex<?>> indexes = owner.getInvolvedIndexes(name);
+  public OIndex getIndex() {
+    Set<OIndex> indexes = owner.getInvolvedIndexes(name);
     if (indexes != null && !indexes.isEmpty())
       return indexes.iterator().next();
     return null;
@@ -328,10 +316,10 @@ public class OImmutableProperty implements OProperty {
   }
 
   @Override
-  public Collection<OIndex<?>> getAllIndexes() {
-    final Set<OIndex<?>> indexes = owner.getIndexes();
-    final List<OIndex<?>> indexList = new LinkedList<OIndex<?>>();
-    for (final OIndex<?> index : indexes) {
+  public Collection<OIndex> getAllIndexes() {
+    final Set<OIndex> indexes = owner.getIndexes();
+    final List<OIndex> indexList = new LinkedList<OIndex>();
+    for (final OIndex index : indexes) {
       final OIndexDefinition indexDefinition = index.getDefinition();
       if (indexDefinition.getFields().contains(name))
         indexList.add(index);

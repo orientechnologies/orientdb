@@ -144,7 +144,7 @@ public abstract class OQueryOperator {
    *          Data returned by cursors should be sorted in ascending or descending order.
    * @return Cursor instance if index can be used to evaluate result of execution of given operator and <code>null</code> otherwise.
    */
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, final List<Object> keyParams,
       boolean ascSortOrder) {
     return Stream.empty();
   }
@@ -213,7 +213,7 @@ public abstract class OQueryOperator {
     return ORDER.EQUAL;
   }
 
-  protected void updateProfiler(final OCommandContext iContext, final OIndex<?> index, final List<Object> keyParams,
+  protected void updateProfiler(final OCommandContext iContext, final OIndex index, final List<Object> keyParams,
       final OIndexDefinition indexDefinition) {
     if (iContext.isRecordingMetrics())
       iContext.updateMetric("compositeIndexUsed", +1);

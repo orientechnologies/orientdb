@@ -92,7 +92,7 @@ public class LuceneExportImportTest extends BaseLuceneTest {
     }
 
     assertThat(db.countClass("City")).isEqualTo(1);
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.name");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.name");
 
     assertThat(index.getType()).isEqualTo(FULLTEXT.toString());
 

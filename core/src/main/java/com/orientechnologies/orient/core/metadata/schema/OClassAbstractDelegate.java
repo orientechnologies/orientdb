@@ -44,7 +44,7 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OIndex<?> getAutoShardingIndex() {
+  public OIndex getAutoShardingIndex() {
     return delegate.getAutoShardingIndex();
   }
 
@@ -110,7 +110,7 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public void getIndexes(final Collection<OIndex<?>> indexes) {
+  public void getIndexes(final Collection<OIndex> indexes) {
     delegate.getIndexes(indexes);
   }
 
@@ -374,50 +374,50 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
+  public OIndex createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
     return delegate.createIndex(iName, iType, fields);
   }
 
   @Override
-  public OIndex<?> createIndex(final String iName, final String iType, final String... fields) {
+  public OIndex createIndex(final String iName, final String iType, final String... fields) {
     return delegate.createIndex(iName, iType, fields);
   }
 
   @Override
-  public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
+  public OIndex createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
       final String... fields) {
     return delegate.createIndex(iName, iType, iProgressListener, fields);
   }
 
   @Override
-  public OIndex<?> createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
+  public OIndex createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
       final ODocument metadata, String algorithm, String... fields) {
     return delegate.createIndex(iName, iType, iProgressListener, metadata, algorithm, fields);
   }
 
   @Override
-  public OIndex<?> createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
+  public OIndex createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
       final ODocument metadata, String... fields) {
     return delegate.createIndex(iName, iType, iProgressListener, metadata, fields);
   }
 
   @Override
-  public Set<OIndex<?>> getInvolvedIndexes(final Collection<String> fields) {
+  public Set<OIndex> getInvolvedIndexes(final Collection<String> fields) {
     return delegate.getInvolvedIndexes(fields);
   }
 
   @Override
-  public Set<OIndex<?>> getInvolvedIndexes(final String... fields) {
+  public Set<OIndex> getInvolvedIndexes(final String... fields) {
     return delegate.getInvolvedIndexes(fields);
   }
 
   @Override
-  public Set<OIndex<?>> getClassInvolvedIndexes(final Collection<String> fields) {
+  public Set<OIndex> getClassInvolvedIndexes(final Collection<String> fields) {
     return delegate.getClassInvolvedIndexes(fields);
   }
 
   @Override
-  public Set<OIndex<?>> getClassInvolvedIndexes(final String... fields) {
+  public Set<OIndex> getClassInvolvedIndexes(final String... fields) {
     return delegate.getClassInvolvedIndexes(fields);
   }
 
@@ -432,22 +432,22 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OIndex<?> getClassIndex(final String iName) {
+  public OIndex getClassIndex(final String iName) {
     return delegate.getClassIndex(iName);
   }
 
   @Override
-  public Set<OIndex<?>> getClassIndexes() {
+  public Set<OIndex> getClassIndexes() {
     return delegate.getClassIndexes();
   }
 
   @Override
-  public void getClassIndexes(final Collection<OIndex<?>> indexes) {
+  public void getClassIndexes(final Collection<OIndex> indexes) {
     delegate.getClassIndexes(indexes);
   }
 
   @Override
-  public Set<OIndex<?>> getIndexes() {
+  public Set<OIndex> getIndexes() {
     return delegate.getIndexes();
   }
 

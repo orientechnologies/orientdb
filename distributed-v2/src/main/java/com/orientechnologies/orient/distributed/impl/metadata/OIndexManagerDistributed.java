@@ -4,11 +4,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.index.OIndexManagerShared;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
@@ -42,7 +38,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
     return this;
   }
 
-  public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+  public OIndex createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
       final OIndexDefinition indexDefinition, final int[] clusterIdsToIndex, final OProgressListener progressListener,
       final ODocument metadata) {
 
@@ -54,7 +50,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
   }
 
   @Override
-  public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+  public OIndex createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
       final OIndexDefinition iIndexDefinition, final int[] iClusterIdsToIndex, final OProgressListener progressListener,
       final ODocument metadata, final String algorithm) {
     if (isDistributedCommand(database)) {
@@ -65,7 +61,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
     return super.createIndex(database, iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
   }
 
-  public OIndex<?> distributedCreateIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+  public OIndex distributedCreateIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
       final OIndexDefinition iIndexDefinition, final int[] iClusterIdsToIndex, final OProgressListener progressListener,
       ODocument metadata, String engine) {
 

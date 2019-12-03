@@ -42,7 +42,7 @@ import java.util.stream.Stream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OIndexRemote<T> implements OIndex<T> {
+public abstract class OIndexRemote<T> implements OIndex {
   public static final    String QUERY_GET_VALUES_BEETWEN_SELECT                   = "select from index:`%s` where ";
   private static final   String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
   private static final   String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
@@ -287,7 +287,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return rid;
   }
 
-  public OIndexInternal<T> getInternal() {
+  public OIndexInternal getInternal() {
     return null;
   }
 
@@ -408,7 +408,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descCursor() {
+  public Stream<ORawPair<Object, ORID>> descStream() {
     final OResultSet result = getDatabase().indexQuery(name, String.format(QUERY_ENTRIES_DESC, name));
     return convertResultSetToIndexStream(result);
   }
@@ -420,7 +420,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public int compareTo(OIndex<T> index) {
+  public int compareTo(OIndex index) {
     final String name = index.getName();
     return this.name.compareTo(name);
   }

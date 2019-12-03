@@ -43,7 +43,7 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
   protected String               lookup;
   protected ACTION               unresolvedLinkAction = ACTION.NOTHING;
   private   OSQLQuery<ODocument> sqlQuery;
-  private   OIndex<?>            index;
+  private   OIndex               index;
 
   @Override
   public void configure(final ODocument iConfiguration, OCommandContext iContext) {

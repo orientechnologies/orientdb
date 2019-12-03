@@ -77,27 +77,31 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keyIterator = keyStream.iterator();
+    Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      String key = (String) keyIterator.next();
+      while (keyIterator.hasNext()) {
+        String key = (String) keyIterator.next();
 
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(20)) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(20)) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -124,26 +128,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
     Assert.assertEquals(keyIndex.getSize(), 2);
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(20)) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(20)) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -172,26 +180,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(30) && !value.equals(20)) {
-        Assert.fail("Unknown key found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(30) && !value.equals(20)) {
+          Assert.fail("Unknown key found: " + value);
+        }
       }
     }
   }
@@ -227,26 +239,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(30) && !value.equals(20)) {
-        Assert.fail("Unknown key found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(30) && !value.equals(20)) {
+          Assert.fail("Unknown key found: " + value);
+        }
       }
     }
   }
@@ -276,26 +292,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key2") && !key.equals("key1")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key2") && !key.equals("key1")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(20)) {
-        Assert.fail("Unknown key found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(20)) {
+          Assert.fail("Unknown key found: " + value);
+        }
       }
     }
   }
@@ -317,26 +337,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 3);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 3);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -368,26 +392,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 3);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 3);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -414,26 +442,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(20) && !value.equals(10)) {
-        Assert.fail("Unknown key found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(20) && !value.equals(10)) {
+          Assert.fail("Unknown key found: " + value);
+        }
       }
     }
   }
@@ -455,13 +487,15 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
@@ -469,13 +503,15 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(40)) {
-        Assert.fail("Unknown key found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(40)) {
+          Assert.fail("Unknown key found: " + value);
+        }
       }
     }
   }
@@ -506,26 +542,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(40)) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(40)) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -551,26 +591,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(20)) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(20)) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -593,26 +637,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(30)) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(30)) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -644,26 +692,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndex.getSize(), 2);
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(30)) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(30)) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -690,26 +742,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
     Assert.assertEquals(keyIndex.getSize(), 3);
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndex.getSize(), 3);
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(20) && !value.equals(30)) {
-        Assert.fail("Unknown key found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(20) && !value.equals(30)) {
+          Assert.fail("Unknown key found: " + value);
+        }
       }
     }
   }
@@ -782,26 +838,30 @@ public class MapIndexTest extends ObjectDBBaseTest {
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getSize(), 2);
 
-    Stream<Object> keyStream = keyIndex.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndex.getSize(), 2);
 
-    Stream<Object> valueStream = valueIndex.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      Integer value = (Integer) valuesIterator.next();
-      if (!value.equals(10) && !value.equals(20)) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        Integer value = (Integer) valuesIterator.next();
+        if (!value.equals(10) && !value.equals(20)) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }

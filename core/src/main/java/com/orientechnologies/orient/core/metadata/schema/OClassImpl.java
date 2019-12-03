@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -1071,25 +1070,25 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
-  public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
+  public OIndex createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
     return createIndex(iName, iType.name(), fields);
   }
 
-  public OIndex<?> createIndex(final String iName, final String iType, final String... fields) {
+  public OIndex createIndex(final String iName, final String iType, final String... fields) {
     return createIndex(iName, iType, null, null, fields);
   }
 
-  public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
+  public OIndex createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
       final String... fields) {
     return createIndex(iName, iType.name(), iProgressListener, null, fields);
   }
 
-  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
+  public OIndex createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
       String... fields) {
     return createIndex(iName, iType, iProgressListener, metadata, null, fields);
   }
 
-  public OIndex<?> createIndex(final String name, String type, final OProgressListener progressListener, ODocument metadata,
+  public OIndex createIndex(final String name, String type, final OProgressListener progressListener, ODocument metadata,
       String algorithm, final String... fields) {
     if (type == null)
       throw new IllegalArgumentException("Index type is null");
@@ -1142,14 +1141,14 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
-  public Set<OIndex<?>> getInvolvedIndexes(final String... fields) {
+  public Set<OIndex> getInvolvedIndexes(final String... fields) {
     return getInvolvedIndexes(Arrays.asList(fields));
   }
 
-  public Set<OIndex<?>> getInvolvedIndexes(final Collection<String> fields) {
+  public Set<OIndex> getInvolvedIndexes(final Collection<String> fields) {
     acquireSchemaReadLock();
     try {
-      final Set<OIndex<?>> result = new HashSet<OIndex<?>>(getClassInvolvedIndexes(fields));
+      final Set<OIndex> result = new HashSet<OIndex>(getClassInvolvedIndexes(fields));
 
       for (OClassImpl superClass : superClasses) {
         result.addAll(superClass.getInvolvedIndexes(fields));
@@ -1161,7 +1160,7 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
-  public Set<OIndex<?>> getClassInvolvedIndexes(final Collection<String> fields) {
+  public Set<OIndex> getClassInvolvedIndexes(final Collection<String> fields) {
 
     final ODatabaseDocumentInternal database = getDatabase();
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
@@ -1174,11 +1173,11 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
-  public Set<OIndex<?>> getClassInvolvedIndexes(final String... fields) {
+  public Set<OIndex> getClassInvolvedIndexes(final String... fields) {
     return getClassInvolvedIndexes(Arrays.asList(fields));
   }
 
-  public OIndex<?> getClassIndex(final String name) {
+  public OIndex getClassIndex(final String name) {
     acquireSchemaReadLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
@@ -1188,7 +1187,7 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
-  public Set<OIndex<?>> getClassIndexes() {
+  public Set<OIndex> getClassIndexes() {
     acquireSchemaReadLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
@@ -1203,7 +1202,7 @@ public abstract class OClassImpl implements OClass {
   }
 
   @Override
-  public void getClassIndexes(final Collection<OIndex<?>> indexes) {
+  public void getClassIndexes(final Collection<OIndex> indexes) {
     acquireSchemaReadLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
@@ -1218,7 +1217,7 @@ public abstract class OClassImpl implements OClass {
   }
 
   @Override
-  public OIndex<?> getAutoShardingIndex() {
+  public OIndex getAutoShardingIndex() {
     final ODatabaseDocumentInternal db = getDatabase();
     return db != null ? db.getMetadata().getIndexManagerInternal().getClassAutoShardingIndex(db, name) : null;
   }
@@ -1234,7 +1233,7 @@ public abstract class OClassImpl implements OClass {
   }
 
   public void onPostIndexManagement() {
-    final OIndex<?> autoShardingIndex = getAutoShardingIndex();
+    final OIndex autoShardingIndex = getAutoShardingIndex();
     if (autoShardingIndex != null) {
       if (!getDatabase().getStorage().isRemote()) {
         // OVERRIDE CLUSTER SELECTION
@@ -1257,7 +1256,7 @@ public abstract class OClassImpl implements OClass {
   }
 
   @Override
-  public void getIndexes(final Collection<OIndex<?>> indexes) {
+  public void getIndexes(final Collection<OIndex> indexes) {
     acquireSchemaReadLock();
     try {
       getClassIndexes(indexes);
@@ -1269,8 +1268,8 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
-  public Set<OIndex<?>> getIndexes() {
-    final Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
+  public Set<OIndex> getIndexes() {
+    final Set<OIndex> indexes = new HashSet<OIndex>();
     getIndexes(indexes);
     return indexes;
   }
@@ -1476,7 +1475,7 @@ public abstract class OClassImpl implements OClass {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToAdd = new ArrayList<String>();
 
-      for (OIndex<?> index : getIndexes())
+      for (OIndex index : getIndexes())
         indexesToAdd.add(index.getName());
 
       final OIndexManagerAbstract indexManager = getDatabase().getMetadata().getIndexManagerInternal();
@@ -1577,7 +1576,7 @@ public abstract class OClassImpl implements OClass {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToRemove = new ArrayList<String>();
 
-      for (final OIndex<?> index : getIndexes())
+      for (final OIndex index : getIndexes())
         indexesToRemove.add(index.getName());
 
       final OIndexManagerAbstract indexManager = getDatabase().getMetadata().getIndexManagerInternal();

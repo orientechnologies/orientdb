@@ -43,7 +43,7 @@ public class OSQLFunctionIndexKeySize extends OSQLFunctionAbstract {
 
     String indexName = String.valueOf(value);
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) context.getDatabase();
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (index == null) {
       return null;
     }

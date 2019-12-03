@@ -450,7 +450,7 @@ public class PredicateSecurityTest {
     db.close();
     this.db = orient.open(DB_NAME, "reader", "reader");
 
-    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Person.name");
+    OIndex index = db.getMetadata().getIndexManager().getIndex("Person.name");
     Object item = index.get("bar");
     Assert.assertTrue(((Collection) item).isEmpty());
 

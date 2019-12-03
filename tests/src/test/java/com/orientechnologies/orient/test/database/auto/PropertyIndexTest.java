@@ -69,10 +69,10 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
 
     propOne.createIndex(OClass.INDEX_TYPE.UNIQUE, new ODocument().field("ignoreNullValues", true));
 
-    final Collection<OIndex<?>> indexes = propOne.getIndexes();
+    final Collection<OIndex> indexes = propOne.getIndexes();
     OIndexDefinition indexDefinition = null;
 
-    for (final OIndex<?> index : indexes) {
+    for (final OIndex index : indexes) {
       if (index.getName().equals("PropertyIndexTestClass.prop1")) {
         indexDefinition = index.getDefinition();
         break;
@@ -112,7 +112,7 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
     final OProperty propOne = oClass.getProperty("prop1");
 
-    final Collection<OIndex<?>> indexes = propOne.getIndexes();
+    final Collection<OIndex> indexes = propOne.getIndexes();
     Assert.assertEquals(indexes.size(), 1);
     Assert.assertNotNull(containsIndex(indexes, "PropertyIndexTestClass.prop1"));
   }
@@ -123,7 +123,7 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
     final OProperty propOne = oClass.getProperty("prop1");
 
-    final Collection<OIndex<?>> indexes = propOne.getAllIndexes();
+    final Collection<OIndex> indexes = propOne.getAllIndexes();
     Assert.assertEquals(indexes.size(), 5);
     Assert.assertNotNull(containsIndex(indexes, "PropertyIndexTestClass.prop1"));
     Assert.assertNotNull(containsIndex(indexes, "propOne0"));
@@ -215,8 +215,8 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     Assert.assertNotNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "PropertyIndexSecondIndex"));
   }
 
-  private OIndex<?> containsIndex(final Collection<OIndex<?>> indexes, final String indexName) {
-    for (final OIndex<?> index : indexes) {
+  private OIndex containsIndex(final Collection<OIndex> indexes, final String indexName) {
+    for (final OIndex index : indexes) {
       if (index.getName().equals(indexName))
         return index;
     }

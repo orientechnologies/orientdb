@@ -36,10 +36,10 @@ import java.util.stream.Stream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public interface OIndex<T> extends Comparable<OIndex<T>> {
+public interface OIndex extends Comparable<OIndex> {
   String MERGE_KEYS = "mergeKeys";
 
-  OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
+  OIndex create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener);
 
   String getDatabaseName();
@@ -57,7 +57,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return The Record set if found, otherwise an empty Set
    */
-  T get(Object iKey);
+  Object get(Object iKey);
 
   /**
    * Tells if a key is contained in the index.
@@ -76,7 +76,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return The index instance itself to allow in chain calls
    */
-  OIndex<T> put(Object iKey, OIdentifiable iValue);
+  OIndex put(Object iKey, OIdentifiable iValue);
 
   /**
    * Removes an entry by its key.
@@ -104,7 +104,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * @deprecated Manual indexes are deprecated and will be removed
    */
   @Deprecated
-  OIndex<T> clear();
+  OIndex clear();
 
   /**
    * @return number of entries in the index.
@@ -132,7 +132,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * @return The index instance itself to allow in chain calls
    */
   @OApi(enduser = false)
-  OIndex<T> delete();
+  OIndex delete();
 
   /**
    * Returns the index name.
@@ -194,7 +194,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   /**
    * Returns the internal index used.
    */
-  OIndexInternal<T> getInternal();
+  OIndexInternal getInternal();
 
   /**
    * Returns stream which presents data associated with passed in keys.
@@ -252,7 +252,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
 
   Stream<ORawPair<Object, ORID>> stream();
 
-  Stream<ORawPair<Object, ORID>> descCursor();
+  Stream<ORawPair<Object, ORID>> descStream();
 
   Stream<Object> keyStream();
 

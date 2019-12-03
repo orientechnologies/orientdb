@@ -66,13 +66,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("eggs")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("eggs")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -94,13 +96,14 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
-
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("eggs")) {
-        Assert.fail("Unknown key found: " + key);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("eggs")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -117,13 +120,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("bacon")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("bacon")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -147,13 +152,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
 
     Assert.assertEquals(index.getSize(), 2);
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("bacon")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("bacon")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -173,13 +180,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("eggs")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("eggs")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -196,13 +205,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 3);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("eggs") && !key.equals("cookies")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("eggs") && !key.equals("cookies")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -229,13 +240,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(index.getSize(), 3);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("eggs") && !key.equals("cookies")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("eggs") && !key.equals("cookies")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -256,13 +269,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("eggs")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("eggs")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -288,13 +303,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 1);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("eggs")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("eggs")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -315,13 +332,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("eggs")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("eggs")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -337,13 +356,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     final OIndex index = getIndex("Collector.stringCollection");
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("eggs")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("eggs")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -394,13 +415,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("spam") && !key.equals("eggs")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("spam") && !key.equals("eggs")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }

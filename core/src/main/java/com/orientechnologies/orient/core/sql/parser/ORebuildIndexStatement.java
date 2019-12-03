@@ -33,14 +33,14 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
     final ODatabaseDocumentInternal database = getDatabase();
     if (all) {
       long totalIndexed = 0;
-      for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
+      for (OIndex idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (idx.isAutomatic())
           totalIndexed += idx.rebuild();
       }
 
       result.setProperty("totalIndexed", totalIndexed);
     } else {
-      final OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database, name.getValue());
+      final OIndex idx = database.getMetadata().getIndexManagerInternal().getIndex(database, name.getValue());
       if (idx == null)
         throw new OCommandExecutionException("Index '" + name + "' not found");
 

@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 /**
  * @since 22.03.12
  */
+@SuppressWarnings("deprecation")
 @Test(groups = { "index" })
 public class LinkMapIndexTest extends DocumentDBBaseTest {
 
@@ -40,6 +41,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void destroySchema() {
+    //noinspection deprecation
     database.open("admin", "admin");
     database.getMetadata().getSchema().dropClass("LinkMapIndexTestClass");
     database.close();
@@ -73,27 +75,31 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    Iterator<Object> keyIterator = keyStream.iterator();
+    Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      String key = (String) keyIterator.next();
+      while (keyIterator.hasNext()) {
+        String key = (String) keyIterator.next();
 
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
 
     Assert.assertEquals(valueIndexMap.getSize(), 2);
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -126,26 +132,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    Iterator<Object> keyIterator = keyStream.iterator();
+    Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      String key = (String) keyIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        String key = (String) keyIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -181,26 +191,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -234,26 +248,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -292,26 +310,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key2") && !key.equals("key1")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key2") && !key.equals("key1")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docTwo.getIdentity()) && !value.equals(docOne.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docTwo.getIdentity()) && !value.equals(docOne.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -343,27 +365,31 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 3);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 3);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    final Iterator<Object> valuesIterator = valueStream.iterator();
+    final Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
-          .getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
+            .getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -403,28 +429,32 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 3);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    final Iterator<Object> keysIterator = keyStream.iterator();
+    final Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
 
-      if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+        if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 3);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
-          .getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
+            .getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -459,26 +489,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    final Iterator<Object> keysIterator = keyStream.iterator();
+    final Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    final Iterator<Object> valuesIterator = valueStream.iterator();
+    final Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docTwo.getIdentity()) && !value.getIdentity().equals(docOne.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docTwo.getIdentity()) && !value.getIdentity().equals(docOne.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -510,26 +544,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
 
     Assert.assertEquals(keyIndexMap.getSize(), 2);
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    final Iterator<Object> keysIterator = keyStream.iterator();
+    final Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -570,26 +608,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
     Assert.assertEquals(keyIndexMap.getSize(), 2);
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    final Iterator<Object> keysIterator = keyStream.iterator();
+    final Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    final Iterator<Object> valuesIterator = valueStream.iterator();
+    final Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown key found: " + value);
+        }
       }
     }
   }
@@ -624,26 +666,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -675,26 +721,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    final Iterator<Object> keysIterator = keyStream.iterator();
+    final Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -735,26 +785,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    Iterator<Object> keysIterator = keyStream.iterator();
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    Iterator<Object> valuesIterator = valueStream.iterator();
+    Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -790,27 +844,31 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 3);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      String key = (String) keyIterator.next();
-      if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        String key = (String) keyIterator.next();
+        if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 3);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    final Iterator<Object> valuesIterator = valueStream.iterator();
+    final Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
-          .getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
+            .getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }
@@ -903,26 +961,30 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getSize(), 2);
 
-    final Stream<Object> keyStream = keyIndexMap.keyStream();
-    final Iterator<Object> keysIterator = keyStream.iterator();
+    final Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (keysIterator.hasNext()) {
-      String key = (String) keysIterator.next();
-      if (!key.equals("key1") && !key.equals("key2")) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        String key = (String) keysIterator.next();
+        if (!key.equals("key1") && !key.equals("key2")) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
     Assert.assertEquals(valueIndexMap.getSize(), 2);
 
-    final Stream<Object> valueStream = valueIndexMap.keyStream();
-    final Iterator<Object> valuesIterator = valueStream.iterator();
+    final Iterator<Object> valuesIterator;
+    try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
+      valuesIterator = valueStream.iterator();
 
-    while (valuesIterator.hasNext()) {
-      OIdentifiable value = (OIdentifiable) valuesIterator.next();
-      if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown value found: " + value);
+      while (valuesIterator.hasNext()) {
+        OIdentifiable value = (OIdentifiable) valuesIterator.next();
+        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown value found: " + value);
+        }
       }
     }
   }

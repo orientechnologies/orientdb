@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public interface OIndexInternal<T> extends OIndex<T> {
+public interface OIndexInternal extends OIndex {
 
   String CONFIG_KEYTYPE            = "keyType";
   String CONFIG_AUTOMATIC          = "automatic";
@@ -79,7 +79,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param iClusterName Cluster to add.
    * @return Current index instance.
    */
-  OIndex<T> addCluster(final String iClusterName);
+  OIndex addCluster(final String iClusterName);
 
   /**
    * Remove given cluster from the list of clusters that should be automatically indexed.
@@ -87,7 +87,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param iClusterName Cluster to remove.
    * @return Current index instance.
    */
-  OIndex<T> removeCluster(final String iClusterName);
+  OIndex removeCluster(final String iClusterName);
 
   /**
    * Indicates whether given index can be used to calculate result of

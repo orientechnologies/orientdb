@@ -141,7 +141,7 @@ public final class OIndexes {
    * @throws OConfigurationException if index creation failed
    * @throws OIndexException         if index type does not exist
    */
-  public static OIndexInternal<?> createIndex(OStorage storage, String name, String indexType, String algorithm,
+  public static OIndexInternal createIndex(OStorage storage, String name, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException, OIndexException {
     if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()) || indexType
         .equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name()) || indexType

@@ -18,10 +18,11 @@ import org.testng.annotations.*;
 
 import java.io.IOException;
 
+@SuppressWarnings("deprecation")
 @Test
 public abstract class BaseTest<T extends ODatabase> {
 
-  private static boolean keepDatabase = Boolean.getBoolean("orientdb.test.keepDatabase");
+  private static final boolean keepDatabase = Boolean.getBoolean("orientdb.test.keepDatabase");
 
   public static String prepareUrl(String url) {
     if (url != null)
@@ -67,19 +68,21 @@ public abstract class BaseTest<T extends ODatabase> {
 
     if (url == null) {
       if ("remote".equals(storageType)) {
-        url = getStorageType() + ":localhost/demo";
+        url = storageType + ":localhost/demo";
         dropDb = !keepDatabase;
       } else {
         final String buildDirectory = System.getProperty("buildDirectory", ".");
-        url = getStorageType() + ":" + buildDirectory + "/test-db/demo";
+        url = storageType + ":" + buildDirectory + "/test-db/demo";
         dropDb = !keepDatabase;
       }
     }
 
     if (!url.startsWith("remote:")) {
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-      if (!db.exists())
-        db.create().close();
+      //noinspection deprecation
+      try (ODatabaseDocumentTx db = new ODatabaseDocumentTx(url)) {
+        if (!db.exists())
+          db.create().close();
+      }
     }
 
     this.url = url;
@@ -98,15 +101,17 @@ public abstract class BaseTest<T extends ODatabase> {
 
     if (url == null) {
       final String buildDirectory = System.getProperty("buildDirectory", ".");
-      url = getStorageType() + ":" + buildDirectory + "/test-db/demo" + prefix;
+      url = storageType + ":" + buildDirectory + "/test-db/demo" + prefix;
       dropDb = !keepDatabase;
     } else
       url = url + prefix;
 
     if (!url.startsWith("remote:")) {
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-      if (!db.exists())
-        db.create().close();
+      //noinspection deprecation
+      try (ODatabaseDocumentTx db = new ODatabaseDocumentTx(url)) {
+        if (!db.exists())
+          db.create().close();
+      }
     }
 
     this.url = url;
@@ -182,7 +187,7 @@ public abstract class BaseTest<T extends ODatabase> {
     ODatabaseHelper.createDatabase(database, database.getURL());
   }
 
-  protected String getTestEnv() {
+  protected static String getTestEnv() {
     return System.getProperty("orientdb.test.env");
   }
 
@@ -201,16 +206,15 @@ public abstract class BaseTest<T extends ODatabase> {
     database.addCluster("csv");
     database.addCluster("flat");
     database.addCluster("binary");
-//    database.addBlobCluster("blobCluster");
 
-    OClass account = database.getMetadata().getSchema().createClass("Account", 1, null);
+    OClass account = database.getMetadata().getSchema().createClass("Account", 1, (OClass[]) null);
     account.createProperty("id", OType.INTEGER);
     account.createProperty("birthDate", OType.DATE);
     account.createProperty("binary", OType.BINARY);
 
     database.getMetadata().getSchema().createClass("Company", account);
 
-    OClass profile = database.getMetadata().getSchema().createClass("Profile", 1, null);
+    OClass profile = database.getMetadata().getSchema().createClass("Profile", 1, (OClass[]) null);
     profile.createProperty("nick", OType.STRING).setMin("3").setMax("30")
         .createIndex(OClass.INDEX_TYPE.UNIQUE, new ODocument().field("ignoreNullValues", true));
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
@@ -219,22 +223,22 @@ public abstract class BaseTest<T extends ODatabase> {
     profile.createProperty("lastAccessOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
     profile.createProperty("photo", OType.TRANSIENT);
 
-    OClass whiz = database.getMetadata().getSchema().createClass("Whiz", 1, null);
+    OClass whiz = database.getMetadata().getSchema().createClass("Whiz", 1, (OClass[]) null);
     whiz.createProperty("id", OType.INTEGER);
     whiz.createProperty("account", OType.LINK, account);
     whiz.createProperty("date", OType.DATE).setMin("2010-01-01");
     whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(OClass.INDEX_TYPE.FULLTEXT);
     whiz.createProperty("replyTo", OType.LINK, account);
 
-    OClass strictTest = database.getMetadata().getSchema().createClass("StrictTest", 1, null);
+    OClass strictTest = database.getMetadata().getSchema().createClass("StrictTest", 1, (OClass[]) null);
     strictTest.setStrictMode(true);
     strictTest.createProperty("id", OType.INTEGER).isMandatory();
     strictTest.createProperty("name", OType.STRING);
 
-    OClass animalRace = database.getMetadata().getSchema().createClass("AnimalRace", 1, null);
+    OClass animalRace = database.getMetadata().getSchema().createClass("AnimalRace", 1, (OClass[]) null);
     animalRace.createProperty("name", OType.STRING);
 
-    OClass animal = database.getMetadata().getSchema().createClass("Animal", 1, null);
+    OClass animal = database.getMetadata().getSchema().createClass("Animal", 1, (OClass[]) null);
     animal.createProperty("races", OType.LINKSET, animalRace);
     animal.createProperty("name", OType.STRING);
   }
@@ -243,6 +247,7 @@ public abstract class BaseTest<T extends ODatabase> {
     return autoManageDatabase;
   }
 
+  @SuppressWarnings("SameParameterValue")
   protected void setAutoManageDatabase(final boolean autoManageDatabase) {
     this.autoManageDatabase = autoManageDatabase;
   }
@@ -251,6 +256,7 @@ public abstract class BaseTest<T extends ODatabase> {
     return dropDb;
   }
 
+  @SuppressWarnings("SameParameterValue")
   protected void setDropDb(final boolean dropDb) {
     this.dropDb = !keepDatabase && dropDb;
   }
@@ -258,10 +264,8 @@ public abstract class BaseTest<T extends ODatabase> {
   protected boolean skipTestIfRemote() {
     final OStorage stg = ((ODatabaseDocumentTx) database).getStorage().getUnderlying();
 
-    if (!(stg instanceof OAbstractPaginatedStorage))
-      // ONLY PLOCAL AND MEMORY STORAGES SUPPORTED
-      return true;
-    return false;
+    // ONLY PLOCAL AND MEMORY STORAGES SUPPORTED
+    return !(stg instanceof OAbstractPaginatedStorage);
   }
 
   protected void checkEmbeddedDB() {
@@ -277,7 +281,8 @@ public abstract class BaseTest<T extends ODatabase> {
     } else {
       db = (ODatabaseDocumentInternal) database;
     }
-    return (db.getMetadata()).getIndexManagerInternal().getIndex(db, indexName);
+    //noinspection unchecked
+    return (OIndex) (db.getMetadata()).getIndexManagerInternal().getIndex(db, indexName);
   }
 
 }

@@ -215,7 +215,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     }
   }
 
-  public OIndexTxAwareMultiValue(final ODatabaseDocumentInternal database, final OIndex<Collection<OIdentifiable>> delegate) {
+  public OIndexTxAwareMultiValue(final ODatabaseDocumentInternal database, final OIndex delegate) {
     super(database, delegate);
   }
 
@@ -224,7 +224,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
-      Collection<OIdentifiable> res = super.get(key);
+      @SuppressWarnings("unchecked")
+      Collection<OIdentifiable> res = (Collection<OIdentifiable>) super.get(key);
       //In case of active transaction we use to return null instead of empty list, make check to be backward compatible
       if (database.getTransaction().isActive()
           && ((OTransactionOptimistic) database.getTransaction()).getIndexOperations().size() != 0 && res.isEmpty())
@@ -238,7 +239,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     final Set<OIdentifiable> result = new HashSet<>();
     if (!indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
-      final Collection<OIdentifiable> subResult = super.get(key);
+      @SuppressWarnings("unchecked")
+      final Collection<OIdentifiable> subResult = (Collection<OIdentifiable>) super.get(key);
       if (subResult != null) {
         result.addAll(subResult);
       }

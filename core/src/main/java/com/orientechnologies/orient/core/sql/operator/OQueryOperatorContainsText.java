@@ -98,8 +98,8 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       // NO PROPERTY DEFINED
       return null;
 
-    OIndex<?> fullTextIndex = null;
-    for (final OIndex<?> indexDefinition : prop.getIndexes()) {
+    OIndex fullTextIndex = null;
+    for (final OIndex indexDefinition : prop.getIndexes()) {
       if (indexDefinition instanceof OIndexFullText) {
         fullTextIndex = indexDefinition;
         break;
@@ -123,14 +123,14 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
       boolean ascSortOrder) {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
     if (indexDefinition.getParamCount() > 1)
       return null;
 
-    final OIndex<?> internalIndex = index.getInternal();
+    final OIndex internalIndex = index.getInternal();
 
     Stream<ORawPair<Object, ORID>> stream;
     if (internalIndex instanceof OIndexFullText) {

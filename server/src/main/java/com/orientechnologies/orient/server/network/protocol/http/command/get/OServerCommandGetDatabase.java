@@ -116,10 +116,10 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.endCollection();
     }
 
-    final Set<OIndex<?>> indexes = cls.getIndexes();
+    final Set<OIndex> indexes = cls.getIndexes();
     if (!indexes.isEmpty()) {
       json.beginCollection("indexes");
-      for (final OIndex<?> index : indexes) {
+      for (final OIndex index : indexes) {
         json.beginObject();
         json.writeAttribute("name", index.getName());
         json.writeAttribute("type", index.getType());
@@ -260,7 +260,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       }
       final OIndexManagerAbstract idxManager = db.getMetadata().getIndexManagerInternal();
       json.beginCollection("indexes");
-      for (OIndex<?> index : idxManager.getIndexes(db)) {
+      for (OIndex index : idxManager.getIndexes(db)) {
         json.beginObject();
         try {
           json.writeAttribute("name", index.getName());

@@ -43,19 +43,19 @@ public class GEOTest extends DocumentDBBaseTest {
     mapPointClass.createProperty("x", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     mapPointClass.createProperty("y", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    final Set<OIndex<?>> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
+    final Set<OIndex> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
     Assert.assertEquals(xIndexes.size(), 1);
 
-    final Set<OIndex<?>> yIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
+    final Set<OIndex> yIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
     Assert.assertEquals(yIndexes.size(), 1);
   }
 
   @Test(dependsOnMethods = "geoSchema")
   public void checkGeoIndexes() {
-    final Set<OIndex<?>> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
+    final Set<OIndex> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
     Assert.assertEquals(xIndexes.size(), 1);
 
-    final Set<OIndex<?>> yIndexDefinitions = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
+    final Set<OIndex> yIndexDefinitions = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
     Assert.assertEquals(yIndexDefinitions.size(), 1);
   }
 

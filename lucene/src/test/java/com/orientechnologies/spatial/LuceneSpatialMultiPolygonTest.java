@@ -94,7 +94,7 @@ public class LuceneSpatialMultiPolygonTest extends BaseSpatialLuceneTest {
     italy.field("location", location);
     db.save(italy);
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Place.location");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Place.location");
 
     Assert.assertEquals(1, index.getSize());
 

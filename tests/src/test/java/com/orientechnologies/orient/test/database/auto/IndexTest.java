@@ -156,7 +156,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testIndexEntries() {
     List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
 
-    OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick");
+    OIndex idx = database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick");
 
     Assert.assertEquals(idx.getSize(), result.size());
   }
@@ -541,7 +541,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final List<Account> result = database.command(new OSQLSynchQuery<Account>("select * from Account limit 1")).execute();
 
-    final OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Whiz.account");
+    final OIndex idx = database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Whiz.account");
 
     for (int i = 0; i < 5; i++) {
       final ODocument whiz = new ODocument("Whiz");
@@ -946,7 +946,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
 
-    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager
+    final OIndex idx = (OIndex) idxManager
         .getIndex(database.getUnderlying(), "IndexNotUniqueIndexKeySizeIndex");
 
     final Set<Integer> keys = new HashSet<Integer>();
@@ -969,7 +969,7 @@ public class IndexTest extends ObjectDBBaseTest {
     cls.createIndex("IndexNotUniqueIndexSizeIndex", INDEX_TYPE.NOTUNIQUE, "value");
 
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
-    final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager
+    final OIndex idx = (OIndex) idxManager
         .getIndex(database.getUnderlying(), "IndexNotUniqueIndexSizeIndex");
 
     for (int i = 1; i < 100; i++) {
@@ -991,7 +991,7 @@ public class IndexTest extends ObjectDBBaseTest {
     profile = database.save(profile);
 
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
-    OIndex<?> nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
+    OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
     Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
 
@@ -1009,7 +1009,7 @@ public class IndexTest extends ObjectDBBaseTest {
     profile = database.save(profile);
 
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
-    OIndex<?> nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
+    OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
     Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
 
@@ -1353,7 +1353,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     {
       fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
-      OIndex<?> index = fieldClass.getClassIndex("nameParentIndex");
+      OIndex index = fieldClass.getClassIndex("nameParentIndex");
       OCompositeKey key = new OCompositeKey(parent.getId(), "pokus");
 
       Collection<ORecordId> h = (Collection<ORecordId>) index.get(key);
@@ -1364,7 +1364,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     {
       fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
-      OIndex<?> index = fieldClass.getClassIndex("nameParentIndex");
+      OIndex index = fieldClass.getClassIndex("nameParentIndex");
       OCompositeKey key = new OCompositeKey(parent2.getId(), "pokus2");
 
       Collection<ORecordId> h = (Collection<ORecordId>) index.get(key);

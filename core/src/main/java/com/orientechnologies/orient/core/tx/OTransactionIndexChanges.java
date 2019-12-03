@@ -46,7 +46,7 @@ public class OTransactionIndexChanges {
 
   public boolean cleared = false;
 
-  private OIndexInternal<?> resolvedIndex = null;
+  private OIndexInternal resolvedIndex = null;
 
   public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
     if (key == null)
@@ -97,10 +97,10 @@ public class OTransactionIndexChanges {
     return changesPerKey.floorKey(key);
   }
 
-  public OIndexInternal<?> resolveAssociatedIndex(String indexName, OIndexManagerAbstract indexManager,
+  public OIndexInternal resolveAssociatedIndex(String indexName, OIndexManagerAbstract indexManager,
       ODatabaseDocumentInternal db) {
     if (resolvedIndex == null) {
-      final OIndex<?> index = indexManager.getIndex(db, indexName);
+      final OIndex index = indexManager.getIndex(db, indexName);
       if (index != null)
         resolvedIndex = index.getInternal();
     }
@@ -108,7 +108,7 @@ public class OTransactionIndexChanges {
     return resolvedIndex;
   }
 
-  public OIndexInternal<?> getAssociatedIndex() {
+  public OIndexInternal getAssociatedIndex() {
     return resolvedIndex;
   }
 }

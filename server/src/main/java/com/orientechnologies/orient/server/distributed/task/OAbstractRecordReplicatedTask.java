@@ -66,7 +66,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     if (db != null) {
       final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(rid.getClusterId());
       if (clazz != null) {
-        final Set<OIndex<?>> indexes = clazz.getIndexes();
+        final Set<OIndex> indexes = clazz.getIndexes();
         if (indexes != null && !indexes.isEmpty()) {
           for (OIndex idx : indexes)
             if (idx.isUnique())

@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
@@ -323,8 +324,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     final OIndexManagerAbstract indexManagerTwo = makeDbCall(databaseTwo,
         database -> database.getMetadata().getIndexManagerInternal());
 
-    final Collection<? extends OIndex<?>> indexesOne = makeDbCall(databaseOne,
-        (ODbRelatedCall<Collection<? extends OIndex<?>>>) indexManagerOne::getIndexes);
+    final Collection<? extends OIndex> indexesOne = makeDbCall(databaseOne,
+        (ODbRelatedCall<Collection<? extends OIndex>>) indexManagerOne::getIndexes);
 
     int indexesSizeOne = makeDbCall(databaseTwo, database -> indexesOne.size());
 
@@ -343,11 +344,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       ++differences;
     }
 
-    final Iterator<? extends OIndex<?>> iteratorOne = makeDbCall(databaseOne,
-        (ODbRelatedCall<Iterator<? extends OIndex<?>>>) database -> indexesOne.iterator());
+    final Iterator<? extends OIndex> iteratorOne = makeDbCall(databaseOne,
+        (ODbRelatedCall<Iterator<? extends OIndex>>) database -> indexesOne.iterator());
 
     while (makeDbCall(databaseOne, database -> iteratorOne.hasNext())) {
-      final OIndex indexOne = makeDbCall(databaseOne, (ODbRelatedCall<OIndex<?>>) database -> iteratorOne.next());
+      final OIndex indexOne = makeDbCall(databaseOne, (ODbRelatedCall<OIndex>) database -> iteratorOne.next());
 
       @SuppressWarnings("ObjectAllocationInLoop")
       final String indexName = makeDbCall(databaseOne, database -> indexOne.getName());
@@ -356,8 +357,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
 
       @SuppressWarnings("ObjectAllocationInLoop")
-      final OIndex<?> indexTwo = makeDbCall(databaseTwo,
-          (ODbRelatedCall<OIndex<?>>) database -> indexManagerTwo.getIndex(database, indexOne.getName()));
+      final OIndex indexTwo = makeDbCall(databaseTwo,
+          (ODbRelatedCall<OIndex>) database -> indexManagerTwo.getIndex(database, indexOne.getName()));
 
       if (indexTwo == null) {
         ok = false;
@@ -451,46 +452,48 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
 
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
-        @SuppressWarnings("ObjectAllocationInLoop")
-        final Iterator<Object> indexKeyIteratorOne = makeDbCall(databaseOne,
-            (ODbRelatedCall<Iterator<Object>>) database -> indexOne.keyStream().iterator());
 
-        while (makeDbCall(databaseOne, database -> indexKeyIteratorOne.hasNext())) {
-          @SuppressWarnings("ObjectAllocationInLoop")
-          final Object indexKey = makeDbCall(databaseOne, database -> indexKeyIteratorOne.next());
+        //noinspection resource
+        try (final Stream<Object> keyStream = makeDbCall(databaseOne,
+            (ODbRelatedCall<Stream<Object>>) database -> indexOne.keyStream())) {
+          final Iterator<Object> indexKeyIteratorOne = makeDbCall(databaseOne, database -> keyStream.iterator());
+          while (makeDbCall(databaseOne, database -> indexKeyIteratorOne.hasNext())) {
+            final Object indexKey = makeDbCall(databaseOne, database -> indexKeyIteratorOne.next());
 
-          Object indexOneValue = makeDbCall(databaseOne, database -> indexOne.get(indexKey));
+            Object indexOneValue = makeDbCall(databaseOne, database -> indexOne.get(indexKey));
 
-          final Object indexTwoValue = makeDbCall(databaseTwo, (ODbRelatedCall<Object>) database -> indexTwo.get(indexKey));
+            final Object indexTwoValue = makeDbCall(databaseTwo, (ODbRelatedCall<Object>) database -> indexTwo.get(indexKey));
 
-          if (indexTwoValue == null) {
-            ok = false;
-            listener.onMessage("\n- ERR: Entry with key " + indexKey + " is absent in index " + indexOne.getName() + " for DB2.");
-            ++differences;
-          } else if (indexOneValue instanceof Set && indexTwoValue instanceof Set) {
-            final Set<Object> indexOneValueSet = (Set<Object>) indexOneValue;
-            final Set<Object> indexTwoValueSet = (Set<Object>) indexTwoValue;
+            if (indexTwoValue == null) {
+              ok = false;
+              listener.onMessage("\n- ERR: Entry with key " + indexKey + " is absent in index " + indexOne.getName() + " for DB2.");
+              ++differences;
+            } else if (indexOneValue instanceof Set && indexTwoValue instanceof Set) {
+              final Set<Object> indexOneValueSet = (Set<Object>) indexOneValue;
+              final Set<Object> indexTwoValueSet = (Set<Object>) indexTwoValue;
 
-            if (!ODocumentHelper.compareSets(databaseOne, indexOneValueSet, databaseTwo, indexTwoValueSet, ridMapper)) {
+              if (!ODocumentHelper.compareSets(databaseOne, indexOneValueSet, databaseTwo, indexTwoValueSet, ridMapper)) {
+                ok = false;
+                reportIndexDiff(indexOne, indexKey, indexOneValue, indexTwoValue);
+              }
+            } else if (indexOneValue instanceof ORID && indexTwoValue instanceof ORID) {
+              if (ridMapper != null && ((ORID) indexOneValue).isPersistent()) {
+                OIdentifiable identifiable = ridMapper.map((ORID) indexOneValue);
+
+                if (identifiable != null)
+                  indexOneValue = identifiable.getIdentity();
+              }
+              if (!indexOneValue.equals(indexTwoValue)) {
+                ok = false;
+                reportIndexDiff(indexOne, indexKey, indexOneValue, indexTwoValue);
+              }
+            } else if (!compareIndexValues((Collection<ORID>) indexOneValue, (Collection<ORID>) indexTwoValue, ridMapper)) {
               ok = false;
               reportIndexDiff(indexOne, indexKey, indexOneValue, indexTwoValue);
             }
-          } else if (indexOneValue instanceof ORID && indexTwoValue instanceof ORID) {
-            if (ridMapper != null && ((ORID) indexOneValue).isPersistent()) {
-              OIdentifiable identifiable = ridMapper.map((ORID) indexOneValue);
-
-              if (identifiable != null)
-                indexOneValue = identifiable.getIdentity();
-            }
-            if (!indexOneValue.equals(indexTwoValue)) {
-              ok = false;
-              reportIndexDiff(indexOne, indexKey, indexOneValue, indexTwoValue);
-            }
-          } else if (!compareIndexValues((Collection<ORID>) indexOneValue, (Collection<ORID>) indexTwoValue, ridMapper)) {
-            ok = false;
-            reportIndexDiff(indexOne, indexKey, indexOneValue, indexTwoValue);
           }
         }
+
       }
     }
 
@@ -851,7 +854,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     }
   }
 
-  private void reportIndexDiff(OIndex<?> indexOne, Object key, final Object indexOneValue, final Object indexTwoValue) {
+  private void reportIndexDiff(OIndex indexOne, Object key, final Object indexOneValue, final Object indexTwoValue) {
     listener.onMessage("\n- ERR: Entry values for key '" + key + "' are different for index " + indexOne.getName());
     listener.onMessage("\n--- DB1: " + makeDbCall(databaseOne, database -> indexOneValue.toString()));
     listener.onMessage("\n--- DB2: " + makeDbCall(databaseOne, database -> indexTwoValue.toString()));

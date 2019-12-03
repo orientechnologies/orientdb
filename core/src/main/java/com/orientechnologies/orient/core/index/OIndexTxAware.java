@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
+public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
   private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
@@ -60,7 +60,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     LOWEST_BOUNDARY
   }
 
-  public OIndexTxAware(final ODatabaseDocumentInternal iDatabase, final OIndex<T> iDelegate) {
+  public OIndexTxAware(final ODatabaseDocumentInternal iDatabase, final OIndex iDelegate) {
     super(iDelegate);
     database = iDatabase;
   }

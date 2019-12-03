@@ -45,7 +45,7 @@ public class OTruncateClassStatementExecutionTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
 
-    final OIndex<?> index = getOrCreateIndex(testClass);
+    final OIndex index = getOrCreateIndex(testClass);
 
     database.command("truncate class test_class");
 
@@ -69,10 +69,11 @@ public class OTruncateClassStatementExecutionTest {
 
     Assert.assertEquals(index.getSize(), 6);
 
-    Stream<ORawPair<Object, ORID>> stream = index.stream();
-    stream.forEach((entry) -> {
-      Assert.assertTrue(set.contains((Integer) entry.first));
-    });
+    try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
+      stream.forEach((entry) -> {
+        Assert.assertTrue(set.contains((Integer) entry.first));
+      });
+    }
 
     schema.dropClass("test_class");
   }
@@ -165,8 +166,8 @@ public class OTruncateClassStatementExecutionTest {
     return result;
   }
 
-  private OIndex<?> getOrCreateIndex(OClass testClass) {
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
+  private OIndex getOrCreateIndex(OClass testClass) {
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
     if (index == null) {
       testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
       index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");

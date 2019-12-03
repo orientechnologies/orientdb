@@ -50,7 +50,7 @@ public interface OIndexFactory {
    * @throws OConfigurationException
    *           if index creation failed
    */
-  OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+  OIndexInternal createIndex(String name, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException;
 
   OBaseIndexEngine createIndexEngine(int indexId, String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,

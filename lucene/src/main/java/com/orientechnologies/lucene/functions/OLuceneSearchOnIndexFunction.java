@@ -137,7 +137,7 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
     String indexName = (String) args[0].execute((OIdentifiable) null, ctx);
 
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getClassIndex(database, className, indexName);
+    OIndex index = database.getMetadata().getIndexManagerInternal().getClassIndex(database, className, indexName);
 
     if (index != null && index.getInternal() instanceof OLuceneFullTextIndex) {
       return (OLuceneFullTextIndex) index;
@@ -148,7 +148,7 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
 
   private OLuceneFullTextIndex searchForIndex(OCommandContext ctx, String indexName) {
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
 
     if (index != null && index.getInternal() instanceof OLuceneFullTextIndex) {
       return (OLuceneFullTextIndex) index;

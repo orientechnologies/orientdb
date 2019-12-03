@@ -86,13 +86,15 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -124,13 +126,15 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -165,13 +169,15 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -214,13 +220,15 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -258,13 +266,15 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -295,14 +305,16 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 3);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
-          .equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
+            .equals(docThree.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -341,14 +353,16 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 3);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
-          .equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
+            .equals(docThree.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -382,13 +396,15 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
 
     Assert.assertEquals(index.getSize(), 2);
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -423,13 +439,15 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
 
     Assert.assertEquals(index.getSize(), 1);
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -459,13 +477,15 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -493,13 +513,15 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 1);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
-      if (!key.getIdentity().equals(docOne.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }
@@ -581,14 +603,16 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getSize(), 2);
 
-    final Stream<Object> keyStream = index.keyStream();
-    final Iterator<Object> keyIterator = keyStream.iterator();
+    final Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      OIdentifiable key = (OIdentifiable) keyIterator.next();
+      while (keyIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keyIterator.next();
 
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
     }
   }

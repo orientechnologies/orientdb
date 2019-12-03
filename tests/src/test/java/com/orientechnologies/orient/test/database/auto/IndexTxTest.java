@@ -72,17 +72,19 @@ public class IndexTxTest extends DocumentDBBaseTest {
     expectedResult.put("doc2", doc2.getIdentity());
 
     OIndex index = getIndex("IndexTxTestIndex");
-    Stream<Object> keyStream = index.keyStream();
-    Iterator<Object> keyIterator = keyStream.iterator();
+    Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (keyIterator.hasNext()) {
-      String key = (String) keyIterator.next();
+      while (keyIterator.hasNext()) {
+        String key = (String) keyIterator.next();
 
-      final ORID expectedValue = expectedResult.get(key);
-      final ORID value = (ORID) index.get(key);
+        final ORID expectedValue = expectedResult.get(key);
+        final ORID value = (ORID) index.get(key);
 
-      Assert.assertTrue(value.isPersistent());
-      Assert.assertEquals(value, expectedValue);
+        Assert.assertTrue(value.isPersistent());
+        Assert.assertEquals(value, expectedValue);
+      }
     }
   }
 }

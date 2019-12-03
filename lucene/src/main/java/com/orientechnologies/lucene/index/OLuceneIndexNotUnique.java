@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> implements OLuceneIndex {
+public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneIndex {
 
   public OLuceneIndexNotUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
@@ -92,7 +92,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
-  public OIndexAbstract<Set<OIdentifiable>> removeCluster(String iClusterName) {
+  public OIndexAbstract removeCluster(String iClusterName) {
     acquireExclusiveLock();
     try {
       if (clustersToIndex.remove(iClusterName)) {
@@ -427,7 +427,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descCursor() {
+  public Stream<ORawPair<Object, ORID>> descStream() {
     while (true) {
       try {
         return IndexStreamSecurityDecorator.decorateStream(this, storage.getIndexStream(indexId, null));

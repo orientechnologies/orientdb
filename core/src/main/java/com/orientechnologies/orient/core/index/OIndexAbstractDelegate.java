@@ -36,28 +36,28 @@ import java.util.stream.Stream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OIndexAbstractDelegate<T> implements OIndex<T> {
-  protected OIndex<T> delegate;
+public class OIndexAbstractDelegate implements OIndex {
+  protected OIndex delegate;
 
-  public OIndexAbstractDelegate(final OIndex<T> iDelegate) {
+  public OIndexAbstractDelegate(final OIndex iDelegate) {
     this.delegate = iDelegate;
   }
 
   @SuppressWarnings("unchecked")
-  public OIndexInternal<T> getInternal() {
-    OIndex<?> internal = delegate;
+  public OIndexInternal getInternal() {
+    OIndex internal = delegate;
     while (!(internal instanceof OIndexInternal) && internal != null)
       internal = internal.getInternal();
 
-    return (OIndexInternal<T>) internal;
+    return (OIndexInternal) internal;
   }
 
-  public OIndex<T> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
+  public OIndex create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
     return delegate.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
   }
 
-  public T get(final Object iKey) {
+  public Object get(final Object iKey) {
     return delegate.get(iKey);
   }
 
@@ -65,7 +65,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.contains(iKey);
   }
 
-  public OIndex<T> put(final Object iKey, final OIdentifiable iValue) {
+  public OIndex put(final Object iKey, final OIdentifiable iValue) {
     checkForKeyType(iKey);
     return delegate.put(iKey, iValue);
   }
@@ -92,7 +92,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
    * {@inheritDoc}
    */
   @Deprecated
-  public OIndex<T> clear() {
+  public OIndex clear() {
     return delegate.clear();
   }
 
@@ -140,7 +140,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     delegate.flush();
   }
 
-  public OIndex<T> delete() {
+  public OIndex delete() {
     return delegate.delete();
   }
 
@@ -198,7 +198,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    final OIndexAbstractDelegate<?> that = (OIndexAbstractDelegate<?>) o;
+    final OIndexAbstractDelegate that = (OIndexAbstractDelegate) o;
 
     return delegate.equals(that.delegate);
   }
@@ -261,8 +261,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descCursor() {
-    return delegate.descCursor();
+  public Stream<ORawPair<Object, ORID>> descStream() {
+    return delegate.descStream();
   }
 
   @Override
@@ -271,7 +271,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public int compareTo(OIndex<T> o) {
+  public int compareTo(OIndex o) {
     return delegate.compareTo(o);
   }
 }

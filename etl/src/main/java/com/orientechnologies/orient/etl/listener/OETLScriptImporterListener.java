@@ -68,7 +68,7 @@ public class OETLScriptImporterListener implements OETLImporterListener {
   }
 
   @Override
-  public void onJoinNotFound(ODatabaseDocument db, OCommandContext iContext, OIndex<?> iIndex, Object iKey) {
+  public void onJoinNotFound(ODatabaseDocument db, OCommandContext iContext, OIndex iIndex, Object iKey) {
     executeEvent(db, "onJoinNotFound", iContext);
   }
 

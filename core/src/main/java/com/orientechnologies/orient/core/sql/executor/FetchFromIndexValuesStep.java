@@ -12,7 +12,7 @@ public class FetchFromIndexValuesStep extends FetchFromIndexStep {
 
   private boolean asc;
 
-  public FetchFromIndexValuesStep(OIndex<?> index, boolean asc, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchFromIndexValuesStep(OIndex index, boolean asc, OCommandContext ctx, boolean profilingEnabled) {
     super(index, null, null, ctx, profilingEnabled);
     this.asc = asc;
   }

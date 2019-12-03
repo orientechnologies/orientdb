@@ -84,7 +84,7 @@ public class LuceneTransactionEmbeddedQueryTest {
       ODocument doc = new ODocument("c1");
       doc.field("p1", new String[] { "abc" });
 
-      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
       db.save(doc);
 
@@ -144,7 +144,7 @@ public class LuceneTransactionEmbeddedQueryTest {
     createSchema(db);
     try {
 
-      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
       Assert.assertEquals(0, index.getSize());
 
@@ -227,7 +227,7 @@ public class LuceneTransactionEmbeddedQueryTest {
     db.create();
     createSchema(db);
     try {
-      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
       Assert.assertEquals(0, index.getSize());
 

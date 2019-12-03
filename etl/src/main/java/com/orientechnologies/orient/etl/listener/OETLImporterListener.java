@@ -34,7 +34,7 @@ public interface OETLImporterListener {
 
   void onDump(ODatabaseDocument db, OCommandContext iContext);
 
-  void onJoinNotFound(ODatabaseDocument db, OCommandContext iContext, final OIndex<?> iIndex, final Object iKey);
+  void onJoinNotFound(ODatabaseDocument db, OCommandContext iContext, final OIndex iIndex, final Object iKey);
 
   void validate(ODatabaseDocument db, OCommandContext iContext, ODocument iRecord);
 }

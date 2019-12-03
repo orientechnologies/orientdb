@@ -45,9 +45,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected volatile int             delayReader           = 1000;
   protected static   int             writerCount           = 5;
   protected          int             baseCount             = 0;
-  protected          long            expected;
-  protected          OIndex<?>       idx;
-  protected          int             maxRetries            = 5;
+  protected          long   expected;
+  protected          OIndex idx;
+  protected          int    maxRetries            = 5;
   protected          boolean         useTransactions       = false;
   protected          List<ServerRun> executeTestsOnServers = null;
   protected          String          className             = "Person";

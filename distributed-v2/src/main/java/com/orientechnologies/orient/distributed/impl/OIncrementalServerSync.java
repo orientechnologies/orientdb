@@ -201,7 +201,7 @@ public class OIncrementalServerSync {
                         if (duplicatedRecord == null) {
                           // RECORD REMOVED: THE INDEX IS DIRTY, FIX THE DIRTY INDEX
                           final ODocument doc = (ODocument) newRecord;
-                          final OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, e.getIndexName());
+                          final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, e.getIndexName());
                           final List<String> fields = index.getDefinition().getFields();
                           final List<Object> values = new ArrayList<Object>(fields.size());
                           for (String f : fields) {

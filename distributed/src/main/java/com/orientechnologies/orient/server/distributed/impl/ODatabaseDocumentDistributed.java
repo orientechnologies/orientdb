@@ -424,7 +424,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
     Set<String> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
-      OIndex<?> index = getMetadata().getIndexManagerInternal().getIndex(this, change.getKey());
+      OIndex index = getMetadata().getIndexManagerInternal().getIndex(this, change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType()) || OClass.INDEX_TYPE.DICTIONARY.name().equals(index.getType())
           || OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(index.getType())) {
@@ -649,7 +649,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
 
     for (Map.Entry<String, OTransactionIndexChanges> change : transaction.getIndexOperations().entrySet()) {
-      OIndex<?> index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
+      OIndex index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType())) {
         OTransactionIndexChangesPerKey nullKeyChanges = change.getValue().nullKeyChanges;

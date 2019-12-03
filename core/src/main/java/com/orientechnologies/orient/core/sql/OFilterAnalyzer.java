@@ -34,15 +34,15 @@ import java.util.*;
  */
 public class OFilterAnalyzer {
 
-  public List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
-    final Set<OIndex<?>> involvedIndexes = iSchemaClass.getInvolvedIndexes(searchResultFields.fields());
+  public List<OIndex> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
+    final Set<OIndex> involvedIndexes = iSchemaClass.getInvolvedIndexes(searchResultFields.fields());
 
-    final List<OIndex<?>> result = new ArrayList<OIndex<?>>(involvedIndexes.size());
+    final List<OIndex> result = new ArrayList<OIndex>(involvedIndexes.size());
 
     if (searchResultFields.lastField.isLong()) {
       result.addAll(OChainedIndexProxy.createProxies(iSchemaClass, searchResultFields.lastField));
     } else {
-      for (OIndex<?> involvedIndex : involvedIndexes) {
+      for (OIndex involvedIndex : involvedIndexes) {
         result.add(involvedIndex);
       }
     }

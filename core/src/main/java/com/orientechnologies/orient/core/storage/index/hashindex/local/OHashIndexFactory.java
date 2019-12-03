@@ -77,7 +77,7 @@ public final class OHashIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public final OIndexInternal<?> createIndex(final String name, final OStorage storage, final String indexType,
+  public final OIndexInternal createIndex(final String name, final OStorage storage, final String indexType,
       final String algorithm, String valueContainerAlgorithm, final ODocument metadata, int version)
       throws OConfigurationException {
 

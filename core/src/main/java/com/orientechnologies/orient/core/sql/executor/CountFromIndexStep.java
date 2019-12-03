@@ -52,7 +52,7 @@ public class CountFromIndexStep extends AbstractExecutionStep {
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-          OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database, target.getIndexName());
+          OIndex idx = database.getMetadata().getIndexManagerInternal().getIndex(database, target.getIndexName());
           long size = idx.getSize();
           executed = true;
           OResultInternal result = new OResultInternal();

@@ -446,7 +446,7 @@ public class OSecurityShared implements OSecurityInternal {
       allClasses.addAll(clazz.getAllSubclasses());
       allClasses.addAll(clazz.getAllSuperClasses());
       for (OClass c : allClasses) {
-        for (OIndex<?> index : c.getIndexes()) {
+        for (OIndex index : c.getIndexes()) {
           List<String> indexFields = index.getDefinition().getFields();
           if (indexFields.size() > 1 && indexFields.contains(((OSecurityResourceProperty) res).getPropertyName())) {
             throw new IllegalArgumentException("Cannot bind security policy on " + resource + " because of existing composite indexes: " + index.getName());

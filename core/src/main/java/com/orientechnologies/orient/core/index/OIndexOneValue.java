@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  *
  * @author Luca Garulli
  */
-public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
+public abstract class OIndexOneValue extends OIndexAbstract {
   public OIndexOneValue(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
     super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
@@ -212,7 +212,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descCursor() {
+  public Stream<ORawPair<Object, ORID>> descStream() {
     acquireSharedLock();
     try {
       while (true) {

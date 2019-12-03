@@ -388,9 +388,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
-    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes(database);
+    final Collection<? extends OIndex> indexes = indexManager.getIndexes(database);
 
-    for (OIndex<?> index : indexes) {
+    for (OIndex index : indexes) {
       final String clsName = index.getDefinition() != null ? index.getDefinition().getClassName() : null;
       if (ODatabaseImport.EXPORT_IMPORT_CLASS_NAME.equals(clsName)) {
         continue;
@@ -447,12 +447,12 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
-    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes(database);
+    final Collection<? extends OIndex> indexes = indexManager.getIndexes(database);
 
     ODocument exportEntry = new ODocument();
 
     int manualIndexes = 0;
-    for (OIndex<?> index : indexes) {
+    for (OIndex index : indexes) {
       if (!index.isAutomatic()) {
         if (manualIndexes == 0) {
           writer.beginCollection(1, true, "manualIndexes");
