@@ -1757,8 +1757,9 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeUniqueIndex");
     Assert.assertEquals(index.size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
-          .map((entry) -> ((Collection) entry).isEmpty() ? 0 : 1).orElse(0), 2);
+      Assert.assertEquals(
+          stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null)).map((entry) -> 1)
+              .orElse(0), 2);
     }
   }
 
@@ -1826,8 +1827,9 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashUniqueIndex");
     Assert.assertEquals(index.size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
-          .map((entry) -> ((Collection) entry).isEmpty() ? 0 : 1).orElse(0), 2);
+      Assert.assertEquals(
+          stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null)).map((entry) -> 1)
+              .orElse(0), 2);
     }
   }
 
