@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
+@Ignore
 public class OSBTreeCollectionManagerRemoteTest {
 
   private static final int                  EXPECTED_FILE_ID      = 17;

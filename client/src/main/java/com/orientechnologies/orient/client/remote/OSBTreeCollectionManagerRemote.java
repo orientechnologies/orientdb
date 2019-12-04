@@ -93,10 +93,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
 
   @Override
   protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
-    OBinarySerializer<OIdentifiable> keySerializer = OLinkSerializer.INSTANCE;
-    OBinarySerializer<Integer> valueSerializer = OIntegerSerializer.INSTANCE;
-
-    return new OSBTreeBonsaiRemote<OIdentifiable, Integer>(collectionPointer, keySerializer, valueSerializer);
+    throw new UnsupportedOperationException();
   }
 
   @Override
