@@ -2341,10 +2341,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
-        if (index.size() == 0) {
-          return null;
-        }
-
         final List<Stream<ORawPair<Object, ORID>>> streams = new ArrayList<>();
 
         Stream<ORawPair<Object, ORID>> stream = null;
