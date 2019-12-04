@@ -343,7 +343,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   }
 
   @Override
-  public long getSize() {
+  public long size() {
     while (true) {
       try {
         // TODO apply current TX
@@ -357,11 +357,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       }
     }
 
-  }
-
-  @Override
-  public long getKeySize() {
-    return 0;
   }
 
   @Override

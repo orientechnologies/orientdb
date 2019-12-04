@@ -1245,7 +1245,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                 }
               } else if (parsedTarget.getTargetIndex() != null) {
                 count += database.getMetadata().getIndexManagerInternal().getIndex(database, parsedTarget.getTargetIndex())
-                    .getSize();
+                    .size();
               } else {
                 final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
                 if (recs != null) {
@@ -2341,7 +2341,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
-        if (index.getKeySize() == 0) {
+        if (index.size() == 0) {
           return null;
         }
 
@@ -2715,12 +2715,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     } else {
       if (isIndexSizeQuery()) {
-        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.getSize());
+        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.size());
         return;
       }
 
       if (isIndexKeySizeQuery()) {
-        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.getKeySize());
+        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.size());
         return;
       }
 

@@ -64,8 +64,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
   }
 
   @Override
-  public long getSize() {
-    long tot = delegate.getSize();
+  public long size() {
+    long tot = delegate.size();
 
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
     if (indexChanges != null) {

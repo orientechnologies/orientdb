@@ -47,7 +47,7 @@ public class OSQLFunctionIndexKeySize extends OSQLFunctionAbstract {
     if (index == null) {
       return null;
     }
-    return index.getKeySize();
+    return index.size();
   }
 
   public String getSyntax() {

@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -92,12 +94,13 @@ public class AutoShardingTest extends DocumentDBBaseTest {
       Assert.assertEquals(deleted.intValue(), 2);
 
       long totExpected = ITERATIONS - (i + 1);
-      Assert.assertEquals(idx.getSize(), totExpected * 2);
-      Assert.assertEquals(idx.getKeySize(), totExpected);
+      Assert.assertEquals(idx.size(), totExpected * 2);
+      try (Stream<ORawPair<Object, ORID>> stream = idx.stream()) {
+        Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), totExpected);
+      }
     }
 
-    Assert.assertEquals(idx.getSize(), 0);
-    Assert.assertEquals(idx.getKeySize(), 0);
+    Assert.assertEquals(idx.size(), 0);
   }
 
   @Test
@@ -110,12 +113,16 @@ public class AutoShardingTest extends DocumentDBBaseTest {
 
       Assert.assertEquals(updated.intValue(), 2);
 
-      Assert.assertEquals(idx.getSize(), ITERATIONS * 2);
-      Assert.assertEquals(idx.getKeySize(), ITERATIONS);
+      Assert.assertEquals(idx.size(), ITERATIONS * 2);
+      try (Stream<ORawPair<Object, ORID>> stream = idx.stream()) {
+        Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), ITERATIONS);
+      }
     }
 
-    Assert.assertEquals(idx.getSize(), ITERATIONS * 2);
-    Assert.assertEquals(idx.getKeySize(), ITERATIONS);
+    Assert.assertEquals(idx.size(), ITERATIONS * 2);
+    try (Stream<ORawPair<Object, ORID>> stream = idx.stream()) {
+      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), ITERATIONS);
+    }
   }
 
   @Test

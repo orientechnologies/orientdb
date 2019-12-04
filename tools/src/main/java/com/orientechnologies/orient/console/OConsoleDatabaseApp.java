@@ -1670,7 +1670,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         final ODocument row = new ODocument();
         resultSet.add(row);
 
-        final long indexSize = index.getKeySize();
+        final long indexSize = index.size();
         totalIndexedRecords += indexSize;
 
         row.field("NAME", index.getName());
@@ -1679,7 +1679,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
         try {
           final OIndexDefinition indexDefinition = index.getDefinition();
-          final long size = index.getKeySize();
+          final long size = index.size();
           if (indexDefinition != null) {
             row.field("CLASS", indexDefinition.getClassName());
             row.field("COLLATE", indexDefinition.getCollate().getName());

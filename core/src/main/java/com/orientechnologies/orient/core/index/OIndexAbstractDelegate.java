@@ -121,8 +121,8 @@ public class OIndexAbstractDelegate implements OIndex {
     return delegate.iterateEntriesMinor(toKey, toInclusive, ascOrder);
   }
 
-  public long getSize() {
-    return delegate.getSize();
+  public long size() {
+    return delegate.size();
   }
 
   public OIndex delete() {
@@ -205,10 +205,6 @@ public class OIndexAbstractDelegate implements OIndex {
   @Override
   public String toString() {
     return delegate.toString();
-  }
-
-  public long getKeySize() {
-    return delegate.getKeySize();
   }
 
   public String getDatabaseName() {

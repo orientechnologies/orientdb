@@ -346,7 +346,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     });
   }
 
-  public long getSize() {
+  public long size() {
     acquireSharedLock();
     try {
       while (true) {
@@ -360,21 +360,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       releaseSharedLock();
     }
 
-  }
-
-  public long getKeySize() {
-    acquireSharedLock();
-    try {
-      while (true) {
-        try {
-          return storage.getIndexSize(indexId, null);
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-      }
-    } finally {
-      releaseSharedLock();
-    }
   }
 
   @Override

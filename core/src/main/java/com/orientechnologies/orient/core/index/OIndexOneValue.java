@@ -154,22 +154,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     }
   }
 
-  public long getSize() {
-    acquireSharedLock();
-    try {
-      while (true) {
-        try {
-          return storage.getIndexSize(indexId, null);
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-      }
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public long getKeySize() {
+  public long size() {
     acquireSharedLock();
     try {
       while (true) {

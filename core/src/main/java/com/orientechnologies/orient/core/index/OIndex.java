@@ -100,12 +100,7 @@ public interface OIndex extends Comparable<OIndex> {
   /**
    * @return number of entries in the index.
    */
-  long getSize();
-
-  /**
-   * @return Number of keys in index
-   */
-  long getKeySize();
+  long size();
 
   /**
    * Delete the index.
