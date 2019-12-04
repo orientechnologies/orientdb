@@ -83,8 +83,16 @@ public class OTransactionIndexChanges {
   }
 
   public Object[] firstAndLastKeys(Object from, boolean fromInclusive, Object to, boolean toInclusive) {
-    final NavigableMap<Object, OTransactionIndexChangesPerKey> interval = changesPerKey
-        .subMap(from, fromInclusive, to, toInclusive);
+    final NavigableMap<Object, OTransactionIndexChangesPerKey> interval;
+    if (from != null && to != null) {
+      interval = changesPerKey.subMap(from, fromInclusive, to, toInclusive);
+    } else if (from != null) {
+      interval = changesPerKey.headMap(from, fromInclusive);
+    } else if (to != null) {
+      interval = changesPerKey.tailMap(to, toInclusive);
+    } else {
+      interval = changesPerKey;
+    }
 
     if (interval.isEmpty()) {
       return new Object[0];
@@ -97,8 +105,7 @@ public class OTransactionIndexChanges {
     return changesPerKey.floorKey(key);
   }
 
-  public OIndexInternal resolveAssociatedIndex(String indexName, OIndexManagerAbstract indexManager,
-      ODatabaseDocumentInternal db) {
+  public OIndexInternal resolveAssociatedIndex(String indexName, OIndexManagerAbstract indexManager, ODatabaseDocumentInternal db) {
     if (resolvedIndex == null) {
       final OIndex index = indexManager.getIndex(db, indexName);
       if (index != null)

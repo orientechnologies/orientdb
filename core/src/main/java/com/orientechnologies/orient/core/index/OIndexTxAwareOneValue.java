@@ -52,8 +52,12 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
         OTransactionIndexChanges indexChanges) {
       this.indexChanges = indexChanges;
 
-      fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
-      toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
+      if (fromKey != null) {
+        fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
+      }
+      if (toKey != null) {
+        toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
+      }
 
       final Object[] keys = indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
       if (keys.length == 0) {
@@ -123,8 +127,12 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
         OTransactionIndexChanges indexChanges) {
       this.indexChanges = indexChanges;
 
-      fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
-      toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
+      if (fromKey != null) {
+        fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
+      }
+      if (toKey != null) {
+        toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
+      }
 
       final Object[] keys = indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
       if (keys.length == 0) {
@@ -195,7 +203,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     ORID result;
     if (!indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
-      result = Optional.ofNullable((OIdentifiable)super.get(key)).map(OIdentifiable::getIdentity).orElse(null);
+      result = Optional.ofNullable((OIdentifiable) super.get(key)).map(OIdentifiable::getIdentity).orElse(null);
     } else {
       // BEGIN FROM EMPTY RESULT SET
       result = null;
@@ -211,12 +219,49 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   @Override
+  public Stream<ORawPair<Object, ORID>> stream() {
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
+        .getIndexChangesInternal(delegate.getName());
+    if (indexChanges == null) {
+      return super.stream();
+    }
+
+    final Stream<ORawPair<Object, ORID>> txStream = StreamSupport
+        .stream(new PureTxBetweenIndexForwardSpliterator(null, true, null, true, indexChanges), false);
+    if (indexChanges.cleared) {
+      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+    }
+
+    final Stream<ORawPair<Object, ORID>> backedStream = super.stream();
+    return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, true));
+  }
+
+  @Override
+  public Stream<ORawPair<Object, ORID>> descStream() {
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
+        .getIndexChangesInternal(delegate.getName());
+    if (indexChanges == null) {
+      return super.descStream();
+    }
+
+    final Stream<ORawPair<Object, ORID>> txStream = StreamSupport
+        .stream(new PureTxBetweenIndexBackwardSpliterator(null, true, null, true, indexChanges), false);
+    if (indexChanges.cleared) {
+      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+    }
+
+    final Stream<ORawPair<Object, ORID>> backedStream = super.descStream();
+    return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, false));
+  }
+
+  @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey,
       final boolean toInclusive, final boolean ascOrder) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null)
+    if (indexChanges == null) {
       return super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
+    }
 
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);

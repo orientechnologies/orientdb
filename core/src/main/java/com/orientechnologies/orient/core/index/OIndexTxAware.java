@@ -19,12 +19,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
+import java.util.stream.Stream;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -69,7 +72,9 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
 
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
     if (indexChanges != null) {
-      throw new UnsupportedOperationException("Size of index is undefined if transaction is in progress");
+      try (Stream<ORawPair<Object, ORID>> stream = stream()) {
+        return stream.count();
+      }
     }
 
     return tot;

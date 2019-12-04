@@ -502,6 +502,12 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
         }
       }
 
+      if (currentIterator != null) {
+        final OIdentifiable identifiable = currentIterator.next();
+        action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
+        return true;
+      }
+
       currentIterator = null;
       return false;
     }
