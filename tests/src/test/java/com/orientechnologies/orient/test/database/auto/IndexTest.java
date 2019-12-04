@@ -883,17 +883,17 @@ public class IndexTest extends ObjectDBBaseTest {
     final OIndex index = getIndex("Profile.nick");
 
     Iterator<ORawPair<Object, ORID>> streamIterator;
+    Object key;
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
       streamIterator = stream.iterator();
       Assert.assertTrue(streamIterator.hasNext());
 
-      streamIterator.next().second.getRecord().delete();
+      ORawPair<Object, ORID> pair = streamIterator.next();
+      key = pair.first;
+      pair.second.getRecord().delete();
     }
 
-    try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      streamIterator = stream.iterator();
-      Assert.assertFalse(streamIterator.hasNext());
-    }
+    Assert.assertNull(index.get(key));
   }
 
   public void createInheritanceIndex() {
