@@ -73,7 +73,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     document.save();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     Iterator<Object> keyIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -90,7 +90,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
 
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
       valuesIterator = valueStream.iterator();
@@ -130,7 +130,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     Iterator<Object> keyIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -145,7 +145,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -189,7 +189,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     document.save();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -204,7 +204,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -246,7 +246,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -261,7 +261,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -308,7 +308,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -323,7 +323,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -363,7 +363,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
         .execute();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 3);
+    Assert.assertEquals(keyIndexMap.size(), 3);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -378,7 +378,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 3);
+    Assert.assertEquals(valueIndexMap.size(), 3);
 
     final Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -427,7 +427,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 3);
+    Assert.assertEquals(keyIndexMap.size(), 3);
 
     final Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -443,7 +443,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 3);
+    Assert.assertEquals(valueIndexMap.size(), 3);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -487,7 +487,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     final Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -502,7 +502,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     final Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -543,7 +543,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
     final Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
       keysIterator = keyStream.iterator();
@@ -557,7 +557,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -605,9 +605,9 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
     final Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
       keysIterator = keyStream.iterator();
@@ -621,7 +621,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     final Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -664,7 +664,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -679,7 +679,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -719,7 +719,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove linkMap = 'key2'")).execute();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     final Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -734,7 +734,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -783,7 +783,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -798,7 +798,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -842,7 +842,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 3);
+    Assert.assertEquals(keyIndexMap.size(), 3);
 
     final Iterator<Object> keyIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -857,7 +857,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 3);
+    Assert.assertEquals(valueIndexMap.size(), 3);
 
     final Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {
@@ -896,10 +896,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     document.delete();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 0);
+    Assert.assertEquals(keyIndexMap.size(), 0);
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 0);
+    Assert.assertEquals(valueIndexMap.size(), 0);
   }
 
   public void testIndexMapRemoveInTx() {
@@ -930,10 +930,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 0);
+    Assert.assertEquals(keyIndexMap.size(), 0);
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 0);
+    Assert.assertEquals(valueIndexMap.size(), 0);
   }
 
   public void testIndexMapRemoveInTxRollback() {
@@ -959,7 +959,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndexMap.getSize(), 2);
+    Assert.assertEquals(keyIndexMap.size(), 2);
 
     final Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndexMap.keyStream()) {
@@ -974,7 +974,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     }
 
     final OIndex valueIndexMap = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndexMap.getSize(), 2);
+    Assert.assertEquals(valueIndexMap.size(), 2);
 
     final Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndexMap.keyStream()) {

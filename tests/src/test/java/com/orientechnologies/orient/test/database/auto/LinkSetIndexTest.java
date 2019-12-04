@@ -49,7 +49,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     if (database.getStorage().isRemote()) {
       OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "linkSetIndex");
-      Assert.assertEquals(index.getSize(), 0);
+      Assert.assertEquals(index.size(), 0);
 
     }
 
@@ -74,7 +74,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.save();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -114,7 +114,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -157,7 +157,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.save();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -208,7 +208,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -254,7 +254,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -292,7 +292,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " add linkSet = " + docThree.getIdentity())).execute();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 3);
+    Assert.assertEquals(index.size(), 3);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -340,7 +340,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 3);
+    Assert.assertEquals(index.size(), 3);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -383,7 +383,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -426,7 +426,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.size(), 1);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -464,7 +464,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -499,7 +499,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove linkSet = " + docTwo.getIdentity())).execute();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.size(), 1);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -534,7 +534,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.delete();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.size(), 0);
   }
 
   public void testIndexLinkSetRemoveInTx() {
@@ -564,7 +564,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.size(), 0);
   }
 
   public void testIndexLinkSetRemoveInTxRollback() {
@@ -590,7 +590,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {

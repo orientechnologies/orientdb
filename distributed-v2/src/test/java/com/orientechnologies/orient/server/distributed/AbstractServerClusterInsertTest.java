@@ -527,7 +527,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
             database.getMetadata().getIndexManagerInternal().getIndex(database, indexName));
 
         try {
-          final long indexSize = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getSize();
+          final long indexSize = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).size();
 
           result.put(server.serverId, indexSize);
 

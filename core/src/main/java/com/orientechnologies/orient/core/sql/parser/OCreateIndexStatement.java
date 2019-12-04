@@ -111,7 +111,7 @@ public class OCreateIndexStatement extends ODDLStatement {
     }
 
     if (idx != null)
-      return idx.getSize();
+      return idx.size();
 
     return null;
   }

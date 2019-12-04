@@ -64,7 +64,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     database.save(collector);
 
     final OIndex index = getIndex("Collector.stringCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -94,7 +94,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     }
 
     final OIndex index = getIndex("Collector.stringCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -118,7 +118,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     database.save(collector);
 
     final OIndex index = getIndex("Collector.stringCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -151,7 +151,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
       keysIterator = keyStream.iterator();
@@ -178,7 +178,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -203,7 +203,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + collector.getId() + " add stringCollection = 'cookies'")).execute();
 
     final OIndex index = getIndex("Collector.stringCollection");
-    Assert.assertEquals(index.getSize(), 3);
+    Assert.assertEquals(index.size(), 3);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -238,7 +238,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertEquals(index.getSize(), 3);
+    Assert.assertEquals(index.size(), 3);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -267,7 +267,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     database.rollback();
 
     final OIndex index = getIndex("Collector.stringCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -301,7 +301,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     }
 
     final OIndex index = getIndex("Collector.stringCollection");
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.size(), 1);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -330,7 +330,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     database.rollback();
 
     final OIndex index = getIndex("Collector.stringCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {
@@ -379,7 +379,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.size(), 0);
   }
 
   public void testIndexCollectionRemoveInTx() {
@@ -399,7 +399,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     final OIndex index = getIndex("Collector.stringCollection");
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.size(), 0);
   }
 
   public void testIndexCollectionRemoveInTxRollback() {
@@ -413,7 +413,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     database.rollback();
 
     final OIndex index = getIndex("Collector.stringCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = index.keyStream()) {

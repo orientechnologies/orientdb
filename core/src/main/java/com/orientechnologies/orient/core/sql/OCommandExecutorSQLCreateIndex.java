@@ -286,7 +286,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     }
 
     if (idx != null)
-      return idx.getSize();
+      return idx.size();
 
     return null;
   }

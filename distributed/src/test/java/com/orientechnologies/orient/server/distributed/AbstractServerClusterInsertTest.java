@@ -525,13 +525,13 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
             database.getMetadata().getIndexManagerInternal().getIndex(database, indexName));
 
         try {
-          final long indexSize = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getSize();
+          final long indexSize = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).size();
 
           result.put(server.serverId, indexSize);
 
           final OIndex index = (database).getMetadata().getIndexManagerInternal().getIndex(database, indexName);
 
-          Assert.assertEquals("Index count is different by index content", indexSize, index.getSize());
+          Assert.assertEquals("Index count is different by index content", indexSize, index.size());
 
           if (indexSize != expected)
             printMissingIndexEntries(server, database);

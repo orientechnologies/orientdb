@@ -67,7 +67,7 @@ public class OTruncateClassStatementExecutionTest {
     result.close();
     Assert.assertTrue(set.containsAll(Arrays.asList(5, 6, 7, 8, 9, -1)));
 
-    Assert.assertEquals(index.getSize(), 6);
+    Assert.assertEquals(index.size(), 6);
 
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
       stream.forEach((entry) -> {
@@ -147,13 +147,13 @@ public class OTruncateClassStatementExecutionTest {
       final OIndexManagerAbstract indexManager = ((OMetadataInternal) database.getMetadata()).getIndexManagerInternal();
       final OIndex indexOne = indexManager
           .getIndex((ODatabaseDocumentInternal) database, "TestTruncateVertexClassSuperclassWithIndex_index");
-      Assert.assertEquals(2, indexOne.getSize());
+      Assert.assertEquals(2, indexOne.size());
 
       database.command("truncate class TestTruncateVertexClassSubclassWithIndex");
-      Assert.assertEquals(1, indexOne.getSize());
+      Assert.assertEquals(1, indexOne.size());
 
       database.command("truncate class TestTruncateVertexClassSuperclassWithIndex polymorphic");
-      Assert.assertEquals(0, indexOne.getSize());
+      Assert.assertEquals(0, indexOne.size());
     }
 
   }

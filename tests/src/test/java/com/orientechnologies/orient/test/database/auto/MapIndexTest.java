@@ -75,7 +75,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.save(mapper);
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keyIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -91,7 +91,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -127,7 +127,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
       keysIterator = keyStream.iterator();
@@ -141,7 +141,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -178,7 +178,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -193,7 +193,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -237,7 +237,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -252,7 +252,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -290,7 +290,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.rollback();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -305,7 +305,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -335,7 +335,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key3', 30")).execute();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 3);
+    Assert.assertEquals(keyIndex.size(), 3);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -350,7 +350,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 3);
+    Assert.assertEquals(valueIndex.size(), 3);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -390,7 +390,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 3);
+    Assert.assertEquals(keyIndex.size(), 3);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -405,7 +405,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 3);
+    Assert.assertEquals(valueIndex.size(), 3);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -440,7 +440,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -455,7 +455,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -485,7 +485,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key2', 40")).execute();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -501,7 +501,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -540,7 +540,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -555,7 +555,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -589,7 +589,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.rollback();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -604,7 +604,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -635,7 +635,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'")).execute();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -650,7 +650,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
@@ -690,7 +690,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -706,7 +706,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
       valuesIterator = valueStream.iterator();
@@ -741,7 +741,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.getSize(), 3);
+    Assert.assertEquals(keyIndex.size(), 3);
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
       keysIterator = keyStream.iterator();
@@ -756,7 +756,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertEquals(valueIndex.getSize(), 3);
+    Assert.assertEquals(valueIndex.size(), 3);
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {
       valuesIterator = valueStream.iterator();
@@ -784,11 +784,11 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.delete(mapper);
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 0);
+    Assert.assertEquals(keyIndex.size(), 0);
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertEquals(valueIndex.getSize(), 0);
+    Assert.assertEquals(valueIndex.size(), 0);
   }
 
   public void testIndexMapRemoveInTx() {
@@ -813,10 +813,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 0);
+    Assert.assertEquals(keyIndex.size(), 0);
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 0);
+    Assert.assertEquals(valueIndex.size(), 0);
   }
 
   public void testIndexMapRemoveInTxRollback() {
@@ -836,7 +836,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.rollback();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getSize(), 2);
+    Assert.assertEquals(keyIndex.size(), 2);
 
     Iterator<Object> keysIterator;
     try (Stream<Object> keyStream = keyIndex.keyStream()) {
@@ -851,7 +851,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getSize(), 2);
+    Assert.assertEquals(valueIndex.size(), 2);
 
     Iterator<Object> valuesIterator;
     try (Stream<Object> valueStream = valueIndex.keyStream()) {

@@ -45,7 +45,7 @@ public class OCommandExecutorSQLSelectTestIndex {
       assertEquals(results.size(), 1);
 
       final OIndex index = databaseDocumentTx.getMetadata().getIndexManagerInternal().getIndex(databaseDocumentTx, "Foo.bar");
-      assertEquals(index.getSize(), 1);
+      assertEquals(index.size(), 1);
     } finally {
       databaseDocumentTx.drop();
     }

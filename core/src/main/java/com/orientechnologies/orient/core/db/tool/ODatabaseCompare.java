@@ -406,10 +406,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         continue;
       }
 
-      final long indexOneSize = makeDbCall(databaseOne, database -> indexOne.getSize());
+      final long indexOneSize = makeDbCall(databaseOne, database -> indexOne.size());
 
       @SuppressWarnings("ObjectAllocationInLoop")
-      final long indexTwoSize = makeDbCall(databaseTwo, database -> indexTwo.getSize());
+      final long indexTwoSize = makeDbCall(databaseTwo, database -> indexTwo.size());
 
       if (indexOneSize != indexTwoSize) {
         ok = false;

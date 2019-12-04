@@ -98,7 +98,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(coll.size(), 0);
 
-    Assert.assertEquals(0, index.getSize());
+    Assert.assertEquals(0, index.size());
 
     db.rollback();
 
@@ -107,7 +107,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(1, index.size());
 
   }
 
@@ -122,7 +122,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
       e.printStackTrace();
     }
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.size(), 0);
 
     db.begin();
 
@@ -154,7 +154,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     }
     Assert.assertEquals(i, 0);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.size(), 1);
 
     query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -170,7 +170,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.size(), 1);
 
   }
 
@@ -185,7 +185,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
       e.printStackTrace();
     }
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.size(), 0);
 
     db.begin();
 
@@ -224,7 +224,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(1, i);
     Assert.assertEquals(rid.getIdentity().toString(), doc1.getIdentity().toString());
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(2, index.size());
 
     query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -241,7 +241,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     assertThat(vertices).hasSize(2);
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(2, index.size());
 
   }
 

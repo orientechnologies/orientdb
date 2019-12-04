@@ -67,7 +67,7 @@ public class IndexChangesQueryTest {
 
     database.commit();
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.size(), 2);
     Assert.assertFalse(((Collection) index.get(1)).isEmpty());
     Assert.assertFalse(((Collection) index.get(2)).isEmpty());
   }
@@ -93,7 +93,7 @@ public class IndexChangesQueryTest {
 
     database.commit();
 
-    Assert.assertEquals(3, index.getSize());
+    Assert.assertEquals(3, index.size());
     Assert.assertEquals(2, ((Collection) index.get(1)).size());
     Assert.assertEquals(1, ((Collection) index.get(2)).size());
 
@@ -118,7 +118,7 @@ public class IndexChangesQueryTest {
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    Assert.assertEquals(3, index.getSize());
+    Assert.assertEquals(3, index.size());
     Assert.assertEquals(2, ((Collection) index.get(1)).size());
     Assert.assertEquals(1, ((Collection) index.get(2)).size());
   }

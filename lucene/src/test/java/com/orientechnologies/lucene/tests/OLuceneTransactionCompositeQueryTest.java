@@ -99,7 +99,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     Assert.assertEquals(coll.size(), 0);
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.size(), 0);
     vertices.close();
     db.rollback();
 
@@ -108,7 +108,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.size(), 1);
     vertices.close();
   }
 
@@ -123,7 +123,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
       e.printStackTrace();
     }
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.size(), 0);
 
     db.begin();
 
@@ -155,7 +155,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     }
     Assert.assertEquals(i, 0);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.size(), 1);
 
     vertices.close();
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"removed\")=true ";
@@ -173,7 +173,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.size(), 1);
     vertices.close();
 
   }
@@ -189,7 +189,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
       e.printStackTrace();
     }
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.size(), 0);
 
     db.begin();
 
@@ -228,7 +228,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     Assert.assertEquals(1, i);
     Assert.assertEquals(rid.getIdentity().toString(), doc1.getIdentity().toString());
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(2, index.size());
     vertices.close();
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"removed\" )=true";
     vertices = db.query(query);
@@ -245,7 +245,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(2);
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(2, index.size());
     vertices.close();
   }
 

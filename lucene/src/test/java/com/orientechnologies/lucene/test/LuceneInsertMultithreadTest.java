@@ -105,7 +105,7 @@ public class LuceneInsertMultithreadTest {
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
-    Assertions.assertThat(idx.getSize()).isEqualTo(THREADS * CYCLE);
+    Assertions.assertThat(idx.size()).isEqualTo(THREADS * CYCLE);
     orientDB.drop(dbName);
   }
 

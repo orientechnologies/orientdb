@@ -129,7 +129,7 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(1, index.size());
 
   }
 
@@ -156,7 +156,7 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(2, index.size());
 
   }
 

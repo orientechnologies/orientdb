@@ -228,7 +228,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
       if (compiledFilter == null || compiledFilter.getRootCondition() == null) {
         if (returning.equalsIgnoreCase("COUNT")) {
           // RETURNS ONLY THE COUNT
-          final long total = index.getSize();
+          final long total = index.size();
           index.clear();
           return total;
         } else {
