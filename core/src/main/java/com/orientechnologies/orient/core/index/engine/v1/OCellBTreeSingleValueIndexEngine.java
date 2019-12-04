@@ -198,10 +198,6 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
 
   @Override
   public long size(final ValuesTransformer transformer) {
-    if (transformer != null) {
-      throw new IllegalStateException("Transformer is not allowed in index which does not support multiple values");
-    }
-
     return sbTree.size();
   }
 

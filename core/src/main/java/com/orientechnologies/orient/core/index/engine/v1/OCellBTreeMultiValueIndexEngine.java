@@ -442,10 +442,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     assert svTree != null;
     assert nullTree != null;
 
-    if (transformer == null) {
-      return svTreeKeys();
-    }
-
     return svTreeEntries();
   }
 
@@ -486,31 +482,6 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     assert nullTree != null;
 
     return svTree.size() + nullTree.size();
-  }
-
-  private long svTreeKeys() {
-    assert svTree != null;
-    assert nullTree != null;
-
-    int count = 0;
-    if (nullTree.size() > 0) {
-      count++;
-    }
-
-    final OCompositeKey firstKey = svTree.firstKey();
-    final OCompositeKey lastKey = svTree.lastKey();
-
-    final Object[] prevKey = new Object[] { new Object() };
-    try (Stream<ORawPair<OCompositeKey, ORID>> stream = svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
-      count += stream.filter((pair) -> {
-        final Object key = extractKey(pair.first);
-        final boolean result = !prevKey[0].equals(key);
-        prevKey[0] = key;
-        return result;
-      }).count();
-    }
-
-    return count;
   }
 
   @Override
