@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -54,13 +53,7 @@ public class OSQLFunctionIndexKeySize extends OSQLFunctionAbstract {
       return null;
     }
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      return stream.map((pair) -> pair.first).distinct().count() + Optional.ofNullable(index.get(null)).map((entry) -> {
-        if (entry instanceof Collection) {
-          return ((Collection) entry).size();
-        }
-
-        return 1;
-      }).orElse(0);
+      return stream.map((pair) -> pair.first).distinct().count() + Optional.ofNullable(index.get(null)).map((entry) -> 1).orElse(0);
     }
   }
 
