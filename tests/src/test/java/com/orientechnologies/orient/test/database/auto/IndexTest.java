@@ -1758,7 +1758,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(index.size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
       Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
-          .map((value) -> ((Collection) value).size()).orElse(0), 2);
+          .map((value) -> 1).orElse(0), 2);
     }
   }
 
@@ -1827,7 +1827,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(index.size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
       Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
-          .map((value) -> ((Collection) value).size()).orElse(0), 2);
+          .map((value) -> 1).orElse(0), 2);
     }
   }
 

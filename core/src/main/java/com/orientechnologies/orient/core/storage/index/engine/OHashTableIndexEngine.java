@@ -332,7 +332,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           }
         }
 
-        currentIterator = null;
+        if (currentIterator != null) {
+          final OIdentifiable identifiable = currentIterator.next();
+          action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
+          return true;
+        }
+
         return false;
       }
 
@@ -414,7 +419,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           }
         }
 
-        currentIterator = null;
+        if (currentIterator != null) {
+          final OIdentifiable identifiable = currentIterator.next();
+          action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
+          return true;
+        }
+
         return false;
       }
 
