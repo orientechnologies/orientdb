@@ -19,11 +19,17 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+
+import java.util.Collection;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * returns the number of keys for an index
@@ -47,7 +53,15 @@ public class OSQLFunctionIndexKeySize extends OSQLFunctionAbstract {
     if (index == null) {
       return null;
     }
-    return index.size();
+    try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
+      return stream.map((pair) -> pair.first).distinct().count() + Optional.ofNullable(index.get(null)).map((entry) -> {
+        if (entry instanceof Collection) {
+          return ((Collection) entry).size();
+        }
+
+        return 1;
+      }).orElse(0);
+    }
   }
 
   public String getSyntax() {

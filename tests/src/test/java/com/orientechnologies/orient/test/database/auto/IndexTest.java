@@ -172,9 +172,8 @@ public class IndexTest extends ObjectDBBaseTest {
     int profileSize = result.size();
 
     database.getMetadata().getIndexManagerInternal().reload();
-    Assert
-        .assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick").size(),
-            profileSize);
+    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick").size(),
+        profileSize);
     for (int i = 0; i < 10; i++) {
       Profile profile = new Profile("Yay-" + i, "Jay", "Miner", null);
       database.save(profile);
@@ -1758,7 +1757,8 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeUniqueIndex");
     Assert.assertEquals(index.size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), 2);
+      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
+          .map((value) -> ((Collection) value).size()).orElse(0), 2);
     }
   }
 
@@ -1780,7 +1780,8 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeNotUniqueOneIndex");
     Assert.assertEquals(index.size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), 2);
+      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
+          .map((value) -> ((Collection) value).size()).orElse(0), 2);
     }
   }
 
@@ -1801,7 +1802,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeNotUniqueTwoIndex");
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), 1);
+      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
+          .map((value) -> ((Collection) value).size()).orElse(0), 1);
     }
     Assert.assertEquals(index.size(), 2);
   }
@@ -1824,7 +1826,8 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashUniqueIndex");
     Assert.assertEquals(index.size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), 2);
+      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
+          .map((value) -> ((Collection) value).size()).orElse(0), 2);
     }
   }
 
@@ -1846,7 +1849,8 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashNotUniqueOneIndex");
     Assert.assertEquals(index.size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), 2);
+      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
+          .map((value) -> ((Collection) value).size()).orElse(0), 2);
     }
   }
 
@@ -1867,7 +1871,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashNotUniqueTwoIndex");
     try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), 1);
+      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
+          .map((value) -> ((Collection) value).size()).orElse(0), 1);
     }
     Assert.assertEquals(index.size(), 2);
   }

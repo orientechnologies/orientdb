@@ -289,6 +289,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
     }
 
+    @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> backedStream = super.stream();
     return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, true));
   }
@@ -308,6 +309,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
     }
 
+    @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> backedStream = super.descStream();
     return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, false));
   }
