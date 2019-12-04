@@ -1832,6 +1832,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNullValuesCountHashNotUniqueOne() {
+    checkEmbeddedDB();
+
     final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
 
     OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountHashNotUniqueOne");
@@ -1855,6 +1857,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNullValuesCountHashNotUniqueTwo() {
+    checkEmbeddedDB();
+
     final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
 
     OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountHashNotUniqueTwo");
