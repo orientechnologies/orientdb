@@ -695,9 +695,15 @@ public class OMatchExecutionPlanner {
 
     Map<String, Long> result = new LinkedHashMap<String, Long>();
     for (String alias : allAliases) {
+      ORid rid = aliasRids.get(alias);
+      if (rid != null) {
+        result.put(alias, 1L);
+        continue;
+      }
+      
       String className = aliasClasses.get(alias);
       String clusterName = aliasClusters.get(alias);
-      ORid rid = aliasRids.get(alias);
+
       if (className == null && clusterName == null) {
         continue;
       }
@@ -734,8 +740,6 @@ public class OMatchExecutionPlanner {
         } else {
           result.put(alias, db.countClusterElements(clusterName));
         }
-      } else if (rid != null) {
-        result.put(alias, 1L);
       }
     }
     return result;
