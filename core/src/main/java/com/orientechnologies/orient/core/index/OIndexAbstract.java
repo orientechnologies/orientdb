@@ -314,8 +314,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   /**
    * {@inheritDoc}
    */
-  @Override
-  public long getRebuildVersion() {
+  private long getRebuildVersion() {
     return 0;
   }
 

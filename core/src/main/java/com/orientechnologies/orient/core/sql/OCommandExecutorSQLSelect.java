@@ -1244,8 +1244,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                   count += database.countClusterElements(cluster);
                 }
               } else if (parsedTarget.getTargetIndex() != null) {
-                count += database.getMetadata().getIndexManagerInternal().getIndex(database, parsedTarget.getTargetIndex())
-                    .size();
+                count += database.getMetadata().getIndexManagerInternal().getIndex(database, parsedTarget.getTargetIndex()).size();
               } else {
                 final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
                 if (recs != null) {
@@ -1956,7 +1955,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         // go through all possible index for given set of fields.
         for (final OIndex index : involvedIndexes) {
-          final long indexRebuildVersion = index.getRebuildVersion();
 
           final OIndexDefinition indexDefinition = index.getDefinition();
 
@@ -2029,12 +2027,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             continue;
           }
 
-          if (indexRebuildVersion == index.getRebuildVersion()) {
-            cursors.add(cursor);
-            indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
-            indexUsed = true;
-            break;
-          }
+          cursors.add(cursor);
+          indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
+          indexUsed = true;
+          break;
         }
         if (indexUsed) {
           break;
@@ -2106,8 +2102,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           // go through all possible index for given set of fields.
           for (final OIndex index : involvedIndexes) {
-            final long indexRebuildVersion = index.getRebuildVersion();
-
             final OIndexDefinition indexDefinition = index.getDefinition();
 
             if (searchResult.containsNullValues && indexDefinition.isNullValuesIgnored()) {
@@ -2180,12 +2174,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               continue;
             }
 
-            if (index.getRebuildVersion() == indexRebuildVersion) {
-              streams.add(stream);
-              indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
-              indexUsed = true;
-              break;
-            }
+            streams.add(stream);
+            indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
+            indexUsed = true;
+            break;
           }
           if (indexUsed) {
             break;
@@ -2337,7 +2329,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     for (OIndex index : indexes) {
       if (orderByOptimizer.canBeUsedByOrderBy(index, orderedFields)) {
-        final long indexRebuildVersion = index.getRebuildVersion();
 
         final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
@@ -2364,39 +2355,36 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
 
-        if (indexRebuildVersion == index.getRebuildVersion()) {
-          fullySortedByIndex = true;
+        fullySortedByIndex = true;
 
-          if (context.isRecordingMetrics()) {
-            context.setVariable("indexIsUsedInOrderBy", true);
-            context.setVariable("fullySortedByIndex", fullySortedByIndex);
+        if (context.isRecordingMetrics()) {
+          context.setVariable("indexIsUsedInOrderBy", true);
+          context.setVariable("fullySortedByIndex", fullySortedByIndex);
 
-            Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
-            if (idxNames == null) {
-              idxNames = new HashSet<String>();
-              context.setVariable("involvedIndexes", idxNames);
-            }
-
-            idxNames.add(index.getName());
+          Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+          if (idxNames == null) {
+            idxNames = new HashSet<String>();
+            context.setVariable("involvedIndexes", idxNames);
           }
 
-          if (streams.isEmpty()) {
-            return Stream.empty();
-          }
-
-          if (streams.size() == 1) {
-            return streams.get(0);
-          }
-
-          Stream<ORawPair<Object, ORID>> resultStream = streams.get(0);
-          for (int i = 1; i < streams.size(); i++) {
-            resultStream = Stream.concat(resultStream, streams.get(i));
-          }
-
-          return resultStream;
-        } else {
-          return null;
+          idxNames.add(index.getName());
         }
+
+        if (streams.isEmpty()) {
+          return Stream.empty();
+        }
+
+        if (streams.size() == 1) {
+          return streams.get(0);
+        }
+
+        Stream<ORawPair<Object, ORID>> resultStream = streams.get(0);
+        for (int i = 1; i < streams.size(); i++) {
+          resultStream = Stream.concat(resultStream, streams.get(i));
+        }
+
+        return resultStream;
+
       }
     }
 

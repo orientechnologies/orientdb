@@ -148,15 +148,11 @@ public interface OIndex extends Comparable<OIndex> {
    * Rebuilds an automatic index.
    *
    * @return The number of entries rebuilt
-   *
-   * @see #getRebuildVersion()
    */
   long rebuild();
 
   /**
    * Populate the index with all the existent records.
-   *
-   * @see #getRebuildVersion()
    */
   long rebuild(OProgressListener iProgressListener);
 
@@ -202,7 +198,8 @@ public interface OIndex extends Comparable<OIndex> {
    *
    * @return Cursor which presents subset of index data between passed in keys.
    */
-  Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder);
+  Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder);
 
   /**
    * Returns stream which presents subset of data which associated with key which is greater than passed in key.
@@ -235,8 +232,6 @@ public interface OIndex extends Comparable<OIndex> {
   ODocument getMetadata();
 
   boolean supportsOrderedIterations();
-
-  long getRebuildVersion();
 
   int getIndexId();
 

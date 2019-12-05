@@ -236,20 +236,6 @@ public class OChainedIndexProxy<T> implements OIndex {
     return priorityOfUsage(index) > 0;
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public long getRebuildVersion() {
-    long rebuildVersion = 0;
-
-    for (OIndex index : indexChain) {
-      rebuildVersion += index.getRebuildVersion();
-    }
-
-    return rebuildVersion;
-  }
-
   private static boolean supportNullValues(OIndex index) {
     final ODocument metadata = index.getMetadata();
     if (metadata == null)

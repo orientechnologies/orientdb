@@ -66,11 +66,6 @@ public class OIndexAbstractDelegate implements OIndex {
   }
 
   @Override
-  public long getRebuildVersion() {
-    return delegate.getRebuildVersion();
-  }
-
-  @Override
   public int getVersion() {
     return delegate.getVersion();
   }

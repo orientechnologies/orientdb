@@ -105,11 +105,6 @@ public abstract class OIndexRemote<T> implements OIndex {
     return databaseName;
   }
 
-  @Override
-  public long getRebuildVersion() {
-    throw new UnsupportedOperationException();
-  }
-
   public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
       final int maxValuesToFetch) {
     final StringBuilder query = new StringBuilder(QUERY_COUNT_RANGE);
