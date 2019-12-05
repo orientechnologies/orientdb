@@ -974,6 +974,16 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
+  public void testFetchFromSingleRidParam() {
+    OResultSet result = db.query("select from ?", new ORecordId(0, 1));
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    Assert.assertNotNull(result.next());
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
   public void testFetchFromSingleRid3() {
     ODocument document = new ODocument();
     document.save(db.getClusterNameById(0));
