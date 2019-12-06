@@ -20,29 +20,29 @@ public class OMatchExecutionPlanner {
 
   static final String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
 
-  protected List<OMatchExpression>  matchExpressions;
-  protected List<OMatchExpression>  notMatchExpressions;
-  protected List<OExpression>       returnItems;
-  protected List<OIdentifier>       returnAliases;
+  protected List<OMatchExpression> matchExpressions;
+  protected List<OMatchExpression> notMatchExpressions;
+  protected List<OExpression> returnItems;
+  protected List<OIdentifier> returnAliases;
   protected List<ONestedProjection> returnNestedProjections;
-  boolean returnElements     = false;
-  boolean returnPaths        = false;
-  boolean returnPatterns     = false;
+  boolean returnElements = false;
+  boolean returnPaths = false;
+  boolean returnPatterns = false;
   boolean returnPathElements = false;
-  boolean returnDistinct     = false;
-  protected     OSkip    skip;
+  boolean returnDistinct = false;
+  protected OSkip skip;
   private final OGroupBy groupBy;
   private final OOrderBy orderBy;
-  private final OUnwind  unwind;
-  protected     OLimit   limit;
+  private final OUnwind unwind;
+  protected OLimit limit;
 
   //post-parsing
-  private Pattern                   pattern;
-  private List<Pattern>             subPatterns;
+  private Pattern pattern;
+  private List<Pattern> subPatterns;
   private Map<String, OWhereClause> aliasFilters;
-  private Map<String, String>       aliasClasses;
-  private Map<String, String>       aliasClusters;
-  private Map<String, ORid>         aliasRids;
+  private Map<String, String> aliasClasses;
+  private Map<String, String> aliasClusters;
+  private Map<String, ORid> aliasRids;
   boolean foundOptional = false;
   private long threshold = 100;
 
@@ -52,7 +52,7 @@ public class OMatchExecutionPlanner {
     this.returnItems = stm.getReturnItems().stream().map(x -> x.copy()).collect(Collectors.toList());
     this.returnAliases = stm.getReturnAliases().stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
     this.returnNestedProjections = stm.getReturnNestedProjections().stream().map(x -> x == null ? null : x.copy())
-        .collect(Collectors.toList());
+            .collect(Collectors.toList());
     this.limit = stm.getLimit() == null ? null : stm.getLimit().copy();
     this.skip = stm.getSkip() == null ? null : stm.getSkip().copy();
 
@@ -74,7 +74,7 @@ public class OMatchExecutionPlanner {
     OSelectExecutionPlan result = new OSelectExecutionPlan(context);
     Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasClusters, aliasRids, aliasFilters, context);
     Set<String> aliasesToPrefetch = estimatedRootEntries.entrySet().stream().filter(x -> x.getValue() < this.threshold)
-        .filter(x -> !dependsOnExecutionContext(x.getKey())).map(x -> x.getKey()).collect(Collectors.toSet());
+            .filter(x -> !dependsOnExecutionContext(x.getKey())).map(x -> x.getKey()).collect(Collectors.toSet());
     for (Map.Entry<String, Long> entry : estimatedRootEntries.entrySet()) {
       if (entry.getValue() == 0L && !isOptional(entry.getKey())) {
         result.chain(new EmptyStep(context, enableProfiling));
@@ -92,7 +92,7 @@ public class OMatchExecutionPlanner {
       result.chain(step);
     } else {
       OInternalExecutionPlan plan = createPlanForPattern(pattern, context, estimatedRootEntries, aliasesToPrefetch,
-          enableProfiling);
+              enableProfiling);
       for (OExecutionStep step : plan.getSteps()) {
         result.chain((OExecutionStepInternal) step);
       }
@@ -112,7 +112,7 @@ public class OMatchExecutionPlanner {
       }
       if (groupBy != null) {
         throw new OCommandExecutionException(
-            "Cannot execute GROUP BY in MATCH query with RETURN $elements, $pathElements, $patterns or $paths");
+                "Cannot execute GROUP BY in MATCH query with RETURN $elements, $pathElements, $patterns or $paths");
       }
 
       if (this.orderBy != null) {
@@ -178,16 +178,16 @@ public class OMatchExecutionPlanner {
   }
 
   private void manageNotPatterns(OSelectExecutionPlan result, Pattern pattern, List<OMatchExpression> notMatchExpressions,
-      OCommandContext context, boolean enableProfiling) {
+                                 OCommandContext context, boolean enableProfiling) {
     for (OMatchExpression exp : notMatchExpressions) {
       if (pattern.aliasToNode.get(exp.getOrigin().getAlias()) == null) {
         throw new OCommandExecutionException("This kind of NOT expression is not supported (yet). "
-            + "The first alias in a NOT expression has to be present in the positive pattern");
+                + "The first alias in a NOT expression has to be present in the positive pattern");
       }
 
       if (exp.getOrigin().getFilter() != null) {
         throw new OCommandExecutionException(
-            "This kind of NOT expression is not supported (yet): " + "WHERE condition on the initial alias");
+                "This kind of NOT expression is not supported (yet): " + "WHERE condition on the initial alias");
         //TODO implement his
       }
 
@@ -236,7 +236,7 @@ public class OMatchExecutionPlanner {
   }
 
   private OInternalExecutionPlan createPlanForPattern(Pattern pattern, OCommandContext context,
-      Map<String, Long> estimatedRootEntries, Set<String> prefetchedAliases, boolean profilingEnabled) {
+                                                      Map<String, Long> estimatedRootEntries, Set<String> prefetchedAliases, boolean profilingEnabled) {
     OSelectExecutionPlan plan = new OSelectExecutionPlan(context);
     List<EdgeTraversal> sortedEdges = getTopologicalSortedSchedule(estimatedRootEntries, pattern);
 
@@ -324,7 +324,7 @@ public class OMatchExecutionPlanner {
         // This means there must be a cycle in our dependency graph, or all dependency-free nodes are optional.
         // Therefore, the query is invalid.
         throw new OCommandExecutionException("This query contains MATCH conditions that cannot be evaluated, "
-            + "like an undefined alias or a circular dependency on a $matched condition.");
+                + "like an undefined alias, a circular dependency on a $matched condition or a chain of mixed optional and non-optional nodes.");
       }
 
       // 2. Having found a starting vertex, traverse its neighbors depth-first,
@@ -351,7 +351,7 @@ public class OMatchExecutionPlanner {
    * @param resultingSchedule     the schedule being computed i.e. appended to (mutated in this function)
    */
   private void updateScheduleStartingAt(PatternNode startNode, Set<PatternNode> visitedNodes, Set<PatternEdge> visitedEdges,
-      Map<String, Set<String>> remainingDependencies, List<EdgeTraversal> resultingSchedule) {
+                                        Map<String, Set<String>> remainingDependencies, List<EdgeTraversal> resultingSchedule) {
     // OrientDB requires the schedule to contain all edges present in the query, which is a stronger condition
     // than simply visiting all nodes in the query. Consider the following example query:
     //     MATCH {
@@ -383,7 +383,7 @@ public class OMatchExecutionPlanner {
       edges.put(outEdge, true);
     }
     for (PatternEdge inEdge : startNode.in) {
-      if(inEdge.item.isBidirectional()) {
+      if (inEdge.item.isBidirectional()) {
         edges.put(inEdge, false);
       }
 
@@ -425,7 +425,7 @@ public class OMatchExecutionPlanner {
           visitedEdges.add(edge);
           resultingSchedule.add(new EdgeTraversal(edge, traversalDirection));
         }
-      } else if (!startNode.optional) {
+      } else if (!startNode.optional || isOptionalChain(startNode, edge, neighboringNode)) {
         // If the neighboring node wasn't visited, we don't expand the optional node into it, hence the above check.
         // Instead, we'll allow the neighboring node to add the edge we failed to visit, via the above block.
         if (visitedEdges.contains(edge)) {
@@ -440,11 +440,32 @@ public class OMatchExecutionPlanner {
     }
   }
 
+  private boolean isOptionalChain(PatternNode startNode, PatternEdge edge, PatternNode neighboringNode) {
+    return isOptionalChain(startNode, edge, neighboringNode, new HashSet<>());
+  }
+
+  private boolean isOptionalChain(PatternNode startNode, PatternEdge edge, PatternNode neighboringNode, Set<PatternEdge> visitedEdges) {
+    if (!startNode.isOptionalNode() || !neighboringNode.isOptionalNode()) {
+      return false;
+    }
+
+    visitedEdges.add(edge);
+
+    if (neighboringNode.out != null) {
+      for (PatternEdge patternEdge : neighboringNode.out) {
+        if (!visitedEdges.contains(patternEdge) && !isOptionalChain(neighboringNode, patternEdge, patternEdge.in, visitedEdges)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   /**
    * Calculate the set of dependency aliases for each alias in the pattern.
    *
    * @param pattern
-   *
    * @return map of alias to the set of aliases it depends on
    */
   private Map<String, Set<String>> getDependencies(Pattern pattern) {
@@ -476,7 +497,7 @@ public class OMatchExecutionPlanner {
   }
 
   private void addStepsFor(OSelectExecutionPlan plan, EdgeTraversal edge, OCommandContext context, boolean first,
-      boolean profilingEnabled) {
+                           boolean profilingEnabled) {
     if (first) {
       PatternNode patternNode = edge.out ? edge.edge.out : edge.edge.in;
       String clazz = this.aliasClasses.get(patternNode.alias);
@@ -497,7 +518,7 @@ public class OMatchExecutionPlanner {
       OBasicCommandContext subContxt = new OBasicCommandContext();
       subContxt.setParentWithoutOverridingChild(context);
       plan.chain(
-          new MatchFirstStep(context, patternNode, select.createExecutionPlan(subContxt, profilingEnabled), profilingEnabled));
+              new MatchFirstStep(context, patternNode, select.createExecutionPlan(subContxt, profilingEnabled), profilingEnabled));
     }
     if (edge.edge.in.isOptionalNode()) {
       foundOptional = true;
@@ -508,7 +529,7 @@ public class OMatchExecutionPlanner {
   }
 
   private void addPrefetchSteps(OSelectExecutionPlan result, Set<String> aliasesToPrefetch, OCommandContext context,
-      boolean profilingEnabled) {
+                                boolean profilingEnabled) {
     for (String alias : aliasesToPrefetch) {
       String targetClass = aliasClasses.get(alias);
       String targetCluster = aliasClusters.get(alias);
@@ -517,7 +538,7 @@ public class OMatchExecutionPlanner {
       OSelectStatement prefetchStm = createSelectStatement(targetClass, targetCluster, targetRid, filter);
 
       MatchPrefetchStep step = new MatchPrefetchStep(context, prefetchStm.createExecutionPlan(context, profilingEnabled), alias,
-          profilingEnabled);
+              profilingEnabled);
       result.chain(step);
     }
   }
@@ -583,7 +604,7 @@ public class OMatchExecutionPlanner {
   }
 
   private void addAliases(OMatchExpression expr, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses,
-      Map<String, String> aliasClusters, Map<String, ORid> aliasRids, OCommandContext context) {
+                          Map<String, String> aliasClusters, Map<String, ORid> aliasRids, OCommandContext context) {
     addAliases(expr.getOrigin(), aliasFilters, aliasClasses, aliasClusters, aliasRids, context);
     for (OMatchPathItem item : expr.getItems()) {
       if (item.getFilter() != null) {
@@ -593,7 +614,7 @@ public class OMatchExecutionPlanner {
   }
 
   private void addAliases(OMatchFilter matchFilter, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses,
-      Map<String, String> aliasClusters, Map<String, ORid> aliasRids, OCommandContext context) {
+                          Map<String, String> aliasClusters, Map<String, ORid> aliasRids, OCommandContext context) {
     String alias = matchFilter.getAlias();
     OWhereClause filter = matchFilter.getFilter();
     if (alias != null) {
@@ -619,7 +640,7 @@ public class OMatchExecutionPlanner {
           String lower = getLowerSubclass(context.getDatabase(), clazz, previousClass);
           if (lower == null) {
             throw new OCommandExecutionException(
-                "classes defined for alias " + alias + " (" + clazz + ", " + previousClass + ") are not in the same hierarchy");
+                    "classes defined for alias " + alias + " (" + clazz + ", " + previousClass + ") are not in the same hierarchy");
           }
           aliasClasses.put(alias, lower);
         }
@@ -632,7 +653,7 @@ public class OMatchExecutionPlanner {
           aliasClusters.put(alias, clusterName);
         } else if (!previousCluster.equalsIgnoreCase(clusterName)) {
           throw new OCommandExecutionException(
-              "Invalid expression for alias " + alias + " cannot be of both clusters " + previousCluster + " and " + clusterName);
+                  "Invalid expression for alias " + alias + " cannot be of both clusters " + previousCluster + " and " + clusterName);
         }
       }
 
@@ -643,7 +664,7 @@ public class OMatchExecutionPlanner {
           aliasRids.put(alias, rid);
         } else if (!previousRid.equals(rid)) {
           throw new OCommandExecutionException(
-              "Invalid expression for alias " + alias + " cannot be of both RIDs " + previousRid + " and " + rid);
+                  "Invalid expression for alias " + alias + " cannot be of both RIDs " + previousRid + " and " + rid);
         }
       }
     }
@@ -686,7 +707,7 @@ public class OMatchExecutionPlanner {
   }
 
   private Map<String, Long> estimateRootEntries(Map<String, String> aliasClasses, Map<String, String> aliasClusters,
-      Map<String, ORid> aliasRids, Map<String, OWhereClause> aliasFilters, OCommandContext ctx) {
+                                                Map<String, ORid> aliasRids, Map<String, OWhereClause> aliasFilters, OCommandContext ctx) {
     Set<String> allAliases = new LinkedHashSet<String>();
     allAliases.addAll(aliasClasses.keySet());
     allAliases.addAll(aliasFilters.keySet());
@@ -702,7 +723,7 @@ public class OMatchExecutionPlanner {
         result.put(alias, 1L);
         continue;
       }
-      
+
       String className = aliasClasses.get(alias);
       String clusterName = aliasClusters.get(alias);
 
