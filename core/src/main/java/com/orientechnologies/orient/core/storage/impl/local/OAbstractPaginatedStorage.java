@@ -110,6 +110,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -6265,13 +6266,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     private boolean firstTime = true;
 
     private volatile Future<?> future;
+    private final    long      startTxTimeStamp;
 
     private TransactionProfiler(int profilingDelay, AtomicBoolean txIsCompleted, Thread txThread) {
       this.profilingDelay = profilingDelay;
       this.txIsCompleted = txIsCompleted;
       this.txThread = txThread;
 
-      filePath = Paths.get(System.nanoTime() + ".sprof").toAbsolutePath();
+      this.startTxTimeStamp = System.nanoTime();
+      filePath = Paths.get(startTxTimeStamp + ".sprof").toAbsolutePath();
     }
 
     @Override
@@ -6301,6 +6304,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           });
         }
       } else {
+        final long endTxTimeStamp = System.nanoTime();
         if (!stackMap.isEmpty()) {
           try (final OutputStream fileStream = Files
               .newOutputStream(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
@@ -6313,6 +6317,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               }
               writer.flush();
 
+              zipStream.closeEntry();
+
+              zipStream.putNextEntry(new ZipEntry("stat.dat"));
+              final byte[] duration = new byte[8];
+              zipStream.write(ByteBuffer.wrap(duration).putLong(endTxTimeStamp - startTxTimeStamp).array());
               zipStream.closeEntry();
             }
           } catch (IOException e) {
