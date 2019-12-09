@@ -91,7 +91,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      stream = index.iterateEntriesMajor(key, false, ascSortOrder);
+      stream = index.getInternal().streamEntriesMajor(key, false, ascSortOrder);
     } else {
       // if we have situation like "field1 = 1 AND field2 > 2"
       // then we fetch collection which left not included boundary is the smallest composite key in the
@@ -110,7 +110,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      stream = index.iterateEntriesBetween(keyOne, false, keyTwo, true, ascSortOrder);
+      stream = index.getInternal().streamEntriesBetween(keyOne, false, keyTwo, true, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);

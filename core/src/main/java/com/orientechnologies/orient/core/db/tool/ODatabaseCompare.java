@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -357,8 +358,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
 
       @SuppressWarnings("ObjectAllocationInLoop")
-      final OIndex indexTwo = makeDbCall(databaseTwo,
-          (ODbRelatedCall<OIndex>) database -> indexManagerTwo.getIndex(database, indexOne.getName()));
+      final OIndex indexTwo = makeDbCall(databaseTwo, database -> indexManagerTwo.getIndex(database, indexOne.getName()));
 
       if (indexTwo == null) {
         ok = false;
@@ -406,10 +406,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         continue;
       }
 
-      final long indexOneSize = makeDbCall(databaseOne, database -> indexOne.size());
+      final long indexOneSize = makeDbCall(databaseOne, database -> ((OIndexInternal) indexOne).size());
 
       @SuppressWarnings("ObjectAllocationInLoop")
-      final long indexTwoSize = makeDbCall(databaseTwo, database -> indexTwo.size());
+      final long indexTwoSize = makeDbCall(databaseTwo, database -> ((OIndexInternal) indexTwo).size());
 
       if (indexOneSize != indexTwoSize) {
         ok = false;
@@ -454,15 +454,14 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
 
         //noinspection resource
-        try (final Stream<Object> keyStream = makeDbCall(databaseOne,
-            (ODbRelatedCall<Stream<Object>>) database -> indexOne.keyStream())) {
+        try (final Stream<Object> keyStream = makeDbCall(databaseOne, database -> ((OIndexInternal) indexOne).keyStream())) {
           final Iterator<Object> indexKeyIteratorOne = makeDbCall(databaseOne, database -> keyStream.iterator());
           while (makeDbCall(databaseOne, database -> indexKeyIteratorOne.hasNext())) {
             final Object indexKey = makeDbCall(databaseOne, database -> indexKeyIteratorOne.next());
 
             Object indexOneValue = makeDbCall(databaseOne, database -> indexOne.get(indexKey));
 
-            final Object indexTwoValue = makeDbCall(databaseTwo, (ODbRelatedCall<Object>) database -> indexTwo.get(indexKey));
+            final Object indexTwoValue = makeDbCall(databaseTwo, database -> indexTwo.get(indexKey));
 
             if (indexTwoValue == null) {
               ok = false;

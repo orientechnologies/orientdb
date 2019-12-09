@@ -106,7 +106,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       if (internalIndex.hasRangeQuerySupport()) {
         final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-        stream = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+        stream = index.getInternal().streamEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult = index.get(keyOne);

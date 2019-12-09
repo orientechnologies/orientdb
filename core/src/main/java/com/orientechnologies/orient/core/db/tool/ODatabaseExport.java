@@ -506,7 +506,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.endCollection(3, true);
 
         writer.endObject(2, true);
-        listener.onMessage("OK (entries=" + index.size() + ")");
+        listener.onMessage("OK (entries=" + index.getInternal().size() + ")");
         manualIndexes++;
       }
     }

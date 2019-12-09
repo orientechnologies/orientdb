@@ -74,7 +74,7 @@ public class OIndexRebuildOutputListener implements OProgressListener {
 
   @Override
   public void onCompletition(final Object iTask, final boolean iSucceed) {
-    final long idxSize = idx.size();
+    final long idxSize = idx.getInternal().size();
 
     if (idxSize > 0)
       if (rebuild)

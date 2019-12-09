@@ -187,8 +187,8 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
   }
 
-  public OIndexTxAwareOneValue(final ODatabaseDocumentInternal iDatabase, final OIndex iDelegate) {
-    super(iDatabase, iDelegate);
+  public OIndexTxAwareOneValue(final ODatabaseDocumentInternal database, final OIndexInternal delegate) {
+    super(database, delegate);
   }
 
   @Override
@@ -232,6 +232,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
     }
 
+    @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> backedStream = super.stream();
     return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, true));
   }
@@ -250,17 +251,18 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
     }
 
+    @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> backedStream = super.descStream();
     return IndexStreamSecurityDecorator.decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, false));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey,
+  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey,
       final boolean toInclusive, final boolean ascOrder) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
-      return super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
+      return super.streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
     }
 
     fromKey = getCollatingValue(fromKey);
@@ -283,7 +285,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
     @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> backedStream = super
-        .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
+        .streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
 
     return IndexStreamSecurityDecorator
         .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
@@ -299,11 +301,11 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
-      return super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
+      return super.streamEntriesMajor(fromKey, fromInclusive, ascOrder);
     }
 
     fromKey = getCollatingValue(fromKey);
@@ -326,17 +328,17 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream = super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
+    final Stream<ORawPair<Object, ORID>> backedStream = super.streamEntriesMajor(fromKey, fromInclusive, ascOrder);
     return IndexStreamSecurityDecorator
         .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
-      return super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
+      return super.streamEntriesMinor(toKey, toInclusive, ascOrder);
     }
 
     toKey = getCollatingValue(toKey);
@@ -359,17 +361,17 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream = super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
+    final Stream<ORawPair<Object, ORID>> backedStream = super.streamEntriesMinor(toKey, toInclusive, ascOrder);
     return IndexStreamSecurityDecorator
         .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
-      return super.iterateEntries(keys, ascSortOrder);
+      return super.streamEntries(keys, ascSortOrder);
     }
 
     @SuppressWarnings("resource")
@@ -384,7 +386,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream = super.iterateEntries(keys, ascSortOrder);
+    final Stream<ORawPair<Object, ORID>> backedStream = super.streamEntries(keys, ascSortOrder);
     return IndexStreamSecurityDecorator
         .decorateStream(this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascSortOrder));
   }

@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
@@ -16,8 +17,8 @@ import java.util.stream.Stream;
  * Created by luigidellaquila on 11/08/16.
  */
 public class DeleteFromIndexStep extends AbstractExecutionStep {
-  protected final OIndex           index;
-  private final   OBinaryCondition additional;
+  protected final OIndexInternal     index;
+  private final   OBinaryCondition   additional;
   private final   OBooleanExpression ridCondition;
   private final   boolean            orderAsc;
 
@@ -41,7 +42,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   private DeleteFromIndexStep(OIndex index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OBooleanExpression ridCondition, boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    this.index = index;
+    this.index = index.getInternal();
     this.condition = condition;
     this.additional = additionalRangeCondition;
     this.ridCondition = ridCondition;
@@ -192,11 +193,11 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     OIndexDefinition indexDef = index.getDefinition();
     if (index.supportsOrderedIterations()) {
       stream = index
-          .iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue),
+          .streamEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue),
               toKeyIncluded, orderAsc);
       storeAcquiredStream(stream);
     } else if (additional == null && allEqualities((OAndBlock) condition)) {
-      stream = index.iterateEntries(toIndexKey(indexDef, secondValue), orderAsc);
+      stream = index.streamEntries(toIndexKey(indexDef, secondValue), orderAsc);
       storeAcquiredStream(stream);
     } else {
       throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
@@ -233,7 +234,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     Object secondValue = second.execute((OResult) null, ctx);
     Object thirdValue = third.execute((OResult) null, ctx);
     stream = index
-        .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
+        .streamEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
             orderAsc);
     storeAcquiredStream(stream);
     streamIterator = stream.iterator();
@@ -283,15 +284,15 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
       OCommandContext ctx) {
     boolean orderAsc = this.orderAsc;
     if (operator instanceof OEqualsCompareOperator) {
-      return index.iterateEntries(toIndexKey(definition, value), orderAsc);
+      return index.streamEntries(toIndexKey(definition, value), orderAsc);
     } else if (operator instanceof OGeOperator) {
-      return index.iterateEntriesMajor(value, true, orderAsc);
+      return index.streamEntriesMajor(value, true, orderAsc);
     } else if (operator instanceof OGtOperator) {
-      return index.iterateEntriesMajor(value, false, orderAsc);
+      return index.streamEntriesMajor(value, false, orderAsc);
     } else if (operator instanceof OLeOperator) {
-      return index.iterateEntriesMinor(value, true, orderAsc);
+      return index.streamEntriesMinor(value, true, orderAsc);
     } else if (operator instanceof OLtOperator) {
-      return index.iterateEntriesMinor(value, false, orderAsc);
+      return index.streamEntriesMinor(value, false, orderAsc);
     } else {
       throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
     }

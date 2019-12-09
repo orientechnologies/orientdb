@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiable>> {
+public class OIndexRemoteMultiValue extends OIndexRemote {
   private static final String QUERY_GET = "select expand( rid ) from index:`%s` where key = ?";
 
   public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,

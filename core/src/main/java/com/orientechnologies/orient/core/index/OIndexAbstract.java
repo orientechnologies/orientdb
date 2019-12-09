@@ -312,10 +312,131 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   /**
-   * {@inheritDoc}
+   * @return number of entries in the index.
    */
-  private long getRebuildVersion() {
+  @Deprecated
+  public long getSize() {
+    return size();
+  }
+
+  /**
+   * Counts the entries for the key.
+   */
+  @Deprecated
+  public long count(Object iKey) {
+    try (Stream<ORawPair<Object, ORID>> stream = streamEntriesBetween(iKey, true, iKey, true, true)) {
+      return stream.count();
+    }
+  }
+
+  /**
+   * @return Number of keys in index
+   */
+  @Deprecated
+  public long getKeySize() {
+    try (Stream<Object> stream = keyStream()) {
+      return stream.distinct().count();
+    }
+  }
+
+  /**
+   * Flushes in-memory changes to disk.
+   */
+  @Deprecated
+  public void flush() {
+    //do nothing
+  }
+
+  @Deprecated
+  public long getRebuildVersion() {
     return 0;
+  }
+
+  /**
+   * @return Indicates whether index is rebuilding at the moment.
+   *
+   * @see #getRebuildVersion()
+   */
+  @Deprecated
+  public boolean isRebuilding() {
+    return false;
+  }
+
+  @Deprecated
+  public Object getFirstKey() {
+    try (final Stream<Object> stream = keyStream()) {
+      final Iterator<Object> iterator = stream.iterator();
+      if (iterator.hasNext()) {
+        return iterator.next();
+      }
+
+      return null;
+    }
+  }
+
+  @Deprecated
+  public Object getLastKey() {
+    try (final Stream<ORawPair<Object, ORID>> stream = descStream()) {
+      final Iterator<ORawPair<Object, ORID>> iterator = stream.iterator();
+      if (iterator.hasNext()) {
+        return iterator.next().first;
+      }
+
+      return null;
+    }
+  }
+
+  @Deprecated
+  public OIndexCursor cursor() {
+    return new StreamWrapper(stream());
+  }
+
+  @Deprecated
+  @Override
+  public OIndexCursor descCursor() {
+    return new StreamWrapper(descStream());
+  }
+
+  @Deprecated
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    return new OIndexKeyCursor() {
+      private final Iterator<Object> keyIterator = keyStream().iterator();
+
+      @Override
+      public Object next(int prefetchSize) {
+        if (keyIterator.hasNext()) {
+          return keyIterator.next();
+        }
+
+        return null;
+      }
+    };
+  }
+
+  @Deprecated
+  @Override
+  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+    return new StreamWrapper(streamEntries(keys, ascSortOrder));
+  }
+
+  @Deprecated
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder) {
+    return new StreamWrapper(streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder));
+  }
+
+  @Deprecated
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    return new StreamWrapper(streamEntriesMajor(fromKey, fromInclusive, ascOrder));
+  }
+
+  @Deprecated
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    return new StreamWrapper(streamEntriesMajor(toKey, toInclusive, ascOrder));
   }
 
   /**
@@ -998,4 +1119,37 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
   }
 
+  private static class StreamWrapper extends OIndexAbstractCursor {
+    private final Iterator<ORawPair<Object, ORID>> iterator;
+
+    private StreamWrapper(final Stream<ORawPair<Object, ORID>> stream) {
+      iterator = stream.iterator();
+    }
+
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      if (iterator.hasNext()) {
+        final ORawPair<Object, ORID> pair = iterator.next();
+
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return pair.first;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return pair.second;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+
+      return null;
+    }
+  }
 }

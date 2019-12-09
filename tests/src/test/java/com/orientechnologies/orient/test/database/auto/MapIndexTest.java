@@ -75,10 +75,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.save(mapper);
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keyIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keyIterator = keyStream.iterator();
 
       while (keyIterator.hasNext()) {
@@ -91,10 +91,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -127,9 +127,9 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -141,10 +141,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -178,10 +178,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -193,10 +193,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -237,10 +237,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -252,10 +252,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -290,10 +290,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.rollback();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -305,10 +305,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -335,10 +335,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key3', 30")).execute();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 3);
+    Assert.assertEquals(keyIndex.getInternal().size(), 3);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -350,10 +350,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 3);
+    Assert.assertEquals(valueIndex.getInternal().size(), 3);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -390,10 +390,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 3);
+    Assert.assertEquals(keyIndex.getInternal().size(), 3);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -405,10 +405,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 3);
+    Assert.assertEquals(valueIndex.getInternal().size(), 3);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -440,10 +440,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -455,10 +455,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -485,10 +485,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key2', 40")).execute();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -501,10 +501,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -540,10 +540,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -555,10 +555,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -589,10 +589,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.rollback();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -604,10 +604,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -635,10 +635,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'")).execute();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -650,10 +650,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -690,10 +690,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -706,9 +706,9 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -741,9 +741,9 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
 
-    Assert.assertEquals(keyIndex.size(), 3);
+    Assert.assertEquals(keyIndex.getInternal().size(), 3);
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -756,9 +756,9 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertEquals(valueIndex.size(), 3);
+    Assert.assertEquals(valueIndex.getInternal().size(), 3);
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {
@@ -784,11 +784,11 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.delete(mapper);
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 0);
+    Assert.assertEquals(keyIndex.getInternal().size(), 0);
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
 
-    Assert.assertEquals(valueIndex.size(), 0);
+    Assert.assertEquals(valueIndex.getInternal().size(), 0);
   }
 
   public void testIndexMapRemoveInTx() {
@@ -813,10 +813,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 0);
+    Assert.assertEquals(keyIndex.getInternal().size(), 0);
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 0);
+    Assert.assertEquals(valueIndex.getInternal().size(), 0);
   }
 
   public void testIndexMapRemoveInTxRollback() {
@@ -836,10 +836,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.rollback();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.size(), 2);
+    Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
     Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.keyStream()) {
+    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
       keysIterator = keyStream.iterator();
 
       while (keysIterator.hasNext()) {
@@ -851,10 +851,10 @@ public class MapIndexTest extends ObjectDBBaseTest {
     }
 
     OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.size(), 2);
+    Assert.assertEquals(valueIndex.getInternal().size(), 2);
 
     Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.keyStream()) {
+    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
       valuesIterator = valueStream.iterator();
 
       while (valuesIterator.hasNext()) {

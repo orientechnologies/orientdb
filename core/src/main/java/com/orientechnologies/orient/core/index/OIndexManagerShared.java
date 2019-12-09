@@ -683,12 +683,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   public OIndex preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex index) {
-    if (index instanceof OIndexMultiValues)
-      return new OIndexTxAwareMultiValue(database, index);
-    else if (index instanceof OIndexDictionary)
-      return new OIndexTxAwareDictionary(database, index);
-    else if (index instanceof OIndexOneValue)
-      return new OIndexTxAwareOneValue(database, index);
+    final OIndexInternal indexInternal = index.getInternal();
+    if (indexInternal instanceof OIndexMultiValues) {
+      return new OIndexTxAwareMultiValue(database, indexInternal);
+    } else if (indexInternal instanceof OIndexDictionary) {
+      return new OIndexTxAwareDictionary(database, indexInternal);
+    } else if (indexInternal instanceof OIndexOneValue) {
+      return new OIndexTxAwareOneValue(database, indexInternal);
+    }
 
     return index;
   }

@@ -26,13 +26,12 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,7 +54,7 @@ import java.util.stream.Stream;
  */
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class OChainedIndexProxy<T> implements OIndex {
+public class OChainedIndexProxy<T> implements OIndexInternal {
   private final OIndex firstIndex;
 
   private final List<OIndex> indexChain;
@@ -322,7 +321,7 @@ public class OChainedIndexProxy<T> implements OIndex {
         }
       } else {
         final List<OIdentifiable> keys;
-        try (Stream<ORawPair<Object, ORID>> stream = currentIndex.iterateEntries(currentKeys, true)) {
+        try (Stream<ORawPair<Object, ORID>> stream = currentIndex.getInternal().streamEntries(currentKeys, true)) {
           keys = stream.map((pair) -> pair.second).collect(Collectors.toList());
         }
         newKeys = prepareKeys(nextIndex, keys);
@@ -344,7 +343,7 @@ public class OChainedIndexProxy<T> implements OIndex {
         result.addAll(getFromCompositeIndex(key, firstIndex));
       }
     } else {
-      try (Stream<ORawPair<Object, ORID>> stream = firstIndex.iterateEntries(currentKeys, true)) {
+      try (Stream<ORawPair<Object, ORID>> stream = firstIndex.getInternal().streamEntries(currentKeys, true)) {
         result = stream.map((pair) -> pair.second).collect(Collectors.toList());
       }
     }
@@ -355,7 +354,8 @@ public class OChainedIndexProxy<T> implements OIndex {
   }
 
   private static List<ORID> getFromCompositeIndex(Comparable currentKey, OIndex currentIndex) {
-    try (Stream<ORawPair<Object, ORID>> stream = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true)) {
+    try (Stream<ORawPair<Object, ORID>> stream = currentIndex.getInternal()
+        .streamEntriesBetween(currentKey, true, currentKey, true, true)) {
       return stream.map((pair) -> pair.second).collect(Collectors.toList());
     }
   }
@@ -444,6 +444,141 @@ public class OChainedIndexProxy<T> implements OIndex {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  @Override
+  public long getSize() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public long count(Object iKey) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public long getKeySize() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void flush() {
+
+  }
+
+  @Override
+  public long getRebuildVersion() {
+    return 0;
+  }
+
+  @Override
+  public boolean isRebuilding() {
+    return false;
+  }
+
+  @Override
+  public Object getFirstKey() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Object getLastKey() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OIndexCursor cursor() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OIndexCursor descCursor() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Object getCollatingValue(Object key) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean loadFromConfiguration(ODocument iConfig) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public ODocument updateConfiguration() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OIndex addCluster(String iClusterName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OIndex removeCluster(String iClusterName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean canBeUsedInEqualityOperators() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean hasRangeQuerySupport() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OIndexMetadata loadMetadata(ODocument iConfig) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void close() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void preCommit(OIndexAbstract.IndexTxSnapshot snapshots) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void addTxOperation(OIndexAbstract.IndexTxSnapshot snapshots, OTransactionIndexChanges changes) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void commit(OIndexAbstract.IndexTxSnapshot snapshots) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void postCommit(OIndexAbstract.IndexTxSnapshot snapshots) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setType(OType type) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String getIndexNameByKey(Object key) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    throw new UnsupportedOperationException();
+  }
+
   public long size() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -487,6 +622,27 @@ public class OChainedIndexProxy<T> implements OIndex {
   }
 
   @Override
+  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+    return null;
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder) {
+    return null;
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    return null;
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    return null;
+  }
+
+  @Override
   public int getIndexId() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -521,24 +677,24 @@ public class OChainedIndexProxy<T> implements OIndex {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    return applyTailIndexes(lastIndex.iterateEntries(keys, ascSortOrder));
+  public Stream<ORawPair<Object, ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder) {
+    return applyTailIndexes(lastIndex.getInternal().streamEntries(keys, ascSortOrder));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
+  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
       boolean toInclusive, boolean ascOrder) {
-    return applyTailIndexes(lastIndex.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder));
+    return applyTailIndexes(lastIndex.getInternal().streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    return applyTailIndexes(lastIndex.iterateEntriesMajor(fromKey, fromInclusive, ascOrder));
+  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    return applyTailIndexes(lastIndex.getInternal().streamEntriesMajor(fromKey, fromInclusive, ascOrder));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
-    return applyTailIndexes(lastIndex.iterateEntriesMinor(toKey, toInclusive, ascOrder));
+  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    return applyTailIndexes(lastIndex.getInternal().streamEntriesMinor(toKey, toInclusive, ascOrder));
   }
 
   private Stream<ORawPair<Object, ORID>> applyTailIndexes(Stream<ORawPair<Object, ORID>> indexStream) {

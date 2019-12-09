@@ -94,13 +94,13 @@ public class AutoShardingTest extends DocumentDBBaseTest {
       Assert.assertEquals(deleted.intValue(), 2);
 
       long totExpected = ITERATIONS - (i + 1);
-      Assert.assertEquals(idx.size(), totExpected * 2);
-      try (Stream<ORawPair<Object, ORID>> stream = idx.stream()) {
+      Assert.assertEquals(idx.getInternal().size(), totExpected * 2);
+      try (Stream<ORawPair<Object, ORID>> stream = idx.getInternal().stream()) {
         Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), totExpected);
       }
     }
 
-    Assert.assertEquals(idx.size(), 0);
+    Assert.assertEquals(idx.getInternal().size(), 0);
   }
 
   @Test
@@ -113,14 +113,14 @@ public class AutoShardingTest extends DocumentDBBaseTest {
 
       Assert.assertEquals(updated.intValue(), 2);
 
-      Assert.assertEquals(idx.size(), ITERATIONS * 2);
-      try (Stream<ORawPair<Object, ORID>> stream = idx.stream()) {
+      Assert.assertEquals(idx.getInternal().size(), ITERATIONS * 2);
+      try (Stream<ORawPair<Object, ORID>> stream = idx.getInternal().stream()) {
         Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), ITERATIONS);
       }
     }
 
-    Assert.assertEquals(idx.size(), ITERATIONS * 2);
-    try (Stream<ORawPair<Object, ORID>> stream = idx.stream()) {
+    Assert.assertEquals(idx.getInternal().size(), ITERATIONS * 2);
+    try (Stream<ORawPair<Object, ORID>> stream = idx.getInternal().stream()) {
       Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count(), ITERATIONS);
     }
   }
@@ -129,7 +129,7 @@ public class AutoShardingTest extends DocumentDBBaseTest {
   public void testKeyCursor() {
     create();
 
-    try (Stream<Object> stream = idx.keyStream()) {
+    try (Stream<Object> stream = idx.getInternal().keyStream()) {
       Assert.assertNotNull(stream);
       Assert.assertEquals(stream.count(), ITERATIONS);
     }

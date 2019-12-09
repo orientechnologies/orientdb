@@ -68,10 +68,10 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     }
     Assert.assertTrue(set.containsAll(Arrays.asList(5, 6, 7, 8, 9, -1)));
 
-    Assert.assertEquals(index.size(), 6);
+    Assert.assertEquals(index.getInternal().size(), 6);
 
     Iterator<ORawPair<Object, ORID>> indexIterator;
-    try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
+    try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
       indexIterator = stream.iterator();
 
       while (indexIterator.hasNext()) {
@@ -143,13 +143,13 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'")).execute();
 
     final OIndex index = getIndex("TestTruncateVertexClassSuperclassWithIndex_index");
-    Assert.assertEquals(index.size(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     database.command(new OCommandSQL("truncate class TestTruncateVertexClassSubclassWithIndex")).execute();
-    Assert.assertEquals(index.size(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
     database.command(new OCommandSQL("truncate class TestTruncateVertexClassSuperclassWithIndex polymorphic")).execute();
-    Assert.assertEquals(index.size(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   private OIndex getOrCreateIndex(OClass testClass) {

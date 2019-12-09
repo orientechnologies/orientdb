@@ -61,7 +61,7 @@ public class LuceneSpatialMultiLineStringTest extends BaseSpatialLuceneTest {
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Place.location");
 
-    Assert.assertEquals(1, index.size());
+    Assert.assertEquals(1, index.getInternal().size());
 
     testQueryMultiLineString();
   }

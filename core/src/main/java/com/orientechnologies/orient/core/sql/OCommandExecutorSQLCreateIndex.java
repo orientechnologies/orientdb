@@ -281,12 +281,14 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, indexType.toString(), null);
 
         idx = database.getMetadata().getIndexManagerInternal()
-            .createIndex(database, indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc, engine);
+            .createIndex(database, indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc,
+                engine);
       }
     }
 
-    if (idx != null)
-      return idx.size();
+    if (idx != null) {
+      return idx.getInternal().size();
+    }
 
     return null;
   }

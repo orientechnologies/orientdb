@@ -112,7 +112,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       if (containsNotCompatibleKey)
         return null;
 
-      stream = index.iterateEntries(inKeys, ascSortOrder);
+      stream = index.getInternal().streamEntries(inKeys, ascSortOrder);
     } else {
       final List<Object> partialKey = new ArrayList<Object>();
       partialKey.addAll(keyParams);
@@ -154,7 +154,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (indexDefinition.getParamCount() == keyParams.size()) {
-        stream = index.iterateEntries(inKeys, ascSortOrder);
+        stream = index.getInternal().streamEntries(inKeys, ascSortOrder);
       } else {
         return null;
       }

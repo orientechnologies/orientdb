@@ -216,7 +216,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
         compiledFilter.bindParameters(iArgs);
 
       final ODatabaseDocumentInternal database = getDatabase();
-      final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+      final OIndexInternal index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getInternal();
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 

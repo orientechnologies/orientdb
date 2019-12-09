@@ -53,7 +53,7 @@ public class OSQLFunctionIndexKeySize extends OSQLFunctionAbstract {
     if (index == null) {
       return null;
     }
-    try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
+    try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
       return stream.map((pair) -> pair.first).distinct().count() + Optional.ofNullable(index.get(null)).map((entry) -> {
         if (entry instanceof Collection) {
           return ((Collection) entry).isEmpty() ? 0 : 1;

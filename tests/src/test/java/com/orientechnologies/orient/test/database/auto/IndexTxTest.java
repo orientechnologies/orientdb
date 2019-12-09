@@ -73,7 +73,7 @@ public class IndexTxTest extends DocumentDBBaseTest {
 
     OIndex index = getIndex("IndexTxTestIndex");
     Iterator<Object> keyIterator;
-    try (Stream<Object> keyStream = index.keyStream()) {
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
       keyIterator = keyStream.iterator();
 
       while (keyIterator.hasNext()) {

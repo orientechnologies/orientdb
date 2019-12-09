@@ -61,9 +61,9 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     LOWEST_BOUNDARY
   }
 
-  public OIndexTxAware(final ODatabaseDocumentInternal iDatabase, final OIndex iDelegate) {
-    super(iDelegate);
-    database = iDatabase;
+  public OIndexTxAware(final ODatabaseDocumentInternal database, final OIndexInternal delegate) {
+    super(delegate);
+    this.database = database;
   }
 
   @Override
@@ -86,11 +86,12 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     final ORID rid = iValue.getIdentity();
 
     if (!rid.isValid())
-      if (iValue instanceof ORecord)
+      if (iValue instanceof ORecord) {
         // EARLY SAVE IT
         ((ORecord) iValue).save();
-      else
+      } else {
         throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
+      }
 
     iKey = getCollatingValue(iKey);
 
@@ -188,12 +189,4 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
     return keyFrom;
   }
-
-  protected Object getCollatingValue(final Object key) {
-    final OIndexDefinition definition = getDefinition();
-    if (key != null && definition != null)
-      return definition.getCollate().transform(key);
-    return key;
-  }
-
 }

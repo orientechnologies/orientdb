@@ -1244,7 +1244,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                   count += database.countClusterElements(cluster);
                 }
               } else if (parsedTarget.getTargetIndex() != null) {
-                count += database.getMetadata().getIndexManagerInternal().getIndex(database, parsedTarget.getTargetIndex()).size();
+                count += database.getMetadata().getIndexManagerInternal().getIndex(database, parsedTarget.getTargetIndex())
+                    .getInternal().size();
               } else {
                 final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
                 if (recs != null) {
@@ -2337,9 +2338,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         Stream<ORawPair<Object, ORID>> stream = null;
 
         if (ascSortOrder) {
-          stream = index.stream();
+          stream = index.getInternal().stream();
         } else {
-          stream = index.descStream();
+          stream = index.getInternal().descStream();
         }
 
         if (stream != null)
@@ -2599,37 +2600,37 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (indexOperator instanceof OQueryOperatorBetween) {
         final Object[] values = (Object[]) compiledFilter.getRootCondition().getRight();
 
-        try (Stream<ORawPair<Object, ORID>> stream = index
-            .iterateEntriesBetween(getIndexKey(index.getDefinition(), values[0], context), true,
+        try (Stream<ORawPair<Object, ORID>> stream = index.getInternal()
+            .streamEntriesBetween(getIndexKey(index.getDefinition(), values[0], context), true,
                 getIndexKey(index.getDefinition(), values[2], context), true, ascOrder)) {
           fetchEntriesFromIndexStream(stream);
         }
       } else if (indexOperator instanceof OQueryOperatorMajor) {
         final Object value = compiledFilter.getRootCondition().getRight();
 
-        try (Stream<ORawPair<Object, ORID>> stream = index
-            .iterateEntriesMajor(getIndexKey(index.getDefinition(), value, context), false, ascOrder)) {
+        try (Stream<ORawPair<Object, ORID>> stream = index.getInternal()
+            .streamEntriesMajor(getIndexKey(index.getDefinition(), value, context), false, ascOrder)) {
           fetchEntriesFromIndexStream(stream);
         }
       } else if (indexOperator instanceof OQueryOperatorMajorEquals) {
         final Object value = compiledFilter.getRootCondition().getRight();
-        try (Stream<ORawPair<Object, ORID>> stream = index
-            .iterateEntriesMajor(getIndexKey(index.getDefinition(), value, context), true, ascOrder)) {
+        try (Stream<ORawPair<Object, ORID>> stream = index.getInternal()
+            .streamEntriesMajor(getIndexKey(index.getDefinition(), value, context), true, ascOrder)) {
           fetchEntriesFromIndexStream(stream);
         }
 
       } else if (indexOperator instanceof OQueryOperatorMinor) {
         final Object value = compiledFilter.getRootCondition().getRight();
 
-        try (Stream<ORawPair<Object, ORID>> stream = index
-            .iterateEntriesMinor(getIndexKey(index.getDefinition(), value, context), false, ascOrder)) {
+        try (Stream<ORawPair<Object, ORID>> stream = index.getInternal()
+            .streamEntriesMinor(getIndexKey(index.getDefinition(), value, context), false, ascOrder)) {
           fetchEntriesFromIndexStream(stream);
         }
       } else if (indexOperator instanceof OQueryOperatorMinorEquals) {
         final Object value = compiledFilter.getRootCondition().getRight();
 
-        try (Stream<ORawPair<Object, ORID>> stream = index
-            .iterateEntriesMinor(getIndexKey(index.getDefinition(), value, context), true, ascOrder)) {
+        try (Stream<ORawPair<Object, ORID>> stream = index.getInternal()
+            .streamEntriesMinor(getIndexKey(index.getDefinition(), value, context), true, ascOrder)) {
           fetchEntriesFromIndexStream(stream);
         }
       } else if (indexOperator instanceof OQueryOperatorIn) {
@@ -2644,7 +2645,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           values.add(val);
         }
 
-        try (Stream<ORawPair<Object, ORID>> stream = index.iterateEntries(values, true)) {
+        try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntries(values, true)) {
           fetchEntriesFromIndexStream(stream);
         }
       } else {
@@ -2668,7 +2669,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               && ((OCompositeKey) secondKey).getKeys().size() == index.getDefinition().getParamCount()) {
             res = index.get(keyValue);
           } else {
-            try (Stream<ORawPair<Object, ORID>> stream = index.iterateEntriesBetween(keyValue, true, secondKey, true, true)) {
+            try (Stream<ORawPair<Object, ORID>> stream = index.getInternal()
+                .streamEntriesBetween(keyValue, true, secondKey, true, true)) {
               fetchEntriesFromIndexStream(stream);
             }
             return;
@@ -2699,12 +2701,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     } else {
       if (isIndexSizeQuery()) {
-        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.size());
+        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.getInternal().size());
         return;
       }
 
       if (isIndexKeySizeQuery()) {
-        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.size());
+        getProjectionGroup(null, context).applyValue(projections.keySet().iterator().next(), index.getInternal().size());
         return;
       }
 
@@ -2717,13 +2719,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         // ADD ALL THE ITEMS AS RESULT
         if (ascOrder) {
-          try (Stream<ORawPair<Object, ORID>> stream = index.stream()) {
+          try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
             fetchEntriesFromIndexStream(stream);
           }
           fetchNullKeyEntries(index);
         } else {
 
-          try (Stream<ORawPair<Object, ORID>> stream = index.descStream()) {
+          try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().descStream()) {
             fetchNullKeyEntries(index);
             fetchEntriesFromIndexStream(stream);
           }

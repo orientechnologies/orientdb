@@ -214,7 +214,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (internalIndex.hasRangeQuerySupport()) {
-        stream = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+        stream = index.getInternal().streamEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult;

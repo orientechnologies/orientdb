@@ -118,8 +118,8 @@ public class OStorageEncryptionTestIT {
           Assert.assertEquals(document.getIdentity(), hashRid);
         }
 
-        Assert.assertEquals(session.countClass("EncryptedData"), treeIndex.size());
-        Assert.assertEquals(session.countClass("EncryptedData"), hashIndex.size());
+        Assert.assertEquals(session.countClass("EncryptedData"), treeIndex.getInternal().size());
+        Assert.assertEquals(session.countClass("EncryptedData"), hashIndex.getInternal().size());
       }
     }
 

@@ -45,8 +45,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     this.storage = storage;
   }
 
-  public OIndex createIndex(ODatabaseDocumentInternal database, final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String engine) {
+  public OIndex createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+      final OIndexDefinition iIndexDefinition, final int[] iClusterIdsToIndex, final OProgressListener progressListener,
+      ODocument metadata, String engine) {
 
     String createIndexDDL;
     if (iIndexDefinition != null)
@@ -80,8 +81,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   @Override
-  public OIndex createIndex(ODatabaseDocumentInternal database, String iName, String iType, OIndexDefinition indexDefinition, int[] clusterIdsToIndex,
-      OProgressListener progressListener, ODocument metadata) {
+  public OIndex createIndex(ODatabaseDocumentInternal database, String iName, String iType, OIndexDefinition indexDefinition,
+      int[] clusterIdsToIndex, OProgressListener progressListener, ODocument metadata) {
     return createIndex(database, iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null);
   }
 
@@ -170,13 +171,6 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   public OIndex preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex index) {
-    if (index instanceof OIndexRemoteMultiValue)
-      return new OIndexTxAwareMultiValue(database, (OIndex) index);
-    else if (index instanceof OIndexDictionary)
-      return new OIndexTxAwareDictionary(database, (OIndex) index);
-    else if (index instanceof OIndexRemoteOneValue)
-      return new OIndexTxAwareOneValue(database, (OIndex) index);
-
     return index;
   }
 

@@ -92,10 +92,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     private IndexValuesIterator(String indexName, boolean ascOrder) {
       final ODatabaseDocumentInternal database = getDatabase();
       if (ascOrder) {
-        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).stream()
+        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getInternal().stream()
             .map((pair) -> pair.second).iterator();
       } else
-        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).descStream()
+        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getInternal().descStream()
             .map((pair) -> pair.second).iterator();
     }
 

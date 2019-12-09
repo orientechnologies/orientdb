@@ -67,7 +67,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder) {
     final List<Object> sortedKeys = new ArrayList<>(keys);
     final Comparator<Object> comparator;
 
@@ -99,7 +99,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
+  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
       boolean toInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);
@@ -119,7 +119,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
     acquireSharedLock();
     try {
@@ -136,7 +136,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     toKey = getCollatingValue(toKey);
     acquireSharedLock();
     try {

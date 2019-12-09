@@ -36,7 +36,7 @@ public class OLuceneNullTest extends OLuceneBaseTest {
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Test.names");
 
-    Assert.assertEquals(1, index.size());
+    Assert.assertEquals(1, index.getInternal().size());
 
   }
 
@@ -58,7 +58,7 @@ public class OLuceneNullTest extends OLuceneBaseTest {
     db.commit();
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Test.names");
-    Assert.assertEquals(0, index.size());
+    Assert.assertEquals(0, index.getInternal().size());
 
   }
 }

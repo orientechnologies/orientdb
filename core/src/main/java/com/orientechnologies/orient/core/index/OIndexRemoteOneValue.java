@@ -31,7 +31,7 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
+public class OIndexRemoteOneValue extends OIndexRemote {
   private static final String QUERY_GET = "select rid from index:`%s` where key = ?";
 
   public OIndexRemoteOneValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,

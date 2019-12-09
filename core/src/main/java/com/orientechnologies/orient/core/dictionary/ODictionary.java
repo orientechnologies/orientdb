@@ -61,7 +61,7 @@ public class ODictionary<T extends Object> {
   }
 
   public long size() {
-    return index.size();
+    return index.getInternal().size();
   }
 
   public OIndex getIndex() {

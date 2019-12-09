@@ -1655,14 +1655,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (currentDatabaseName != null) {
       message("\n\nINDEXES");
 
-      final List<ODocument> resultSet = new ArrayList<ODocument>();
+      final List<ODocument> resultSet = new ArrayList<>();
 
       int totalIndexes = 0;
       long totalRecords = 0;
 
       final List<OIndex> indexes = new ArrayList<OIndex>(
           currentDatabase.getMetadata().getIndexManagerInternal().getIndexes(currentDatabase));
-      Collections.sort(indexes, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+      indexes.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
       long totalIndexedRecords = 0;
 
@@ -1670,7 +1670,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         final ODocument row = new ODocument();
         resultSet.add(row);
 
-        final long indexSize = index.size();
+        final long indexSize = index.getInternal().size();
         totalIndexedRecords += indexSize;
 
         row.field("NAME", index.getName());
@@ -1679,7 +1679,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
         try {
           final OIndexDefinition indexDefinition = index.getDefinition();
-          final long size = index.size();
+          final long size = index.getInternal().size();
           if (indexDefinition != null) {
             row.field("CLASS", indexDefinition.getClassName());
             row.field("COLLATE", indexDefinition.getCollate().getName());

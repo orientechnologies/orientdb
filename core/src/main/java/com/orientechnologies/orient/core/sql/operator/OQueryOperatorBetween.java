@@ -144,7 +144,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyOne == null || keyTwo == null)
         return null;
 
-      stream = index.iterateEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
+      stream = index.getInternal().streamEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     } else {
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
@@ -160,11 +160,11 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (betweenKeyTwo == null)
         return null;
 
-      final List<Object> betweenKeyOneParams = new ArrayList<Object>(keyParams.size());
+      final List<Object> betweenKeyOneParams = new ArrayList<>(keyParams.size());
       betweenKeyOneParams.addAll(keyParams.subList(0, keyParams.size() - 1));
       betweenKeyOneParams.add(betweenKeyOne);
 
-      final List<Object> betweenKeyTwoParams = new ArrayList<Object>(keyParams.size());
+      final List<Object> betweenKeyTwoParams = new ArrayList<>(keyParams.size());
       betweenKeyTwoParams.addAll(keyParams.subList(0, keyParams.size() - 1));
       betweenKeyTwoParams.add(betweenKeyTwo);
 
@@ -178,7 +178,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      stream = index.iterateEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
+      stream = index.getInternal().streamEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);

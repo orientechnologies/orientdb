@@ -17,18 +17,13 @@
  *  * For more information: http://orientdb.com
  *
  */
+
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-
 /**
- * Transactional wrapper for dictionary index. Stores changes locally to the transaction until tx.commit(). All the other operations
- * are delegated to the wrapped OIndex instance.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
+ * @since 4/22/14
  */
-public class OIndexTxAwareDictionary extends OIndexTxAwareOneValue {
-  public OIndexTxAwareDictionary(ODatabaseDocumentInternal iDatabase, OIndexInternal delegate) {
-    super(iDatabase, delegate);
-  }
+public interface OIndexKeyCursor {
+  Object next(int prefetchSize);
 }

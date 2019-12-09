@@ -15,10 +15,7 @@ import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.*;
@@ -32,7 +29,7 @@ import java.util.stream.StreamSupport;
  * Created by luigidellaquila on 23/07/16.
  */
 public class FetchFromIndexStep extends AbstractExecutionStep {
-  protected OIndex             index;
+  protected OIndexInternal     index;
   protected OBooleanExpression condition;
   private   OBinaryCondition   additionalRangeCondition;
 
@@ -60,10 +57,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this(index, condition, additionalRangeCondition, true, ctx, profilingEnabled);
   }
 
-  public FetchFromIndexStep(OIndex index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
-      boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchFromIndexStep(OIndex index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition, boolean orderAsc,
+      OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    this.index = index;
+    this.index = index.getInternal();
     this.indexName = index.getName();
     this.condition = condition;
     this.additionalRangeCondition = additionalRangeCondition;
@@ -241,7 +238,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private void init(OBooleanExpression condition, ODatabaseDocumentInternal db) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     if (index == null) {
-      index = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
+      index = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName).getInternal();
     }
     try {
       if (index.getDefinition() == null) {
@@ -408,15 +405,15 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           stream = getStreamForNullKey();
           storeAcquiredStream(stream);
         } else {
-          stream = index.iterateEntriesBetween(from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
+          stream = index.streamEntriesBetween(from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
           storeAcquiredStream(stream);
         }
 
       } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
-        stream = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+        stream = index.streamEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
         storeAcquiredStream(stream);
       } else if (isFullTextIndex(index) || isFullTextHashIndex(index)) {
-        stream = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+        stream = index.streamEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
         storeAcquiredStream(stream);
       } else {
         throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
@@ -593,7 +590,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     Object thirdValue = third.execute((OResult) null, ctx);
     thirdValue = unboxOResult(thirdValue);
     stream = index
-        .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
+        .streamEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
             isOrderAsc());
     storeAcquiredStream(stream);
     cursorToIterator();
@@ -656,15 +653,15 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     boolean orderAsc = isOrderAsc();
     if (operator instanceof OEqualsCompareOperator || operator instanceof OContainsKeyOperator
         || operator instanceof OContainsValueOperator) {
-      return index.iterateEntries(toIndexKey(definition, value), orderAsc);
+      return index.streamEntries(toIndexKey(definition, value), orderAsc);
     } else if (operator instanceof OGeOperator) {
-      return index.iterateEntriesMajor(value, true, orderAsc);
+      return index.streamEntriesMajor(value, true, orderAsc);
     } else if (operator instanceof OGtOperator) {
-      return index.iterateEntriesMajor(value, false, orderAsc);
+      return index.streamEntriesMajor(value, false, orderAsc);
     } else if (operator instanceof OLeOperator) {
-      return index.iterateEntriesMinor(value, true, orderAsc);
+      return index.streamEntriesMinor(value, true, orderAsc);
     } else if (operator instanceof OLtOperator) {
-      return index.iterateEntriesMinor(value, false, orderAsc);
+      return index.streamEntriesMinor(value, false, orderAsc);
     } else {
       throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
     }
@@ -805,8 +802,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private static boolean indexKeyToIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
     OBooleanExpression exp = keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
-    OBinaryCompareOperator additionalOperator = Optional.ofNullable(additional)
-        .map(OBinaryCondition::getOperator).orElse(null);
+    OBinaryCompareOperator additionalOperator = Optional.ofNullable(additional).map(OBinaryCondition::getOperator).orElse(null);
     if (exp instanceof OBinaryCondition) {
       OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
       if (isLessOperator(operator)) {
@@ -897,8 +893,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
-    return new FetchFromIndexStep(indexName,
-        Optional.ofNullable(this.condition).map(OBooleanExpression::copy).orElse(null),
+    return new FetchFromIndexStep(indexName, Optional.ofNullable(this.condition).map(OBooleanExpression::copy).orElse(null),
         Optional.ofNullable(this.additionalRangeCondition).map(OBinaryCondition::copy).orElse(null), this.orderAsc, ctx,
         this.profilingEnabled);
   }
