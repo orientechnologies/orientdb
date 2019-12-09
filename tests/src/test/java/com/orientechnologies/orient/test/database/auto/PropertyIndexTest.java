@@ -150,6 +150,8 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = { "testIsIndexedIndexedField" })
   public void testIndexingCompositeRIDAndOthers() throws Exception {
+    checkEmbeddedDB();
+
     long prev0 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getInternal().size();
     long prev1 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getInternal().size();
 

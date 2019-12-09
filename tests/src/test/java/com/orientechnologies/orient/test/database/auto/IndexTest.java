@@ -156,6 +156,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
   public void testIndexEntries() {
+    checkEmbeddedDB();
+
     List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick is not null")).execute();
 
     OIndex idx = database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick");
@@ -538,6 +540,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void indexLinks() {
+    checkEmbeddedDB();
+
     database.getMetadata().getSchema().getClass("Whiz").getProperty("account").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
     final List<Account> result = database.command(new OSQLSynchQuery<Account>("select * from Account limit 1")).execute();
@@ -654,6 +658,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testConcurrentRemoveDelete() {
+    checkEmbeddedDB();
+
     try (ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL())) {
       db.open("admin", "admin");
 
@@ -971,6 +977,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNotUniqueIndexSize() {
+    checkEmbeddedDB();
+
     final OSchema schema = database.getMetadata().getSchema();
     OClass cls = schema.createClass("IndexNotUniqueIndexSize");
     cls.createProperty("value", OType.INTEGER);
@@ -1457,6 +1465,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testMultikeyWithoutFieldAndNullSupport() {
+    checkEmbeddedDB();
+
     //generates stubs for index
     ODocument doc1 = new ODocument();
     doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
@@ -1606,6 +1616,8 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testMultikeyWithoutFieldAndNoNullSupport() {
+    checkEmbeddedDB();
+
     //generates stubs for index
     ODocument doc1 = new ODocument();
     doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
