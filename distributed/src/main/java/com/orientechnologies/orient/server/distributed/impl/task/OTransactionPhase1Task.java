@@ -5,6 +5,7 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -17,10 +18,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedWorker;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TimerTask;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -46,6 +47,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   private           List<ORecordOperationRequest>                   operations;
   private           OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   private transient int                                             retryCount = 0;
+  private volatile  boolean                                         finished;
+  private           TimerTask                                       notYetFinishedTask;
 
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
@@ -94,17 +97,26 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
 
-
-    if(iManager!=null) {
+    if (iManager != null) {
       iManager.messageBeforeOp("prepare1Phase", requestId);
     }
     convert(database);
-    if(iManager!=null) {
+    if (iManager != null) {
       iManager.messageAfterOp("prepare1Phase", requestId);
     }
+
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
     //No need to increase the lock timeout here with the retry because this retries are not deadlock retries
-    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
+    OTransactionResultPayload res1;
+    try {
+      res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
+    } catch (Exception e) {
+      this.finished = true;
+      if (this.notYetFinishedTask != null) {
+        this.notYetFinishedTask.cancel();
+      }
+      throw e;
+    }
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
@@ -112,7 +124,12 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       hasResponse = false;
       return null;
     }
+
     hasResponse = true;
+    this.finished = true;
+    if (this.notYetFinishedTask != null) {
+      this.notYetFinishedTask.cancel();
+    }
     return new OTransactionPhase1TaskResult(res1);
   }
 
@@ -260,5 +277,21 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   public List<ORecordOperation> getOps() {
     return ops;
+  }
+
+  @Override
+  public void received(ODistributedRequest request, ODistributedDatabase distributedDatabase) {
+    notYetFinishedTask = new TimerTask() {
+      @Override
+      public void run() {
+        Orient.instance().submit(() -> {
+          if (!finished) {
+            ODistributedWorker.sendResponseBack(this, distributedDatabase.getManager(), request,
+                new OTransactionPhase1TaskResult(new OTxStillRunning()));
+          }
+        });
+      }
+    };
+    Orient.instance().scheduleTask(notYetFinishedTask, getDistributedTimeout(), getDistributedTimeout());
   }
 }
