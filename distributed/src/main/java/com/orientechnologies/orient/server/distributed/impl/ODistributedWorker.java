@@ -408,7 +408,7 @@ public class ODistributedWorker extends Thread {
     return sendResponseBack(this, manager, iRequest, responsePayload);
   }
 
-  static boolean sendResponseBack(final Object current, final ODistributedServerManager manager, final ODistributedRequest iRequest,
+  public static boolean sendResponseBack(final Object current, final ODistributedServerManager manager, final ODistributedRequest iRequest,
       Object responsePayload) {
     if (iRequest.getId().getMessageId() < 0)
       // INTERNAL MSG
