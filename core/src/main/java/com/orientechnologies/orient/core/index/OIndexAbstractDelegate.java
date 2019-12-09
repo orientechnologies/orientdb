@@ -45,7 +45,7 @@ public class OIndexAbstractDelegate implements OIndexInternal {
   }
 
   public OIndexInternal getInternal() {
-    return delegate;
+    return this;
   }
 
   public OIndex create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
