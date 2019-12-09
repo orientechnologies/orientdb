@@ -262,7 +262,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     final ORemoteTask task = request.getTask();
-
+    task.received(request, this);
     manager.messageReceived(request);
 
     if (waitForAcceptingRequests) {
@@ -274,23 +274,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     totalReceivedRequests.incrementAndGet();
-
-    // final ODistributedMomentum lastMomentum = filterByMomentum.get();
-    // if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
-    // final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-    //
-    // final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
-    // final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
-    //
-    // if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
-    // // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
-    // final String msg = String.format("Skipped request %s on database '%s' because %s < current %s", request, databaseName,
-    // taskLastLSN, lastLSNFromMomentum);
-    // ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, msg);
-    // ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedException(msg));
-    // return;
-    // }
-    // }
 
     final int[] partitionKeys = task.getPartitionKey();
 
