@@ -177,7 +177,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     final Collection<OIndex> rawResult = indexes.values();
     final List<OIndex> result = new ArrayList<>(rawResult.size());
     for (final OIndex index : rawResult) {
-      result.add(preProcessBeforeReturn(database, index.getInternal()));
+      result.add(preProcessBeforeReturn(database, index));
     }
     return result;
   }
@@ -193,7 +193,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     final OIndex index = indexes.get(iName);
     if (index == null)
       return null;
-    return preProcessBeforeReturn(database, index.getInternal());
+    return preProcessBeforeReturn(database, index);
   }
 
   public void addClusterToIndex(final String clusterName, final String indexName) {
@@ -294,7 +294,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     for (final OIndex index : rawResult) {
       //ignore indexes that ignore null values on partial match
       if (fields.size() == index.getDefinition().getFields().size() || !index.getDefinition().isNullValuesIgnored()) {
-        transactionalResult.add(preProcessBeforeReturn(database, index.getInternal()));
+        transactionalResult.add(preProcessBeforeReturn(database, index));
       }
     }
 
@@ -335,7 +335,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
     for (final Set<OIndex> propertyIndexes : propertyIndex.values())
       for (final OIndex index : propertyIndexes)
-        indexes.add(preProcessBeforeReturn(database, index.getInternal()));
+        indexes.add(preProcessBeforeReturn(database, index));
   }
 
   public void getClassRawIndexes(final String className, final Collection<OIndex> indexes) {
@@ -367,7 +367,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     final OIndex index = indexes.get(indexName);
     if (index != null && index.getDefinition() != null && index.getDefinition().getClassName() != null && className
         .equals(index.getDefinition().getClassName().toLowerCase(locale)))
-      return preProcessBeforeReturn(database, index.getInternal());
+      return preProcessBeforeReturn(database, index);
     return null;
   }
 
@@ -380,7 +380,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       if (index != null && OAutoShardingIndexFactory.AUTOSHARDING_ALGORITHM.equals(index.getAlgorithm())
           && index.getDefinition() != null && index.getDefinition().getClassName() != null && className
           .equals(index.getDefinition().getClassName().toLowerCase(locale)))
-        return preProcessBeforeReturn(database, index.getInternal());
+        return preProcessBeforeReturn(database, index);
     }
     return null;
   }
