@@ -293,7 +293,7 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
    * Returns internal index of last chain index, because proxy applicable to all operations that last index applicable.
    */
   public OIndexInternal getInternal() {
-    return lastIndex.getInternal();
+    return this;
   }
 
   /**
@@ -501,7 +501,7 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
 
   @Override
   public Object getCollatingValue(Object key) {
-    throw new UnsupportedOperationException();
+    return this.lastIndex.getInternal().getCollatingValue(key);
   }
 
   @Override
@@ -526,12 +526,12 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
 
   @Override
   public boolean canBeUsedInEqualityOperators() {
-    throw new UnsupportedOperationException();
+    return this.lastIndex.getInternal().canBeUsedInEqualityOperators();
   }
 
   @Override
   public boolean hasRangeQuerySupport() {
-    throw new UnsupportedOperationException();
+    return this.lastIndex.getInternal().hasRangeQuerySupport();
   }
 
   @Override
