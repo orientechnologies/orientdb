@@ -424,7 +424,7 @@ public class OMatchExecutionPlanner {
           visitedEdges.add(edge);
           resultingSchedule.add(new EdgeTraversal(edge, traversalDirection));
         }
-      } else if (!startNode.optional) {
+      } else if (!startNode.optional || isOptionalChain(startNode, edge, neighboringNode)) {
         // If the neighboring node wasn't visited, we don't expand the optional node into it, hence the above check.
         // Instead, we'll allow the neighboring node to add the edge we failed to visit, via the above block.
         if (visitedEdges.contains(edge)) {
@@ -437,6 +437,28 @@ public class OMatchExecutionPlanner {
         updateScheduleStartingAt(neighboringNode, visitedNodes, visitedEdges, remainingDependencies, resultingSchedule);
       }
     }
+  }
+
+  private boolean isOptionalChain(PatternNode startNode, PatternEdge edge, PatternNode neighboringNode) {
+    return isOptionalChain(startNode, edge, neighboringNode, new HashSet<>());
+  }
+
+  private boolean isOptionalChain(PatternNode startNode, PatternEdge edge, PatternNode neighboringNode, Set<PatternEdge> visitedEdges) {
+    if (!startNode.isOptionalNode() || !neighboringNode.isOptionalNode()) {
+      return false;
+    }
+
+    visitedEdges.add(edge);
+
+    if (neighboringNode.out != null) {
+      for (PatternEdge patternEdge : neighboringNode.out) {
+        if (!visitedEdges.contains(patternEdge) && !isOptionalChain(neighboringNode, patternEdge, patternEdge.in, visitedEdges)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -695,9 +717,15 @@ public class OMatchExecutionPlanner {
 
     Map<String, Long> result = new LinkedHashMap<String, Long>();
     for (String alias : allAliases) {
+      ORid rid = aliasRids.get(alias);
+      if (rid != null) {
+        result.put(alias, 1L);
+        continue;
+      }
+      
       String className = aliasClasses.get(alias);
       String clusterName = aliasClusters.get(alias);
-      ORid rid = aliasRids.get(alias);
+
       if (className == null && clusterName == null) {
         continue;
       }
@@ -734,8 +762,6 @@ public class OMatchExecutionPlanner {
         } else {
           result.put(alias, db.countClusterElements(clusterName));
         }
-      } else if (rid != null) {
-        result.put(alias, 1L);
       }
     }
     return result;
