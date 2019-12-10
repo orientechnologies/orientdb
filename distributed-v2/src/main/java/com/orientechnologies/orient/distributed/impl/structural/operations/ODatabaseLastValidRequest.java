@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
+import com.orientechnologies.orient.distributed.impl.log.OOplogIterator;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -31,7 +32,7 @@ public class ODatabaseLastValidRequest implements OOperation {
 
   @Override
   public void apply(ONodeIdentity sender, OrientDBDistributed context) {
-    Optional<Iterator<OOperationLogEntry>> res = context.getDistributedContext(this.database).getOpLog().searchFrom(oLogId);
+    Optional<OOplogIterator> res = context.getDistributedContext(this.database).getOpLog().searchFrom(oLogId);
     Optional<OLogId> id;
     if (res.isPresent()) {
       if (res.get().hasNext()) {

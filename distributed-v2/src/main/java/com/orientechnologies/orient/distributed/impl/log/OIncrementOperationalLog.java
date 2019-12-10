@@ -28,12 +28,12 @@ public class OIncrementOperationalLog implements OOperationLog {
   }
 
   @Override
-  public Iterator<OOperationLogEntry> iterate(long from, long to) {
+  public OOplogIterator iterate(long from, long to) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Optional<Iterator<OOperationLogEntry>> searchFrom(OLogId from) {
+  public Optional<OOplogIterator> searchFrom(OLogId from) {
     throw new UnsupportedOperationException();
   }
 

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
+import com.orientechnologies.orient.distributed.impl.log.OOplogIterator;
 import com.orientechnologies.orient.distributed.impl.structural.OReadStructuralSharedConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OFullConfiguration;
@@ -193,7 +194,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   @Override
   public boolean tryResend(ONodeIdentity identity, OLogId logId) {
     //TODO: this may fail, handle the failure.
-    Optional<Iterator<OOperationLogEntry>> res = operationLog.searchFrom(logId);
+    Optional<OOplogIterator> res = operationLog.searchFrom(logId);
     if (res.isPresent()) {
       Iterator<OOperationLogEntry> iter = res.get();
       executor.execute(() -> {

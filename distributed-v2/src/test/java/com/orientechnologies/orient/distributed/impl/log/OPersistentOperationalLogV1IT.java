@@ -27,13 +27,16 @@ public class OPersistentOperationalLogV1IT {
       }
 
       long nextEntry = 10_000;
-      Iterator<OOperationLogEntry> iteartor = log.iterate(nextEntry, totLogEntries - 1);
-      while (nextEntry < totLogEntries) {
-        OOperationLogEntry item = iteartor.next();
-        Assert.assertEquals(nextEntry++, item.getLogId().getId());
+      OOplogIterator iteartor = log.iterate(nextEntry, totLogEntries - 1);
+      try {
+        while (nextEntry < totLogEntries) {
+          OOperationLogEntry item = iteartor.next();
+          Assert.assertEquals(nextEntry++, item.getLogId().getId());
+        }
+        Assert.assertFalse(iteartor.hasNext());
+      } finally {
+        iteartor.close();
       }
-      Assert.assertFalse(iteartor.hasNext());
-
     } finally {
       for (File file1 : file.toFile().listFiles()) {
         file1.delete();
@@ -56,13 +59,14 @@ public class OPersistentOperationalLogV1IT {
         log.log(item);
       }
 
-      Iterator<OOperationLogEntry> iteartor = log.iterate(10_000, 40_000 - 1);
+      OOplogIterator iterator = log.iterate(10_000, 40_000 - 1);
       for (int i = 10_000; i < 40_000; i++) {
-        OOperationLogEntry item = iteartor.next();
+        OOperationLogEntry item = iterator.next();
         Assert.assertEquals(i, item.getLogId().getId());
       }
-      Assert.assertFalse(iteartor.hasNext());
+      Assert.assertFalse(iterator.hasNext());
 
+      iterator.close();
     } finally {
       for (File file1 : file.toFile().listFiles()) {
         file1.delete();
@@ -98,7 +102,7 @@ public class OPersistentOperationalLogV1IT {
 
         Assert.assertEquals(OOperationLog.LogIdStatus.PRESENT, status);
 
-        Iterator<OOperationLogEntry> iteartor = log.iterate(0, totLogEntries);
+        OOplogIterator iteartor = log.iterate(0, totLogEntries);
         for (int i = 0; i <= cutTo; i++) {
           OOperationLogEntry item = iteartor.next();
           Assert.assertEquals(i, item.getLogId().getId());
@@ -110,6 +114,7 @@ public class OPersistentOperationalLogV1IT {
           throw e;
         }
 
+        iteartor.close();
       } finally {
         for (File file1 : file.toFile().listFiles()) {
           file1.delete();

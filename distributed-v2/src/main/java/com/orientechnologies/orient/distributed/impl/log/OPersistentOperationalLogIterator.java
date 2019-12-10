@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class OPersistentOperationalLogIterator implements Iterator<OOperationLogEntry> {
+public class OPersistentOperationalLogIterator implements OOplogIterator {
   private final Long from;
   private final long to;
   private final OPersistentOperationalLogV1 opLog;
@@ -80,6 +80,16 @@ public class OPersistentOperationalLogIterator implements Iterator<OOperationLog
       this.stream = new DataInputStream(new FileInputStream(file));
     } catch (FileNotFoundException e) {
       throw new IllegalStateException("Oplog file not found: " + file.getAbsolutePath());
+    }
+  }
+
+  public void close() {
+    try {
+      if (this.stream != null) {
+        this.stream.close();
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
