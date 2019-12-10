@@ -335,7 +335,7 @@ public final class OrientGraph implements OGraph {
     return rawDatabase.executeWithRetry(nRetries, (db) -> function.apply(this));
   }
 
-  protected Object convertValue(final OIndex<?> idx, Object iValue) {
+  protected Object convertValue(final OIndex idx, Object iValue) {
     if (iValue != null) {
       final OType[] types = idx.getKeyTypes();
       if (types.length == 0)
@@ -346,23 +346,23 @@ public final class OrientGraph implements OGraph {
     return iValue;
   }
 
-  public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Iterator<Object> valueIter) {
+  public Stream<OrientVertex> getIndexedVertices(OIndex index, Iterator<Object> valueIter) {
     return getIndexedElements(index, valueIter, OrientVertex::new);
   }
 
-  public Stream<OrientEdge> getIndexedEdges(OIndex<Object> index, Iterator<Object> valueIter) {
+  public Stream<OrientEdge> getIndexedEdges(OIndex index, Iterator<Object> valueIter) {
     return getIndexedElements(index, valueIter, OrientEdge::new);
   }
 
-  private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(OIndex<Object> index,
-      Iterator<Object> valuesIter, BiFunction<OrientGraph, OIdentifiable, ElementType> newElement) {
+  private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(OIndex index, Iterator<Object> valuesIter,
+      BiFunction<OrientGraph, OIdentifiable, ElementType> newElement) {
     makeActive();
 
     if (index == null) {
       return Collections.<ElementType>emptyList().stream();
     } else {
       if (!valuesIter.hasNext()) {
-        return index.stream().map(id -> newElement.apply(this, id.second));
+        return index.getInternal().stream().map(id -> newElement.apply(this, id.second));
       } else {
         Stream<Object> convertedValues = StreamUtils.asStream(valuesIter).map(value -> convertValue(index, value));
         Stream<OIdentifiable> ids = convertedValues.flatMap(v -> lookupInIndex(index, v)).filter(r -> r != null);
@@ -372,7 +372,7 @@ public final class OrientGraph implements OGraph {
     }
   }
 
-  private Stream<OIdentifiable> lookupInIndex(OIndex<Object> index, Object value) {
+  private Stream<OIdentifiable> lookupInIndex(OIndex index, Object value) {
     Object fromIndex = index.get(value);
     if (fromIndex instanceof Iterable)
       return StreamUtils.asStream(((Iterable<OIdentifiable>) fromIndex).iterator());
@@ -389,7 +389,7 @@ public final class OrientGraph implements OGraph {
   }
 
   public Set<String> getIndexedKeys(String className) {
-    Iterator<OIndex<?>> indexes = getIndexManager().getClassIndexes(className).iterator();
+    Iterator<OIndex> indexes = getIndexManager().getClassIndexes(className).iterator();
     HashSet<String> indexedKeys = new HashSet<>();
     indexes.forEachRemaining(index -> {
       index.getDefinition().getFields().forEach(indexedKeys::add);

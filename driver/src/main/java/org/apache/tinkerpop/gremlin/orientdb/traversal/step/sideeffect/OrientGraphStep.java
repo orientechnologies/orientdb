@@ -66,7 +66,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
    */
   private <ElementType extends Element> Iterator<? extends ElementType> elements(
       BiFunction<OGraph, Object[], Iterator<ElementType>> getElementsByIds,
-      TriFunction<OGraph, OIndex<Object>, Iterator<Object>, Stream<? extends ElementType>> getElementsByIndex,
+      TriFunction<OGraph, OIndex, Iterator<Object>, Stream<? extends ElementType>> getElementsByIndex,
       Function<OGraph, Iterator<ElementType>> getAllElements, Function<OGremlinResult, ElementType> getElement) {
     final OGraph graph = getGraph();
 
@@ -154,8 +154,8 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
         classLabels.forEach(classLabel -> {
           Iterator<Object> values = getValueIterator(requestedKeyValue);
           String className = graph.labelToClassName(classLabel, isVertexStep() ? OClass.VERTEX_CLASS_NAME : OClass.EDGE_CLASS_NAME);
-          Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
-          Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key))
+          Set<OIndex> classIndexes = indexManager.getClassIndexes(className);
+          Iterator<OIndex> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key))
               .iterator();
 
           if (keyIndexes.hasNext()) {
@@ -175,9 +175,9 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
    * gets the requested values from the Has step. If it's a single value, wrap it in an array, otherwise return the array
    */
   private Iterator<Object> getValueIterator(HasContainer c) {
-    return c.getPredicate().getBiPredicate() == Contains.within ?
-        ((Iterable<Object>) c.getValue()).iterator() :
-        IteratorUtils.of(c.getValue());
+    return c.getPredicate().getBiPredicate() == Contains.within
+        ? ((Iterable<Object>) c.getValue()).iterator()
+        : IteratorUtils.of(c.getValue());
   }
 
   @Override
@@ -185,9 +185,9 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
     if (this.hasContainers.isEmpty())
       return super.toString();
     else
-      return 0 == this.ids.length ?
-          StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), this.hasContainers) :
-          StringFactory
+      return 0 == this.ids.length
+          ? StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), this.hasContainers)
+          : StringFactory
               .stepString(this, this.returnClass.getSimpleName().toLowerCase(), Arrays.toString(this.ids), this.hasContainers);
   }
 

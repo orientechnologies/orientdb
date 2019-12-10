@@ -43,9 +43,9 @@ public class OrientStandardGraph implements OGraph {
 
   private final Configuration          config;
   private       OrientGraphBaseFactory factory;
-  private boolean transactional = true;
-  private Transaction     tx;
-  private OElementFactory elementFactory;
+  private       boolean                transactional = true;
+  private       Transaction            tx;
+  private       OElementFactory        elementFactory;
 
   public OrientStandardGraph(OrientGraphBaseFactory factory, Configuration config) {
     this.factory = factory;
@@ -165,12 +165,12 @@ public class OrientStandardGraph implements OGraph {
   }
 
   @Override
-  public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Iterator<Object> valueIter) {
+  public Stream<OrientVertex> getIndexedVertices(OIndex index, Iterator<Object> valueIter) {
     return graph().getIndexedVertices(index, valueIter);
   }
 
   @Override
-  public Stream<OrientEdge> getIndexedEdges(OIndex<Object> index, Iterator<Object> valueIter) {
+  public Stream<OrientEdge> getIndexedEdges(OIndex index, Iterator<Object> valueIter) {
     return graph().getIndexedEdges(index, valueIter);
   }
 
@@ -186,7 +186,7 @@ public class OrientStandardGraph implements OGraph {
 
   @Override
   public OGremlinResultSet querySql(String sql, Map params) {
-    return graph().querySql(sql,params);
+    return graph().querySql(sql, params);
   }
 
   @Override

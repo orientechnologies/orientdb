@@ -28,11 +28,11 @@ public interface OGraph extends Graph {
   String createVertexClass(final String label);
 
   @Deprecated
-  Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Iterator<Object> valueIter);
+  Stream<OrientVertex> getIndexedVertices(OIndex index, Iterator<Object> valueIter);
 
 
   @Deprecated
-  Stream<OrientEdge> getIndexedEdges(OIndex<Object> index, Iterator<Object> valueIter);
+  Stream<OrientEdge> getIndexedEdges(OIndex index, Iterator<Object> valueIter);
 
   ODatabaseDocument getRawDatabase();
 
