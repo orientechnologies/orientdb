@@ -496,8 +496,16 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     while (true) {
       OOplogIterator iterator = iterate(smallest, smallest + 11);
       try {
+        if (!iterator.hasNext()) {
+          return Optional.empty();
+        }
+        boolean first = true;
         while (iterator.hasNext()) {
           OLogId found = iterator.next().getLogId();
+          if (first && found.getId() > from.getId()) {
+            return Optional.empty();
+          }
+          first = false;
           if (found.getId() > from.getId()) {
             return Optional.empty();
           }

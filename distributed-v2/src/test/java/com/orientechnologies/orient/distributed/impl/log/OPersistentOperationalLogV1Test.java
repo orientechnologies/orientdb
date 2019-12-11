@@ -586,5 +586,17 @@ public class OPersistentOperationalLogV1Test {
   }
 
 
+  @Test
+  public void testSearchFromEmpty() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 master = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    master.setLeader(true, 0);
+
+    Assert.assertFalse(master.searchFrom(new OLogId(0, 10, 0)).isPresent());
+    master.close();
+
+  }
+
+
 }
 
