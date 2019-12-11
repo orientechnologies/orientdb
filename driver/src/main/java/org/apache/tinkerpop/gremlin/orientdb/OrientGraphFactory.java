@@ -188,12 +188,12 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
    * Setting up the factory to use database pool instead of creation a new instance of database connection each time.
    */
   public OrientGraphBaseFactory setupPool(final int max) {
-    pool = new OPartitionedReCreatableDatabasePool(this.factory, dbName, user, password, max);
+    pool = new OPartitionedReCreatableDatabasePool(this.factory, dbName, type, user, password, max);
     return this;
   }
 
   public OrientGraphFactory setupPool(final int maxPartitionSize, final int max) {
-    pool = new OPartitionedReCreatableDatabasePool(this.factory, dbName, user, password, max);
+    pool = new OPartitionedReCreatableDatabasePool(this.factory, dbName, type, user, password, max);
     return this;
   }
 
