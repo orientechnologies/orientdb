@@ -45,7 +45,7 @@ import java.util.UUID;
 public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract {
 
   private final OCollectionNetworkSerializer networkSerializer;
-  private boolean remoteCreationAllowed = false;
+  private       boolean                      remoteCreationAllowed = false;
 
   private volatile ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections = new PendingCollectionsThreadLocal();
 
@@ -75,20 +75,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
 
   @Override
   protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createEdgeTree(final int clusterId) {
-    if (remoteCreationAllowed) {
-      final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
-      OSBTCreateTreeRequest request = new OSBTCreateTreeRequest(clusterId);
-      OSBTCreateTreeResponse response = storage.networkOperationNoRetry(request, "Cannot create sb-tree bonsai");
-
-      OBonsaiCollectionPointer pointer = response.getCollenctionPointer();
-
-      OBinarySerializer<OIdentifiable> keySerializer = OLinkSerializer.INSTANCE;
-      OBinarySerializer<Integer> valueSerializer = OIntegerSerializer.INSTANCE;
-
-      return new OSBTreeBonsaiRemote<OIdentifiable, Integer>(pointer, keySerializer, valueSerializer);
-    } else {
-      throw new UnsupportedOperationException("Creation of SB-Tree from remote storage is not allowed");
-    }
+    throw new UnsupportedOperationException("Creation of SB-Tree from remote storage is not allowed");
   }
 
   @Override

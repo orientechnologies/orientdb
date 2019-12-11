@@ -3,9 +3,11 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.ridbag.ORemoteTreeRidBag;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +16,7 @@ import java.util.UUID;
 public class ORecordSerializerNetworkV37Client extends ORecordSerializerNetworkV37 {
 
   public static final ORecordSerializerNetworkV37Client INSTANCE = new ORecordSerializerNetworkV37Client();
+  public static final String                            NAME     = "onet_ser_v37_client";
 
   protected ORidBag readRidBag(BytesContainer bytes) {
     UUID uuid = OUUIDSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
@@ -48,7 +51,10 @@ public class ORecordSerializerNetworkV37Client extends ORecordSerializerNetworkV
         int change = OVarIntSerializer.readAsInteger(bytes);
         changes.put(link, ChangeSerializationHelper.createChangeInstance(type, change));
       }
-      return new ORidBag(new ORemoteTreeRidBag());
+      OBonsaiCollectionPointer pointer = null;
+      if (fileId != -1)
+        pointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+      return new ORidBag(new ORemoteTreeRidBag(pointer));
     }
   }
 

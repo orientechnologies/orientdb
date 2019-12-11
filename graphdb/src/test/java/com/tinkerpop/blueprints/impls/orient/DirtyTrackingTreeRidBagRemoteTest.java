@@ -116,7 +116,7 @@ public class DirtyTrackingTreeRidBagRemoteTest {
       OrientVertex vertex = graph.getVertex(oneVertex);
       assertEquals(new GremlinPipeline<Vertex, Long>().start(vertex).in("Edge").count(), max);
     } finally {
-      graph.shutdown();
+      //graph.shutdown();
     }
   }
 

@@ -334,7 +334,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       uuid = new UUID(-1, -1);
     int uuidPos = bytes.alloc(OUUIDSerializer.UUID_SIZE);
     OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, uuidPos);
-    if (bag.isEmbedded() || OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger() >= bag.size()) {
+    if (bag.isToSerializeEmbedded()) {
       int pos = bytes.alloc(1);
       bytes.bytes[pos] = 1;
       OVarIntSerializer.write(bytes, bag.size());

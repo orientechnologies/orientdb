@@ -1432,6 +1432,7 @@ public class ODocument extends ORecordAbstract
     if (oldValue instanceof ORidBag) {
       final ORidBag ridBag = (ORidBag) oldValue;
       ridBag.setOwner(null);
+      ridBag.setRecordAndField(recordId, iFieldName);
     } else if (oldValue instanceof ODocument) {
       ((ODocument) oldValue).removeOwner(this);
     }
@@ -1458,6 +1459,7 @@ public class ODocument extends ORecordAbstract
         final ORidBag ridBag = (ORidBag) iPropertyValue;
         ridBag.setOwner(null); // in order to avoid IllegalStateException when ridBag changes the owner (ODocument.merge)
         ridBag.setOwner(this);
+        ridBag.setRecordAndField(recordId, iFieldName);
       }
     }
 
@@ -2599,8 +2601,8 @@ public class ODocument extends ORecordAbstract
     entry.value = iFieldValue;
     entry.type = iFieldType;
     entry.enableTracking(this);
-    if (iFieldValue instanceof ORidBag && ((ORidBag) iFieldValue).getDelegate() instanceof ORemoteTreeRidBag) {
-      ((ORemoteTreeRidBag) (((ORidBag) iFieldValue).getDelegate())).setRecordAndField(recordId, iFieldName);
+    if (iFieldValue instanceof ORidBag ) {
+      ((ORidBag) iFieldValue).setRecordAndField(recordId, iFieldName);
     }
     if (iFieldValue instanceof OIdentifiable && !((OIdentifiable) iFieldValue).getIdentity().isPersistent())
       track((OIdentifiable) iFieldValue);
@@ -2646,6 +2648,7 @@ public class ODocument extends ORecordAbstract
           if (type == OType.LINKBAG && entry.value != null && !(entry.value instanceof ORidBag)
               && entry.value instanceof Collection) {
             ORidBag newValue = new ORidBag();
+            newValue.setRecordAndField(recordId, prop.getName());
             for (Object o : ((Collection) entry.value)) {
               if (!(o instanceof OIdentifiable)) {
                 throw new OValidationException("Invalid value in ridbag: " + o);
@@ -2868,6 +2871,7 @@ public class ODocument extends ORecordAbstract
         if (fieldValue instanceof Collection<?>) {
           ORidBag bag = new ORidBag();
           bag.setOwner(this);
+          bag.setRecordAndField(recordId, fieldEntry.getKey());
           bag.addAll((Collection<OIdentifiable>) fieldValue);
           newValue = bag;
         }
