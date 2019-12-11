@@ -132,15 +132,15 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   public synchronized boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName) {
+    if (response.getResultPayload() instanceof OTxStillRunning) {
+      stillRunning++;
+      return false;
+    }
     debugNodeReplied.add(senderNodeName);
     return addResult(senderNodeName, response.getResultPayload());
   }
 
   private boolean addResult(String senderNodeName, OTransactionResultPayload result) {
-    if (result instanceof OTxStillRunning) {
-      stillRunning++;
-      return false;
-    }
     List<OTransactionResultPayload> results = new ArrayList<>();
 
     if (nodesConcurToTheQuorum.contains(senderNodeName)) {
