@@ -25,24 +25,22 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.impl.local.AtomicOperationIdGen;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -62,9 +60,6 @@ import java.util.concurrent.locks.LockSupport;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
-
-  private volatile boolean trackAtomicOperations = OGlobalConfiguration.TX_TRACK_ATOMIC_OPERATIONS.getValueAsBoolean();
-
   private final LongAdder atomicOperationsCount = new LongAdder();
 
   private final AtomicInteger freezeRequests = new AtomicInteger();
@@ -99,14 +94,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
   private final OReadCache                         readCache;
   private final OWriteCache                        writeCache;
-
-  private final Map<OOperationUnitId, OPair<String, StackTraceElement[]>> activeAtomicOperations = new ConcurrentHashMap<>();
+  private final AtomicOperationIdGen               idGen;
 
   public OAtomicOperationsManager(OAbstractPaginatedStorage storage) {
     this.storage = storage;
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
+    this.idGen = storage.getIdGen();
   }
 
   /**
@@ -118,7 +113,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       return startAtomicOperation(durableComponent.getLockName(), trackNonTxOperations, false);
     }
 
-    return startAtomicOperation((String) null, trackNonTxOperations, false);
+    return startAtomicOperation(null, trackNonTxOperations, false);
   }
 
   public OAtomicOperation tryStartAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
@@ -127,7 +122,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       return startAtomicOperation(durableComponent.getLockName(), trackNonTxOperations, true);
     }
 
-    return startAtomicOperation((String) null, trackNonTxOperations, true);
+    return startAtomicOperation(null, trackNonTxOperations, true);
   }
 
   /**
@@ -196,16 +191,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert freezeRequests.get() >= 0;
 
     final boolean useWal = useWal();
-    final OOperationUnitId unitId = OOperationUnitId.generateId();
+    final long unitId = idGen.nextId();
     final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
 
     operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
     currentOperation.set(operation);
-
-    if (trackAtomicOperations) {
-      final Thread thread = Thread.currentThread();
-      activeAtomicOperations.put(unitId, new OPair<>(thread.getName(), thread.getStackTrace()));
-    }
 
     if (useWal && trackNonTxOperations && storage.getStorageTransaction() == null) {
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
@@ -420,10 +410,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
           } else {
             lsn = null;
           }
-
-          if (trackAtomicOperations) {
-            activeAtomicOperations.remove(operation.getOperationUnitId());
-          }
         } finally {
           final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
 
@@ -485,7 +471,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     operation.addLockedObject(lockName);
   }
 
-  public boolean tryAcquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String lockName) {
+  private boolean tryAcquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String lockName) {
     if (operation.containsInLockedObjects(lockName)) {
       return true;
     }
@@ -523,47 +509,22 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
   @Override
   public void trackAtomicOperations() {
-    activeAtomicOperations.clear();
-    trackAtomicOperations = true;
   }
 
   @Override
   public void doNotTrackAtomicOperations() {
-    trackAtomicOperations = false;
-    activeAtomicOperations.clear();
   }
 
   @Override
   public String dumpActiveAtomicOperations() {
-    if (!trackAtomicOperations) {
-      activeAtomicOperations.clear();
-    }
-
-    @SuppressWarnings("resource")
-    final StringWriter writer = new StringWriter();
-    writer.append("List of active atomic operations: \r\n");
-    writer.append("------------------------------------------------------------------------------------------------\r\n");
-    for (Map.Entry<OOperationUnitId, OPair<String, StackTraceElement[]>> entry : activeAtomicOperations.entrySet()) {
-      writer.append("Operation unit id :").append(entry.getKey().toString()).append("\r\n");
-      writer.append("Started at thread : ").append(entry.getValue().getKey()).append("\r\n");
-      writer.append("Stack trace of method which started this operation : \r\n");
-
-      StackTraceElement[] stackTraceElements = entry.getValue().getValue();
-      for (int i = 1; i < stackTraceElements.length; i++) {
-        writer.append("\tat ").append(stackTraceElements[i].toString()).append("\r\n");
-      }
-
-      writer.append("\r\n\r\n");
-    }
-    writer.append("-------------------------------------------------------------------------------------------------\r\n");
-    return writer.toString();
+    return "";
   }
 
   private static final class FreezeParameters {
     private final String                      message;
     private final Class<? extends OException> exceptionClass;
 
-    FreezeParameters(String message, Class<? extends OException> exceptionClass) {
+    private FreezeParameters(String message, Class<? extends OException> exceptionClass) {
       this.message = message;
       this.exceptionClass = exceptionClass;
     }
@@ -578,11 +539,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     private final    Thread          item;
     private volatile WaitingListNode next;
 
-    WaitingListNode(Thread item) {
+    private WaitingListNode(Thread item) {
       this.item = item;
     }
 
-    void waitTillAllLinksWillBeCreated() {
+    private void waitTillAllLinksWillBeCreated() {
       try {
         linkLatch.await();
       } catch (InterruptedException e) {

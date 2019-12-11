@@ -33,18 +33,7 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CHECKPOINT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.EMPTY_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_CREATED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_DELETED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_TRUNCATED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FULL_CHECKPOINT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.NON_TX_OPERATION_PERFORMED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.UPDATE_PAGE_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -107,6 +96,9 @@ public final class OWALRecordsFactory {
     case UPDATE_PAGE_RECORD:
       walRecord = new OUpdatePageRecord();
       break;
+    case UPDATE_PAGE_RECORD_V2:
+      walRecord = new OUpdatePageRecordV2();
+      break;
     case FUZZY_CHECKPOINT_START_RECORD:
       walRecord = new OFuzzyCheckpointStartRecord();
       break;
@@ -122,11 +114,20 @@ public final class OWALRecordsFactory {
     case ATOMIC_UNIT_START_RECORD:
       walRecord = new OAtomicUnitStartRecord();
       break;
+    case ATOMIC_UNIT_START_RECORD_V2:
+      walRecord = new OAtomicUnitStartRecordV2();
+      break;
     case ATOMIC_UNIT_END_RECORD:
       walRecord = new OAtomicUnitEndRecord();
       break;
+    case ATOMIC_UNIT_END_RECORD_V2:
+      walRecord = new OAtomicUnitEndRecordV2();
+      break;
     case FILE_CREATED_WAL_RECORD:
       walRecord = new OFileCreatedWALRecord();
+      break;
+    case FILE_CREATED_WAL_RECORD_V2:
+      walRecord = new OFileCreatedWALRecordV2();
       break;
     case NON_TX_OPERATION_PERFORMED_WAL_RECORD:
       walRecord = new ONonTxOperationPerformedWALRecord();
@@ -134,8 +135,14 @@ public final class OWALRecordsFactory {
     case FILE_DELETED_WAL_RECORD:
       walRecord = new OFileDeletedWALRecord();
       break;
+    case FILE_DELETED_WAL_RECORD_V2:
+      walRecord = new OFileDeletedWALRecordV2();
+      break;
     case FILE_TRUNCATED_WAL_RECORD:
       walRecord = new OFileTruncatedWALRecord();
+      break;
+    case FILE_TRUNCATED_WAL_RECORD_V2:
+      walRecord = new OFileTruncatedWALRecordV2();
       break;
     case EMPTY_WAL_RECORD:
       walRecord = new OEmptyWALRecord();

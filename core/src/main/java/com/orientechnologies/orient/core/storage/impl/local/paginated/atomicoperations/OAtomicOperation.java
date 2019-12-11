@@ -21,27 +21,12 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileDeletedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Note: all atomic operations methods are designed in context that all operations on single files will be wrapped in shared lock.
@@ -53,7 +38,7 @@ public final class OAtomicOperation {
 
   private final int                storageId;
   private final OLogSequenceNumber startLSN;
-  private final OOperationUnitId   operationUnitId;
+  private final long               operationUnitId;
 
   private int     startCounter;
   private boolean rollback;
@@ -69,7 +54,7 @@ public final class OAtomicOperation {
 
   private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<>();
 
-  public OAtomicOperation(final OLogSequenceNumber startLSN, final OOperationUnitId operationUnitId, final OReadCache readCache,
+  public OAtomicOperation(final OLogSequenceNumber startLSN, final long operationUnitId, final OReadCache readCache,
       final OWriteCache writeCache, final int storageId) {
     this.storageId = storageId;
     this.startLSN = startLSN;
@@ -80,7 +65,7 @@ public final class OAtomicOperation {
     this.writeCache = writeCache;
   }
 
-  public OOperationUnitId getOperationUnitId() {
+  public long getOperationUnitId() {
     return operationUnitId;
   }
 
@@ -98,8 +83,7 @@ public final class OAtomicOperation {
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex) {
-        final OCacheEntryChanges pageChange = changesContainer.pageChangesMap.get(pageIndex);
-        return pageChange;
+        return changesContainer.pageChangesMap.get(pageIndex);
       } else {
         return null;
       }
@@ -108,8 +92,8 @@ public final class OAtomicOperation {
 
       if (checkChangesFilledUpTo(changesContainer, pageIndex)) {
         if (pageChangesContainer == null) {
-          final OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages,
-              writeCache, pageCount, verifyChecksum);
+          final OCacheEntry delegate = readCache
+              .loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, verifyChecksum);
           if (delegate != null) {
             pageChangesContainer = new OCacheEntryChanges(verifyChecksum);
             changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
@@ -121,9 +105,8 @@ public final class OAtomicOperation {
             return pageChangesContainer;
           } else {
             // Need to load the page again from cache for locking reasons
-            final OCacheEntry delegate = readCache
+            pageChangesContainer.delegate = readCache
                 .loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, verifyChecksum);
-            pageChangesContainer.delegate = delegate;
             return pageChangesContainer;
           }
         }
@@ -149,8 +132,7 @@ public final class OAtomicOperation {
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex) {
-        final OCacheEntryChanges pageChange = changesContainer.pageChangesMap.get(pageIndex);
-        return pageChange;
+        return changesContainer.pageChangesMap.get(pageIndex);
       } else {
         return null;
       }
@@ -165,8 +147,7 @@ public final class OAtomicOperation {
             return pageChangesContainer;
           } else {
             // Need to load the page again from cache for locking reasons
-            final OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
-            pageChangesContainer.delegate = delegate;
+            pageChangesContainer.delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
             return pageChangesContainer;
           }
         }
@@ -237,8 +218,7 @@ public final class OAtomicOperation {
 
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
-    final OCacheEntry delegate = new OCacheEntryImpl(fileId, filledUpTo, new OCachePointer(null, null, fileId, filledUpTo));
-    pageChangesContainer.delegate = delegate;
+    pageChangesContainer.delegate = new OCacheEntryImpl(fileId, filledUpTo, new OCachePointer(null, null, fileId, filledUpTo));
     return pageChangesContainer;
   }
 
@@ -411,7 +391,7 @@ public final class OAtomicOperation {
       final OLogSequenceNumber startLSN = writeAheadLog.end();
 
       for (final long deletedFileId : deletedFiles) {
-        writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, deletedFileId));
+        writeAheadLog.log(new OFileDeletedWALRecordV2(operationUnitId, deletedFileId));
       }
 
       for (final Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
@@ -419,7 +399,7 @@ public final class OAtomicOperation {
         final long fileId = fileChangesEntry.getKey();
 
         if (fileChanges.isNew) {
-          writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId));
+          writeAheadLog.log(new OFileCreatedWALRecordV2(operationUnitId, fileChanges.fileName, fileId));
         } else if (fileChanges.truncate) {
           OLogManager.instance().warn(this,
               "You performing truncate operation which is considered unsafe because can not be rolled back, "
@@ -436,7 +416,7 @@ public final class OAtomicOperation {
             final OCacheEntryChanges filePageChanges = filePageChangesEntry.getValue();
 
             final OLogSequenceNumber changesLSN = writeAheadLog
-                .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
+                .log(new OUpdatePageRecordV2(pageIndex, fileId, operationUnitId, filePageChanges.changes));
             filePageChanges.setChangeLSN(changesLSN);
           } else {
             filePageChangesIterator.remove();
@@ -444,7 +424,7 @@ public final class OAtomicOperation {
         }
       }
 
-      txEndLsn = writeAheadLog.logAtomicOperationEndRecord(getOperationUnitId(), rollback, this.startLSN, getMetadata());
+      txEndLsn = writeAheadLog.logAtomicOperationEndRecord(operationUnitId, rollback, this.startLSN, getMetadata());
 
       for (final long deletedFileId : deletedFiles) {
         readCache.deleteFile(deletedFileId, writeCache);
@@ -599,12 +579,12 @@ public final class OAtomicOperation {
 
     final OAtomicOperation operation = (OAtomicOperation) o;
 
-    return operationUnitId.equals(operation.operationUnitId);
+    return operationUnitId == operation.operationUnitId;
   }
 
   @Override
   public int hashCode() {
-    return operationUnitId.hashCode();
+    return Long.hashCode(operationUnitId);
   }
 
   private static final class FileChanges {

@@ -70,4 +70,11 @@ public final class WALRecordTypes {
   public static final byte SBTREE_BONSAI_BUCKET_SET_DELETED_OPERATION           = 63;
   public static final byte SBTREE_BONSAI_BUCKET_SET_LEFT_SIBLING_OPERATION      = 64;
   public static final byte SBTREE_BONSAI_BUCKET_SET_RIGHT_SIBLING_OPERATION     = 65;
+
+  public static final byte FILE_DELETED_WAL_RECORD_V2   = 66;
+  public static final byte FILE_TRUNCATED_WAL_RECORD_V2 = 67;
+  public static final byte ATOMIC_UNIT_END_RECORD_V2    = 68;
+  public static final byte FILE_CREATED_WAL_RECORD_V2   = 69;
+  public static final byte UPDATE_PAGE_RECORD_V2        = 70;
+  public static final byte ATOMIC_UNIT_START_RECORD_V2  = 71;
 }

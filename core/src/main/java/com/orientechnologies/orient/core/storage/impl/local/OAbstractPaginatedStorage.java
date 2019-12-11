@@ -199,6 +199,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private final Map<String, OBaseIndexEngine> indexEngineNameMap = new HashMap<>();
   private final List<OBaseIndexEngine>        indexEngines       = new ArrayList<>();
+  private final AtomicOperationIdGen          idGen              = new AtomicOperationIdGen();
   private       boolean                       wereDataRestoredAfterOpen;
 
   private final LongAdder fullCheckpointCount = new LongAdder();
@@ -293,7 +294,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         atomicOperationsManager = new OAtomicOperationsManager(this);
         transaction = new ThreadLocal<>();
 
-        checkIfStorageDirty();
+        final long lastTxId = checkIfStorageDirty();
+        if (lastTxId > 0) {
+          idGen.setStartId(lastTxId + 1);
+        } else {
+          idGen.setStartId(0);
+        }
+
         recoverIfNeeded();
 
         if (OClusterBasedStorageConfiguration.exists(writeCache)) {
@@ -341,7 +348,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         try {
-          postCloseSteps(false, false);
+          postCloseSteps(false, false, idGen.getLastId());
         } catch (final Exception ee) {
           //ignore
         }
@@ -1624,6 +1631,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return writeAheadLog;
   }
 
+  public AtomicOperationIdGen getIdGen() {
+    return idGen;
+  }
+
   @Override
   public final OStorageOperationResult<Boolean> deleteRecord(final ORecordId rid, final int version, final int mode,
       final ORecordCallback<Boolean> callback) {
@@ -2050,7 +2061,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 final ORecordId oldRID = rid.copy();
 
                 final Integer clusterOverride = clusterOverrides.get(recordOperation);
-                final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
+                final int clusterId = Optional.ofNullable(clusterOverride).orElseGet(rid::getClusterId);
 
                 final OCluster cluster = getClusterById(clusterId);
 
@@ -2250,7 +2261,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
         final int keySize = determineKeySize(indexDefinition);
-        final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
+        final OType[] keyTypes = Optional.ofNullable(indexDefinition).map(OIndexDefinition::getTypes).orElse(null);
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
 
         final OBaseIndexEngine engine = OIndexes
@@ -2316,7 +2327,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
         final int keySize = determineKeySize(indexDefinition);
-        final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
+        final OType[] keyTypes = Optional.ofNullable(indexDefinition).map(OIndexDefinition::getTypes).orElse(null);
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
         final byte serializerId;
 
@@ -3943,7 +3954,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           if (db != null) {
             final OSecurityUser user = db.getUser();
-            final String userString = user != null ? user.toString() : null;
+            final String userString = Optional.ofNullable(user).map(Object::toString).orElse(null);
             Orient.instance().getProfiler()
                 .stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".command." + iCommand,
                     "Command executed against the database", beginTime, "db.*.command.*", null, userString);
@@ -4295,7 +4306,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return fullCheckpointCount.sum();
   }
 
-  protected void checkIfStorageDirty() throws IOException {
+  protected long checkIfStorageDirty() throws IOException {
+    return -1;
   }
 
   protected void initConfiguration(final OContextConfiguration contextConfiguration) throws IOException {
@@ -4310,7 +4322,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected abstract void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException, InterruptedException;
 
-  protected abstract void postCloseSteps(@SuppressWarnings("unused") boolean onDelete, boolean jvmError) throws IOException;
+  protected abstract void postCloseSteps(@SuppressWarnings("unused") boolean onDelete, boolean jvmError, long lastTxId)
+      throws IOException;
 
   @SuppressWarnings("EmptyMethod")
   protected void postCloseStepsAfterLock(final Map<String, Object> params) {
@@ -4926,7 +4939,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
         }
 
-        postCloseSteps(onDelete, jvmError.get() != null);
+        postCloseSteps(onDelete, jvmError.get() != null, idGen.getLastId());
         transaction = null;
       } else {
         OLogManager.instance()
@@ -6311,6 +6324,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             try (final ZipOutputStream zipStream = new ZipOutputStream(fileStream)) {
               zipStream.putNextEntry(new ZipEntry("profile.dat"));
 
+              @SuppressWarnings("resource")
               final OutputStreamWriter writer = new OutputStreamWriter(zipStream);
               for (Map.Entry<String, Integer> entry : stackMap.entrySet()) {
                 writer.write(entry.getKey() + " " + entry.getValue() + "\n");

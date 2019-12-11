@@ -57,9 +57,9 @@ public interface OWriteAheadLog {
 
   void flush();
 
-  OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException;
+  OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, long unitId) throws IOException;
 
-  OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
+  OLogSequenceNumber logAtomicOperationEndRecord(long operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
       Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) throws IOException;
 
   OLogSequenceNumber log(OWriteableWALRecord record) throws IOException;

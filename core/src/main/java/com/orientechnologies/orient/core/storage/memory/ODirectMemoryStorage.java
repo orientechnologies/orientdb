@@ -75,7 +75,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void postCloseSteps(final boolean onDelete, final boolean jvmError) throws IOException {
+  protected void postCloseSteps(final boolean onDelete, final boolean jvmError, long lastTxId) throws IOException {
   }
 
   @Override

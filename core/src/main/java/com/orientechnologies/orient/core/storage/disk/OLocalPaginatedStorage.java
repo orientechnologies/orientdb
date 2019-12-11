@@ -55,28 +55,13 @@ import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -427,13 +412,15 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void checkIfStorageDirty() throws IOException {
-    if (dirtyFlag.exists())
+  protected long checkIfStorageDirty() throws IOException {
+    if (dirtyFlag.exists()) {
       dirtyFlag.open();
-    else {
+    } else {
       dirtyFlag.create();
       dirtyFlag.makeDirty();
     }
+
+    return dirtyFlag.getLastTxId();
   }
 
   @Override
@@ -478,11 +465,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void postCloseSteps(final boolean onDelete, final boolean jvmError) throws IOException {
+  protected void postCloseSteps(final boolean onDelete, final boolean jvmError, long lastTxId) throws IOException {
     if (onDelete) {
       dirtyFlag.delete();
     } else {
       if (!jvmError) {
+        dirtyFlag.setLastTxId(lastTxId);
         dirtyFlag.clearDirty();
       }
       dirtyFlag.close();
