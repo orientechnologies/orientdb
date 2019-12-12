@@ -393,8 +393,14 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   }
 
   protected void checkForSystemClusters(final ODatabaseDocumentInternal iDatabase, final int[] iClusterIds) {
+    final OStorage storage = iDatabase.getStorage();
+    //we have similar check on server's side
+    if (storage.isRemote()) {
+      return;
+    }
+
     for (int clId : iClusterIds) {
-      if (iDatabase.getStorage().isSystemCluster(clId)) {
+      if (storage.isSystemCluster(clId)) {
         final OSecurityUser dbUser = iDatabase.getUser();
         if (dbUser == null || dbUser.allow(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_READ) != null)
           // AUTHORIZED
