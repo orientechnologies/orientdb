@@ -39,9 +39,10 @@ public class DirtyTrackingTreeRidBagRemoteTest {
   private String  oldOrientDBHome;
 
   @Before
-  public void before() throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-      NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException, NoSuchMethodException,
-      InstantiationException, IOException, IllegalAccessException {
+  public void before()
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName();
 
@@ -75,7 +76,8 @@ public class DirtyTrackingTreeRidBagRemoteTest {
 
   @Test
   public void test() {
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getDefValue());
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
+        .setValue(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getDefValue());
     final int max = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
     OrientGraph graph = new OrientGraph("remote:localhost:3064/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(), "root",
         "root");
@@ -116,7 +118,7 @@ public class DirtyTrackingTreeRidBagRemoteTest {
       OrientVertex vertex = graph.getVertex(oneVertex);
       assertEquals(new GremlinPipeline<Vertex, Long>().start(vertex).in("Edge").count(), max);
     } finally {
-      //graph.shutdown();
+      graph.shutdown();
     }
   }
 
