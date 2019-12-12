@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.AtomicOperationIdGen;
@@ -102,6 +103,46 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
     this.idGen = storage.getIdGen();
+  }
+
+  public OAtomicOperation startAtomicOperation() throws IOException {
+    OAtomicOperation operation = currentOperation.get();
+    if (operation != null) {
+      throw new OStorageExistsException("Atomic operation already started");
+    }
+
+    atomicOperationsCount.increment();
+
+    while (freezeRequests.get() > 0) {
+      assert freezeRequests.get() >= 0;
+
+      atomicOperationsCount.decrement();
+
+      throwFreezeExceptionIfNeeded();
+
+      final Thread thread = Thread.currentThread();
+
+      addThreadInWaitingList(thread);
+
+      if (freezeRequests.get() > 0) {
+        LockSupport.park(this);
+      }
+
+      atomicOperationsCount.increment();
+    }
+
+    assert freezeRequests.get() >= 0;
+
+    final boolean useWal = useWal();
+    final long unitId = idGen.nextId();
+    final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
+
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
+    currentOperation.set(operation);
+
+    checkReadOnlyConditions(operation);
+
+    return operation;
   }
 
   /**
@@ -216,6 +257,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       }
     }
 
+    checkReadOnlyConditions(operation);
+
+    return operation;
+  }
+
+  private void checkReadOnlyConditions(OAtomicOperation operation) {
     try {
       storage.checkReadOnlyConditions();
     } catch (RuntimeException | Error e) {
@@ -230,8 +277,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
       throw e;
     }
-
-    return operation;
   }
 
   public static void alarmClearOfAtomicOperation() {

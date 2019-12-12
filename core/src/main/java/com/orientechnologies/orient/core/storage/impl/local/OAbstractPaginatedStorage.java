@@ -886,7 +886,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        final OCluster cluster = clusterMap.get(clusterName);
+        final OCluster cluster = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
         if (cluster == null) {
           throwClusterDoesNotExist(clusterName);
         }
@@ -1012,7 +1012,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        final OCluster cluster = clusterMap.get(clusterName);
+        final OCluster cluster = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
         if (cluster == null) {
           throwClusterDoesNotExist(clusterName);
         }
@@ -1148,7 +1148,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        final OCluster cluster = clusterMap.get(clusterName);
+        final OCluster cluster = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
         if (cluster == null) {
           throwClusterDoesNotExist(clusterName);
         }
