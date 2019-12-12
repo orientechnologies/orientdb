@@ -256,30 +256,7 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
 
   @Override
   public NavigableMap<OIdentifiable, Change> getChanges() {
-    NavigableMap<OIdentifiable, Change> map = new ConcurrentSkipListMap<>();
-    if (tracker.getTimeLine() != null) {
-      for (OMultiValueChangeEvent event : tracker.getTimeLine().getMultiValueChangeEvents()) {
-        switch (event.getChangeType()) {
-        case ADD:
-          Change addChange = map.get(event.getKey());
-          if (addChange != null) {
-            addChange.increment();
-          } else {
-            map.put((OIdentifiable) event.getKey(), new DiffChange(1));
-          }
-          break;
-        case REMOVE:
-          Change removeChange = map.get(event.getKey());
-          if (removeChange != null) {
-            removeChange.decrement();
-          } else {
-            map.put((OIdentifiable) event.getKey(), new DiffChange(-1));
-          }
-          break;
-        }
-      }
-    }
-    return map;
+    return new ConcurrentSkipListMap<>();
   }
 
   @Override
