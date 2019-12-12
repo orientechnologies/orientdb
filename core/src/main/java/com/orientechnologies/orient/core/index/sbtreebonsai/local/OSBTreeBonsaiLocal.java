@@ -1409,8 +1409,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     sysCacheEntry.acquireExclusiveLock();
     try {
       final OSysBucket sysBucket = new OSysBucket(sysCacheEntry, getChanges(atomicOperation, sysCacheEntry));
-      if ((1.0 * sysBucket.freeListLength()) / ((1.0 * getFilledUpTo(atomicOperation, fileId)) * PAGE_SIZE
-          / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) >= freeSpaceReuseTrigger) {
+      long freeListLength = sysBucket.freeListLength();
+      if ((freeListLength > 0) &&
+          ((1.0 * freeListLength) / ((1.0 * getFilledUpTo(atomicOperation, fileId)) * PAGE_SIZE
+          / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) >= freeSpaceReuseTrigger)) {
         final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket, atomicOperation);
         return allocationResult;
       } else {
