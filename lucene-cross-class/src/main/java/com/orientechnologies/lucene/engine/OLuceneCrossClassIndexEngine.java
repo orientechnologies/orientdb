@@ -93,11 +93,6 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   }
 
   @Override
-  public boolean contains(Object key) {
-    return false;
-  }
-
-  @Override
   public boolean remove(Object key) {
     return false;
   }
@@ -205,16 +200,6 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   @Override
   public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
     return false;
-  }
-
-  @Override
-  public Object getFirstKey() {
-    return null;
-  }
-
-  @Override
-  public Object getLastKey() {
-    return null;
   }
 
   @Override

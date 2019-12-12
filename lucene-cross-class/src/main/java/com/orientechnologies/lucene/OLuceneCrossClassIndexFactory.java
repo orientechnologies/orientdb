@@ -84,7 +84,7 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
   }
 
   @Override
-  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+  public OIndexInternal createIndex(String name, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
 
     OAbstractPaginatedStorage paginated = (OAbstractPaginatedStorage) storage.getUnderlying();
@@ -143,7 +143,7 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
 
       OLogManager.instance().debug(this, "Dropping Lucene indexes...");
 
-      for (OIndex<?> idx : db.getMetadata().getIndexManager().getIndexes()) {
+      for (OIndex idx : db.getMetadata().getIndexManager().getIndexes()) {
         if (idx instanceof OLuceneCrossClassIndexEngine) {
           OLogManager.instance().debug(this, "deleting index " + idx.getName());
           idx.delete();

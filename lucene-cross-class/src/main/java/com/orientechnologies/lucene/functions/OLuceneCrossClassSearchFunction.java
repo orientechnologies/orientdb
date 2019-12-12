@@ -80,8 +80,8 @@ public class OLuceneCrossClassSearchFunction extends OSQLFunctionAbstract implem
 
   protected OLuceneFullTextIndex searchForIndex() {
 
-    Collection<? extends OIndex<?>> indexes = getDb().getMetadata().getIndexManager().getIndexes();
-    for (OIndex<?> index : indexes) {
+    Collection<? extends OIndex> indexes = getDb().getMetadata().getIndexManager().getIndexes();
+    for (OIndex index : indexes) {
       if (index.getInternal() instanceof OLuceneFullTextIndex) {
         if (index.getAlgorithm().equalsIgnoreCase(LUCENE_CROSS_CLASS)) {
           return (OLuceneFullTextIndex) index;
