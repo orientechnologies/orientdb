@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -52,11 +51,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_NOT      = "NOT";
   public static final String KEYWORD_EXISTS   = "EXISTS";
 
-  private String className;
+  private String       className;
   private List<OClass> superClasses = new ArrayList<OClass>();
-  private int[] clusterIds;
-  private Integer clusters    = null;
-  private boolean ifNotExists = false;
+  private int[]        clusterIds;
+  private Integer      clusters     = null;
+  private boolean      ifNotExists  = false;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -123,7 +122,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
               else if (Character.isLetterOrDigit(ch))
                 break;
               else if (ch == '`')
-                  break;
+                break;
             }
           } while (hasNext);
           if (newParser) {
@@ -160,12 +159,9 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
               if (clusterIds[i] == -1)
                 throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
 
-              try {
-                database.getStorage().getClusterById(clusterIds[i]);
-              } catch (Exception e) {
-                throw OException.wrapException(
-                    new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos),
-                    e);
+              final String clusterName = database.getStorage().getClusterNameById(clusterIds[i]);
+              if (clusterName == null) {
+                throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
               }
             }
           }

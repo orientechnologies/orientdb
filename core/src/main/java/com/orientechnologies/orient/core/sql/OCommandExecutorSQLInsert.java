@@ -41,17 +41,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.OCluster;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -135,9 +126,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
 
       if (clusterName != null && className == null) {
         ODatabaseDocumentInternal db = getDatabase();
-        OCluster cluster = db.getStorage().getClusterByName(clusterName);
-        if (cluster != null) {
-          clazz = db.getMetadata().getSchema().getClassByClusterId(cluster.getId());
+        final int clusterId = db.getStorage().getClusterIdByName(clusterName);
+        if (clusterId >= 0) {
+          clazz = db.getMetadata().getSchema().getClassByClusterId(clusterId);
           if (clazz != null) {
             className = clazz.getName();
           }

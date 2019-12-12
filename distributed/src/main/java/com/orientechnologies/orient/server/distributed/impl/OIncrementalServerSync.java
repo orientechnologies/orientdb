@@ -39,7 +39,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 
 import java.io.DataInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -109,9 +108,7 @@ public class OIncrementalServerSync {
 
                 totalRecords++;
 
-                final OPaginatedCluster cluster = (OPaginatedCluster) db.getStorage().getUnderlying()
-                    .getClusterById(rid.getClusterId());
-                final OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
+                final OPaginatedCluster.RECORD_STATUS recordStatus = db.getStorage().getRecordStatus(rid);
 
                 ORecord newRecord = null;
 

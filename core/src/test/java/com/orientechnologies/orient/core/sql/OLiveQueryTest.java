@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OCluster;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -123,13 +122,13 @@ public class OLiveQueryTest {
       OClass clazz = db.getMetadata().getSchema().createClass("test");
 
       int defaultCluster = clazz.getDefaultClusterId();
-      OCluster cluster = db.getStorage().getClusterById(defaultCluster);
+      String clusterName = db.getStorage().getClusterNameById(defaultCluster);
 
       MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(1));
 
-      db.query(new OLiveQuery<ODocument>("live select from cluster:" + cluster.getName(), listener));
+      db.query(new OLiveQuery<ODocument>("live select from cluster:" + clusterName, listener));
 
-      db.command(new OCommandSQL("insert into cluster:" + cluster.getName() + " set name = 'foo', surname = 'bar'")).execute();
+      db.command(new OCommandSQL("insert into cluster:" + clusterName + " set name = 'foo', surname = 'bar'")).execute();
 
       try {
         Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));

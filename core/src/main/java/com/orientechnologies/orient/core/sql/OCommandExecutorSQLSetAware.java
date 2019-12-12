@@ -26,21 +26,19 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
 
 import java.util.*;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- *
  */
 public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbstract {
 
-  protected static final String KEYWORD_SET      = "SET";
-  protected static final String KEYWORD_CONTENT  = "CONTENT";
+  protected static final String KEYWORD_SET     = "SET";
+  protected static final String KEYWORD_CONTENT = "CONTENT";
 
-  protected ODocument           content          = null;
-  protected int                 parameterCounter = 0;
+  protected ODocument content          = null;
+  protected int       parameterCounter = 0;
 
   protected void parseContent() {
     if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE))
@@ -77,8 +75,8 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
   protected OClass extractClassFromTarget(String iTarget) {
     // CLASS
-    if (!iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)
-        && !iTarget.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
+    if (!iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX) && !iTarget
+        .startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
 
       if (iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
         // REMOVE CLASS PREFIX
@@ -93,29 +91,29 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     if (iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
       String clusterName = iTarget.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()).trim();
       ODatabaseDocumentInternal db = getDatabase();
-      if(clusterName.startsWith("[") && clusterName.endsWith("]")) {
-        String[] clusterNames = clusterName.substring(1, clusterName.length()-1).split(",");
+      if (clusterName.startsWith("[") && clusterName.endsWith("]")) {
+        String[] clusterNames = clusterName.substring(1, clusterName.length() - 1).split(",");
         OClass candidateClass = null;
-        for(String cName:clusterNames){
-          OCluster aCluster = db.getStorage().getClusterByName(cName.trim());
-          if(aCluster == null){
+        for (String cName : clusterNames) {
+          int clusterId = db.getStorage().getClusterIdByName(cName.trim());
+          if (clusterId < 0) {
             return null;
           }
-          OClass aClass = db.getMetadata().getSchema().getClassByClusterId(aCluster.getId());
-          if(aClass == null){
+          OClass aClass = db.getMetadata().getSchema().getClassByClusterId(clusterId);
+          if (aClass == null) {
             return null;
           }
-          if(candidateClass == null || candidateClass.equals(aClass) || candidateClass.isSubClassOf(aClass)){
+          if (candidateClass == null || candidateClass.equals(aClass) || candidateClass.isSubClassOf(aClass)) {
             candidateClass = aClass;
-          }else if(!candidateClass.isSuperClassOf(aClass)){
+          } else if (!candidateClass.isSuperClassOf(aClass)) {
             return null;
           }
         }
         return candidateClass;
       } else {
-        OCluster cluster = db.getStorage().getClusterByName(clusterName);
-        if (cluster != null) {
-          return db.getMetadata().getSchema().getClassByClusterId(cluster.getId());
+        final int clusterId = db.getStorage().getClusterIdByName(clusterName);
+        if (clusterId >= 0) {
+          return db.getMetadata().getSchema().getClassByClusterId(clusterId);
         }
       }
     }

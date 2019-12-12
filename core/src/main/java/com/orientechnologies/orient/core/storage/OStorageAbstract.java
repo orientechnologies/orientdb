@@ -22,11 +22,9 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -65,8 +63,8 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
   protected          String                           name;
-  private final      AtomicLong version = new AtomicLong();
-  protected volatile STATUS     status  = STATUS.CLOSED;
+  private final      AtomicLong                       version = new AtomicLong();
+  protected volatile STATUS                           status  = STATUS.CLOSED;
 
   /**
    * This field is used in EE version, do not make it private
@@ -106,9 +104,6 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
       return name;
     }
   }
-
-  @Override
-  public abstract OCluster getClusterByName(final String iClusterName);
 
   @Override
   public OStorage getUnderlying() {
@@ -179,31 +174,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   }
 
   @Override
-  public long countRecords() {
-    long tot = 0;
-
-    for (OCluster c : getClusterInstances())
-      if (c != null)
-        tot += c.getEntries() - c.getTombstonesCount();
-
-    return tot;
-  }
-
-  @Override
-  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
-    stateLock.acquireReadLock();
-    try {
-      try {
-        return iCallable.call();
-      } catch (RuntimeException e) {
-        throw e;
-      } catch (Exception e) {
-        throw OException.wrapException(new OStorageException("Error on nested call in lock"), e);
-      }
-    } finally {
-      stateLock.releaseReadLock();
-    }
-  }
+  public abstract long countRecords();
 
   @Override
   public String toString() {

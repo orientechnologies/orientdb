@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 public interface ODatabaseInternal<T> extends ODatabase<T> {
 
@@ -54,8 +53,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    * @param iNewStorage The new storage to use. Usually it's a wrapped instance of the current cluster.
    */
   void replaceStorage(OStorage iNewStorage);
-
-  <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
   void resetInitialization();
 

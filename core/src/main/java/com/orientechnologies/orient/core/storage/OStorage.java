@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.util.OBackupable;
@@ -37,11 +38,9 @@ import com.orientechnologies.orient.core.util.OBackupable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.Callable;
 
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
@@ -115,10 +114,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   Set<String> getClusterNames();
 
-  OCluster getClusterById(int iId);
-
-  Collection<? extends OCluster> getClusterInstances();
-
   /**
    * Add a new cluster into the storage.
    *
@@ -135,6 +130,32 @@ public interface OStorage extends OBackupable, OSharedContainer {
   int addCluster(String iClusterName, int iRequestedId, Object... iParameters);
 
   boolean dropCluster(String iClusterName, final boolean iTruncate);
+
+  String getClusterNameById(final int clusterId);
+
+  long getClusterRecordsSizeById(final int clusterId);
+
+  long getClusterRecordsSizeByName(final String clusterName);
+
+  void truncateCluster(final String clusterName);
+
+  void truncateCluster(final int clusterId);
+
+  void setClusterAttribute(final int clusterId, OCluster.ATTRIBUTES attribute, Object value);
+
+  Object setClusterAttribute(final String clusterName, OCluster.ATTRIBUTES attribute, Object value);
+
+  String getClusterRecordConflictStrategy(final int clusterId);
+
+  String getClusterEncryption(final int clusterId);
+
+  boolean isSystemCluster(final int clusterId);
+
+  long getLastClusterPosition(final int clusterId);
+
+  long getClusterNextPosition(final int clusterId);
+
+  OPaginatedCluster.RECORD_STATUS getRecordStatus(final ORID rid);
 
   /**
    * Drops a cluster.
@@ -199,8 +220,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
    */
   long[] getClusterDataRange(int currentClusterId);
 
-  <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
-
   OPhysicalPosition[] higherPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 
   OPhysicalPosition[] lowerPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
@@ -233,9 +252,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
 
-  OCluster getClusterByName(String clusterName);
-
-  ORecordConflictStrategy getConflictStrategy();
+  ORecordConflictStrategy getClusterRecordConflictStrategy();
 
   void setConflictStrategy(ORecordConflictStrategy iResolver);
 

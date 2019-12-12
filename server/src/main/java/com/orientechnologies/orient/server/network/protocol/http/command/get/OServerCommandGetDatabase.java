@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -223,23 +223,19 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
       if (db.getClusterNames() != null) {
         json.beginCollection("clusters");
-        OCluster cluster;
+        final OStorage storage = db.getStorage();
         for (String clusterName : db.getClusterNames()) {
-          try {
-            cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
-          } catch (IllegalArgumentException e) {
-            OLogManager.instance().error(this, "Cluster '%s' does not exist in database", e, clusterName);
+          final int clusterId = storage.getClusterIdByName(clusterName);
+          if (clusterId < 0) {
             continue;
           }
-
           try {
-            final String conflictStrategy = cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy()
-                .getName() : null;
+            final String conflictStrategy = storage.getClusterRecordConflictStrategy(clusterId);
 
             json.beginObject();
-            json.writeAttribute("id", cluster.getId());
+            json.writeAttribute("id", clusterId);
             json.writeAttribute("name", clusterName);
-            json.writeAttribute("records", cluster.getEntries() - cluster.getTombstonesCount());
+            json.writeAttribute("records", storage.count(clusterId));
             json.writeAttribute("conflictStrategy", conflictStrategy);
             json.writeAttribute("size", "-");
             json.writeAttribute("filled", "-");
@@ -277,16 +273,16 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.beginObject("config");
 
       json.beginCollection("values");
-      json.writeObjects(null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat()},
-          new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat() }, new Object[] {
-              "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() }, new Object[] { "name",
-              "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
-              "charSet", "value", db.getStorage().getConfiguration().getCharset() }, new Object[] { "name", "timezone", "value",
-              db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name", "definitionVersion", "value",
-              db.getStorage().getConfiguration().getVersion() }, new Object[] { "name", "clusterSelection", "value",
-              db.getStorage().getConfiguration().getClusterSelection() }, new Object[] { "name", "minimumClusters", "value",
-              db.getStorage().getConfiguration().getMinimumClusters() }, new Object[] { "name", "conflictStrategy", "value",
-              db.getStorage().getConfiguration().getConflictStrategy() });
+      json.writeObjects(null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat() },
+          new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat() },
+          new Object[] { "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() },
+          new Object[] { "name", "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() },
+          new Object[] { "name", "charSet", "value", db.getStorage().getConfiguration().getCharset() },
+          new Object[] { "name", "timezone", "value", db.getStorage().getConfiguration().getTimeZone().getID() },
+          new Object[] { "name", "definitionVersion", "value", db.getStorage().getConfiguration().getVersion() },
+          new Object[] { "name", "clusterSelection", "value", db.getStorage().getConfiguration().getClusterSelection() },
+          new Object[] { "name", "minimumClusters", "value", db.getStorage().getConfiguration().getMinimumClusters() },
+          new Object[] { "name", "conflictStrategy", "value", db.getStorage().getConfiguration().getConflictStrategy() });
       json.endCollection();
 
       json.beginCollection("properties");

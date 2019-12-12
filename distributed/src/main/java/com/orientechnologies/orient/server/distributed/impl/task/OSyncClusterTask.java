@@ -28,27 +28,16 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
-import java.io.BufferedOutputStream;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -114,8 +103,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
             "Creating backup of cluster '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
 
-        final OPaginatedCluster cluster = (OPaginatedCluster) database.getStorage().getClusterByName(clusterName);
-
+        final OStorage storage = database.getStorage();
         switch (mode) {
         case MERGE:
           throw new IllegalArgumentException("Merge mode not supported");
@@ -138,7 +126,6 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                 database.freeze();
 
                 try {
-                  final String fileName = cluster.getFileName();
                   final String dbPath = iServer.getDatabaseDirectory() + databaseName;
 
                   final Map<String, String> fileNames = new LinkedHashMap<>();
@@ -146,10 +133,6 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                   final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) database.getStorage()
                       .getUnderlying();
                   final OWriteCache writeCache = paginatedStorage.getWriteCache();
-
-                  addFileById(fileNames, cluster.getFileId(), writeCache);
-                  addFileByName(fileNames, fileName.substring(0, fileName.length() - OPaginatedCluster.DEF_EXTENSION.length())
-                      + OClusterPositionMap.DEF_EXTENSION, writeCache);
 
                   final OutputStream outputStream = new BufferedOutputStream(fileOutputStream, CHUNK_MAX_SIZE);
                   try {

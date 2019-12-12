@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
@@ -1111,6 +1112,71 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return response.getClusterId();
   }
 
+  @Override
+  public String getClusterNameById(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public long getClusterRecordsSizeById(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public long getClusterRecordsSizeByName(String clusterName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void truncateCluster(String clusterName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void truncateCluster(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setClusterAttribute(int clusterId, OCluster.ATTRIBUTES attribute, Object value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Object setClusterAttribute(String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String getClusterRecordConflictStrategy(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String getClusterEncryption(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isSystemCluster(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public long getLastClusterPosition(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public long getClusterNextPosition(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OPaginatedCluster.RECORD_STATUS getRecordStatus(ORID rid) {
+    throw new UnsupportedOperationException();
+  }
+
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
 
     ODropClusterRequest request = new ODropClusterRequest(iClusterId);
@@ -1160,38 +1226,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     stateLock.acquireReadLock();
     try {
       return clusterMap.size();
-    } finally {
-      stateLock.releaseReadLock();
-    }
-  }
-
-  public Collection<OCluster> getClusterInstances() {
-    stateLock.acquireReadLock();
-    try {
-
-      return Arrays.asList(clusters);
-
-    } finally {
-      stateLock.releaseReadLock();
-    }
-  }
-
-  public OCluster getClusterById(int iClusterId) {
-    stateLock.acquireReadLock();
-    try {
-
-      if (iClusterId == ORID.CLUSTER_ID_INVALID)
-        // GET THE DEFAULT CLUSTER
-        iClusterId = defaultClusterId;
-
-      if (iClusterId >= clusters.length) {
-        stateLock.releaseReadLock();
-        reload();
-        stateLock.acquireReadLock();
-      }
-
-      return clusters[iClusterId];
-
     } finally {
       stateLock.releaseReadLock();
     }
@@ -1269,12 +1303,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
-  public OCluster getClusterByName(final String iClusterName) {
-    throw new UnsupportedOperationException("getClusterByName()");
-  }
-
-  @Override
-  public ORecordConflictStrategy getConflictStrategy() {
+  public ORecordConflictStrategy getClusterRecordConflictStrategy() {
     throw new UnsupportedOperationException("getConflictStrategy");
   }
 
@@ -1679,9 +1708,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     // REGISTER THE REMOTE SERVER+PORT
     if (!host.contains(":"))
-      host += ":" + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ?
-          getDefaultSSLPort() :
-          getDefaultPort());
+      host += ":" + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL)
+          ? getDefaultSSLPort()
+          : getDefaultPort());
     else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0)
       host += (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
 

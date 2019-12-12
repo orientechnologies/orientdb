@@ -29,12 +29,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.ODistributedCommand;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -48,11 +43,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -64,14 +55,8 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
@@ -81,47 +66,18 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.OAsynchDistributedOperation;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfigurationChangedException;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
-import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -283,9 +239,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
 
-    final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ?
-        ((OCommandExecutorSQLDelegate) executor).getDelegate() :
-        executor;
+    final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
+        .getDelegate() : executor;
 
     if (!exec.isIdempotent()) {
       resetLastValidBackup();
@@ -351,9 +306,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             results = executeOnServers(iCommand, exec, involvedClusters, nodeClusterMap);
           }
 
-          final OCommandExecutorSQLSelect select = exec instanceof OCommandExecutorSQLSelect ?
-              (OCommandExecutorSQLSelect) exec :
-              null;
+          final OCommandExecutorSQLSelect select = exec instanceof OCommandExecutorSQLSelect
+              ? (OCommandExecutorSQLSelect) exec
+              : null;
 
           if (select != null && select.isAnyFunctionAggregates() && !select.hasGroupBy()) {
             result = mergeResultByAggregation(select, results);
@@ -368,9 +323,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             undoCommandOnLocalServer(iCommand);
 
         } else {
-          final OAbstractCommandTask task = iCommand instanceof OCommandScript ?
-              new OScriptTask(iCommand) :
-              new OSQLCommandTask(iCommand, new HashSet<String>());
+          final OAbstractCommandTask task = iCommand instanceof OCommandScript
+              ? new OScriptTask(iCommand)
+              : new OSQLCommandTask(iCommand, new HashSet<String>());
           task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
           final Set<String> nodes = dbCfg.getServers(involvedClusters);
@@ -522,9 +477,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       } else {
 
-        final OAbstractCommandTask task = iCommand instanceof OCommandScript ?
-            new OScriptTask(iCommand) :
-            new OSQLCommandTask(iCommand, c.getValue());
+        final OAbstractCommandTask task = iCommand instanceof OCommandScript
+            ? new OScriptTask(iCommand)
+            : new OSQLCommandTask(iCommand, c.getValue());
         task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
         nodes.clear();
@@ -1046,13 +1001,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return wrapped.existsResource(iName);
   }
 
-  public OCluster getClusterByName(final String iName) {
-    return wrapped.getClusterByName(iName);
-  }
-
   @Override
-  public ORecordConflictStrategy getConflictStrategy() {
-    return getUnderlying().getConflictStrategy();
+  public ORecordConflictStrategy getClusterRecordConflictStrategy() {
+    return getUnderlying().getClusterRecordConflictStrategy();
   }
 
   @Override
@@ -1224,16 +1175,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public Set<String> getClusterNames() {
     return wrapped.getClusterNames();
-  }
-
-  @Override
-  public OCluster getClusterById(int iId) {
-    return wrapped.getClusterById(iId);
-  }
-
-  @Override
-  public Collection<? extends OCluster> getClusterInstances() {
-    return wrapped.getClusterInstances();
   }
 
   @Override
@@ -1500,11 +1441,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return wrapped.getClusterDataRange(currentClusterId);
   }
 
-  @Override
-  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
-    return wrapped.callInLock(iCallable, iExclusiveLock);
-  }
-
   public STATUS getStatus() {
     return wrapped.getStatus();
   }
@@ -1637,7 +1573,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   public void release() {
     if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE) {
       // RESTORE PREVIOUS STATUS
-      getLocalDistributedDatabase().setOnline();;
+      getLocalDistributedDatabase().setOnline();
+      ;
     }
 
     getFreezableStorage().release();
@@ -1685,9 +1622,79 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public String getClusterNameByRID(final ORecordId iRid) {
-    final OCluster cluster = getClusterById(iRid.getClusterId());
-    return cluster != null ? cluster.getName() : "*";
+    String name = wrapped.getClusterNameById(iRid.getClusterId());
+    if (name == null) {
+      return "*";
+    }
+
+    return name;
   }
+
+  @Override
+  public String getClusterNameById(int clusterId) {
+    return wrapped.getClusterNameById(clusterId);
+  }
+
+  @Override
+  public long getClusterRecordsSizeById(int clusterId) {
+    return wrapped.getClusterRecordsSizeById(clusterId);
+  }
+
+  @Override
+  public long getClusterRecordsSizeByName(String clusterName) {
+    return wrapped.getClusterRecordsSizeByName(clusterName);
+  }
+
+  @Override
+  public void truncateCluster(String clusterName) {
+    wrapped.truncateCluster(clusterName);
+  }
+
+  @Override
+  public void truncateCluster(int clusterId) {
+    wrapped.truncateCluster(clusterId);
+  }
+
+  @Override
+  public void setClusterAttribute(int clusterId, OCluster.ATTRIBUTES attribute, Object value) {
+    wrapped.setClusterAttribute(clusterId, attribute, value);
+  }
+
+  @Override
+  public Object setClusterAttribute(String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
+    return wrapped.setClusterAttribute(clusterName, attribute, value);
+  }
+
+  @Override
+  public String getClusterRecordConflictStrategy(int clusterId) {
+    return wrapped.getClusterRecordConflictStrategy(clusterId);
+  }
+
+  @Override
+  public String getClusterEncryption(int clusterId) {
+    return wrapped.getClusterEncryption(clusterId);
+  }
+
+  @Override
+  public boolean isSystemCluster(int clusterId) {
+    return wrapped.isSystemCluster(clusterId);
+  }
+
+  @Override
+  public long getLastClusterPosition(int clusterId) {
+    return wrapped.getLastClusterPosition(clusterId);
+  }
+
+  @Override
+  public long getClusterNextPosition(int clusterId) {
+    return wrapped.getClusterNextPosition(clusterId);
+  }
+
+  @Override
+  public OPaginatedCluster.RECORD_STATUS getRecordStatus(ORID rid) {
+    return wrapped.getRecordStatus(rid);
+  }
+
 
   @Override
   public String getStorageId() {
@@ -1881,9 +1888,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // NO CHANGES
       return null;
 
-    final OCluster cl = getClusterByName(clusterName);
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-    final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
+    final OClass cls = db.getMetadata().getSchema().getClassByClusterId(getClusterIdByName(clusterName));
     String newClusterName = null;
     if (cls != null) {
 

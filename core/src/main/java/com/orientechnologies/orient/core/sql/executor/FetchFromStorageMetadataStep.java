@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.*;
@@ -46,12 +45,12 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
             if (ctx.getDatabase() instanceof ODatabaseInternal) {
               ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
               OStorage storage = db.getStorage();
-              result.setProperty("clusters", toResult(storage.getClusterInstances()));
+              result.setProperty("clusters", toResult(storage.getClusterNames(), storage));
               result.setProperty("defaultClusterId", storage.getDefaultClusterId());
               result.setProperty("totalClusters", storage.getClusters());
               result.setProperty("configuration", toResult(storage.getConfiguration()));
               result.setProperty("conflictStrategy",
-                  storage.getConflictStrategy() == null ? null : storage.getConflictStrategy().getName());
+                  storage.getClusterRecordConflictStrategy() == null ? null : storage.getClusterRecordConflictStrategy().getName());
               result.setProperty("name", storage.getName());
               result.setProperty("size", storage.getSize());
               result.setProperty("type", storage.getType());
@@ -119,20 +118,22 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
     return result;
   }
 
-  private List<OResult> toResult(Collection<? extends OCluster> clusterInstances) {
+  private List<OResult> toResult(Collection<String> clusterNames, OStorage storage) {
+
     List<OResult> result = new ArrayList<>();
-    if (clusterInstances != null) {
-      for (OCluster cluster : clusterInstances) {
+    if (clusterNames != null) {
+      for (String cluster : clusterNames) {
         OResultInternal item = new OResultInternal();
-        item.setProperty("name", cluster.getName());
-        item.setProperty("fileName", cluster.getFileName());
-        item.setProperty("id", cluster.getId());
-        item.setProperty("entries", cluster.getEntries());
+        final int clusterId = storage.getClusterIdByName(cluster);
+        item.setProperty("name", cluster);
+        item.setProperty("id", storage.getClusterIdByName(cluster));
+        item.setProperty("entries", storage.count(clusterId));
         item.setProperty("conflictStrategy",
-            cluster.getRecordConflictStrategy() == null ? null : cluster.getRecordConflictStrategy().getName());
-        item.setProperty("tombstonesCount", cluster.getTombstonesCount());
+            storage.getClusterRecordConflictStrategy(clusterId));
+
         try {
-          item.setProperty("encryption", cluster.encryption());
+          item.setProperty("encryption",
+             storage.getClusterEncryption(clusterId));
         } catch (Exception e) {
           OLogManager.instance().error(this, "Can not set value of encryption parameter", e);
         }

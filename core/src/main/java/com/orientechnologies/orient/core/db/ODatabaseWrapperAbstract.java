@@ -342,11 +342,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   }
 
   @Override
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
-    return getStorage().callInLock(iCallable, iExclusiveLock);
-  }
-
-  @Override
   public ORecordMetadata getRecordMetadata(ORID rid) {
     return underlying.getRecordMetadata(rid);
   }

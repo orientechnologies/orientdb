@@ -2,7 +2,7 @@ package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.client.remote.OClusterRemote;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -144,43 +143,32 @@ public class OMessageHelper {
     return physicalPositions;
   }
 
-  public static OCluster[] readClustersArray(final OChannelDataInput network) throws IOException {
-
+  public static ORawPair<String[], int[]> readClustersArray(final OChannelDataInput network) throws IOException {
     final int tot = network.readShort();
-    OCluster[] clusters = new OCluster[tot];
+    final String[] clusterNames = new String[tot];
+    final int[] clusterIds = new int[tot];
+
     for (int i = 0; i < tot; ++i) {
-      final OClusterRemote cluster = new OClusterRemote();
-      String clusterName = network.readString();
+      String clusterName = network.readString().toLowerCase(Locale.ENGLISH);
       final int clusterId = network.readShort();
-      if (clusterName != null) {
-        clusterName = clusterName.toLowerCase(Locale.ENGLISH);
-        cluster.configure(null, clusterId, clusterName);
-        if (clusterId >= clusters.length)
-          clusters = Arrays.copyOf(clusters, clusterId + 1);
-        clusters[clusterId] = cluster;
-      }
+      clusterNames[i] = clusterName;
+      clusterIds[i] = clusterId;
     }
-    return clusters;
+
+    return new ORawPair<>(clusterNames, clusterIds);
   }
 
-  public static void writeClustersArray(OChannelDataOutput channel, OCluster[] clusters, int protocolVersion) throws IOException {
-    int clusterCount = 0;
-    for (OCluster c : clusters) {
-      if (c != null) {
-        ++clusterCount;
-      }
-    }
-    channel.writeShort((short) clusterCount);
+  public static void writeClustersArray(OChannelDataOutput channel, ORawPair<String[], int[]> clusters, int protocolVersion)
+      throws IOException {
+    final String[] clusterNames = clusters.getFirst();
+    final int[] clusterIds = clusters.getSecond();
 
-    for (OCluster c : clusters) {
-      if (c != null) {
-        channel.writeString(c.getName());
-        channel.writeShort((short) c.getId());
-        if (protocolVersion < 24) {
-          channel.writeString("none");
-          channel.writeShort((short) -1);
-        }
-      }
+    channel.writeShort((short) clusterNames.length);
+
+    for (int i = 0; i < clusterNames.length; i++) {
+      channel.writeString(clusterNames[i]);
+      channel.writeShort((short) clusterIds[i]);
+
     }
   }
 

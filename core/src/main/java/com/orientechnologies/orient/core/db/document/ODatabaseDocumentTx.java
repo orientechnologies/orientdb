@@ -28,8 +28,13 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.*;
-import com.orientechnologies.orient.core.record.impl.*;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -410,11 +415,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public void replaceStorage(OStorage iNewStorage) {
     internal.replaceStorage(iNewStorage);
-  }
-
-  @Override
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
-    return internal.callInLock(iCallable, iExclusiveLock);
   }
 
   @Override

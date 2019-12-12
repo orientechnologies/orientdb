@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
@@ -31,15 +30,10 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -56,19 +50,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -77,24 +59,24 @@ import java.util.TreeSet;
  */
 @SuppressWarnings("unchecked")
 public abstract class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final   long serialVersionUID        = 1L;
-  protected static final int  NOT_EXISTENT_CLUSTER_ID = -1;
-  protected final OSchemaShared owner;
-  protected final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
-  protected       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-  protected String name;
-  protected String description;
-  protected int[]  clusterIds;
-  protected List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
-  protected int[]        polymorphicClusterIds;
-  protected List<OClass> subclasses;
-  protected float overSize = 0f;
-  protected String shortName;
-  protected boolean strictMode    = false;                           // @SINCE v1.0rc8
-  protected boolean abstractClass = false;                           // @SINCE v1.2.0
-  protected          Map<String, String>       customFields;
-  protected volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
-  protected volatile int                       hashCode;
+  private static final   long                      serialVersionUID        = 1L;
+  protected static final int                       NOT_EXISTENT_CLUSTER_ID = -1;
+  protected final        OSchemaShared             owner;
+  protected final        Map<String, OProperty>    properties              = new HashMap<String, OProperty>();
+  protected              int                       defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
+  protected              String                    name;
+  protected              String                    description;
+  protected              int[]                     clusterIds;
+  protected              List<OClassImpl>          superClasses            = new ArrayList<OClassImpl>();
+  protected              int[]                     polymorphicClusterIds;
+  protected              List<OClass>              subclasses;
+  protected              float                     overSize                = 0f;
+  protected              String                    shortName;
+  protected              boolean                   strictMode              = false;                           // @SINCE v1.0rc8
+  protected              boolean                   abstractClass           = false;                           // @SINCE v1.2.0
+  protected              Map<String, String>       customFields;
+  protected volatile     OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
+  protected volatile     int                       hashCode;
 
   private static Set<String> reserved = new HashSet<String>();
 
@@ -678,18 +660,8 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   }
 
   protected void truncateClusterInternal(final String clusterName, final ODatabaseDocumentInternal database) {
-    final OCluster cluster = database.getStorage().getClusterByName(clusterName);
-
-    if (cluster == null) {
-      throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
-    }
-
-    try {
-      database.checkForClusterPermissions(clusterName);
-      cluster.truncate();
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during truncate of cluster " + clusterName), e);
-    }
+    database.checkForClusterPermissions(clusterName);
+    database.getStorage().truncateCluster(clusterName);
 
     for (OIndex index : getIndexes()) {
       index.rebuild();
@@ -891,9 +863,8 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     try {
 
       for (int id : clusterIds) {
-        OCluster cl = storage.getClusterById(id);
-        db.checkForClusterPermissions(cl.getName());
-        cl.truncate();
+        db.checkForClusterPermissions(storage.getClusterNameById(id));
+        storage.truncateCluster(id);
       }
       for (OIndex<?> index : getClassIndexes())
         index.clear();
@@ -1106,13 +1077,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
 
   protected void setEncryptionInternal(ODatabaseDocumentInternal database, final String iValue) {
     for (int cl : getClusterIds()) {
-      final OCluster c = database.getStorage().getClusterById(cl);
-      if (c != null)
-        try {
-          c.set(OCluster.ATTRIBUTES.ENCRYPTION, iValue);
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Can not set value of encryption parameter to '%s'", e, iValue);
-        }
+      database.getStorage().setClusterAttribute(cl, OCluster.ATTRIBUTES.ENCRYPTION, iValue);
     }
   }
 

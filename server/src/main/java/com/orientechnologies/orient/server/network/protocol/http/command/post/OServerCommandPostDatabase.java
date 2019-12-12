@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -66,8 +66,8 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       final String type = urlParts.length > 3 ? urlParts[3] : "document";
       if (url != null) {
         if (server.existsDatabase(databaseName)) {
-          sendJsonError(iResponse,OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-              "Database '" + databaseName + "' already exists.", null);
+          sendJsonError(iResponse, OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION,
+              OHttpUtils.CONTENT_TEXT_PLAIN, "Database '" + databaseName + "' already exists.", null);
         } else {
           server.createDatabase(databaseName, ODatabaseType.valueOf(storageMode.toUpperCase(Locale.ENGLISH)), null);
           try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, serverUser, serverPassword, null, false)) {
@@ -102,7 +102,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     final OJSONWriter json = new OJSONWriter(buffer);
 
     json.beginObject();
-    
+
     if (db.getMetadata().getSchema().getClasses() != null) {
       json.beginCollection(1, false, "classes");
       Set<String> exportedNames = new HashSet<String>();
@@ -120,15 +120,18 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
     if (db.getClusterNames() != null) {
       json.beginCollection(1, false, "clusters");
-      OCluster cluster;
+      OStorage storage = db.getStorage();
       for (String clusterName : db.getClusterNames()) {
-        cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
+        final int clusterId = storage.getClusterIdByName(clusterName);
+        if (clusterId < 0) {
+          continue;
+        }
 
         try {
           json.beginObject(2, true, null);
-          json.writeAttribute(3, false, "id", cluster.getId());
+          json.writeAttribute(3, false, "id", clusterId);
           json.writeAttribute(3, false, "name", clusterName);
-          json.writeAttribute(3, false, "records", cluster.getEntries() - cluster.getTombstonesCount());
+          json.writeAttribute(3, false, "records", storage.count(clusterId));
           json.writeAttribute(3, false, "size", "-");
           json.writeAttribute(3, false, "filled", "-");
           json.writeAttribute(3, false, "maxSize", "-");
@@ -141,12 +144,12 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       json.endCollection(1, true);
     }
 
-    if(db.getUser() != null)
-    	json.writeAttribute(1, false, "currentUser", db.getUser().getName());
+    if (db.getUser() != null)
+      json.writeAttribute(1, false, "currentUser", db.getUser().getName());
 
     json.beginCollection(1, false, "users");
     OUser user;
-    for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {    	
+    for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
       user = new OUser(doc);
       json.beginObject(2, true, null);
       json.writeAttribute(3, false, "name", user.getName());
@@ -182,11 +185,12 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     json.beginObject(1, true, "config");
 
     json.beginCollection(2, true, "values");
-    json.writeObjects(3, true, null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat() },
-        new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat() }, new Object[] {
-            "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() }, new Object[] { "name",
-            "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
-            "definitionVersion", "value", db.getStorage().getConfiguration().getVersion() });
+    json.writeObjects(3, true, null,
+        new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat() },
+        new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat() },
+        new Object[] { "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() },
+        new Object[] { "name", "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() },
+        new Object[] { "name", "definitionVersion", "value", db.getStorage().getConfiguration().getVersion() });
     json.endCollection(2, true);
 
     json.beginCollection(2, true, "properties");

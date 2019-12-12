@@ -746,7 +746,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   public ORecordConflictStrategy getConflictStrategy() {
     checkIfActive();
-    return getStorage().getConflictStrategy();
+    return getStorage().getClusterRecordConflictStrategy();
   }
 
   public ODatabaseDocumentAbstract setConflictStrategy(final String iStrategyName) {
@@ -910,7 +910,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public long getClusterRecordSizeByName(final String clusterName) {
     checkIfActive();
     try {
-      return getStorage().getClusterById(getClusterIdByName(clusterName)).getRecordsSize();
+      return getStorage().getClusterRecordsSizeByName(clusterName);
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Error on reading records size for cluster '" + clusterName + "'"), e);
     }
@@ -920,7 +920,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public long getClusterRecordSizeById(final int clusterId) {
     checkIfActive();
     try {
-      return getStorage().getClusterById(clusterId).getRecordsSize();
+      return getStorage().getClusterRecordsSizeById(clusterId);
     } catch (Exception e) {
       throw OException
           .wrapException(new ODatabaseException("Error on reading records size for cluster with id '" + clusterId + "'"), e);
@@ -2312,11 +2312,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
-    return getStorage().callInLock(iCallable, iExclusiveLock);
-  }
-
-  @Override
   public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
     checkOpenness();
@@ -2606,23 +2601,20 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (connectionStrategy != null)
       configuration.setValue(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
 
-    final String compressionMethod = iProperties != null ?
-        (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase(Locale.ENGLISH)) :
-        null;
+    final String compressionMethod = iProperties != null ? (String) iProperties
+        .get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase(Locale.ENGLISH)) : null;
     if (compressionMethod != null)
       // SAVE COMPRESSION METHOD IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
-    final String encryptionMethod = iProperties != null ?
-        (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase(Locale.ENGLISH)) :
-        null;
+    final String encryptionMethod = iProperties != null ? (String) iProperties
+        .get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase(Locale.ENGLISH)) : null;
     if (encryptionMethod != null)
       // SAVE ENCRYPTION METHOD IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
 
-    final String encryptionKey = iProperties != null ?
-        (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase(Locale.ENGLISH)) :
-        null;
+    final String encryptionKey = iProperties != null ? (String) iProperties
+        .get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase(Locale.ENGLISH)) : null;
     if (encryptionKey != null)
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);

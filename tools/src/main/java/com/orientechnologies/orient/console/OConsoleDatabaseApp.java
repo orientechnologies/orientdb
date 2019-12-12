@@ -45,7 +45,6 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -68,20 +67,11 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializationDebug;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializationDebugProperty;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinaryDebug;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPageDebug;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedClusterDebug;
-import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
@@ -1243,114 +1233,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         throw new OSystemException("No result set where to find the requested record. Execute a query first.");
 
       if (currentResultSet.size() <= recNumber)
-        throw new OSystemException("The record requested is not part of current result set (0" + (currentResultSet.size() > 0 ?
-            "-" + (currentResultSet.size() - 1) :
-            "") + ")");
+        throw new OSystemException(
+            "The record requested is not part of current result set (0" + (currentResultSet.size() > 0 ? "-" + (
+                currentResultSet.size() - 1) : "") + ")");
 
       setCurrentRecord(recNumber);
     }
 
     dumpRecordDetails();
-  }
-
-  @ConsoleCommand(description = "Display a record as raw bytes", onlineHelp = "Console-Command-Display-Raw-Record")
-  public void displayRawRecord(@ConsoleParameter(name = "rid", description = "The record id to display") final String iRecordId)
-      throws IOException {
-    checkForDatabase();
-
-    ORecordId rid;
-    if (iRecordId.indexOf(':') > -1)
-      rid = new ORecordId(iRecordId);
-    else {
-      OIdentifiable rec = setCurrentRecord(Integer.parseInt(iRecordId));
-      if (rec != null)
-        rid = (ORecordId) rec.getIdentity();
-      else
-        return;
-    }
-
-    ORawBuffer record;
-    ORecordId id = new ORecordId(rid);
-    if (!(currentDatabase.getStorage() instanceof OLocalPaginatedStorage)) {
-      record = currentDatabase.getStorage().readRecord(rid, null, false, false, null).getResult();
-      if (record != null) {
-        String content;
-        if (Integer.parseInt(properties.get("maxBinaryDisplay")) < record.buffer.length)
-          content = new String(Arrays.copyOf(record.buffer, Integer.parseInt(properties.get("maxBinaryDisplay"))));
-        else
-          content = new String(record.buffer);
-        out.println(
-            "\nRaw record content. The size is " + record.buffer.length + " bytes, while settings force to print first " + content
-                .length() + " bytes:\n\n" + content);
-      }
-    } else {
-      final OLocalPaginatedStorage storage = (OLocalPaginatedStorage) currentDatabase.getStorage();
-      final OPaginatedCluster cluster = (OPaginatedCluster) storage.getClusterById(id.getClusterId());
-      if (cluster == null) {
-        message("\n cluster with id %i does not exist", id.getClusterId());
-        return;
-      }
-
-      message("\n\nLOW LEVEL CLUSTER INFO");
-      final OPaginatedCluster.RECORD_STATUS status = cluster.getRecordStatus(id.getClusterPosition());
-      message("\n status: %s", status);
-
-      final OPaginatedClusterDebug debugInfo = cluster.readDebug(id.getClusterPosition());
-      message("\n cluster fieldId: %d", debugInfo.fileId);
-      message("\n cluster name: %s", cluster.getName());
-
-      message("\n in cluster position: %d", debugInfo.clusterPosition);
-      message("\n empty: %b", debugInfo.empty);
-      message("\n contentSize: %d", debugInfo.contentSize);
-      message("\n n-pages: %d", debugInfo.pages.size());
-      message(
-          "\n\n +----------PAGE_ID---------------+------IN_PAGE_POSITION----------+---------IN_PAGE_SIZE-----------+----PAGE_CONTENT---->> ");
-      for (OClusterPageDebug page : debugInfo.pages) {
-        message("\n |%30d ", page.pageIndex);
-        message(" |%30d ", page.inPagePosition);
-        message(" |%30d ", page.inPageSize);
-        message(" |%s", Base64.getEncoder().encodeToString(page.content));
-      }
-      record = cluster.readRecord(id.getClusterPosition(), false);
-    }
-    if (record == null)
-      throw new OSystemException("The record has been deleted");
-    if ("ORecordSerializerBinary".equals(currentDatabase.getSerializer().toString())) {
-      byte[] buff = record.getBuffer();
-      ORecordSerializerBinaryDebug debugger = new ORecordSerializerBinaryDebug();
-      ORecordSerializationDebug deserializeDebug = debugger.deserializeDebug(buff, currentDatabase);
-      message("\n\nRECORD CONTENT INFO");
-      message("\n class name: %s", deserializeDebug.className);
-      message("\n fail on Reading: %b", deserializeDebug.readingFailure);
-      message("\n fail position: %d", deserializeDebug.failPosition);
-      if (deserializeDebug.readingException != null) {
-        StringWriter writer = new StringWriter();
-        deserializeDebug.readingException.printStackTrace(new PrintWriter(writer));
-        message("\n Exception On Reading: %s", writer.getBuffer().toString());
-      }
-
-      message("\n number of properties : %d", deserializeDebug.properties.size());
-      message("\n\n PROPERTIES");
-      for (ORecordSerializationDebugProperty prop : deserializeDebug.properties) {
-        message("\n  property name: %s", prop.name);
-        message("\n  property type: %s", prop.type.name());
-        message("\n  property globalId: %d", prop.globalId);
-        message("\n  fail on reading: %b", prop.faildToRead);
-        if (prop.faildToRead) {
-          message("\n  failed on reading position: %b", prop.failPosition);
-          StringWriter writer = new StringWriter();
-          prop.readingException.printStackTrace(new PrintWriter(writer));
-          message("\n  Exception on reading: %s", writer.getBuffer().toString());
-        } else {
-          if (prop.value instanceof ORidBag) {
-            message("\n  property value: ORidBug ");
-            ((ORidBag) prop.value).debugPrint(System.out);
-          } else
-            message("\n  property value: %s", prop.value != null ? prop.value.toString() : "null");
-        }
-        message("\n");
-      }
-    }
   }
 
   @ConsoleCommand(aliases = {
@@ -1761,23 +1651,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           final ODocument row = new ODocument();
           resultSet.add(row);
 
+          final OStorage storage = currentDatabase.getStorage();
           clusterId = currentDatabase.getClusterIdByName(clusterName);
-          final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
 
-          final String conflictStrategy =
-              cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : "";
+          final String conflictStrategy = Optional.ofNullable(storage.getClusterRecordConflictStrategy(clusterId)).orElse("");
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;
 
-          final long spaceUsed = !isRemote ? cluster.getRecordsSize() : 0;
-          totalSpaceUsed += spaceUsed;
-
-          final long tombstones = !isRemote ? cluster.getTombstonesCount() : 0;
-          totalTombstones += tombstones;
-
           final OClass cls = currentDatabase.getMetadata().getSchema().getClassByClusterId(clusterId);
-          final String className = cls != null ? cls.getName() : null;
+          final String className = Optional.ofNullable(cls).map(OClass::getName).orElse(null);
 
           row.field("NAME", clusterName);
           row.field("ID", clusterId);
@@ -1786,12 +1669,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
             row.field("CONFLICT-STRATEGY", conflictStrategy);
           }
           row.field("COUNT", count);
-          if (!isRemote) {
-            row.field("SPACE-USED", OFileUtils.getSizeAsString(spaceUsed));
-            if (commandOptions.containsKey("-v")) {
-              row.field("TOMBSTONES", tombstones);
-            }
-          }
 
           if (dClusters != null) {
             ODocument dClusterCfg = dClusters.field(clusterName);

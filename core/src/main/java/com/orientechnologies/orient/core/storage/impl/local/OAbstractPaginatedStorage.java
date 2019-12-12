@@ -118,7 +118,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
@@ -769,11 +772,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpenness();
-        if (clusterId < 0 || clusterId >= clusters.size()) {
-          throw new IllegalArgumentException(
-              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
-                  + ") in database '" + name + "'");
-        }
+        checkClusterId(clusterId);
 
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null) {
@@ -808,6 +807,471 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  private void checkClusterId(int clusterId) {
+    if (clusterId < 0 || clusterId >= clusters.size()) {
+      throw new OStorageException(
+          "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
+              + ") in database '" + name + "'");
+    }
+  }
+
+  @Override
+  public String getClusterNameById(int clusterId) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        return cluster.getName();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public long getClusterRecordsSizeById(int clusterId) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        return cluster.getRecordsSize();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public long getClusterRecordsSizeByName(String clusterName) {
+    Objects.requireNonNull(clusterName);
+
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        final OCluster cluster = clusterMap.get(clusterName);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterName);
+        }
+
+        return cluster.getRecordsSize();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public boolean isSystemCluster(int clusterId) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        return cluster.isSystemCluster();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public long getLastClusterPosition(int clusterId) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        return cluster.getLastPosition();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public void setClusterAttribute(int clusterId, OCluster.ATTRIBUTES attribute, Object value) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireWriteLock();
+      try {
+        checkOpenness();
+
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        boolean rollback = false;
+        atomicOperationsManager.startAtomicOperation(null, false);
+        try {
+          cluster.set(attribute, value);
+        } catch (Exception e) {
+          rollback = true;
+          throw e;
+        } finally {
+          atomicOperationsManager.endAtomicOperation(rollback);
+        }
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public Object setClusterAttribute(String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
+    Objects.requireNonNull(clusterName);
+
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireWriteLock();
+      try {
+        checkOpenness();
+
+        final OCluster cluster = clusterMap.get(clusterName);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterName);
+        }
+
+        boolean rollback = false;
+        atomicOperationsManager.startAtomicOperation(null, false);
+        try {
+          return cluster.set(attribute, value);
+        } catch (Exception e) {
+          rollback = true;
+          throw e;
+        } finally {
+          atomicOperationsManager.endAtomicOperation(rollback);
+        }
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public String getClusterRecordConflictStrategy(int clusterId) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        return Optional.ofNullable(cluster.getRecordConflictStrategy()).
+            map(ORecordConflictStrategy::getName).orElse(null);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public String getClusterEncryption(int clusterId) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        return cluster.encryption();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public void truncateCluster(int clusterId) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireWriteLock();
+      try {
+        checkOpenness();
+
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        boolean rollback = false;
+        atomicOperationsManager.startAtomicOperation(null, false);
+        try {
+          cluster.truncate();
+        } catch (Exception e) {
+          rollback = true;
+          throw e;
+        } finally {
+          atomicOperationsManager.endAtomicOperation(rollback);
+        }
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public void truncateCluster(String clusterName) {
+    Objects.requireNonNull(clusterName);
+
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireWriteLock();
+      try {
+        checkOpenness();
+
+        final OCluster cluster = clusterMap.get(clusterName);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterName);
+        }
+
+        boolean rollback = false;
+        atomicOperationsManager.startAtomicOperation(null, false);
+        try {
+          cluster.truncate();
+        } catch (Exception e) {
+          rollback = true;
+          throw e;
+        } finally {
+          atomicOperationsManager.endAtomicOperation(rollback);
+        }
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public long countRecords() {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireWriteLock();
+      try {
+        checkOpenness();
+
+        int totalRecords = 0;
+        for (final OCluster cluster : clusters) {
+          if (cluster != null) {
+            totalRecords += cluster.getEntries();
+          }
+        }
+
+        return totalRecords;
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public long getClusterNextPosition(int clusterId) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        return cluster.getNextPosition();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public OPaginatedCluster.RECORD_STATUS getRecordStatus(ORID rid) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        final int clusterId = rid.getClusterId();
+        checkClusterId(clusterId);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null) {
+          throwClusterDoesNotExist(clusterId);
+        }
+
+        return ((OPaginatedCluster) cluster).getRecordStatus(rid.getClusterPosition());
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  private void throwClusterDoesNotExist(int clusterId) {
+    throw new OStorageException("Cluster with id " + clusterId + " does not exist inside of storage " + name);
+  }
+
+  private void throwClusterDoesNotExist(String clusterName) {
+    throw new OStorageException("Cluster with name `" + clusterName + "` does not exist inside of storage " + name);
+  }
+
   @Override
   public final int getId() {
     return id;
@@ -819,11 +1283,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
-        if (clusterId < 0 || clusterId >= clusters.size()) {
-          throw new IllegalArgumentException(
-              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
-                  + ") in database '" + name + "'");
-        }
+        checkClusterId(clusterId);
 
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null) {
@@ -1337,7 +1797,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-      final OCluster cluster = getClusterById(rid.getClusterId());
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
       if (transaction.get() != null) {
         return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, null);
       }
@@ -1369,7 +1829,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        final OCluster cluster = getClusterById(rid.getClusterId());
+        final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
         checkOpenness();
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
@@ -1404,7 +1864,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        final OCluster cluster = getClusterById(rid.getClusterId());
+        final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
         checkOpenness();
 
         return cluster.isDeleted(new OPhysicalPosition(rid.getClusterPosition()));
@@ -1515,7 +1975,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       final OCluster cluster;
       try {
-        cluster = getClusterById(iRid.getClusterId());
+        cluster = doGetAndCheckCluster(iRid.getClusterId());
       } catch (final IllegalArgumentException e) {
         throw OException.wrapException(new ORecordNotFoundException(iRid), e);
       }
@@ -1535,7 +1995,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
     try {
       checkOpenness();
-      return new OStorageOperationResult<>(readRecordIfNotLatest(getClusterById(rid.getClusterId()), rid, recordVersion));
+      return new OStorageOperationResult<>(readRecordIfNotLatest(doGetAndCheckCluster(rid.getClusterId()), rid, recordVersion));
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
@@ -1552,7 +2012,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-      final OCluster cluster = getClusterById(rid.getClusterId());
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
       if (transaction.get() != null) {
         return doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
@@ -1589,7 +2049,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-      final OCluster cluster = getClusterById(rid.getClusterId());
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
       if (transaction.get() != null) {
         return doRecycleRecord(rid, content, version, cluster, recordType);
       }
@@ -1642,7 +2102,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-      final OCluster cluster = getClusterById(rid.getClusterId());
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
       if (transaction.get() != null) {
         return doDeleteRecord(rid, version, cluster);
@@ -1671,7 +2131,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-      final OCluster cluster = getClusterById(rid.getClusterId());
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
       if (transaction.get() != null) {
         return doHideMethod(rid, cluster);
@@ -1731,28 +2191,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public OSessionStoragePerformanceStatistic completeGatheringPerformanceStatisticForCurrentThread() {
     try {
       return performanceStatisticManager.stopThreadMonitoring();
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
-  public final <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
-    try {
-      stateLock.acquireReadLock();
-      try {
-        if (iExclusiveLock) {
-          return super.callInLock(iCallable, true);
-        } else {
-          return super.callInLock(iCallable, false);
-        }
-      } finally {
-        stateLock.releaseReadLock();
-      }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
@@ -1844,7 +2282,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (txEntry.type == ORecordOperation.CREATED) {
           newRecords.add(txEntry);
           final int clusterId = txEntry.getRID().getClusterId();
-          clustersToLock.put(clusterId, getClusterById(clusterId));
+          clustersToLock.put(clusterId, doGetAndCheckCluster(clusterId));
         }
       }
       stateLock.acquireReadLock();
@@ -1865,7 +2303,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 //This allocate a position for a new record
                 final ORecordId rid = (ORecordId) rec.getIdentity().copy();
                 final ORecordId oldRID = rid.copy();
-                final OCluster cluster = getClusterById(rid.getClusterId());
+                final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
                 final OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
                 rid.setClusterPosition(ppos.clusterPosition);
                 clientTx.updateIdentityAfterCommit(oldRID, rid);
@@ -1873,7 +2311,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             } else {
               //This allocate position starting from a valid rid, used in distributed for allocate the same position on other nodes
               final ORecordId rid = (ORecordId) rec.getIdentity();
-              final OPaginatedCluster cluster = (OPaginatedCluster) getClusterById(rid.getClusterId());
+              final OPaginatedCluster cluster = (OPaginatedCluster) doGetAndCheckCluster(rid.getClusterId());
               OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
               if (recordStatus == OPaginatedCluster.RECORD_STATUS.NOT_EXISTENT) {
                 OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
@@ -1994,7 +2432,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
           final int clusterId = recordOperation.getRecord().getIdentity().getClusterId();
-          clustersToLock.put(clusterId, getClusterById(clusterId));
+          clustersToLock.put(clusterId, doGetAndCheckCluster(clusterId));
         } else if (recordOperation.type == ORecordOperation.CREATED) {
           newRecords.add(recordOperation);
 
@@ -2013,7 +2451,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           }
 
-          clustersToLock.put(clusterId, getClusterById(clusterId));
+          clustersToLock.put(clusterId, doGetAndCheckCluster(clusterId));
         }
       }
 
@@ -2063,7 +2501,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 final Integer clusterOverride = clusterOverrides.get(recordOperation);
                 final int clusterId = Optional.ofNullable(clusterOverride).orElseGet(rid::getClusterId);
 
-                final OCluster cluster = getClusterById(clusterId);
+                final OCluster cluster = doGetAndCheckCluster(clusterId);
 
                 assert atomicOperation.getCounter() == 1;
                 OPhysicalPosition physicalPosition = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
@@ -3550,59 +3988,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public final OCluster getClusterById(int iClusterId) {
-    try {
-      checkOpenness();
-      stateLock.acquireReadLock();
-      try {
-        checkOpenness();
-
-        if (iClusterId == ORID.CLUSTER_ID_INVALID)
-        // GET THE DEFAULT CLUSTER
-        {
-          iClusterId = defaultClusterId;
-        }
-
-        return doGetAndCheckCluster(iClusterId);
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
-  public final OCluster getClusterByName(final String clusterName) {
-    try {
-      checkOpenness();
-
-      stateLock.acquireReadLock();
-      try {
-        checkOpenness();
-        final OCluster cluster = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
-
-        if (cluster == null) {
-          throw new OStorageException("Cluster " + clusterName + " does not exist in database '" + name + "'");
-        }
-        return cluster;
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
   public final long getSize() {
     try {
       try {
@@ -3640,36 +4025,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
         return clusterMap.size();
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
-  public final Set<OCluster> getClusterInstances() {
-    try {
-      checkOpenness();
-      stateLock.acquireReadLock();
-      try {
-        checkOpenness();
-        final Set<OCluster> result = new HashSet<>(1024);
-
-        // ADD ALL THE CLUSTERS
-        for (final OCluster c : clusters) {
-          if (c != null) {
-            result.add(c);
-          }
-        }
-
-        return result;
-
       } finally {
         stateLock.releaseReadLock();
       }
@@ -3983,7 +4338,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        final OCluster cluster = getClusterById(currentClusterId);
+        final OCluster cluster = doGetAndCheckCluster(currentClusterId);
         return cluster.higherPositions(physicalPosition);
       } catch (final IOException ioe) {
         throw OException
@@ -4013,7 +4368,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        final OCluster cluster = getClusterById(clusterId);
+        final OCluster cluster = doGetAndCheckCluster(clusterId);
         return cluster.ceilingPositions(physicalPosition);
       } catch (final IOException ioe) {
         throw OException
@@ -4043,7 +4398,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        final OCluster cluster = getClusterById(currentClusterId);
+        final OCluster cluster = doGetAndCheckCluster(currentClusterId);
 
         return cluster.lowerPositions(physicalPosition);
       } catch (final IOException ioe) {
@@ -4074,7 +4429,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        final OCluster cluster = getClusterById(clusterId);
+        final OCluster cluster = doGetAndCheckCluster(clusterId);
 
         return cluster.floorPositions(physicalPosition);
       } catch (final IOException ioe) {
@@ -4141,7 +4496,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public final ORecordConflictStrategy getConflictStrategy() {
+  public final ORecordConflictStrategy getClusterRecordConflictStrategy() {
     return recordConflictStrategy;
   }
 
@@ -5049,7 +5404,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     ORecordSerializationContext.pushContext();
     try {
-      final OCluster cluster = getClusterById(rid.getClusterId());
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
       if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME) || cluster.getName()
           .equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))

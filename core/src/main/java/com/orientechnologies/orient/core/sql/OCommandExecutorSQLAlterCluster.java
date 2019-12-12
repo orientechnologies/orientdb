@@ -31,12 +31,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,8 +45,8 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
   public static final String KEYWORD_ALTER   = "ALTER";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 
-  protected String clusterName;
-  protected int clusterId = -1;
+  protected String     clusterName;
+  protected int        clusterId = -1;
   protected ATTRIBUTES attribute;
   protected String     value;
 
@@ -136,33 +131,29 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     if (attribute == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final List<OCluster> clusters = getClusters();
+    final List<String> clusters = getClusters();
 
     if (clusters.isEmpty())
       throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
 
     Object result = null;
 
-    for (OCluster cluster : getClusters()) {
+    for (String cluster : getClusters()) {
       if (clusterId > -1 && clusterName.equals(String.valueOf(clusterId))) {
-        clusterName = cluster.getName();
+        clusterName = cluster;
       } else {
-        clusterId = cluster.getId();
+        clusterId = getDatabase().getStorage().getClusterIdByName(clusterName);
       }
 
-      try {
-        if (attribute == ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase(value))
-          // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-          getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
+      if (attribute == ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase(value))
+        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+        getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
 
-        if (attribute == ATTRIBUTES.NAME)
-          // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-          getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
+      if (attribute == ATTRIBUTES.NAME)
+        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+        getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
 
-        result = cluster.set(attribute, value);
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OCommandExecutionException("Error altering cluster '" + clusterName + "'"), ioe);
-      }
+      result = getDatabase().getStorage().setClusterAttribute(cluster, attribute, value);
     }
 
     return result;
@@ -173,22 +164,22 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
-  protected List<OCluster> getClusters() {
+  protected List<String> getClusters() {
     final ODatabaseDocumentInternal database = getDatabase();
 
-    final List<OCluster> result = new ArrayList<OCluster>();
+    final List<String> result = new ArrayList<>();
 
     if (clusterName.endsWith("*")) {
       final String toMatch = clusterName.substring(0, clusterName.length() - 1).toLowerCase(Locale.ENGLISH);
       for (String cl : database.getStorage().getClusterNames()) {
         if (cl.startsWith(toMatch))
-          result.add(database.getStorage().getClusterByName(cl));
+          result.add(cl);
       }
     } else {
       if (clusterId > -1) {
-        result.add(database.getStorage().getClusterById(clusterId));
+        result.add(database.getStorage().getClusterNameById(clusterId));
       } else {
-        result.add(database.getStorage().getClusterById(database.getStorage().getClusterIdByName(clusterName)));
+        result.add(clusterName);
       }
     }
 

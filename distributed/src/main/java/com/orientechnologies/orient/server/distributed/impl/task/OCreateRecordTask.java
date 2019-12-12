@@ -34,15 +34,8 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -58,11 +51,11 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
-  public static final int FACTORYID = 0;
-  protected byte[] content;
-  protected byte   recordType;
-  protected int clusterId = -1;
-  private transient ORecord record;
+  public static final int     FACTORYID = 0;
+  protected           byte[]  content;
+  protected           byte    recordType;
+  protected           int     clusterId = -1;
+  private transient   ORecord record;
 
   public OCreateRecordTask() {
   }
@@ -118,9 +111,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     if (!rid.isPersistent())
       throw new ODistributedException("Record " + rid + " has not been saved on owner node first (temporary rid)");
 
-    final OPaginatedCluster cluster = (OPaginatedCluster) ODatabaseRecordThreadLocal.instance().get().getStorage()
-        .getClusterById(rid.getClusterId());
-    final OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
+    final OPaginatedCluster.RECORD_STATUS recordStatus = ODatabaseRecordThreadLocal.instance().get().getStorage()
+        .getRecordStatus(rid);
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog
