@@ -1578,4 +1578,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges() {
     return internal.getCollectionsChanges();
   }
+
+  @Override
+  public boolean isRemote() {
+    return internal.isRemote();
+  }
 }

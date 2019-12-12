@@ -115,6 +115,7 @@ public final class OSimpleMultiValueTracker<K, V> {
   public void sourceFrom(OSimpleMultiValueTracker<K, V> tracker) {
     this.timeLine = tracker.timeLine;
     this.transactionTimeLine = tracker.transactionTimeLine;
+    this.enabled = tracker.enabled;
   }
 
   public OMultiValueChangeTimeLine<Object, Object> getTimeLine() {
