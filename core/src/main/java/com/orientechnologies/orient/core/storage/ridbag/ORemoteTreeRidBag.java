@@ -158,7 +158,7 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
   private List<OIdentifiable> loadElements() {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
     List<OIdentifiable> set;
-    try (OResultSet result = database.query("select list(`" + fieldName + "`) as elements from ?", ownerRecord)) {
+    try (OResultSet result = database.query("select list(@this.field(?)) as elements from ?", fieldName, ownerRecord)) {
       if (result.hasNext()) {
         set = (result.next().getProperty("elements"));
       } else {
