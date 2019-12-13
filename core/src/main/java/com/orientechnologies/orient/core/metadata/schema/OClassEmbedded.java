@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -629,15 +630,16 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaReadLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
+      database.checkForClusterPermissions(clusterName);
       if (isDistributedCommand(database)) {
         final String cmd = String.format("truncate cluster %s", clusterName);
 
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
         database.command(commandSQL).execute();
-        truncateClusterInternal(clusterName, database);
+        for (OIndex index : getIndexes()) {
+          index.rebuild();
+        }
       } else
         truncateClusterInternal(clusterName, database);
     } finally {
