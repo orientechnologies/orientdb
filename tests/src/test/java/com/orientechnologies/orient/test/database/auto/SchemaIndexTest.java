@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-@Test(groups = { "index" })
+@Test(groups = {"index"})
 public class SchemaIndexTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
@@ -47,7 +47,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
   @Test
   public void testDropClass() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX SchemaSharedIndexCompositeIndex ON SchemaIndexTest (prop1, prop2) UNIQUE"))
-        .execute();
+            .execute();
     database.getMetadata().getIndexManager().reload();
     Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("SchemaSharedIndexCompositeIndex"));
 
@@ -64,7 +64,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
   @Test
   public void testDropSuperClass() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX SchemaSharedIndexCompositeIndex ON SchemaIndexTest (prop1, prop2) UNIQUE"))
-        .execute();
+            .execute();
     database.getMetadata().getIndexManager().reload();
 
     try {
@@ -72,10 +72,10 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
       Assert.fail();
     } catch (OSchemaException e) {
       Assert
-          .assertTrue(e
-              .getMessage()
-              .startsWith(
-                  "Class 'SchemaSharedIndexSuperTest' cannot be dropped because it has sub classes"));
+              .assertTrue(e
+                      .getMessage()
+                      .startsWith(
+                              "Class 'SchemaSharedIndexSuperTest' cannot be dropped because it has sub classes"));
     }
 
     database.getMetadata().getSchema().reload();
@@ -134,7 +134,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
     assertContains(polymorpicIdsPropagationSuper.getPolymorphicClusterIds(), clusterId2);
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
-        "select from polymorpicIdsPropagationSuperSuper where value = 'val12'"));
+            "select from polymorpicIdsPropagationSuperSuper where value = 'val12'"));
 
     Assert.assertEquals(result.size(), 1);
 
@@ -148,6 +148,15 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
 
     result = database.query(new OSQLSynchQuery<ODocument>("select from polymorpicIdsPropagationSuperSuper  where value = 'val12'"));
     Assert.assertTrue(result.isEmpty());
+  }
+
+  public void testIndexWithNumberProperties() {
+    OClass oclass = database.getMetadata().getSchema().createClass("SchemaIndexTest_numberclass");
+    oclass.createProperty("1", OType.STRING).setMandatory(false);
+    oclass.createProperty("2", OType.STRING).setMandatory(false);
+    oclass.createIndex("SchemaIndexTest_numberclass_1_2", OClass.INDEX_TYPE.UNIQUE, "1", "2");
+
+    database.getMetadata().getSchema().dropClass(oclass.getName());
   }
 
   private void assertContains(int[] clusterIds, int clusterId) {
