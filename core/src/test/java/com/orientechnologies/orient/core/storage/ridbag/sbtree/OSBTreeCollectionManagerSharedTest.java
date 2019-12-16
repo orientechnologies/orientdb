@@ -177,8 +177,9 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
       OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
       Assert.assertSame(cachedTree, createdTree);
 
-      if (i > 4)
+      if (i > 4) {
         sbTreeCollectionManager.releaseSBTree(collectionPointer);
+      }
     }
 
     atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
@@ -188,15 +189,5 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
     });
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 11);
-
-    for (int i = 0; i <= 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
-          createdTree.getRootBucketPointer());
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
-
-      Assert.assertNotSame(cachedTree, createdTree);
-      sbTreeCollectionManager.releaseSBTree(collectionPointer);
-    }
   }
 }
