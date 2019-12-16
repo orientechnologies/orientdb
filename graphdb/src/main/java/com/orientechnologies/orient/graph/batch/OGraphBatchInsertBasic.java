@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
@@ -24,7 +25,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- *
  * this is and API for fast batch import of simple graphs, starting from an empty (or non existing) DB. This class allows import of
  * graphs with
  * <ul>
@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </ul>
  * These limitations are intended to have best performance on a very simple use case. If there limitations don't fit your
  * requirements you can rely on other implementations (at the time of writing this they are planned, but not implemented yet)
- *
+ * <p>
  * Typical usage: <code>
  *   OGraphBatchInsertSimple batch = new OGraphBatchInsertSimple("plocal:your/db", "admin", "admin");
  *   batch.begin();
@@ -43,32 +43,32 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   ...
  *   batch.end();
  * </code>
- *
+ * <p>
  * There is no need to create vertices before connecting them: <code>
  *   batch.createVertex(0L);
  *   batch.createVertex(1L);
  *   batch.createEdge(0L, 1L);
  * </code>
- *
+ * <p>
  * is equivalent to (but less performing than) <code>
  *   batch.createEdge(0L, 1L);
  * </code>
- *
+ * <p>
  * batch.createVertex() is needed only if you want to create unconnected vertices.
  *
- * @since 2.0 M3
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) (l.dellaquila-at-orientdb.com)
+ * @since 2.0 M3
  */
 public class OGraphBatchInsertBasic implements Closeable {
 
-  private final String              userName;
-  private final String              fullUrl;
-  private final String              password;
-  private final OURLConnection      dbUrlConnection;
-  private final ODatabaseType       dbType;
-  private final OrientDB            orientDB;
-  Map<Long, List<Long>>             out                      = new HashMap<Long, List<Long>>();
-  Map<Long, List<Long>>             in                       = new HashMap<Long, List<Long>>();
+  private final String         userName;
+  private final String         fullUrl;
+  private final String         password;
+  private final OURLConnection dbUrlConnection;
+  private final ODatabaseType  dbType;
+  private final OrientDB       orientDB;
+  Map<Long, List<Long>> out = new HashMap<Long, List<Long>>();
+  Map<Long, List<Long>> in  = new HashMap<Long, List<Long>>();
   private String                    idPropertyName           = "uid";
   private String                    edgeClass                = OrientEdgeType.CLASS_NAME;
   private String                    vertexClass              = OrientVertexType.CLASS_NAME;
@@ -81,8 +81,8 @@ public class OGraphBatchInsertBasic implements Closeable {
   private long                      last                     = 0;
   private boolean                   walActive;
 
-  private int                       parallel                 = 4;
-  private AtomicInteger             runningThreads;
+  private int           parallel = 4;
+  private AtomicInteger runningThreads;
 
   @Override
   public void close() {
@@ -93,7 +93,7 @@ public class OGraphBatchInsertBasic implements Closeable {
   class BatchImporterJob extends Thread {
 
     private final int mod;
-    OClass            vClass;
+    OClass vClass;
 
     BatchImporterJob(int mod, OClass vertexClass) {
       this.mod = mod;
@@ -102,7 +102,8 @@ public class OGraphBatchInsertBasic implements Closeable {
 
     @Override
     public void run() {
-      try (ODatabaseDocumentInternal perThreadDbInstance = (ODatabaseDocumentInternal) orientDB.open(dbUrlConnection.getDbName(), userName, password)){
+      try (ODatabaseDocumentInternal perThreadDbInstance = (ODatabaseDocumentInternal) orientDB
+          .open(dbUrlConnection.getDbName(), userName, password)) {
         perThreadDbInstance.declareIntent(new OIntentMassiveInsert());
         int clusterId = clusterIds[mod];
 
@@ -152,8 +153,7 @@ public class OGraphBatchInsertBasic implements Closeable {
    * Creates a new batch insert procedure by using admin user. It's intended to be used only for a single batch cycle (begin,
    * create..., end)
    *
-   * @param iDbURL
-   *          db connection URL (plocal:/your/db/path)
+   * @param iDbURL db connection URL (plocal:/your/db/path)
    */
   public OGraphBatchInsertBasic(String iDbURL) {
     this(iDbURL, "admin", "admin");
@@ -162,12 +162,9 @@ public class OGraphBatchInsertBasic implements Closeable {
   /**
    * Creates a new batch insert procedure. It's intended to be used only for a single batch cycle (begin, create..., end)
    *
-   * @param iDbURL
-   *          db connection URL (plocal:/your/db/path)
-   * @param iUserName
-   *          db user name (use admin for new db)
-   * @param iPassword
-   *          db password (use admin for new db)
+   * @param iDbURL    db connection URL (plocal:/your/db/path)
+   * @param iUserName db user name (use admin for new db)
+   * @param iPassword db password (use admin for new db)
    */
   public OGraphBatchInsertBasic(String iDbURL, String iUserName, String iPassword) {
     this.fullUrl = iDbURL;
@@ -175,7 +172,7 @@ public class OGraphBatchInsertBasic implements Closeable {
     // To deprecate ODatabaseDocumentTx, we need to separate the "url" from the database name
     this.dbUrlConnection = OURLHelper.parseNew(fullUrl);
     this.dbType = dbUrlConnection.getDbType().orElse(ODatabaseType.MEMORY);
-    String dbGroupUrl = dbUrlConnection.getType() + ":"  + dbUrlConnection.getPath();
+    String dbGroupUrl = dbUrlConnection.getType() + ":" + dbUrlConnection.getPath();
     this.userName = iUserName;
     this.password = iPassword;
     this.orientDB = new OrientDB(dbGroupUrl, userName, password, OrientDBConfig.defaultConfig());
@@ -184,10 +181,9 @@ public class OGraphBatchInsertBasic implements Closeable {
   /**
    * Creates the database (if it does not exist) and initializes batch operations. Call this once, before starting to create
    * vertices and edges.
-   *
    */
   public OrientDB begin() {
-    walActive =  OGlobalConfiguration.USE_WAL.getValueAsBoolean();
+    walActive = OGlobalConfiguration.USE_WAL.getValueAsBoolean();
     if (walActive)
       OGlobalConfiguration.USE_WAL.setValue(false);
     if (averageEdgeNumberPerNode > 0) {
@@ -216,7 +212,13 @@ public class OGraphBatchInsertBasic implements Closeable {
     for (int i = 0; i < clusterIds.length; i++) {
       int clusterId = clusterIds[i];
       try {
-        lastClusterPositions[i] = db.getStorage().getLastClusterPosition(clusterId);
+        final OStorage storage = db.getStorage();
+        if (storage.isRemote()) {
+          lastClusterPositions[i] = 0;
+        } else {
+          lastClusterPositions[i] = storage.getLastClusterPosition(clusterId);
+        }
+
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -264,8 +266,7 @@ public class OGraphBatchInsertBasic implements Closeable {
   /**
    * Creates a new vertex
    *
-   * @param v
-   *          the vertex ID
+   * @param v the vertex ID
    */
   public void createVertex(final Long v) {
     last = last < v ? v : last;
@@ -278,10 +279,8 @@ public class OGraphBatchInsertBasic implements Closeable {
   /**
    * Creates a new edge between two vertices. If vertices do not exist, they will be created
    *
-   * @param from
-   *          id of the vertex that is starting point of the edge
-   * @param to
-   *          id of the vertex that is end point of the edge
+   * @param from id of the vertex that is starting point of the edge
+   * @param to   id of the vertex that is end point of the edge
    */
   public void createEdge(final Long from, final Long to) {
     if (from < 0) {
@@ -297,7 +296,6 @@ public class OGraphBatchInsertBasic implements Closeable {
   }
 
   /**
-   *
    * @return the configured average number of edges per node (optimization parameter, not calculated)
    */
   public int getAverageEdgeNumberPerNode() {
@@ -321,15 +319,13 @@ public class OGraphBatchInsertBasic implements Closeable {
   }
 
   /**
-   * @param idPropertyName
-   *          the property name where ids are written on vertices
+   * @param idPropertyName the property name where ids are written on vertices
    */
   public void setIdPropertyName(final String idPropertyName) {
     this.idPropertyName = idPropertyName;
   }
 
   /**
-   *
    * @return the edge class name (E by default)
    */
   public String getEdgeClass() {
@@ -337,16 +333,13 @@ public class OGraphBatchInsertBasic implements Closeable {
   }
 
   /**
-   *
-   * @param edgeClass
-   *          the edge class name
+   * @param edgeClass the edge class name
    */
   public void setEdgeClass(final String edgeClass) {
     this.edgeClass = edgeClass;
   }
 
   /**
-   *
    * @return the vertex class name (V by default)
    */
   public String getVertexClass() {
@@ -354,9 +347,7 @@ public class OGraphBatchInsertBasic implements Closeable {
   }
 
   /**
-   *
-   * @param vertexClass
-   *          the vertex class name
+   * @param vertexClass the vertex class name
    */
   public void setVertexClass(final String vertexClass) {
     this.vertexClass = vertexClass;
@@ -372,9 +363,8 @@ public class OGraphBatchInsertBasic implements Closeable {
   /**
    * Sets the threshold for passing from emdedded RidBag to SBTreeBonsai implementation, in number of edges (low level
    * optimization). High values speed up writes but slow down reads later. Set -1 (default) to use default database configuration.
-   *
+   * <p>
    * See OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD}
-   *
    */
   public void setBonsaiThreshold(final int bonsaiThreshold) {
     this.bonsaiThreshold = bonsaiThreshold;
@@ -390,14 +380,12 @@ public class OGraphBatchInsertBasic implements Closeable {
   /**
    * Sets the estimated number of entries, 0 for auto-resize (default). This pre-allocate in memory structure avoiding resizing of
    * them at run-time.
-   *
    */
   public void setEstimatedEntries(final int estimatedEntries) {
     this.estimatedEntries = estimatedEntries;
   }
 
   /**
-   *
    * @return number of parallel threads used for batch import
    */
   public int getParallel() {
@@ -407,8 +395,7 @@ public class OGraphBatchInsertBasic implements Closeable {
   /**
    * sets the number of parallel threads to be used for batch insert
    *
-   * @param parallel
-   *          number of threads (default 4)
+   * @param parallel number of threads (default 4)
    */
   public void setParallel(int parallel) {
     this.parallel = parallel;

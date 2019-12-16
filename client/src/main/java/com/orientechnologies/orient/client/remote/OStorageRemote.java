@@ -1114,7 +1114,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @Override
   public String getClusterNameById(int clusterId) {
-    throw new UnsupportedOperationException();
+    stateLock.acquireReadLock();
+    try {
+      if (clusterId < 0 || clusterId >= clusters.length) {
+        throw new OStorageException("Cluster with id " + clusterId + " does not exist");
+      }
+
+      final OCluster cluster = clusters[clusterId];
+      return cluster.getName();
+    } finally {
+      stateLock.releaseReadLock();
+    }
   }
 
   @Override
