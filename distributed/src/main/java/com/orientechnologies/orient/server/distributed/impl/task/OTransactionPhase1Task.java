@@ -282,7 +282,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   @Override
   public void received(ODistributedRequest request, ODistributedDatabase distributedDatabase) {
     if (notYetFinishedTask == null) {
-      notYetFinishedTask = new TimerTask() {
+
+      notYetFinishedTask = Orient.instance().scheduleTask(new Runnable() {
         @Override
         public void run() {
           Orient.instance().submit(() -> {
@@ -292,8 +293,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
             }
           });
         }
-      };
-      Orient.instance().scheduleTask(notYetFinishedTask, getDistributedTimeout(), getDistributedTimeout());
+      }, getDistributedTimeout(), getDistributedTimeout());
     }
   }
+
 }
