@@ -2,11 +2,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -37,12 +33,13 @@ public class OLocalHashTableEncryptionTestIT extends OLocalHashTableBase {
 
     OSHA256HashFunction<Integer> SHA256HashFunction = new OSHA256HashFunction<>(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<>("localHashTableEncryptionTest", ".imc", ".tsc", ".obf", ".nbh",
-        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    localHashTable = new OLocalHashTable<>("localHashTableEncryptionTest", ".imc", ".tsc", ".obf", ".nbh", storage);
 
-    localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null,
-            encryption, SHA256HashFunction, true);
+    atomicOperationsManager = storage.getAtomicOperationsManager();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> localHashTable
+        .create(atomicOperation, OIntegerSerializer.INSTANCE,
+            OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, encryption, SHA256HashFunction, true));
 
   }
 

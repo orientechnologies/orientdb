@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.index.sbtree;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,7 @@ public interface OTreeInternal<K, V> {
 
   K firstKey();
 
-  V remove(K key) throws IOException;
+  V remove(OAtomicOperation atomicOperation, K key) throws IOException;
 
   /**
    * @author Artem Orobets (enisher-at-gmail.com)

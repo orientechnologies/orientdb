@@ -21,6 +21,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.function.TxConsumer;
+import com.orientechnologies.common.function.TxFunction;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -32,20 +34,13 @@ import java.io.IOException;
 
 /**
  * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
- * crash but results of last operations in small interval before crash may be lost.
- * This class contains methods which are used to support such concepts as:
+ * crash but results of last operations in small interval before crash may be lost. This class contains methods which are used to
+ * support such concepts as:
  * <ol>
  * <li>"atomic operation" - set of operations which should be either applied together or not. It includes not only changes on
  * current data structure but on all durable data structures which are used by current one during implementation of specific
  * operation.</li>
  * <li>write ahead log - log of all changes which were done with page content after loading it from cache.</li>
- * </ol>
- * To support of "atomic operation" concept following should be done:
- * <ol>
- * <li>Call {@link #startAtomicOperation(boolean)} method.</li>
- * <li>Call {@link #endAtomicOperation(boolean)} method when atomic operation completes, passed in parameter should be
- * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
- * needed to rollback given operation.</li>
  * </ol>
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -104,16 +99,16 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     atomicOperationsManager.endAtomicOperation(rollback);
   }
 
-  /**
-   * @see OAtomicOperationsManager#startAtomicOperation(com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent,
-   * boolean)
-   */
-  protected OAtomicOperation startAtomicOperation(final boolean trackNonTxOperations) throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
+  protected <T> T calculateInsideComponentOperation(final OAtomicOperation atomicOperation, final TxFunction<T> function) {
+    return atomicOperationsManager.calculateInsideComponentOperation(atomicOperation, this, function);
   }
 
-  protected OAtomicOperation tryStartAtomicOperation(final boolean trackNonTxOperations) throws IOException {
-    return atomicOperationsManager.tryStartAtomicOperation(this, trackNonTxOperations);
+  protected void executeInsideComponentOperation(final OAtomicOperation operation, final TxConsumer consumer) {
+    atomicOperationsManager.executeInsideComponentOperation(operation, this, consumer);
+  }
+
+  protected boolean tryExecuteInsideComponentOperation(final OAtomicOperation operation, final TxConsumer consumer) {
+    return atomicOperationsManager.tryExecuteInsideComponentOperation(operation, this, consumer);
   }
 
   protected long getFilledUpTo(final OAtomicOperation atomicOperation, final long fileId) {

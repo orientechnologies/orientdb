@@ -5,15 +5,12 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v1.OCellBTreeMultiValueV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2;
@@ -58,30 +55,30 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
+  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes,
+      boolean nullPointerSupport, OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata, OEncryption encryption) {
     try {
       //noinspection unchecked
-      sbTree.create(keySerializer, keyTypes, keySize, encryption);
+      sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during creation of index " + name), e);
     }
   }
 
   @Override
-  public void delete() {
+  public void delete(OAtomicOperation atomicOperation) {
     try {
-      sbTree.delete();
+      sbTree.delete(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
     }
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) {
+  public void deleteWithoutLoad(OAtomicOperation atomicOperation, String indexName) {
     try {
-      sbTree.deleteWithoutLoad();
+      sbTree.deleteWithoutLoad(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
     }
@@ -100,18 +97,18 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public boolean remove(Object key) {
+  public boolean remove(OAtomicOperation atomicOperation, Object key) {
     try {
-      return sbTree.remove(key);
+      return sbTree.remove(atomicOperation, key);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during removal of key " + key + " from index " + name), e);
     }
   }
 
   @Override
-  public boolean remove(Object key, ORID value) {
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
     try {
-      return sbTree.remove(key, value);
+      return sbTree.remove(atomicOperation, key, value);
     } catch (IOException e) {
       throw OException.wrapException(
           new OIndexException("Error during removal of entry with key " + key + "and RID " + value + " from index " + name), e);
@@ -119,9 +116,9 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public void clear() {
+  public void clear(OAtomicOperation atomicOperation) {
     try {
-      sbTree.clear();
+      sbTree.clear(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during clearing of index " + name), e);
     }
@@ -170,9 +167,9 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public void put(Object key, ORID value) {
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     try {
-      sbTree.put(key, value);
+      sbTree.put(atomicOperation, key, value);
     } catch (IOException e) {
       throw OException
           .wrapException(new OIndexException("Error during insertion of key " + key + " and RID " + value + " to index " + name),

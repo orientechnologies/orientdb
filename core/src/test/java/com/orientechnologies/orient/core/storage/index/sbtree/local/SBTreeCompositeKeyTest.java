@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,30 +28,35 @@ import static org.junit.Assert.assertTrue;
 public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
   private OSBTree<OCompositeKey, OIdentifiable> localSBTree;
+  private OAtomicOperationsManager              atomicOperationsManager;
 
   @Before
   public void beforeMethod() throws Exception {
-    localSBTree = new OSBTree<>("localSBTreeCompositeKeyTest", ".sbt", ".nbt",
-        (OAbstractPaginatedStorage) database.getStorage().getUnderlying());
-    localSBTree.create(OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 2, false, null);
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+    localSBTree = new OSBTree<>("localSBTreeCompositeKeyTest", ".sbt", ".nbt", storage);
+    atomicOperationsManager = storage.getAtomicOperationsManager();
 
-    for (double i = 1; i < 4; i++) {
-      for (double j = 1; j < 10; j++) {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(i);
-        compositeKey.addKey(j);
-        localSBTree.put(compositeKey, new ORecordId((int) i, (long) j));
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      localSBTree.create(atomicOperation, OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 2, false, null);
+
+      for (double i = 1; i < 4; i++) {
+        for (double j = 1; j < 10; j++) {
+          final OCompositeKey compositeKey = new OCompositeKey();
+          compositeKey.addKey(i);
+          compositeKey.addKey(j);
+          localSBTree.put(atomicOperation, compositeKey, new ORecordId((int) i, (long) j));
+        }
       }
-    }
+    });
   }
-
 
   @After
   public void afterClass() throws Exception {
-    localSBTree.clear();
-    localSBTree.clear();
-    localSBTree.delete();
-
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      localSBTree.clear(atomicOperation);
+      localSBTree.clear(atomicOperation);
+      localSBTree.delete(atomicOperation);
+    });
   }
 
   @Test

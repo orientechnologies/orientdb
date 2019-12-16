@@ -31,14 +31,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
@@ -121,7 +118,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public boolean remove(Object key) {
+  public boolean remove(OAtomicOperation atomicOperation, Object key) {
     updateLastAccess();
     openIfClosed();
     try {
@@ -141,12 +138,12 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public void update(Object key, OIndexKeyUpdater<Object> updater) {
-    put(key, updater.update(null, bonsayFileId).getValue());
+  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
+    put(atomicOperation, key, updater.update(null, bonsayFileId).getValue());
   }
 
   @Override
-  public void put(Object key, Object value) {
+  public void put(OAtomicOperation atomicOperation, Object key, Object value) {
 
     updateLastAccess();
     openIfClosed();
@@ -162,7 +159,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     throw new UnsupportedOperationException("Validated put is not supported by OLuceneFullTextIndexEngine");
   }
 

@@ -27,10 +27,12 @@ public class LocalPaginatedClusterV1TestIT extends LocalPaginatedClusterAbstract
 
     databaseDocumentTx.create();
 
-    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+    storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
 
-    paginatedCluster = new OPaginatedClusterV1("paginatedClusterTest", storage);
-    paginatedCluster.configure(storage, 42, "paginatedClusterTest", buildDirectory, -1);
-    paginatedCluster.create(-1);
+    storage.getAtomicOperationsManager().executeInsideAtomicOperation((atomicOperation) -> {
+      paginatedCluster = new OPaginatedClusterV1("paginatedClusterTest", storage);
+      paginatedCluster.configure(storage, 42, "paginatedClusterTest", buildDirectory, -1);
+      paginatedCluster.create(atomicOperation, -1);
+    });
   }
 }

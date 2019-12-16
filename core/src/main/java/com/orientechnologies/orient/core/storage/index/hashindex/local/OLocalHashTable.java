@@ -25,17 +25,14 @@ import java.util.List;
 
 /**
  * Implementation of hash index which is based on <a href="http://en.wikipedia.org/wiki/Extendible_hashing">extendible hashing
- * algorithm</a>. The directory for extindible hashing is implemented in
- * {@link com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableDirectory} class. Directory is not implemented
- * according
- * to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead it is implemented
- * according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002". Which has much less
- * memory consumption in case of nonuniform data distribution.
- * Index itself uses so called "multilevel schema" when first level contains 256 buckets, when bucket is split it is put at the
- * end of other file which represents second level. So if data which are put has distribution close to uniform (this index was
- * designed to be use as rid index for DHT storage) buckets split will be preformed in append only manner to speed up index write
- * speed.
- * So hash index bucket itself has following structure:
+ * algorithm</a>. The directory for extindible hashing is implemented in {@link com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableDirectory}
+ * class. Directory is not implemented according to classic algorithm because of its big memory consumption in case of non-uniform
+ * data distribution instead it is implemented according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido
+ * Moerkotte April 17, 2002". Which has much less memory consumption in case of nonuniform data distribution. Index itself uses so
+ * called "multilevel schema" when first level contains 256 buckets, when bucket is split it is put at the end of other file which
+ * represents second level. So if data which are put has distribution close to uniform (this index was designed to be use as rid
+ * index for DHT storage) buckets split will be preformed in append only manner to speed up index write speed. So hash index bucket
+ * itself has following structure:
  * <ol>
  * <li>Bucket depth - 1 byte.</li>
  * <li>Bucket's size - amount of entities (key, value) in one bucket, 4 bytes</li>
@@ -121,11 +118,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void create(final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer, final OType[] keyTypes,
-      final OEncryption encryption, final OHashFunction<K> keyHashFunction, final boolean nullKeyIsSupported) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void create(OAtomicOperation atomicOperation, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer, final OType[] keyTypes, final OEncryption encryption,
+      final OHashFunction<K> keyHashFunction, final boolean nullKeyIsSupported) throws IOException {
+    executeInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         this.keyHashFunction = keyHashFunction;
@@ -172,12 +168,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   public V get(K key) {
@@ -204,6 +195,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           return result;
         } else {
+          //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
           final long hashCode = keyHashFunction.hashCode(key);
@@ -255,29 +247,28 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void put(final K key, final V value) throws IOException {
-    put(key, value, null);
+  public void put(OAtomicOperation atomicOperation, final K key, final V value) {
+    put(atomicOperation, key, value, null);
   }
 
   @Override
-  public boolean validatedPut(final K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) throws IOException {
-    return put(key, value, validator);
+  public boolean validatedPut(OAtomicOperation atomicOperation, final K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) {
+    return put(atomicOperation, key, value, validator);
   }
 
   @Override
-  public V remove(K key) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public V remove(final OAtomicOperation atomicOperation, final K key) {
+    return calculateInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         checkNullSupport(key);
 
         int sizeDiff = 0;
         if (key != null) {
-          key = keySerializer.preprocess(key, (Object[]) keyTypes);
+          @SuppressWarnings("RedundantCast")
+          final K updatedKey = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-          final long hashCode = keyHashFunction.hashCode(key);
+          final long hashCode = keyHashFunction.hashCode(updatedKey);
 
           final OHashTable.BucketPath nodePath = getBucket(hashCode, atomicOperation);
           final long bucketPointer = directory
@@ -291,7 +282,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           try {
             final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
                 encryption);
-            final int positionIndex = bucket.getIndex(hashCode, key);
+            final int positionIndex = bucket.getIndex(hashCode, updatedKey);
             found = positionIndex >= 0;
 
             if (found) {
@@ -351,12 +342,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         releaseExclusiveLock();
       }
 
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private void changeSize(final int sizeDiff, final OAtomicOperation atomicOperation) throws IOException {
@@ -373,10 +359,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void clear() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public void clear(final OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         if (nullKeyIsSupported) {
@@ -387,12 +371,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
@@ -408,6 +387,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
+        //noinspection RedundantCast
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
@@ -517,10 +497,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void deleteWithoutLoad(final String name) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void deleteWithoutLoad(final OAtomicOperation atomicOperation, final String name) {
+    executeInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         if (isFileExists(atomicOperation, name + metadataConfigurationFileExtension)) {
@@ -543,12 +521,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private OHashIndexBucket.Entry<K, V>[] convertBucketToEntries(final OHashIndexBucket<K, V> bucket, final int startIndex,
@@ -682,6 +655,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
+        //noinspection RedundantCast
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
@@ -841,6 +815,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
+        //noinspection RedundantCast
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
@@ -905,6 +880,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        //noinspection RedundantCast
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
@@ -971,6 +947,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     int nodeLocalDepth = bucketPath.nodeLocalDepth;
     while (offset > 0) {
       offset -= nodeLocalDepth;
+      //noinspection IfStatementMissingBreakInLoop
       if (offset > 0) {
         currentBucket = bucketPath.parent;
         nodeLocalDepth = currentBucket.nodeLocalDepth;
@@ -1101,10 +1078,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void delete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void delete(final OAtomicOperation atomicOperation) throws IOException {
+    executeInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         directory.delete(atomicOperation);
@@ -1117,12 +1092,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private void mergeNodeToParent(final OHashTable.BucketPath nodePath, final OAtomicOperation atomicOperation) throws IOException {
@@ -1173,15 +1143,15 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
   }
 
-  private boolean put(K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  private boolean put(final OAtomicOperation atomicOperation, final K key, final V value,
+      final OBaseIndexEngine.Validator<K, V> validator) {
+    return calculateInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         checkNullSupport(key);
 
         if (key != null) {
+          @SuppressWarnings("RedundantCast")
           final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
           if (keySize > MAX_KEY_SIZE) {
             throw new OTooBigIndexKeyException(
@@ -1190,18 +1160,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           }
         }
 
-        key = keySerializer.preprocess(key, (Object[]) keyTypes);
+        @SuppressWarnings("RedundantCast")
+        final K preProcessedKey = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-        return doPut(key, value, validator, atomicOperation);
+        return doPut(preProcessedKey, value, validator, atomicOperation);
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @SuppressWarnings("unchecked")
@@ -1545,6 +1511,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     int nodeLocalDepth = bucketPath.nodeLocalDepth;
     while (offset > 0) {
       offset -= nodeLocalDepth;
+      //noinspection IfStatementMissingBreakInLoop
       if (offset > 0) {
         currentNode = bucketPath.parent;
         nodeLocalDepth = currentNode.nodeLocalDepth;

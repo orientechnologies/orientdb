@@ -18,7 +18,7 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 
@@ -84,7 +84,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private final OPaginatedCluster             cluster;
 
   private final OAbstractPaginatedStorage storage;
-  private final OAtomicOperationsManager  atomicOperationsManager;
   private final OReadersWriterSpinLock    lock = new OReadersWriterSpinLock();
 
   private final HashMap<String, Object> cache = new HashMap<>();
@@ -102,49 +101,48 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         .createCluster(COMPONENT_NAME, OPaginatedCluster.getLatestBinaryVersion(), storage, DATA_FILE_EXTENSION,
             MAP_FILE_EXTENSION);
     btree = new OCellBTreeSingleValue<>(COMPONENT_NAME, TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
-    this.atomicOperationsManager = storage.getAtomicOperationsManager();
-
     this.storage = storage;
   }
 
-  public void create(final OContextConfiguration contextConfiguration) throws IOException {
+  public void create(final OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration) throws IOException {
     lock.acquireWriteLock();
     try {
-      cluster.create(-1);
-      btree.create(OStringSerializer.INSTANCE, null, 1, null);
+      cluster.create(atomicOperation, -1);
+      btree.create(atomicOperation, OStringSerializer.INSTANCE, null, 1, null);
 
       this.configuration = contextConfiguration;
 
-      init();
+      init(atomicOperation);
 
       preloadIntProperties();
       preloadStringProperties();
       preloadClusters();
       preloadConfigurationProperties();
-      setValidation(getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION));
+      setValidation(atomicOperation, getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION));
       recalculateLocale();
     } finally {
       lock.releaseWriteLock();
     }
   }
 
-  public void create(final OContextConfiguration contextConfiguration, final OStorageConfiguration source) throws IOException {
+  public void create(final OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration,
+      final OStorageConfiguration source) throws IOException {
     lock.acquireWriteLock();
     try {
-      create(contextConfiguration);
-      copy(source);
+      create(atomicOperation, contextConfiguration);
+      copy(atomicOperation, source);
     } finally {
       lock.releaseWriteLock();
     }
   }
 
-  public void delete() throws IOException {
+  public void delete(final OAtomicOperation atomicOperation) throws IOException {
     lock.acquireWriteLock();
     try {
       updateListener = null;
 
-      cluster.delete();
-      btree.delete();
+      cluster.delete(atomicOperation);
+      btree.delete(atomicOperation);
 
       cache.clear();
     } finally {
@@ -152,13 +150,13 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void close() {
+  public void close(OAtomicOperation atomicOperation) {
     lock.acquireWriteLock();
     try {
       updateListener = null;
 
-      updateConfigurationProperty();
-      updateMinimumClusters();
+      updateConfigurationProperty(atomicOperation);
+      updateMinimumClusters(atomicOperation);
 
       cache.clear();
 
@@ -228,8 +226,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private void updateMinimumClusters() {
-    updateIntProperty(MINIMUM_CLUSTERS_PROPERTY, getMinimumClusters());
+  private void updateMinimumClusters(OAtomicOperation atomicOperation) {
+    updateIntProperty(atomicOperation, MINIMUM_CLUSTERS_PROPERTY, getMinimumClusters());
   }
 
   private void readMinimumClusters() {
@@ -460,12 +458,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     buffer.append(value != null ? value.toString() : ' ');
   }
 
-  private void updateVersion() {
-    updateIntProperty(VERSION_PROPERTY, CURRENT_VERSION);
+  private void updateVersion(OAtomicOperation atomicOperation) {
+    updateIntProperty(atomicOperation, VERSION_PROPERTY, CURRENT_VERSION);
   }
 
-  private void updateVersion(final int version) {
-    updateIntProperty(VERSION_PROPERTY, version);
+  private void updateVersion(OAtomicOperation atomicOperation, final int version) {
+    updateIntProperty(atomicOperation, VERSION_PROPERTY, version);
   }
 
   @Override
@@ -484,10 +482,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     return null;
   }
 
-  public void setSchemaRecordId(final String schemaRecordId) {
+  public void setSchemaRecordId(final OAtomicOperation atomicOperation, final String schemaRecordId) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(SCHEMA_RECORD_ID_PROPERTY, schemaRecordId, true);
+      updateStringProperty(atomicOperation, SCHEMA_RECORD_ID_PROPERTY, schemaRecordId, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -503,10 +501,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setIndexMgrRecordId(final String indexMgrRecordId) {
+  public void setIndexMgrRecordId(final OAtomicOperation atomicOperation, final String indexMgrRecordId) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(INDEX_MANAGER_RECORD_ID_PROPERTY, indexMgrRecordId, true);
+      updateStringProperty(atomicOperation, INDEX_MANAGER_RECORD_ID_PROPERTY, indexMgrRecordId, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -522,10 +520,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setLocaleLanguage(final String value) {
+  public void setLocaleLanguage(OAtomicOperation atomicOperation, final String value) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(LOCALE_LANGUAGE_PROPERTY, value, true);
+      updateStringProperty(atomicOperation, LOCALE_LANGUAGE_PROPERTY, value, true);
 
       recalculateLocale();
     } finally {
@@ -543,10 +541,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setLocaleCountry(final String value) {
+  public void setLocaleCountry(OAtomicOperation atomicOperation, final String value) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(LOCALE_COUNTRY_PROPERTY, value, true);
+      updateStringProperty(atomicOperation, LOCALE_COUNTRY_PROPERTY, value, true);
 
       recalculateLocale();
     } finally {
@@ -564,10 +562,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setDateFormat(final String dateFormat) {
+  public void setDateFormat(final OAtomicOperation atomicOperation, final String dateFormat) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(DATE_FORMAT_PROPERTY, dateFormat, true);
+      updateStringProperty(atomicOperation, DATE_FORMAT_PROPERTY, dateFormat, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -616,10 +614,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setDateTimeFormat(final String dateTimeFormat) {
+  public void setDateTimeFormat(final OAtomicOperation atomicOperation, final String dateTimeFormat) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(DATE_TIME_FORMAT_PROPERTY, dateTimeFormat, true);
+      updateStringProperty(atomicOperation, DATE_TIME_FORMAT_PROPERTY, dateTimeFormat, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -642,10 +640,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setTimeZone(final TimeZone timeZone) {
+  public void setTimeZone(final OAtomicOperation atomicOperation, final TimeZone timeZone) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(TIME_ZONE_PROPERTY, timeZone.getID(), true);
+      updateStringProperty(atomicOperation, TIME_ZONE_PROPERTY, timeZone.getID(), true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -666,10 +664,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setCharset(final String charset) {
+  public void setCharset(final OAtomicOperation atomicOperation, final String charset) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(CHARSET_PROPERTY, charset, true);
+      updateStringProperty(atomicOperation, CHARSET_PROPERTY, charset, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -685,10 +683,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setConflictStrategy(final String conflictStrategy) {
+  public void setConflictStrategy(final OAtomicOperation atomicOperation, final String conflictStrategy) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(CONFLICT_STRATEGY_PROPERTY, conflictStrategy, true);
+      updateStringProperty(atomicOperation, CONFLICT_STRATEGY_PROPERTY, conflictStrategy, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -704,12 +702,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private void updateBinaryFormatVersion() {
-    updateIntProperty(BINARY_FORMAT_VERSION_PROPERTY, CURRENT_BINARY_FORMAT_VERSION);
+  private void updateBinaryFormatVersion(OAtomicOperation atomicOperation) {
+    updateIntProperty(atomicOperation, BINARY_FORMAT_VERSION_PROPERTY, CURRENT_BINARY_FORMAT_VERSION);
   }
 
-  private void updateBinaryFormatVersion(final int version) {
-    updateIntProperty(BINARY_FORMAT_VERSION_PROPERTY, version);
+  private void updateBinaryFormatVersion(OAtomicOperation atomicOperation, final int version) {
+    updateIntProperty(atomicOperation, BINARY_FORMAT_VERSION_PROPERTY, version);
   }
 
   @Override
@@ -722,10 +720,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setClusterSelection(final String clusterSelection) {
+  public void setClusterSelection(final OAtomicOperation atomicOperation, final String clusterSelection) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(CLUSTER_SELECTION_PROPERTY, clusterSelection, true);
+      updateStringProperty(atomicOperation, CLUSTER_SELECTION_PROPERTY, clusterSelection, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -741,10 +739,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setRecordSerializer(final String recordSerializer) {
+  public void setRecordSerializer(final OAtomicOperation atomicOperation, final String recordSerializer) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(RECORD_SERIALIZER_PROPERTY, recordSerializer, true);
+      updateStringProperty(atomicOperation, RECORD_SERIALIZER_PROPERTY, recordSerializer, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -760,10 +758,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setRecordSerializerVersion(final int recordSerializerVersion) {
+  public void setRecordSerializerVersion(OAtomicOperation atomicOperation, final int recordSerializerVersion) {
     lock.acquireWriteLock();
     try {
-      updateIntProperty(RECORD_SERIALIZER_VERSION_PROPERTY, recordSerializerVersion);
+      updateIntProperty(atomicOperation, RECORD_SERIALIZER_VERSION_PROPERTY, recordSerializerVersion);
     } finally {
       lock.releaseWriteLock();
     }
@@ -779,7 +777,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private void updateConfigurationProperty() {
+  private void updateConfigurationProperty(final OAtomicOperation atomicOperation) {
     final List<byte[]> entries = new ArrayList<>(8);
     int totalSize = 0;
 
@@ -809,7 +807,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
 
     final byte[] property = mergeBinaryEntries(totalSize, entries);
-    storeProperty(CONFIGURATION_PROPERTY, property);
+    storeProperty(atomicOperation, CONFIGURATION_PROPERTY, property);
   }
 
   private void readConfiguration() {
@@ -841,10 +839,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setCreationVersion(final String version) {
+  public void setCreationVersion(OAtomicOperation atomicOperation, final String version) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(CREATED_AT_VERSION_PROPERTY, version, true);
+      updateStringProperty(atomicOperation, CREATED_AT_VERSION_PROPERTY, version, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -860,10 +858,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setPageSize(final int pageSize) {
+  public void setPageSize(final OAtomicOperation atomicOperation, final int pageSize) {
     lock.acquireWriteLock();
     try {
-      updateIntProperty(PAGE_SIZE_PROPERTY, pageSize);
+      updateIntProperty(atomicOperation, PAGE_SIZE_PROPERTY, pageSize);
     } finally {
       lock.releaseWriteLock();
     }
@@ -879,10 +877,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setFreeListBoundary(final int freeListBoundary) {
+  public void setFreeListBoundary(final OAtomicOperation atomicOperation, final int freeListBoundary) {
     lock.acquireWriteLock();
     try {
-      updateIntProperty(FREE_LIST_BOUNDARY_PROPERTY, freeListBoundary);
+      updateIntProperty(atomicOperation, FREE_LIST_BOUNDARY_PROPERTY, freeListBoundary);
     } finally {
       lock.releaseWriteLock();
     }
@@ -898,10 +896,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setMaxKeySize(final int maxKeySize) {
+  public void setMaxKeySize(final OAtomicOperation atomicOperation, final int maxKeySize) {
     lock.acquireWriteLock();
     try {
-      updateIntProperty(MAX_KEY_SIZE_PROPERTY, maxKeySize);
+      updateIntProperty(atomicOperation, MAX_KEY_SIZE_PROPERTY, maxKeySize);
     } finally {
       lock.releaseWriteLock();
     }
@@ -917,7 +915,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setProperty(final String name, final String value) {
+  public void setProperty(OAtomicOperation atomicOperation, final String name, final String value) {
     lock.acquireWriteLock();
     try {
       if ("validation".equalsIgnoreCase(name)) {
@@ -925,7 +923,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       }
 
       final String key = PROPERTY_PREFIX_PROPERTY + name;
-      updateStringProperty(key, value, false);
+      updateStringProperty(atomicOperation, key, value, false);
 
       @SuppressWarnings("unchecked")
       final Map<String, String> properties = (Map<String, String>) cache.get(PROPERTIES);
@@ -935,8 +933,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setValidation(final boolean validation) {
-    setProperty("validation", validation ? "true" : "false");
+  public void setValidation(final OAtomicOperation atomicOperation, final boolean validation) {
+    setProperty(atomicOperation, "validation", validation ? "true" : "false");
   }
 
   @Override
@@ -1041,7 +1039,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     return true;
   }
 
-  public void clearProperties() {
+  public void clearProperties(final OAtomicOperation atomicOperation) {
     lock.acquireWriteLock();
     try {
       final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = btree
@@ -1062,26 +1060,17 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         entry = cursor.next(-1);
       }
 
-      boolean rollback = false;
-      atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true, false);
-      try {
-        for (final String key : keysToRemove) {
-          btree.remove(key);
-        }
-
-        for (final ORID rid : ridsToRemove) {
-          cluster.deleteRecord(rid.getClusterPosition());
-        }
-
-        @SuppressWarnings("unchecked")
-        final Map<String, String> properties = (Map<String, String>) cache.get(PROPERTIES);
-        properties.clear();
-      } catch (final Exception e) {
-        rollback = true;
-        throw e;
-      } finally {
-        atomicOperationsManager.endAtomicOperation(rollback);
+      for (final String key : keysToRemove) {
+        btree.remove(atomicOperation, key);
       }
+
+      for (final ORID rid : ridsToRemove) {
+        cluster.deleteRecord(atomicOperation, rid.getClusterPosition());
+      }
+
+      @SuppressWarnings("unchecked")
+      final Map<String, String> properties = (Map<String, String>) cache.get(PROPERTIES);
+      properties.clear();
     } catch (final IOException e) {
       throw OException.wrapException(new OStorageException("Error during clear of configuration properties"), e);
     } finally {
@@ -1089,16 +1078,16 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void removeProperty(final String name) {
+  public void removeProperty(final OAtomicOperation atomicOperation, final String name) {
     lock.acquireWriteLock();
     try {
-      dropProperty(PROPERTY_PREFIX_PROPERTY + name);
+      dropProperty(atomicOperation, PROPERTY_PREFIX_PROPERTY + name);
     } finally {
       lock.releaseWriteLock();
     }
   }
 
-  public void addIndexEngine(final String name, final IndexEngineData engineData) {
+  public void addIndexEngine(final OAtomicOperation atomicOperation, final String name, final IndexEngineData engineData) {
     lock.acquireWriteLock();
     try {
       final ORID identifiable = btree.get(ENGINE_PREFIX_PROPERTY + name);
@@ -1106,17 +1095,17 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         OLogManager.instance()
             .warn(this, "Index engine with name '" + engineData.getName() + "' already contained in database configuration");
       } else {
-        storeProperty(ENGINE_PREFIX_PROPERTY + name, serializeIndexEngineProperty(engineData));
+        storeProperty(atomicOperation, ENGINE_PREFIX_PROPERTY + name, serializeIndexEngineProperty(engineData));
       }
     } finally {
       lock.releaseWriteLock();
     }
   }
 
-  public void deleteIndexEngine(final String name) {
+  public void deleteIndexEngine(OAtomicOperation atomicOperation, final String name) {
     lock.acquireWriteLock();
     try {
-      dropProperty(ENGINE_PREFIX_PROPERTY + name);
+      dropProperty(atomicOperation, ENGINE_PREFIX_PROPERTY + name);
     } finally {
       lock.releaseWriteLock();
     }
@@ -1188,7 +1177,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void updateCluster(final OStorageClusterConfiguration config) {
+  public void updateCluster(final OAtomicOperation atomicOperation, final OStorageClusterConfiguration config) {
     lock.acquireWriteLock();
     try {
       @SuppressWarnings("unchecked")
@@ -1205,13 +1194,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         assert clusters.size() - 1 == config.getId();
       }
 
-      storeProperty(CLUSTERS_PREFIX_PROPERTY + config.getId(), updateClusterConfig(config));
+      storeProperty(atomicOperation, CLUSTERS_PREFIX_PROPERTY + config.getId(), updateClusterConfig(config));
     } finally {
       lock.releaseWriteLock();
     }
   }
 
-  public void setClusterStatus(final int clusterId, final OStorageClusterConfiguration.STATUS status) {
+  public void setClusterStatus(final OAtomicOperation atomicOperation, final int clusterId,
+      final OStorageClusterConfiguration.STATUS status) {
     lock.acquireWriteLock();
     try {
       @SuppressWarnings("unchecked")
@@ -1226,7 +1216,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       if (property != null) {
         final OStorageClusterConfiguration clusterCfg = deserializeStorageClusterConfig(clusterId, property);
         clusterCfg.setStatus(status);
-        updateCluster(clusterCfg);
+        updateCluster(atomicOperation, clusterCfg);
       }
     } finally {
       lock.releaseWriteLock();
@@ -1277,7 +1267,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     cache.put(CLUSTERS, clusters);
   }
 
-  public void dropCluster(final int clusterId) {
+  public void dropCluster(OAtomicOperation atomicOperation, final int clusterId) {
     lock.acquireWriteLock();
     try {
       @SuppressWarnings("unchecked")
@@ -1286,7 +1276,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         clusters.set(clusterId, null);
       }
 
-      dropProperty(CLUSTERS_PREFIX_PROPERTY + clusterId);
+      dropProperty(atomicOperation, CLUSTERS_PREFIX_PROPERTY + clusterId);
     } finally {
       lock.releaseWriteLock();
     }
@@ -1518,21 +1508,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         OStorageClusterConfiguration.STATUS.valueOf(status), binaryVersion);
   }
 
-  private void dropProperty(final String name) {
+  private void dropProperty(final OAtomicOperation atomicOperation, final String name) {
     try {
-      boolean rollback = false;
-      atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true, false);
-      try {
-        final ORID identifiable = btree.remove(name);
+      final ORID identifiable = btree.remove(atomicOperation, name);
 
-        if (identifiable != null) {
-          cluster.deleteRecord(identifiable.getClusterPosition());
-        }
-      } catch (final Exception e) {
-        rollback = true;
-        throw e;
-      } finally {
-        atomicOperationsManager.endAtomicOperation(rollback);
+      if (identifiable != null) {
+        cluster.deleteRecord(atomicOperation, identifiable.getClusterPosition());
       }
     } catch (final IOException e) {
       throw OException.wrapException(new OStorageException("Error during drop of property " + name), e);
@@ -1549,14 +1530,15 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private void updateStringProperty(final String name, final String value, final boolean useCache) {
+  private void updateStringProperty(final OAtomicOperation atomicOperation, final String name, final String value,
+      final boolean useCache) {
     if (useCache) {
       cache.put(name, value);
     }
 
     final byte[] property = serializeStringValue(value);
 
-    storeProperty(name, property);
+    storeProperty(atomicOperation, name, property);
   }
 
   private static byte[] serializeStringValue(final String value) {
@@ -1593,33 +1575,24 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     return OIntegerSerializer.INSTANCE.deserializeNative(raw, start + 1) + 5;
   }
 
-  private void updateIntProperty(final String name, final int value) {
+  private void updateIntProperty(final OAtomicOperation atomicOperation, final String name, final int value) {
     cache.put(name, value);
 
     final byte[] property = new byte[OIntegerSerializer.INT_SIZE];
     OIntegerSerializer.INSTANCE.serializeNative(value, property, 0);
 
-    storeProperty(name, property);
+    storeProperty(atomicOperation, name, property);
   }
 
-  private void storeProperty(final String name, final byte[] property) {
+  private void storeProperty(final OAtomicOperation atomicOperation, final String name, final byte[] property) {
     try {
-      boolean rollback = false;
-      atomicOperationsManager.startAtomicOperation(COMPONENT_NAME, true, false);
-      try {
-        ORID identity = btree.get(name);
-        if (identity == null) {
-          final OPhysicalPosition position = cluster.createRecord(property, 0, (byte) 0, null);
-          identity = new ORecordId(0, position.clusterPosition);
-          btree.put(name, identity);
-        } else {
-          cluster.updateRecord(identity.getClusterPosition(), property, -1, (byte) 0);
-        }
-      } catch (final Exception e) {
-        rollback = true;
-        throw e;
-      } finally {
-        atomicOperationsManager.endAtomicOperation(rollback);
+      ORID identity = btree.get(name);
+      if (identity == null) {
+        final OPhysicalPosition position = cluster.createRecord(atomicOperation, property, 0, (byte) 0, null);
+        identity = new ORecordId(0, position.clusterPosition);
+        btree.put(atomicOperation, name, identity);
+      } else {
+        cluster.updateRecord(atomicOperation, identity.getClusterPosition(), property, -1, (byte) 0);
       }
     } catch (final IOException e) {
       throw OException.wrapException(new OStorageException("Error during update of configuration property " + name), e);
@@ -1696,20 +1669,20 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private void init() {
-    updateVersion();
-    updateBinaryFormatVersion();
+  private void init(final OAtomicOperation atomicOperation) {
+    updateVersion(atomicOperation);
+    updateBinaryFormatVersion(atomicOperation);
 
-    setCharset(DEFAULT_CHARSET);
-    setDateFormat(DEFAULT_DATE_FORMAT);
-    setDateTimeFormat(DEFAULT_DATETIME_FORMAT);
-    setLocaleLanguage(Locale.getDefault().getLanguage());
-    setLocaleCountry(Locale.getDefault().getCountry());
-    setTimeZone(TimeZone.getDefault());
+    setCharset(atomicOperation, DEFAULT_CHARSET);
+    setDateFormat(atomicOperation, DEFAULT_DATE_FORMAT);
+    setDateTimeFormat(atomicOperation, DEFAULT_DATETIME_FORMAT);
+    setLocaleLanguage(atomicOperation, Locale.getDefault().getLanguage());
+    setLocaleCountry(atomicOperation, Locale.getDefault().getCountry());
+    setTimeZone(atomicOperation, TimeZone.getDefault());
 
-    setPageSize(-1);
-    setFreeListBoundary(-1);
-    setMaxKeySize(-1);
+    setPageSize(atomicOperation, -1);
+    setFreeListBoundary(atomicOperation, -1);
+    setMaxKeySize(atomicOperation, -1);
 
     if (!configuration.getContextKeys().contains(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getKey())) {
       configuration.setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS,
@@ -1717,61 +1690,61 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
     autoInitClusters();
 
-    updateMinimumClusters();//store inside of configuration
+    updateMinimumClusters(atomicOperation);//store inside of configuration
 
-    setRecordSerializerVersion(0);
+    setRecordSerializerVersion(atomicOperation, 0);
   }
 
-  private void copy(final OStorageConfiguration storageConfiguration) {
-    updateVersion(storageConfiguration.getVersion());
-    updateBinaryFormatVersion(storageConfiguration.getBinaryFormatVersion());
+  private void copy(final OAtomicOperation atomicOperation, final OStorageConfiguration storageConfiguration) {
+    updateVersion(atomicOperation, storageConfiguration.getVersion());
+    updateBinaryFormatVersion(atomicOperation, storageConfiguration.getBinaryFormatVersion());
 
-    setCharset(storageConfiguration.getCharset());
-    setSchemaRecordId(storageConfiguration.getSchemaRecordId());
-    setIndexMgrRecordId(storageConfiguration.getIndexMgrRecordId());
+    setCharset(atomicOperation, storageConfiguration.getCharset());
+    setSchemaRecordId(atomicOperation, storageConfiguration.getSchemaRecordId());
+    setIndexMgrRecordId(atomicOperation, storageConfiguration.getIndexMgrRecordId());
 
     final TimeZone timeZone = storageConfiguration.getTimeZone();
     assert timeZone != null;
 
-    setTimeZone(timeZone);
-    setDateFormat(storageConfiguration.getDateFormat());
-    setDateTimeFormat(storageConfiguration.getDateTimeFormat());
+    setTimeZone(atomicOperation, timeZone);
+    setDateFormat(atomicOperation, storageConfiguration.getDateFormat());
+    setDateTimeFormat(atomicOperation, storageConfiguration.getDateTimeFormat());
 
     this.configuration = storageConfiguration.getContextConfiguration();
 
     setMinimumClusters(storageConfiguration.getMinimumClusters());
 
-    setLocaleCountry(storageConfiguration.getLocaleCountry());
-    setLocaleLanguage(storageConfiguration.getLocaleLanguage());
+    setLocaleCountry(atomicOperation, storageConfiguration.getLocaleCountry());
+    setLocaleLanguage(atomicOperation, storageConfiguration.getLocaleLanguage());
 
     final List<OStorageEntryConfiguration> properties = storageConfiguration.getProperties();
     for (final OStorageEntryConfiguration property : properties) {
-      setProperty(property.name, property.value);
+      setProperty(atomicOperation, property.name, property.value);
     }
 
-    setClusterSelection(storageConfiguration.getClusterSelection());
-    setConflictStrategy(storageConfiguration.getConflictStrategy());
-    setValidation(storageConfiguration.isValidationEnabled());
+    setClusterSelection(atomicOperation, storageConfiguration.getClusterSelection());
+    setConflictStrategy(atomicOperation, storageConfiguration.getConflictStrategy());
+    setValidation(atomicOperation, storageConfiguration.isValidationEnabled());
 
     final Set<String> indexEngines = storageConfiguration.indexEngines();
     for (final String engine : indexEngines) {
-      addIndexEngine(engine, storageConfiguration.getIndexEngine(engine));
+      addIndexEngine(atomicOperation, engine, storageConfiguration.getIndexEngine(engine));
     }
 
-    setRecordSerializer(storageConfiguration.getRecordSerializer());
-    setRecordSerializerVersion(storageConfiguration.getRecordSerializerVersion());
+    setRecordSerializer(atomicOperation, storageConfiguration.getRecordSerializer());
+    setRecordSerializerVersion(atomicOperation, storageConfiguration.getRecordSerializerVersion());
 
     final List<OStorageClusterConfiguration> clusters = storageConfiguration.getClusters();
     for (final OStorageClusterConfiguration cluster : clusters) {
       if (cluster != null) {
-        updateCluster(cluster);
+        updateCluster(atomicOperation, cluster);
       }
     }
 
-    setCreationVersion(storageConfiguration.getCreatedAtVersion());
-    setPageSize(storageConfiguration.getPageSize());
-    setFreeListBoundary(storageConfiguration.getFreeListBoundary());
-    setMaxKeySize(storageConfiguration.getMaxKeySize());
+    setCreationVersion(atomicOperation, storageConfiguration.getCreatedAtVersion());
+    setPageSize(atomicOperation, storageConfiguration.getPageSize());
+    setFreeListBoundary(atomicOperation, storageConfiguration.getFreeListBoundary());
+    setMaxKeySize(atomicOperation, storageConfiguration.getMaxKeySize());
   }
 
   private void autoInitClusters() {

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 
@@ -66,7 +67,7 @@ public class OClusterRemote implements OCluster {
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#create(int)
    */
-  public void create(int iStartSize) throws IOException {
+  public void create(OAtomicOperation atomicOperation, int iStartSize) throws IOException {
 
   }
 
@@ -86,28 +87,28 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
+  public OPhysicalPosition allocatePosition(OAtomicOperation atomicOperation, byte recordType) throws IOException {
     throw new UnsupportedOperationException("allocatePosition");
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
+  public OPhysicalPosition createRecord(OAtomicOperation atomicOperation, byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
       throws IOException {
     throw new UnsupportedOperationException("createRecord");
   }
 
   @Override
-  public boolean deleteRecord(long clusterPosition) throws IOException {
+  public boolean deleteRecord(OAtomicOperation atomicOperation, long clusterPosition) throws IOException {
     throw new UnsupportedOperationException("deleteRecord");
   }
 
   @Override
-  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void updateRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new UnsupportedOperationException("updateRecord");
   }
 
   @Override
-  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void recycleRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new UnsupportedOperationException("recyclePosition");
   }
 
@@ -122,10 +123,10 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("readRecordIfVersionIsNotLatest");
   }
 
-  public void delete() throws IOException {
+  public void delete(OAtomicOperation atomicOperation) throws IOException {
   }
 
-  public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+  public Object set(OAtomicOperation atomicOperation, ATTRIBUTES iAttribute, Object iValue) throws IOException {
     return null;
   }
 
@@ -134,7 +135,7 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("encryption");
   }
 
-  public void truncate() throws IOException {
+  public void truncate(OAtomicOperation atomicOperation) throws IOException {
   }
 
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
@@ -231,7 +232,7 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public boolean hideRecord(long position) {
+  public boolean hideRecord(OAtomicOperation atomicOperation, long position) {
     throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
   }
 

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -20,23 +21,22 @@ public interface OBaseIndexEngine {
 
   void flush();
 
-  void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) throws IOException;
+  void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties, ODocument metadata, OEncryption encryption) throws IOException;
 
-  void delete() throws IOException;
+  void delete(OAtomicOperation atomicOperation) throws IOException;
 
-  void deleteWithoutLoad(String indexName) throws IOException;
+  void deleteWithoutLoad(OAtomicOperation atomicOperation, String indexName) throws IOException;
 
   boolean contains(Object key);
 
-  void clear() throws IOException;
+  void clear(OAtomicOperation atomicOperation) throws IOException;
 
   void close();
 
   Object get(Object key);
 
-  boolean remove(Object key) throws IOException;
+  boolean remove(OAtomicOperation atomicOperation, Object key) throws IOException;
 
   Object getFirstKey();
 

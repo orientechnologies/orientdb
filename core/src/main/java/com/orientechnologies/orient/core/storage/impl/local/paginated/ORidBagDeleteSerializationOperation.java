@@ -21,11 +21,14 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
@@ -50,10 +53,10 @@ public class ORidBagDeleteSerializationOperation implements ORecordSerialization
   }
 
   @Override
-  public void execute(OAbstractPaginatedStorage paginatedStorage) {
+  public void execute(final OAtomicOperation atomicOperation, OAbstractPaginatedStorage paginatedStorage) {
     OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = loadTree();
     try {
-      treeBonsai.markToDelete();
+      treeBonsai.markToDelete(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new ODatabaseException("Error during ridbag deletion"), e);
     } finally {
@@ -62,9 +65,17 @@ public class ORidBagDeleteSerializationOperation implements ORecordSerialization
 
     long delay = paginatedStorage.getConfiguration().getContextConfiguration().getValueAsInteger(RID_BAG_SBTREEBONSAI_DELETE_DALAY);
     long schedule = delay / 3;
+
     deleteTask = () -> {
-      if (!((OSBTreeCollectionManagerShared) collectionManager).tryDelete(collectionPointer, delay)) {
-        Orient.instance().scheduleTask(deleteTask, schedule, 0);
+      final OAtomicOperationsManager atomicOperationsManager = paginatedStorage.getAtomicOperationsManager();
+      try {
+        atomicOperationsManager.executeInsideAtomicOperation((operation) -> {
+          if (!((OSBTreeCollectionManagerShared) collectionManager).tryDelete(collectionPointer, delay)) {
+            Orient.instance().scheduleTask(deleteTask, schedule, 0);
+          }
+        });
+      } catch (IOException e) {
+        OLogManager.instance().errorNoDb(this, "Error during deletion of rid bag", e);
       }
     };
     Orient.instance().scheduleTask(deleteTask, schedule, 0);

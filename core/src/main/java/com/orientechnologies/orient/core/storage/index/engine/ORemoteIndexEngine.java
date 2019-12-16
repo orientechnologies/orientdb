@@ -23,14 +23,11 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.util.Map;
 import java.util.Set;
@@ -65,17 +62,17 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
+  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes,
+      boolean nullPointerSupport, OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata, OEncryption encryption) {
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) {
+  public void deleteWithoutLoad(OAtomicOperation atomicOperation, String indexName) {
   }
 
   @Override
-  public void delete() {
+  public void delete(OAtomicOperation atomicOperation) {
   }
 
   @Override
@@ -89,12 +86,12 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(Object key) {
+  public boolean remove(OAtomicOperation atomicOperation, Object key) {
     return false;
   }
 
   @Override
-  public void clear() {
+  public void clear(OAtomicOperation atomicOperation) {
   }
 
   @Override
@@ -107,16 +104,16 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(Object key, Object value) {
+  public void put(OAtomicOperation atomicOperation, Object key, Object value) {
   }
 
   @Override
-  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
 
   }
 
   @Override
-  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     return false;
   }
 

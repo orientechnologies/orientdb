@@ -25,17 +25,13 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 
 import java.io.IOException;
@@ -78,33 +74,29 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+  public void create(final OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic,
+      OType[] keyTypes, boolean nullPointerSupport, OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex,
+      Map<String, String> engineProperties, ODocument metadata, OEncryption encryption) {
     try {
       //noinspection unchecked
-      sbTree.create(keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport, encryption);
+      sbTree.create(atomicOperation, keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport, encryption);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during creation of index " + name), e);
     }
   }
 
   @Override
-  public void delete() {
+  public void delete(final OAtomicOperation atomicOperation) {
     try {
-      sbTree.delete();
+      sbTree.delete(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
     }
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) {
-    try {
-      sbTree.deleteWithoutLoad();
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
-    }
+  public void deleteWithoutLoad(OAtomicOperation atomicOperation, String indexName) {
+    sbTree.deleteWithoutLoad(atomicOperation);
   }
 
   @Override
@@ -120,12 +112,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(Object key) {
-    try {
-      return sbTree.remove(key) != null;
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during removal of key " + key + " from index " + name), e);
-    }
+  public boolean remove(OAtomicOperation atomicOperation, Object key) {
+    return sbTree.remove(atomicOperation, key) != null;
   }
 
   @Override
@@ -134,12 +122,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void clear() {
-    try {
-      sbTree.clear();
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during clear index " + name), e);
-    }
+  public void clear(OAtomicOperation atomicOperation) {
+    sbTree.clear(atomicOperation);
   }
 
   @Override
@@ -185,31 +169,19 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(Object key, Object value) {
-    try {
-      sbTree.put(key, value);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " in index " + name), e);
-    }
+  public void put(final OAtomicOperation atomicOperation, Object key, Object value) {
+    sbTree.put(atomicOperation, key, value);
   }
 
   @Override
-  public void update(Object key, OIndexKeyUpdater<Object> updater) {
-    try {
-      sbTree.update(key, updater, null);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during update of key " + key + " in index " + name), e);
-    }
+  public void update(final OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
+    sbTree.update(atomicOperation, key, updater, null);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
-    try {
-      return sbTree.validatedPut(key, value, (Validator) validator);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " in index " + name), e);
-    }
+  public boolean validatedPut(final OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+    return sbTree.validatedPut(atomicOperation, key, value, (Validator) validator);
   }
 
   @Override

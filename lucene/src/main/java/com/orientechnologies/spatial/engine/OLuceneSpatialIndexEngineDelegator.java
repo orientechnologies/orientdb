@@ -26,15 +26,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -87,22 +84,22 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
+  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes,
+      boolean nullPointerSupport, OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata, OEncryption encryption) {
 
   }
 
   @Override
-  public void delete() {
+  public void delete(OAtomicOperation atomicOperation) {
     if (delegate != null)
-      delegate.delete();
+      delegate.delete(atomicOperation);
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) {
+  public void deleteWithoutLoad(OAtomicOperation atomicOperation, String indexName) {
     if (delegate != null)
-      delegate.deleteWithoutLoad(indexName);
+      delegate.deleteWithoutLoad(atomicOperation, indexName);
   }
 
   @Override
@@ -120,14 +117,14 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public boolean remove(Object key) {
-    return delegate.remove(key);
+  public boolean remove(OAtomicOperation atomicOperation, Object key) {
+    return delegate.remove(atomicOperation, key);
   }
 
   @Override
-  public void clear() {
+  public void clear(OAtomicOperation atomicOperation) {
 
-    delegate.clear();
+    delegate.clear(atomicOperation);
   }
 
   @Override
@@ -142,28 +139,28 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public void put(Object key, Object value) {
+  public void put(OAtomicOperation atomicOperation, Object key, Object value) {
 
     try {
-      delegate.put(key, value);
+      delegate.put(atomicOperation, key, value);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " in index " + indexName), e);
     }
   }
 
   @Override
-  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
     try {
-      delegate.update(key, updater);
+      delegate.update(atomicOperation, key, updater);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during update of key " + key + " in index " + indexName), e);
     }
   }
 
   @Override
-  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     try {
-      return delegate.validatedPut(key, value, validator);
+      return delegate.validatedPut(atomicOperation, key, value, validator);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " in index " + indexName), e);
     }

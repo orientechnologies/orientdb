@@ -24,6 +24,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -32,7 +33,7 @@ import java.util.Comparator;
  * Created by lomak_000 on 15.04.2015.
  */
 public interface OHashTable<K, V> {
-  void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, OEncryption encryption,
+  void create(OAtomicOperation atomicOperation, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, OEncryption encryption,
       OHashFunction<K> keyHashFunction, boolean nullKeyIsSupported) throws IOException;
 
   V get(K key);
@@ -40,6 +41,8 @@ public interface OHashTable<K, V> {
   /**
    * Puts the given value under the given key into this hash table. Validates the operation using the provided validator.
    *
+   *
+   * @param atomicOperation
    * @param key       the key to put the value under.
    * @param value     the value to put.
    * @param validator the operation validator.
@@ -48,13 +51,13 @@ public interface OHashTable<K, V> {
    *
    * @see OBaseIndexEngine.Validator#validate(Object, Object, Object)
    */
-  boolean validatedPut(K key, V value, OBaseIndexEngine.Validator<K, V> validator) throws IOException;
+  boolean validatedPut(OAtomicOperation atomicOperation, K key, V value, OBaseIndexEngine.Validator<K, V> validator) throws IOException;
 
-  void put(K key, V value) throws IOException;
+  void put(OAtomicOperation atomicOperation, K key, V value) throws IOException;
 
-  V remove(K key) throws IOException;
+  V remove(OAtomicOperation atomicOperation, K key) throws IOException;
 
-  void clear() throws IOException;
+  void clear(OAtomicOperation atomicOperation) throws IOException;
 
   OHashIndexBucket.Entry<K, V>[] higherEntries(K key);
 
@@ -63,7 +66,7 @@ public interface OHashTable<K, V> {
   void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption, OHashFunction<K> keyHashFunction,
       final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer);
 
-  void deleteWithoutLoad(String name) throws IOException;
+  void deleteWithoutLoad(OAtomicOperation atomicOperation, String name) throws IOException;
 
   OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key);
 
@@ -79,7 +82,7 @@ public interface OHashTable<K, V> {
 
   void close();
 
-  void delete() throws IOException;
+  void delete(OAtomicOperation atomicOperation) throws IOException;
 
   void flush();
 

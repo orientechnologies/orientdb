@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTre
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -122,7 +123,10 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
     OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION,
         storage);
-    tree.create(OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
+    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
+
+    tree.create(atomicOperation, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
 
     return tree;
   }
@@ -197,7 +201,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       final OSBTreeBonsaiLocal<OIdentifiable, Integer> treeBonsai = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) this
           .loadTree(collectionPointer);
       try {
-        return treeBonsai.tryDelete();
+        return treeBonsai.tryDelete(atomicOperation);
       } catch (IOException e) {
         throw OException.wrapException(new ODatabaseException("Error during ridbag deletion"), e);
       }

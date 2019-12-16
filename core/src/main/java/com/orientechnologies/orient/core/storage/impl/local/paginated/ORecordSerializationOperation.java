@@ -21,11 +21,12 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 11/26/13
  */
 public interface ORecordSerializationOperation {
-  void execute(OAbstractPaginatedStorage paginatedStorage);
+  void execute(OAtomicOperation atomicOperation, OAbstractPaginatedStorage paginatedStorage);
 }

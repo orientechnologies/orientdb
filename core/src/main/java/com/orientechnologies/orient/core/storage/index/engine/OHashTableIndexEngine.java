@@ -24,23 +24,14 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
-import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -90,8 +81,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
+  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes,
+      boolean nullPointerSupport, OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata, OEncryption encryption) throws IOException {
     final OHashFunction<Object> hashFunction;
 
@@ -104,7 +95,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     }
 
     //noinspection unchecked
-    hashTable.create(keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
+    hashTable.create(atomicOperation, keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
   }
 
   @Override
@@ -112,8 +103,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) throws IOException {
-    hashTable.deleteWithoutLoad(indexName);
+  public void deleteWithoutLoad(OAtomicOperation atomicOperation, String indexName) throws IOException {
+    hashTable.deleteWithoutLoad(atomicOperation, indexName);
   }
 
   @Override
@@ -122,8 +113,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void delete() throws IOException {
-    hashTable.delete();
+  public void delete(OAtomicOperation atomicOperation) throws IOException {
+    hashTable.delete(atomicOperation);
   }
 
   @Override
@@ -149,13 +140,13 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(Object key) throws IOException {
-    return hashTable.remove(key) != null;
+  public boolean remove(OAtomicOperation atomicOperation, Object key) throws IOException {
+    return hashTable.remove(atomicOperation, key) != null;
   }
 
   @Override
-  public void clear() throws IOException {
-    hashTable.clear();
+  public void clear(OAtomicOperation atomicOperation) throws IOException {
+    hashTable.clear(atomicOperation);
   }
 
   @Override
@@ -169,18 +160,18 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(Object key, Object value) throws IOException {
-    hashTable.put(key, value);
+  public void put(OAtomicOperation atomicOperation, Object key, Object value) throws IOException {
+    hashTable.put(atomicOperation, key, value);
   }
 
   @Override
-  public void update(Object key, OIndexKeyUpdater<Object> updater) throws IOException {
+  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) throws IOException {
     Object value = get(key);
     OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
     if (updated.isChange()) {
-      put(key, updated.getValue());
+      put(atomicOperation, key, updated.getValue());
     } else if (updated.isRemove()) {
-      remove(key);
+      remove(atomicOperation, key);
     } else if (updated.isNothing()) {
       //Do nothing
     }
@@ -188,8 +179,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) throws IOException {
-    return hashTable.validatedPut(key, value, (Validator) validator);
+  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) throws IOException {
+    return hashTable.validatedPut(atomicOperation, key, value, (Validator) validator);
   }
 
   @Override

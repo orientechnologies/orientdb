@@ -100,12 +100,10 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
     }
   }
 
-  public void create(final OBinarySerializer<K> keySerializer, final OType[] keyTypes, final int keySize,
-      final OEncryption encryption) throws IOException {
+  public void create(OAtomicOperation atomicOperation, final OBinarySerializer<K> keySerializer, final OType[] keyTypes,
+      final int keySize, final OEncryption encryption) {
     assert keySerializer != null;
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+    executeInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
 
@@ -150,13 +148,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-
+    });
   }
 
   public ORID get(K key) {
@@ -166,6 +158,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         if (key != null) {
+          //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
           final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
@@ -202,25 +195,26 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
     }
   }
 
-  public void put(final K key, final ORID value) throws IOException {
-    update(key, value, null);
+  public void put(OAtomicOperation atomicOperation, final K key, final ORID value) {
+    update(atomicOperation, key, value, null);
   }
 
-  public boolean validatedPut(final K key, final ORID value, final OBaseIndexEngine.Validator<K, ORID> validator)
-      throws IOException {
-    return update(key, value, validator);
+  public boolean validatedPut(OAtomicOperation atomicOperation, final K key, final ORID value,
+      final OBaseIndexEngine.Validator<K, ORID> validator) {
+    return update(atomicOperation, key, value, validator);
   }
 
-  private boolean update(K key, ORID value, final OBaseIndexEngine.Validator<K, ORID> validator) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  private boolean update(OAtomicOperation atomicOperation, final K key, ORID value,
+      final OBaseIndexEngine.Validator<K, ORID> validator) {
+    return calculateInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         if (key != null) {
 
-          key = keySerializer.preprocess(key, (Object[]) keyTypes);
-          final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
+          @SuppressWarnings("RedundantCast")
+          final K preProcessedKey = keySerializer.preprocess(key, (Object[]) keyTypes);
+          @SuppressWarnings("RedundantCast")
+          final byte[] serializedKey = keySerializer.serializeNativeAsWhole(preProcessedKey, (Object[]) keyTypes);
 
           if (keySize > MAX_KEY_SIZE) {
             throw new OTooBigIndexKeyException(
@@ -228,7 +222,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
                 getName());
           }
 
-          UpdateBucketSearchResult bucketSearchResult = findBucketForUpdate(key, atomicOperation);
+          UpdateBucketSearchResult bucketSearchResult = findBucketForUpdate(preProcessedKey, atomicOperation);
 
           OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false,
               true);
@@ -245,20 +239,21 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
             oldValue = new ORecordId(clusterId, clusterPosition);
           }
 
+          ORID updatedValue = value;
           if (validator != null) {
             boolean failure = true; // assuming validation throws by default
             boolean ignored = false;
 
             try {
 
-              final Object result = validator.validate(key, oldValue, value);
+              final Object result = validator.validate(preProcessedKey, oldValue, updatedValue);
               if (result == OBaseIndexEngine.Validator.IGNORE) {
                 ignored = true;
                 failure = false;
                 return false;
               }
 
-              value = (ORID) result;
+              updatedValue = (ORID) result;
               failure = false;
             } finally {
               if (failure || ignored) {
@@ -268,8 +263,8 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
           }
 
           final byte[] serializedValue = new byte[OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE];
-          OShortSerializer.INSTANCE.serializeNative((short) value.getClusterId(), serializedValue, 0);
-          OLongSerializer.INSTANCE.serializeNative(value.getClusterPosition(), serializedValue, OShortSerializer.SHORT_SIZE);
+          OShortSerializer.INSTANCE.serializeNative((short) updatedValue.getClusterId(), serializedValue, 0);
+          OLongSerializer.INSTANCE.serializeNative(updatedValue.getClusterPosition(), serializedValue, OShortSerializer.SHORT_SIZE);
 
           final byte[] rawKey;
           if (encryption == null) {
@@ -357,12 +352,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   public void close() {
@@ -375,10 +365,8 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
     }
   }
 
-  public void clear() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public void clear(final OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
@@ -408,19 +396,11 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
-  public void delete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-
-    try {
+  public void delete(final OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         deleteFile(atomicOperation, fileId);
@@ -428,19 +408,11 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
-  public void deleteWithoutLoad() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-
-    try {
+  public void deleteWithoutLoad(final OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         if (isFileExists(atomicOperation, getFullName())) {
@@ -455,12 +427,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   public void load(final String name, final int keySize, final OType[] keyTypes, final OBinarySerializer<K> keySerializer,
@@ -508,18 +475,16 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
     }
   }
 
-  public ORID remove(K key) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public ORID remove(final OAtomicOperation atomicOperation, final K key) {
+    return calculateInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
         final ORID removedValue;
 
         if (key != null) {
-          key = keySerializer.preprocess(key, (Object[]) keyTypes);
-
-          final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
+          @SuppressWarnings("RedundantCast")
+          final K preProcessedKey = keySerializer.preprocess(key, (Object[]) keyTypes);
+          final BucketSearchResult bucketSearchResult = findBucket(preProcessedKey, atomicOperation);
           if (bucketSearchResult.itemIndex < 0) {
             return null;
           }
@@ -536,12 +501,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private ORID removeNullBucket(final OAtomicOperation atomicOperation) throws IOException {
@@ -742,6 +702,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
   }
 
   private OSBTreeCursor<K, ORID> iterateEntriesMinorDesc(K key, final boolean inclusive) {
+    //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorDesc(key, inclusive);
 
@@ -749,6 +710,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
   }
 
   private OSBTreeCursor<K, ORID> iterateEntriesMinorAsc(K key, final boolean inclusive) {
+    //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorAsc(key, inclusive);
 
@@ -780,6 +742,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
   }
 
   private OSBTreeCursor<K, ORID> iterateEntriesMajorAsc(K key, final boolean inclusive) {
+    //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMajorAsc(key, inclusive);
 
@@ -789,6 +752,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
   private OSBTreeCursor<K, ORID> iterateEntriesMajorDesc(K key, final boolean inclusive) {
     acquireSharedLock();
     try {
+      //noinspection RedundantCast
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
       key = enhanceCompositeKeyMajorDesc(key, inclusive);
 
@@ -946,7 +910,9 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
 
   private OSBTreeCursor<K, ORID> iterateEntriesBetweenAscOrder(K keyFrom, final boolean fromInclusive, K keyTo,
       final boolean toInclusive) {
+    //noinspection RedundantCast
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
+    //noinspection RedundantCast
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
     keyFrom = enhanceFromCompositeKeyBetweenAsc(keyFrom, fromInclusive);
@@ -957,7 +923,9 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
 
   private OSBTreeCursor<K, ORID> iterateEntriesBetweenDescOrder(K keyFrom, final boolean fromInclusive, K keyTo,
       final boolean toInclusive) {
+    //noinspection RedundantCast
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
+    //noinspection RedundantCast
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
     keyFrom = enhanceFromCompositeKeyBetweenDesc(keyFrom, fromInclusive);
@@ -1426,7 +1394,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
       this.itemIndex = itemIndex;
     }
 
-    final long getLastPathItem() {
+    private long getLastPathItem() {
       return path.get(path.size() - 1);
     }
   }
@@ -1448,7 +1416,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
     private List<K>     keysCache    = new ArrayList<>();
     private Iterator<K> keysIterator = new OEmptyIterator<>();
 
-    OSBTreeFullKeyCursor(final long startPageIndex) {
+    private OSBTreeFullKeyCursor(final long startPageIndex) {
       pageIndex = startPageIndex;
       itemIndex = 0;
     }

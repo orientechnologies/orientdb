@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 
@@ -36,7 +37,7 @@ public interface OCluster {
 
   void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
 
-  void create(int iStartSize) throws IOException;
+  void create(OAtomicOperation atomicOperation, int iStartSize) throws IOException;
 
   void open() throws IOException;
 
@@ -44,9 +45,9 @@ public interface OCluster {
 
   void close(boolean flush) throws IOException;
 
-  void delete() throws IOException;
+  void delete(OAtomicOperation atomicOperation) throws IOException;
 
-  Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+  Object set(OAtomicOperation atomicOperation, ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
   String encryption();
 
@@ -54,21 +55,25 @@ public interface OCluster {
 
   /**
    * Truncates the cluster content. All the entries will be removed.
+   * @param atomicOperation
    */
-  void truncate() throws IOException;
+  void truncate(OAtomicOperation atomicOperation) throws IOException;
 
   /**
    * Allocates a physical position pointer on the storage for generate an id without a content.
    *
+   * @param atomicOperation
    * @param recordType the type of record of which allocate the position.
    *
    * @return the allocated position.
    */
-  OPhysicalPosition allocatePosition(byte recordType) throws IOException;
+  OPhysicalPosition allocatePosition(OAtomicOperation atomicOperation, byte recordType) throws IOException;
 
   /**
    * Creates a new record in the cluster.
    *
+   *
+   * @param atomicOperation
    * @param content           the content of the record.
    * @param recordVersion     the current version
    * @param recordType        the type of the record
@@ -76,17 +81,17 @@ public interface OCluster {
    *
    * @return the position where the record si created.
    */
-  OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
+  OPhysicalPosition createRecord(OAtomicOperation atomicOperation, byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
       throws IOException;
 
-  boolean deleteRecord(long clusterPosition) throws IOException;
+  boolean deleteRecord(OAtomicOperation atomicOperation, long clusterPosition) throws IOException;
 
-  void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
+  void updateRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
 
   /**
    * Recycling a record position that was deleted.
    */
-  void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
+  void recycleRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
 
   ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException;
 
@@ -144,13 +149,15 @@ public interface OCluster {
    * Hides records content by putting tombstone on the records position but does not delete record itself.
    * <p>This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method.
    *
+   *
+   * @param atomicOperation
    * @param position Position of record in cluster
    *
    * @return false if record does not exist.
    *
    * @throws java.lang.UnsupportedOperationException In case current version of cluster does not support given operation.
    */
-  boolean hideRecord(long position) throws IOException;
+  boolean hideRecord(OAtomicOperation atomicOperation, long position) throws IOException;
 
   ORecordConflictStrategy getRecordConflictStrategy();
 

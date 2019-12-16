@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedStorageDirtyFlag;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
@@ -424,13 +425,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void initConfiguration(final OContextConfiguration contextConfiguration) throws IOException {
+  protected void initConfiguration(final OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration)
+      throws IOException {
     if (!OClusterBasedStorageConfiguration.exists(writeCache) && Files.exists(storagePath.resolve("database.ocf"))) {
       final OStorageConfigurationSegment oldConfig = new OStorageConfigurationSegment(this);
       oldConfig.load(contextConfiguration);
 
       final OClusterBasedStorageConfiguration atomicConfiguration = new OClusterBasedStorageConfiguration(this);
-      atomicConfiguration.create(contextConfiguration, oldConfig);
+      atomicConfiguration.create(atomicOperation, contextConfiguration, oldConfig);
       configuration = atomicConfiguration;
 
       oldConfig.close();
@@ -660,7 +662,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     private final long                  segment;
     private final OCASDiskWriteAheadLog wal;
 
-    SegmentAdder(final long segment, final OCASDiskWriteAheadLog wal) {
+    private SegmentAdder(final long segment, final OCASDiskWriteAheadLog wal) {
       this.segment = segment;
       this.wal = wal;
     }
@@ -698,9 +700,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   private final static class SegmentAppenderFactory implements ThreadFactory {
-    SegmentAppenderFactory() {
-    }
-
     @Override
     public Thread newThread(final Runnable r) {
       return new Thread(OAbstractPaginatedStorage.storageThreadGroup, r, "Segment adder thread");

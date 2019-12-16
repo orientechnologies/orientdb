@@ -34,16 +34,15 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> implements OLuceneIndex {
 
@@ -142,7 +141,9 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
               Object key = snapshotEntry.getKey();
               OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
 
-              indexEngine.put(decodeKey(key), operations.added);
+              final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+              Objects.requireNonNull(atomicOperation);
+              indexEngine.put(atomicOperation, decodeKey(key), operations.added);
 
             }
             OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();

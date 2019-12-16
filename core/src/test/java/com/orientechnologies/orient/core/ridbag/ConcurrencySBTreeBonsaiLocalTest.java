@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -12,16 +13,13 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public class ConcurrencySBTreeBonsaiLocalTest {
 
   @Test
   public void testName() throws Exception {
+    @SuppressWarnings({ "resource", "deprecation" })
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ConcurrencySBTreeBonsaiLocalTest.class.getSimpleName());
     db.create();
     ExecutorService exec = Executors.newCachedThreadPool();
@@ -35,26 +33,22 @@ public class ConcurrencySBTreeBonsaiLocalTest {
           .loadSBTree(treePointer1);
 
       final OAtomicOperationsManager atomManager = ((OAbstractPaginatedStorage) db.getStorage()).getAtomicOperationsManager();
-      atomManager.startAtomicOperation(tree, false);
+      final OAtomicOperation atomicOperation = atomManager.startAtomicOperation();
       for (int i = 1000; i < 2000; i++)
-        tree.put(new ORecordId(10, i), 1);
+        tree.put(atomicOperation, new ORecordId(10, i), 1);
       Future<?> ex = null;
       try {
-        ex = exec.submit(new Runnable() {
+        ex = exec.submit(() -> {
+          try {
+            final OAtomicOperation atomicOperation1 = atomManager.startAtomicOperation();
+            for (int i = 2000; i < 3000; i++)
+              tree1.put(atomicOperation1, new ORecordId(10, i), 1);
+            atomManager.endAtomicOperation(false);
 
-          @Override
-          public void run() {
-            try {
-              atomManager.startAtomicOperation(tree1, false);
-              for (int i = 2000; i < 3000; i++)
-                tree1.put(new ORecordId(10, i), 1);
-              atomManager.endAtomicOperation(false);
-
-            } catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-
+          } catch (Exception e) {
+            throw new RuntimeException(e);
           }
+
         });
         ex.get(10, TimeUnit.MILLISECONDS);
       } catch (TimeoutException e) {

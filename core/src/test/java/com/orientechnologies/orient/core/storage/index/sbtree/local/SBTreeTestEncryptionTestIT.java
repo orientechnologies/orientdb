@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 
 import java.io.File;
 
@@ -27,10 +28,12 @@ public class SBTreeTestEncryptionTestIT extends SBTreeTestIT {
     orientDB.create(dbName, ODatabaseType.PLOCAL);
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
-    sbTree = new OSBTree<>("sbTreeEncrypted", ".sbt", ".nbt",
-        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    sbTree = new OSBTree<>("sbTreeEncrypted", ".sbt", ".nbt", storage);
 
     final OEncryption encryption = OEncryptionFactory.INSTANCE.getEncryption("aes/gcm", "T1JJRU5UREJfSVNfQ09PTA==");
-    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, encryption);
+    OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> sbTree
+        .create(atomicOperation, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, encryption));
   }
 }

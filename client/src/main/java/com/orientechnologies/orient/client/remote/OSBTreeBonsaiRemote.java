@@ -22,17 +22,11 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorResponse;
-import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyResponse;
-import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeResponse;
-import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTGetResponse;
+import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
@@ -93,22 +87,22 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   }
 
   @Override
-  public boolean put(K key, V value) {
+  public boolean put(OAtomicOperation atomicOperation, K key, V value) {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
-  public V remove(K key) {
+  public V remove(OAtomicOperation atomicOperation, K key) {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
-  public void clear() throws IOException {
+  public void clear(OAtomicOperation atomicOperation) throws IOException {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
-  public void delete() {
+  public void delete(OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 
@@ -221,7 +215,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   }
 
   @Override
-  public void markToDelete() {
+  public void markToDelete(OAtomicOperation atomicOperation) {
     throw  new UnsupportedOperationException();
   }
 

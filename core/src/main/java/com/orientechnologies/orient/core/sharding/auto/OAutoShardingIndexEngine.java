@@ -24,22 +24,13 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
-import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -84,7 +75,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void create(final OBinarySerializer valueSerializer, final boolean isAutomatic, final OType[] keyTypes,
+  public void create(OAtomicOperation atomicOperation, final OBinarySerializer valueSerializer, final boolean isAutomatic, final OType[] keyTypes,
       final boolean nullPointerSupport, final OBinarySerializer keySerializer, final int keySize, final Set<String> clustersToIndex,
       final Map<String, String> engineProperties, final ODocument metadata, OEncryption encryption) {
 
@@ -111,7 +102,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     try {
       for (OHashTable<Object, Object> p : partitions) {
         //noinspection unchecked
-        p.create(keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
+        p.create(atomicOperation, keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
       }
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during creation of index with name " + name), e);
@@ -160,22 +151,22 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void deleteWithoutLoad(final String indexName) {
+  public void deleteWithoutLoad(OAtomicOperation atomicOperation, final String indexName) {
     try {
       if (partitions != null)
         for (OHashTable<Object, Object> p : partitions)
-          p.deleteWithoutLoad(indexName);
+          p.deleteWithoutLoad(atomicOperation, indexName);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index with name " + name), e);
     }
   }
 
   @Override
-  public void delete() {
+  public void delete(OAtomicOperation atomicOperation) {
     try {
       if (partitions != null)
         for (OHashTable<Object, Object> p : partitions)
-          p.delete();
+          p.delete(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index with name " + name), e);
     }
@@ -203,20 +194,20 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(final Object key) {
+  public boolean remove(OAtomicOperation atomicOperation, final Object key) {
     try {
-      return getPartition(key).remove(key) != null;
+      return getPartition(key).remove(atomicOperation, key) != null;
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of key " + key + " of index with name " + name), e);
     }
   }
 
   @Override
-  public void clear() {
+  public void clear(OAtomicOperation atomicOperation) {
     try {
       if (partitions != null)
         for (OHashTable<Object, Object> p : partitions)
-          p.clear();
+          p.clear(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during clear of index with name " + name), e);
     }
@@ -235,9 +226,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(final Object key, final Object value) {
+  public void put(OAtomicOperation atomicOperation, final Object key, final Object value) {
     try {
-      getPartition(key).put(key, value);
+      getPartition(key).put(atomicOperation, key, value);
     } catch (IOException e) {
       throw OException
           .wrapException(new OIndexException("Error during insertion of key " + key + " of index with name " + name), e);
@@ -245,13 +236,13 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
     Object value = get(key);
     OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
     if (updated.isChange())
-      put(key, updated.getValue());
+      put(atomicOperation, key, updated.getValue());
     else if (updated.isRemove()) {
-      remove(key);
+      remove(atomicOperation, key);
     } else if (updated.isNothing()) {
       //Do Nothing
     }
@@ -259,9 +250,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     try {
-      return getPartition(key).validatedPut(key, value, (Validator) validator);
+      return getPartition(key).validatedPut(atomicOperation, key, value, (Validator) validator);
     } catch (IOException e) {
       throw OException
           .wrapException(new OIndexException("Error during insertion of key " + key + " of index with name " + name), e);

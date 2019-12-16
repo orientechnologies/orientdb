@@ -5,18 +5,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import org.junit.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -28,6 +20,7 @@ public class LocalHashTableIterationTestIT {
   private ODatabaseDocumentTx databaseDocumentTx;
 
   private OLocalHashTable<Integer, String> localHashTable;
+  private OAtomicOperationsManager         atomicOperationsManager;
 
   @Before
   public void beforeClass() throws Exception {
@@ -50,119 +43,129 @@ public class LocalHashTableIterationTestIT {
       }
     };
 
-    localHashTable = new OLocalHashTable<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+    atomicOperationsManager = storage.getAtomicOperationsManager();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      localHashTable = new OLocalHashTable<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh", storage);
 
-    localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,
-            null, hashFunction, true);
+      localHashTable.create(atomicOperation, OIntegerSerializer.INSTANCE,
+          OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null, null, hashFunction, true);
+    });
   }
 
   @After
   public void afterClass() throws Exception {
-    localHashTable.clear();
-    localHashTable.delete();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      localHashTable.clear(atomicOperation);
+      localHashTable.delete(atomicOperation);
+    });
     databaseDocumentTx.drop();
   }
 
   @After
   public void afterMethod() throws Exception {
-    localHashTable.clear();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      localHashTable.clear(atomicOperation);
+    });
   }
 
   @Test
   public void testNextHaveRightOrder() throws Exception {
-    SortedSet<Integer> keys = new TreeSet<Integer>();
-    keys.clear();
-    final Random random = new Random();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      SortedSet<Integer> keys = new TreeSet<Integer>();
+      keys.clear();
+      final Random random = new Random();
 
-    while (keys.size() < KEYS_COUNT) {
-      int key = random.nextInt();
+      while (keys.size() < KEYS_COUNT) {
+        int key = random.nextInt();
 
-      if (localHashTable.get(key) == null) {
-        localHashTable.put(key, key + "");
-        keys.add(key);
-        Assert.assertEquals(localHashTable.get(key), "" + key);
+        if (localHashTable.get(key) == null) {
+          localHashTable.put(atomicOperation, key, key + "");
+          keys.add(key);
+          Assert.assertEquals(localHashTable.get(key), "" + key);
+        }
       }
-    }
 
-    OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(Integer.MIN_VALUE);
-    int curPos = 0;
-    for (int key : keys) {
-      int sKey = entries[curPos].key;
+      OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(Integer.MIN_VALUE);
+      int curPos = 0;
+      for (int key : keys) {
+        int sKey = entries[curPos].key;
 
-      Assert.assertEquals(key, sKey);
-      curPos++;
-      if (curPos >= entries.length) {
-        entries = localHashTable.higherEntries(entries[entries.length - 1].key);
-        curPos = 0;
+        Assert.assertEquals(key, sKey);
+        curPos++;
+        if (curPos >= entries.length) {
+          entries = localHashTable.higherEntries(entries[entries.length - 1].key);
+          curPos = 0;
+        }
       }
-    }
+    });
   }
 
   public void testNextSkipsRecordValid() throws Exception {
-    List<Integer> keys = new ArrayList<Integer>();
-    keys.clear();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      List<Integer> keys = new ArrayList<Integer>();
 
-    final Random random = new Random();
-    while (keys.size() < KEYS_COUNT) {
-      int key = random.nextInt();
+      final Random random = new Random();
+      while (keys.size() < KEYS_COUNT) {
+        int key = random.nextInt();
 
-      if (localHashTable.get(key) == null) {
-        localHashTable.put(key, key + "");
-        keys.add(key);
-        Assert.assertEquals(localHashTable.get(key), "" + key);
+        if (localHashTable.get(key) == null) {
+          localHashTable.put(atomicOperation, key, key + "");
+          keys.add(key);
+          Assert.assertEquals(localHashTable.get(key), "" + key);
+        }
       }
-    }
 
-    Collections.sort(keys);
+      Collections.sort(keys);
 
-    OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(keys.get(10));
-    int curPos = 0;
-    for (int key : keys) {
-      if (key < keys.get(10)) {
-        continue;
+      OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(keys.get(10));
+      int curPos = 0;
+      for (int key : keys) {
+        if (key < keys.get(10)) {
+          continue;
+        }
+        int sKey = entries[curPos].key;
+        Assert.assertEquals(key, sKey);
+
+        curPos++;
+        if (curPos >= entries.length) {
+          entries = localHashTable.higherEntries(entries[entries.length - 1].key);
+          curPos = 0;
+        }
       }
-      int sKey = entries[curPos].key;
-      Assert.assertEquals(key, sKey);
-
-      curPos++;
-      if (curPos >= entries.length) {
-        entries = localHashTable.higherEntries(entries[entries.length - 1].key);
-        curPos = 0;
-      }
-    }
+    });
   }
 
   @Test
   @Ignore
   public void testNextHaveRightOrderUsingNextMethod() throws Exception {
-    List<Integer> keys = new ArrayList<Integer>();
-    keys.clear();
-    Random random = new Random();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      List<Integer> keys = new ArrayList<Integer>();
+      keys.clear();
+      Random random = new Random();
 
-    while (keys.size() < KEYS_COUNT) {
-      int key = random.nextInt();
+      while (keys.size() < KEYS_COUNT) {
+        int key = random.nextInt();
 
-      if (localHashTable.get(key) == null) {
-        localHashTable.put(key, key + "");
-        keys.add(key);
-        Assert.assertEquals(localHashTable.get(key), key + "");
+        if (localHashTable.get(key) == null) {
+          localHashTable.put(atomicOperation, key, key + "");
+          keys.add(key);
+          Assert.assertEquals(localHashTable.get(key), key + "");
+        }
       }
-    }
 
-    Collections.sort(keys);
+      Collections.sort(keys);
 
-    for (int key : keys) {
-      OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(key);
-      Assert.assertTrue(key == entries[0].key);
-    }
+      for (int key : keys) {
+        OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(key);
+        Assert.assertTrue(key == entries[0].key);
+      }
 
-    for (int j = 0, keysSize = keys.size() - 1; j < keysSize; j++) {
-      int key = keys.get(j);
-      int sKey = localHashTable.higherEntries(key)[0].key;
-      Assert.assertTrue(sKey == keys.get(j + 1));
-    }
+      for (int j = 0, keysSize = keys.size() - 1; j < keysSize; j++) {
+        int key = keys.get(j);
+        int sKey = localHashTable.higherEntries(key)[0].key;
+        Assert.assertTrue(sKey == keys.get(j + 1));
+      }
+    });
   }
-
 }

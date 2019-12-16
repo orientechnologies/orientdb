@@ -4,33 +4,34 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public interface OCellBTreeMultiValue<K> {
-  void create(OBinarySerializer<K> keySerializer, OType[] keyTypes, int keySize, OEncryption encryption) throws IOException;
+  void create(OAtomicOperation atomicOperation, OBinarySerializer<K> keySerializer, OType[] keyTypes, int keySize, OEncryption encryption) throws IOException;
 
   List<ORID> get(K key);
 
-  void put(K key, ORID value) throws IOException;
+  void put(OAtomicOperation atomicOperation, K key, ORID value) throws IOException;
 
   void close();
 
-  void clear() throws IOException;
+  void clear(OAtomicOperation atomicOperation) throws IOException;
 
-  void delete() throws IOException;
+  void delete(OAtomicOperation atomicOperation) throws IOException;
 
-  void deleteWithoutLoad() throws IOException;
+  void deleteWithoutLoad(OAtomicOperation atomicOperation) throws IOException;
 
   void load(String name, int keySize, OType[] keyTypes, OBinarySerializer<K> keySerializer, OEncryption encryption);
 
   long size();
 
-  boolean remove(K key) throws IOException;
+  boolean remove(OAtomicOperation atomicOperation, K key) throws IOException;
 
-  boolean remove(K key, ORID value) throws IOException;
+  boolean remove(OAtomicOperation atomicOperation, K key, ORID value) throws IOException;
 
   OCellBTreeCursor<K, ORID> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
 

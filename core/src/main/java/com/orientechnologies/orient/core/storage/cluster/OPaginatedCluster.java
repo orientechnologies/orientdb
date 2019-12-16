@@ -3,9 +3,9 @@ package com.orientechnologies.orient.core.storage.cluster;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
-import java.io.File;
 import java.io.IOException;
 
 public abstract class OPaginatedCluster extends ODurableComponent implements OCluster {
@@ -25,15 +25,11 @@ public abstract class OPaginatedCluster extends ODurableComponent implements OCl
     super(storage, name, extension, lockName);
   }
 
-  public abstract void replaceFile(File file) throws IOException;
-
-  public abstract void replaceClusterMapFile(File file) throws IOException;
-
   public abstract RECORD_STATUS getRecordStatus(final long clusterPosition) throws IOException;
 
   public abstract OPaginatedClusterDebug readDebug(long clusterPosition) throws IOException;
 
-  public abstract void registerInStorageConfig(OClusterBasedStorageConfiguration root);
+  public abstract void registerInStorageConfig(OAtomicOperation atomicOperation, OClusterBasedStorageConfiguration root);
 
   public abstract long getFileId();
 }

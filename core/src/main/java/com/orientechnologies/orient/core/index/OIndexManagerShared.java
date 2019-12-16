@@ -40,18 +40,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 
 import java.nio.channels.UnsupportedAddressTypeException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -303,7 +295,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       document = database.load(new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
 
-      Runnable recreateIndexesTask = new RecreateIndexesTask(database.getStorage());
+      Runnable recreateIndexesTask = new RecreateIndexesTask((OAbstractPaginatedStorage) database.getStorage());
       recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");
       recreateIndexesThread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       recreateIndexesThread.start();
@@ -509,11 +501,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   private class RecreateIndexesTask implements Runnable {
-    private final OStorage storage;
-    private       int      ok;
-    private       int      errors;
+    private final OAbstractPaginatedStorage storage;
+    private       int                       ok;
+    private       int                       errors;
 
-    RecreateIndexesTask(OStorage storage) {
+    RecreateIndexesTask(OAbstractPaginatedStorage storage) {
       this.storage = storage;
     }
 
@@ -541,13 +533,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           releaseExclusiveLock();
         }
 
+        final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
         try {
           recreateIndexes(indexesToRebuild, newDb);
         } finally {
-          if (storage instanceof OAbstractPaginatedStorage) {
-            final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
-            abstractPaginatedStorage.synch();
-          }
+          abstractPaginatedStorage.synch();
           newDb.close();
         }
 
@@ -595,7 +585,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         } else {
           OLogManager.instance()
               .info(this, "Index '%s' is a non-durable automatic index and must be rebuilt", indexMetadata.getName());
-          rebuildNonDurableAutomaticIndex(indexDocument, index, indexMetadata, indexDefinition);
+          rebuildNonDurableAutomaticIndex(storage, indexDocument, index, indexMetadata, indexDefinition);
         }
       } else {
         if (durable) {
@@ -612,8 +602,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
     }
 
-    private void rebuildNonDurableAutomaticIndex(ODocument indexDocument, OIndexInternal<?> index, OIndexMetadata indexMetadata,
-        OIndexDefinition indexDefinition) {
+    private void rebuildNonDurableAutomaticIndex(OAbstractPaginatedStorage storage, ODocument indexDocument,
+        OIndexInternal<?> index, OIndexMetadata indexMetadata, OIndexDefinition indexDefinition) {
       try {
         index.loadFromConfiguration(indexDocument);
         index.delete();
@@ -626,10 +616,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           try {
             final OIndexFactory indexFactory = it.next();
             final OBaseIndexEngine engine = indexFactory
-                .createIndexEngine(index.getAlgorithm(), index.getName(), false, storage, 0, 1,
+                .createIndexEngine(index.getAlgorithm(), index.getName(), false, this.storage, 0, 1,
                     indexDefinition.getTypes().length > 1, null);
 
-            engine.deleteWithoutLoad(index.getName());
+            final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+            atomicOperationsManager
+                .executeInsideAtomicOperation((atomicOperation) -> engine.deleteWithoutLoad(atomicOperation, index.getName()));
           } catch (Exception e2) {
             OLogManager.instance().error(this, "Error during deletion of index engine %s", e2, index.getName());
           }

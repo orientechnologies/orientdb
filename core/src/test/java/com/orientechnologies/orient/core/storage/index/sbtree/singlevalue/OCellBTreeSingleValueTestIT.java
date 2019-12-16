@@ -2,33 +2,25 @@ package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 public class OCellBTreeSingleValueTestIT {
   private OCellBTreeSingleValue<String> singleValueTree;
   private OrientDB                      orientDB;
 
-  private String dbName;
+  private String                   dbName;
+  private OAtomicOperationsManager atomicOperationsManager;
 
   @Before
   public void before() throws Exception {
@@ -44,9 +36,12 @@ public class OCellBTreeSingleValueTestIT {
 
     final ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
-    singleValueTree = new OCellBTreeSingleValue<>("singleBTree", ".sbt", ".nbt",
-        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
-    singleValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    singleValueTree = new OCellBTreeSingleValue<>("singleBTree", ".sbt", ".nbt", storage);
+    atomicOperationsManager = storage.getAtomicOperationsManager();
+
+    atomicOperationsManager.executeInsideAtomicOperation(
+        (atomicOperation) -> singleValueTree.create(atomicOperation, OUTF8Serializer.INSTANCE, null, 1, null));
   }
 
   @After
@@ -57,346 +52,369 @@ public class OCellBTreeSingleValueTestIT {
 
   @Test
   public void testKeyPut() throws Exception {
-    final int keysCount = 1_000_000;
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      final int keysCount = 1_000_000;
 
-    String lastKey = null;
+      String lastKey = null;
 
-    for (int i = 0; i < keysCount; i++) {
-      final String key = Integer.toString(i);
+      for (int i = 0; i < keysCount; i++) {
+        final String key = Integer.toString(i);
 
-      singleValueTree.put(key, new ORecordId(i % 32000, i));
-      if (i % 100_000 == 0) {
-        System.out.printf("%d items loaded out of %d%n", i, keysCount);
+        singleValueTree.put(atomicOperation, key, new ORecordId(i % 32000, i));
+        if (i % 100_000 == 0) {
+          System.out.printf("%d items loaded out of %d%n", i, keysCount);
+        }
+
+        if (lastKey == null) {
+          lastKey = key;
+        } else if (key.compareTo(lastKey) > 0) {
+          lastKey = key;
+        }
+
+        Assert.assertEquals("0", singleValueTree.firstKey());
+        Assert.assertEquals(lastKey, singleValueTree.lastKey());
       }
 
-      if (lastKey == null) {
-        lastKey = key;
-      } else if (key.compareTo(lastKey) > 0) {
-        lastKey = key;
+      for (int i = 0; i < keysCount; i++) {
+        Assert.assertEquals(i + " key is absent", singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+        if (i % 100_000 == 0) {
+          System.out.printf("%d items tested out of %d%n", i, keysCount);
+        }
       }
 
-      Assert.assertEquals("0", singleValueTree.firstKey());
-      Assert.assertEquals(lastKey, singleValueTree.lastKey());
-    }
-
-    for (int i = 0; i < keysCount; i++) {
-      Assert.assertEquals(i + " key is absent", singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
-      if (i % 100_000 == 0) {
-        System.out.printf("%d items tested out of %d%n", i, keysCount);
+      for (int i = keysCount; i < 2 * keysCount; i++) {
+        Assert.assertNull(singleValueTree.get(Integer.toString(i)));
       }
-    }
-
-    for (int i = keysCount; i < 2 * keysCount; i++) {
-      Assert.assertNull(singleValueTree.get(Integer.toString(i)));
-    }
+    });
   }
 
   @Test
   public void testKeyPutRandomUniform() throws Exception {
-    final NavigableSet<String> keys = new TreeSet<>();
-    final Random random = new Random();
-    final int keysCount = 1_000_000;
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      final NavigableSet<String> keys = new TreeSet<>();
+      final Random random = new Random();
+      final int keysCount = 1_000_000;
 
-    while (keys.size() < keysCount) {
-      int val = random.nextInt(Integer.MAX_VALUE);
-      String key = Integer.toString(val);
+      while (keys.size() < keysCount) {
+        int val = random.nextInt(Integer.MAX_VALUE);
+        String key = Integer.toString(val);
 
-      singleValueTree.put(key, new ORecordId(val % 32000, val));
-      keys.add(key);
+        singleValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+        keys.add(key);
 
-      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
-    }
+        Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
+      }
 
-    Assert.assertEquals(singleValueTree.firstKey(), keys.first());
-    Assert.assertEquals(singleValueTree.lastKey(), keys.last());
+      Assert.assertEquals(singleValueTree.firstKey(), keys.first());
+      Assert.assertEquals(singleValueTree.lastKey(), keys.last());
 
-    for (String key : keys) {
-      final int val = Integer.parseInt(key);
-      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
-    }
+      for (String key : keys) {
+        final int val = Integer.parseInt(key);
+        Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
+      }
+    });
   }
 
   @Test
   public void testKeyPutRandomGaussian() throws Exception {
-    NavigableSet<String> keys = new TreeSet<>();
-    long seed = System.currentTimeMillis();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      NavigableSet<String> keys = new TreeSet<>();
+      long seed = System.currentTimeMillis();
 
-    System.out.println("testKeyPutRandomGaussian seed : " + seed);
+      System.out.println("testKeyPutRandomGaussian seed : " + seed);
 
-    Random random = new Random(seed);
-    final int keysCount = 1_000_000;
+      Random random = new Random(seed);
+      final int keysCount = 1_000_000;
 
-    while (keys.size() < keysCount) {
-      int val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (val < 0) {
-        continue;
+      while (keys.size() < keysCount) {
+        int val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
+        if (val < 0) {
+          continue;
+        }
+
+        String key = Integer.toString(val);
+        singleValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+        keys.add(key);
+
+        Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
       }
 
-      String key = Integer.toString(val);
-      singleValueTree.put(key, new ORecordId(val % 32000, val));
-      keys.add(key);
+      Assert.assertEquals(singleValueTree.firstKey(), keys.first());
+      Assert.assertEquals(singleValueTree.lastKey(), keys.last());
 
-      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
-    }
-
-    Assert.assertEquals(singleValueTree.firstKey(), keys.first());
-    Assert.assertEquals(singleValueTree.lastKey(), keys.last());
-
-    for (String key : keys) {
-      int val = Integer.parseInt(key);
-      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
-    }
+      for (String key : keys) {
+        int val = Integer.parseInt(key);
+        Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
+      }
+    });
   }
 
   @Test
   public void testKeyDeleteRandomUniform() throws Exception {
-    final int keysCount = 1_000_000;
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      final int keysCount = 1_000_000;
 
-    NavigableSet<String> keys = new TreeSet<>();
-    for (int i = 0; i < keysCount; i++) {
-      String key = Integer.toString(i);
-      singleValueTree.put(key, new ORecordId(i % 32000, i));
-      keys.add(key);
-    }
-
-    Iterator<String> keysIterator = keys.iterator();
-    while (keysIterator.hasNext()) {
-      String key = keysIterator.next();
-      if (Integer.parseInt(key) % 3 == 0) {
-        singleValueTree.remove(key);
-        keysIterator.remove();
+      NavigableSet<String> keys = new TreeSet<>();
+      for (int i = 0; i < keysCount; i++) {
+        String key = Integer.toString(i);
+        singleValueTree.put(atomicOperation, key, new ORecordId(i % 32000, i));
+        keys.add(key);
       }
-    }
 
-    Assert.assertEquals(singleValueTree.firstKey(), keys.first());
-    Assert.assertEquals(singleValueTree.lastKey(), keys.last());
-
-    for (String key : keys) {
-      int val = Integer.parseInt(key);
-      if (val % 3 == 0) {
-        Assert.assertNull(singleValueTree.get(key));
-      } else {
-        Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
+      Iterator<String> keysIterator = keys.iterator();
+      while (keysIterator.hasNext()) {
+        String key = keysIterator.next();
+        if (Integer.parseInt(key) % 3 == 0) {
+          singleValueTree.remove(atomicOperation, key);
+          keysIterator.remove();
+        }
       }
-    }
+
+      Assert.assertEquals(singleValueTree.firstKey(), keys.first());
+      Assert.assertEquals(singleValueTree.lastKey(), keys.last());
+
+      for (String key : keys) {
+        int val = Integer.parseInt(key);
+        if (val % 3 == 0) {
+          Assert.assertNull(singleValueTree.get(key));
+        } else {
+          Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
+        }
+      }
+    });
   }
 
   @Test
   public void testKeyDeleteRandomGaussian() throws Exception {
-    NavigableSet<String> keys = new TreeSet<>();
-    final int keysCount = 1_000_000;
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      NavigableSet<String> keys = new TreeSet<>();
+      final int keysCount = 1_000_000;
 
-    long seed = System.currentTimeMillis();
+      long seed = System.currentTimeMillis();
 
-    System.out.println("testKeyDeleteRandomGaussian seed : " + seed);
-    Random random = new Random(seed);
+      System.out.println("testKeyDeleteRandomGaussian seed : " + seed);
+      Random random = new Random(seed);
 
-    while (keys.size() < keysCount) {
-      int val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (val < 0) {
-        continue;
-      }
+      while (keys.size() < keysCount) {
+        int val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
+        if (val < 0) {
+          continue;
+        }
 
-      String key = Integer.toString(val);
-      singleValueTree.put(key, new ORecordId(val % 32000, val));
-      keys.add(key);
+        String key = Integer.toString(val);
+        singleValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+        keys.add(key);
 
-      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
-    }
-
-    Iterator<String> keysIterator = keys.iterator();
-
-    while (keysIterator.hasNext()) {
-      String key = keysIterator.next();
-
-      if (Integer.parseInt(key) % 3 == 0) {
-        singleValueTree.remove(key);
-        keysIterator.remove();
-      }
-    }
-
-    Assert.assertEquals(singleValueTree.firstKey(), keys.first());
-    Assert.assertEquals(singleValueTree.lastKey(), keys.last());
-
-    for (String key : keys) {
-      int val = Integer.parseInt(key);
-      if (val % 3 == 0) {
-        Assert.assertNull(singleValueTree.get(key));
-      } else {
         Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
       }
-    }
+
+      Iterator<String> keysIterator = keys.iterator();
+
+      while (keysIterator.hasNext()) {
+        String key = keysIterator.next();
+
+        if (Integer.parseInt(key) % 3 == 0) {
+          singleValueTree.remove(atomicOperation, key);
+          keysIterator.remove();
+        }
+      }
+
+      Assert.assertEquals(singleValueTree.firstKey(), keys.first());
+      Assert.assertEquals(singleValueTree.lastKey(), keys.last());
+
+      for (String key : keys) {
+        int val = Integer.parseInt(key);
+        if (val % 3 == 0) {
+          Assert.assertNull(singleValueTree.get(key));
+        } else {
+          Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
+        }
+      }
+    });
   }
 
   @Test
   public void testKeyDelete() throws Exception {
-    final int keysCount = 1_000_000;
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      final int keysCount = 1_000_000;
 
-    for (int i = 0; i < keysCount; i++) {
-      singleValueTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
-    }
-
-    for (int i = 0; i < keysCount; i++) {
-      if (i % 3 == 0) {
-        Assert.assertEquals(singleValueTree.remove(Integer.toString(i)), new ORecordId(i % 32000, i));
+      for (int i = 0; i < keysCount; i++) {
+        singleValueTree.put(atomicOperation, Integer.toString(i), new ORecordId(i % 32000, i));
       }
-    }
 
-    for (int i = 0; i < keysCount; i++) {
-      if (i % 3 == 0) {
-        Assert.assertNull(singleValueTree.get(Integer.toString(i)));
-      } else {
-        Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+      for (int i = 0; i < keysCount; i++) {
+        if (i % 3 == 0) {
+          Assert.assertEquals(singleValueTree.remove(atomicOperation, Integer.toString(i)), new ORecordId(i % 32000, i));
+        }
       }
-    }
+
+      for (int i = 0; i < keysCount; i++) {
+        if (i % 3 == 0) {
+          Assert.assertNull(singleValueTree.get(Integer.toString(i)));
+        } else {
+          Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+        }
+      }
+    });
   }
 
   @Test
   public void testKeyAddDelete() throws Exception {
-    final int keysCount = 1_000_000;
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      final int keysCount = 1_000_000;
 
-    for (int i = 0; i < keysCount; i++) {
-      singleValueTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
+      for (int i = 0; i < keysCount; i++) {
+        singleValueTree.put(atomicOperation, Integer.toString(i), new ORecordId(i % 32000, i));
 
-      Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
-    }
-
-    for (int i = 0; i < keysCount; i++) {
-      if (i % 3 == 0) {
-        Assert.assertEquals(singleValueTree.remove(Integer.toString(i)), new ORecordId(i % 32000, i));
-      }
-
-      if (i % 2 == 0) {
-        singleValueTree.put(Integer.toString(keysCount + i), new ORecordId((keysCount + i) % 32000, keysCount + i));
-      }
-
-    }
-
-    for (int i = 0; i < keysCount; i++) {
-      if (i % 3 == 0) {
-        Assert.assertNull(singleValueTree.get(Integer.toString(i)));
-      } else {
         Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
       }
 
-      if (i % 2 == 0) {
-        Assert.assertEquals(singleValueTree.get(Integer.toString(keysCount + i)),
-            new ORecordId((keysCount + i) % 32000, keysCount + i));
+      for (int i = 0; i < keysCount; i++) {
+        if (i % 3 == 0) {
+          Assert.assertEquals(singleValueTree.remove(atomicOperation, Integer.toString(i)), new ORecordId(i % 32000, i));
+        }
+
+        if (i % 2 == 0) {
+          singleValueTree
+              .put(atomicOperation, Integer.toString(keysCount + i), new ORecordId((keysCount + i) % 32000, keysCount + i));
+        }
+
       }
-    }
+
+      for (int i = 0; i < keysCount; i++) {
+        if (i % 3 == 0) {
+          Assert.assertNull(singleValueTree.get(Integer.toString(i)));
+        } else {
+          Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+        }
+
+        if (i % 2 == 0) {
+          Assert.assertEquals(singleValueTree.get(Integer.toString(keysCount + i)),
+              new ORecordId((keysCount + i) % 32000, keysCount + i));
+        }
+      }
+    });
   }
 
   @Test
   public void testKeyCursor() throws Exception {
-    final int keysCount = 1_000_000;
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      final int keysCount = 1_000_000;
 
-    NavigableMap<String, ORID> keyValues = new TreeMap<>();
-    final long seed = System.nanoTime();
+      NavigableMap<String, ORID> keyValues = new TreeMap<>();
+      final long seed = System.nanoTime();
 
-    System.out.println("testKeyCursor: " + seed);
-    Random random = new Random(seed);
+      System.out.println("testKeyCursor: " + seed);
+      Random random = new Random(seed);
 
-    while (keyValues.size() < keysCount) {
-      int val = random.nextInt(Integer.MAX_VALUE);
-      String key = Integer.toString(val);
+      while (keyValues.size() < keysCount) {
+        int val = random.nextInt(Integer.MAX_VALUE);
+        String key = Integer.toString(val);
 
-      singleValueTree.put(key, new ORecordId(val % 32000, val));
-      keyValues.put(key, new ORecordId(val % 32000, val));
-    }
+        singleValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+        keyValues.put(key, new ORecordId(val % 32000, val));
+      }
 
-    Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
-    Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
+      Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
+      Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
 
-    final OCellBTreeSingleValue.OSBTreeKeyCursor<String> cursor = singleValueTree.keyCursor();
+      final OCellBTreeSingleValue.OSBTreeKeyCursor<String> cursor = singleValueTree.keyCursor();
 
-    for (String entryKey : keyValues.keySet()) {
-      final String indexKey = cursor.next(-1);
-      Assert.assertEquals(entryKey, indexKey);
-    }
+      for (String entryKey : keyValues.keySet()) {
+        final String indexKey = cursor.next(-1);
+        Assert.assertEquals(entryKey, indexKey);
+      }
+    });
   }
 
   @Test
   public void testIterateEntriesMajor() throws Exception {
-    final int keysCount = 1_000_000;
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      final int keysCount = 1_000_000;
 
-    NavigableMap<String, ORID> keyValues = new TreeMap<>();
-    final long seed = System.nanoTime();
+      NavigableMap<String, ORID> keyValues = new TreeMap<>();
+      final long seed = System.nanoTime();
 
-    System.out.println("testIterateEntriesMajor: " + seed);
-    Random random = new Random(seed);
+      System.out.println("testIterateEntriesMajor: " + seed);
+      Random random = new Random(seed);
 
-    while (keyValues.size() < keysCount) {
-      int val = random.nextInt(Integer.MAX_VALUE);
-      String key = Integer.toString(val);
+      while (keyValues.size() < keysCount) {
+        int val = random.nextInt(Integer.MAX_VALUE);
+        String key = Integer.toString(val);
 
-      singleValueTree.put(key, new ORecordId(val % 32000, val));
-      keyValues.put(key, new ORecordId(val % 32000, val));
-    }
+        singleValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+        keyValues.put(key, new ORecordId(val % 32000, val));
+      }
 
-    assertIterateMajorEntries(keyValues, random, true, true);
-    assertIterateMajorEntries(keyValues, random, false, true);
+      assertIterateMajorEntries(keyValues, random, true, true);
+      assertIterateMajorEntries(keyValues, random, false, true);
 
-    assertIterateMajorEntries(keyValues, random, true, false);
-    assertIterateMajorEntries(keyValues, random, false, false);
+      assertIterateMajorEntries(keyValues, random, true, false);
+      assertIterateMajorEntries(keyValues, random, false, false);
 
-    Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
-    Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
+      Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
+      Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
+    });
   }
 
   @Test
   public void testIterateEntriesMinor() throws Exception {
-    final int keysCount = 1_000_000;
-    NavigableMap<String, ORID> keyValues = new TreeMap<>();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      final int keysCount = 1_000_000;
+      NavigableMap<String, ORID> keyValues = new TreeMap<>();
 
-    final long seed = System.nanoTime();
+      final long seed = System.nanoTime();
 
-    System.out.println("testIterateEntriesMinor: " + seed);
-    Random random = new Random(seed);
+      System.out.println("testIterateEntriesMinor: " + seed);
+      Random random = new Random(seed);
 
-    while (keyValues.size() < keysCount) {
-      int val = random.nextInt(Integer.MAX_VALUE);
-      String key = Integer.toString(val);
+      while (keyValues.size() < keysCount) {
+        int val = random.nextInt(Integer.MAX_VALUE);
+        String key = Integer.toString(val);
 
-      singleValueTree.put(key, new ORecordId(val % 32000, val));
-      keyValues.put(key, new ORecordId(val % 32000, val));
-    }
+        singleValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+        keyValues.put(key, new ORecordId(val % 32000, val));
+      }
 
-    assertIterateMinorEntries(keyValues, random, true, true);
-    assertIterateMinorEntries(keyValues, random, false, true);
+      assertIterateMinorEntries(keyValues, random, true, true);
+      assertIterateMinorEntries(keyValues, random, false, true);
 
-    assertIterateMinorEntries(keyValues, random, true, false);
-    assertIterateMinorEntries(keyValues, random, false, false);
+      assertIterateMinorEntries(keyValues, random, true, false);
+      assertIterateMinorEntries(keyValues, random, false, false);
 
-    Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
-    Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
+      Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
+      Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
+    });
   }
 
   @Test
   public void testIterateEntriesBetween() throws Exception {
-    final int keysCount = 1_000_000;
-    NavigableMap<String, ORID> keyValues = new TreeMap<>();
-    Random random = new Random();
+    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+      final int keysCount = 1_000_000;
+      NavigableMap<String, ORID> keyValues = new TreeMap<>();
+      Random random = new Random();
 
-    while (keyValues.size() < keysCount) {
-      int val = random.nextInt(Integer.MAX_VALUE);
-      String key = Integer.toString(val);
+      while (keyValues.size() < keysCount) {
+        int val = random.nextInt(Integer.MAX_VALUE);
+        String key = Integer.toString(val);
 
-      singleValueTree.put(key, new ORecordId(val % 32000, val));
-      keyValues.put(key, new ORecordId(val % 32000, val));
-    }
+        singleValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+        keyValues.put(key, new ORecordId(val % 32000, val));
+      }
 
-    assertIterateBetweenEntries(keyValues, random, true, true, true);
-    assertIterateBetweenEntries(keyValues, random, true, false, true);
-    assertIterateBetweenEntries(keyValues, random, false, true, true);
-    assertIterateBetweenEntries(keyValues, random, false, false, true);
+      assertIterateBetweenEntries(keyValues, random, true, true, true);
+      assertIterateBetweenEntries(keyValues, random, true, false, true);
+      assertIterateBetweenEntries(keyValues, random, false, true, true);
+      assertIterateBetweenEntries(keyValues, random, false, false, true);
 
-    assertIterateBetweenEntries(keyValues, random, true, true, false);
-    assertIterateBetweenEntries(keyValues, random, true, false, false);
-    assertIterateBetweenEntries(keyValues, random, false, true, false);
-    assertIterateBetweenEntries(keyValues, random, false, false, false);
+      assertIterateBetweenEntries(keyValues, random, true, true, false);
+      assertIterateBetweenEntries(keyValues, random, true, false, false);
+      assertIterateBetweenEntries(keyValues, random, false, true, false);
+      assertIterateBetweenEntries(keyValues, random, false, false, false);
 
-    Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
-    Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
+      Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
+      Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
+    });
   }
 
   private void assertIterateMajorEntries(NavigableMap<String, ORID> keyValues, Random random, boolean keyInclusive,

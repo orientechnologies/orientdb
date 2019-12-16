@@ -40,7 +40,6 @@ public final class OAtomicOperation {
   private final OLogSequenceNumber startLSN;
   private final long               operationUnitId;
 
-  private int     startCounter;
   private boolean rollback;
 
   private final Set<String>            lockedObjects        = new HashSet<>();
@@ -54,13 +53,14 @@ public final class OAtomicOperation {
 
   private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<>();
 
+  private int componentOperationsCount;
+
   public OAtomicOperation(final OLogSequenceNumber startLSN, final long operationUnitId, final OReadCache readCache,
       final OWriteCache writeCache, final int storageId) {
     this.storageId = storageId;
     this.startLSN = startLSN;
     this.operationUnitId = operationUnitId;
 
-    startCounter = 1;
     this.readCache = readCache;
     this.writeCache = writeCache;
   }
@@ -385,8 +385,8 @@ public final class OAtomicOperation {
     fileChanges.truncate = true;
   }
 
-  OLogSequenceNumber commitChanges(final OWriteAheadLog writeAheadLog) throws IOException {
-    OLogSequenceNumber txEndLsn = null;
+  void commitChanges(final OWriteAheadLog writeAheadLog) throws IOException {
+    OLogSequenceNumber txEndLsn;
     if (writeAheadLog != null) {
       final OLogSequenceNumber startLSN = writeAheadLog.end();
 
@@ -533,19 +533,18 @@ public final class OAtomicOperation {
       }
     }
 
-    return txEndLsn;
   }
 
-  void incrementCounter() {
-    startCounter++;
+  void incrementComponentOperations() {
+    componentOperationsCount++;
   }
 
-  void decrementCounter() {
-    startCounter--;
-  }
+  boolean decrementComponentOperations() {
+    if (componentOperationsCount <= 0) {
+      throw new IllegalStateException("component operations count `" + componentOperationsCount + "`");
+    }
 
-  public int getCounter() {
-    return startCounter;
+    return --componentOperationsCount == 0;
   }
 
   void rollback() {

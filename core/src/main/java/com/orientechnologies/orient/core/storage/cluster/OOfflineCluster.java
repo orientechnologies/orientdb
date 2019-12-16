@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 
@@ -61,7 +62,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void create(int iStartSize) throws IOException {
+  public void create(OAtomicOperation atomicOperation, int iStartSize) throws IOException {
   }
 
   @Override
@@ -78,11 +79,11 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void delete() throws IOException {
+  public void delete(OAtomicOperation atomicOperation) throws IOException {
   }
 
   @Override
-  public Object set(ATTRIBUTES attribute, Object value) throws IOException {
+  public Object set(OAtomicOperation atomicOperation, ATTRIBUTES attribute, Object value) throws IOException {
     if (attribute == null)
       throw new IllegalArgumentException("attribute is null");
 
@@ -113,33 +114,33 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void truncate() throws IOException {
+  public void truncate(OAtomicOperation atomicOperation) throws IOException {
     throw new OOfflineClusterException("Cannot truncate an offline cluster '" + name + "'");
   }
 
   @Override
-  public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
+  public OPhysicalPosition allocatePosition(OAtomicOperation atomicOperation, byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot allocate a new position on offline cluster '" + name + "'");
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
+  public OPhysicalPosition createRecord(OAtomicOperation atomicOperation, byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
       throws IOException {
     throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + "'");
   }
 
   @Override
-  public boolean deleteRecord(long clusterPosition) throws IOException {
+  public boolean deleteRecord(OAtomicOperation atomicOperation, long clusterPosition) throws IOException {
     throw new OOfflineClusterException("Cannot delete a record on offline cluster '" + name + "'");
   }
 
   @Override
-  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void updateRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
   }
 
   @Override
-  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void recycleRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot resurrect a record on offline cluster '" + name + "'");
   }
 
@@ -254,7 +255,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public boolean hideRecord(long position) throws IOException {
+  public boolean hideRecord(OAtomicOperation atomicOperation, long position) throws IOException {
     return false;
   }
 
