@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
@@ -30,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OAccessToSBtreeCollectionManagerIsProhibitedException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -187,7 +185,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     ODatabaseRecordThreadLocal.instance().get().getCollectionsChanges().clear();
   }
 
-  public boolean tryDelete(OBonsaiCollectionPointer collectionPointer, long delay) {
+  public boolean tryDelete(OAtomicOperation atomicOperation, OBonsaiCollectionPointer collectionPointer, long delay) {
     final CacheKey cacheKey = new CacheKey(storage, collectionPointer);
     final Object lock = treesSubsetLock(cacheKey);
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -200,11 +198,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       treeCache.remove(cacheKey);
       final OSBTreeBonsaiLocal<OIdentifiable, Integer> treeBonsai = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) this
           .loadTree(collectionPointer);
-      try {
-        return treeBonsai.tryDelete(atomicOperation);
-      } catch (IOException e) {
-        throw OException.wrapException(new ODatabaseException("Error during ridbag deletion"), e);
-      }
+      return treeBonsai.tryDelete(atomicOperation);
     }
   }
 }

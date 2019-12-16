@@ -70,7 +70,7 @@ public class ORidBagDeleteSerializationOperation implements ORecordSerialization
       final OAtomicOperationsManager atomicOperationsManager = paginatedStorage.getAtomicOperationsManager();
       try {
         atomicOperationsManager.executeInsideAtomicOperation((operation) -> {
-          if (!((OSBTreeCollectionManagerShared) collectionManager).tryDelete(collectionPointer, delay)) {
+          if (!((OSBTreeCollectionManagerShared) collectionManager).tryDelete(atomicOperation, collectionPointer, delay)) {
             Orient.instance().scheduleTask(deleteTask, schedule, 0);
           }
         });
