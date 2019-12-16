@@ -190,10 +190,16 @@ public final class OAtomicOperation {
     }
 
     final FileChanges changesContainer = fileChanges.get(cacheEntry.getFileId());
-    assert changesContainer != null;
+    if (changesContainer == null) {
+      readCache.pinPage(cacheEntry, writeCache);
+      return;
+    }
 
     final OCacheEntryChanges pageChangesContainer = changesContainer.pageChangesMap.get(cacheEntry.getPageIndex());
-    assert pageChangesContainer != null;
+    if (pageChangesContainer == null) {
+      readCache.pinPage(cacheEntry, writeCache);
+      return;
+    }
 
     pageChangesContainer.pinPage = true;
   }
