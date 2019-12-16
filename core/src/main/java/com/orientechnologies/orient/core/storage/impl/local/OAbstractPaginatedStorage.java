@@ -525,11 +525,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         transaction = new ThreadLocal<>();
 
         preCreateSteps();
-        componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
         atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
           configuration = new OClusterBasedStorageConfiguration(this);
           ((OClusterBasedStorageConfiguration) configuration).create(atomicOperation, contextConfiguration);
+
+          componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
           status = STATUS.OPEN;
 
@@ -562,8 +563,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           postCreateSteps();
 
           //binary compatibility with previous version, this record contained configuration of storage
-          createRecord(new ORecordId(0, -1), new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, (byte) 0, null);
-
+          doCreateRecord(atomicOperation, new ORecordId(0, -1), new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, null,
+              doGetAndCheckCluster(0), null);
           initTxProfiler(contextConfiguration);
         });
       } catch (final InterruptedException e) {
@@ -1018,7 +1019,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throwClusterDoesNotExist(clusterName);
         }
 
-        return atomicOperationsManager.calculateInsideAtomicOperation((atomicOperation) -> cluster.set(atomicOperation, attribute, value));
+        return atomicOperationsManager
+            .calculateInsideAtomicOperation((atomicOperation) -> cluster.set(atomicOperation, attribute, value));
       } finally {
         stateLock.releaseWriteLock();
       }
@@ -4631,7 +4633,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return -1;
   }
 
-  protected void initConfiguration(OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration) throws IOException {
+  protected void initConfiguration(OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration)
+      throws IOException {
   }
 
   @SuppressWarnings({ "WeakerAccess", "EmptyMethod" })
