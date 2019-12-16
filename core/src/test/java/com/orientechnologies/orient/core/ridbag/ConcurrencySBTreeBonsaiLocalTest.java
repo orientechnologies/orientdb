@@ -25,15 +25,14 @@ public class ConcurrencySBTreeBonsaiLocalTest {
     ExecutorService exec = Executors.newCachedThreadPool();
     try {
       OSBTreeCollectionManager coll = db.getSbTreeCollectionManager();
-      OBonsaiCollectionPointer treePointer = coll.createSBTree(3, null);
-      OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) coll.loadSBTree(treePointer);
-
-      OBonsaiCollectionPointer treePointer1 = coll.createSBTree(3, null);
-      final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree1 = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) coll
-          .loadSBTree(treePointer1);
-
       final OAtomicOperationsManager atomManager = ((OAbstractPaginatedStorage) db.getStorage()).getAtomicOperationsManager();
       final OAtomicOperation atomicOperation = atomManager.startAtomicOperation();
+      OBonsaiCollectionPointer treePointer = coll.createSBTree(atomicOperation, 3, null);
+      OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) coll.loadSBTree(treePointer);
+
+      OBonsaiCollectionPointer treePointer1 = coll.createSBTree(atomicOperation, 3, null);
+      final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree1 = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) coll
+          .loadSBTree(treePointer1);
       for (int i = 1000; i < 2000; i++)
         tree.put(atomicOperation, new ORecordId(10, i), 1);
       Future<?> ex = null;

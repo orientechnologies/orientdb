@@ -17,35 +17,23 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MapRecordInfo;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Triple;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
 
@@ -861,8 +849,10 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
 
     OBonsaiCollectionPointer pointer = ridbag.getPointer();
 
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+    final OStorage storage = db.getStorage();
     final ORecordSerializationContext context;
-    boolean remoteMode = ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy;
+    boolean remoteMode = storage instanceof OStorageProxy;
     if (remoteMode) {
       context = null;
     } else
@@ -872,7 +862,9 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       final int clusterId = getHighLevelDocClusterId(ridbag);
       assert clusterId > -1;
       try {
-        pointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager().createSBTree(clusterId, ownerUuid);
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        Objects.requireNonNull(atomicOperation);
+        pointer = db.getSbTreeCollectionManager().createSBTree(atomicOperation, clusterId, ownerUuid);
       } catch (IOException e) {
         throw OException.wrapException(new ODatabaseException("Errur during ridbag creation"), e);
       }

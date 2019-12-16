@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTre
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -89,10 +88,10 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) throws IOException {
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(OAtomicOperation atomicOperation, int clusterId) throws IOException {
     checkAccess();
 
-    return super.createAndLoadTree(clusterId);
+    return super.createAndLoadTree(atomicOperation, clusterId);
   }
 
   @Override
@@ -101,10 +100,10 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) throws IOException {
+  public OBonsaiCollectionPointer createSBTree(OAtomicOperation atomicOperation, int clusterId, UUID ownerUUID) throws IOException {
     checkAccess();
 
-    final OBonsaiCollectionPointer pointer = super.createSBTree(clusterId, ownerUUID);
+    final OBonsaiCollectionPointer pointer = super.createSBTree(atomicOperation, clusterId, ownerUUID);
 
     if (ownerUUID != null) {
       Map<UUID, OBonsaiCollectionPointer> changedPointers = ODatabaseRecordThreadLocal.instance().get().getCollectionsChanges();
@@ -117,15 +116,13 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) throws IOException {
+  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(OAtomicOperation atomicOperation, int clusterId)
+      throws IOException {
 
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION,
+    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION,
         storage);
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-    Objects.requireNonNull(atomicOperation);
 
     tree.create(atomicOperation, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
-
     return tree;
   }
 

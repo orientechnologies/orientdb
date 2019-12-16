@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerAbstract;
@@ -74,7 +75,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createTree(final int clusterId) {
+  protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createTree(OAtomicOperation atomicOperation, final int clusterId) {
     if (remoteCreationAllowed) {
       final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
       OSBTCreateTreeRequest request = new OSBTCreateTreeRequest(clusterId);
