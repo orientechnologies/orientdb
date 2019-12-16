@@ -2829,7 +2829,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-        checkIndexId(indexId);
+        checkIndexId(internalId);
 
         makeStorageDirty();
 
