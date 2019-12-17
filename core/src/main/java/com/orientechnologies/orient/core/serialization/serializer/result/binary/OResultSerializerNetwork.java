@@ -414,7 +414,7 @@ public class OResultSerializerNetwork {
       writeLinkCollection(bytes, ridCollection);
       break;
     case LINK:
-      if(value instanceof OResult && ((OResult) value).isElement()){
+      if (value instanceof OResult && ((OResult) value).isElement()) {
         value = ((OResult) value).getElement().get();
       }
       if (!(value instanceof OIdentifiable))
@@ -576,7 +576,7 @@ public class OResultSerializerNetwork {
   }
 
   private OType getTypeFromValueEmbedded(final Object fieldValue) {
-    if(fieldValue instanceof OResult && ((OResult) fieldValue).isElement()){
+    if (fieldValue instanceof OResult && ((OResult) fieldValue).isElement()) {
       return OType.LINK;
     }
     OType type = fieldValue instanceof OResult ? OType.EMBEDDED : OType.getTypeByValue(fieldValue);
