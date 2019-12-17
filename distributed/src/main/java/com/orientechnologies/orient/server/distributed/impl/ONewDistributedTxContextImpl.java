@@ -162,4 +162,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return lockedRids;
   }
 
+  public List<Object> getLockedKeys() {
+    return lockedKeys;
+  }
 }
