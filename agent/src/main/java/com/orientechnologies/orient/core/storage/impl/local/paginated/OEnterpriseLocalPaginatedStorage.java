@@ -276,8 +276,15 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   private long extractIndexFromIBUFile(final File backupDirectory, final String fileName) throws IOException {
     final File file = new File(backupDirectory, fileName);
 
-    try (RandomAccessFile rndFile = new RandomAccessFile(file, "r")) {
+    RandomAccessFile rndFile = new RandomAccessFile(file, "r");
+    try {
       return rndFile.readLong();
+    } finally {
+      try {
+        rndFile.close();
+      } catch (Exception e) {
+        OLogManager.instance().warn(this, "Failed to close resource " + rndFile);
+      }
     }
   }
 
@@ -358,10 +365,19 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               writeAheadLog.removeCutTillLimit(freezeLsn);
             }
           } finally {
-            zipOutputStream.flush();
+            try {
+              zipOutputStream.flush();
+            } catch (Exception e) {
+              OLogManager.instance().warn(this, "Failed to flush resource " + zipOutputStream);
+            }
           }
         } finally {
-          bufferedOutputStream.flush();
+          try {
+            bufferedOutputStream.flush();
+          } catch (Exception e) {
+            OLogManager.instance().warn(this, "Failed to flush resource " + bufferedOutputStream);
+          }
+
         }
       } finally {
         if (!isWriteAllowedDuringIncrementalBackup())
@@ -518,7 +534,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         for (String file : files) {
           final File ibuFile = new File(backupDirectory, file);
 
-          try (RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw")) {
+          RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw");
+          try {
             final FileChannel ibuChannel = rndIBUFile.getChannel();
             ibuChannel.position(3 * OLongSerializer.LONG_SIZE);
 
@@ -533,6 +550,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               restoreFromIncrementalBackup(inputStream, fullBackup);
             } finally {
               Utils.safeClose(this, inputStream);
+            }
+          } finally {
+            try {
+              rndIBUFile.close();
+            } catch (Exception e) {
+              OLogManager.instance().warn(this, "Failed to close resource " + rndIBUFile);
             }
           }
 

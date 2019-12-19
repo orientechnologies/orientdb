@@ -72,16 +72,16 @@ import java.util.Properties;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
         implements ODatabaseLifecycleListener, OPluginLifecycleListener, OServerLifecycleListener, OEnterpriseEndpoint {
-  private static final String  PLUGIN_NAME            = "enterprise-agent";
-  private static final String  PATH_TO_EE_AGENT_PROPS = "/com/orientechnologies/agent.properties";
-  private static final String  EE_VERSION             = "version";
-  private static final String  LICENSE                = "license";
+  private static final String PLUGIN_NAME = "enterprise-agent";
+  private static final String PATH_TO_EE_AGENT_PROPS = "/com/orientechnologies/agent.properties";
+  private static final String EE_VERSION = "version";
+  private static final String LICENSE = "license";
   private static final boolean PLUGIN_ENABLED_DEFAULT = false;
 
-  private String     enterpriseVersion = "";
-  public  OServer    server;
-  private String     license;
-  private Properties properties        = new Properties();
+  private String enterpriseVersion = "";
+  public OServer server;
+  private String license;
+  private Properties properties = new Properties();
 
   private List<OEnterpriseService> services = new ArrayList<>();
 
@@ -321,11 +321,18 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   private void loadAgentProperties() throws IOException {
-    try(final InputStream inputStream = OEnterpriseAgent.class.getResourceAsStream(PATH_TO_EE_AGENT_PROPS);) {
+    final InputStream inputStream = OEnterpriseAgent.class.getResourceAsStream(PATH_TO_EE_AGENT_PROPS);
+    try {
       properties.load(inputStream);
       enterpriseVersion = properties.getProperty(EE_VERSION);
       if (enterpriseVersion == null || enterpriseVersion.isEmpty()) {
         throw new IllegalArgumentException("Cannot read the agent version from the agent config file.");
+      }
+    } finally {
+      try {
+        inputStream.close();
+      } catch (Exception e) {
+        OLogManager.instance().warn(this, "Failed to close input stream " + inputStream);
       }
     }
   }
@@ -333,13 +340,12 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   private boolean checkVersion() {
     if (!OConstants.getRawVersion().equalsIgnoreCase(enterpriseVersion)) {
       OLogManager.instance()
-          .warn(this, "The current agent version %s is not compatible with OrientDB %s. Please use the same version.",
-              enterpriseVersion, OConstants.getVersion());
+              .warn(this, "The current agent version %s is not compatible with OrientDB %s. Please use the same version.",
+                      enterpriseVersion, OConstants.getVersion());
       return false;
     }
     return true;
   }
-
 
 
   private void installComponents() {
@@ -428,7 +434,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
     final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
-        .getDistributedManager();
+            .getDistributedManager();
     if (dManager == null || !dManager.isEnabled()) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
@@ -446,7 +452,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     }
 
     final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
-        .getDistributedManager();
+            .getDistributedManager();
     if (dManager == null || !dManager.isEnabled()) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
@@ -464,7 +470,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
     final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
-        .getDistributedManager();
+            .getDistributedManager();
     if (dManager == null || !dManager.isEnabled()) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }

@@ -33,12 +33,12 @@ import java.util.stream.Collectors;
  */
 public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbstract {
 
-  private static final String[] NAMES = { "GET|metrics", "GET|metrics/*", "POST|metrics/config", "POST|metrics/config" };
+  private static final String[] NAMES = {"GET|metrics", "GET|metrics/*", "POST|metrics/config", "POST|metrics/config"};
 
-  private OEnterpriseServer      enterpriseServer;
-  private OMetricsRegistry       registry;
+  private OEnterpriseServer enterpriseServer;
+  private OMetricsRegistry registry;
   private OrientDBMetricsService service;
-  private ObjectMapper           mapper = new ObjectMapper();
+  private ObjectMapper mapper = new ObjectMapper();
 
   public OrientDBMetricsCommand(OEnterpriseServer enterpriseServer, OMetricsRegistry registry, OrientDBMetricsService settings) {
     super(EnterprisePermissions.SERVER_METRICS.toString());
@@ -114,15 +114,15 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
         } else {
 
           Map<String, ODocument> responses = enterpriseServer.getNodesManager().sendAll(new NewEnterpriseStatsTask()).stream()
-              .collect(Collectors.toMap(OperationResponseFromNode::getSenderNodeName, (r) -> {
-                NodeResponse node = r.getNodeResponse();
-                if (node != null && node.getResponseType() == 1) {
-                  ResponseOk ok = (ResponseOk) node;
-                  EnterpriseStatsResponse response = (EnterpriseStatsResponse) ok.getPayload();
-                  return new ODocument().fromJSON(response.getStats());
-                }
-                return new ODocument();
-              }));
+                  .collect(Collectors.toMap(OperationResponseFromNode::getSenderNodeName, (r) -> {
+                    NodeResponse node = r.getNodeResponse();
+                    if (node != null && node.getResponseType() == 1) {
+                      ResponseOk ok = (ResponseOk) node;
+                      EnterpriseStatsResponse response = (EnterpriseStatsResponse) ok.getPayload();
+                      return new ODocument().fromJSON(response.getStats());
+                    }
+                    return new ODocument();
+                  }));
 
           metrics.field("clusterStats", responses);
 
@@ -138,7 +138,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
       }
       metrics.setProperty("distributed", manager != null);
       iResponse
-          .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, metrics.toJSON(""), null);
+              .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, metrics.toJSON(""), null);
     } else {
       String command = parts[1];
 
@@ -146,11 +146,18 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
       switch (command) {
       case "prometheus":
         if (settings.reporters.prometheus.enabled) {
-          try (StringWriter writer = new StringWriter()) {
+          StringWriter writer = new StringWriter();
+          try {
             TextFormat.write004(writer, CollectorRegistry.defaultRegistry.filteredMetricFamilySamples(Collections.emptySet()));
             iResponse
-                .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, writer.toString(),
-                    null);
+                    .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, writer.toString(),
+                            null);
+          } finally {
+            try {
+              writer.close();
+            } catch (Exception e) {
+              OLogManager.instance().warn(this, "Failed to close resource " + writer);
+            }
           }
         }
         break;
@@ -161,7 +168,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
       case "list":
         Map<String, MetricInfo> metrics = getMetricsLists(registry.getMetrics(), "");
         String metricsAsString = mapper
-            .writeValueAsString(new MetricList(metrics.entrySet().stream().map(v -> v.getValue()).collect(Collectors.toList())));
+                .writeValueAsString(new MetricList(metrics.entrySet().stream().map(v -> v.getValue()).collect(Collectors.toList())));
         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, metricsAsString, null);
         break;
       }
