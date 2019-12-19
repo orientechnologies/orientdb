@@ -72,7 +72,7 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
         } finally {
           try {
             input.close();
-          } catch (Exception e) {
+          } catch (IOException e) {
             OLogManager.instance().info(this, "Failed to close input stream for " + file2);
           }
         }

@@ -63,7 +63,7 @@ public class OLocalBackupUploader {
     return this.uploadingStrategy.executeUpload(sourceBackupDirectory, destinationDirectoryPath, accessParameters);
   }
 
-  public OUploadMetadata executeUpload(String sourceFile, String fname, String destinationDirectoryPath) throws Exception {
+  public OUploadMetadata executeUpload(String sourceFile, String fname, String destinationDirectoryPath) {
     return this.uploadingStrategy.executeUpload(sourceFile, fname, destinationDirectoryPath);
   }
 

@@ -356,25 +356,20 @@ public class OBackupDBLogger implements OBackupLogger {
 
       String path = "";
       String directory = ((OBackupFinishedLog) oBackupLog).getPath();
-      try {
-
         path = directory + File.separator + ((OBackupFinishedLog) oBackupLog).getFileName();
-        File f = new File(path);
-        boolean deleted = f.delete();
-        if (!deleted) {
-          OLogManager.instance().warn(this,"Error deleting file: " + f.getName());
-        }
-        File dir = new File(directory);
-        if (dir.isDirectory()) {
-          if (dir.listFiles().length == 0) {
-            deleted = dir.delete();
-            if (!deleted) {
-              OLogManager.instance().warn(this,"Error deleting file: " + f.getName());
-            }
+      File f = new File(path);
+      boolean deleted = f.delete();
+      if (!deleted) {
+        OLogManager.instance().warn(this, "Error deleting file: " + f.getName());
+      }
+      File dir = new File(directory);
+      if (dir.isDirectory()) {
+        if (dir.listFiles().length == 0) {
+          deleted = dir.delete();
+          if (!deleted) {
+            OLogManager.instance().warn(this, "Error deleting file: " + f.getName());
           }
         }
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error deleting file " + path, e);
       }
     }
   }

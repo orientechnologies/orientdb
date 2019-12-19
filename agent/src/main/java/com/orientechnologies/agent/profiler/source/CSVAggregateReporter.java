@@ -9,6 +9,7 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -290,13 +291,13 @@ public class CSVAggregateReporter {
         } finally {
           try {
             writer.close();
-          } catch (Exception e) {
+          } catch (IOException e) {
             OLogManager.instance().warn(this, "Failed to close resource " + writer);
           }
         }
 
       }
-    } catch (Exception e) {
+    } catch (IOException e) {
       OLogManager.instance().warn(this, "Error writing to {}", name, e);
     }
   }

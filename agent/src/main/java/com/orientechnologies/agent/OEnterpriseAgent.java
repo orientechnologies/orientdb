@@ -331,7 +331,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     } finally {
       try {
         inputStream.close();
-      } catch (Exception e) {
+      } catch (IOException e) {
         OLogManager.instance().warn(this, "Failed to close input stream " + inputStream);
       }
     }

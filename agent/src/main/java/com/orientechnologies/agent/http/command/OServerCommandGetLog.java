@@ -19,6 +19,7 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.agent.Utils;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import java.io.*;
 import java.net.URLDecoder;
 import java.sql.Time;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -209,7 +211,7 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
               line = line.replace(split[2], "");
               info = line;
 
-            } catch (Exception e) {
+            } catch (ParseException e) {
               // stack trace
               info = info.concat(line);
             }

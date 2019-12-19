@@ -282,7 +282,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     } finally {
       try {
         rndFile.close();
-      } catch (Exception e) {
+      } catch (IOException e) {
         OLogManager.instance().warn(this, "Failed to close resource " + rndFile);
       }
     }
@@ -367,14 +367,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           } finally {
             try {
               zipOutputStream.flush();
-            } catch (Exception e) {
+            } catch (IOException e) {
               OLogManager.instance().warn(this, "Failed to flush resource " + zipOutputStream);
             }
           }
         } finally {
           try {
             bufferedOutputStream.flush();
-          } catch (Exception e) {
+          } catch (IOException e) {
             OLogManager.instance().warn(this, "Failed to flush resource " + bufferedOutputStream);
           }
 
@@ -554,7 +554,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           } finally {
             try {
               rndIBUFile.close();
-            } catch (Exception e) {
+            } catch (IOException e) {
               OLogManager.instance().warn(this, "Failed to close resource " + rndIBUFile);
             }
           }

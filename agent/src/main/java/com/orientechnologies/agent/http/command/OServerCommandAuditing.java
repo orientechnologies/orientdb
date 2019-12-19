@@ -156,7 +156,7 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     return where;
   }
 
-  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
+  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws InterruptedException, IOException {
 
     ODocument config = new ODocument().fromJSON(iRequest.content, "noMap");
     iRequest.databaseName = db;
@@ -176,7 +176,7 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     }
   }
 
-  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
+  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws IOException {
     iRequest.databaseName = db;
 
     ODocument config = null;

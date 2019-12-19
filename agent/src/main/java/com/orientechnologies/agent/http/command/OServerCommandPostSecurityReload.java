@@ -108,7 +108,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
       json.append("\" }");
 
       iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Error", OHttpUtils.CONTENT_JSON, json.toString(), null);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       OLogManager.instance().error(this, "OServerCommandPostSecurityReload.writeJSON()", ex);
     }
   }
@@ -117,7 +117,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
     try {
       iResponse
           .send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, new ODocument().field("message", json).toJSON(), null);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       OLogManager.instance().error(this, "OServerCommandPostSecurityReload.writeJSON", ex);
     }
   }

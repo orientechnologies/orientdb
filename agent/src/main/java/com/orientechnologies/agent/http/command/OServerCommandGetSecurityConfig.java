@@ -100,7 +100,7 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
       json.append("\" }");
 
       iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Error", OHttpUtils.CONTENT_JSON, json.toString(), null);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.writeJSON() ", ex);
     }
   }
@@ -108,7 +108,7 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
   protected void writeJSON(final OHttpResponse iResponse, final String json) {
     try {
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, json, null);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.writeJSON()", ex);
     }
   }
