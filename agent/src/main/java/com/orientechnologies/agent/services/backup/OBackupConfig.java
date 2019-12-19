@@ -79,8 +79,12 @@ public class OBackupConfig {
       }
     } else {
       try {
-        f.getParentFile().mkdirs();
-        f.createNewFile();
+        if (!f.getParentFile().mkdirs()) {
+          OLogManager.instance().warn(this, "Error creating directories '%s'", f.getParentFile().getName());
+        }
+        if (!f.createNewFile()) {
+          OLogManager.instance().warn(this, "Error creating file '%s'", f.getName());
+        }
         OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
 
         OLogManager.instance().info(this, "Backups plugin: created configuration to file '%s'", f);
