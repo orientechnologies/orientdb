@@ -92,7 +92,6 @@ public abstract class OBackupStrategy {
       OBackupErrorLog error = new OBackupErrorLog(start.getUnitId(), start.getTxId(), getUUID(), getDbName(), getMode().toString());
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
-      e.printStackTrace(pw);
       error.setMessage(e.getMessage());
       error.setStackTrace(sw.toString());
       logger.log(error);
@@ -137,7 +136,6 @@ public abstract class OBackupStrategy {
             getMode().toString());
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
         error.setMessage(e.getMessage());
         error.setStackTrace(sw.toString());
         logger.log(error);
