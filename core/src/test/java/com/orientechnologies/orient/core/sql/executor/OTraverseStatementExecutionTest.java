@@ -7,6 +7,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collection;
+
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -165,4 +167,34 @@ public class OTraverseStatementExecutionTest {
     result.close();
   }
 
+
+  @Test
+  public void testTraverseInBatchTx(){
+    String script = "";
+    script += "";
+
+    script += "drop class testTraverseInBatchTx_V if exists unsafe;";
+    script += "create class testTraverseInBatchTx_V extends V;";
+    script += "create property testTraverseInBatchTx_V.name STRING;";
+    script += "drop class testTraverseInBatchTx_E if exists unsafe;";
+    script += "create class testTraverseInBatchTx_E extends E;";
+
+
+    script += "begin;";
+    script += "insert into testTraverseInBatchTx_V(name) values ('a'), ('b'), ('c');";
+    script += "create edge testTraverseInBatchTx_E from (select from testTraverseInBatchTx_V where name = 'a') to (select from testTraverseInBatchTx_V where name = 'b');";
+    script += "create edge testTraverseInBatchTx_E from (select from testTraverseInBatchTx_V where name = 'b') to (select from testTraverseInBatchTx_V where name = 'c');";
+    script += "let top = (select * from (traverse in('testTraverseInBatchTx_E') from (select from testTraverseInBatchTx_V where name='c')) where in('testTraverseInBatchTx_E').size() == 0);";
+    script += "commit;";
+    script += "return $top";
+
+    OResultSet result = db.execute("sql", script);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Object val = item.getProperty("value");
+    Assert.assertTrue(val instanceof Collection);
+    Assert.assertEquals(1, ((Collection)val).size());
+    result.close();
+
+  }
 }
