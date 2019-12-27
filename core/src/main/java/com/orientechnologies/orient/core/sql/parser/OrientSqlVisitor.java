@@ -32,7 +32,6 @@ public interface OrientSqlVisitor
   public Object visit(OInsertStatement node, Object data);
   public Object visit(OInsertBody node, Object data);
   public Object visit(OCreateVertexStatementEmptyNoTarget node, Object data);
-  public Object visit(OCreateVertexStatementEmpty node, Object data);
   public Object visit(OCreateVertexStatement node, Object data);
   public Object visit(OCreateVertexStatementNoTarget node, Object data);
   public Object visit(OCreateEdgeStatement node, Object data);

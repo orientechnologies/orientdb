@@ -1094,9 +1094,6 @@ OStatement StatementInternal():
                 LOOKAHEAD(CreateVertexStatement())
                 result = CreateVertexStatement()
                 |
-                LOOKAHEAD(CreateVertexStatementEmpty())
-                result = CreateVertexStatementEmpty()
-                |
                 LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
                 result = CreateVertexStatementEmptyNoTarget()
                 |
@@ -1909,21 +1906,6 @@ OCreateVertexStatementEmptyNoTarget CreateVertexStatementEmptyNoTarget():
 	<VERTEX>
 	{return jjtThis;}
 }
-
-OCreateVertexStatementEmpty CreateVertexStatementEmpty():
-{}
-{
-
-	<CREATE>
-	<VERTEX>
-	jjtThis.targetClass = Identifier()
-    [
-        <CLUSTER>
-        jjtThis.targetClusterName = Identifier()
-    ]
-    {return jjtThis;}
-}
-
 
 OCreateVertexStatement CreateVertexStatement():
 {}
