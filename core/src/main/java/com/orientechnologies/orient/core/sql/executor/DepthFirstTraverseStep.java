@@ -92,7 +92,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     return value;
   }
 
-    @Override
+  @Override
   protected void fetchNextResults(OCommandContext ctx, int nRecords) {
     if (!this.entryPoints.isEmpty()) {
       OTraverseResult item = (OTraverseResult) this.entryPoints.remove(0);
