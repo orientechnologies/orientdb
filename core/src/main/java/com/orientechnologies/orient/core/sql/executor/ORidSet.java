@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.id.ORID;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -24,6 +25,8 @@ public class ORidSet implements Set<ORID> {
    */
   protected long[][][] content = new long[8][][];
 
+  protected Set<ORID> negatives = new HashSet<>();
+
   long size = 0;
 
   protected int maxArraySize;
@@ -37,14 +40,14 @@ public class ORidSet implements Set<ORID> {
 
   /**
    *
-   * @param bucketSize 
+   * @param bucketSize
    */
   public ORidSet(int bucketSize) {
     maxArraySize = bucketSize;
   }
 
   @Override public int size() {
-    return size <= Integer.MAX_VALUE ? (int) size : Integer.MAX_VALUE;
+    return size + negatives.size() <= Integer.MAX_VALUE ? (int) size + negatives.size() : Integer.MAX_VALUE;
   }
 
   @Override public boolean isEmpty() {
@@ -52,7 +55,7 @@ public class ORidSet implements Set<ORID> {
   }
 
   @Override public boolean contains(Object o) {
-    if (size == 0L) {
+    if (size == 0L && negatives.size() == 0) {
       return false;
     }
     if (!(o instanceof ORID)) {
@@ -65,7 +68,7 @@ public class ORidSet implements Set<ORID> {
     int cluster = identifiable.getClusterId();
     long position = identifiable.getClusterPosition();
     if (cluster < 0 || position < 0) {
-      return false;
+      return negatives.contains(identifiable);
     }
     long positionByte = (position / 63);
     int positionBit = (int) (position % 63);
@@ -113,7 +116,7 @@ public class ORidSet implements Set<ORID> {
     int cluster = identifiable.getClusterId();
     long position = identifiable.getClusterPosition();
     if (cluster < 0 || position < 0) {
-      throw new IllegalArgumentException("negative RID");//TODO
+      return negatives.add(identifiable);
     }
     long positionByte = (position / 63);
     int positionBit = (int) (position % 63);
@@ -195,7 +198,7 @@ public class ORidSet implements Set<ORID> {
     int cluster = identifiable.getClusterId();
     long position = identifiable.getClusterPosition();
     if (cluster < 0 || position < 0) {
-      throw new IllegalArgumentException("negative RID");//TODO
+      return negatives.remove(o);
     }
     long positionByte = (position / 63);
     int positionBit = (int) (position % 63);
@@ -258,6 +261,7 @@ public class ORidSet implements Set<ORID> {
   @Override public void clear() {
     content = new long[8][][];
     size = 0;
+    this.negatives.clear();
   }
 
 }
