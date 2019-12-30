@@ -39,4 +39,8 @@ public class ODropDatabaseSubmitRequest implements OStructuralSubmitRequest {
   public int getRequestType() {
     return OCoordinateMessagesFactory.DROP_DATABASE_SUBMIT_REQUEST;
   }
+
+  public String getDatabase() {
+    return database;
+  }
 }
