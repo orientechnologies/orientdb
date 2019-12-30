@@ -85,7 +85,6 @@ public interface OrientSqlVisitor
   public Object visit(OBinaryCondition node, Object data);
   public Object visit(OContainsValueCondition node, Object data);
   public Object visit(OInstanceofCondition node, Object data);
-  public Object visit(OIndexMatchCondition node, Object data);
   public Object visit(OBetweenCondition node, Object data);
   public Object visit(OIsNullCondition node, Object data);
   public Object visit(OIsNotNullCondition node, Object data);
