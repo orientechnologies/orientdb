@@ -47,6 +47,8 @@ public class OCoordinateMessagesFactory {
   public static final int DATABASE_LEADER_ELECTED               = 34;
   public static final int DATABASE_FULL_SYNC_START              = 35;
   public static final int DATABASE_FULL_SYNC_CHUNK              = 36;
+  public static final int DATABASE_SYNC_REQUEST                 = 37;
+
 
   public static ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {

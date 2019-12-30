@@ -44,4 +44,8 @@ public class ONetworkOperation implements ODistributedMessage {
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
     executor.executeOperation(sender, operation);
   }
+
+  protected OOperation getOperation() {
+    return operation;
+  }
 }

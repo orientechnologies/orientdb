@@ -50,4 +50,16 @@ public class ODatabaseLeaderElected implements OOperation {
   public int getOperationId() {
     return DATABASE_LEADER_ELECTED;
   }
+
+  public String getDatabase() {
+    return database;
+  }
+
+  public ONodeIdentity getLeader() {
+    return leader;
+  }
+
+  public Optional<OLogId> getId() {
+    return id;
+  }
 }
