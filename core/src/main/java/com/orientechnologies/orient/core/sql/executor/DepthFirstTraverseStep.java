@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by luigidellaquila on 26/10/16.
@@ -113,6 +114,8 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       addNextEntryPoint(((OIdentifiable) nextStep), depth, path, stack, ctx);
     } else if (nextStep instanceof Iterable) {
       addNextEntryPoints(((Iterable) nextStep).iterator(), depth, path, stack, ctx);
+    } else if (nextStep instanceof Map) {
+      addNextEntryPoints(((Map) nextStep).values().iterator(), depth, path, stack, ctx);
     } else if (nextStep instanceof OResult) {
       addNextEntryPoint(((OResult) nextStep), depth, path, stack, ctx);
     }
