@@ -95,10 +95,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return extension;
   }
 
-  protected void endAtomicOperation(final boolean rollback) throws IOException {
-    atomicOperationsManager.endAtomicOperation(rollback);
-  }
-
   protected <T> T calculateInsideComponentOperation(final OAtomicOperation atomicOperation, final TxFunction<T> function) {
     return atomicOperationsManager.calculateInsideComponentOperation(atomicOperation, this, function);
   }

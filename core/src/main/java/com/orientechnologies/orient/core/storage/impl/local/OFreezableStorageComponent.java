@@ -43,8 +43,4 @@ public interface OFreezableStorageComponent {
    */
   void release();
 
-  /**
-   * Returns true if the storage is frozen, otherwise false.
-   */
-  boolean isFrozen();
 }

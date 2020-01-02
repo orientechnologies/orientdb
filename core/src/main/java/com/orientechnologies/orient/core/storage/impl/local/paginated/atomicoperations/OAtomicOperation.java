@@ -53,8 +53,6 @@ public final class OAtomicOperation {
 
   private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<>();
 
-  private int componentOperationsCount;
-
   public OAtomicOperation(final OLogSequenceNumber startLSN, final long operationUnitId, final OReadCache readCache,
       final OWriteCache writeCache, final int storageId) {
     this.storageId = storageId;
@@ -539,18 +537,6 @@ public final class OAtomicOperation {
       }
     }
 
-  }
-
-  void incrementComponentOperations() {
-    componentOperationsCount++;
-  }
-
-  boolean decrementComponentOperations() {
-    if (componentOperationsCount <= 0) {
-      throw new IllegalStateException("component operations count `" + componentOperationsCount + "`");
-    }
-
-    return --componentOperationsCount == 0;
   }
 
   void rollback() {

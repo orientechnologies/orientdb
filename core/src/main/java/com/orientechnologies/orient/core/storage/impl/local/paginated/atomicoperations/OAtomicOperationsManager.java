@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.exception.OException;
@@ -38,43 +37,25 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.AtomicOperationIdGen;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.operationsfreezer.OperationsFreezer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12/3/13
  */
 public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
-  private final LongAdder atomicOperationsCount = new LongAdder();
-
-  private final AtomicInteger freezeRequests = new AtomicInteger();
-
-  private final ConcurrentMap<Long, FreezeParameters> freezeParametersIdMap = new ConcurrentHashMap<>();
-  private final AtomicLong                            freezeIdGen           = new AtomicLong();
-
-  private final AtomicReference<WaitingListNode> waitingHead = new AtomicReference<>();
-  private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<>();
-
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
+
+  private final OperationsFreezer atomicOperationsFreezer    = new OperationsFreezer();
+  private final OperationsFreezer componentOperationsFreezer = new OperationsFreezer();
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -114,27 +95,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       throw new OStorageExistsException("Atomic operation already started");
     }
 
-    atomicOperationsCount.increment();
-
-    while (freezeRequests.get() > 0) {
-      assert freezeRequests.get() >= 0;
-
-      atomicOperationsCount.decrement();
-
-      throwFreezeExceptionIfNeeded();
-
-      final Thread thread = Thread.currentThread();
-
-      addThreadInWaitingList(thread);
-
-      if (freezeRequests.get() > 0) {
-        LockSupport.park(this);
-      }
-
-      atomicOperationsCount.increment();
-    }
-
-    assert freezeRequests.get() >= 0;
+    atomicOperationsFreezer.startOperation();
 
     final boolean useWal = useWal();
     final long unitId = idGen.nextId();
@@ -191,7 +152,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       throw OException.wrapException(
           new OStorageException("Exception during execution of component operation inside of storage " + storage.getName()), e);
     } finally {
-      endComponentOperation(atomicOperation);
+      endComponentOperation();
     }
   }
 
@@ -214,7 +175,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       throw OException.wrapException(
           new OStorageException("Exception during execution of component operation inside of storage " + storage.getName()), e);
     } finally {
-      endComponentOperation(atomicOperation);
+      endComponentOperation();
     }
 
     return true;
@@ -235,7 +196,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       throw OException.wrapException(
           new OStorageException("Exception during execution of component operation inside of storage " + storage.getName()), e);
     } finally {
-      endComponentOperation(atomicOperation);
+      endComponentOperation();
     }
   }
 
@@ -264,134 +225,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
   }
 
-  private void addThreadInWaitingList(Thread thread) {
-    final WaitingListNode node = new WaitingListNode(thread);
-
-    while (true) {
-      final WaitingListNode last = waitingTail.get();
-
-      if (waitingTail.compareAndSet(last, node)) {
-        if (last == null) {
-          waitingHead.set(node);
-        } else {
-          last.next = node;
-          last.linkLatch.countDown();
-        }
-
-        break;
-      }
-    }
-  }
-
-  private WaitingListNode cutWaitingList() {
-    while (true) {
-      final WaitingListNode tail = waitingTail.get();
-      final WaitingListNode head = waitingHead.get();
-
-      if (tail == null) {
-        return null;
-      }
-
-      //head is null but tail is not null we are in the middle of addition of item in the list
-      if (head == null) {
-        //let other thread to make it's work
-        Thread.yield();
-        continue;
-      }
-
-      if (head == tail) {
-        return new WaitingListNode(head.item);
-      }
-
-      if (waitingHead.compareAndSet(head, tail)) {
-        WaitingListNode node = head;
-
-        node.waitTillAllLinksWillBeCreated();
-
-        while (node.next != tail) {
-          node = node.next;
-
-          node.waitTillAllLinksWillBeCreated();
-        }
-
-        node.next = new WaitingListNode(tail.item);
-
-        return head;
-      }
-    }
-  }
-
   public long freezeAtomicOperations(Class<? extends OException> exceptionClass, String message) {
-
-    final long id = freezeIdGen.incrementAndGet();
-
-    freezeRequests.incrementAndGet();
-    freezeParametersIdMap.put(id, new FreezeParameters(message, exceptionClass));
-
-    while (atomicOperationsCount.sum() > 0) {
-      Thread.yield();
-    }
-
-    return id;
+    return atomicOperationsFreezer.freezeOperations(exceptionClass, message);
   }
 
-  public boolean isFrozen() {
-    return freezeRequests.get() > 0;
-  }
-
-  public void releaseAtomicOperations(long id) {
-    if (id >= 0) {
-      final FreezeParameters freezeParameters = freezeParametersIdMap.remove(id);
-      if (freezeParameters == null) {
-        throw new IllegalStateException("Invalid value for freeze id " + id);
-      }
-    }
-
-    final Map<Long, FreezeParameters> freezeParametersMap = new HashMap<>(freezeParametersIdMap);
-    final long requests = freezeRequests.decrementAndGet();
-
-    if (requests == 0) {
-      for (Long freezeId : freezeParametersMap.keySet()) {
-        freezeParametersIdMap.remove(freezeId);
-      }
-
-      WaitingListNode node = cutWaitingList();
-
-      while (node != null) {
-        LockSupport.unpark(node.item);
-        node = node.next;
-      }
-    }
-  }
-
-  private void throwFreezeExceptionIfNeeded() {
-    for (FreezeParameters freezeParameters : this.freezeParametersIdMap.values()) {
-      if (freezeParameters.exceptionClass != null) {
-        if (freezeParameters.message != null) {
-          try {
-            final Constructor<? extends OException> mConstructor = freezeParameters.exceptionClass.getConstructor(String.class);
-            throw mConstructor.newInstance(freezeParameters.message);
-          } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | SecurityException | InvocationTargetException ie) {
-            OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
-                + " with message will try empty constructor instead", ie);
-            throwFreezeExceptionWithoutMessage(freezeParameters);
-          }
-        } else {
-          throwFreezeExceptionWithoutMessage(freezeParameters);
-        }
-
-      }
-    }
-  }
-
-  private void throwFreezeExceptionWithoutMessage(FreezeParameters freezeParameters) {
-    try {
-      //noinspection deprecation
-      throw freezeParameters.exceptionClass.newInstance();
-    } catch (InstantiationException | IllegalAccessException ie) {
-      OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
-          + " will park thread instead of throwing of exception", ie);
-    }
+  public void releaseAtomicOperations(final long id) {
+    atomicOperationsFreezer.releaseOperations(id);
   }
 
   public static OAtomicOperation getCurrentOperation() {
@@ -401,11 +240,20 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private void startComponentOperation(final OAtomicOperation atomicOperation, final String lockName) {
     acquireExclusiveLockTillOperationComplete(atomicOperation, lockName);
     checkReadOnlyConditions(atomicOperation);
-    atomicOperation.incrementComponentOperations();
+
+    componentOperationsFreezer.startOperation();
   }
 
-  private static void endComponentOperation(final OAtomicOperation atomicOperation) {
-    atomicOperation.decrementComponentOperations();
+  private void endComponentOperation() {
+    componentOperationsFreezer.endOperation();
+  }
+
+  public long freezeComponentOperations() {
+    return componentOperationsFreezer.freezeOperations(null, null);
+  }
+
+  public void releaseComponentOperations(final long freezeId) {
+    componentOperationsFreezer.releaseOperations(freezeId);
   }
 
   private boolean tryStartComponentOperation(final OAtomicOperation atomicOperation, final String lockName) {
@@ -415,7 +263,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
 
     checkReadOnlyConditions(atomicOperation);
-    atomicOperation.incrementComponentOperations();
+
+    componentOperationsFreezer.startOperation();
     return true;
   }
 
@@ -463,7 +312,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
       throw e;
     } finally {
-      atomicOperationsCount.decrement();
+      atomicOperationsFreezer.endOperation();
     }
 
   }
@@ -541,40 +390,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   @Override
   public String dumpActiveAtomicOperations() {
     return "";
-  }
-
-  private static final class FreezeParameters {
-    private final String                      message;
-    private final Class<? extends OException> exceptionClass;
-
-    private FreezeParameters(String message, Class<? extends OException> exceptionClass) {
-      this.message = message;
-      this.exceptionClass = exceptionClass;
-    }
-  }
-
-  private static final class WaitingListNode {
-    /**
-     * Latch which indicates that all links are created between add and existing list elements.
-     */
-    private final CountDownLatch linkLatch = new CountDownLatch(1);
-
-    private final    Thread          item;
-    private volatile WaitingListNode next;
-
-    private WaitingListNode(Thread item) {
-      this.item = item;
-    }
-
-    private void waitTillAllLinksWillBeCreated() {
-      try {
-        linkLatch.await();
-      } catch (InterruptedException e) {
-        throw OException.wrapException(
-            new OInterruptedException("Thread was interrupted while was waiting for completion of 'waiting linked list' operation"),
-            e);
-      }
-    }
   }
 
   private boolean useWal() {
