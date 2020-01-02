@@ -51,10 +51,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 
@@ -334,6 +331,43 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   @Override
   public byte[] writeClassOnly(ORecord iSource) {
     return new byte[] {};
+  }
+
+
+  public void toString(final ORecord iRecord, final OJSONWriter json, final String iFormat, boolean iOnlyDelta,
+                                boolean autoDetectCollectionType) {
+    try {
+      final FormatSettings settings = new FormatSettings(iFormat);
+
+      json.beginObject();
+
+      OJSONFetchContext context = new OJSONFetchContext(json, settings);
+      context.writeSignature(json, iRecord);
+
+      if (iRecord instanceof ODocument) {
+        final OFetchPlan fp = OFetchHelper.buildFetchPlan(settings.fetchPlan);
+
+        OFetchHelper.fetch(iRecord, null, fp, new OJSONFetchListener(), context, iFormat);
+      } else if (iRecord instanceof ORecordStringable) {
+
+        // STRINGABLE
+        final ORecordStringable record = (ORecordStringable) iRecord;
+        json.writeAttribute(settings.indentLevel, true, "value", record.value());
+
+      } else if (iRecord instanceof OBlob) {
+        // BYTES
+        final OBlob record = (OBlob) iRecord;
+        json.writeAttribute(settings.indentLevel, true, "value", Base64.getEncoder().encodeToString(record.toStream()));
+      } else
+
+        throw new OSerializationException(
+                "Error on marshalling record of type '" + iRecord.getClass() + "' to JSON. The record type cannot be exported to JSON");
+
+      json.endObject(settings.indentLevel, true);
+
+    } catch (IOException e) {
+      throw OException.wrapException(new OSerializationException("Error on marshalling of record to JSON"), e);
+    }
   }
 
   @Override
