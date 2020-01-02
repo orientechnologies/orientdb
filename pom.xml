@@ -527,6 +527,8 @@
                             **/*OrientSqlTokenManager*
                         </exclude>
                     </excludes>
+                    <destFile>${project.basedir}/../target/jacoco.exec</destFile>
+                    <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
                 </configuration>
                 <executions>
                     <execution>
