@@ -112,4 +112,8 @@ public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
   public boolean isIdempotent() {
     return false;
   }
+
+  public int getClusterId() {
+    return clusterId;
+  }
 }
