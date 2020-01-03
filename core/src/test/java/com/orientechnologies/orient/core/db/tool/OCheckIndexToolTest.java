@@ -33,7 +33,7 @@ public class OCheckIndexToolTest {
 
       ORID rid = doc.getIdentity();
 
-      int N_RECORDS = 1000000;
+      int N_RECORDS = 100000;
       for (int i = 0; i < N_RECORDS; i++) {
         doc = db.newInstance("Foo");
         doc.field("name", "x" + i);
