@@ -1072,6 +1072,8 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testFetchFromIndex() {
+    boolean oldAllowManual = OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean();
+    OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.setValue(true);
     String className = "testFetchFromIndex";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1100,6 +1102,7 @@ public class OSelectStatementExecutionTest {
     OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
     Assert.assertEquals(FetchFromIndexStep.class, plan.getSteps().get(0).getClass());
     result.close();
+    OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.setValue(oldAllowManual);
   }
 
   @Test
