@@ -1758,18 +1758,6 @@ OUpdatePutItem UpdatePutItem():
     { return jjtThis; }
 }
 
-
-OUpdateAddItem UpdateAddItem():
-{}
-{
-    (
-    	jjtThis.left = Identifier() <EQ>
-    	jjtThis.right = Expression()
-    )
-    { return jjtThis; }
-}
-
-
 OInsertStatement InsertStatement():
 {}
 {
