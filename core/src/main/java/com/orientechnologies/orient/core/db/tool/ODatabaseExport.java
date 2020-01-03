@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.io.FileOutputStream;
@@ -629,7 +630,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (recordExported > 0)
           writer.append(",");
 
-        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,dateAsLong"));
+        String iFormat = "rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,dateAsLong";
+        ORecordSerializerJSON.INSTANCE.toString(rec, writer, iFormat == null ? "" : iFormat, true);
 
         recordExported++;
         recordNum++;
