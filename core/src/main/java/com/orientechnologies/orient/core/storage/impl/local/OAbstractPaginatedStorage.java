@@ -525,6 +525,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         transaction = new ThreadLocal<>();
 
         preCreateSteps();
+        makeStorageDirty();
 
         atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
           configuration = new OClusterBasedStorageConfiguration(this);
@@ -555,10 +556,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           // ADD THE DEFAULT CLUSTER
           defaultClusterId = doAddCluster(atomicOperation, CLUSTER_DEFAULT_NAME, null);
-
-          if (jvmError.get() == null) {
-            clearStorageDirty();
-          }
 
           postCreateSteps();
 
@@ -989,6 +986,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throwClusterDoesNotExist(clusterId);
         }
 
+        makeStorageDirty();
         atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> cluster.set(atomicOperation, attribute, value));
       } finally {
         stateLock.releaseWriteLock();
@@ -1019,6 +1017,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throwClusterDoesNotExist(clusterName);
         }
 
+        makeStorageDirty();
         return atomicOperationsManager
             .calculateInsideAtomicOperation((atomicOperation) -> cluster.set(atomicOperation, attribute, value));
       } finally {
@@ -1108,6 +1107,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throwClusterDoesNotExist(clusterId);
         }
 
+        makeStorageDirty();
+
         atomicOperationsManager.executeInsideAtomicOperation(cluster::truncate);
       } finally {
         stateLock.releaseWriteLock();
@@ -1138,7 +1139,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throwClusterDoesNotExist(clusterName);
         }
 
-        boolean rollback = false;
+        makeStorageDirty();
         atomicOperationsManager.executeInsideAtomicOperation(cluster::truncate);
       } finally {
         stateLock.releaseWriteLock();
@@ -1254,74 +1255,53 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return id;
   }
 
-  public final boolean setClusterStatus(final int clusterId, final OStorageClusterConfiguration.STATUS iStatus) {
-    try {
-      checkOpenness();
-      stateLock.acquireWriteLock();
-      try {
-        checkOpenness();
-        checkClusterId(clusterId);
-
-        final OCluster cluster = clusters.get(clusterId);
-        if (cluster == null) {
-          return false;
-        }
-
-        if (iStatus == OStorageClusterConfiguration.STATUS.OFFLINE && cluster instanceof OOfflineCluster
-            || iStatus == OStorageClusterConfiguration.STATUS.ONLINE && !(cluster instanceof OOfflineCluster)) {
-          return false;
-        }
-
-        // UPDATE CONFIGURATION
-        makeStorageDirty();
-
-        boolean rollback = false;
-        atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-          final OCluster newCluster;
-          if (iStatus == OStorageClusterConfiguration.STATUS.OFFLINE) {
-            cluster.close(true);
-            newCluster = new OOfflineCluster(this, clusterId, cluster.getName());
-
-            boolean configured = false;
-            for (final OStorageClusterConfiguration clusterConfiguration : configuration.getClusters()) {
-              if (clusterConfiguration.getId() == cluster.getId()) {
-                newCluster.configure(this, clusterConfiguration);
-                configured = true;
-                break;
-              }
-            }
-
-            if (!configured) {
-              throw new OStorageException("Can not configure offline cluster with id " + clusterId);
-            }
-          } else {
-
-            newCluster = OPaginatedClusterFactory
-                .createCluster(cluster.getName(), configuration.getVersion(), cluster.getBinaryVersion(), this);
-            newCluster.configure(this, clusterId, cluster.getName());
-            newCluster.open();
-          }
-
-          clusterMap.put(cluster.getName().toLowerCase(configuration.getLocaleInstance()), newCluster);
-          clusters.set(clusterId, newCluster);
-
-          ((OClusterBasedStorageConfiguration) configuration).setClusterStatus(atomicOperation, clusterId, iStatus);
-        });
-
-        makeFullCheckpoint();
-        return true;
-      } catch (final Exception e) {
-        throw OException.wrapException(new OStorageException("Error while removing cluster '" + clusterId + "'"), e);
-      } finally {
-        stateLock.releaseWriteLock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+  /**
+   * INTERNAL METHOD !!!
+   */
+  public final boolean setClusterStatus(final OAtomicOperation atomicOperation, final OCluster cluster,
+      final OStorageClusterConfiguration.STATUS status) throws IOException {
+    if (status == OStorageClusterConfiguration.STATUS.OFFLINE && cluster instanceof OOfflineCluster
+        || status == OStorageClusterConfiguration.STATUS.ONLINE && !(cluster instanceof OOfflineCluster)) {
+      return false;
     }
+
+    // UPDATE CONFIGURATION
+    makeStorageDirty();
+
+    boolean rollback = false;
+
+    final OCluster newCluster;
+    if (status == OStorageClusterConfiguration.STATUS.OFFLINE) {
+      cluster.close(true);
+      newCluster = new OOfflineCluster(this, cluster.getId(), cluster.getName());
+
+      boolean configured = false;
+      for (final OStorageClusterConfiguration clusterConfiguration : configuration.getClusters()) {
+        if (clusterConfiguration.getId() == cluster.getId()) {
+          newCluster.configure(this, clusterConfiguration);
+          configured = true;
+          break;
+        }
+      }
+
+      if (!configured) {
+        throw new OStorageException("Can not configure offline cluster with id " + cluster.getId());
+      }
+    } else {
+
+      newCluster = OPaginatedClusterFactory
+          .createCluster(cluster.getName(), configuration.getVersion(), cluster.getBinaryVersion(), this);
+      newCluster.configure(this, cluster.getId(), cluster.getName());
+      newCluster.open();
+    }
+
+    clusterMap.put(cluster.getName().toLowerCase(configuration.getLocaleInstance()), newCluster);
+    clusters.set(cluster.getId(), newCluster);
+
+    ((OClusterBasedStorageConfiguration) configuration).setClusterStatus(atomicOperation, cluster.getId(), status);
+
+    makeFullCheckpoint();
+    return true;
   }
 
   @Override
@@ -4458,6 +4438,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         this.recordConflictStrategy = conflictResolver;
         ((OClusterBasedStorageConfiguration) configuration).setConflictStrategy(atomicOperation, conflictResolver.getName());
@@ -6152,6 +6133,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setSchemaRecordId(atomicOperation, schemaRecordId);
@@ -6174,6 +6156,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setDateFormat(atomicOperation, dateFormat);
@@ -6196,6 +6179,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setTimeZone(atomicOperation, timeZoneValue);
@@ -6218,6 +6203,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setLocaleLanguage(atomicOperation, locale);
@@ -6241,6 +6228,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setCharset(atomicOperation, charset);
@@ -6263,6 +6251,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setIndexMgrRecordId(atomicOperation, indexMgrRecordId);
@@ -6285,6 +6274,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setDateTimeFormat(atomicOperation, dateTimeFormat);
@@ -6307,6 +6297,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setLocaleCountry(atomicOperation, localeCountry);
@@ -6329,6 +6320,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setClusterSelection(atomicOperation, clusterSelection);
@@ -6351,6 +6343,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setMinimumClusters(minimumClusters);
@@ -6373,6 +6366,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setValidation(atomicOperation, validation);
@@ -6395,6 +6389,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+
+      makeStorageDirty();
 
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
@@ -6420,6 +6416,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setProperty(atomicOperation, property, value);
@@ -6443,6 +6440,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setRecordSerializer(atomicOperation, recordSerializer);
@@ -6468,6 +6466,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
+      makeStorageDirty();
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.clearProperties(atomicOperation);

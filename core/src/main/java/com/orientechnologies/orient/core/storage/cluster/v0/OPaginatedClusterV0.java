@@ -257,7 +257,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
           throw new IllegalStateException("Value of attribute is null");
         }
 
-        return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS
+        return storageLocal.setClusterStatus(atomicOperation, this, OStorageClusterConfiguration.STATUS
             .valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
       }
       case ENCRYPTION:

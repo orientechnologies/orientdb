@@ -94,7 +94,7 @@ public class OOfflineCluster implements OCluster {
       if (stringValue == null)
         throw new IllegalStateException("Value of attribute is null.");
 
-      return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS
+      return storageLocal.setClusterStatus(atomicOperation, this, OStorageClusterConfiguration.STATUS
           .valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
     }
     default:
@@ -124,8 +124,8 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition createRecord(OAtomicOperation atomicOperation, byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
-      throws IOException {
+  public OPhysicalPosition createRecord(OAtomicOperation atomicOperation, byte[] content, int recordVersion, byte recordType,
+      OPhysicalPosition allocatedPosition) throws IOException {
     throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + "'");
   }
 
@@ -135,12 +135,14 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void updateRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void updateRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion,
+      byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
   }
 
   @Override
-  public void recycleRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void recycleRecord(OAtomicOperation atomicOperation, long clusterPosition, byte[] content, int recordVersion,
+      byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot resurrect a record on offline cluster '" + name + "'");
   }
 
