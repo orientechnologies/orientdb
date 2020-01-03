@@ -1646,11 +1646,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void truncateCluster(int clusterId) {
-    wrapped.truncateCluster(clusterId);
-  }
-
-  @Override
   public void setClusterAttribute(int clusterId, OCluster.ATTRIBUTES attribute, Object value) {
     wrapped.setClusterAttribute(clusterId, attribute, value);
   }

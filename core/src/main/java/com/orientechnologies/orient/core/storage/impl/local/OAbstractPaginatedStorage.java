@@ -1092,37 +1092,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public void truncateCluster(int clusterId) {
-    try {
-      checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
-      stateLock.acquireWriteLock();
-      try {
-        checkOpenness();
-
-        checkClusterId(clusterId);
-        final OCluster cluster = clusters.get(clusterId);
-        if (cluster == null) {
-          throwClusterDoesNotExist(clusterId);
-        }
-
-        makeStorageDirty();
-
-        atomicOperationsManager.executeInsideAtomicOperation(cluster::truncate);
-      } finally {
-        stateLock.releaseWriteLock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
   public void truncateCluster(String clusterName) {
     Objects.requireNonNull(clusterName);
 

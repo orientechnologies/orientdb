@@ -379,11 +379,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public void truncateCluster(int clusterId) {
-
-        }
-
-        @Override
         public void setClusterAttribute(int clusterId, OCluster.ATTRIBUTES attribute, Object value) {
 
         }

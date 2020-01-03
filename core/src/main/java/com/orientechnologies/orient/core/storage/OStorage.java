@@ -139,8 +139,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   void truncateCluster(final String clusterName);
 
-  void truncateCluster(final int clusterId);
-
   void setClusterAttribute(final int clusterId, OCluster.ATTRIBUTES attribute, Object value);
 
   Object setClusterAttribute(final String clusterName, OCluster.ATTRIBUTES attribute, Object value);

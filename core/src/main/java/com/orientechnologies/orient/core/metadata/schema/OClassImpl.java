@@ -659,14 +659,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     return cls;
   }
 
-  protected void truncateClusterInternal(final String clusterName, final ODatabaseDocumentInternal database) {
-    database.checkForClusterPermissions(clusterName);
-    database.getStorage().truncateCluster(clusterName);
 
-    for (OIndex index : getIndexes()) {
-      index.rebuild();
-    }
-  }
 
   public Collection<OClass> getSubclasses() {
     acquireSchemaReadLock();
@@ -863,8 +856,11 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     try {
 
       for (int id : clusterIds) {
-        db.checkForClusterPermissions(storage.getClusterNameById(id));
-        storage.truncateCluster(id);
+        final String clusterName = storage.getClusterNameById(id);
+        db.checkForClusterPermissions(clusterName);
+        //noinspection EmptyTryBlock
+        try (final OResultSet resultSet = db.command("truncate cluster " + clusterName)) {
+        }
       }
       for (OIndex<?> index : getClassIndexes())
         index.clear();

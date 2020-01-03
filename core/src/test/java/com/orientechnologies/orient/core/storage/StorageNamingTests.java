@@ -230,11 +230,6 @@ public class StorageNamingTests {
     }
 
     @Override
-    public void truncateCluster(int clusterId) {
-
-    }
-
-    @Override
     public void setClusterAttribute(int clusterId, OCluster.ATTRIBUTES attribute, Object value) {
 
     }

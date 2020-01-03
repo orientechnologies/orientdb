@@ -48,8 +48,9 @@ public class OTruncateClusterStatement extends ODDLStatement {
     final OClass clazz = schema.getClassByClusterId(clusterId);
     if (clazz == null) {
       final OStorage storage = database.getStorage();
-      database.checkForClusterPermissions(storage.getClusterNameById(clusterId));
-      storage.truncateCluster(clusterId);
+      final String clusterName = storage.getClusterNameById(clusterId);
+      database.checkForClusterPermissions(clusterName);
+      storage.truncateCluster(clusterName);
     } else {
       String name = database.getClusterNameById(clusterId);
       clazz.truncateCluster(name);

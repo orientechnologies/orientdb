@@ -1143,11 +1143,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
-  public void truncateCluster(int clusterId) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void setClusterAttribute(int clusterId, OCluster.ATTRIBUTES attribute, Object value) {
     throw new UnsupportedOperationException();
   }

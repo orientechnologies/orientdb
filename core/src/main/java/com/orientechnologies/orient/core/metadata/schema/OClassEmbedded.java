@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -181,7 +182,7 @@ public class OClassEmbedded extends OClassImpl {
       releaseSchemaWriteLock();
     }
   }
-  
+
   public OClassImpl setCustom(final String name, final String value) {
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -645,6 +646,15 @@ public class OClassEmbedded extends OClassImpl {
     }
 
     return this;
+  }
+
+  private void truncateClusterInternal(final String clusterName, final ODatabaseDocumentInternal database) {
+    database.checkForClusterPermissions(clusterName);
+    database.getStorage().truncateCluster(clusterName);
+
+    for (OIndex index : getIndexes()) {
+      index.rebuild();
+    }
   }
 
   public OClass setStrictMode(final boolean isStrict) {

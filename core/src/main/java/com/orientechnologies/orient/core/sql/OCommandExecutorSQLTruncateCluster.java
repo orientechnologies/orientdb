@@ -115,7 +115,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
     if (clazz == null) {
       final OStorage storage = database.getStorage();
       database.checkForClusterPermissions(clusterName);
-      storage.truncateCluster(clusterId);
+      storage.truncateCluster(clusterName);
     } else {
       clazz.truncateCluster(clusterName);
     }
