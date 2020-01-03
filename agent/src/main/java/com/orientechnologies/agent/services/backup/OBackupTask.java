@@ -48,17 +48,15 @@ public class OBackupTask implements OBackupListener {
     if (strategy.isEnabled()) {
       Date nextExecution = strategy.scheduleNextExecution(this);
 
-      task = new TimerTask() {
-        @Override
-        public void run() {
+      task = Orient.instance().scheduleTask(() -> {
+        Orient.instance().submit(() -> {
           try {
             strategy.doBackup(OBackupTask.this);
           } catch (IOException e) {
             OLogManager.instance().error(this, "Error " + e.getMessage(), e);
           }
-        }
-      };
-      Orient.instance().scheduleTask(task, nextExecution, 0);
+        });
+      }, nextExecution, 0);
 
       OLogManager.instance().info(this,
           "Scheduled [" + strategy.getMode() + "] task : " + strategy.getUUID() + ". Next execution will be " + nextExecution);

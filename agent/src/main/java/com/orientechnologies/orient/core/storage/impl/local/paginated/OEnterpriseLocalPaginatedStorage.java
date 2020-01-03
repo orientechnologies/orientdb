@@ -159,25 +159,26 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         OutputStream stream = Channels.newOutputStream(ibuChannel);
         OLogSequenceNumber maxLsn;
         try {
-           maxLsn = incrementalBackup(stream, lastLsn, true);
+          maxLsn = incrementalBackup(stream, lastLsn, true);
+          final ByteBuffer dataBuffer = ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+
+          dataBuffer.putLong(nextIndex);
+          dataBuffer.putLong(maxLsn.getSegment());
+          dataBuffer.putLong(maxLsn.getPosition());
+
+          if (lastLsn == null)
+            dataBuffer.put((byte) 1);
+          else
+            dataBuffer.put((byte) 0);
+
+          dataBuffer.rewind();
+
+          ibuChannel.position(0);
+          ibuChannel.write(dataBuffer);
+
         } finally {
           Utils.safeClose(this, stream);
         }
-        final ByteBuffer dataBuffer = ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
-
-        dataBuffer.putLong(nextIndex);
-        dataBuffer.putLong(maxLsn.getSegment());
-        dataBuffer.putLong(maxLsn.getPosition());
-
-        if (lastLsn == null)
-          dataBuffer.put((byte) 1);
-        else
-          dataBuffer.put((byte) 0);
-
-        dataBuffer.rewind();
-
-        ibuChannel.position(0);
-        ibuChannel.write(dataBuffer);
       } catch (RuntimeException e) {
         rndIBUFile.close();
 
