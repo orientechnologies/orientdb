@@ -20,9 +20,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -47,12 +45,12 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 4,
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 4,
         "Syntax error: importRecords/<database>/<format>/<class>[/<separator>][/<string-delimiter>][/<locale>]");
 
     final long start = System.currentTimeMillis();
 
-    iRequest.data.commandInfo = "Import records";
+    iRequest.getData().commandInfo = "Import records";
 
     ODatabaseDocument db = getProfiledDatabaseInstance(iRequest);
     try {
@@ -61,7 +59,7 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
       if (cls == null)
         throw new IllegalArgumentException("Class '" + urlParts[3] + " is not defined");
 
-      if (iRequest.content == null)
+      if (iRequest.getContent() == null)
         throw new IllegalArgumentException("Empty content");
 
       if (urlParts[2].equalsIgnoreCase("csv")) {
@@ -69,7 +67,7 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
         final char stringDelimiter = urlParts.length > 5 ? urlParts[5].charAt(0) : CSV_STR_DELIMITER;
         final Locale locale = urlParts.length > 6 ? new Locale(urlParts[6]) : Locale.getDefault();
 
-        final BufferedReader reader = new BufferedReader(new StringReader(iRequest.content));
+        final BufferedReader reader = new BufferedReader(new StringReader(iRequest.getContent()));
         String header = reader.readLine();
         if (header == null || (header = header.trim()).length() == 0)
           throw new InputMismatchException("Missing CSV file header");

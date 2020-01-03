@@ -36,9 +36,9 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>[/<value>]");
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>[/<value>]");
 
-    iRequest.data.commandInfo = "Index put";
+    iRequest.getData().commandInfo = "Index put";
 
     ODatabaseDocumentInternal db = null;
 
@@ -56,10 +56,10 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
         record = new ORecordId(urlParts[4]);
       else {
         // GET THE REQUEST CONTENT AS DOCUMENT
-        if (iRequest.content == null || iRequest.content.length() == 0)
+        if (iRequest.getContent() == null || iRequest.getContent().length() == 0)
           throw new IllegalArgumentException("Index's entry value is null");
 
-        record = new ODocument().fromJSON(iRequest.content);
+        record = new ODocument().fromJSON(iRequest.getContent());
       }
 
       final OIndexDefinition indexDefinition = index.getDefinition();

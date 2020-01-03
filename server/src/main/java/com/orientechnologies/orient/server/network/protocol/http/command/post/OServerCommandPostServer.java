@@ -37,9 +37,9 @@ public class OServerCommandPostServer extends OServerCommandAuthenticatedServerA
 
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: server/<setting-name>/<setting-value>");
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: server/<setting-name>/<setting-value>");
 
-    iRequest.data.commandInfo = "Change server settings";
+    iRequest.getData().commandInfo = "Change server settings";
 
     if (urlParts[1] == null || urlParts.length == 0)
       throw new IllegalArgumentException("setting-name is null or empty");

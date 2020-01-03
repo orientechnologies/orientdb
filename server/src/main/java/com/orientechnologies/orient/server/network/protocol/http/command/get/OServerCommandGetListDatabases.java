@@ -46,9 +46,9 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
 
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-    checkSyntax(iRequest.url, 1, "Syntax error: server");
+    checkSyntax(iRequest.getUrl(), 1, "Syntax error: server");
 
-    iRequest.data.commandInfo = "Server status";
+    iRequest.getData().commandInfo = "Server status";
 
     final ODocument result = new ODocument();
 

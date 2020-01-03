@@ -57,7 +57,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OHttpResponse {
+public abstract class OHttpResponse {
   public static final  String  JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
   public static final  char[]  URL_SEPARATOR = { '/' };
   private static final Charset utf8          = Charset.forName("utf8");

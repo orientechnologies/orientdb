@@ -37,12 +37,12 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 3,
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3,
         "Syntax error: command/<database>/<language>/<command-text>[/limit][/<fetchPlan>]");
 
     // TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
     final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
-    String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
+    String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.getContent();
     int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
     String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
     final String accept = iRequest.getHeader("accept");
@@ -53,11 +53,11 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     boolean returnExecutionPlan = true;
 
     long begin = System.currentTimeMillis();
-    if (iRequest.content != null && !iRequest.content.isEmpty()) {
+    if (iRequest.getContent() != null && !iRequest.getContent().isEmpty()) {
       // CONTENT REPLACES TEXT
-      if (iRequest.content.startsWith("{")) {
+      if (iRequest.getContent().startsWith("{")) {
         // JSON PAYLOAD
-        final ODocument doc = new ODocument().fromJSON(iRequest.content);
+        final ODocument doc = new ODocument().fromJSON(iRequest.getContent());
         text = doc.field("command");
         params = doc.field("parameters");
         if (doc.containsField("mode"))
@@ -73,7 +73,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
           params = paramArray;
         }
       } else {
-        text = iRequest.content;
+        text = iRequest.getContent();
       }
     }
 
@@ -84,8 +84,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     if (text == null)
       throw new IllegalArgumentException("text cannot be null");
 
-    iRequest.data.commandInfo = "Command";
-    iRequest.data.commandDetail = text;
+    iRequest.getData().commandInfo = "Command";
+    iRequest.getData().commandDetail = text;
 
     ODatabaseDocument db = null;
 

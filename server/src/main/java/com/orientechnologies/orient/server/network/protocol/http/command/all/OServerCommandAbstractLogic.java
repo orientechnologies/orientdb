@@ -23,14 +23,12 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestWrapper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponseWrapper;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -49,7 +47,7 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
       if (f == null)
         throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
 
-      if (iRequest.httpMethod.equalsIgnoreCase("GET") && !f.isIdempotent()) {
+      if (iRequest.getHttpMethod().equalsIgnoreCase("GET") && !f.isIdempotent()) {
         iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
             "GET method is not allowed to execute function '" + parts[2]
                 + "' because has been declared as non idempotent. Use POST instead.", null);
@@ -62,15 +60,15 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
 
       // BIND CONTEXT VARIABLES
       final OBasicCommandContext context = new OBasicCommandContext();
-      context.setVariable("session", server.getHttpSessionManager().getSession(iRequest.sessionId));
+      context.setVariable("session", server.getHttpSessionManager().getSession(iRequest.getSessionId()));
       context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));
       context.setVariable("response", new OHttpResponseWrapper(iResponse));
 
       final Object functionResult;
-      if (args.length == 0 && iRequest.content != null && !iRequest.content.isEmpty()) {
+      if (args.length == 0 && iRequest.getContent() != null && !iRequest.getContent().isEmpty()) {
         // PARSE PARAMETERS FROM CONTENT PAYLOAD
         try {
-          final ODocument params = new ODocument().fromJSON(iRequest.content);
+          final ODocument params = new ODocument().fromJSON(iRequest.getContent());
           functionResult = f.executeInContext(context, params.toMap());
         } catch (Exception e) {
           throw OException.wrapException(new OCommandScriptException("Error on parsing parameters from request body"), e);

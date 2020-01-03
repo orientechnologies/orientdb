@@ -33,10 +33,10 @@ public class OServerCommandPostConnection extends OServerCommandAuthenticatedSer
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: connection/<command>/<id>");
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: connection/<command>/<id>");
 
-    iRequest.data.commandInfo = "Interrupt command";
-    iRequest.data.commandDetail = urlParts[1];
+    iRequest.getData().commandInfo = "Interrupt command";
+    iRequest.getData().commandDetail = urlParts[1];
 
     if ("KILL".equalsIgnoreCase(urlParts[1]))
       server.getClientConnectionManager().kill(Integer.parseInt(urlParts[2]));

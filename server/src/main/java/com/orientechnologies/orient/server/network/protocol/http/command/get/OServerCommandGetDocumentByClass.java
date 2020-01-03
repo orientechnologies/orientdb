@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -36,12 +35,12 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     ODatabaseDocument db = null;
 
-    final String[] urlParts = checkSyntax(iRequest.url, 4,
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 4,
         "Syntax error: documentbyclass/<database>/<class-name>/<record-position>[/fetchPlan]");
 
     final String fetchPlan = urlParts.length > 4 ? urlParts[4] : null;
 
-    iRequest.data.commandInfo = "Load document";
+    iRequest.getData().commandInfo = "Load document";
 
     final ORecord rec;
     try {
@@ -56,7 +55,7 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
       if (rec == null)
         iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_JSON, "Record with id '" + rid
             + "' was not found.", null);
-      else if (iRequest.httpMethod.equals("HEAD"))
+      else if (iRequest.getHttpMethod().equals("HEAD"))
         // JUST SEND HTTP CODE 200
         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null, null);
       else

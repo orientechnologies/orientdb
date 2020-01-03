@@ -32,9 +32,9 @@ public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>/[<value>]");
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>/[<value>]");
 
-    iRequest.data.commandInfo = "Index remove";
+    iRequest.getData().commandInfo = "Index remove";
 
     ODatabaseDocumentInternal db = null;
     try {

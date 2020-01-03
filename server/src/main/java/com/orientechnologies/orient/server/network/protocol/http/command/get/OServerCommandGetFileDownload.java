@@ -20,7 +20,6 @@ import java.util.Date;
 
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -43,7 +42,7 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: fileDownload/<database>/rid/[/<fileName>][/<fileType>].");
+    String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: fileDownload/<database>/rid/[/<fileName>][/<fileType>].");
 
     final String fileName = urlParts.length > 3 ? encodeResponseText(urlParts[3]) : "unknown";
 
@@ -52,8 +51,8 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 
     final String rid = urlParts[2];
 
-    iRequest.data.commandInfo = "Download";
-    iRequest.data.commandDetail = rid;
+    iRequest.getData().commandInfo = "Download";
+    iRequest.getData().commandDetail = rid;
 
     final ORecordAbstract response;
     ODatabaseDocument db = getProfiledDatabaseInstance(iRequest);

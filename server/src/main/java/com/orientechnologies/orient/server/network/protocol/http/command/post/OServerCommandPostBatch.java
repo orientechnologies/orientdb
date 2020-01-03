@@ -68,9 +68,9 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    checkSyntax(iRequest.url, 2, "Syntax error: batch/<database>");
+    checkSyntax(iRequest.getUrl(), 2, "Syntax error: batch/<database>");
 
-    iRequest.data.commandInfo = "Execute multiple requests in one shot";
+    iRequest.getData().commandInfo = "Execute multiple requests in one shot";
 
     ODatabaseDocument db = null;
 
@@ -88,7 +88,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         db.rollback(true);
       }
 
-      batch = new ODocument().fromJSON(iRequest.content);
+      batch = new ODocument().fromJSON(iRequest.getContent());
 
       Boolean tx = batch.field("transaction");
       if (tx == null)

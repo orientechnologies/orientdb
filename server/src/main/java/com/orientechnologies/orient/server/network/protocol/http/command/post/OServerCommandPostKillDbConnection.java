@@ -33,9 +33,9 @@ public class OServerCommandPostKillDbConnection extends OServerCommandAuthentica
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: dbconnection/<database>");
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: dbconnection/<database>");
 
-    doPost(iRequest, iResponse, urlParts[1], iRequest.content);
+    doPost(iRequest, iResponse, urlParts[1], iRequest.getContent());
 
     return false;
   }
@@ -48,7 +48,7 @@ public class OServerCommandPostKillDbConnection extends OServerCommandAuthentica
         final ONetworkProtocolHttpAbstract http = (ONetworkProtocolHttpAbstract) connection.getProtocol();
         final OHttpRequest req = http.getRequest();
 
-        if (req != null && req != iRequest && req.sessionId.equals(iRequest.sessionId)) {
+        if (req != null && req != iRequest && req.getSessionId().equals(iRequest.getSessionId())) {
           server.getClientConnectionManager().interrupt(connection.getId());
         }
       }

@@ -142,10 +142,10 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
+    String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: database/<database>");
 
-    iRequest.data.commandInfo = "Database info";
-    iRequest.data.commandDetail = urlParts[1];
+    iRequest.getData().commandInfo = "Database info";
+    iRequest.getData().commandDetail = urlParts[1];
 
     exec(iRequest, iResponse, urlParts);
     return false;

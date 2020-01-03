@@ -41,9 +41,9 @@ public class OServerCommandGetConnections extends OServerCommandAuthenticatedSer
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] args = checkSyntax(iRequest.url, 1, "Syntax error: connections[/<database>]");
+    final String[] args = checkSyntax(iRequest.getUrl(), 1, "Syntax error: connections[/<database>]");
 
-    iRequest.data.commandInfo = "Server status";
+    iRequest.getData().commandInfo = "Server status";
 
     final StringWriter jsonBuffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(jsonBuffer);

@@ -33,10 +33,10 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 2,
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 2,
         "Syntax error: document/<database>[/<record-id>][?updateMode=full|partial]");
 
-    iRequest.data.commandInfo = "Edit Document";
+    iRequest.getData().commandInfo = "Edit Document";
 
     ODatabaseDocument db = null;
     ORecordId recordId;
@@ -58,11 +58,11 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
       // UNMARSHALL DOCUMENT WITH REQUEST CONTENT
       doc = new ODocument();
-      doc.fromJSON(iRequest.content).setTrackingChanges(false);
+      doc.fromJSON(iRequest.getContent()).setTrackingChanges(false);
 
-      if (iRequest.ifMatch != null)
+      if (iRequest.getIfMatch() != null)
         // USE THE IF-MATCH HTTP HEADER AS VERSION
-        ORecordInternal.setVersion(doc, Integer.parseInt(iRequest.ifMatch));
+        ORecordInternal.setVersion(doc, Integer.parseInt(iRequest.getIfMatch()));
 
       if (!recordId.isValid())
         recordId = (ORecordId) doc.getIdentity();
