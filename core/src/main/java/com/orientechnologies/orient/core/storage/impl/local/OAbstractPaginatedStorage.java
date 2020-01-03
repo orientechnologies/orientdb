@@ -1158,7 +1158,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-      stateLock.acquireWriteLock();
+      stateLock.acquireReadLock();
       try {
         checkOpenness();
 
