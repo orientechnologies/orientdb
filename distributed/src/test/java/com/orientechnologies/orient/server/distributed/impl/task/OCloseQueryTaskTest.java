@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import org.junit.Assert;
 import org.junit.Test;
 
