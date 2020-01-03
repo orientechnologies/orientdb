@@ -1071,6 +1071,38 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
+  public void testFetchFromIndex() {
+    String className = "testFetchFromIndex";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    String indexName = className + ".name";
+    clazz.createIndex(indexName, OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+
+    OResultSet result = db.query("select from index:" + indexName + " where key = 'name2'");
+    printExecutionPlan(result);
+
+    Assert.assertTrue(result.hasNext());
+    OResult next = result.next();
+    Assert.assertNotNull(next);
+
+    Assert.assertFalse(result.hasNext());
+
+    Optional<OExecutionPlan> p = result.getExecutionPlan();
+    Assert.assertTrue(p.isPresent());
+    OExecutionPlan p2 = p.get();
+    Assert.assertTrue(p2 instanceof OSelectExecutionPlan);
+    OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
+    Assert.assertEquals(FetchFromIndexStep.class, plan.getSteps().get(0).getClass());
+    result.close();
+  }
+
+  @Test
   public void testFetchFromClassWithIndexes() {
     String className = "testFetchFromClassWithIndexes";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
