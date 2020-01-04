@@ -317,7 +317,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       iRequest.data.commandInfo = "Studio delete index";
 
       try {
-        final OIndex<?> index = cls.getClassIndex(className);
+        final OIndex index = cls.getClassIndex(className);
         if (index == null) {
           iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN,
               "Error: Index '" + className + "' not found in class '" + rid + "'.", null);

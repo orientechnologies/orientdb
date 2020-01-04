@@ -2,7 +2,10 @@ package com.orientechnologies.orient.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
@@ -19,19 +22,16 @@ import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.ViewManagerDistributed;
 
 /**
  * Created by tglman on 22/06/17.
  */
-public class OSharedContextDistributed extends OSharedContext {
+public class OSharedContextDistributed extends OSharedContextEmbedded {
 
-  private ViewManager         viewManager;
   private ODistributedContext distributedContext;
 
   public OSharedContextDistributed(OStorage storage, OrientDBDistributed orientDB) {
-    this.orientDB = orientDB;
-    this.storage = storage;
+    super(storage, orientDB);
     schema = new OSchemaDistributed(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerDistributed(storage);
@@ -51,8 +51,6 @@ public class OSharedContextDistributed extends OSharedContext {
     queryStats = new OQueryStats();
 
     distributedContext = new ODistributedContext(storage, orientDB);
-    this.viewManager = new ViewManagerDistributed(orientDB, storage.getName());
-
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {

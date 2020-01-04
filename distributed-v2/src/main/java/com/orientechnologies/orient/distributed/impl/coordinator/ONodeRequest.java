@@ -1,15 +1,18 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OLogRequest;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public interface ONodeRequest extends OLogRequest {
-  ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor, ODatabaseDocumentInternal session);
+  ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor, ODatabaseDocumentInternal session);
 
-  default ONodeResponse recover(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+  default ONodeResponse recover(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
     return execute(nodeFrom, opId, executor, session);
   }

@@ -15,9 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -30,6 +30,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Test
 public class TruncateClassTest extends DocumentDBBaseTest {
@@ -47,7 +48,7 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
 
-    final OIndex<?> index = getOrCreateIndex(testClass);
+    final OIndex index = getOrCreateIndex(testClass);
 
     database.command(new OCommandSQL("truncate class test_class")).execute();
 
@@ -67,13 +68,16 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     }
     Assert.assertTrue(set.containsAll(Arrays.asList(5, 6, 7, 8, 9, -1)));
 
-    Assert.assertEquals(index.getSize(), 6);
+    Assert.assertEquals(index.getInternal().size(), 6);
 
-    OIndexCursor cursor = index.cursor();
-    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
-    while (entry != null) {
-      Assert.assertTrue(set.contains((Integer) entry.getKey()));
-      entry = cursor.nextEntry();
+    Iterator<ORawPair<Object, ORID>> indexIterator;
+    try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
+      indexIterator = stream.iterator();
+
+      while (indexIterator.hasNext()) {
+        ORawPair<Object, ORID> entry = indexIterator.next();
+        Assert.assertTrue(set.contains((Integer) entry.first));
+      }
     }
 
     schema.dropClass("test_class");
@@ -139,17 +143,17 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'")).execute();
 
     final OIndex index = getIndex("TestTruncateVertexClassSuperclassWithIndex_index");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     database.command(new OCommandSQL("truncate class TestTruncateVertexClassSubclassWithIndex")).execute();
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
     database.command(new OCommandSQL("truncate class TestTruncateVertexClassSuperclassWithIndex polymorphic")).execute();
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
-  private OIndex<?> getOrCreateIndex(OClass testClass) {
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
+  private OIndex getOrCreateIndex(OClass testClass) {
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
     if (index == null) {
       testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
       index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");

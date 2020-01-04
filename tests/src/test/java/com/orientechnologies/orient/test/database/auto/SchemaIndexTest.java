@@ -142,6 +142,16 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
     Assert.assertTrue(result.isEmpty());
   }
 
+  public void testIndexWithNumberProperties() {
+    OClass oclass = database.getMetadata().getSchema().createClass("SchemaIndexTest_numberclass");
+    oclass.createProperty("1", OType.STRING).setMandatory(false);
+    oclass.createProperty("2", OType.STRING).setMandatory(false);
+    oclass.createIndex("SchemaIndexTest_numberclass_1_2", OClass.INDEX_TYPE.UNIQUE, "1", "2");
+
+    database.getMetadata().getSchema().dropClass(oclass.getName());
+  }
+
+
   private void assertContains(int[] clusterIds, int clusterId) {
     boolean contains = false;
     for (int cluster : clusterIds) {

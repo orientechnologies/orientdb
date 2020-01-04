@@ -119,7 +119,7 @@ public class LuceneBackupRestoreTest {
 
     assertThat(databaseDocumentTx.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManagerInternal().getIndex(databaseDocumentTx, "City.name");
+    OIndex index = databaseDocumentTx.getMetadata().getIndexManagerInternal().getIndex(databaseDocumentTx, "City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());

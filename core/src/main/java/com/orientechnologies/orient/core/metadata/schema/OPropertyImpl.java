@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -139,7 +138,7 @@ public abstract class OPropertyImpl implements OProperty {
    *
    * @see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
    */
-  public OIndex<?> createIndex(final OClass.INDEX_TYPE iType) {
+  public OIndex createIndex(final OClass.INDEX_TYPE iType) {
     return createIndex(iType.toString());
   }
 
@@ -153,7 +152,7 @@ public abstract class OPropertyImpl implements OProperty {
    *
    * @see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
    */
-  public OIndex<?> createIndex(final String iType) {
+  public OIndex createIndex(final String iType) {
     acquireSchemaReadLock();
     try {
       return owner.createIndex(getFullName(), iType, globalRef.getName());
@@ -163,12 +162,12 @@ public abstract class OPropertyImpl implements OProperty {
   }
 
   @Override
-  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
+  public OIndex createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
     return createIndex(iType.name(), metadata);
   }
 
   @Override
-  public OIndex<?> createIndex(String iType, ODocument metadata) {
+  public OIndex createIndex(String iType, ODocument metadata) {
     acquireSchemaReadLock();
     try {
       return owner.createIndex(getFullName(), iType, null, metadata, new String[] { globalRef.getName() });
@@ -191,8 +190,8 @@ public abstract class OPropertyImpl implements OProperty {
     try {
       final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-      final ArrayList<OIndex<?>> relatedIndexes = new ArrayList<OIndex<?>>();
-      for (final OIndex<?> index : indexManager.getClassIndexes(database, owner.getName())) {
+      final ArrayList<OIndex> relatedIndexes = new ArrayList<OIndex>();
+      for (final OIndex index : indexManager.getClassIndexes(database, owner.getName())) {
         final OIndexDefinition definition = index.getDefinition();
 
         if (OCollections.indexOf(definition.getFields(), globalRef.getName(), new OCaseInsentiveComparator()) > -1) {
@@ -205,7 +204,7 @@ public abstract class OPropertyImpl implements OProperty {
         }
       }
 
-      for (final OIndex<?> index : relatedIndexes)
+      for (final OIndex index : relatedIndexes)
         database.getMetadata().getIndexManagerInternal().dropIndex(database, index.getName());
 
       return this;
@@ -230,10 +229,10 @@ public abstract class OPropertyImpl implements OProperty {
    * @deprecated Use {@link OClass#getInvolvedIndexes(String...)} instead.
    */
   @Deprecated
-  public OIndex<?> getIndex() {
+  public OIndex getIndex() {
     acquireSchemaReadLock();
     try {
-      Set<OIndex<?>> indexes = owner.getInvolvedIndexes(globalRef.getName());
+      Set<OIndex> indexes = owner.getInvolvedIndexes(globalRef.getName());
       if (indexes != null && !indexes.isEmpty())
         return indexes.iterator().next();
       return null;
@@ -246,7 +245,7 @@ public abstract class OPropertyImpl implements OProperty {
    * @deprecated Use {@link OClass#getInvolvedIndexes(String...)} instead.
    */
   @Deprecated
-  public Set<OIndex<?>> getIndexes() {
+  public Set<OIndex> getIndexes() {
     acquireSchemaReadLock();
     try {
       return owner.getInvolvedIndexes(globalRef.getName());
@@ -658,12 +657,12 @@ public abstract class OPropertyImpl implements OProperty {
     description = (String) (document.containsField("description") ? document.field("description") : null);
   }
 
-  public Collection<OIndex<?>> getAllIndexes() {
+  public Collection<OIndex> getAllIndexes() {
     acquireSchemaReadLock();
     try {
-      final Set<OIndex<?>> indexes = owner.getIndexes();
-      final List<OIndex<?>> indexList = new LinkedList<OIndex<?>>();
-      for (final OIndex<?> index : indexes) {
+      final Set<OIndex> indexes = owner.getIndexes();
+      final List<OIndex> indexList = new LinkedList<OIndex>();
+      for (final OIndex index : indexes) {
         final OIndexDefinition indexDefinition = index.getDefinition();
         if (indexDefinition.getFields().contains(globalRef.getName()))
           indexList.add(index);

@@ -109,8 +109,8 @@ public final class OClusterPage extends ODurablePage {
     if (requestedPosition < 0) {
       final ORawPair<Integer, Boolean> entry = findFirstEmptySlot(recordVersion, freePosition, indexesLength, entrySize,
           freeListHeader, bookedRecordPositions);
-      entryIndex = entry.getFirst();
-      allocatedFromFreeList = entry.getSecond();
+      entryIndex = entry.first;
+      allocatedFromFreeList = entry.second;
     } else {
       allocatedFromFreeList = insertIntoRequestedSlot(recordVersion, freePosition, entrySize, requestedPosition, freeListHeader);
       entryIndex = requestedPosition;

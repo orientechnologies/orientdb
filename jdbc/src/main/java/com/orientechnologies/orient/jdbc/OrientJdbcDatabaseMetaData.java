@@ -817,18 +817,18 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   @Override
   public ResultSet getPrimaryKeys(final String catalog, final String schema, final String table) throws SQLException {
     database.activateOnCurrentThread();
-    final Set<OIndex<?>> classIndexes = database.getMetadata().getIndexManagerInternal().getClassIndexes(database, table);
+    final Set<OIndex> classIndexes = database.getMetadata().getIndexManagerInternal().getClassIndexes(database, table);
 
-    final Set<OIndex<?>> uniqueIndexes = new HashSet<>();
+    final Set<OIndex> uniqueIndexes = new HashSet<>();
 
-    for (OIndex<?> oIndex : classIndexes) {
+    for (OIndex oIndex : classIndexes) {
       if (oIndex.getType().equals(INDEX_TYPE.UNIQUE.name()))
         uniqueIndexes.add(oIndex);
     }
 
     final OInternalResultSet resultSet = new OInternalResultSet();
 
-    for (OIndex<?> unique : uniqueIndexes) {
+    for (OIndex unique : uniqueIndexes) {
       int keyFiledSeq = 1;
       for (String keyFieldName : unique.getDefinition().getFields()) {
         final OResultInternal res = new OResultInternal();
@@ -1019,17 +1019,17 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       metadata.getIndexManagerInternal().reload();
     }
 
-    final Set<OIndex<?>> classIndexes = metadata.getIndexManagerInternal().getClassIndexes(database, table);
+    final Set<OIndex> classIndexes = metadata.getIndexManagerInternal().getClassIndexes(database, table);
 
-    final Set<OIndex<?>> indexes = new HashSet<>();
+    final Set<OIndex> indexes = new HashSet<>();
 
-    for (OIndex<?> oIndex : classIndexes) {
+    for (OIndex oIndex : classIndexes) {
       if (!unique || oIndex.getType().equals(INDEX_TYPE.UNIQUE.name()))
         indexes.add(oIndex);
     }
 
     final OInternalResultSet resultSet = new OInternalResultSet();
-    for (OIndex<?> idx : indexes) {
+    for (OIndex idx : indexes) {
       boolean notUniqueIndex = !(idx.getType().equals(INDEX_TYPE.UNIQUE.name()));
 
       final String fieldNames = idx.getDefinition().getFields().toString();

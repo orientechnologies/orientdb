@@ -338,9 +338,9 @@ public class OSchemaRemote extends OSchemaShared {
         throw new OSchemaException("Class '" + className + "' cannot be dropped because it has sub classes " + cls.getSubclasses()
             + ". Remove the dependencies before trying to drop it again");
 
-      final StringBuilder cmd = new StringBuilder("drop class ");
+      final StringBuilder cmd = new StringBuilder("drop class `");
       cmd.append(className);
-      cmd.append(" unsafe");
+      cmd.append("` unsafe");
       database.command(cmd.toString()).close();
       reload(database);
 

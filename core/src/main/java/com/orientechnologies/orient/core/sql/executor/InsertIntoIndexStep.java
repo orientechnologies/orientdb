@@ -44,7 +44,7 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
         }
         //TODO
         final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-        OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, targetIndex.getIndexName());
+        OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, targetIndex.getIndexName());
         if (index == null) {
           throw new OCommandExecutionException("Index not found: " + targetIndex);
         }

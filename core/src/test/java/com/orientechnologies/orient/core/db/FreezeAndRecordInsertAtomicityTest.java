@@ -98,7 +98,7 @@ public class FreezeAndRecordInsertAtomicityTest {
         try {
           final ODatabaseDocumentInternal db = new ODatabaseDocumentTx(URL);
           db.open("admin", "admin");
-          final OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.name");
+          final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.name");
 
           for (int i1 = 0; i1 < ITERATIONS; ++i1)
             switch (random.nextInt(3)) {

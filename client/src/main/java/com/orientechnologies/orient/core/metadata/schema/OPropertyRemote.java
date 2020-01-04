@@ -264,22 +264,22 @@ public class OPropertyRemote extends OPropertyImpl {
   }
 
   @Override
-  public OIndex<?> createIndex(String iType) {
+  public OIndex createIndex(String iType) {
     return owner.createIndex(getFullName(), iType, globalRef.getName());
   }
 
   @Override
-  public OIndex<?> createIndex(OClass.INDEX_TYPE iType) {
+  public OIndex createIndex(OClass.INDEX_TYPE iType) {
     return createIndex(iType.toString());
   }
 
   @Override
-  public OIndex<?> createIndex(String iType, ODocument metadata) {
+  public OIndex createIndex(String iType, ODocument metadata) {
     return owner.createIndex(getFullName(), iType, null, metadata, new String[] { globalRef.getName() });
   }
 
   @Override
-  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
+  public OIndex createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
     return createIndex(iType.name(), metadata);
   }
 
@@ -290,8 +290,8 @@ public class OPropertyRemote extends OPropertyImpl {
 
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final ArrayList<OIndex<?>> relatedIndexes = new ArrayList<OIndex<?>>();
-    for (final OIndex<?> index : indexManager.getClassIndexes(database, owner.getName())) {
+    final ArrayList<OIndex> relatedIndexes = new ArrayList<OIndex>();
+    for (final OIndex index : indexManager.getClassIndexes(database, owner.getName())) {
       final OIndexDefinition definition = index.getDefinition();
 
       if (OCollections.indexOf(definition.getFields(), globalRef.getName(), new OCaseInsentiveComparator()) > -1) {
@@ -304,7 +304,7 @@ public class OPropertyRemote extends OPropertyImpl {
       }
     }
 
-    for (final OIndex<?> index : relatedIndexes)
+    for (final OIndex index : relatedIndexes)
       database.getMetadata().getIndexManagerInternal().dropIndex(database, index.getName());
 
     return this;

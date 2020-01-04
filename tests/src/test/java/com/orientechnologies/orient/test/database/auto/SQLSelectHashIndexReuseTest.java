@@ -1901,30 +1901,6 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
   }
 
   @Test
-  public void testFullTextIndex() {
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    long oldcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
-
-    final List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select * from sqlSelectHashIndexReuseTestClass where prop7 containstext 'Alice' "))
-        .execute();
-
-    Assert.assertEquals(result.size(), 20);
-
-    final ODocument docOne = new ODocument();
-    docOne.field("prop7", "Alice : What is the use of a book, without pictures or conversations?");
-    Assert.assertEquals(containsDocument(result, docOne), 10);
-
-    final ODocument docTwo = new ODocument();
-    docTwo.field("prop7",
-        "Alice : If it had grown up, it would have made a dreadfully ugly child; but it makes rather a handsome pig, I think");
-    Assert.assertEquals(containsDocument(result, docTwo), 10);
-
-    assertProfileCount(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage, 1);
-    assertProfileCount(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed);
-  }
-
-  @Test
   public void testLastFieldNotCompatibleOperator() {
     long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
     long oldcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");

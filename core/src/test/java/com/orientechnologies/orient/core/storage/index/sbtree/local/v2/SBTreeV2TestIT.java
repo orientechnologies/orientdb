@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local.v2;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -10,7 +11,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 import org.junit.After;
 import org.junit.Assert;
@@ -18,7 +18,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -605,8 +608,8 @@ public class SBTreeV2TestIT {
 
     Set<OIdentifiable> identifiables = new HashSet<>();
 
-    OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesMinor(7200, true, true);
-    cursorToSet(identifiables, cursor);
+    Stream<ORawPair<Integer, OIdentifiable>> stream = sbTree.iterateEntriesMinor(7200, true, true);
+    streamToSet(identifiables, stream);
 
     for (int i = 7200; i >= 6900; i--) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -620,8 +623,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesMinor(7200, true, false);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesMinor(7200, true, false);
+    streamToSet(identifiables, stream);
 
     for (int i = 7200; i >= 6900; i--) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -635,8 +638,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesMajor(1740, true, true);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesMajor(1740, true, true);
+    streamToSet(identifiables, stream);
 
     for (int i = 1740; i < 3440; i++) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -650,8 +653,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesMajor(1740, true, false);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesMajor(1740, true, false);
+    streamToSet(identifiables, stream);
 
     for (int i = 1740; i < 3440; i++) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -665,8 +668,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesBetween(1740, true, 7200, true, true);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesBetween(1740, true, 7200, true, true);
+    streamToSet(identifiables, stream);
 
     for (int i = 1740; i < 3440; i++) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -680,8 +683,8 @@ public class SBTreeV2TestIT {
 
     Assert.assertTrue(identifiables.isEmpty());
 
-    cursor = sbTree.iterateEntriesBetween(1740, true, 7200, true, false);
-    cursorToSet(identifiables, cursor);
+    stream = sbTree.iterateEntriesBetween(1740, true, 7200, true, false);
+    streamToSet(identifiables, stream);
 
     for (int i = 1740; i < 3440; i++) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -715,20 +718,21 @@ public class SBTreeV2TestIT {
       doNullTesting(nullSBTree);
 
     } finally {
-      final OSBTree.OSBTreeKeyCursor<Integer> keyCursor = nullSBTree.keyCursor();
-
-      Integer key = keyCursor.next(-1);
-      while (key != null) {
-        nullSBTree.remove(key);
-        key = keyCursor.next(-1);
-      }
+      final Stream<Integer> keyStream = nullSBTree.keyStream();
+      keyStream.forEach((key) -> {
+        try {
+          nullSBTree.remove(key);
+        } catch (IOException e) {
+          throw new IllegalStateException(e);
+        }
+      });
 
       nullSBTree.remove(null);
       nullSBTree.delete();
     }
   }
 
-  private void doNullTesting(OSBTreeV1<Integer, OIdentifiable> nullSBTree) throws java.io.IOException {
+  private static void doNullTesting(OSBTreeV1<Integer, OIdentifiable> nullSBTree) throws java.io.IOException {
     OIdentifiable identifiable = nullSBTree.get(null);
     Assert.assertNull(identifiable);
 
@@ -750,13 +754,9 @@ public class SBTreeV2TestIT {
     Assert.assertNull(identifiable);
   }
 
-  private void cursorToSet(Set<OIdentifiable> identifiables, OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor) {
+  private static void streamToSet(Set<OIdentifiable> identifiables, Stream<ORawPair<Integer, OIdentifiable>> stream) {
     identifiables.clear();
-    Map.Entry<Integer, OIdentifiable> entry = cursor.next(-1);
-    while (entry != null) {
-      identifiables.add(entry.getValue());
-      entry = cursor.next(-1);
-    }
+    identifiables.addAll(stream.map((entry) -> entry.second).collect(Collectors.toSet()));
   }
 
   private void assertIterateMajorEntries(NavigableMap<Integer, ORID> keyValues, Random random, boolean keyInclusive,
@@ -777,7 +777,8 @@ public class SBTreeV2TestIT {
           fromKey = keyValues.floorKey(fromKey);
       }
 
-      final OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
+      final Stream<ORawPair<Integer, OIdentifiable>> stream = sbTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<Integer, OIdentifiable>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
       if (ascSortOrder)
@@ -786,14 +787,14 @@ public class SBTreeV2TestIT {
         iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
 
       while (iterator.hasNext()) {
-        final Map.Entry<Integer, OIdentifiable> indexEntry = cursor.next(-1);
+        final ORawPair<Integer, OIdentifiable> indexEntry = indexIterator.next();
         final Map.Entry<Integer, ORID> entry = iterator.next();
 
-        Assert.assertEquals(indexEntry.getKey(), entry.getKey());
-        Assert.assertEquals(indexEntry.getValue(), entry.getValue());
+        Assert.assertEquals(indexEntry.first, entry.getKey());
+        Assert.assertEquals(indexEntry.second, entry.getValue());
       }
 
-      Assert.assertNull(cursor.next(-1));
+      Assert.assertFalse(indexIterator.hasNext());
     }
   }
 
@@ -815,7 +816,8 @@ public class SBTreeV2TestIT {
           toKey = keyValues.floorKey(toKey);
       }
 
-      final OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
+      final Stream<ORawPair<Integer, OIdentifiable>> stream = sbTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
+      final Iterator<ORawPair<Integer, OIdentifiable>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
       if (ascSortOrder)
@@ -824,14 +826,14 @@ public class SBTreeV2TestIT {
         iterator = keyValues.headMap(toKey, keyInclusive).descendingMap().entrySet().iterator();
 
       while (iterator.hasNext()) {
-        Map.Entry<Integer, OIdentifiable> indexEntry = cursor.next(-1);
+        ORawPair<Integer, OIdentifiable> indexEntry = indexIterator.next();
         Map.Entry<Integer, ORID> entry = iterator.next();
 
-        Assert.assertEquals(indexEntry.getKey(), entry.getKey());
-        Assert.assertEquals(indexEntry.getValue(), entry.getValue());
+        Assert.assertEquals(indexEntry.first, entry.getKey());
+        Assert.assertEquals(indexEntry.second, entry.getValue());
       }
 
-      Assert.assertNull(cursor.next(-1));
+      Assert.assertFalse(indexIterator.hasNext());
     }
   }
 
@@ -871,8 +873,9 @@ public class SBTreeV2TestIT {
       if (fromKey > toKey)
         toKey = fromKey;
 
-      OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree
+      Stream<ORawPair<Integer, OIdentifiable>> stream = sbTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
+      final Iterator<ORawPair<Integer, OIdentifiable>> indexIterator = stream.iterator();
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
       if (ascSortOrder)
@@ -885,12 +888,12 @@ public class SBTreeV2TestIT {
       while (iterator.hasNext()) {
         iteration++;
 
-        Map.Entry<Integer, OIdentifiable> indexEntry = cursor.next(-1);
+        ORawPair<Integer, OIdentifiable> indexEntry = indexIterator.next();
         Assert.assertNotNull(indexEntry);
 
         Map.Entry<Integer, ORID> mapEntry = iterator.next();
-        Assert.assertEquals(indexEntry.getKey(), mapEntry.getKey());
-        Assert.assertEquals(indexEntry.getValue(), mapEntry.getValue());
+        Assert.assertEquals(indexEntry.first, mapEntry.getKey());
+        Assert.assertEquals(indexEntry.second, mapEntry.getValue());
       }
 
       long endTime = System.currentTimeMillis();
@@ -899,7 +902,7 @@ public class SBTreeV2TestIT {
       totalTime += (endTime - startTime);
 
       Assert.assertFalse(iterator.hasNext());
-      Assert.assertNull(cursor.next(-1));
+      Assert.assertFalse(indexIterator.hasNext());
     }
 
     if (totalTime != 0)

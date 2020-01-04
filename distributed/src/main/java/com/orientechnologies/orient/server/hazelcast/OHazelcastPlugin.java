@@ -128,10 +128,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     Orient.instance().setRunningDistributed(true);
 
-    //FORCE TO NEVER CONVERT RIDBAG EMBEDDED TO TREE
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
-    //FORCE TO EVERYTIME CONVERT RIDBAG TREE TO EMBEDDED 
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
@@ -1788,5 +1784,58 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public boolean isRunning() {
     return enabled && running;
+  }
+
+  @Override
+  public void messageReceived(ODistributedRequest request) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageReceived(request);
+    }
+  }
+
+  @Override
+  public void messagePartitionCalculate(ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessagePartitionCalculated(request, involvedWorkerQueues);
+    }
+
+  }
+
+  @Override
+  public void messageBeforeOp(String op, ODistributedRequestId request) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageBeforeOp(op, request);
+    }
+  }
+
+  @Override
+  public void messageAfterOp(String op, ODistributedRequestId request) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageAfterOp(op, request);
+    }
+  }
+
+  @Override
+  public void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageCurrentPayload(requestId, responsePayload);
+    }
+  }
+
+  @Override
+  public void messageProcessStart(ODistributedRequest message) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageProcessStart(message);
+    }
+  }
+
+  @Override
+  public void messageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageProcessEnd(iRequest, responsePayload);
+    }
   }
 }

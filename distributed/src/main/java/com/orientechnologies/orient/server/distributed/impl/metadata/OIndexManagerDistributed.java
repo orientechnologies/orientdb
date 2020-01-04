@@ -30,7 +30,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
     return this;
   }
 
-  public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+  public OIndex createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
       final OIndexDefinition indexDefinition, final int[] clusterIdsToIndex, final OProgressListener progressListener,
       final ODocument metadata) {
 
@@ -42,7 +42,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
   }
 
   @Override
-  public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+  public OIndex createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
       final OIndexDefinition iIndexDefinition, final int[] iClusterIdsToIndex, final OProgressListener progressListener,
       final ODocument metadata, final String algorithm) {
     if (isDistributedCommand(database)) {
@@ -53,7 +53,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
     return super.createIndex(database, iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
   }
 
-  public OIndex<?> distributedCreateIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+  public OIndex distributedCreateIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
       final OIndexDefinition iIndexDefinition, final int[] iClusterIdsToIndex, final OProgressListener progressListener,
       ODocument metadata, String engine) {
 

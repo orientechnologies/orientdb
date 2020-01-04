@@ -1,29 +1,33 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -34,12 +38,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * BETWEEN operator.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
   private boolean leftInclusive  = true;
@@ -99,7 +103,6 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       rightResult = ((Comparable<Object>) left).compareTo(right2c);
     }
 
-
     return (leftInclusive ? leftResult >= 0 : leftResult > 0) && (rightInclusive ? rightResult <= 0 : rightResult < 0);
   }
 
@@ -123,11 +126,12 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
+      boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
-    OIndexCursor cursor;
-    final OIndexInternal<?> internalIndex = index.getInternal();
+    Stream<ORawPair<Object, ORID>> stream;
+    final OIndexInternal internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
 
@@ -140,7 +144,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyOne == null || keyTwo == null)
         return null;
 
-      cursor = index.iterateEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
+      stream = index.getInternal().streamEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     } else {
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
@@ -156,11 +160,11 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (betweenKeyTwo == null)
         return null;
 
-      final List<Object> betweenKeyOneParams = new ArrayList<Object>(keyParams.size());
+      final List<Object> betweenKeyOneParams = new ArrayList<>(keyParams.size());
       betweenKeyOneParams.addAll(keyParams.subList(0, keyParams.size() - 1));
       betweenKeyOneParams.add(betweenKeyOne);
 
-      final List<Object> betweenKeyTwoParams = new ArrayList<Object>(keyParams.size());
+      final List<Object> betweenKeyTwoParams = new ArrayList<>(keyParams.size());
       betweenKeyTwoParams.addAll(keyParams.subList(0, keyParams.size() - 1));
       betweenKeyTwoParams.add(betweenKeyTwo);
 
@@ -174,11 +178,11 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      cursor = index.iterateEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
+      stream = index.getInternal().streamEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return cursor;
+    return stream;
   }
 
   @Override

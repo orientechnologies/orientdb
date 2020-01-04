@@ -59,7 +59,7 @@ public class TestOrderByIndexPropDesc {
     List<ODocument> result = db
         .query(new OSQLSynchQuery<ODocument>("select from " + DOCUMENT_CLASS_NAME + " order by " + PROP_INDEXED_STRING + " desc"));
     for (ODocument d : result) {
-      // System.out.println(d.<Integer>field(PROP_INDEXED_STRING));
+      //System.out.println(d.<Integer>field(PROP_INDEXED_STRING));
     }
 
     Assert.assertEquals(count, result.size());

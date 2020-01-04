@@ -34,41 +34,41 @@ import java.util.*;
 public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, ODocumentSerializable {
   private static final long         serialVersionUID = 1L;
   /**
+   *
    */
   private final        List<Object> keys;
 
-  private final transient Comparator<Object> comparator;
-
   public OCompositeKey(final List<?> keys) {
-    this.keys = new ArrayList<Object>(keys.size());
-    this.comparator = ODefaultComparator.INSTANCE;
+    this.keys = new ArrayList<>(keys.size());
 
-    for (final Object key : keys)
+    for (final Object key : keys) {
       addKey(key);
+    }
   }
 
   public OCompositeKey(final Object... keys) {
-    this.keys = new ArrayList<Object>(keys.length);
-    this.comparator = ODefaultComparator.INSTANCE;
+    this.keys = new ArrayList<>(keys.length);
 
-    for (final Object key : keys)
+    for (final Object key : keys) {
       addKey(key);
+    }
   }
 
   public OCompositeKey() {
-    this.keys = new ArrayList<Object>();
-    this.comparator = ODefaultComparator.INSTANCE;
+    this.keys = new ArrayList<>();
   }
 
   /**
    * Clears the keys array for reuse of the object
    */
   public void reset() {
-    if (this.keys != null)
+    if (this.keys != null) {
       this.keys.clear();
+    }
   }
 
   /**
+   *
    */
   public List<Object> getKeys() {
     return Collections.unmodifiableList(keys);
@@ -112,21 +112,26 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
       final Object inKey = inIter.next();
       final Object outKey = outIter.next();
 
-      if (outKey instanceof OAlwaysGreaterKey)
+      if (outKey instanceof OAlwaysGreaterKey) {
         return -1;
+      }
 
-      if (outKey instanceof OAlwaysLessKey)
+      if (outKey instanceof OAlwaysLessKey) {
         return 1;
+      }
 
-      if (inKey instanceof OAlwaysGreaterKey)
+      if (inKey instanceof OAlwaysGreaterKey) {
         return 1;
+      }
 
-      if (inKey instanceof OAlwaysLessKey)
+      if (inKey instanceof OAlwaysLessKey) {
         return -1;
+      }
 
-      final int result = comparator.compare(inKey, outKey);
-      if (result != 0)
+      final int result = ODefaultComparator.INSTANCE.compare(inKey, outKey);
+      if (result != 0) {
         return result;
+      }
     }
 
     return 0;
@@ -179,7 +184,7 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
 
     final String[] fieldNames = document.fieldNames();
 
-    final SortedMap<Integer, Object> keyMap = new TreeMap<Integer, Object>();
+    final SortedMap<Integer, Object> keyMap = new TreeMap<>();
 
     for (String fieldName : fieldNames) {
       if (fieldName.startsWith("key")) {
@@ -189,7 +194,6 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
     }
 
     keys.clear();
-    for (Object value : keyMap.values())
-      keys.add(value);
+    keys.addAll(keyMap.values());
   }
 }

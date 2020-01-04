@@ -79,7 +79,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     doc.field("name", "Test");
     doc.field("bar", "abc");
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
 
     db.save(doc);
 
@@ -98,7 +98,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(coll.size(), 0);
 
-    Assert.assertEquals(0, index.getSize());
+    Assert.assertEquals(0, index.getInternal().size());
 
     db.rollback();
 
@@ -107,14 +107,14 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(1, index.getInternal().size());
 
   }
 
   @Test
   public void txUpdateTest() {
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
     OClass c1 = db.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();
@@ -122,7 +122,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
       e.printStackTrace();
     }
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     db.begin();
 
@@ -154,7 +154,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     }
     Assert.assertEquals(i, 0);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
     query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -170,14 +170,14 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
   }
 
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
     OClass c1 = db.getMetadata().getSchema().getClass("Foo");
     try {
       c1.truncate();
@@ -185,7 +185,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
       e.printStackTrace();
     }
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     db.begin();
 
@@ -224,7 +224,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(1, i);
     Assert.assertEquals(rid.getIdentity().toString(), doc1.getIdentity().toString());
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(2, index.getInternal().size());
 
     query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -241,7 +241,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     assertThat(vertices).hasSize(2);
 
-    Assert.assertEquals(2, index.getSize());
+    Assert.assertEquals(2, index.getInternal().size());
 
   }
 

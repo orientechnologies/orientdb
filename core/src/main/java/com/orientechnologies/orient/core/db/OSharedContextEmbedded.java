@@ -29,9 +29,8 @@ import java.util.Map;
  */
 public class OSharedContextEmbedded extends OSharedContext {
 
-  private Map<String, DistributedQueryContext> activeDistributedQueries;
-
-  private ViewManager viewManager;
+  private   Map<String, DistributedQueryContext> activeDistributedQueries;
+  protected ViewManager                          viewManager;
 
   public OSharedContextEmbedded(OStorage storage, OrientDBEmbedded orientDB) {
     this.orientDB = orientDB;
@@ -151,6 +150,5 @@ public class OSharedContextEmbedded extends OSharedContext {
   public ViewManager getViewManager() {
     return viewManager;
   }
-
 
 }

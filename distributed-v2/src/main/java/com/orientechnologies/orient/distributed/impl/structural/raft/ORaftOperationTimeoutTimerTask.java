@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural.raft;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.util.TimerTask;
 

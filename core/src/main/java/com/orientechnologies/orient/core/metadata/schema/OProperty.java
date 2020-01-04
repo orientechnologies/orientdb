@@ -157,7 +157,7 @@ public interface OProperty extends Comparable<OProperty> {
    *          </ul>
    * @return see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)}.
    */
-  public OIndex<?> createIndex(final OClass.INDEX_TYPE iType);
+  public OIndex createIndex(final OClass.INDEX_TYPE iType);
 
   /**
    * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
@@ -167,7 +167,7 @@ public interface OProperty extends Comparable<OProperty> {
    * @param iType
    * @return see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)}.
    */
-  public OIndex<?> createIndex(final String iType);
+  public OIndex createIndex(final String iType);
 
   /**
    * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
@@ -184,7 +184,7 @@ public interface OProperty extends Comparable<OProperty> {
    * @param metadata the index metadata
    * @return see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)}.
    */
-  public OIndex<?> createIndex(String iType, ODocument metadata);
+  public OIndex createIndex(String iType, ODocument metadata);
 
   /**
    * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
@@ -201,7 +201,7 @@ public interface OProperty extends Comparable<OProperty> {
    * @param metadata the index metadata
    * @return see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)}.
    */
-  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata);
+  public OIndex createIndex(OClass.INDEX_TYPE iType, ODocument metadata);
 
   /**
    * Remove the index on property
@@ -218,7 +218,7 @@ public interface OProperty extends Comparable<OProperty> {
    * @deprecated Use {@link OClass#getInvolvedIndexes(String...)} instead.
    */
   @Deprecated
-  public Set<OIndex<?>> getIndexes();
+  public Set<OIndex> getIndexes();
 
   /**
    * @return The first index in which this property participates as first key item.
@@ -226,12 +226,12 @@ public interface OProperty extends Comparable<OProperty> {
    * @deprecated Use {@link OClass#getInvolvedIndexes(String...)} instead.
    */
   @Deprecated
-  public OIndex<?> getIndex();
+  public OIndex getIndex();
 
   /**
    * @return All indexes in which this property participates.
    */
-  public Collection<OIndex<?>> getAllIndexes();
+  public Collection<OIndex> getAllIndexes();
 
   /**
    * Indicates whether property is contained in indexes as its first key item. If you would like to fetch all indexes or check

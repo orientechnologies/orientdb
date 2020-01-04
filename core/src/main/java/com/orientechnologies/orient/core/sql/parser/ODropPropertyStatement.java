@@ -45,10 +45,10 @@ public class ODropPropertyStatement extends ODDLStatement {
       }
       throw new OCommandExecutionException("Property '" + propertyName + "' not found on class " + className);
     }
-    final List<OIndex<?>> indexes = relatedIndexes(propertyName.getStringValue(), database);
+    final List<OIndex> indexes = relatedIndexes(propertyName.getStringValue(), database);
     if (!indexes.isEmpty()) {
       if (force) {
-        for (final OIndex<?> index : indexes) {
+        for (final OIndex index : indexes) {
           index.delete();
           OResultInternal result = new OResultInternal();
           result.setProperty("operation", "cascade drop index");
@@ -59,7 +59,7 @@ public class ODropPropertyStatement extends ODDLStatement {
         final StringBuilder indexNames = new StringBuilder();
 
         boolean first = true;
-        for (final OIndex<?> index : sourceClass.getClassInvolvedIndexes(propertyName.getStringValue())) {
+        for (final OIndex index : sourceClass.getClassInvolvedIndexes(propertyName.getStringValue())) {
           if (!first) {
             indexNames.append(", ");
           } else {
@@ -84,9 +84,9 @@ public class ODropPropertyStatement extends ODDLStatement {
     return rs;
   }
 
-  private List<OIndex<?>> relatedIndexes(final String fieldName, ODatabaseDocumentInternal database) {
-    final List<OIndex<?>> result = new ArrayList<OIndex<?>>();
-    for (final OIndex<?> oIndex : database.getMetadata().getIndexManagerInternal().getClassIndexes(database, className.getStringValue())) {
+  private List<OIndex> relatedIndexes(final String fieldName, ODatabaseDocumentInternal database) {
+    final List<OIndex> result = new ArrayList<OIndex>();
+    for (final OIndex oIndex : database.getMetadata().getIndexManagerInternal().getClassIndexes(database, className.getStringValue())) {
       if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseInsentiveComparator()) > -1) {
         result.add(oIndex);
       }

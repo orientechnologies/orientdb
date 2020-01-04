@@ -20,19 +20,13 @@ import com.orientechnologies.orient.client.remote.message.sequence.OSequenceActi
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.sequence.OSequence;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceCached;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceHelper;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLimitReachedException;
+import com.orientechnologies.orient.core.metadata.sequence.*;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExecutor;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -57,7 +51,7 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
   }
 
   @Override
-  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+  public ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
     int actionType = -1;
     try {

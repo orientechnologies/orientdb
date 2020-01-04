@@ -3,17 +3,19 @@ package com.orientechnologies.orient.distributed.impl.coordinator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.raft.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 import org.junit.Test;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -27,22 +29,20 @@ public class ODistributedCoordinatorTest {
   public void simpleOperationTest() throws InterruptedException {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
-
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
-        null);
-    MockDistributedChannel channel = new MockDistributedChannel();
-    channel.coordinator = coordinator;
-    ODistributedMember one = new ODistributedMember(new ONodeIdentity("one", "one"), null, channel);
-    channel.member = one;
+    MockNetword network = new MockNetword();
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null, null,
+        network, "database");
+    network.coordinator = coordinator;
+    ONodeIdentity one = new ONodeIdentity("one", "one");
     coordinator.join(one);
 
     coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(ONodeIdentity requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
-          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeIdentity member,
               ONodeResponse response) {
             if (context.getResponses().size() == 1) {
               responseReceived.countDown();
@@ -81,28 +81,27 @@ public class ODistributedCoordinatorTest {
   public void testTwoPhase() throws InterruptedException {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
+    MockNetword network = new MockNetword();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
-        null);
-    MockDistributedChannel channel = new MockDistributedChannel();
-    channel.coordinator = coordinator;
-    channel.reply = responseReceived;
-    ODistributedMember one = new ODistributedMember(new ONodeIdentity("one", "one"), null, channel);
-    channel.member = one;
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null, null,
+        network, "database");
+    network.coordinator = coordinator;
+    network.reply = responseReceived;
+    ONodeIdentity one = new ONodeIdentity("one", "one");
     coordinator.join(one);
 
     coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(ONodeIdentity requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
-          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeIdentity member,
               ONodeResponse response) {
             if (context.getResponses().size() == 1) {
               coordinator.sendOperation(null, new ONodeRequest() {
                 @Override
-                public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+                public ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
                     ODatabaseDocumentInternal session) {
                   return null;
                 }
@@ -123,10 +122,10 @@ public class ODistributedCoordinatorTest {
                 }
               }, new OResponseHandler() {
                 @Override
-                public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+                public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeIdentity member,
                     ONodeResponse response) {
                   if (context.getResponses().size() == 1) {
-                    member.reply(new OSessionOperationId(), new OSubmitResponse() {
+                    coordinator.reply(member, new OSessionOperationId(), new OSubmitResponse() {
                       @Override
                       public void serialize(DataOutput output) throws IOException {
 
@@ -187,22 +186,21 @@ public class ODistributedCoordinatorTest {
   public void simpleTimeoutTest() throws InterruptedException {
     CountDownLatch timedOut = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
+    MockNetword network = new MockNetword();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
-        null);
-    MockDistributedChannel channel = new MockDistributedChannel();
-    channel.coordinator = coordinator;
-    ODistributedMember one = new ODistributedMember(new ONodeIdentity("one", "one"), null, channel);
-    channel.member = one;
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null, null,
+        network, "database");
+    network.coordinator = coordinator;
+    ONodeIdentity one = new ONodeIdentity("one", "one");
     coordinator.join(one);
 
     coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(ONodeIdentity requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
-          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeIdentity member,
               ONodeResponse response) {
             return false;
           }
@@ -237,91 +235,10 @@ public class ODistributedCoordinatorTest {
     assertEquals(0, coordinator.getContexts().size());
   }
 
-  private static class MockDistributedChannel implements ODistributedChannel {
-    public ODistributedCoordinator coordinator;
-    public CountDownLatch          reply;
-    public ODistributedMember      member;
-
-    @Override
-    public void sendRequest(String database, OLogId id, ONodeRequest request) {
-      coordinator.receive(member, id, new ONodeResponse() {
-        @Override
-        public void serialize(DataOutput output) throws IOException {
-
-        }
-
-        @Override
-        public void deserialize(DataInput input) throws IOException {
-
-        }
-
-        @Override
-        public int getResponseType() {
-          return 0;
-        }
-      });
-    }
-
-    @Override
-    public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
-      assertTrue(false);
-    }
-
-    @Override
-    public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
-
-    }
-
-    @Override
-    public void sendRequest(OLogId id, OStructuralNodeRequest request) {
-
-    }
-
-    @Override
-    public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
-
-    }
-
-    @Override
-    public void submit(OSessionOperationId operationId, OStructuralSubmitRequest request) {
-
-    }
-
-    @Override
-    public void submit(String database, OSessionOperationId operationId, OSubmitRequest request) {
-
-    }
-
-    @Override
-    public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
-      reply.countDown();
-    }
-
-    @Override
-    public void propagate(OLogId id, ORaftOperation operation) {
-
-    }
-
-    @Override
-    public void ack(OLogId logId) {
-
-    }
-
-    @Override
-    public void confirm(OLogId id) {
-
-    }
-
-    @Override
-    public void send(OFullConfiguration fullConfiguration) {
-
-    }
-  }
-
   private static class MockNodeRequest implements ONodeRequest {
 
     @Override
-    public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+    public ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
         ODatabaseDocumentInternal session) {
       return null;
     }
@@ -339,6 +256,90 @@ public class ODistributedCoordinatorTest {
     @Override
     public int getRequestType() {
       return 0;
+    }
+  }
+
+  private class MockNetword implements ODistributedNetwork {
+    public ODistributedCoordinator coordinator;
+    public CountDownLatch          reply;
+
+    @Override
+    public void submit(ONodeIdentity to, OSessionOperationId operationId, OStructuralSubmitRequest request) {
+
+    }
+
+    @Override
+    public void reply(ONodeIdentity to, OSessionOperationId operationId, OStructuralSubmitResponse response) {
+    }
+
+    @Override
+    public void propagate(Collection<ONodeIdentity> to, OLogId id, ORaftOperation operation) {
+
+    }
+
+    @Override
+    public void ack(ONodeIdentity to, OLogId logId) {
+
+    }
+
+    @Override
+    public void confirm(Collection<ONodeIdentity> to, OLogId id) {
+
+    }
+
+    @Override
+    public void submit(ONodeIdentity coordinator, String database, OSessionOperationId operationId, OSubmitRequest request) {
+
+    }
+
+    @Override
+    public void replay(ONodeIdentity to, String database, OSessionOperationId operationId, OSubmitResponse response) {
+      reply.countDown();
+    }
+
+    @Override
+    public void sendResponse(ONodeIdentity to, String database, OLogId opId, ONodeResponse response) {
+
+    }
+
+    @Override
+    public void sendRequest(Collection<ONodeIdentity> to, String database, OLogId id, ONodeRequest request) {
+      for (ONodeIdentity member : to) {
+        coordinator.receive(member, id, new ONodeResponse() {
+          @Override
+          public void serialize(DataOutput output) throws IOException {
+
+          }
+
+          @Override
+          public void deserialize(DataInput input) throws IOException {
+
+          }
+
+          @Override
+          public int getResponseType() {
+            return 0;
+          }
+        });
+      }
+    }
+
+    @Override
+    public void send(ONodeIdentity identity, OOperation fullConfiguration) {
+
+    }
+
+    @Override
+    public void sendAll(Collection<ONodeIdentity> members, OOperation operation) {
+
+    }
+
+    @Override
+    public void notifyLastDbOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    }
+
+    @Override
+    public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
     }
   }
 }

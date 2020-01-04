@@ -21,6 +21,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.exception.OLuceneIndexException;
@@ -35,10 +36,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -60,6 +60,7 @@ import org.apache.lucene.util.Version;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.*;
@@ -67,6 +68,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
@@ -85,8 +87,8 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   protected        Version                                       version;
   protected        Map<String, Boolean>                          collectionFields = new HashMap<>();
   private          TimerTask                                     commitTask;
-  private          AtomicBoolean                                 closed;
-  private          OStorage                                      storage;
+  private final    AtomicBoolean                                 closed;
+  private final    OStorage                                      storage;
   private volatile long                                          reopenToken;
   private          Analyzer                                      indexAnalyzer;
   private          Analyzer                                      queryAnalyzer;
@@ -96,7 +98,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   private          long                                          closeAfterInterval;
   private          long                                          firstFlushAfter;
 
-  private Lock openCloseLock;
+  private final Lock openCloseLock;
 
   private final int id;
 
@@ -176,6 +178,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   private boolean shouldClose() {
+    //noinspection resource
     return !(directory.getDirectory() instanceof RAMDirectory)
         && System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
   }
@@ -198,6 +201,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   private void reOpen() throws IOException {
 
+    //noinspection resource
     if (indexWriter != null && indexWriter.isOpen() && directory.getDirectory() instanceof RAMDirectory) {
       // don't waste time reopening an in memory index
       return;
@@ -206,7 +210,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   }
 
-  protected ODatabaseDocumentInternal getDatabase() {
+  protected static ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
@@ -343,22 +347,26 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   private void deleteIndexFolder(File baseStoragePath) throws IOException {
+    @SuppressWarnings("resource")
     final String[] files = directory.getDirectory().listAll();
     for (String fileName : files) {
+      //noinspection resource
       directory.getDirectory().deleteFile(fileName);
     }
     directory.getDirectory().close();
     String indexPath = directory.getPath();
     if (indexPath != null) {
       File indexDir = new File(indexPath);
+      final FileSystem fileSystem = FileSystems.getDefault();
       while (true) {
-        if (Files.isSameFile(FileSystems.getDefault().getPath(baseStoragePath.getCanonicalPath()),
-            FileSystems.getDefault().getPath(indexDir.getCanonicalPath()))) {
+        if (Files.isSameFile(fileSystem.getPath(baseStoragePath.getCanonicalPath()),
+                fileSystem.getPath(indexDir.getCanonicalPath()))) {
           break;
         }
         //delete only if dir is empty, otherwise stop deleting process
         //last index will remove all upper dirs
-        if (indexDir.listFiles().length == 0) {
+        final File[] indexDirFiles = indexDir.listFiles();
+        if (indexDirFiles != null && indexDirFiles.length == 0) {
           OFileUtils.deleteRecursively(indexDir, true);
           indexDir = indexDir.getParentFile();
         } else {
@@ -456,6 +464,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     openIfClosed();
     IndexSearcher searcher = searcher();
     try {
+      @SuppressWarnings("resource")
       IndexReader reader = searcher.getIndexReader();
 
       //we subtract metadata document added during open
@@ -539,17 +548,17 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
-  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
   @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
+  public Stream<Object> keyStream() {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
@@ -567,11 +576,6 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on releasing index searcher  of Lucene index", e);
     }
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
   }
 
   @Override

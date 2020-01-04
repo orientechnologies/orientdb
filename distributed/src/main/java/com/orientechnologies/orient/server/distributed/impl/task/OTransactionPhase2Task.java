@@ -57,6 +57,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
     int nodeId = in.readInt();
     long messageId = in.readLong();
     this.transactionId = new ODistributedRequestId(nodeId, messageId);
+
     int length = in.readInt();
     this.involvedClusters = new int[length];
     for (int i = 0; i < length; i++) {
@@ -89,7 +90,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     if (success) {
-      if (!((ODatabaseDocumentDistributed) database).commit2pc(transactionId, false)) {
+      if (!((ODatabaseDocumentDistributed) database).commit2pc(transactionId, false, requestId)) {
         retryCount++;
         if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           OLogManager.instance()
@@ -129,6 +130,15 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       }
     }
     return "OK";
+
+  }
+
+  public int getRetryCount() {
+    return retryCount;
+  }
+
+  public ODistributedRequestId getTransactionId() {
+    return transactionId;
   }
 
   @Override

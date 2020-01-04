@@ -1,19 +1,19 @@
 package com.orientechnologies.orient.core.sql;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.List;
-
-import org.junit.Assert; import org.junit.Test;
-
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class OChainedIndexProxyFindBestIndexTest {
 
@@ -22,9 +22,9 @@ public class OChainedIndexProxyFindBestIndexTest {
 
     final OIndexUnique expectedResult = mockUniqueIndex();
 
-    final List<OIndex<?>> indexes = Arrays.<OIndex<?>> asList(expectedResult);
+    final List<OIndex> indexes = Arrays.<OIndex> asList(expectedResult);
 
-    final OIndex<?> result = OChainedIndexProxy.findBestIndex(indexes);
+    final OIndex result = OChainedIndexProxy.findBestIndex(indexes);
 
     Assert.assertSame(result, expectedResult);
   }
@@ -34,10 +34,10 @@ public class OChainedIndexProxyFindBestIndexTest {
 
     final OIndexUnique expectedResult = mockUniqueIndex();
 
-    final List<OIndex<?>> indexes = Arrays.<OIndex<?>> asList(mockUniqueCompositeHashIndex(), mockUniqueCompositeIndex(),
+    final List<OIndex> indexes = Arrays.<OIndex> asList(mockUniqueCompositeHashIndex(), mockUniqueCompositeIndex(),
         expectedResult);
 
-    final OIndex<?> result = OChainedIndexProxy.findBestIndex(indexes);
+    final OIndex result = OChainedIndexProxy.findBestIndex(indexes);
 
     Assert.assertSame(result, expectedResult);
   }
@@ -47,10 +47,10 @@ public class OChainedIndexProxyFindBestIndexTest {
 
     final OIndexUnique expectedResult = mockUniqueIndex();
 
-    final List<OIndex<?>> indexes = Arrays.<OIndex<?>> asList(mockUniqueCompositeHashIndexWithNullSupport(), expectedResult,
+    final List<OIndex> indexes = Arrays.<OIndex> asList(mockUniqueCompositeHashIndexWithNullSupport(), expectedResult,
         mockUniqueCompositeHashIndexWithNullSupport());
 
-    final OIndex<?> result = OChainedIndexProxy.findBestIndex(indexes);
+    final OIndex result = OChainedIndexProxy.findBestIndex(indexes);
 
     Assert.assertSame(result, expectedResult);
   }
@@ -60,10 +60,10 @@ public class OChainedIndexProxyFindBestIndexTest {
 
     final OIndexUnique expectedResult = mockUniqueHashIndex();
 
-    final List<OIndex<?>> indexes = Arrays.<OIndex<?>> asList(mockUniqueIndex(), mockUniqueCompositeIndex(), expectedResult,
+    final List<OIndex> indexes = Arrays.<OIndex> asList(mockUniqueIndex(), mockUniqueCompositeIndex(), expectedResult,
         mockUniqueIndex(), mockUniqueCompositeIndex());
 
-    final OIndex<?> result = OChainedIndexProxy.findBestIndex(indexes);
+    final OIndex result = OChainedIndexProxy.findBestIndex(indexes);
 
     Assert.assertSame(result, expectedResult);
   }
@@ -73,11 +73,11 @@ public class OChainedIndexProxyFindBestIndexTest {
 
     final OIndexUnique expectedResult = mockUniqueIndex();
 
-    final List<OIndex<?>> indexes = Arrays.<OIndex<?>> asList(mockUniqueCompositeIndexWithNullSupport(),
+    final List<OIndex> indexes = Arrays.<OIndex> asList(mockUniqueCompositeIndexWithNullSupport(),
         mockUniqueCompositeHashIndexWithNullSupport(), expectedResult, mockUniqueCompositeIndexWithNullSupport(),
         mockUniqueCompositeHashIndexWithNullSupport());
 
-    final OIndex<?> result = OChainedIndexProxy.findBestIndex(indexes);
+    final OIndex result = OChainedIndexProxy.findBestIndex(indexes);
 
     Assert.assertSame(result, expectedResult);
   }

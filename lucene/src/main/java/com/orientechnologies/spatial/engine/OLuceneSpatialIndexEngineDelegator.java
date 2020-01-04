@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package com.orientechnologies.spatial.engine;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
@@ -23,7 +24,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -39,15 +42,14 @@ import org.apache.lucene.spatial.SpatialStrategy;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Created by Enrico Risa on 04/09/15.
  */
 public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, OLuceneSpatialIndexContainer {
 
-  private final Boolean                           durableInNonTxMode;
   private final OStorage                          storage;
-  private final int                               version;
   private final String                            indexName;
   private       OLuceneSpatialIndexEngineAbstract delegate;
   private final int                               id;
@@ -56,9 +58,7 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
     this.id = id;
 
     this.indexName = name;
-    this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
-    this.version = version;
   }
 
   @Override
@@ -75,8 +75,11 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
         } else {
           delegate = new OLuceneGeoSpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
         }
+
+        delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
+      } else {
+        throw new IllegalStateException("Invalid index type " + indexType);
       }
-      delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
     }
 
   }
@@ -105,11 +108,6 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
       delegate.load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize, engineProperties,
           encryption);
 
-  }
-
-  @Override
-  public boolean contains(Object key) {
-    return delegate.contains(key);
   }
 
   @Override
@@ -163,45 +161,36 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public Object getFirstKey() {
-    return delegate.getFirstKey();
-  }
-
-  @Override
-  public Object getLastKey() {
-    return delegate.getFirstKey();
-  }
-
-  @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return delegate.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer) {
     return delegate.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return delegate.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
-    return delegate.cursor(valuesTransformer);
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
+    return delegate.stream(valuesTransformer);
   }
 
   @Override
-  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
-    return delegate.descCursor(valuesTransformer);
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
+    return delegate.descStream(valuesTransformer);
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
-    return delegate.keyCursor();
+  public Stream<Object> keyStream() {
+    return delegate.keyStream();
   }
 
   @Override
@@ -212,11 +201,6 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   @Override
   public boolean hasRangeQuerySupport() {
     return delegate.hasRangeQuerySupport();
-  }
-
-  @Override
-  public int getVersion() {
-    return version;
   }
 
   @Override

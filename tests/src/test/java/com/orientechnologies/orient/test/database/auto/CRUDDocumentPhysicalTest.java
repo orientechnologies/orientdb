@@ -223,7 +223,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     vDoc.field("nick", "JayM3");
     vDoc.save();
 
-    Set<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndexes();
+    Set<OIndex> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndexes();
 
     Assert.assertEquals(indexes.size(), 1);
 
@@ -251,10 +251,10 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     vDoc.field("nick", "Jack").field("name", "Jack").field("surname", "Bauer");
     vDoc.save();
 
-    Collection<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndexes();
+    Collection<OIndex> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndexes();
     Assert.assertEquals(indexes.size(), 1);
 
-    OIndex<?> indexName = indexes.iterator().next();
+    OIndex indexName = indexes.iterator().next();
     // We must get 2 records for "nameA".
     Collection<OIdentifiable> vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
     Assert.assertEquals(vName1.size(), 2);

@@ -74,7 +74,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
     ODocument doc = new ODocument("c1");
     doc.field("p1", "abc");
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
     db.save(doc);
 
@@ -83,14 +83,14 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(1, vertices.size());
 
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(1, index.getInternal().size());
     db.commit();
 
     query = "select from C1 where p1 lucene \"abc\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(1, vertices.size());
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(1, index.getInternal().size());
 
     db.begin();
 
@@ -114,7 +114,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
       i++;
     }
     Assert.assertEquals(0, i);
-    Assert.assertEquals(0, index.getSize());
+    Assert.assertEquals(0, index.getInternal().size());
 
     db.rollback();
 
@@ -123,14 +123,14 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(1, vertices.size());
 
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(1, index.getInternal().size());
 
   }
 
   @Test
   public void txUpdateTest() {
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
     OClass c1 = db.getMetadata().getSchema().getClass("C1");
     try {
       c1.truncate();
@@ -138,7 +138,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
       e.printStackTrace();
     }
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     db.begin();
 
@@ -152,7 +152,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(vertices.size(), 1);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
     db.commit();
 
@@ -163,7 +163,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(vertices.size(), 1);
     Assert.assertEquals(coll.size(), 1);
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
     db.begin();
 
@@ -186,7 +186,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
     }
     Assert.assertEquals(i, 0);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
     query = "select from C1 where p1 lucene \"removed\"";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -202,14 +202,14 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(vertices.size(), 1);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
   }
 
   @Test
   public void txUpdateTestComplex() {
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
     OClass c1 = db.getMetadata().getSchema().getClass("C1");
     try {
       c1.truncate();
@@ -217,7 +217,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
       e.printStackTrace();
     }
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     db.begin();
 
@@ -254,7 +254,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(i, 1);
     Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     query = "select from C1 where p1 lucene \"removed\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -270,7 +270,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(vertices.size(), 2);
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
   }
 

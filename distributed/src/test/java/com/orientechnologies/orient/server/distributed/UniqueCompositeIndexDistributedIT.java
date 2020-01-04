@@ -38,7 +38,7 @@ public class UniqueCompositeIndexDistributedIT {
     OClass clazz = session.createClass("Test");
     clazz.createProperty("test", OType.STRING);
     clazz.createProperty("testa", OType.STRING);
-    OIndex<?> idx = clazz.createIndex("cu", OClass.INDEX_TYPE.UNIQUE, "test", "testa");
+    OIndex idx = clazz.createIndex("cu", OClass.INDEX_TYPE.UNIQUE, "test", "testa");
     indexName = idx.getName();
   }
 

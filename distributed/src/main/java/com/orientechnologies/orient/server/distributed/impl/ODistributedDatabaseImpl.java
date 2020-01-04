@@ -82,6 +82,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 
@@ -261,6 +262,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     final ORemoteTask task = request.getTask();
+    task.received(request, this);
+    manager.messageReceived(request);
 
     if (waitForAcceptingRequests) {
       waitIsReady(task);
@@ -271,23 +274,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     totalReceivedRequests.incrementAndGet();
-
-    // final ODistributedMomentum lastMomentum = filterByMomentum.get();
-    // if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
-    // final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-    //
-    // final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
-    // final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
-    //
-    // if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
-    // // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
-    // final String msg = String.format("Skipped request %s on database '%s' because %s < current %s", request, databaseName,
-    // taskLastLSN, lastLSNFromMomentum);
-    // ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, msg);
-    // ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedException(msg));
-    // return;
-    // }
-    // }
 
     final int[] partitionKeys = task.getPartitionKey();
 
@@ -304,6 +290,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       else
         // LOCK ALL THE QUEUES
         involvedWorkerQueues = ALL_QUEUES;
+
+      manager.messagePartitionCalculate(request, involvedWorkerQueues);
 
       // if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog
@@ -410,6 +398,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final int partition = partitionKey % workerThreads.size();
 
+    Set<Integer> partitions = new HashSet<>();
+    partitions.add(partition);
+
+    manager.messagePartitionCalculate(request, partitions);
+
     ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
         "Request %s on database '%s' dispatched to the worker %d", request, databaseName, partition);
 
@@ -467,8 +460,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       final int expectedResponses = localResult != null ? availableNodes + 1 : availableNodes;
 
+      // all online masters
+      int onlineMasters = manager.getOnlineNodes(databaseName).stream()
+          .filter(f -> cfg.getServerRole(f) == ODistributedConfiguration.ROLES.MASTER).collect(Collectors.toSet()).size();
+
       final int quorum = calculateQuorum(task.getQuorumType(), iClusterNames, cfg, expectedResponses, nodesConcurToTheQuorum.size(),
-          checkNodesAreOnline, localNodeName);
+          onlineMasters, checkNodesAreOnline, localNodeName);
 
       final boolean groupByResponse = task.getResultStrategy() != OAbstractRemoteTask.RESULT_STRATEGY.UNION;
 
@@ -1053,8 +1050,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType, Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int totalServers, final int totalMasterServers, final boolean checkNodesAreOnline,
-      final String localNodeName) {
+      final ODistributedConfiguration cfg, final int totalServers, final int totalMasterServers, int onlineMasters,
+      final boolean checkNodesAreOnline, final String localNodeName) {
 
     int quorum = 1;
 
@@ -1076,6 +1073,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       case WRITE:
         clusterQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
         totalServerInQuorum = totalMasterServers;
+        break;
+      case WRITE_ALL_MASTERS:
+        int cfgQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
+        clusterQuorum = Math.max(cfgQuorum, onlineMasters);
         break;
       case ALL:
         clusterQuorum = totalServers;

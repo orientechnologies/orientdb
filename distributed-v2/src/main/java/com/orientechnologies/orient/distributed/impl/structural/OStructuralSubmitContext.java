@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
 
 import java.util.concurrent.Future;
 
@@ -16,6 +18,6 @@ public interface OStructuralSubmitContext {
 
   void receive(OSessionOperationId requestId, OStructuralSubmitResponse response);
 
-  void setLeader(ODistributedChannel channel);
+  void setLeader(ONodeIdentity leader);
 
 }

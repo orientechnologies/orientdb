@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -32,7 +33,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * EQUALS operator.
@@ -169,11 +170,12 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
+      boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
-    final OIndexInternal<?> internalIndex = index.getInternal();
-    OIndexCursor cursor;
+    final OIndexInternal internalIndex = index.getInternal();
+    Stream<ORawPair<Object, ORID>> stream;
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;
 
@@ -190,10 +192,14 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       final Object indexResult;
       indexResult = index.get(key);
 
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
+      if (indexResult == null) {
+        stream = Stream.empty();
+      } else if (indexResult instanceof OIdentifiable) {
+        stream = Stream.of(new ORawPair<>(key, ((OIdentifiable) indexResult).getIdentity()));
+      } else {
+        stream = ((Collection<OIdentifiable>) indexResult).stream()
+            .map((identifiable) -> new ORawPair<>(key, identifiable.getIdentity()));
+      }
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -208,23 +214,27 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (internalIndex.hasRangeQuerySupport()) {
-        cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+        stream = index.getInternal().streamEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult;
           indexResult = index.get(keyOne);
 
-          if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
-          else
-            cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, keyOne);
+          if (indexResult == null) {
+            stream = Stream.empty();
+          } else if (indexResult instanceof OIdentifiable) {
+            stream = Stream.of(new ORawPair<>(keyOne, ((OIdentifiable) indexResult).getIdentity()));
+          } else {
+            stream = ((Collection<OIdentifiable>) indexResult).stream()
+                .map((identifiable) -> new ORawPair<>(keyOne, identifiable.getIdentity()));
+          }
         } else
           return null;
       }
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return cursor;
+    return stream;
   }
 
   @Override
@@ -262,8 +272,8 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, 
-          OCommandContext iContext, final ODocumentSerializer serializer) {
+  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, OCommandContext iContext,
+      final ODocumentSerializer serializer) {
     return serializer.getComparator().isEqual(iFirstField, iSecondField);
   }
 

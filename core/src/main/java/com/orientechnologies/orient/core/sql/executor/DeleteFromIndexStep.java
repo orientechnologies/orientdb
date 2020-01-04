@@ -1,43 +1,48 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Created by luigidellaquila on 11/08/16.
  */
 public class DeleteFromIndexStep extends AbstractExecutionStep {
-  protected final OIndex             index;
+  protected final OIndexInternal     index;
   private final   OBinaryCondition   additional;
   private final   OBooleanExpression ridCondition;
   private final   boolean            orderAsc;
 
-  private Map.Entry<Object, OIdentifiable> nextEntry = null;
+  private ORawPair<Object, ORID> nextEntry = null;
 
-  private OBooleanExpression condition;
+  private final OBooleanExpression condition;
 
-  private boolean      inited = false;
-  private OIndexCursor cursor;
+  private boolean                          inited = false;
+  private Stream<ORawPair<Object, ORID>>   stream;
+  private Iterator<ORawPair<Object, ORID>> streamIterator;
 
   private long cost = 0;
 
-  public DeleteFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
+  private final Set<Stream<ORawPair<Object, ORID>>> acquiredStreams = Collections.newSetFromMap(new IdentityHashMap<>());
+
+  public DeleteFromIndexStep(OIndex index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OBooleanExpression ridCondition, OCommandContext ctx, boolean profilingEnabled) {
     this(index, condition, additionalRangeCondition, ridCondition, true, ctx, profilingEnabled);
   }
 
-  public DeleteFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
+  private DeleteFromIndexStep(OIndex index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OBooleanExpression ridCondition, boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    this.index = index;
+    this.index = index.getInternal();
     this.condition = condition;
     this.additional = additionalRangeCondition;
     this.ridCondition = ridCondition;
@@ -64,18 +69,11 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
           if (!hasNext()) {
             throw new IllegalStateException();
           }
-          Map.Entry<Object, OIdentifiable> entry = nextEntry;
+          ORawPair<Object, ORID> entry = nextEntry;
           OResultInternal result = new OResultInternal();
-          OIdentifiable value = entry.getValue();
+          ORID value = entry.second;
 
-//        if(index.isAutomatic()) {
-//          ORecord record = value.getRecord();
-//          if (record != null) {
-//            ctx.getDatabase().delete(record);
-//          }
-//        }else{
-          index.remove(entry.getKey(), value);
-//        }
+          index.remove(entry.first, value);
           localCount++;
           nextEntry = loadNextEntry(ctx);
           return result;
@@ -88,6 +86,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
       @Override
       public void close() {
+        closeStreams();
       }
 
       @Override
@@ -100,6 +99,20 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
         return null;
       }
     };
+  }
+
+  private void closeStreams() {
+    for (Stream<ORawPair<Object, ORID>> stream : acquiredStreams) {
+      stream.close();
+    }
+    acquiredStreams.clear();
+  }
+
+  @Override
+  public void close() {
+    super.close();
+
+    closeStreams();
   }
 
   private synchronized void init() {
@@ -118,22 +131,20 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     }
   }
 
-  private Map.Entry<Object, OIdentifiable> loadNextEntry(OCommandContext commandContext) {
-    Map.Entry<Object, OIdentifiable> result = cursor.nextEntry();
-    while (true) {
-      if (result == null) {
-        return null;
-      }
+  private ORawPair<Object, ORID> loadNextEntry(OCommandContext commandContext) {
+    while (streamIterator.hasNext()) {
+      final ORawPair<Object, ORID> entry = streamIterator.next();
       if (ridCondition == null) {
-        return result;
+        return entry;
       }
       OResultInternal res = new OResultInternal();
-      res.setProperty("rid", result.getValue());
+      res.setProperty("rid", entry.second);
       if (ridCondition.evaluate(res, commandContext)) {
-        return result;
+        return entry;
       }
-      result = cursor.nextEntry();
     }
+
+    return null;
   }
 
   private void init(OBooleanExpression condition) {
@@ -165,7 +176,15 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   }
 
   private void processFlatIteration() {
-    cursor = isOrderAsc() ? index.cursor() : index.descCursor();
+    stream = orderAsc ? index.stream() : index.descStream();
+    storeAcquiredStream(stream);
+    streamIterator = stream.iterator();
+  }
+
+  private void storeAcquiredStream(Stream<ORawPair<Object, ORID>> stream) {
+    if (stream != null) {
+      acquiredStreams.add(stream);
+    }
   }
 
   private void init(OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
@@ -173,17 +192,21 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     Object thirdValue = toKey.execute((OResult) null, ctx);
     OIndexDefinition indexDef = index.getDefinition();
     if (index.supportsOrderedIterations()) {
-      cursor = index
-          .iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue),
-              toKeyIncluded, isOrderAsc());
+      stream = index
+          .streamEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue),
+              toKeyIncluded, orderAsc);
+      storeAcquiredStream(stream);
     } else if (additional == null && allEqualities((OAndBlock) condition)) {
-      cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+      stream = index.streamEntries(toIndexKey(indexDef, secondValue), orderAsc);
+      storeAcquiredStream(stream);
     } else {
       throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
     }
+
+    streamIterator = stream.iterator();
   }
 
-  private boolean allEqualities(OAndBlock condition) {
+  private static boolean allEqualities(OAndBlock condition) {
     if (condition == null) {
       return false;
     }
@@ -210,9 +233,11 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
     Object secondValue = second.execute((OResult) null, ctx);
     Object thirdValue = third.execute((OResult) null, ctx);
-    cursor = index
-        .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
-            isOrderAsc());
+    stream = index
+        .streamEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
+            orderAsc);
+    storeAcquiredStream(stream);
+    streamIterator = stream.iterator();
   }
 
   private void processBinaryCondition() {
@@ -223,10 +248,12 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
     }
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
-    cursor = createCursor(operator, definition, rightValue, ctx);
+    stream = createStream(operator, definition, rightValue, ctx);
+    storeAcquiredStream(stream);
+    streamIterator = stream.iterator();
   }
 
-  private Collection toIndexKey(OIndexDefinition definition, Object rightValue) {
+  private static Collection toIndexKey(OIndexDefinition definition, Object rightValue) {
     if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
       rightValue = ((Collection) rightValue).iterator().next();
     }
@@ -241,7 +268,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return (Collection) rightValue;
   }
 
-  private Object toBetweenIndexKey(OIndexDefinition definition, Object rightValue) {
+  private static Object toBetweenIndexKey(OIndexDefinition definition, Object rightValue) {
     if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
       rightValue = ((Collection) rightValue).iterator().next();
     }
@@ -253,19 +280,19 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return rightValue;
   }
 
-  private OIndexCursor createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
+  private Stream<ORawPair<Object, ORID>> createStream(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
       OCommandContext ctx) {
-    boolean orderAsc = isOrderAsc();
+    boolean orderAsc = this.orderAsc;
     if (operator instanceof OEqualsCompareOperator) {
-      return index.iterateEntries(toIndexKey(definition, value), orderAsc);
+      return index.streamEntries(toIndexKey(definition, value), orderAsc);
     } else if (operator instanceof OGeOperator) {
-      return index.iterateEntriesMajor(value, true, orderAsc);
+      return index.streamEntriesMajor(value, true, orderAsc);
     } else if (operator instanceof OGtOperator) {
-      return index.iterateEntriesMajor(value, false, orderAsc);
+      return index.streamEntriesMajor(value, false, orderAsc);
     } else if (operator instanceof OLeOperator) {
-      return index.iterateEntriesMinor(value, true, orderAsc);
+      return index.streamEntriesMinor(value, true, orderAsc);
     } else if (operator instanceof OLtOperator) {
-      return index.iterateEntriesMinor(value, false, orderAsc);
+      return index.streamEntriesMinor(value, false, orderAsc);
     } else {
       throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
     }
@@ -276,7 +303,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return orderAsc;
   }
 
-  private OCollection indexKeyFrom(OAndBlock keyCondition, OBinaryCondition additional) {
+  private static OCollection indexKeyFrom(OAndBlock keyCondition, OBinaryCondition additional) {
     OCollection result = new OCollection(-1);
     for (OBooleanExpression exp : keyCondition.getSubBlocks()) {
       if (exp instanceof OBinaryCondition) {
@@ -295,7 +322,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return result;
   }
 
-  private OCollection indexKeyTo(OAndBlock keyCondition, OBinaryCondition additional) {
+  private static OCollection indexKeyTo(OAndBlock keyCondition, OBinaryCondition additional) {
     OCollection result = new OCollection(-1);
     for (OBooleanExpression exp : keyCondition.getSubBlocks()) {
       if (exp instanceof OBinaryCondition) {
@@ -314,64 +341,50 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return result;
   }
 
-  private boolean indexKeyFromIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
+  private static boolean indexKeyFromIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
     OBooleanExpression exp = keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
     if (exp instanceof OBinaryCondition) {
       OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
-      OBinaryCompareOperator additionalOperator = additional == null ? null : ((OBinaryCondition) additional).getOperator();
+      OBinaryCompareOperator additionalOperator = Optional.ofNullable(additional).map(OBinaryCondition::getOperator).orElse(null);
       if (isGreaterOperator(operator)) {
-        if (isIncludeOperator(operator)) {
-          return true;
-        } else {
-          return false;
-        }
-      } else if (additionalOperator == null || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator))) {
-        return true;
-      } else {
-        return false;
-      }
+        return isIncludeOperator(operator);
+      } else
+        return additionalOperator == null || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator));
     } else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
     }
   }
 
-  private boolean isGreaterOperator(OBinaryCompareOperator operator) {
+  private static boolean isGreaterOperator(OBinaryCompareOperator operator) {
     if (operator == null) {
       return false;
     }
     return operator instanceof OGeOperator || operator instanceof OGtOperator;
   }
 
-  private boolean isLessOperator(OBinaryCompareOperator operator) {
+  private static boolean isLessOperator(OBinaryCompareOperator operator) {
     if (operator == null) {
       return false;
     }
     return operator instanceof OLeOperator || operator instanceof OLtOperator;
   }
 
-  private boolean isIncludeOperator(OBinaryCompareOperator operator) {
+  private static boolean isIncludeOperator(OBinaryCompareOperator operator) {
     if (operator == null) {
       return false;
     }
     return operator instanceof OGeOperator || operator instanceof OLeOperator;
   }
 
-  private boolean indexKeyToIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
+  private static boolean indexKeyToIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
     OBooleanExpression exp = keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
     if (exp instanceof OBinaryCondition) {
       OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
-      OBinaryCompareOperator additionalOperator = additional == null ? null : ((OBinaryCondition) additional).getOperator();
+      OBinaryCompareOperator additionalOperator = Optional.ofNullable(additional).map(OBinaryCondition::getOperator).orElse(null);
       if (isLessOperator(operator)) {
-        if (isIncludeOperator(operator)) {
-          return true;
-        } else {
-          return false;
-        }
-      } else if (additionalOperator == null || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator))) {
-        return true;
-      } else {
-        return false;
-      }
+        return isIncludeOperator(operator);
+      } else
+        return additionalOperator == null || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator));
     } else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
     }
@@ -383,8 +396,10 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }
-    String additional = this.additional == null ? "" : " and " + this.additional;
-    result += (condition == null ? "" : ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + additional));
+    String additional = Optional.ofNullable(this.additional).map(oBinaryCondition -> " and " + oBinaryCondition).orElse("");
+    result += (Optional.ofNullable(condition).map(
+        oBooleanExpression -> ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + oBooleanExpression + additional))
+        .orElse(""));
     return result;
   }
 

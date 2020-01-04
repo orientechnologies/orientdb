@@ -53,7 +53,7 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     doc2.field("byteArrayKey", key2);
     doc2.save();
 
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "byteArrayKeyIndex");
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "byteArrayKeyIndex");
     Assert.assertEquals(index.get(key1), doc1);
     Assert.assertEquals(index.get(key2), doc2);
   }
@@ -74,7 +74,7 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     doc2.field("intKey", 2);
     doc2.save();
 
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "compositeByteArrayKey");
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "compositeByteArrayKey");
     Assert.assertEquals(index.get(new OCompositeKey(key1, 1)), doc1);
     Assert.assertEquals(index.get(new OCompositeKey(key2, 2)), doc2);
   }
@@ -97,7 +97,7 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     doc2.save();
     database.commit();
 
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, "compositeByteArrayKey");
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "compositeByteArrayKey");
     Assert.assertEquals(index.get(new OCompositeKey(key1, 1)), doc1);
     Assert.assertEquals(index.get(new OCompositeKey(key2, 2)), doc2);
   }
@@ -107,8 +107,8 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
     byte[] key2 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2 };
 
-    OIndex<?> autoIndex = database.getMetadata().getIndexManagerInternal().getIndex(database, "byteArrayKeyIndex");
-    Assert.assertTrue(autoIndex.contains(key1));
-    Assert.assertTrue(autoIndex.contains(key2));
+    OIndex autoIndex = database.getMetadata().getIndexManagerInternal().getIndex(database, "byteArrayKeyIndex");
+    Assert.assertNotNull(autoIndex.get(key1));
+    Assert.assertNotNull(autoIndex.get(key2));
   }
 }

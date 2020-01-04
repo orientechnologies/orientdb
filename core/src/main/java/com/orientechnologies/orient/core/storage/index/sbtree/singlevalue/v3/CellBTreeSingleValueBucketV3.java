@@ -200,7 +200,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return getIntValue(SIZE_OFFSET);
   }
 
-  public SBTreeEntry<K> getEntry(final int entryIndex, final OBinarySerializer<K> keySerializer) {
+  public CellBTreeEntry<K> getEntry(final int entryIndex, final OBinarySerializer<K> keySerializer) {
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
     if (isLeaf()) {
@@ -213,7 +213,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
       final int clusterId = getShortValue(entryPosition);
       final long clusterPosition = getLongValue(entryPosition + OShortSerializer.SHORT_SIZE);
 
-      return new SBTreeEntry<>(-1, -1, key, new ORecordId(clusterId, clusterPosition));
+      return new CellBTreeEntry<>(-1, -1, key, new ORecordId(clusterId, clusterPosition));
     } else {
       final int leftChild = getIntValue(entryPosition);
       entryPosition += OIntegerSerializer.INT_SIZE;
@@ -223,7 +223,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
       final K key = deserializeFromDirectMemory(keySerializer, entryPosition);
 
-      return new SBTreeEntry<>(leftChild, rightChild, key, null);
+      return new CellBTreeEntry<>(leftChild, rightChild, key, null);
     }
   }
 
@@ -465,7 +465,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return getLongValue(RIGHT_SIBLING_OFFSET);
   }
 
-  public static final class SBTreeEntry<K> implements Comparable<SBTreeEntry<K>> {
+  public static final class CellBTreeEntry<K> implements Comparable<CellBTreeEntry<K>> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
     protected final int  leftChild;
@@ -473,7 +473,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     public final    K    key;
     public final    ORID value;
 
-    public SBTreeEntry(final int leftChild, final int rightChild, final K key, final ORID value) {
+    public CellBTreeEntry(final int leftChild, final int rightChild, final K key, final ORID value) {
       this.leftChild = leftChild;
       this.rightChild = rightChild;
       this.key = key;
@@ -488,7 +488,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      final SBTreeEntry<?> that = (SBTreeEntry<?>) o;
+      final CellBTreeEntry<?> that = (CellBTreeEntry<?>) o;
       return leftChild == that.leftChild && rightChild == that.rightChild && Objects.equals(key, that.key) && Objects
           .equals(value, that.value);
     }
@@ -500,11 +500,11 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
     @Override
     public String toString() {
-      return "SBTreeEntry{" + "leftChild=" + leftChild + ", rightChild=" + rightChild + ", key=" + key + ", value=" + value + '}';
+      return "CellBTreeEntry{" + "leftChild=" + leftChild + ", rightChild=" + rightChild + ", key=" + key + ", value=" + value + '}';
     }
 
     @Override
-    public int compareTo(final SBTreeEntry<K> other) {
+    public int compareTo(final CellBTreeEntry<K> other) {
       return comparator.compare(key, other.key);
     }
   }

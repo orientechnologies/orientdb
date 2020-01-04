@@ -27,14 +27,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class ODictionary<T extends Object> {
-  private OIndex<OIdentifiable> index;
+  private OIndex index;
 
-  public ODictionary(final OIndex<OIdentifiable> iIndex) {
+  public ODictionary(final OIndex iIndex) {
     index = iIndex;
   }
 
   public <RET extends T> RET get(final String iKey) {
-    final OIdentifiable value = index.get(iKey);
+    final OIdentifiable value = (OIdentifiable)index.get(iKey);
     if (value == null)
       return null;
 
@@ -42,7 +42,7 @@ public class ODictionary<T extends Object> {
   }
 
   public <RET extends T> RET get(final String iKey, final String iFetchPlan) {
-    final OIdentifiable value = index.get(iKey);
+    final OIdentifiable value = (OIdentifiable)index.get(iKey);
     if (value == null)
       return null;
 
@@ -56,19 +56,15 @@ public class ODictionary<T extends Object> {
     index.put(iKey, (OIdentifiable) iValue);
   }
 
-  public boolean containsKey(final String iKey) {
-    return index.contains(iKey);
-  }
-
   public boolean remove(final String iKey) {
     return index.remove(iKey);
   }
 
   public long size() {
-    return index.getSize();
+    return index.getInternal().size();
   }
 
-  public OIndex<OIdentifiable> getIndex() {
+  public OIndex getIndex() {
     return index;
   }
 }

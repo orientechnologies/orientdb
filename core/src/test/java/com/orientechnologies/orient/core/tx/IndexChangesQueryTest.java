@@ -50,7 +50,7 @@ public class IndexChangesQueryTest {
   public void testMultiplePut() {
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     ODocument doc = new ODocument(CLASS_NAME);
@@ -62,14 +62,14 @@ public class IndexChangesQueryTest {
     doc1.save();
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    Assert.assertTrue(index.contains(1));
-    Assert.assertTrue(index.contains(2));
+    Assert.assertFalse(((Collection) index.get(1)).isEmpty());
+    Assert.assertFalse(((Collection) index.get(2)).isEmpty());
 
     database.commit();
 
-    Assert.assertEquals(index.getSize(), 2);
-    Assert.assertTrue(index.contains(1));
-    Assert.assertTrue(index.contains(2));
+    Assert.assertEquals(index.getInternal().size(), 2);
+    Assert.assertFalse(((Collection) index.get(1)).isEmpty());
+    Assert.assertFalse(((Collection) index.get(2)).isEmpty());
   }
 
   @Test
@@ -88,12 +88,12 @@ public class IndexChangesQueryTest {
     doc3.field(FIELD_NAME, 2);
     doc3.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     database.commit();
 
-    Assert.assertEquals(3, index.getSize());
+    Assert.assertEquals(3, index.getInternal().size());
     Assert.assertEquals(2, ((Collection) index.get(1)).size());
     Assert.assertEquals(1, ((Collection) index.get(2)).size());
 
@@ -118,7 +118,7 @@ public class IndexChangesQueryTest {
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    Assert.assertEquals(3, index.getSize());
+    Assert.assertEquals(3, index.getInternal().size());
     Assert.assertEquals(2, ((Collection) index.get(1)).size());
     Assert.assertEquals(1, ((Collection) index.get(2)).size());
   }

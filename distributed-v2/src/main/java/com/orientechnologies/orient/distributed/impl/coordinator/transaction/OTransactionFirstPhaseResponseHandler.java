@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.OLockGuard;
@@ -11,23 +12,22 @@ import java.util.*;
 
 public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
 
-  private final OSessionOperationId                   operationId;
-  private final OTransactionSubmit                    request;
-  private final ODistributedMember                    requester;
-  private       int                                   responseCount   = 0;
-  private final Set<ODistributedMember>               success         = new HashSet<>();
-  private final Map<ORID, List<ODistributedMember>>   cme             = new HashMap<>();
-  private final Map<String, List<ODistributedMember>> unique          = new HashMap<>();
-  private final List<ODistributedMember>              exceptions      = new ArrayList<>();
-  private       boolean                               secondPhaseSent = false;
-  private       boolean                               replySent       = false;
-  private final List<OLockGuard>                      guards;
-  private       List<ORecordOperationRequest>         operations;
-  private       List<OIndexOperationRequest>          indexes;
+  private final OSessionOperationId              operationId;
+  private final OTransactionSubmit               request;
+  private final ONodeIdentity                    requester;
+  private       int                              responseCount   = 0;
+  private final Set<ONodeIdentity>               success         = new HashSet<>();
+  private final Map<ORID, List<ONodeIdentity>>   cme             = new HashMap<>();
+  private final Map<String, List<ONodeIdentity>> unique          = new HashMap<>();
+  private final List<ONodeIdentity>              exceptions      = new ArrayList<>();
+  private       boolean                          secondPhaseSent = false;
+  private       boolean                          replySent       = false;
+  private final List<OLockGuard>                 guards;
+  private       List<ORecordOperationRequest>    operations;
+  private       List<OIndexOperationRequest>     indexes;
 
-  public OTransactionFirstPhaseResponseHandler(OSessionOperationId operationId, OTransactionSubmit request,
-      ODistributedMember requester, List<ORecordOperationRequest> operations, List<OIndexOperationRequest> indexes,
-      List<OLockGuard> guards) {
+  public OTransactionFirstPhaseResponseHandler(OSessionOperationId operationId, OTransactionSubmit request, ONodeIdentity requester,
+      List<ORecordOperationRequest> operations, List<OIndexOperationRequest> indexes, List<OLockGuard> guards) {
     this.operationId = operationId;
     this.request = request;
     this.requester = requester;
@@ -37,7 +37,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
   }
 
   @Override
-  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeIdentity member,
       ONodeResponse response) {
     responseCount++;
     OTransactionFirstPhaseResult result = (OTransactionFirstPhaseResult) response;
@@ -47,7 +47,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       break;
     case CONCURRENT_MODIFICATION_EXCEPTION: {
       OConcurrentModificationResult concurrentModification = (OConcurrentModificationResult) result.getResultMetadata();
-      List<ODistributedMember> members = cme.get(concurrentModification.getRecordId());
+      List<ONodeIdentity> members = cme.get(concurrentModification.getRecordId());
       if (members == null) {
         members = new ArrayList<>();
         cme.put(concurrentModification.getRecordId(), members);
@@ -57,7 +57,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
     break;
     case UNIQUE_KEY_VIOLATION: {
       OUniqueKeyViolationResult uniqueKeyViolation = (OUniqueKeyViolationResult) result.getResultMetadata();
-      List<ODistributedMember> members = unique.get(uniqueKeyViolation.getKeyStringified());
+      List<ONodeIdentity> members = unique.get(uniqueKeyViolation.getKeyStringified());
       if (members == null) {
         members = new ArrayList<>();
         unique.put(uniqueKeyViolation.getKeyStringified(), members);
@@ -75,14 +75,14 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
         sendSecondPhaseSuccess(coordinator);
       }
 
-      for (Map.Entry<ORID, List<ODistributedMember>> entry : cme.entrySet()) {
+      for (Map.Entry<ORID, List<ONodeIdentity>> entry : cme.entrySet()) {
         if (entry.getValue().size() >= quorum) {
           sendSecondPhaseError(coordinator);
           break;
         }
       }
 
-      for (Map.Entry<String, List<ODistributedMember>> entry : unique.entrySet()) {
+      for (Map.Entry<String, List<ONodeIdentity>> entry : unique.entrySet()) {
         if (entry.getValue().size() >= quorum) {
           sendSecondPhaseError(coordinator);
           break;

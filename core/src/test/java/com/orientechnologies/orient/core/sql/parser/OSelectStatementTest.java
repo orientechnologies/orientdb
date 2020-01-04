@@ -783,6 +783,16 @@ public class OSelectStatementTest {
     checkWrongSyntax("select from V order by foo asc collate ");
   }
 
+  @Test
+  public void testQueryIndex() {
+    checkRightSyntax("select from index:foo WHERE key = 'foo'");
+    checkRightSyntax("select from index:foo WHERE key = ['foo', 'bar']");
+    checkRightSyntax("select from index:foo WHERE key > 10");
+    checkRightSyntax("select from index:foo WHERE key CONTAINS 'foo'");
+    checkRightSyntax("select from index:foo WHERE key BETWEEN 'bar' AND 'foo'");
+
+  }
+
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);

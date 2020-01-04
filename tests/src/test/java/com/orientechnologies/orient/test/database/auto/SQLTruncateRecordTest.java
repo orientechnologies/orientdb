@@ -38,7 +38,7 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
 
   @Test
   public void truncateRecord() {
-    if (!database.getMetadata().getSchema().existsClass("Person"))
+    if (!database.getMetadata().getSchema().existsClass("Profile"))
       database.command(new OCommandSQL("create class Profile")).execute();
 
     database.command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)")).execute();
@@ -54,9 +54,9 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
     Assert.assertEquals(records.intValue(), 1);
 
     OClass cls = database.getMetadata().getSchema().getClass("Profile");
-    Set<OIndex<?>> indexes = cls.getIndexes();
+    Set<OIndex> indexes = cls.getIndexes();
 
-    for (OIndex<?> index : indexes) {
+    for (OIndex index : indexes) {
       index.rebuild();
     }
 

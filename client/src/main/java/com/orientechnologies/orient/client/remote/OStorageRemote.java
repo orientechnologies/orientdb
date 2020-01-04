@@ -1230,9 +1230,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @SuppressWarnings("unchecked")
   public void updateDistributedNodes(List<String> hosts) {
-    // TEMPORARY FIX: DISTRIBUTED MODE DOESN'T SUPPORT TREE BONSAI, KEEP ALWAYS EMBEDDED RIDS
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
-
     if (!clientConfiguration.getValueAsBoolean(CLIENT_CONNECTION_FETCH_HOST_LIST)) {
       List<String> definedHosts = parseAddressesFromUrl(url);
       synchronized (serverURLs) {
@@ -1774,14 +1771,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           throw new OStorageException("Cannot create a connection to remote server because url list is empty");
       }
 
-      final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + getName();
-      if (session != null)
-        session.serverURLIndex = this.nextServerToConnect;
-
       this.nextServerToConnect++;
       if (this.nextServerToConnect >= serverURLs.size())
         // RESET INDEX
         this.nextServerToConnect = 0;
+
+      final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + getName();
+      if (session != null)
+        session.serverURLIndex = this.nextServerToConnect;
 
       return serverURL;
     }

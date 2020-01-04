@@ -91,7 +91,7 @@ public interface OBasicTransaction {
    * @param key       the index key.
    * @param value     the index key value.
    */
-  void addIndexEntry(OIndex<?> index, String indexName, OTransactionIndexChanges.OPERATION operation, Object key,
+  void addIndexEntry(OIndex index, String indexName, OTransactionIndexChanges.OPERATION operation, Object key,
       OIdentifiable value);
 
   /**

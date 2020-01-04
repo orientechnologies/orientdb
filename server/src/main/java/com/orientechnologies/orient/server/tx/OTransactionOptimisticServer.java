@@ -493,14 +493,14 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   }
 
   @Override
-  public void addIndexEntry(OIndex<?> delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
+  public void addIndexEntry(OIndex delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
       OIdentifiable iValue) {
     super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue);
     changed = true;
   }
 
   @Override
-  public void addIndexEntry(OIndex<?> delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
+  public void addIndexEntry(OIndex delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
       OIdentifiable iValue, boolean clientTrackOnly) {
     super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue, clientTrackOnly);
     changed = true;

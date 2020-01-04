@@ -1,33 +1,29 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import static org.testng.AssertJUnit.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import org.junit.After;
-import org.junit.Before;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import static org.testng.AssertJUnit.*;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -160,7 +156,7 @@ public class DefaultValuesTrivialTest {
 
     OProperty prop = classA.createProperty("name", OType.STRING);
     prop.setDefaultValue("default name");
-    OIndex<?> index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    OIndex index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
     {
       ODocument doc = new ODocument(classA);
@@ -180,7 +176,7 @@ public class DefaultValuesTrivialTest {
 
     OProperty prop = classA.createProperty("name", OType.STRING);
     prop.setDefaultValue("default name");
-    OIndex<?> index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    OIndex index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
     {
       database.begin();
@@ -203,7 +199,7 @@ public class DefaultValuesTrivialTest {
     OProperty prop = classA.createProperty("name", OType.STRING);
     prop.setDefaultValue("default name");
     OProperty prop2 = classA.createProperty("value", OType.STRING);
-    OIndex<?> index = classA.createIndex("multi", OClass.INDEX_TYPE.NOTUNIQUE, "value", "name");
+    OIndex index = classA.createIndex("multi", OClass.INDEX_TYPE.NOTUNIQUE, "value", "name");
 
     {
       ODocument doc = new ODocument(classA);

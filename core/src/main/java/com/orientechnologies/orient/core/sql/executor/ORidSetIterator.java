@@ -10,22 +10,27 @@ import java.util.Iterator;
  */
 public class ORidSetIterator implements Iterator<ORID> {
 
+  private final Iterator<ORID> negativesIterator;
   private ORidSet set;
   private int     currentCluster = -1;
   private long    currentId      = -1;
 
   protected ORidSetIterator(ORidSet set) {
     this.set = set;
+    this.negativesIterator = set.negatives.iterator();
     fetchNext();
   }
 
   @Override
   public boolean hasNext() {
-    return currentCluster >= 0;
+    return negativesIterator.hasNext() || currentCluster >= 0;
   }
 
   @Override
   public ORID next() {
+    if (negativesIterator.hasNext()) {
+      return negativesIterator.next();
+    }
     if (!hasNext()) {
       throw new IllegalStateException();
     }

@@ -73,6 +73,13 @@ public class ODurablePage {
     this.changes = cacheEntry.getChanges();
   }
 
+  public final OLogSequenceNumber getLSN() {
+    final long segment = getLongValue(WAL_SEGMENT_OFFSET);
+    final long position = getLongValue(WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE);
+
+    return new OLogSequenceNumber(segment, position);
+  }
+
   public static OLogSequenceNumber getLogSequenceNumberFromPage(final ByteBuffer buffer) {
     buffer.position(WAL_SEGMENT_OFFSET);
     final long segment = buffer.getLong();

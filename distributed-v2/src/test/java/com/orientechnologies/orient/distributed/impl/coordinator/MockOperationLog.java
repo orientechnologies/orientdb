@@ -1,6 +1,9 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.distributed.impl.log.*;
+
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MockOperationLog implements OOperationLog {
@@ -34,12 +37,12 @@ public class MockOperationLog implements OOperationLog {
   }
 
   @Override
-  public Iterator<OOperationLogEntry> iterate(long from, long to) {
+  public OOplogIterator iterate(long from, long to) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Iterator<OOperationLogEntry> searchFrom(OLogId from) {
+  public Optional<OOplogIterator> searchFrom(OLogId from) {
     throw new UnsupportedOperationException();
   }
 

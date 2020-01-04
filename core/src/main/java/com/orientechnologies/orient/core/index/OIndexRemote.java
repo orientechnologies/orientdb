@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public abstract class OIndexRemote<T> implements OIndex<T> {
+public abstract class OIndexRemote implements OIndex {
   public static final    String QUERY_GET_VALUES_BEETWEN_SELECT                   = "select from index:`%s` where ";
   public static final    String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
   public static final    String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
@@ -54,27 +54,27 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private static final String QUERY_ITERATE_ENTRIES = "select from index:`%s` where key in [%s] order by key %s ";
   private static final String QUERY_GET_ENTRIES     = "select from index:`%s` where key in [%s]";
 
-  private static final String QUERY_PUT         = "insert into index:`%s` (key,rid) values (?,?)";
-  private static final String QUERY_REMOVE      = "delete from index:`%s` where key = ?";
-  private static final String QUERY_REMOVE2     = "delete from index:`%s` where key = ? and rid = ?";
-  private static final String QUERY_REMOVE3     = "delete from index:`%s` where rid = ?";
-  private static final String QUERY_CONTAINS    = "select count(*) as size from index:`%s` where key = ?";
-  private static final String QUERY_COUNT       = "select count(*) as size from index:`%s` where key = ?";
-  private static final String QUERY_COUNT_RANGE = "select count(*) as size from index:`%s` where ";
-  private static final String QUERY_SIZE        = "select count(*) as size from index:`%s`";
-  private static final String QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
-  private static final String QUERY_KEYS        = "select key from index:`%s`";
-  private static final String QUERY_REBUILD     = "rebuild index %s";
-  private static final String QUERY_CLEAR       = "delete from index:`%s`";
-  private static final String QUERY_DROP        = "drop index %s";
-  protected final String           databaseName;
-  private final   String           wrappedType;
-  private final   String           algorithm;
-  private final   ORID             rid;
-  protected       OIndexDefinition indexDefinition;
-  protected       String           name;
-  protected       ODocument        configuration;
-  protected       Set<String>      clustersToIndex;
+  private static final String           QUERY_PUT         = "insert into index:`%s` (key,rid) values (?,?)";
+  private static final String           QUERY_REMOVE      = "delete from index:`%s` where key = ?";
+  private static final String           QUERY_REMOVE2     = "delete from index:`%s` where key = ? and rid = ?";
+  private static final String           QUERY_REMOVE3     = "delete from index:`%s` where rid = ?";
+  private static final String           QUERY_CONTAINS    = "select count(*) as size from index:`%s` where key = ?";
+  private static final String           QUERY_COUNT       = "select count(*) as size from index:`%s` where key = ?";
+  private static final String           QUERY_COUNT_RANGE = "select count(*) as size from index:`%s` where ";
+  private static final String           QUERY_SIZE        = "select count(*) as size from index:`%s`";
+  private static final String           QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
+  private static final String           QUERY_KEYS        = "select key from index:`%s`";
+  private static final String           QUERY_REBUILD     = "rebuild index %s";
+  private static final String           QUERY_CLEAR       = "delete from index:`%s`";
+  private static final String           QUERY_DROP        = "drop index %s";
+  protected final      String           databaseName;
+  private final        String           wrappedType;
+  private final        String           algorithm;
+  private final        ORID             rid;
+  protected            OIndexDefinition indexDefinition;
+  protected            String           name;
+  protected            ODocument        configuration;
+  protected            Set<String>      clustersToIndex;
 
   public OIndexRemote(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {
@@ -88,13 +88,13 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     this.databaseName = database;
   }
 
-  public OIndexRemote<T> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
+  public OIndexRemote create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
     this.name = name;
     return this;
   }
 
-  public OIndexRemote<T> delete() {
+  public OIndexRemote delete() {
     getDatabase().indexQuery(getName(), String.format(QUERY_DROP, name));
     return this;
   }
@@ -150,7 +150,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     }
   }
 
-  public OIndexRemote<T> put(final Object iKey, final OIdentifiable iValue) {
+  public OIndexRemote put(final Object iKey, final OIdentifiable iValue) {
     if (iValue instanceof ORecord && !iValue.getIdentity().isValid())
       // SAVE IT BEFORE TO PUT
       ((ORecord) iValue).save();
@@ -225,12 +225,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  @Deprecated
-  public OIndexRemote<T> clear() {
+  public OIndexRemote clear() {
     getDatabase().command(String.format(QUERY_CLEAR, name)).close();
     return this;
   }
@@ -289,7 +284,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return rid;
   }
 
-  public OIndexInternal<T> getInternal() {
+  public OIndexInternal getInternal() {
     return null;
   }
 
@@ -312,7 +307,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       }
     }
 
-    try (OResultSet rs = getDatabase().indexQuery(getName(), String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray())) {
+    try (OResultSet rs = getDatabase()
+        .indexQuery(getName(), String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray())) {
       return rs.stream().map((res) -> (ODocument) res.toElement()).collect(Collectors.toList());
     }
 
@@ -329,7 +325,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    final OIndexRemote<?> that = (OIndexRemote<?>) o;
+    final OIndexRemote that = (OIndexRemote) o;
 
     return name.equals(that.name);
   }
@@ -386,7 +382,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     }
 
     final OResultSet res = getDatabase()
-        .indexQuery(getName(), String.format(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"), keys.toArray());
+        .indexQuery(getName(), String.format(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"),
+            keys.toArray());
 
     final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
     res.forEachRemaining(x -> copy.add(x));
@@ -519,7 +516,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public int compareTo(OIndex<T> index) {
+  public int compareTo(OIndex index) {
     final String name = index.getName();
     return this.name.compareTo(name);
   }

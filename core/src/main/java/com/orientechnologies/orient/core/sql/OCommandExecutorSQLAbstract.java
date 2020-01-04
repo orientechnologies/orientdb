@@ -189,7 +189,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     final Set<String> clusters = new HashSet<String>();
 
     final OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-    final OIndex<?> idx = metadata.getIndexManagerInternal().getIndex(db, iIndexName);
+    final OIndex idx = metadata.getIndexManagerInternal().getIndex(db, iIndexName);
     if (idx != null && idx.getDefinition() != null) {
       final String clazz = idx.getDefinition().getClassName();
 

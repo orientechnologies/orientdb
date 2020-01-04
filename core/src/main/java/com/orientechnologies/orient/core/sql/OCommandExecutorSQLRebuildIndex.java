@@ -86,7 +86,7 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
     final ODatabaseDocumentInternal database = getDatabase();
     if (name.equals("*")) {
       long totalIndexed = 0;
-      for (OIndex<?> idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
+      for (OIndex idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (idx.isAutomatic())
           totalIndexed += idx.rebuild();
       }
@@ -94,7 +94,7 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
       return totalIndexed;
 
     } else {
-      final OIndex<?> idx = database.getMetadata().getIndexManagerInternal().getIndex(database, name);
+      final OIndex idx = database.getMetadata().getIndexManagerInternal().getIndex(database, name);
       if (idx == null)
         throw new OCommandExecutionException("Index '" + name + "' not found");
 

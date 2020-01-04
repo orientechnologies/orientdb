@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -33,14 +33,14 @@ public class OCheckIndexToolTest {
 
       ORID rid = doc.getIdentity();
 
-      int N_RECORDS = 1000000;
+      int N_RECORDS = 100000;
       for (int i = 0; i < N_RECORDS; i++) {
         doc = db.newInstance("Foo");
         doc.field("name", "x" + i);
         doc.save();
       }
 
-      OIndex<?> idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.name");
+      OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.name");
       Object key = idx.getDefinition().createValue("a");
       boolean a = idx.remove(key, rid);
 
@@ -64,4 +64,40 @@ public class OCheckIndexToolTest {
     }
   }
 
+  @Test
+  public void testBugOnCollectionIndex() {
+
+    OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+
+    context.create("test", ODatabaseType.MEMORY);
+
+    try (ODatabaseSession db = context.open("test", "admin", "admin")) {
+
+      db.command("create class testclass");
+      db.command("create property testclass.name string");
+      db.command("create property testclass.tags linklist");
+      db.command("alter property testclass.tags default '[]'");
+      db.command("create index testclass_tags_idx on testclass (tags) NOTUNIQUE_HASH_INDEX");
+
+      db.command("insert into testclass set name = 'a',tags = [#5:0] ");
+      db.command("insert into testclass set name = 'b'");
+      db.command("insert into testclass set name = 'c' ");
+
+      OCheckIndexTool tool = new OCheckIndexTool();
+
+      tool.setDatabase((ODatabaseDocumentInternal) db);
+      tool.setVerbose(true);
+      tool.setOutputListener(new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
+          System.out.println(iText);
+        }
+      });
+
+      tool.run();
+      Assert.assertEquals(0, tool.getTotalErrors());
+
+    }
+    context.close();
+  }
 }

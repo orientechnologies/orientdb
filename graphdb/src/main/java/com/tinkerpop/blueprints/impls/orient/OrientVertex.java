@@ -1086,30 +1086,4 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       iterable.add(toAdd);
   }
 
-  private Direction decodeODirection(ODirection direction) {
-    if (direction == null) {
-      return null;
-    }
-    switch (direction) {
-    case OUT:
-      return Direction.OUT;
-    case IN:
-      return Direction.IN;
-    case BOTH:
-      return Direction.BOTH;
-    }
-    return null;
-  }
-
-  private String[] toClassNames(OClass[] type) {
-    if (type == null) {
-      return null;
-    }
-    String[] result = new String[type.length];
-    for (int i = 0; i < type.length; i++) {
-      result[i] = type[i].getName();
-    }
-    return result;
-  }
-
 }

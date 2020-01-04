@@ -41,13 +41,13 @@ public class OGraphImporterBasicAPITest {
     OrientVertexType user = graph.createVertexType("User");
     user.createProperty("uid", OType.STRING);
 
-    final OIndex<?> userIndex = user.createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, "AUTOSHARDING",
+    final OIndex userIndex = user.createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, "AUTOSHARDING",
             new String[] { "uid" });
 
     OrientVertexType product = graph.createVertexType("Product");
     product.createProperty("uid", OType.STRING);
 
-    final OIndex<?> productIndex = product
+    final OIndex productIndex = product
         .createIndex("Product.uid", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, "AUTOSHARDING",
             new String[] { "uid" });
 

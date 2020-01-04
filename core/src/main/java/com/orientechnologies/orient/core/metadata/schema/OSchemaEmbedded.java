@@ -149,7 +149,7 @@ public class OSchemaEmbedded extends OSchemaShared {
           for (int i = 0; i < clustersToIndex.length; i++)
             clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
 
-          for (OIndex<?> index : superClass.getIndexes())
+          for (OIndex index : superClass.getIndexes())
             for (String clusterName : clusterNames)
               if (clusterName != null)
                 database.getMetadata().getIndexManagerInternal().addClusterToIndex(clusterName, index.getName());
@@ -668,7 +668,7 @@ public class OSchemaEmbedded extends OSchemaShared {
   private void dropClassIndexes(ODatabaseDocumentInternal database, final OClass cls) {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    for (final OIndex<?> index : indexManager.getClassIndexes(database, cls.getName()))
+    for (final OIndex index : indexManager.getClassIndexes(database, cls.getName()))
       indexManager.dropIndex(database, index.getName());
   }
 

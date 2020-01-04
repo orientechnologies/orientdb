@@ -2,7 +2,11 @@ package com.orientechnologies.orient.distributed.impl.coordinator.ddl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExecutor;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -22,7 +26,7 @@ public class ODDLQueryOperationRequest implements ONodeRequest {
   }
 
   @Override
-  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+  public ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
     OScenarioThreadLocal.executeAsDistributed(() -> {
       return session.command(query);
@@ -44,5 +48,9 @@ public class ODDLQueryOperationRequest implements ONodeRequest {
   @Override
   public int getRequestType() {
     return DDL_QUERY_NODE_REQUEST;
+  }
+
+  public String getQuery() {
+    return query;
   }
 }

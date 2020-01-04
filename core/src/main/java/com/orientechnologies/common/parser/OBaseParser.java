@@ -137,7 +137,7 @@ public abstract class OBaseParser {
   }
 
   /**
-   * Returns the cursor position before last parsing.
+   * Returns the stream position before last parsing.
    * 
    * @return Offset from the beginning
    */
@@ -155,7 +155,7 @@ public abstract class OBaseParser {
   }
 
   /**
-   * Returns the current cursor position.
+   * Returns the current stream position.
    * 
    * @return Offset from the beginning
    */
@@ -164,9 +164,9 @@ public abstract class OBaseParser {
   }
 
   /**
-   * Returns the current character in the current cursor position
+   * Returns the current character in the current stream position
    * 
-   * @return The current character in the current cursor position. If the end is reached, then a blank (' ') is returned
+   * @return The current character in the current stream position. If the end is reached, then a blank (' ') is returned
    */
   public char parserGetCurrentChar() {
     if (parserCurrentPos < 0)
@@ -439,7 +439,7 @@ public abstract class OBaseParser {
   }
 
   /**
-   * Overwrites the current cursor position.
+   * Overwrites the current stream position.
    * 
    * @param iPosition
    *          New position
@@ -461,7 +461,7 @@ public abstract class OBaseParser {
   }
 
   /**
-   * Moves the current cursor position forward or backward of iOffset characters
+   * Moves the current stream position forward or backward of iOffset characters
    * 
    * @param iOffset
    *          Number of characters to move. Negative numbers means backwards

@@ -182,7 +182,7 @@ public class OLuceneIndexCrashRestoreIT {
     db = (ODatabaseDocumentInternal) databasePool.acquire();
     db.getMetadata().reload();
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.name");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.name");
     assertThat(index).isNotNull();
 
     //sometimes the metadata is null!!!!!

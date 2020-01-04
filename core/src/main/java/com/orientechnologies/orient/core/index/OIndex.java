@@ -21,36 +21,22 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Basic interface to handle index.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public interface OIndex<T> extends Comparable<OIndex<T>> {
+public interface OIndex extends Comparable<OIndex> {
   String MERGE_KEYS = "mergeKeys";
 
-  /**
-   * Creates the index.
-   *
-   * @param name
-   * @param clusterIndexName Cluster name where to place the TreeMap
-   * @param clustersToIndex
-   * @param rebuild
-   * @param progressListener
-   */
-  OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
+  OIndex create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener);
 
   String getDatabaseName();
@@ -68,16 +54,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return The Record set if found, otherwise an empty Set
    */
-  T get(Object iKey);
-
-  /**
-   * Tells if a key is contained in the index.
-   *
-   * @param iKey The key to search
-   *
-   * @return True if the key is contained, otherwise false
-   */
-  boolean contains(Object iKey);
+  Object get(Object iKey);
 
   /**
    * Inserts a new entry in the index. The behaviour depends by the index implementation.
@@ -87,7 +64,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return The index instance itself to allow in chain calls
    */
-  OIndex<T> put(Object iKey, OIdentifiable iValue);
+  OIndex put(Object iKey, OIdentifiable iValue);
 
   /**
    * Removes an entry by its key.
@@ -115,27 +92,58 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * @deprecated Manual indexes are deprecated and will be removed
    */
   @Deprecated
-  OIndex<T> clear();
+  OIndex clear();
+
 
   /**
    * @return number of entries in the index.
    */
+  @Deprecated
   long getSize();
 
   /**
    * Counts the entries for the key.
    */
+  @Deprecated
   long count(Object iKey);
 
   /**
    * @return Number of keys in index
    */
+  @Deprecated
   long getKeySize();
 
   /**
    * Flushes in-memory changes to disk.
    */
-  public void flush();
+  @Deprecated
+  void flush();
+
+  @Deprecated
+  long getRebuildVersion();
+
+  /**
+   * @return Indicates whether index is rebuilding at the moment.
+   *
+   * @see #getRebuildVersion()
+   */
+  @Deprecated
+  boolean isRebuilding();
+
+  @Deprecated
+  Object getFirstKey();
+
+  @Deprecated
+  Object getLastKey();
+
+  @Deprecated
+  OIndexCursor cursor();
+
+  @Deprecated
+  OIndexCursor descCursor();
+
+  @Deprecated
+  OIndexKeyCursor keyCursor();
 
   /**
    * Delete the index.
@@ -143,7 +151,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * @return The index instance itself to allow in chain calls
    */
   @OApi(enduser = false)
-  OIndex<T> delete();
+  OIndex delete();
 
   /**
    * Returns the index name.
@@ -160,7 +168,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   /**
    * Returns the engine of the index as string.
    */
-  public String getAlgorithm();
+  String getAlgorithm();
 
   /**
    * Returns binary format version for this index. Index format changes during system development but old formats are supported for
@@ -183,15 +191,11 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * Rebuilds an automatic index.
    *
    * @return The number of entries rebuilt
-   *
-   * @see #getRebuildVersion()
    */
   long rebuild();
 
   /**
    * Populate the index with all the existent records.
-   *
-   * @see #getRebuildVersion()
    */
   long rebuild(OProgressListener iProgressListener);
 
@@ -205,17 +209,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   /**
    * Returns the internal index used.
    */
-  OIndexInternal<T> getInternal();
-
-  /**
-   * Returns cursor which presents data associated with passed in keys.
-   *
-   * @param keys         Keys data of which should be returned.
-   * @param ascSortOrder Flag which determines whether data iterated by cursor should be in ascending or descending order.
-   *
-   * @return cursor which presents data associated with passed in keys.
-   */
-  OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder);
+  OIndexInternal getInternal();
 
   OIndexDefinition getDefinition();
 
@@ -225,6 +219,17 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * @return Names of clusters that will be indexed.
    */
   Set<String> getClusters();
+
+  /**
+   * Returns cursor which presents data associated with passed in keys.
+   *
+   * @param keys         Keys data of which should be returned.
+   * @param ascSortOrder Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   *
+   * @return cursor which presents data associated with passed in keys.
+   */
+  @Deprecated
+  OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder);
 
   /**
    * Returns cursor which presents subset of index data between passed in keys.
@@ -237,6 +242,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return Cursor which presents subset of index data between passed in keys.
    */
+  @Deprecated
   OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder);
 
   /**
@@ -248,6 +254,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return cursor which presents subset of data which associated with key which is greater than passed in key.
    */
+  @Deprecated
   OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
 
   /**
@@ -259,81 +266,14 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return cursor which presents subset of data which associated with key which is less than passed in key.
    */
+  @Deprecated
   OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
-
-  OIndexCursor cursor();
-
-  OIndexCursor descCursor();
-
-  OIndexKeyCursor keyCursor();
 
   ODocument getMetadata();
 
   boolean supportsOrderedIterations();
 
-  /**
-   * Returns amount of times when index was rebuilt since storage was opened.
-   * <p>
-   * It is used to support so called "live index rebuild" feature.
-   * <p>
-   * Value of this version is increased every time when index is going to be rebuild. So if two sequential calls of this method
-   * return different numbers it means that index at least started to rebuild itself.
-   * <p>
-   * If you use indexes to increase speed of fetching data from database you should follow following workflow:
-   * <ol>
-   * <li>Read index rebuild version.</li>
-   * <li>Check index rebuild flag {@link #isRebuilding()}, if it is true, do not use index and fetch data directly from
-   * database clusters.</li>
-   * <li>Fetch data from index.</li>
-   * <li>Read index rebuild version again, if it is not equal to version which was read at first time, go to step 2.
-   * It is VERY important do not reorder steps 1 and 2. Such recording may lead to situation when index is rebuilding but we miss
-   * this state.</li>
-   * </ol>
-   * <p>
-   * This approach works well ONLY if you do not use methods which return {@link OIndexCursor} instance. In case of you work with
-   * cursors index rebuild may cause data inconsistency issues in both:
-   * <ol>
-   * <li>Code which calls index methods to create cursor (can be avoided using steps are listed above)</li>
-   * <li>During iteration over the cursor itself</li>
-   * </ol>
-   * <p>
-   * To detect last data inconsistency issue please use cursor wrapper {@link OIndexChangesWrapper} which throws {@link
-   * com.orientechnologies.orient.core.exception.OIndexIsRebuildingException} in case of index rebuild.
-   * <p>
-   * Both of these approaches are used in implementation of support of "live index rebuild" for <code>SELECT</code> SQL queries.
-   * <ol>
-   * <li>In case of index which we are going to use to speed up <code>SELECT</code> query is rebuilding
-   * we skip this index.</li>
-   * <li>If index is rebuilding at the moment when we iterate over the cursor
-   * we catch {@link com.orientechnologies.orient.core.exception.OIndexIsRebuildingException} exception and retry whole query
-   * again.</li>
-   * </ol>
-   *
-   * @return amount of times  when index was rebuilt since the start of the storage.
-   *
-   * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#searchForIndexes(com.orientechnologies.orient.core.metadata.schema.OClass)
-   * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#getIndexCursors(com.orientechnologies.orient.core.metadata.schema.OClass)
-   * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#getOptimizedSortCursor(com.orientechnologies.orient.core.metadata.schema.OClass)
-   * @see com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage#command(com.orientechnologies.orient.core.command.OCommandRequestText)
-   * @see OIndexChangesWrapper
-   * @see com.orientechnologies.orient.core.exception.OIndexIsRebuildingException
-   * @see com.orientechnologies.orient.core.exception.ORetryQueryException
-   */
-  long getRebuildVersion();
-
-  /**
-   * @return Indicates whether index is rebuilding at the moment.
-   *
-   * @see #getRebuildVersion()
-   */
-  boolean isRebuilding();
-
-  Object getFirstKey();
-
-  Object getLastKey();
-
   int getIndexId();
 
   boolean isUnique();
-
 }

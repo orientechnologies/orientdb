@@ -249,5 +249,9 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     return false;
   }
 
+  default boolean isRemote() {
+    return false;
+  }
+
   Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges();
 }

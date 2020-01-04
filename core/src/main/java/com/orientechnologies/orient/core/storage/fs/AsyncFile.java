@@ -173,15 +173,15 @@ public final class AsyncFile implements OFile {
     final AsyncIOResult asyncIOResult = new AsyncIOResult(latch);
 
     for (final ORawPair<Long, ByteBuffer> pair : buffers) {
-      final ByteBuffer byteBuffer = pair.getSecond();
+      final ByteBuffer byteBuffer = pair.second;
       byteBuffer.rewind();
       lock.sharedLock();
       try {
         checkForClose();
-        checkPosition(pair.getFirst());
-        checkPosition(pair.getFirst() + pair.getSecond().limit() - 1);
+        checkPosition(pair.first);
+        checkPosition(pair.first + pair.second.limit() - 1);
 
-        final long position = pair.getFirst() + HEADER_SIZE;
+        final long position = pair.first + HEADER_SIZE;
         fileChannel.write(byteBuffer, position, latch, new WriteHandler(byteBuffer, asyncIOResult, position));
       } finally {
         lock.sharedUnlock();

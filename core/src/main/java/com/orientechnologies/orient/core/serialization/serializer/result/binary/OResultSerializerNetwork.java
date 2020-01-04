@@ -414,6 +414,9 @@ public class OResultSerializerNetwork {
       writeLinkCollection(bytes, ridCollection);
       break;
     case LINK:
+      if (value instanceof OResult && ((OResult) value).isElement()) {
+        value = ((OResult) value).getElement().get();
+      }
       if (!(value instanceof OIdentifiable))
         throw new OValidationException("Value '" + value + "' is not a OIdentifiable");
       writeOptimizedLink(bytes, (OIdentifiable) value);
@@ -573,6 +576,9 @@ public class OResultSerializerNetwork {
   }
 
   private OType getTypeFromValueEmbedded(final Object fieldValue) {
+    if (fieldValue instanceof OResult && ((OResult) fieldValue).isElement()) {
+      return OType.LINK;
+    }
     OType type = fieldValue instanceof OResult ? OType.EMBEDDED : OType.getTypeByValue(fieldValue);
     if (type == OType.LINK && fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid())
       type = OType.EMBEDDED;

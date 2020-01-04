@@ -267,7 +267,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     return getIndexChanges(indexName);
   }
 
-  public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
+  public void addIndexEntry(final OIndex delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
       final Object key, final OIdentifiable iValue) {
     addIndexEntry(delegate, iIndexName, iOperation, key, iValue, false);
   }
@@ -275,7 +275,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
   /**
    * Bufferizes index changes to be flushed at commit time.
    */
-  public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
+  public void addIndexEntry(final OIndex delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
       final Object key, final OIdentifiable iValue, boolean clientTrackOnly) {
     OTransactionIndexChanges indexEntry = indexEntries.get(iIndexName);
     if (indexEntry == null) {
@@ -316,7 +316,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     final ODatabaseDocumentInternal database = getDatabase();
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     for (Entry<String, OTransactionIndexChanges> entry : indexEntries.entrySet()) {
-      final OIndex<?> index = indexManager.getIndex(database, entry.getKey());
+      final OIndex index = indexManager.getIndex(database, entry.getKey());
       if (index == null)
         throw new OTransactionException("Cannot find index '" + entry.getValue() + "' while committing transaction");
 
@@ -458,7 +458,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     return userData.get(iName);
   }
 
-  private static Dependency[] getIndexFieldRidDependencies(OIndex<?> index) {
+  private static Dependency[] getIndexFieldRidDependencies(OIndex index) {
     final OIndexDefinition definition = index.getDefinition();
 
     if (definition == null) // type for untyped index is still not resolved

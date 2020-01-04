@@ -232,7 +232,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocumentInternal database = getDatabase();
-    final OIndex<?> idx;
+    final OIndex idx;
     List<OCollate> collatesList = null;
 
     if (collates != null) {
@@ -281,12 +281,14 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, indexType.toString(), null);
 
         idx = database.getMetadata().getIndexManagerInternal()
-            .createIndex(database, indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc, engine);
+            .createIndex(database, indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc,
+                engine);
       }
     }
 
-    if (idx != null)
-      return idx.getSize();
+    if (idx != null) {
+      return idx.getInternal().size();
+    }
 
     return null;
   }

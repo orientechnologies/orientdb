@@ -46,7 +46,7 @@ public class OTransactionIndexChanges {
 
   public boolean cleared = false;
 
-  private OIndexInternal<?> resolvedIndex = null;
+  private OIndexInternal resolvedIndex = null;
 
   public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
     if (key == null)
@@ -83,8 +83,16 @@ public class OTransactionIndexChanges {
   }
 
   public Object[] firstAndLastKeys(Object from, boolean fromInclusive, Object to, boolean toInclusive) {
-    final NavigableMap<Object, OTransactionIndexChangesPerKey> interval = changesPerKey
-        .subMap(from, fromInclusive, to, toInclusive);
+    final NavigableMap<Object, OTransactionIndexChangesPerKey> interval;
+    if (from != null && to != null) {
+      interval = changesPerKey.subMap(from, fromInclusive, to, toInclusive);
+    } else if (from != null) {
+      interval = changesPerKey.headMap(from, fromInclusive);
+    } else if (to != null) {
+      interval = changesPerKey.tailMap(to, toInclusive);
+    } else {
+      interval = changesPerKey;
+    }
 
     if (interval.isEmpty()) {
       return new Object[0];
@@ -97,10 +105,9 @@ public class OTransactionIndexChanges {
     return changesPerKey.floorKey(key);
   }
 
-  public OIndexInternal<?> resolveAssociatedIndex(String indexName, OIndexManagerAbstract indexManager,
-      ODatabaseDocumentInternal db) {
+  public OIndexInternal resolveAssociatedIndex(String indexName, OIndexManagerAbstract indexManager, ODatabaseDocumentInternal db) {
     if (resolvedIndex == null) {
-      final OIndex<?> index = indexManager.getIndex(db, indexName);
+      final OIndex index = indexManager.getIndex(db, indexName);
       if (index != null)
         resolvedIndex = index.getInternal();
     }
@@ -108,7 +115,7 @@ public class OTransactionIndexChanges {
     return resolvedIndex;
   }
 
-  public OIndexInternal<?> getAssociatedIndex() {
+  public OIndexInternal getAssociatedIndex() {
     return resolvedIndex;
   }
 }

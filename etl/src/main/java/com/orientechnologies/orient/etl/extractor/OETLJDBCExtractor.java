@@ -233,7 +233,7 @@ public class OETLJDBCExtractor extends OETLAbstractExtractor {
     return new ODocument().fromJSON("{parameters:[{driver:{optional:false,description:'JDBC Driver class'}},"
         + "{url:{optional:false,description:'Connection URL'}}," + "{userName:{optional:false,description:'User name'}},"
         + "{userPassword:{optional:false,description:'User password'}},"
-        + "{fetchSize:{optional:true,description:'JDBC cursor fetch size. Default is 10000'}},"
+        + "{fetchSize:{optional:true,description:'JDBC stream fetch size. Default is 10000'}},"
         + "{query:{optional:false,description:'Query that extract records'}},"
         + "{queryCount:{optional:true,description:'Query that returns the count to have a correct progress status'}}],"
         + "output:'ODocument'}");

@@ -47,7 +47,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
 
     db.command("create index Person.weight on Person(weight) FULLTEXT ENGINE LUCENE");
 
-    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.weight").getSize()).isEqualTo(10);
+    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.weight").getInternal().size()).isEqualTo(10);
 
     //range
     OResultSet results = db.command("SELECT FROM Person WHERE search_class('weight:[0.0 TO 1.1]') = true");
@@ -66,7 +66,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
 
     db.command("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE");
 
-    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.age").getSize()).isEqualTo(10);
+    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.age").getInternal().size()).isEqualTo(10);
 
     //range
     OResultSet results = db.command("SELECT FROM Person WHERE search_class('age:[5 TO 6]') = true");
@@ -86,7 +86,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     db.command("create index Person.date on Person(date) FULLTEXT ENGINE LUCENE");
     db.commit();
 
-    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.date").getSize()).isEqualTo(10);
+    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.date").getInternal().size()).isEqualTo(10);
 
     String today = DateTools.timeToString(System.currentTimeMillis(), DateTools.Resolution.MINUTE);
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
@@ -103,7 +103,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
 
     db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE");
 
-    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.composite").getSize()).isEqualTo(10);
+    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.composite").getInternal().size()).isEqualTo(10);
 
     db.commit();
 
@@ -132,7 +132,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() {
     db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE");
 
-    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.composite").getSize()).isEqualTo(10);
+    assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.composite").getInternal().size()).isEqualTo(10);
 
     db.commit();
 

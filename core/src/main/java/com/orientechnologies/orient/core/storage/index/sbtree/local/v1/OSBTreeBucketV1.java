@@ -620,7 +620,7 @@ public final class OSBTreeBucketV1<K, V> extends ODurablePage {
 
     @Override
     public String toString() {
-      return "SBTreeEntry{" + "leftChild=" + leftChild + ", rightChild=" + rightChild + ", key=" + key + ", value=" + value + '}';
+      return "CellBTreeEntry{" + "leftChild=" + leftChild + ", rightChild=" + rightChild + ", key=" + key + ", value=" + value + '}';
     }
 
     @Override

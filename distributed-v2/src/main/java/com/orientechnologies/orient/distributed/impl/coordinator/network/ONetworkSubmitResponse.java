@@ -9,7 +9,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.orientechnologies.orient.distributed.impl.network.binary.OBinaryDistributedMessage.DISTRIBUTED_SUBMIT_RESPONSE;
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_SUBMIT_RESPONSE;
 
 public class ONetworkSubmitResponse implements ODistributedMessage {
   private String              database;
@@ -45,7 +45,7 @@ public class ONetworkSubmitResponse implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executeSubmitResponse(sender, this);
+    executor.executeSubmitResponse(sender, database, operationId, response);
   }
 
   @Override

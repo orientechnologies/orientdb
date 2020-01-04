@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -14,8 +14,9 @@ import org.testng.annotations.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Test
 public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
@@ -47,12 +48,12 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
 
   @Test
   public void testPut() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
     database.begin();
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
@@ -63,8 +64,8 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> resultOne = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultOne);
+    Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, resultOne);
     Assert.assertEquals(resultOne.size(), 3);
 
     database.begin();
@@ -73,27 +74,27 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> resultTwo = new HashSet<>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultTwo);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, resultTwo);
     Assert.assertEquals(resultTwo.size(), 4);
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> resultThree = new HashSet<>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultThree);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, resultThree);
     Assert.assertEquals(resultThree.size(), 3);
   }
 
   @Test
   public void testRemove() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
     database.begin();
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final ODocument docOne = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
@@ -104,8 +105,8 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> resultOne = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultOne);
+    Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, resultOne);
     Assert.assertEquals(resultOne.size(), 3);
 
     database.begin();
@@ -115,27 +116,27 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> resultTwo = new HashSet<>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultTwo);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, resultTwo);
     Assert.assertEquals(resultTwo.size(), 1);
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> resultThree = new HashSet<>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultThree);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, resultThree);
     Assert.assertEquals(resultThree.size(), 3);
   }
 
   @Test
   public void testRemoveOne() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
     database.begin();
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final ODocument docOne = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
@@ -146,8 +147,8 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> resultOne = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultOne);
+    Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, resultOne);
     Assert.assertEquals(resultOne.size(), 3);
 
     database.begin();
@@ -156,28 +157,28 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> resultTwo = new HashSet<>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultTwo);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, resultTwo);
     Assert.assertEquals(resultTwo.size(), 2);
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> resultThree = new HashSet<>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, resultThree);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, resultThree);
     Assert.assertEquals(resultThree.size(), 3);
   }
 
   @Test
   public void testMultiPut() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final ODocument document = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
@@ -190,28 +191,28 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
     Set<OIdentifiable> result = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
 
     Assert.assertEquals(result.size(), 2);
 
     database.commit();
 
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
 
     Assert.assertEquals(result.size(), 2);
   }
 
   @Test
   public void testPutAfterTransaction() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
@@ -219,27 +220,27 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     Set<OIdentifiable> result = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
     Assert.assertEquals(result.size(), 2);
     database.commit();
 
     new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
 
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
     Assert.assertEquals(result.size(), 3);
   }
 
   @Test
   public void testRemoveOneWithinTransaction() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final ODocument doc = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
@@ -250,29 +251,29 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
     Set<OIdentifiable> result = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
 
     Assert.assertEquals(result.size(), 1);
 
     database.commit();
 
     result = new HashSet<>();
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
 
     Assert.assertEquals(result.size(), 1);
   }
 
   @Test
   public void testRemoveAllWithinTransaction() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     ODocument docOne = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
@@ -283,28 +284,28 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
     Set<OIdentifiable> result = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
 
     Assert.assertEquals(result.size(), 1);
 
     database.commit();
 
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
 
     Assert.assertEquals(result.size(), 1);
   }
 
   @Test
   public void testPutAfterRemove() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
     database.begin();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final ODocument docOne = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
@@ -316,25 +317,21 @@ public class IndexTxAwareMultiValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
     Set<OIdentifiable> result = new HashSet<>();
-    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
 
     Assert.assertEquals(result.size(), 2);
 
     database.commit();
 
-    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
-    cursorToSet(cursor, result);
+    stream = index.getInternal().streamEntries(Arrays.asList(1, 2), true);
+    streamToSet(stream, result);
 
     Assert.assertEquals(result.size(), 2);
   }
 
-  private void cursorToSet(OIndexCursor cursor, Set<OIdentifiable> result) {
+  private static void streamToSet(Stream<ORawPair<Object, ORID>> stream, Set<OIdentifiable> result) {
     result.clear();
-    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
-    while (entry != null) {
-      result.add(entry.getValue());
-      entry = cursor.nextEntry();
-    }
+    result.addAll(stream.map((entry) -> entry.second).collect(Collectors.toSet()));
   }
 }

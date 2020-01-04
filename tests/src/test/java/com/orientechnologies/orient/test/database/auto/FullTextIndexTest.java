@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
@@ -111,9 +112,9 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
     Set<ODocument> allDocs = new HashSet<ODocument>();
 
     for (int i = 0; i < words.length - 1; ++i) {
-      List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
-          + "\""));
-      allDocs.addAll(docs);
+      OResultSet rs = database.query("SELECT FROM Whiz WHERE text containstext ?", words[i]);
+      rs.stream().forEach(x -> allDocs.add((ODocument) x.toElement()));
+      rs.close();
     }
 
     Assert.assertEquals(allDocs.size(), TOT);
@@ -142,9 +143,9 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
 
     Set<ODocument> allDocs = new HashSet<ODocument>();
     for (int i = 0; i < words.length - 1; ++i) {
-      List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
-          + "\""));
-      allDocs.addAll(docs);
+      OResultSet rs = database.query("SELECT FROM Whiz WHERE text containstext ?", words[i]);
+      rs.stream().forEach(x -> allDocs.add((ODocument) x.toElement()));
+      rs.close();
     }
 
     Assert.assertEquals(allDocs.size(), TOT + 1);
@@ -154,9 +155,9 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
     allDocs.clear();
 
     for (int i = 0; i < words.length - 1; ++i) {
-      List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
-          + "\""));
-      allDocs.addAll(docs);
+      OResultSet rs = database.query("SELECT FROM Whiz WHERE text containstext ?", words[i]);
+      rs.stream().forEach(x -> allDocs.add((ODocument) x.toElement()));
+      rs.close();
     }
 
     Assert.assertEquals(allDocs.size(), TOT);
@@ -185,9 +186,9 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
 
     Set<ODocument> allDocs = new HashSet<ODocument>();
     for (int i = 0; i < words.length - 1; ++i) {
-      List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
-          + "\""));
-      allDocs.addAll(docs);
+      OResultSet rs = database.query("SELECT FROM Whiz WHERE text containstext ?", words[i]);
+      rs.stream().forEach(x -> allDocs.add((ODocument) x.toElement()));
+      rs.close();
     }
 
     Assert.assertEquals(allDocs.size(), TOT + 1);
@@ -205,9 +206,9 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
     allDocs.clear();
 
     for (int i = 0; i < words.length - 1; ++i) {
-      List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext \"" + words[i]
-          + "\""));
-      allDocs.addAll(docs);
+      OResultSet rs = database.query("SELECT FROM Whiz WHERE text containstext ?", words[i]);
+      rs.stream().forEach(x -> allDocs.add((ODocument) x.toElement()));
+      rs.close();
     }
 
     Assert.assertEquals(allDocs.size(), TOT + 1);

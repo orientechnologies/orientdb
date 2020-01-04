@@ -253,15 +253,15 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         return null;
       }
 
-      final String segmentName = createSegmentName(segmentPosition.getFirst());
+      final String segmentName = createSegmentName(segmentPosition.first);
       final Path segmentPath = storagePath.resolve(segmentName);
 
       //bellow set of precautions to prevent errors during page restore
       if (Files.exists(segmentPath)) {
         try (final FileChannel channel = FileChannel.open(segmentPath, StandardOpenOption.READ)) {
           final long channelSize = channel.size();
-          if (channelSize - segmentPosition.getSecond() > METADATA_SIZE) {
-            channel.position(segmentPosition.getSecond());
+          if (channelSize - segmentPosition.second > METADATA_SIZE) {
+            channel.position(segmentPosition.second);
 
             final ByteBuffer metadataBuffer = ByteBuffer.allocate(METADATA_SIZE).order(ByteOrder.nativeOrder());
             OIOUtils.readByteBuffer(metadataBuffer, channel);
@@ -273,7 +273,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
             final int compressedLen = metadataBuffer.getInt();
 
             if (storedFileId == fileId && pageIndex >= storedPageIndex && pageIndex < storedPageIndex + pages) {
-              if (channelSize - segmentPosition.getSecond() - METADATA_SIZE >= compressedLen) {
+              if (channelSize - segmentPosition.second - METADATA_SIZE >= compressedLen) {
                 final ByteBuffer compressedBuffer = ByteBuffer.allocate(compressedLen).order(ByteOrder.nativeOrder());
                 OIOUtils.readByteBuffer(compressedBuffer, channel);
                 compressedBuffer.rewind();

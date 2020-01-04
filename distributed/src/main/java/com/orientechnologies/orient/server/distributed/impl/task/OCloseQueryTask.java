@@ -57,7 +57,7 @@ public class OCloseQueryTask extends OAbstractRemoteTask {
   public void toStream(DataOutput out) throws IOException {
     char[] chars = queryId.toCharArray();
     int length = chars.length;
-    out.write(length);
+    out.writeInt(length);
     for (char aChar : chars) {
       out.writeChar(aChar);
     }
@@ -78,4 +78,7 @@ public class OCloseQueryTask extends OAbstractRemoteTask {
     return FACTORYID;
   }
 
+  public String getQueryId() {
+    return queryId;
+  }
 }

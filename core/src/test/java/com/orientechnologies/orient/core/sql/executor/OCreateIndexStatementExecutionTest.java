@@ -40,7 +40,7 @@ public class OCreateIndexStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     Assert.assertNotNull(next);
     result.close();
-    OIndex<?> idx = db.getMetadata().getIndexManagerInternal().getIndex(db, className + ".name");
+    OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, className + ".name");
     Assert.assertNotNull(idx);
     Assert.assertFalse(idx.isUnique());
   }
@@ -58,7 +58,7 @@ public class OCreateIndexStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     Assert.assertNotNull(next);
     result.close();
-    OIndex<?> idx = db.getMetadata().getIndexManagerInternal().getIndex(db, className + ".name");
+    OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, className + ".name");
     Assert.assertNotNull(idx);
     Assert.assertFalse(idx.isUnique());
 

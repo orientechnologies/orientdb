@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
@@ -62,8 +61,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * In the command context you've access to the variable $depth containing the depth level from the root node. This is useful to
  * limit the traverse up to a level. For example to consider from the first depth level (0 is root node) to the third use:
  * <code>TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3</code>. To filter traversed records use it combined with a
- * SELECT
- * statement:
+ * SELECT statement:
  * </p>
  * <p>
  * <code>SELECT FROM (TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3) WHERE city.name = 'Rome'</code>
@@ -89,45 +87,26 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected boolean                           lazyIteration = true;
 
   private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
-    private OIndexCursor  indexCursor;
-    private OIdentifiable nextValue;
-    private boolean       noItems;
+    private Iterator<ORID> indexValuesIterator;
 
     private IndexValuesIterator(String indexName, boolean ascOrder) {
       final ODatabaseDocumentInternal database = getDatabase();
-      if (ascOrder)
-        indexCursor = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).cursor();
-      else
-        indexCursor = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).descCursor();
+      if (ascOrder) {
+        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getInternal().stream()
+            .map((pair) -> pair.second).iterator();
+      } else
+        indexValuesIterator = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getInternal().descStream()
+            .map((pair) -> pair.second).iterator();
     }
 
     @Override
     public boolean hasNext() {
-      if (noItems)
-        return false;
-
-      if (nextValue == null) {
-        final Map.Entry<Object, OIdentifiable> entry = indexCursor.nextEntry();
-        if (entry == null) {
-          noItems = true;
-          return false;
-        }
-
-        nextValue = entry.getValue();
-      }
-
-      return true;
+      return indexValuesIterator.hasNext();
     }
 
     @Override
     public OIdentifiable next() {
-      if (!hasNext())
-        throw new NoSuchElementException();
-
-      final OIdentifiable value = nextValue;
-      nextValue = null;
-
-      return value;
+      return indexValuesIterator.next();
     }
 
     @Override

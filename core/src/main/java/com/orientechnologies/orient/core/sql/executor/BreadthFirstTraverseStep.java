@@ -94,6 +94,8 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
       addNextEntryPoints(((OIdentifiable) nextStep), depth, path, ctx);
     } else if (nextStep instanceof Iterable) {
       addNextEntryPoints(((Iterable) nextStep).iterator(), depth, path, ctx);
+    } else if (nextStep instanceof Map) {
+      addNextEntryPoints(((Map) nextStep).values().iterator(), depth, path, ctx);
     } else if (nextStep instanceof OResult) {
       addNextEntryPoints(((OResult) nextStep), depth, path, ctx);
     }

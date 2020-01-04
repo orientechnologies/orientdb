@@ -128,7 +128,7 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
 
     OLuceneSpatialIndex index = searchForIndex(target, args);
 
-    return index == null ? -1 : index.getSize();
+    return index == null ? -1 : index.size();
   }
 
   public <T> boolean intersect(List<T> list1, List<T> list2) {

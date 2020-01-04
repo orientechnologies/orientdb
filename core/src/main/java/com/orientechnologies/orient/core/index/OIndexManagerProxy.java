@@ -51,11 +51,11 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     delegate.create(database);
   }
 
-  public Collection<? extends OIndex<?>> getIndexes() {
+  public Collection<? extends OIndex> getIndexes() {
     return delegate.getIndexes(database);
   }
 
-  public OIndex<?> getIndex(final String iName) {
+  public OIndex getIndex(final String iName) {
     return delegate.getIndex(database, iName);
   }
 
@@ -63,13 +63,13 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     return delegate.existsIndex(iName);
   }
 
-  public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
+  public OIndex createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
       final int[] clusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata) {
     return delegate.createIndex(database, iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
   }
 
   @Override
-  public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+  public OIndex createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
       final int[] iClusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata, final String algorithm) {
     return delegate
         .createIndex(database, iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
@@ -96,16 +96,11 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     return delegate.getDictionary(database);
   }
 
-  public void flush() {
-    if (delegate != null)
-      delegate.flush();
-  }
-
-  public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final Collection<String> fields) {
+  public Set<OIndex> getClassInvolvedIndexes(final String className, final Collection<String> fields) {
     return delegate.getClassInvolvedIndexes(database, className, fields);
   }
 
-  public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final String... fields) {
+  public Set<OIndex> getClassInvolvedIndexes(final String className, final String... fields) {
     return delegate.getClassInvolvedIndexes(database, className, fields);
   }
 
@@ -117,16 +112,16 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     return delegate.areIndexed(className, fields);
   }
 
-  public Set<OIndex<?>> getClassIndexes(final String className) {
+  public Set<OIndex> getClassIndexes(final String className) {
     return delegate.getClassIndexes(database, className);
   }
 
   @Override
-  public void getClassIndexes(final String className, final Collection<OIndex<?>> indexes) {
+  public void getClassIndexes(final String className, final Collection<OIndex> indexes) {
     delegate.getClassIndexes(database, className, indexes);
   }
 
-  public OIndex<?> getClassIndex(final String className, final String indexName) {
+  public OIndex getClassIndex(final String className, final String indexName) {
     return delegate.getClassIndex(database, className, indexName);
   }
 
@@ -135,7 +130,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     return delegate.getClassUniqueIndex(className);
   }
 
-  public OIndex<?> getClassAutoShardingIndex(final String className) {
+  public OIndex getClassAutoShardingIndex(final String className) {
     return delegate.getClassAutoShardingIndex(database, className);
   }
 
@@ -169,16 +164,16 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     return delegate.save();
   }
 
-  public void removeClassPropertyIndex(final OIndex<?> idx) {
+  public void removeClassPropertyIndex(final OIndex idx) {
     //noinspection deprecation
     delegate.removeClassPropertyIndex(idx);
   }
 
-  public void getClassRawIndexes(String name, Collection<OIndex<?>> indexes) {
+  public void getClassRawIndexes(String name, Collection<OIndex> indexes) {
     delegate.getClassRawIndexes(name, indexes);
   }
 
-  OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex<?> index) {
+  OIndex preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex index) {
     return delegate.preProcessBeforeReturn(database, index);
   }
 

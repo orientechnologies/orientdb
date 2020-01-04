@@ -48,7 +48,7 @@ public class OETLDefaultImporterListener implements OETLImporterListener {
   }
 
   @Override
-  public void onJoinNotFound(final ODatabaseDocument db, final OCommandContext iContext, final OIndex<?> iIndex,
+  public void onJoinNotFound(final ODatabaseDocument db, final OCommandContext iContext, final OIndex iIndex,
       final Object iKey) {
     iContext.setVariable("joinNotFound", ((Integer) iContext.getVariable("joinNotFound", 0)) + 1);
     OLogManager.instance()

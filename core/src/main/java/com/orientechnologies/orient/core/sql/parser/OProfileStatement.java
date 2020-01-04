@@ -48,12 +48,12 @@ public class OProfileStatement extends OStatement {
 
     OExecutionPlan executionPlan;
     if (usePlanCache) {
-      executionPlan = statement.createExecutionPlan(ctx, false);
+      executionPlan = statement.createExecutionPlan(ctx, true);
     } else {
-      executionPlan = statement.createExecutionPlanNoCache(ctx, false);
+      executionPlan = statement.createExecutionPlanNoCache(ctx, true);
     }
 
-    if(executionPlan instanceof OUpdateExecutionPlan){
+    if (executionPlan instanceof OUpdateExecutionPlan) {
       ((OUpdateExecutionPlan) executionPlan).executeInternal();
     }
 
@@ -81,9 +81,9 @@ public class OProfileStatement extends OStatement {
 
     OExecutionPlan executionPlan;
     if (usePlanCache) {
-      executionPlan = statement.createExecutionPlan(ctx, false);
+      executionPlan = statement.createExecutionPlan(ctx, true);
     } else {
-      executionPlan = statement.createExecutionPlanNoCache(ctx, false);
+      executionPlan = statement.createExecutionPlanNoCache(ctx, true);
     }
 
     OLocalResultSet rs = new OLocalResultSet((OInternalExecutionPlan) executionPlan);

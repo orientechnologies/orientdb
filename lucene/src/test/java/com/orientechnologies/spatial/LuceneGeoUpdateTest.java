@@ -39,11 +39,11 @@ public class LuceneGeoUpdateTest extends BaseSpatialLuceneTest {
         new OCommandSQL("insert into City set name = 'TestInsert' , location = ST_GeomFromText('POINT(-160.2075374 21.9029803)')"))
         .execute();
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.location");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.location");
 
     db.command(new OCommandSQL("update City set name = 'TestInsert' , location = ST_GeomFromText('POINT(12.5 41.9)')")).execute();
 
-    Assert.assertEquals(1, index.getSize());
+    Assert.assertEquals(1, index.getInternal().size());
 
   }
 

@@ -1,19 +1,20 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.mocktx;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 
 public class FirstPhaseHandler implements OResponseHandler {
-  private       OSubmitTx          submitTx;
-  private final ODistributedMember member;
-  private       boolean            done;
+  private       OSubmitTx     submitTx;
+  private final ONodeIdentity member;
+  private       boolean       done;
 
-  public FirstPhaseHandler(OSubmitTx submitTx, ODistributedMember member) {
+  public FirstPhaseHandler(OSubmitTx submitTx, ONodeIdentity member) {
     this.submitTx = submitTx;
     this.member = member;
   }
 
   @Override
-  public boolean receive(ODistributedCoordinator coordinator1, ORequestContext context, ODistributedMember member,
+  public boolean receive(ODistributedCoordinator coordinator1, ORequestContext context, ONodeIdentity member,
       ONodeResponse response) {
     if (context.getResponses().size() >= context.getQuorum() && !done) {
       done = true;

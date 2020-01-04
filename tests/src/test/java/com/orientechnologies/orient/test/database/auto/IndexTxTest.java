@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -11,7 +10,9 @@ import org.testng.Assert;
 import org.testng.annotations.*;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -71,17 +72,19 @@ public class IndexTxTest extends DocumentDBBaseTest {
     expectedResult.put("doc2", doc2.getIdentity());
 
     OIndex index = getIndex("IndexTxTestIndex");
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    String key = (String) keyCursor.next(-1);
+    Iterator<Object> keyIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keyIterator = keyStream.iterator();
 
-    while (key != null) {
-      final ORID expectedValue = expectedResult.get(key);
-      final ORID value = (ORID) index.get(key);
+      while (keyIterator.hasNext()) {
+        String key = (String) keyIterator.next();
 
-      Assert.assertTrue(value.isPersistent());
-      Assert.assertEquals(value, expectedValue);
+        final ORID expectedValue = expectedResult.get(key);
+        final ORID value = (ORID) index.get(key);
 
-      key = (String) keyCursor.next(-1);
+        Assert.assertTrue(value.isPersistent());
+        Assert.assertEquals(value, expectedValue);
+      }
     }
   }
 }

@@ -424,7 +424,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
     Set<String> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
-      OIndex<?> index = getMetadata().getIndexManagerInternal().getIndex(this, change.getKey());
+      OIndex index = getMetadata().getIndexManagerInternal().getIndex(this, change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType()) || OClass.INDEX_TYPE.DICTIONARY.name().equals(index.getType())
           || OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(index.getType())) {
@@ -508,7 +508,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @param transactionId
    */
   public void commit2pcLocal(ODistributedRequestId transactionId) {
-    commit2pc(transactionId, true);
+    commit2pc(transactionId, true, transactionId);
   }
 
   /**
@@ -516,16 +516,24 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    *
    * @return null returned means that commit failed
    */
-  public boolean commit2pc(ODistributedRequestId transactionId, boolean local) {
+  public boolean commit2pc(ODistributedRequestId transactionId, boolean local, ODistributedRequestId requestId) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-
+    ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
     ONewDistributedTxContextImpl txContext = (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
 
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
         try {
+
+          if (manager != null) {
+            manager.messageCurrentPayload(requestId, txContext);
+            manager.messageBeforeOp("commit", requestId);
+          }
           txContext.commit(this);
+          if (manager != null) {
+            manager.messageAfterOp("commit", requestId);
+          }
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
@@ -620,6 +628,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
     try {
       OTransactionInternal tx = txContext.getTransaction();
+
       ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
     } catch (OLowDiskSpaceException ex) {
       distributedManager.setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
@@ -639,17 +648,24 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ((OTransactionOptimistic) transaction).begin();
     }
 
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("locks", txContext.getReqId());
+
     acquireLocksForTx(transaction, txContext);
 
-    firstPhaseDataChecks(local, transaction);
+    firstPhaseDataChecks(local, transaction, txContext);
 
   }
 
-  private void firstPhaseDataChecks(boolean local, OTransactionInternal transaction) {
-    ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
+  private void firstPhaseDataChecks(boolean local, OTransactionInternal transaction, ONewDistributedTxContextImpl txContext) {
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("locks", txContext.getReqId());
 
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("allocate", txContext.getReqId());
+    ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("allocate", txContext.getReqId());
+
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("indexCheck", txContext.getReqId());
     for (Map.Entry<String, OTransactionIndexChanges> change : transaction.getIndexOperations().entrySet()) {
-      OIndex<?> index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
+      OIndex index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType())) {
         OTransactionIndexChangesPerKey nullKeyChanges = change.getValue().nullKeyChanges;
@@ -697,6 +713,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
 
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("indexCheck", txContext.getReqId());
+
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageBeforeOp("mvccCheck", txContext.getReqId());
     for (ORecordOperation entry : transaction.getRecordOperations()) {
       if (entry.getType() != ORecordOperation.CREATED) {
         int changeVersion = entry.getRecord().getVersion();
@@ -715,6 +734,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
+    getStorageDistributed().getLocalDistributedDatabase().getManager().messageAfterOp("mvccCheck", txContext.getReqId());
   }
 
   @Override

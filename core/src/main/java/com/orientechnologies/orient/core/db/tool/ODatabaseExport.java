@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.io.FileOutputStream;
@@ -388,9 +389,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
-    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes(database);
+    final Collection<? extends OIndex> indexes = indexManager.getIndexes(database);
 
-    for (OIndex<?> index : indexes) {
+    for (OIndex index : indexes) {
       final String clsName = index.getDefinition() != null ? index.getDefinition().getClassName() : null;
       if (ODatabaseImport.EXPORT_IMPORT_CLASS_NAME.equals(clsName)) {
         continue;
@@ -447,12 +448,12 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     indexManager.reload();
 
-    final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes(database);
+    final Collection<? extends OIndex> indexes = indexManager.getIndexes(database);
 
     ODocument exportEntry = new ODocument();
 
     int manualIndexes = 0;
-    for (OIndex<?> index : indexes) {
+    for (OIndex index : indexes) {
       if (!index.isAutomatic()) {
         if (manualIndexes == 0) {
           writer.beginCollection(1, true, "manualIndexes");
@@ -506,7 +507,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.endCollection(3, true);
 
         writer.endObject(2, true);
-        listener.onMessage("OK (entries=" + index.getSize() + ")");
+        listener.onMessage("OK (entries=" + index.getInternal().size() + ")");
         manualIndexes++;
       }
     }
@@ -629,7 +630,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (recordExported > 0)
           writer.append(",");
 
-        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,dateAsLong"));
+        String iFormat = "rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,dateAsLong";
+        ORecordSerializerJSON.INSTANCE.toString(rec, writer, iFormat == null ? "" : iFormat, true);
 
         recordExported++;
         recordNum++;

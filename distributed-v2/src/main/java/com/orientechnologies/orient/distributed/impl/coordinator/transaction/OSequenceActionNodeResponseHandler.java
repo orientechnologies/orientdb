@@ -17,7 +17,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.ORequestContext;
 import com.orientechnologies.orient.distributed.impl.coordinator.OResponseHandler;
@@ -31,24 +30,24 @@ import java.util.stream.Collectors;
  */
 public class OSequenceActionNodeResponseHandler implements OResponseHandler {
 
-  private       int                      responseCount     = 0;
-  private final List<ODistributedMember> failedActionNode  = new ArrayList<>();
-  private final List<ODistributedMember> limitReachedNodes = new ArrayList<>();
-  private final OSessionOperationId      operationId;
-  private       Object                   senderResult      = null;
-  private final ODistributedMember       initiator;
+  private       int                 responseCount     = 0;
+  private final List<ONodeIdentity> failedActionNode  = new ArrayList<>();
+  private final List<ONodeIdentity> limitReachedNodes = new ArrayList<>();
+  private final OSessionOperationId operationId;
+  private       Object              senderResult      = null;
+  private final ONodeIdentity       initiator;
 
 //  private OSequenceActionNodeResponseHandler(){
 //    
 //  }
 
-  public OSequenceActionNodeResponseHandler(OSessionOperationId operationId, ODistributedMember initiator) {
+  public OSequenceActionNodeResponseHandler(OSessionOperationId operationId, ONodeIdentity initiator) {
     this.operationId = operationId;
     this.initiator = initiator;
   }
 
   @Override
-  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeIdentity member,
       ONodeResponse response) {
     responseCount++;
     OSequenceActionNodeResponse responseFromNode = (OSequenceActionNodeResponse) response;
@@ -67,10 +66,8 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler {
       break;
     }
     if (responseCount == context.getInvolvedMembers().size()) {
-      List<ONodeIdentity> failedNodesNames = failedActionNode.stream().map(ODistributedMember::getNodeIdentity)
-          .collect(Collectors.toList());
-      List<ONodeIdentity> limitReachedNodeNames = limitReachedNodes.stream().map(ODistributedMember::getNodeIdentity)
-          .collect(Collectors.toList());
+      List<ONodeIdentity> failedNodesNames = failedActionNode.stream().collect(Collectors.toList());
+      List<ONodeIdentity> limitReachedNodeNames = limitReachedNodes.stream().collect(Collectors.toList());
       OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedNodesNames,
           limitReachedNodeNames, senderResult, context.getInvolvedMembers().size());
       coordinator.reply(initiator, operationId, submitedActionResponse);

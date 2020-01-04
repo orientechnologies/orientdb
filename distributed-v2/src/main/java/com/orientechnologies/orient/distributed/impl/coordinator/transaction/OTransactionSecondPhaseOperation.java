@@ -2,11 +2,15 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.OTransactionOptimisticDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExecutor;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -37,7 +41,7 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
   }
 
   @Override
-  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+  public ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
     OTransactionOptimisticDistributed tx = ((ODatabaseDocumentDistributed) session)
         .txSecondPhase(operationId, operations, indexes, success);

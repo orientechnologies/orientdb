@@ -166,22 +166,22 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OIndex<?> createIndex(final OClass.INDEX_TYPE iType) {
+  public OIndex createIndex(final OClass.INDEX_TYPE iType) {
     return delegate.createIndex(iType);
   }
 
   @Override
-  public OIndex<?> createIndex(final String iType) {
+  public OIndex createIndex(final String iType) {
     return delegate.createIndex(iType);
   }
 
   @Override
-  public OIndex<?> createIndex(String iType, ODocument metadata) {
+  public OIndex createIndex(String iType, ODocument metadata) {
     return delegate.createIndex(iType, metadata);
   }
 
   @Override
-  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
+  public OIndex createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
     return delegate.createIndex(iType, metadata);
   }
 
@@ -212,18 +212,18 @@ public class OPropertyAbstractDelegate implements OProperty {
 
   @Override
   @Deprecated
-  public Set<OIndex<?>> getIndexes() {
+  public Set<OIndex> getIndexes() {
     return delegate.getIndexes();
   }
 
   @Override
   @Deprecated
-  public OIndex<?> getIndex() {
+  public OIndex getIndex() {
     return delegate.getIndex();
   }
 
   @Override
-  public Collection<OIndex<?>> getAllIndexes() {
+  public Collection<OIndex> getAllIndexes() {
     return delegate.getAllIndexes();
   }
 

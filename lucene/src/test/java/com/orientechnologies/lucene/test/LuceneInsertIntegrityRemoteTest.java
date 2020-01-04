@@ -95,7 +95,7 @@ public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
     coll = (Collection<?>) idx.get("London");
     Assert.assertEquals(coll.size(), 0);
     coll = (Collection<?>) idx.get("Berlin");
-    Assert.assertEquals(idx.getSize(), 1);
+    Assert.assertEquals(idx.getInternal().size(), 1);
     Assert.assertEquals(coll.size(), 1);
 
     Thread.sleep(1000);
@@ -110,7 +110,7 @@ public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
     schema = db.getMetadata().getSchema();
     idx = schema.getClass("City").getClassIndex("City.name");
 
-    Assert.assertEquals(idx.getSize(), 1);
+    Assert.assertEquals(idx.getInternal().size(), 1);
     coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 0);
     coll = (Collection<?>) idx.get("London");

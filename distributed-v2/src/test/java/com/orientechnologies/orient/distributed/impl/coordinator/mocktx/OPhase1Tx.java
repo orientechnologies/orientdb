@@ -1,7 +1,11 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.mocktx;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExecutor;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -9,7 +13,7 @@ import java.io.IOException;
 
 public class OPhase1Tx implements ONodeRequest {
   @Override
-  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+  public ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
     return new OPhase1TxOk();
   }

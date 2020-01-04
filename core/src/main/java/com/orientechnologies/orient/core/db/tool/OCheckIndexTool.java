@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -102,13 +104,13 @@ public class OCheckIndexTool extends ODatabaseTool {
     long totRecordsForCluster = database.countClusterElements(clusterId);
     String clusterName = database.getClusterNameById(clusterId);
 
-    int totSteps = 20;
+    int totSteps = 5;
     message("Checking cluster " + clusterName + "  for index " + index.getName() + "\n");
     ORecordIteratorCluster<ORecord> iter = database.browseCluster(clusterName);
     long count = 0;
     long step = -1;
     while (iter.hasNext()) {
-      long currentStep = count * 20 / totRecordsForCluster;
+      long currentStep = count * totSteps / totRecordsForCluster;
       if (currentStep > step) {
         printProgress(clusterName, clusterId, (int) currentStep, totSteps);
         step = currentStep;
@@ -150,7 +152,19 @@ public class OCheckIndexTool extends ODatabaseTool {
     if (indexKey == null) {
       return;
     }
-    Object values = index.get(indexKey);
+
+    if (index.getDefinition().getFields().size() == 1 && indexKey instanceof Collection) {
+      for (Object key : ((Collection) indexKey)) {
+        Object values = index.get(key);
+        checkSingleRecord(doc, index, docId, values);
+      }
+    } else {
+      Object values = index.get(indexKey);
+      checkSingleRecord(doc, index, docId, values);
+    }
+  }
+
+  private void checkSingleRecord(ODocument doc, OIndex index, ORID docId, Object values) {
     if (values instanceof OIdentifiable) {
       //single value
       ORID indexRid = ((OIdentifiable) values).getIdentity();

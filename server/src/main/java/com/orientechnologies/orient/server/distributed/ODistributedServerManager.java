@@ -46,7 +46,6 @@ import java.util.Set;
 public interface ODistributedServerManager {
   String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
 
-
   /**
    * Server status.
    */
@@ -300,4 +299,31 @@ public interface ODistributedServerManager {
 
   void notifyClients(String databaseName);
 
+  default void messageReceived(ODistributedRequest request) {
+
+  }
+
+  default void messagePartitionCalculate(ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
+
+  }
+
+  default void messageBeforeOp(String op, ODistributedRequestId requestId) {
+
+  }
+
+  default void messageAfterOp(String op, ODistributedRequestId requestId) {
+
+  }
+
+  default void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
+
+  }
+
+  default void messageProcessStart(ODistributedRequest message) {
+
+  }
+
+  default void messageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
+
+  }
 }

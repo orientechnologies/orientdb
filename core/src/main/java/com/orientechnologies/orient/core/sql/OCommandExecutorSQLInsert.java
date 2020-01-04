@@ -210,7 +210,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
       OIndexAbstract.manualIndexesWarning();
 
       final ODatabaseDocumentInternal database = getDatabase();
-      final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+      final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 

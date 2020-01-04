@@ -362,7 +362,7 @@ public class ViewManager {
         String indexName = view.getName() + "_" + UUID.randomUUID().toString().replaceAll("-", "_");
         String type = cfg.getType();
         String engine = cfg.getEngine();
-        OIndex<?> idx = idxMgr.createIndex(db, indexName, type, definition, new int[] { cluster }, null, null, engine);
+        OIndex idx = idxMgr.createIndex(db, indexName, type, definition, new int[] { cluster }, null, null, engine);
         result.add(idx);
       }
       return result;

@@ -93,7 +93,7 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
 
     assertThat(indexManager.existsIndex("Person.surname")).isTrue();
 
-    final OIndex<?> index = indexManager.getIndex(db, "Person.surname");
+    final OIndex index = indexManager.getIndex(db, "Person.surname");
     final ODocument indexMetadata = index.getMetadata();
     assertThat(index.getAlgorithm()).isEqualTo("LUCENE");
 

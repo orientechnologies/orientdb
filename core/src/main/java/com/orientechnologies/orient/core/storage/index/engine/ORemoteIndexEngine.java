@@ -20,15 +20,17 @@
 package com.orientechnologies.orient.core.storage.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -81,11 +83,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean contains(Object key) {
-    return false;
-  }
-
-  @Override
   public boolean remove(Object key) {
     return false;
   }
@@ -118,30 +115,21 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Object getFirstKey() {
-    return null;
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    throw new UnsupportedOperationException("stream");
   }
 
   @Override
-  public Object getLastKey() {
-    return null;
-  }
-
-  @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
-    return new EntriesBetweenCursor();
-  }
-
-  @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer) {
-    return new EntriesMajorCursor();
+    throw new UnsupportedOperationException("stream");
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new EntriesMinorCursor();
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    throw new UnsupportedOperationException("stream");
   }
 
   @Override
@@ -155,48 +143,22 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
-    throw new UnsupportedOperationException("cursor");
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
+    throw new UnsupportedOperationException("stream");
   }
 
   @Override
-  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
-    throw new UnsupportedOperationException("keyCursor");
-  }
-
-  @Override
-  public int getVersion() {
-    return -1;
+  public Stream<Object> keyStream() {
+    throw new UnsupportedOperationException("keyStream");
   }
 
   @Override
   public boolean acquireAtomicExclusiveLock(Object key) {
     throw new UnsupportedOperationException("atomic locking is not supported by remote index engine");
-  }
-
-  private static class EntriesBetweenCursor extends OIndexAbstractCursor {
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      return null;
-    }
-  }
-
-  private static class EntriesMajorCursor extends OIndexAbstractCursor {
-    @Override
-    public Map.Entry nextEntry() {
-      return null;
-    }
-  }
-
-  private static class EntriesMinorCursor extends OIndexAbstractCursor {
-    @Override
-    public Map.Entry nextEntry() {
-      return null;
-    }
   }
 }

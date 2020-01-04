@@ -1,13 +1,14 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.stream.Stream;
 
 public interface OCellBTreeSingleValue<K> {
   void create(OBinarySerializer<K> keySerializer, OType[] keyTypes, int keySize, OEncryption encryption) throws IOException;
@@ -16,8 +17,7 @@ public interface OCellBTreeSingleValue<K> {
 
   void put(K key, ORID value) throws IOException;
 
-  boolean validatedPut(K key, ORID value, OBaseIndexEngine.Validator<K, ORID> validator)
-          throws IOException;
+  boolean validatedPut(K key, ORID value, OBaseIndexEngine.Validator<K, ORID> validator) throws IOException;
 
   void close();
 
@@ -29,26 +29,18 @@ public interface OCellBTreeSingleValue<K> {
 
   ORID remove(K key) throws IOException;
 
-  OCellBTreeCursor<K, ORID> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, ORID>> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
 
-  OCellBTreeCursor<K, ORID> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, ORID>> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
 
   K firstKey();
 
   K lastKey();
 
-  OCellBTreeKeyCursor<K> keyCursor();
+  Stream<K> keyStream();
 
-  OCellBTreeCursor<K, ORID> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+  Stream<ORawPair<K, ORID>> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
       boolean ascSortOrder);
 
   void acquireAtomicExclusiveLock();
-
-  interface OCellBTreeCursor<K2, V> {
-    Map.Entry<K2, V> next(int prefetchSize);
-  }
-
-  interface OCellBTreeKeyCursor<K2> {
-    K2 next(int prefetchSize);
-  }
 }

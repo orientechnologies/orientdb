@@ -124,7 +124,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
       return null;
     }
 
-    final List<OIndex<?>> indexes = relatedIndexes(fieldName);
+    final List<OIndex> indexes = relatedIndexes(fieldName);
     if (!indexes.isEmpty()) {
       if (force) {
         dropRelatedIndexes(indexes);
@@ -132,7 +132,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
         final StringBuilder indexNames = new StringBuilder();
 
         boolean first = true;
-        for (final OIndex<?> index : sourceClass.getClassInvolvedIndexes(fieldName)) {
+        for (final OIndex index : sourceClass.getClassInvolvedIndexes(fieldName)) {
           if (!first) {
             indexNames.append(", ");
           } else {
@@ -162,18 +162,18 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
     return QUORUM_TYPE.ALL;
   }
 
-  private void dropRelatedIndexes(final List<OIndex<?>> indexes) {
+  private void dropRelatedIndexes(final List<OIndex> indexes) {
     final ODatabaseDocument database = getDatabase();
-    for (final OIndex<?> index : indexes) {
+    for (final OIndex index : indexes) {
       database.command("DROP INDEX " + index.getName()).close();
     }
   }
 
-  private List<OIndex<?>> relatedIndexes(final String fieldName) {
-    final List<OIndex<?>> result = new ArrayList<OIndex<?>>();
+  private List<OIndex> relatedIndexes(final String fieldName) {
+    final List<OIndex> result = new ArrayList<OIndex>();
 
     final ODatabaseDocumentInternal database = getDatabase();
-    for (final OIndex<?> oIndex : database.getMetadata().getIndexManagerInternal().getClassIndexes(database, className)) {
+    for (final OIndex oIndex : database.getMetadata().getIndexManagerInternal().getClassIndexes(database, className)) {
       if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseInsentiveComparator()) > -1) {
         result.add(oIndex);
       }

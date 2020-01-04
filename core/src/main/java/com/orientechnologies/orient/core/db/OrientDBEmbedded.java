@@ -594,7 +594,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected synchronized OSharedContext getOrCreateSharedContext(OAbstractPaginatedStorage storage) {
-
     OSharedContext result = sharedContexts.get(storage.getName());
     if (result == null) {
       result = createSharedContext(storage);

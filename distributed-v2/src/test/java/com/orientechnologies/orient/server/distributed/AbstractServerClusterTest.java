@@ -28,14 +28,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.distributed.impl.task.OCreateRecordTask;
-import com.orientechnologies.orient.distributed.impl.task.OFixCreateRecordTask;
-import com.orientechnologies.orient.distributed.impl.task.OFixUpdateRecordTask;
-import com.orientechnologies.orient.distributed.impl.task.OReadRecordTask;
 import org.junit.Assert;
 
 import java.util.*;
@@ -475,8 +470,8 @@ public abstract class AbstractServerClusterTest {
     clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(rid.getClusterId()));
 
     ODistributedResponse response = dManager
-        .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OReadRecordTask().init(rid),
-            dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+        .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), null, dManager.getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
     if (response != null) {
       final ORawBuffer buffer = (ORawBuffer) response.getPayload();
@@ -492,9 +487,8 @@ public abstract class AbstractServerClusterTest {
     final Collection<String> clusterNames = new ArrayList<String>(1);
     clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(record.getIdentity().getClusterId()));
 
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OCreateRecordTask()
-            .init((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record)),
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), null, dManager.getNextMessageIdCounter(),
+        ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
   }
 
   protected ODistributedResponse updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
@@ -503,18 +497,8 @@ public abstract class AbstractServerClusterTest {
     final Collection<String> clusterNames = new ArrayList<String>(1);
     clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(record.getIdentity().getClusterId()));
 
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixUpdateRecordTask()
-            .init((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record)),
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-  }
-
-  protected ODistributedResponse deleteRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
-    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
-
-    final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(rid.getClusterId()));
-
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask().init(rid, -1),
+    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
+        null,
         dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
   }
 

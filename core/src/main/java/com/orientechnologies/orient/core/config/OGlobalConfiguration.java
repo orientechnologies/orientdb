@@ -384,7 +384,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   DOCUMENT_BINARY_MAPPING("document.binaryMapping", "Mapping approach for binary fields", Integer.class, 0),
 
   // DATABASE
-  DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 0),
+  DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
@@ -472,7 +472,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Indicates the index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
       "FULL"),
 
-  INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 10000),
+  INDEX_CURSOR_PREFETCH_SIZE("index.stream.prefetchSize", "Default prefetch size of index stream", Integer.class, 10),
 
   // SBTREE
   SBTREE_MAX_DEPTH("sbtree.maxDepth",

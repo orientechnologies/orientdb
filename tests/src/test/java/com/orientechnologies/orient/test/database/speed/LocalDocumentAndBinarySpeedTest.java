@@ -1,33 +1,32 @@
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class LocalDocumentAndBinarySpeedTest {
 
-	private static final String	DEFAULT_DB_URL			= "plocal:database/binarytest";
-	private static final String	DEFAULT_DB_USER			= "admin";
-	private static final String	DEFAULT_DB_PASSWORD	= "admin";
-	private static final int		size								= 64000;
-	private static final int		count								= 10000;
-	private static final int		load								= 10000;
-	private OIndex<?>						index;
-	private ODatabaseDocumentTx	database;
+	private static final String DEFAULT_DB_URL			= "plocal:database/binarytest";
+	private static final String DEFAULT_DB_USER			= "admin";
+	private static final String DEFAULT_DB_PASSWORD	= "admin";
+	private static final int    size								= 64000;
+	private static final int    count								= 10000;
+	private static final int    load								= 10000;
+	private OIndex              index;
+	private ODatabaseDocumentTx database;
 
 	@BeforeClass
 	public void setUpClass() {

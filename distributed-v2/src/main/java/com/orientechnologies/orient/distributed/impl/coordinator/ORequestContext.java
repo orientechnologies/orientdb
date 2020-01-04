@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.TimerTask;
@@ -11,18 +14,18 @@ public class ORequestContext {
     STARTED, QUORUM_OK, QUORUM_KO
   }
 
-  private OSubmitRequest                         submitRequest;
-  private ONodeRequest                           nodeRequest;
-  private Collection<ODistributedMember>         involvedMembers;
-  private Map<ODistributedMember, ONodeResponse> responses = new ConcurrentHashMap<>();
-  private ODistributedCoordinator                coordinator;
-  private int                                    quorum;
-  private OResponseHandler                       handler;
-  private TimerTask                              timerTask;
-  private OLogId                                 requestId;
+  private OSubmitRequest                    submitRequest;
+  private ONodeRequest                      nodeRequest;
+  private Collection<ONodeIdentity>         involvedMembers;
+  private Map<ONodeIdentity, ONodeResponse> responses = new ConcurrentHashMap<>();
+  private ODistributedCoordinator           coordinator;
+  private int                               quorum;
+  private OResponseHandler                  handler;
+  private TimerTask                         timerTask;
+  private OLogId                            requestId;
 
   public ORequestContext(ODistributedCoordinator coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest,
-      Collection<ODistributedMember> involvedMembers, OResponseHandler handler, OLogId requestId) {
+      Collection<ONodeIdentity> involvedMembers, OResponseHandler handler, OLogId requestId) {
     this.coordinator = coordinator;
     this.submitRequest = submitRequest;
     this.nodeRequest = nodeRequest;
@@ -48,7 +51,7 @@ public class ORequestContext {
     coordinator.finish(requestId);
   }
 
-  public void receive(ODistributedMember member, ONodeResponse response) {
+  public void receive(ONodeIdentity member, ONodeResponse response) {
     responses.put(member, response);
     if (handler.receive(coordinator, this, member, response)) {
       timerTask.cancel();
@@ -56,7 +59,7 @@ public class ORequestContext {
     }
   }
 
-  public Map<ODistributedMember, ONodeResponse> getResponses() {
+  public Map<ONodeIdentity, ONodeResponse> getResponses() {
     return responses;
   }
 
@@ -68,7 +71,7 @@ public class ORequestContext {
     return timerTask;
   }
 
-  public Collection<ODistributedMember> getInvolvedMembers() {
+  public Collection<ONodeIdentity> getInvolvedMembers() {
     return involvedMembers;
   }
 }

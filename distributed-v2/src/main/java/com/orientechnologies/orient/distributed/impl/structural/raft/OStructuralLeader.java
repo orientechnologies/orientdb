@@ -1,22 +1,23 @@
 package com.orientechnologies.orient.distributed.impl.structural.raft;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedLockManager;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
+import com.orientechnologies.orient.distributed.impl.log.OOplogIterator;
 import com.orientechnologies.orient.distributed.impl.structural.OReadStructuralSharedConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralConfiguration;
-import com.orientechnologies.orient.distributed.impl.structural.operations.OCreateDatabaseSubmitResponse;
-import com.orientechnologies.orient.distributed.impl.structural.operations.ODropDatabaseSubmitResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.distributed.impl.structural.operations.OFullConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OCreateDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.submit.ODropDatabaseSubmitResponse;
+import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT;
 
@@ -25,20 +26,33 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   private final        ExecutorService                            executor;
   private final        OOperationLog                              operationLog;
   private final        ConcurrentMap<OLogId, ORaftRequestContext> contexts      = new ConcurrentHashMap<>();
-  private final        Map<ONodeIdentity, ODistributedChannel>    members       = new ConcurrentHashMap<>();
+  private final        Set<ONodeIdentity>                         members       = Collections
+      .newSetFromMap(new ConcurrentHashMap<>());
   private final        Timer                                      timer;
   private final        OrientDBDistributed                        context;
+  private final        ONodeIdentity                              nodeIdentity;
   private              ODistributedLockManager                    lockManager   = new ODistributedLockManagerImpl();
   private              int                                        quorum;
   private              int                                        timeout;
+  private              ODistributedNetwork                        network;
 
-  public OStructuralLeader(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed context) {
-    this.executor = executor;
+  public OStructuralLeader(OOperationLog operationLog, ODistributedNetwork network, OrientDBDistributed context) {
+    this.executor = Executors.newSingleThreadExecutor();
     this.operationLog = operationLog;
     this.timer = new Timer(true);
     this.context = context;
     this.quorum = context.getStructuralConfiguration().readSharedConfiguration().getQuorum();
     this.timeout = context.getConfigurations().getConfigurations().getValueAsInteger(DISTRIBUTED_TX_EXPIRE_TIMEOUT);
+    long pingTimeout = 1000;// context.getConfigurations().getConfigurations().getValueAsInteger()
+    this.nodeIdentity = context.getNodeIdentity();
+    this.network = network;
+    this.timer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        OLogId logId = operationLog.lastPersistentLog();
+        network.notifyLastStructuralOperation(context.getNodeIdentity(), logId);
+      }
+    }, pingTimeout, pingTimeout);
   }
 
   public void propagateAndApply(ORaftOperation operation, OpFinished finished) {
@@ -46,9 +60,9 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
       OLogId id = operationLog.log(operation);
       contexts.put(id, new ORaftRequestContext(operation, quorum, finished));
       timer.schedule(new ORaftOperationTimeoutTimerTask(this, id), timeout, timeout);
-      for (ODistributedChannel value : members.values()) {
-        value.propagate(id, operation);
-      }
+      Set<ONodeIdentity> to = new HashSet<>(members);
+      to.remove(nodeIdentity);
+      network.propagate(to, id, operation);
       receiveAck(getOrientDB().getStructuralConfiguration().getCurrentNodeIdentity(), id);
     });
   }
@@ -57,9 +71,9 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
     executor.execute(() -> {
       ORaftRequestContext ctx = contexts.get(id);
       if (ctx != null && ctx.ack(node, this)) {
-        for (ODistributedChannel value : members.values()) {
-          value.confirm(id);
-        }
+        Set<ONodeIdentity> to = new HashSet<>(members);
+        to.remove(nodeIdentity);
+        network.confirm(to, id);
         contexts.remove(id);
       }
     });
@@ -82,6 +96,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
 
   @Override
   public void close() {
+    timer.cancel();
     executor.shutdown();
     try {
       executor.awaitTermination(1, TimeUnit.HOURS);
@@ -91,7 +106,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
   }
 
   public void receiveSubmit(ONodeIdentity senderNode, OSessionOperationId operationId, OStructuralSubmit request) {
-    if (members.containsKey(senderNode)) {
+    if (members.contains(senderNode)) {
       executor.execute(() -> {
         request.begin(Optional.of(senderNode), operationId, this);
       });
@@ -136,15 +151,13 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
       if (shared.existsDatabase(database)) {
         getLockManager().unlock(guards);
         if (requester.isPresent()) {
-          ODistributedChannel requesterChannel = getMemberChannel(requester.get());
-          requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(false, "Database Already Exists"));
+          network.reply(requester.get(), operationId, new OCreateDatabaseSubmitResponse(false, "Database Already Exists"));
         }
       } else {
         this.propagateAndApply(new OCreateDatabase(operationId, database, type, configurations), () -> {
           getLockManager().unlock(guards);
           if (requester.isPresent()) {
-            ODistributedChannel requesterChannel = getMemberChannel(requester.get());
-            requesterChannel.reply(operationId, new OCreateDatabaseSubmitResponse(true, ""));
+            network.reply(requester.get(), operationId, new OCreateDatabaseSubmitResponse(true, ""));
           }
         });
       }
@@ -159,47 +172,41 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
         this.propagateAndApply(new ODropDatabase(operationId, database), () -> {
           getLockManager().unlock(guards);
           if (requester.isPresent()) {
-            ODistributedChannel requesterChannel = getMemberChannel(requester.get());
-            requesterChannel.reply(operationId, new ODropDatabaseSubmitResponse(true, ""));
+            network.reply(requester.get(), operationId, new ODropDatabaseSubmitResponse(true, ""));
           }
         });
       } else {
         getLockManager().unlock(guards);
         if (requester.isPresent()) {
-          ODistributedChannel requesterChannel = getMemberChannel(requester.get());
-          requesterChannel.reply(operationId, new ODropDatabaseSubmitResponse(false, "Database do not exists"));
+          network.reply(requester.get(), operationId, new ODropDatabaseSubmitResponse(false, "Database do not exists"));
         }
       }
     });
   }
 
-  public void connected(ONodeIdentity identity, ODistributedChannel channel) {
+  public void connected(ONodeIdentity identity) {
     OReadStructuralSharedConfiguration conf = context.getStructuralConfiguration().readSharedConfiguration();
     if (conf.existsNode(identity) || conf.canAddNode(identity)) {
-      members.put(identity, channel);
+      members.add(identity);
     }
   }
 
   @Override
-  public void tryResend(ONodeIdentity identity, OLogId logId) {
+  public boolean tryResend(ONodeIdentity identity, OLogId logId) {
     //TODO: this may fail, handle the failure.
-    executor.execute(() -> {
-      //TODO: this in single thread executor may cost too much, find a different implementation
-      Iterator<OOperationLogEntry> iter = operationLog.searchFrom(logId);
-      while (iter.hasNext()) {
-        OOperationLogEntry logEntry = iter.next();
-        getMemberChannel(identity).propagate(logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());
-      }
-    });
-  }
-
-  private ODistributedChannel getMemberChannel(ONodeIdentity identity) {
-    ODistributedChannel channel = members.get(identity);
-    if (channel == null) {
-      OLogManager.instance().errorNoDb(this, "Cannot find channel for node with id:%s, available nodes:%s", null, identity,
-          members.keySet().toString());
+    Optional<OOplogIterator> res = operationLog.searchFrom(logId);
+    if (res.isPresent()) {
+      Iterator<OOperationLogEntry> iter = res.get();
+      executor.execute(() -> {
+        //TODO: this in single thread executor may cost too much, find a different implementation
+        while (iter.hasNext()) {
+          OOperationLogEntry logEntry = iter.next();
+          network.propagate(Collections.singleton(identity), logEntry.getLogId(), (ORaftOperation) logEntry.getRequest());
+        }
+      });
+      return true;
     }
-    return channel;
+    return false;
   }
 
   @Override
@@ -208,7 +215,7 @@ public class OStructuralLeader implements AutoCloseable, OLeaderContext {
       OStructuralConfiguration structuralConfiguration = getOrientDB().getStructuralConfiguration();
       OLogId lastId = structuralConfiguration.getLastUpdateId();
       OReadStructuralSharedConfiguration shared = structuralConfiguration.readSharedConfiguration();
-      getMemberChannel(identity).send(new OFullConfiguration(lastId, shared));
+      getOrientDB().getNetworkManager().send(identity, new OFullConfiguration(lastId, shared));
     });
   }
 

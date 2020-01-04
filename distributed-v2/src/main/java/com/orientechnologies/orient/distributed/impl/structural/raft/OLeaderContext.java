@@ -2,14 +2,14 @@ package com.orientechnologies.orient.distributed.impl.structural.raft;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.util.Map;
 import java.util.Optional;
 
 public interface OLeaderContext {
-  void tryResend(ONodeIdentity identity, OLogId logId);
+  boolean tryResend(ONodeIdentity identity, OLogId logId);
 
   void sendFullConfiguration(ONodeIdentity identity);
 

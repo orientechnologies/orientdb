@@ -242,7 +242,7 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  public OIndexInternal<?> create(OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
+  public OIndexInternal create(OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener, OBinarySerializer valueSerializer) {
 
     if (indexDefinition.getFields().size() > 1) {
@@ -371,7 +371,7 @@ public class OIndexFullText extends OIndexMultiValues {
     private final OIdentifiable      value;
     private final OModifiableBoolean removed;
 
-    EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
+    private EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
       this.value = value;
       this.removed = removed;
     }
@@ -401,13 +401,13 @@ public class OIndexFullText extends OIndexMultiValues {
     }
   }
 
-  private final class FullTextIndexConfiguration extends IndexConfiguration {
-    FullTextIndexConfiguration(ODocument document) {
+  private static final class FullTextIndexConfiguration extends IndexConfiguration {
+    private FullTextIndexConfiguration(ODocument document) {
       super(document);
     }
 
-    synchronized ODocument updateFullTextIndexConfiguration(String separatorChars, String ignoreChars, Set<String> stopWords,
-        int minWordLength, boolean indexRadix) {
+    private synchronized ODocument updateFullTextIndexConfiguration(String separatorChars, String ignoreChars,
+        Set<String> stopWords, int minWordLength, boolean indexRadix) {
       document.field(CONFIG_SEPARATOR_CHARS, separatorChars);
       document.field(CONFIG_IGNORE_CHARS, ignoreChars);
       document.field(CONFIG_STOP_WORDS, stopWords);

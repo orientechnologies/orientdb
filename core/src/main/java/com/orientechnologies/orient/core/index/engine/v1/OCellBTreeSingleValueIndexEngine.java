@@ -2,12 +2,12 @@ package com.orientechnologies.orient.core.index.engine.v1;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.engine.OSingleValueIndexEngine;
-import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -16,8 +16,10 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.Cel
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
   private static final String DATA_FILE_EXTENSION        = ".cbt";
@@ -33,7 +35,7 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
 
     if (version < 3) {
       this.sbTree = new CellBTreeSingleValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
-    } else if (version == 3) {
+    } else if (version == 3 || version == 4) {
       this.sbTree = new CellBTreeSingleValueV3<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
@@ -81,11 +83,14 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   private void doClearTree() throws IOException {
-    final OCellBTreeSingleValue.OCellBTreeKeyCursor keyCursor = sbTree.keyCursor();
-    Object key = keyCursor.next(-1);
-    while (key != null) {
-      sbTree.remove(key);
-      key = keyCursor.next(-1);
+    try (Stream<Object> stream = sbTree.keyStream()) {
+      stream.forEach((key) -> {
+        try {
+          sbTree.remove(key);
+        } catch (IOException e) {
+          throw OException.wrapException(new OIndexException("Can not clear index"), e);
+        }
+      });
     }
 
     sbTree.remove(null);
@@ -96,11 +101,6 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
       final OEncryption encryption) {
     //noinspection unchecked
     sbTree.load(indexName, keySize, keyTypes, keySerializer, encryption);
-  }
-
-  @Override
-  public boolean contains(Object key) {
-    return sbTree.get(key) != null;
   }
 
   @Override
@@ -132,35 +132,32 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
     final Object firstKey = sbTree.firstKey();
     if (firstKey == null) {
-      return new NullCursor();
+      return emptyStream();
     }
 
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesMajor(firstKey, true, true), valuesTransformer);
+    return sbTree.iterateEntriesMajor(firstKey, true, true);
+  }
+
+  private static Stream<ORawPair<Object, ORID>> emptyStream() {
+    return StreamSupport.stream(Spliterators.emptySpliterator(), false);
   }
 
   @Override
-  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
     final Object lastKey = sbTree.lastKey();
     if (lastKey == null) {
-      return new NullCursor();
+      return emptyStream();
     }
 
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesMinor(lastKey, true, false), valuesTransformer);
+    return sbTree.iterateEntriesMinor(lastKey, true, false);
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
-    return new OIndexKeyCursor() {
-      private final OCellBTreeSingleValue.OCellBTreeKeyCursor<Object> sbTreeKeyCursor = sbTree.keyCursor();
-
-      @Override
-      public Object next(int prefetchSize) {
-        return sbTreeKeyCursor.next(prefetchSize);
-      }
-    };
+  public Stream<Object> keyStream() {
+    return sbTree.keyStream();
   }
 
   @Override
@@ -182,62 +179,26 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public Object getFirstKey() {
-    return sbTree.firstKey();
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
   }
 
   @Override
-  public Object getLastKey() {
-    return sbTree.lastKey();
-  }
-
-  @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder),
-        transformer);
-  }
-
-  @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer) {
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder), transformer);
+    return sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder), transformer);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    return sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder);
   }
 
   @Override
   public long size(final ValuesTransformer transformer) {
-    if (transformer == null) {
-      return sbTree.size();
-    } else {
-      int counter = 0;
-
-      final Object nullValue = sbTree.get(null);
-      if (nullValue != null) {
-        counter += transformer.transformFromValue(nullValue).size();
-      }
-
-      final Object firstKey = sbTree.firstKey();
-      final Object lastKey = sbTree.lastKey();
-
-      if (firstKey != null && lastKey != null) {
-        final OCellBTreeSingleValue.OCellBTreeCursor<Object, ORID> cursor = sbTree
-            .iterateEntriesBetween(firstKey, true, lastKey, true, true);
-        Map.Entry<Object, ORID> entry = cursor.next(-1);
-        while (entry != null) {
-          counter += transformer.transformFromValue(entry.getValue()).size();
-          entry = cursor.next(-1);
-        }
-
-        return counter;
-      }
-
-      return counter;
-    }
+    return sbTree.size();
   }
 
   @Override
@@ -254,72 +215,5 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   @Override
   public String getIndexNameByKey(Object key) {
     return name;
-  }
-
-  private static final class OSBTreeIndexCursor extends OIndexAbstractCursor {
-    private final OCellBTreeSingleValue.OCellBTreeCursor<Object, ORID> treeCursor;
-    private final ValuesTransformer                                    valuesTransformer;
-
-    private Iterator<ORID> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object         currentKey      = null;
-
-    private OSBTreeIndexCursor(OCellBTreeSingleValue.OCellBTreeCursor<Object, ORID> treeCursor,
-        ValuesTransformer valuesTransformer) {
-      this.treeCursor = treeCursor;
-      this.valuesTransformer = valuesTransformer;
-    }
-
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (valuesTransformer == null) {
-        final Object entry = treeCursor.next(getPrefetchSize());
-        //noinspection unchecked
-        return (Map.Entry<Object, OIdentifiable>) entry;
-      }
-
-      if (currentIterator == null) {
-        return null;
-      }
-
-      while (!currentIterator.hasNext()) {
-        final Object p = treeCursor.next(getPrefetchSize());
-        @SuppressWarnings("unchecked")
-        final Map.Entry<Object, OIdentifiable> entry = (Map.Entry<Object, OIdentifiable>) p;
-
-        if (entry == null) {
-          currentIterator = null;
-          return null;
-        }
-
-        currentKey = entry.getKey();
-        currentIterator = valuesTransformer.transformFromValue(entry.getValue()).iterator();
-      }
-
-      final OIdentifiable value = currentIterator.next();
-
-      return new Map.Entry<Object, OIdentifiable>() {
-        @Override
-        public Object getKey() {
-          return currentKey;
-        }
-
-        @Override
-        public OIdentifiable getValue() {
-          return value;
-        }
-
-        @Override
-        public OIdentifiable setValue(OIdentifiable value) {
-          throw new UnsupportedOperationException("setValue");
-        }
-      };
-    }
-  }
-
-  private static class NullCursor extends OIndexAbstractCursor {
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      return null;
-    }
   }
 }

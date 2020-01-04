@@ -1695,8 +1695,8 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
     for (int i = entriesToRemove.size() - 1; i >= 0; i--) {
       final ORawPair<Integer, RawEntry> pair = entriesToRemove.get(i);
-      final RawEntry entry = pair.getSecond();
-      bucket.deleteEntry(pair.getFirst(), entry.hashCode, entry.key, entry.value);
+      final RawEntry entry = pair.second;
+      bucket.deleteEntry(pair.first, entry.hashCode, entry.key, entry.value);
     }
 
     assert checkBucketDepth(bucket);

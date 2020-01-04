@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by luigidellaquila on 26/10/16.
@@ -29,7 +30,10 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
     super(ctx, profilingEnabled);
     this.whileClause = whileClause;
     this.maxDepth = maxDepth;
-    this.projections = projections.stream().map(x -> x.copy()).collect(Collectors.toList());
+
+    try (final Stream<OTraverseProjectionItem> stream = projections.stream()) {
+      this.projections = stream.map(OTraverseProjectionItem::copy).collect(Collectors.toList());
+    }
   }
 
   @Override

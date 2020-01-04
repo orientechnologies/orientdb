@@ -45,10 +45,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.*;
-import com.orientechnologies.orient.core.metadata.security.OIdentity;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -158,7 +155,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         database.getMetadata().getIndexManagerInternal().reload();
       }
 
-      for (OIndex<?> index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
+      for (OIndex index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (index.isAutomatic())
           indexesToRebuild.add(index.getName());
       }
@@ -424,14 +421,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     OClass orole = schema.getClass(ORole.CLASS_NAME);
     OClass ouser = schema.getClass(OUser.CLASS_NAME);
     OClass oidentity = schema.getClass(OIdentity.CLASS_NAME);
+    OClass oSecurityPolicy = schema.getClass(OSecurityPolicy.class.getSimpleName());
     final Map<String, OClass> classesToDrop = new HashMap<>();
     final Set<String> indexes = new HashSet<>();
     for (OClass dbClass : classes) {
       String className = dbClass.getName();
 
-      if (!dbClass.isSuperClassOf(orole) && !dbClass.isSuperClassOf(ouser) && !dbClass.isSuperClassOf(oidentity)) {
+      if (!dbClass.isSuperClassOf(orole) && !dbClass.isSuperClassOf(ouser) && !dbClass.isSuperClassOf(oidentity ) && !dbClass.isSuperClassOf(oSecurityPolicy)) {
         classesToDrop.put(className, dbClass);
-        for (OIndex<?> index : dbClass.getIndexes()) {
+        for (OIndex index : dbClass.getIndexes()) {
           indexes.add(index.getName());
         }
       }
@@ -496,7 +494,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       listener.onMessage("\n- Index '" + indexName + "'...");
 
-      final OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+      final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
 
       long tot = 0;
 

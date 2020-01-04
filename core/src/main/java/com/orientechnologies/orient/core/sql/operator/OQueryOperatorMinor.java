@@ -19,33 +19,28 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * MINOR operator.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
 
@@ -76,14 +71,15 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
+      boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
-    final OIndexInternal<?> internalIndex = index.getInternal();
+    final OIndexInternal internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
 
-    final OIndexCursor cursor;
+    final Stream<ORawPair<Object, ORID>> stream;
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
       if (indexDefinition instanceof OIndexDefinitionMultiValue)
@@ -94,7 +90,7 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      cursor = index.iterateEntriesMinor(key, false, ascSortOrder);
+      stream = index.getInternal().streamEntriesMinor(key, false, ascSortOrder);
     } else {
       // if we have situation like "field1 = 1 AND field2 < 2"
       // then we fetch collection which left included boundary is the smallest composite key in the
@@ -113,11 +109,11 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, false, ascSortOrder);
+      stream = index.getInternal().streamEntriesBetween(keyOne, true, keyTwo, false, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return cursor;
+    return stream;
   }
 
   @Override
@@ -131,8 +127,8 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof ORID)
         return (ORID) iRight;
       else {
-        if (iRight instanceof OSQLFilterItemParameter
-            && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
+        if (iRight instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iRight)
+            .getValue(null, null, null) instanceof ORID)
           return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
       }
 
@@ -140,8 +136,8 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, 
-          OCommandContext iContext, final ODocumentSerializer serializer) {
+  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, OCommandContext iContext,
+      final ODocumentSerializer serializer) {
     return serializer.getComparator().compare(iFirstField, iSecondField) < 0;
   }
 

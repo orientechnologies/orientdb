@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 
 public class ONodeInternalConfiguration {
 

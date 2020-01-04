@@ -333,7 +333,7 @@ public class OAlterClassStatement extends ODDLStatement {
   }
 
   private void checkNotIndexed(OClass oClass) {
-    Set<OIndex<?>> indexes = oClass.getIndexes();
+    Set<OIndex> indexes = oClass.getIndexes();
     if (indexes != null && indexes.size() > 0) {
       throw new OCommandExecutionException("Cannot rename class '" + oClass.getName()
           + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");

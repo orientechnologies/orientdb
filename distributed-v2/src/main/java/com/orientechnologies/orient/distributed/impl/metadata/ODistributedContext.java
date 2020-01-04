@@ -1,19 +1,16 @@
 package com.orientechnologies.orient.distributed.impl.metadata;
 
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OClusterPositionAllocatorDatabase;
-import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
-import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
+import com.orientechnologies.orient.distributed.impl.log.OPersistentOperationalLogV1;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import java.util.concurrent.Executors;
 
 public class ODistributedContext {
@@ -22,7 +19,7 @@ public class ODistributedContext {
   private OSubmitContext                    submitContext;
   private ODistributedCoordinator           coordinator;
   private OClusterPositionAllocatorDatabase allocator;
-  private OrientDBInternal                  context;
+  private OrientDBDistributed               context;
   private String                            databaseName;
   private OOperationLog                     opLog;
 
@@ -30,8 +27,9 @@ public class ODistributedContext {
     this.context = context;
     this.databaseName = storage.getName();
     initOpLog();
-    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), opLog, context, storage.getName());
-    submitContext = new OSubmitContextImpl();
+    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), opLog, context, context.getNetworkManager(),
+        storage.getName());
+    submitContext = new OSubmitContextImpl(context, storage.getName());
     coordinator = null;
 
   }
@@ -53,28 +51,28 @@ public class ODistributedContext {
     return coordinator;
   }
 
-  public synchronized void makeCoordinator(ONodeIdentity nodeName, OSharedContext context) {
+  public synchronized void makeCoordinator(ONodeIdentity leader, String database, OLogId leaderLastValid,
+      Set<ONodeIdentity> activeNodes) {
     if (coordinator == null) {
-      allocator = new OClusterPositionAllocatorDatabase(context);
+      //TODO: Make sure that this leader kind of sync with the leader valid oplog id
+      allocator = new OClusterPositionAllocatorDatabase(context.getSharedContext(database));
       coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), opLog, new ODistributedLockManagerImpl(),
-          allocator);
-      OLoopBackDistributeMember loopBack = new OLoopBackDistributeMember(nodeName, databaseName, submitContext, coordinator,
-          executor);
-      coordinator.join(loopBack);
-      submitContext.setCoordinator(loopBack);
-      executor.join(loopBack);
+          allocator, context.getNetworkManager(), databaseName);
+      for (ONodeIdentity node : activeNodes) {
+        coordinator.join(node);
+      }
+      submitContext.setCoordinator(context.getNodeIdentity());
     }
-
   }
 
-  public synchronized void setExternalCoordinator(ODistributedMember lockManager) {
+  public synchronized void setExternalCoordinator(ONodeIdentity lockManager, OLogId leaderLastValid) {
     if (coordinator != null) {
       coordinator.close();
       coordinator = null;
       allocator = null;
     }
     submitContext.setCoordinator(lockManager);
-    executor.join(lockManager);
+    executor.notifyLastValidLog(lockManager, leaderLastValid);
   }
 
   public synchronized void close() {
@@ -88,5 +86,21 @@ public class ODistributedContext {
     if (allocator != null) {
       allocator.reload();
     }
+  }
+
+  public synchronized void connected(ONodeIdentity nodeIdentity) {
+    if (coordinator != null) {
+      coordinator.join(nodeIdentity);
+    }
+  }
+
+  public synchronized void disconnected(ONodeIdentity nodeIdentity) {
+    if (coordinator != null) {
+      coordinator.leave(nodeIdentity);
+    }
+  }
+
+  public OOperationLog getOpLog() {
+    return opLog;
   }
 }

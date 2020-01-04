@@ -260,7 +260,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesOnePropertyArrayParams() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fOne");
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fOne");
 
     assertEquals(result.size(), 3);
 
@@ -274,7 +274,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesTwoPropertiesArrayParams() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fTwo", "fOne");
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fTwo", "fOne");
     assertEquals(result.size(), 2);
 
     assertTrue(containsIndex(result, "compositeone"));
@@ -286,7 +286,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesThreePropertiesArrayParams() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fTwo", "fOne", "fThree");
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fTwo", "fOne", "fThree");
 
     assertEquals(result.size(), 1);
     assertEquals(result.iterator().next().getName(), "compositetwo");
@@ -297,7 +297,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesNotInvolvedPropertiesArrayParams() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fTwo", "fFour");
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fTwo", "fFour");
 
     assertEquals(result.size(), 0);
   }
@@ -307,7 +307,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesPropertiesMorThanNeededArrayParams() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fTwo", "fOne", "fThee", "fFour");
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, "fTwo", "fOne", "fThee", "fFour");
 
     assertEquals(result.size(), 0);
   }
@@ -317,7 +317,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetInvolvedIndexesPropertiesMorThanNeeded() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager
+    final Set<OIndex> result = indexManager
         .getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThee", "fFour"));
 
     assertEquals(result.size(), 0);
@@ -328,7 +328,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesNotExistingClass() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, "testlass", Arrays.asList("fOne"));
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, "testlass", Arrays.asList("fOne"));
 
     assertTrue(result.isEmpty());
   }
@@ -338,7 +338,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesOneProperty() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fOne"));
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fOne"));
 
     assertEquals(result.size(), 3);
 
@@ -352,7 +352,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesOnePropertyBrokenClassNameCase() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, "ClaSSforindeXmanagerTEST", Arrays.asList("fOne"));
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, "ClaSSforindeXmanagerTEST", Arrays.asList("fOne"));
 
     assertEquals(result.size(), 3);
 
@@ -366,7 +366,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesTwoProperties() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fTwo", "fOne"));
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fTwo", "fOne"));
     assertEquals(result.size(), 2);
 
     assertTrue(containsIndex(result, "compositeone"));
@@ -378,7 +378,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesThreeProperties() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager
+    final Set<OIndex> result = indexManager
         .getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThree"));
 
     assertEquals(result.size(), 1);
@@ -390,7 +390,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesThreePropertiesBrokenFiledNameTest() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager
+    final Set<OIndex> result = indexManager
         .getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThree"));
 
     assertEquals(result.size(), 1);
@@ -402,7 +402,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesNotInvolvedProperties() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fTwo", "fFour"));
+    final Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fTwo", "fFour"));
 
     assertEquals(result.size(), 0);
   }
@@ -412,7 +412,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesPropertiesMorThanNeeded() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> result = indexManager
+    final Set<OIndex> result = indexManager
         .getClassInvolvedIndexes(database, CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThee", "fFour"));
 
     assertEquals(result.size(), 0);
@@ -445,7 +445,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
         ), -1), oClass.getClusterIds(), null, null);
 
-    Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(database, className, Arrays.asList("one"));
+    Set<OIndex> result = indexManager.getClassInvolvedIndexes(database, className, Arrays.asList("one"));
     assertEquals(result.size(), 3);
 
     result = indexManager.getClassInvolvedIndexes(database, className, Arrays.asList("one", "two"));
@@ -466,7 +466,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassIndexes() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> indexes = indexManager.getClassIndexes(database, CLASS_NAME);
+    final Set<OIndex> indexes = indexManager.getClassIndexes(database, CLASS_NAME);
     final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
 
     final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME);
@@ -501,7 +501,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassIndexesBrokenClassNameCase() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final Set<OIndex<?>> indexes = indexManager.getClassIndexes(database, "ClassforindeXMaNAgerTeST");
+    final Set<OIndex> indexes = indexManager.getClassIndexes(database, "ClassforindeXMaNAgerTeST");
     final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
 
     final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME);
@@ -578,7 +578,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassIndex() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final OIndex<?> result = indexManager.getClassIndex(database, CLASS_NAME, "propertyone");
+    final OIndex result = indexManager.getClassIndex(database, CLASS_NAME, "propertyone");
     assertNotNull(result);
     assertEquals(result.getName(), "propertyone");
   }
@@ -588,7 +588,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassIndexBrokenClassNameCase() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final OIndex<?> result = indexManager.getClassIndex(database, "ClaSSforindeXManagerTeST", "propertyone");
+    final OIndex result = indexManager.getClassIndex(database, "ClaSSforindeXManagerTeST", "propertyone");
     assertNotNull(result);
     assertEquals(result.getName(), "propertyone");
   }
@@ -598,7 +598,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassIndexWrongIndexName() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final OIndex<?> result = indexManager.getClassIndex(database, CLASS_NAME, "propertyonetwo");
+    final OIndex result = indexManager.getClassIndex(database, CLASS_NAME, "propertyonetwo");
     assertNull(result);
   }
 
@@ -607,7 +607,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassIndexWrongClassName() {
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-    final OIndex<?> result = indexManager.getClassIndex(database, "testClassTT", "propertyone");
+    final OIndex result = indexManager.getClassIndex(database, "testClassTT", "propertyone");
     assertNull(result);
   }
 

@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
@@ -48,7 +49,8 @@ public class ORecordSerializerFactory {
     register(ORecordSerializerRaw.NAME, new ORecordSerializerRaw());
     register(ORecordSerializerBinary.NAME, ORecordSerializerBinary.INSTANCE);
     register(ORecordSerializerNetwork.NAME, ORecordSerializerNetwork.INSTANCE);
-    register(ORecordSerializerNetworkV37.NAME,ORecordSerializerNetworkV37.INSTANCE);
+    register(ORecordSerializerNetworkV37.NAME, ORecordSerializerNetworkV37.INSTANCE);
+    register(ORecordSerializerNetworkV37Client.NAME, ORecordSerializerNetworkV37Client.INSTANCE);
 
     defaultRecordSerializer = getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
     if (defaultRecordSerializer == null)
@@ -84,7 +86,7 @@ public class ORecordSerializerFactory {
   public void setDefaultRecordSerializer(ORecordSerializer defaultRecordSerializer) {
     this.defaultRecordSerializer = defaultRecordSerializer;
   }
-  
+
   public ORecordSerializer getDefaultRecordSerializer() {
     return defaultRecordSerializer;
   }

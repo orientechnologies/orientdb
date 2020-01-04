@@ -68,7 +68,7 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     Collection<?> coll = (Collection<?>) idx.get("Rome");
 
     assertThat(coll).hasSize(1);
-    assertThat(idx.getSize()).isEqualTo(1);
+    assertThat(idx.getInternal().size()).isEqualTo(1);
 
     OIdentifiable next = (OIdentifiable) coll.iterator().next();
     doc = db.load(next.<ORecord>getRecord());
@@ -77,7 +77,7 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
 
     coll = (Collection<?>) idx.get("Rome");
     assertThat(coll).hasSize(0);
-    assertThat(idx.getSize()).isEqualTo(0);
+    assertThat(idx.getInternal().size()).isEqualTo(0);
 
   }
 

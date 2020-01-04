@@ -64,7 +64,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
         .execute();
     database.getMetadata().getIndexManagerInternal().reload();
 
-    OIndex<?> index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
+    OIndex index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
     Assert.assertNotNull(index);
 
@@ -84,7 +84,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
         .execute();
     database.getMetadata().getIndexManagerInternal().reload();
 
-    OIndex<?> index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
+    OIndex index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
     Assert.assertNotNull(index);
 
@@ -104,7 +104,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
         .execute();
     database.getMetadata().getIndexManagerInternal().reload();
 
-    OIndex<?> index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
+    OIndex index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
     Assert.assertNotNull(index);
 
@@ -146,7 +146,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
     }
 
     database.getMetadata().getIndexManagerInternal().reload();
-    final OIndex<?> index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
+    final OIndex index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
         .getClassIndex("DropPropertyIndexCompositeIndex");
 
     Assert.assertNotNull(index);

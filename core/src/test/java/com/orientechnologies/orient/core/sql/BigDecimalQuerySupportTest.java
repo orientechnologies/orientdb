@@ -14,21 +14,22 @@ public class BigDecimalQuerySupportTest {
 
   @Test
   public void testDecimalPrecision() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + BigDecimalQuerySupportTest.class.getSimpleName());
-    db.create();
-    try {
+    try (ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + BigDecimalQuerySupportTest.class.getSimpleName())) {
+      db.create();
+      try {
 
-      db.command(new OCommandSQL("CREATE Class Test")).execute();
-      db.command(new OCommandSQL("CREATE Property Test.salary DECIMAL")).execute();
-      db.command(new OCommandSQL("INSERT INTO Test set salary = ?")).execute(new BigDecimal("179999999999.99999999999999999999"));
-      List<ODocument> list = db.query(new OSQLSynchQuery<ODocument>("SELECT * FROM Test"));
+        db.command(new OCommandSQL("CREATE Class Test")).execute();
+        db.command(new OCommandSQL("CREATE Property Test.salary DECIMAL")).execute();
+        db.command(new OCommandSQL("INSERT INTO Test set salary = ?")).execute(new BigDecimal("179999999999.99999999999999999999"));
+        List<ODocument> list = db.query(new OSQLSynchQuery<ODocument>("SELECT * FROM Test"));
 
-      ODocument doc = (ODocument) list.get(0);
-      BigDecimal salary = doc.field("salary");
+        ODocument doc = (ODocument) list.get(0);
+        BigDecimal salary = doc.field("salary");
 
-      assertEquals(new BigDecimal("179999999999.99999999999999999999"), salary);
-    } finally {
-      db.drop();
+        assertEquals(new BigDecimal("179999999999.99999999999999999999"), salary);
+      } finally {
+        db.drop();
+      }
     }
   }
 

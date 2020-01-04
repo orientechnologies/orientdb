@@ -236,7 +236,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
     OLuceneFullTextIndex index = this.searchForIndex(target, ctx);
 
     if (index != null)
-      return index.getSize();
+      return index.size();
     return 0;
 
   }

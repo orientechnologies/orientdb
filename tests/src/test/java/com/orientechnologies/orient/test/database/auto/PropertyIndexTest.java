@@ -69,10 +69,10 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
 
     propOne.createIndex(OClass.INDEX_TYPE.UNIQUE, new ODocument().field("ignoreNullValues", true));
 
-    final Collection<OIndex<?>> indexes = propOne.getIndexes();
+    final Collection<OIndex> indexes = propOne.getIndexes();
     OIndexDefinition indexDefinition = null;
 
-    for (final OIndex<?> index : indexes) {
+    for (final OIndex index : indexes) {
       if (index.getName().equals("PropertyIndexTestClass.prop1")) {
         indexDefinition = index.getDefinition();
         break;
@@ -112,7 +112,7 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
     final OProperty propOne = oClass.getProperty("prop1");
 
-    final Collection<OIndex<?>> indexes = propOne.getIndexes();
+    final Collection<OIndex> indexes = propOne.getIndexes();
     Assert.assertEquals(indexes.size(), 1);
     Assert.assertNotNull(containsIndex(indexes, "PropertyIndexTestClass.prop1"));
   }
@@ -123,7 +123,7 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
     final OProperty propOne = oClass.getProperty("prop1");
 
-    final Collection<OIndex<?>> indexes = propOne.getAllIndexes();
+    final Collection<OIndex> indexes = propOne.getAllIndexes();
     Assert.assertEquals(indexes.size(), 5);
     Assert.assertNotNull(containsIndex(indexes, "PropertyIndexTestClass.prop1"));
     Assert.assertNotNull(containsIndex(indexes, "propOne0"));
@@ -150,23 +150,25 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = { "testIsIndexedIndexedField" })
   public void testIndexingCompositeRIDAndOthers() throws Exception {
-    long prev0 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getSize();
-    long prev1 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getSize();
+    checkEmbeddedDB();
+
+    long prev0 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getInternal().size();
+    long prev1 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getInternal().size();
 
     ODocument doc = new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite3").save();
     new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite1").save();
     new ODocument("PropertyIndexTestClass").fields("prop0", doc).save();
 
-    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getSize(), prev0 + 1);
-    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getSize(), prev1);
+    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getInternal().size(), prev0 + 1);
+    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getInternal().size(), prev1);
   }
 
   @Test(dependsOnMethods = { "testIndexingCompositeRIDAndOthers" })
   public void testIndexingCompositeRIDAndOthersInTx() throws Exception {
     database.begin();
 
-    long prev0 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getSize();
-    long prev1 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getSize();
+    long prev0 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getInternal().size();
+    long prev1 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getInternal().size();
 
     ODocument doc = new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite34").save();
     new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite33").save();
@@ -174,8 +176,8 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
 
     database.commit();
 
-    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getSize(), prev0 + 1);
-    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getSize(), prev1);
+    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getInternal().size(), prev0 + 1);
+    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getInternal().size(), prev1);
   }
 
   @Test
@@ -215,8 +217,8 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     Assert.assertNotNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "PropertyIndexSecondIndex"));
   }
 
-  private OIndex<?> containsIndex(final Collection<OIndex<?>> indexes, final String indexName) {
-    for (final OIndex<?> index : indexes) {
+  private OIndex containsIndex(final Collection<OIndex> indexes, final String indexName) {
+    for (final OIndex index : indexes) {
       if (index.getName().equals(indexName))
         return index;
     }

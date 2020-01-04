@@ -63,7 +63,7 @@ public class OCreateIndexStatement extends ODDLStatement {
       }
     }
 
-    final OIndex<?> idx;
+    final OIndex idx;
     List<OCollate> collatesList = calculateCollates(ctx);
     String engine = this.engine == null ? null : this.engine.getStringValue().toUpperCase(Locale.ENGLISH);
     ODocument metadataDoc = calculateMetadata(ctx);
@@ -111,14 +111,14 @@ public class OCreateIndexStatement extends ODDLStatement {
     }
 
     if (idx != null)
-      return idx.getSize();
+      return idx.getInternal().size();
 
     return null;
   }
 
-  private OIndex<?> getoIndex(OClass oClass, String[] fields, String engine, ODatabaseDocumentInternal database, List<OCollate> collatesList,
+  private OIndex getoIndex(OClass oClass, String[] fields, String engine, ODatabaseDocumentInternal database, List<OCollate> collatesList,
       ODocument metadataDoc) {
-    OIndex<?> idx;
+    OIndex idx;
     if ((keyTypes == null || keyTypes.size() == 0) && collatesList == null) {
 
       idx = oClass.createIndex(name.getValue(), type.getStringValue(), null, metadataDoc, engine, fields);

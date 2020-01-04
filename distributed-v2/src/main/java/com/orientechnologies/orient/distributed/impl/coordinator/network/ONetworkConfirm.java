@@ -1,13 +1,13 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.log.OLogId;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.orientechnologies.orient.distributed.impl.network.binary.OBinaryDistributedMessage.DISTRIBUTED_CONFIRM_REQUEST;
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_CONFIRM_REQUEST;
 
 public class ONetworkConfirm implements ODistributedMessage {
   private OLogId id;
@@ -31,7 +31,7 @@ public class ONetworkConfirm implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executeConfirm(sender, this);
+    executor.executeConfirm(sender, id);
   }
 
   @Override

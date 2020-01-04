@@ -84,7 +84,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
     }
 
     for (OIndexOperationRequest indexChange : indexes) {
-      OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexChange.getIndexName());
+      OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexChange.getIndexName());
       if (indexChange.isCleanIndexValues()) {
         addIndexEntry(index, indexChange.getIndexName(), OTransactionIndexChanges.OPERATION.CLEAR, null, null);
       }

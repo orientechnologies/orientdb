@@ -9,5 +9,5 @@ script: mvn clean package -B -DskipTests
 branches:
   only:
   - develop
-#jdk:
-#  - openjdk8
+jdk:
+  - openjdk9

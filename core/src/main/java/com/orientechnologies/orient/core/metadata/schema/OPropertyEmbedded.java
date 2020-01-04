@@ -156,10 +156,10 @@ public class OPropertyEmbedded extends OPropertyImpl {
       collate = OSQLEngine.getCollate(iCollate);
 
       if ((this.collate != null && !this.collate.equals(oldCollate)) || (this.collate == null && oldCollate != null)) {
-        final Set<OIndex<?>> indexes = owner.getClassIndexes();
-        final List<OIndex<?>> indexesToRecreate = new ArrayList<OIndex<?>>();
+        final Set<OIndex> indexes = owner.getClassIndexes();
+        final List<OIndex> indexesToRecreate = new ArrayList<OIndex>();
 
-        for (OIndex<?> index : indexes) {
+        for (OIndex index : indexes) {
           OIndexDefinition definition = index.getDefinition();
 
           final List<String> fields = definition.getFields();
@@ -173,7 +173,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
           final ODatabaseDocumentInternal database = getDatabase();
           final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
-          for (OIndex<?> indexToRecreate : indexesToRecreate) {
+          for (OIndex indexToRecreate : indexesToRecreate) {
             final OIndexMetadata indexMetadata = indexToRecreate.getInternal().loadMetadata(indexToRecreate.getConfiguration());
 
             final ODocument metadata = indexToRecreate.getMetadata();

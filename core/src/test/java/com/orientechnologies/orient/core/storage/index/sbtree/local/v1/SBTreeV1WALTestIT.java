@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
@@ -59,7 +60,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
     OFileUtils.deleteRecursively(buildDir);
 
     orientDB = new OrientDB("plocal:" + buildDir, OrientDBConfig.defaultConfig());
-
+    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
     createExpectedSBTree();
     createActualSBTree();
   }

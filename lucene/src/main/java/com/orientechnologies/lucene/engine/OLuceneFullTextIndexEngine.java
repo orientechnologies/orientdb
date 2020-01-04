@@ -18,11 +18,12 @@ package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
+import com.orientechnologies.lucene.collections.LuceneIndexTransformer;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
-import com.orientechnologies.lucene.collections.OLuceneIndexCursor;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
@@ -31,7 +32,10 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -52,14 +56,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
-  private OLuceneDocumentBuilder builder;
-  private OLuceneQueryBuilder    queryBuilder;
-  private final AtomicLong bonsayFileId = new AtomicLong(0);
+  private final OLuceneDocumentBuilder builder;
+  private       OLuceneQueryBuilder    queryBuilder;
+  private final AtomicLong             bonsayFileId = new AtomicLong(0);
 
   public OLuceneFullTextIndexEngine(OStorage storage, String idxName, int id) {
     super(id, storage, idxName);
@@ -84,37 +89,27 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public int getVersion() {
-    return 0;
-  }
-
-  @Override
   public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
       final ScoreDoc score) {
 
-    recordId.setContext(new HashMap<String, Object>() {{
+    recordId.setContext(new HashMap<String, Object>() {
+      {
 
         HashMap<String, TextFragment[]> frag = queryContext.getFragments();
 
-        frag.entrySet().stream().forEach(f -> {
-          TextFragment[] fragments = f.getValue();
+        frag.forEach((key, fragments) -> {
           StringBuilder hlField = new StringBuilder();
-          for (int j = 0; j < fragments.length; j++) {
-            if ((fragments[j] != null) && (fragments[j].getScore() > 0)) {
-              hlField.append(fragments[j].toString());
+          for (TextFragment fragment : fragments) {
+            if ((fragment != null) && (fragment.getScore() > 0)) {
+              hlField.append(fragment.toString());
             }
           }
-          put("$" + f.getKey() + "_hl", hlField.toString());
+          put("$" + key + "_hl", hlField.toString());
         });
 
         put("$score", score.score);
       }
     });
-  }
-
-  @Override
-  public boolean contains(Object key) {
-    return false;
   }
 
   @Override
@@ -147,6 +142,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
     updateLastAccess();
     openIfClosed();
+    @SuppressWarnings("unchecked")
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
 
     for (OIdentifiable oIdentifiable : container) {
@@ -164,19 +160,9 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public Object getFirstKey() {
-    return null;
-  }
-
-  @Override
-  public Object getLastKey() {
-    return null;
-  }
-
-  @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OLuceneIndexCursor((OLuceneResultSet) get(rangeFrom), rangeFrom);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return LuceneIndexTransformer.transformToStream((OLuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
   private Set<OIdentifiable> getResults(Query query, OCommandContext context, OLuceneTxChanges changes, ODocument metadata) {
@@ -194,13 +180,14 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer) {
     return null;
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return null;
   }
 
@@ -220,7 +207,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     }
   }
 
-  private Document putInManualindex(Object key, OIdentifiable oIdentifiable) {
+  private static Document putInManualindex(Object key, OIdentifiable oIdentifiable) {
     Document doc = new Document();
     doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
 
@@ -234,6 +221,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
         k++;
       }
     } else if (key instanceof Collection) {
+      @SuppressWarnings("unchecked")
       Collection<Object> keys = (Collection<Object>) key;
 
       int k = 0;
@@ -254,8 +242,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
         return queryBuilder.query(indexDefinition, maybeQuery, EMPTY_METADATA, queryAnalyzer());
       } else {
         OLuceneKeyAndMetadata q = (OLuceneKeyAndMetadata) maybeQuery;
-        Query query = queryBuilder.query(indexDefinition, q.key, q.metadata, queryAnalyzer());
-        return query;
+        return queryBuilder.query(indexDefinition, q.key, q.metadata, queryAnalyzer());
 
       }
     } catch (ParseException e) {

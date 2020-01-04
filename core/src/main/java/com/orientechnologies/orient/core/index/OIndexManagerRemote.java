@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -46,8 +45,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     this.storage = storage;
   }
 
-  public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String engine) {
+  public OIndex createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
+      final OIndexDefinition iIndexDefinition, final int[] iClusterIdsToIndex, final OProgressListener progressListener,
+      ODocument metadata, String engine) {
 
     String createIndexDDL;
     if (iIndexDefinition != null)
@@ -81,8 +81,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   @Override
-  public OIndex<?> createIndex(ODatabaseDocumentInternal database, String iName, String iType, OIndexDefinition indexDefinition, int[] clusterIdsToIndex,
-      OProgressListener progressListener, ODocument metadata) {
+  public OIndex createIndex(ODatabaseDocumentInternal database, String iName, String iType, OIndexDefinition indexDefinition,
+      int[] clusterIdsToIndex, OProgressListener progressListener, ODocument metadata) {
     return createIndex(database, iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null);
   }
 
@@ -127,10 +127,10 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     return false;
   }
 
-  public void removeClassPropertyIndex(OIndex<?> idx) {
+  public void removeClassPropertyIndex(OIndex idx) {
   }
 
-  protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, String algorithm,
+  protected OIndex getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, String algorithm,
       Set<String> clustersToIndex, OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
     if (isMultiValueIndex)
       return new OIndexRemoteMultiValue(name, type, algorithm, identity, indexDefinition, configuration, clustersToIndex,
@@ -170,14 +170,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     }
   }
 
-  public OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
-    if (index instanceof OIndexRemoteMultiValue)
-      return new OIndexTxAwareMultiValue(database, (OIndex<Collection<OIdentifiable>>) index);
-    else if (index instanceof OIndexDictionary)
-      return new OIndexTxAwareDictionary(database, (OIndex<OIdentifiable>) index);
-    else if (index instanceof OIndexRemoteOneValue)
-      return new OIndexTxAwareOneValue(database, (OIndex<OIdentifiable>) index);
-
+  public OIndex preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex index) {
     return index;
   }
 

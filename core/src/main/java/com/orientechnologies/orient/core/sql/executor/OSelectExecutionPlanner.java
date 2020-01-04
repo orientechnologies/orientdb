@@ -376,7 +376,7 @@ public class OSelectExecutionPlanner {
       return result;
     } else if (item.getIndex() != null) {
       String indexName = item.getIndex().getIndexName();
-      OIndex<?> idx = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
+      OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
       if (idx == null) {
         throw new OCommandExecutionException("Index " + indexName + " does not exist");
       }
@@ -569,7 +569,7 @@ public class OSelectExecutionPlanner {
       return false;
     }
 
-    for (OIndex<?> classIndex : clazz.getClassIndexes()) {
+    for (OIndex classIndex : clazz.getClassIndexes()) {
       List<String> fields = classIndex.getDefinition().getFields();
       if (fields.size() == 1 && fields.get(0).equals(binaryCondition.getLeft().getDefaultAlias().getStringValue())) {
         OBinaryCondition indexCond = new OBinaryCondition(-1);
@@ -1324,7 +1324,7 @@ public class OSelectExecutionPlanner {
     OIndexAbstract.manualIndexesWarning();
     String indexName = indexIdentifier.getIndexName();
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    OIndex<?> index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (index == null) {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
@@ -1983,7 +1983,7 @@ public class OSelectExecutionPlanner {
       throw new OCommandExecutionException("Cannot find class " + targetClass);
     }
 
-    Set<OIndex<?>> indexes = clazz.getIndexes();
+    Set<OIndex> indexes = clazz.getIndexes();
 
     final OClass c = clazz;
     List<IndexSearchDescriptor> indexSearchDescriptors = info.flattenedWhereClause.stream()
@@ -2187,7 +2187,7 @@ public class OSelectExecutionPlanner {
    * @param block
    * @return
    */
-  private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block, OClass clazz) {
+  private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex> indexes, OAndBlock block, OClass clazz) {
     //get all valid index descriptors
     List<IndexSearchDescriptor> descriptors = indexes.stream().filter(x -> x.getInternal().canBeUsedInEqualityOperators())
         .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz)).filter(Objects::nonNull)
@@ -2304,7 +2304,7 @@ public class OSelectExecutionPlanner {
    * @param clazz
    * @return
    */
-  private IndexSearchDescriptor buildIndexSearchDescriptor(OCommandContext ctx, OIndex<?> index, OAndBlock block, OClass clazz) {
+  private IndexSearchDescriptor buildIndexSearchDescriptor(OCommandContext ctx, OIndex index, OAndBlock block, OClass clazz) {
     List<String> indexFields = index.getDefinition().getFields();
     OBinaryCondition keyCondition = new OBinaryCondition(-1);
     OIdentifier key = new OIdentifier("key");
@@ -2472,7 +2472,7 @@ public class OSelectExecutionPlanner {
    * @param clazz
    * @return
    */
-  private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(OCommandContext ctx, OIndex<?> index, OAndBlock block,
+  private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(OCommandContext ctx, OIndex index, OAndBlock block,
       OClass clazz) {
     List<String> indexFields = index.getDefinition().getFields();
     OBinaryCondition keyCondition = new OBinaryCondition(-1);
@@ -2528,7 +2528,7 @@ public class OSelectExecutionPlanner {
     return null;
   }
 
-  private boolean isIndexByKey(OIndex<?> index, String field) {
+  private boolean isIndexByKey(OIndex index, String field) {
     OIndexDefinition def = index.getDefinition();
     for (String o : def.getFieldsToIndex()) {
       if (o.equalsIgnoreCase(field + " by key")) {
@@ -2538,7 +2538,7 @@ public class OSelectExecutionPlanner {
     return false;
   }
 
-  private boolean isIndexByValue(OIndex<?> index, String field) {
+  private boolean isIndexByValue(OIndex index, String field) {
     OIndexDefinition def = index.getDefinition();
     for (String o : def.getFieldsToIndex()) {
       if (o.equalsIgnoreCase(field + " by value")) {
@@ -2575,7 +2575,7 @@ public class OSelectExecutionPlanner {
     return false;
   }
 
-  private boolean allowsRangeQueries(OIndex<?> index) {
+  private boolean allowsRangeQueries(OIndex index) {
     return index.supportsOrderedIterations();
   }
 

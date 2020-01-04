@@ -1,9 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -14,11 +12,13 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 3/28/14
  */
+@SuppressWarnings("deprecation")
 public class LinkSetIndexTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
   public LinkSetIndexTest(@Optional String url) {
@@ -42,14 +42,16 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
   @AfterMethod
   public void afterMethod() {
+    checkEmbeddedDB();
+
     database.command(new OCommandSQL("DELETE FROM LinkSetIndexTestClass")).execute();
 
     List<ODocument> result = database.command(new OCommandSQL("select from LinkSetIndexTestClass")).execute();
     Assert.assertEquals(result.size(), 0);
 
-    if (((ODatabaseDocumentInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "linkSetIndex");
-      Assert.assertEquals(index.getSize(), 0);
+      Assert.assertEquals(index.getInternal().size(), 0);
 
     }
 
@@ -74,17 +76,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.save();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -113,17 +116,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -155,17 +159,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.save();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -205,17 +210,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -250,17 +256,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -287,18 +294,19 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " add linkSet = " + docThree.getIdentity())).execute();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 3);
+    Assert.assertEquals(index.getInternal().size(), 3);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
-          .equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
+            .equals(docThree.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -334,18 +342,19 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 3);
+    Assert.assertEquals(index.getInternal().size(), 3);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
-          .equals(docThree.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
+            .equals(docThree.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -376,17 +385,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -418,17 +428,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -455,17 +466,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -489,17 +501,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove linkSet = " + docTwo.getIdentity())).execute();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getInternal().size(), 1);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 
@@ -523,7 +536,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.delete();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testIndexLinkSetRemoveInTx() {
@@ -553,7 +566,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     }
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testIndexLinkSetRemoveInTxRollback() {
@@ -568,7 +581,6 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
 
-
     linkSet.add(docOne);
     linkSet.add(docTwo);
 
@@ -580,17 +592,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
-    OIndexKeyCursor keyCursor = index.keyCursor();
-    OIdentifiable key = (OIdentifiable) keyCursor.next(-1);
+    Iterator<Object> keysIterator;
+    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
+      keysIterator = keyStream.iterator();
 
-    while (key != null) {
-      if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
-        Assert.fail("Unknown key found: " + key);
+      while (keysIterator.hasNext()) {
+        OIdentifiable key = (OIdentifiable) keysIterator.next();
+        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+          Assert.fail("Unknown key found: " + key);
+        }
       }
-
-      key = (OIdentifiable) keyCursor.next(-1);
     }
   }
 

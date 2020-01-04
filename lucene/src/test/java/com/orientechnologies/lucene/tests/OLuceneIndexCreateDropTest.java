@@ -47,7 +47,7 @@ public class OLuceneIndexCreateDropTest extends OLuceneBaseTest {
 
     db.command("drop index City.name");
 
-    OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.name");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.name");
 
     assertThat(index).isNull();
   }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -44,6 +46,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -213,7 +216,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
         compiledFilter.bindParameters(iArgs);
 
       final ODatabaseDocumentInternal database = getDatabase();
-      final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+      final OIndexInternal index = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName).getInternal();
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
@@ -225,16 +228,16 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
       if (compiledFilter == null || compiledFilter.getRootCondition() == null) {
         if (returning.equalsIgnoreCase("COUNT")) {
           // RETURNS ONLY THE COUNT
-          final long total = index.getSize();
+          final long total = index.size();
           index.clear();
           return total;
         } else {
           // RETURNS ALL THE DELETED RECORDS
-          OIndexCursor cursor = index.cursor();
-          Map.Entry<Object, OIdentifiable> entry;
+          Iterator<ORawPair<Object, ORID>> cursor = index.stream().iterator();
 
-          while ((entry = cursor.nextEntry()) != null) {
-            OIdentifiable rec = entry.getValue();
+          while (cursor.hasNext()) {
+            final ORawPair<Object, ORID> entry = cursor.next();
+            OIdentifiable rec = entry.second;
             rec = rec.getRecord();
             if (rec != null)
               allDeletedRecords.add((ORecord) rec);

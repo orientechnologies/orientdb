@@ -20,25 +20,22 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
+import com.orientechnologies.orient.core.sql.operator.math.*;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Query Operators. Remember to handle the operator in OQueryItemCondition.
@@ -125,7 +122,7 @@ public abstract class OQueryOperator {
   }
 
   /**
-   * Performs index query and returns index cursor which presents subset of index data which corresponds to result of execution of
+   * Performs index query and returns index stream which presents subset of index data which corresponds to result of execution of
    * given operator.
    *
    * <p/>
@@ -147,9 +144,9 @@ public abstract class OQueryOperator {
    *          Data returned by cursors should be sorted in ascending or descending order.
    * @return Cursor instance if index can be used to evaluate result of execution of given operator and <code>null</code> otherwise.
    */
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, final List<Object> keyParams,
       boolean ascSortOrder) {
-    return null;
+    return Stream.empty();
   }
 
   @Override
@@ -216,7 +213,7 @@ public abstract class OQueryOperator {
     return ORDER.EQUAL;
   }
 
-  protected void updateProfiler(final OCommandContext iContext, final OIndex<?> index, final List<Object> keyParams,
+  protected void updateProfiler(final OCommandContext iContext, final OIndex index, final List<Object> keyParams,
       final OIndexDefinition indexDefinition) {
     if (iContext.isRecordingMetrics())
       iContext.updateMetric("compositeIndexUsed", +1);

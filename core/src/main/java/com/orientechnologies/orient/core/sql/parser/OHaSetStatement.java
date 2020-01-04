@@ -11,10 +11,12 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
+import java.util.Map;
+
 public class OHaSetStatement extends OSimpleExecStatement {
-  OIdentifier operation;
-  OExpression key;
-  OExpression value;
+  protected OIdentifier operation;
+  protected OExpression key;
+  protected OExpression value;
 
   public OHaSetStatement(int id) {
     super(id);
@@ -88,5 +90,14 @@ public class OHaSetStatement extends OSimpleExecStatement {
     return result;
   }
 
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("HA SET ");
+    operation.toString(params, builder);
+    builder.append(" ");
+    key.toString(params, builder);
+    builder.append(" = ");
+    value.toString(params, builder);
+  }
 }
 /* JavaCC - OriginalChecksum=21dffd729680550a5deb24492465084d (do not edit this line) */

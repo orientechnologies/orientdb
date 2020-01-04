@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 
 /**
  * Created by tglman on 30/03/17.

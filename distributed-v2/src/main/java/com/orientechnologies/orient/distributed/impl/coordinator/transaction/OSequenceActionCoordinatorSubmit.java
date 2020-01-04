@@ -16,10 +16,10 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.client.remote.message.sequence.OSequenceActionRequest;
+import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
-import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
 
 import java.io.DataInput;
@@ -42,8 +42,8 @@ public class OSequenceActionCoordinatorSubmit implements OSubmitRequest {
   }
 
   @Override
-  public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
-    OSequenceActionNodeRequest nodeRequest = new OSequenceActionNodeRequest(action, requester.getNodeIdentity());
+  public void begin(ONodeIdentity requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+    OSequenceActionNodeRequest nodeRequest = new OSequenceActionNodeRequest(action, requester);
     OSequenceActionNodeResponseHandler nodeResponseHandler = new OSequenceActionNodeResponseHandler(operationId, requester);
 
     coordinator.sendOperation(this, nodeRequest, nodeResponseHandler);

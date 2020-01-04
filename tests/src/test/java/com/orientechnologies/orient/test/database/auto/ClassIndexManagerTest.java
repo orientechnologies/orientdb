@@ -98,9 +98,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     if (!((ODatabaseDocumentInternal) database).getStorage().isRemote()) {
       Assert.assertEquals(
-          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop1").getSize(), 0);
+          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop1").getInternal().size(), 0);
       Assert.assertEquals(
-          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop2").getSize(), 0);
+          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop2").getInternal().size(), 0);
     }
 
     super.afterMethod();
@@ -235,11 +235,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   public void testCreateDocumentWithoutClass() {
     checkEmbeddedDB();
 
-    final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
+    final Collection<? extends OIndex> beforeIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
     final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
 
-    for (final OIndex<?> index : beforeIndexes)
-      indexSizeMap.put(index.getName(), index.getSize());
+    for (final OIndex index : beforeIndexes)
+      indexSizeMap.put(index.getName(), index.getInternal().size());
 
     final ODocument docOne = new ODocument();
     docOne.field("prop1", "a");
@@ -249,19 +249,19 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     docTwo.field("prop1", "a");
     docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
-    final Collection<? extends OIndex<?>> afterIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
-    for (final OIndex<?> index : afterIndexes)
-      Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
+    final Collection<? extends OIndex> afterIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
+    for (final OIndex index : afterIndexes)
+      Assert.assertEquals(index.getInternal().size(), indexSizeMap.get(index.getName()).longValue());
   }
 
   public void testUpdateDocumentWithoutClass() {
     checkEmbeddedDB();
 
-    final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
-    final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
+    final Collection<? extends OIndex> beforeIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
+    final Map<String, Long> indexSizeMap = new HashMap<>();
 
-    for (final OIndex<?> index : beforeIndexes)
-      indexSizeMap.put(index.getName(), index.getSize());
+    for (final OIndex index : beforeIndexes)
+      indexSizeMap.put(index.getName(), index.getInternal().size());
 
     final ODocument docOne = new ODocument();
     docOne.field("prop1", "a");
@@ -274,9 +274,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     docOne.field("prop1", "a");
     docOne.save();
 
-    final Collection<? extends OIndex<?>> afterIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
-    for (final OIndex<?> index : afterIndexes)
-      Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
+    final Collection<? extends OIndex> afterIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
+    for (final OIndex index : afterIndexes)
+      Assert.assertEquals(index.getInternal().size(), indexSizeMap.get(index.getName()).longValue());
   }
 
   public void testDeleteDocumentWithoutClass() {
@@ -320,19 +320,19 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
     final OClass oSuperClass = schema.getClass("classIndexManagerTestSuperClass");
 
-    final OIndex<?> propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
+    final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
     Assert.assertNotNull(propOneIndex.get("a"));
-    Assert.assertEquals(propOneIndex.getSize(), 1);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
 
-    final OIndex<?> compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
+    final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
 
     final OIndexDefinition compositeIndexDefinition = compositeIndex.getDefinition();
     Assert.assertNotNull(compositeIndex.get(compositeIndexDefinition.createValue("a", 1)));
-    Assert.assertEquals(compositeIndex.getSize(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 1);
 
-    final OIndex<?> propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
+    final OIndex propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
     Assert.assertNotNull(propZeroIndex.get("x"));
-    Assert.assertEquals(propZeroIndex.getSize(), 1);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 1);
   }
 
   public void testUpdateDocumentIndexRecordRemoved() {
@@ -349,21 +349,21 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OClass oSuperClass = schema.getClass("classIndexManagerTestSuperClass");
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
-    final OIndex<?> compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
-    final OIndex<?> propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
+    final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
+    final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
+    final OIndex propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 1);
-    Assert.assertEquals(propZeroIndex.getSize(), 1);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 1);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 1);
 
     doc.removeField("prop2");
     doc.removeField("prop0");
     doc.save();
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 0);
-    Assert.assertEquals(propZeroIndex.getSize(), 0);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 0);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 0);
   }
 
   public void testUpdateDocumentNullKeyIndexRecordRemoved() {
@@ -381,21 +381,21 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OClass oSuperClass = schema.getClass("classIndexManagerTestSuperClass");
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
-    final OIndex<?> compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
-    final OIndex<?> propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
+    final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
+    final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
+    final OIndex propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 1);
-    Assert.assertEquals(propZeroIndex.getSize(), 1);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 1);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 1);
 
     doc.field("prop2", (Object) null);
     doc.field("prop0", (Object) null);
     doc.save();
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 0);
-    Assert.assertEquals(propZeroIndex.getSize(), 0);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 0);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 0);
   }
 
   public void testUpdateDocumentIndexRecordUpdated() {
@@ -412,22 +412,22 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OClass oSuperClass = schema.getClass("classIndexManagerTestSuperClass");
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
-    final OIndex<?> propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
-    final OIndex<?> compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
+    final OIndex propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
+    final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
+    final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
     final OIndexDefinition compositeIndexDefinition = compositeIndex.getDefinition();
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 1);
-    Assert.assertEquals(propZeroIndex.getSize(), 1);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 1);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 1);
 
     doc.field("prop2", 2);
     doc.field("prop0", "y");
     doc.save();
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 1);
-    Assert.assertEquals(propZeroIndex.getSize(), 1);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 1);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 1);
 
     Assert.assertNotNull(propZeroIndex.get("y"));
     Assert.assertNotNull(propOneIndex.get("a"));
@@ -446,18 +446,18 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
-    final OIndex<?> compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
+    final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
+    final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
     final OIndexDefinition compositeIndexDefinition = compositeIndex.getDefinition();
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 0);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 0);
 
     doc.field("prop2", 2);
     doc.save();
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 1);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 1);
 
     Assert.assertNotNull(propOneIndex.get("a"));
     Assert.assertNotNull(compositeIndex.get(compositeIndexDefinition.createValue("a", 2)));
@@ -469,9 +469,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propFourIndex = oClass.getClassIndex("classIndexManagerTestClass.prop4");
+    final OIndex propFourIndex = oClass.getClassIndex("classIndexManagerTestClass.prop4");
 
-    Assert.assertEquals(propFourIndex.getSize(), 0);
+    Assert.assertEquals(propFourIndex.getInternal().size(), 0);
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
@@ -482,7 +482,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.field("prop4", listProperty);
     doc.save();
 
-    Assert.assertEquals(propFourIndex.getSize(), 2);
+    Assert.assertEquals(propFourIndex.getInternal().size(), 2);
     Assert.assertNotNull(propFourIndex.get("value1"));
     Assert.assertNotNull(propFourIndex.get("value2"));
 
@@ -498,7 +498,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(propFourIndex.getSize(), 3);
+    Assert.assertEquals(propFourIndex.getInternal().size(), 3);
     Assert.assertNotNull(propFourIndex.get("value3"));
     Assert.assertNotNull(propFourIndex.get("value4"));
     Assert.assertNotNull(propFourIndex.get("value5"));
@@ -510,10 +510,10 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propFiveIndexKey = oClass.getClassIndex("classIndexManagerTestIndexByKey");
-    final OIndex<?> propFiveIndexValue = oClass.getClassIndex("classIndexManagerTestIndexByValue");
+    final OIndex propFiveIndexKey = oClass.getClassIndex("classIndexManagerTestIndexByKey");
+    final OIndex propFiveIndexValue = oClass.getClassIndex("classIndexManagerTestIndexByValue");
 
-    Assert.assertEquals(propFiveIndexKey.getSize(), 0);
+    Assert.assertEquals(propFiveIndexKey.getInternal().size(), 0);
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
@@ -524,7 +524,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.field("prop5", mapProperty);
     doc.save();
 
-    Assert.assertEquals(propFiveIndexKey.getSize(), 2);
+    Assert.assertEquals(propFiveIndexKey.getInternal().size(), 2);
     Assert.assertNotNull(propFiveIndexKey.get("key1"));
     Assert.assertNotNull(propFiveIndexKey.get("key2"));
 
@@ -543,14 +543,14 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(propFiveIndexKey.getSize(), 5);
+    Assert.assertEquals(propFiveIndexKey.getInternal().size(), 5);
     Assert.assertNotNull(propFiveIndexKey.get("key1"));
     Assert.assertNotNull(propFiveIndexKey.get("key3"));
     Assert.assertNotNull(propFiveIndexKey.get("key4"));
     Assert.assertNotNull(propFiveIndexKey.get("key6"));
     Assert.assertNotNull(propFiveIndexKey.get("key7"));
 
-    Assert.assertEquals(propFiveIndexValue.getSize(), 4);
+    Assert.assertEquals(propFiveIndexValue.getInternal().size(), 4);
     Assert.assertNotNull(propFiveIndexValue.get("value5"));
     Assert.assertNotNull(propFiveIndexValue.get("value3"));
     Assert.assertNotNull(propFiveIndexValue.get("value7"));
@@ -564,9 +564,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propSixIndex = oClass.getClassIndex("classIndexManagerTestClass.prop6");
+    final OIndex propSixIndex = oClass.getClassIndex("classIndexManagerTestClass.prop6");
 
-    Assert.assertEquals(propSixIndex.getSize(), 0);
+    Assert.assertEquals(propSixIndex.getInternal().size(), 0);
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
@@ -577,7 +577,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.field("prop6", setProperty);
     doc.save();
 
-    Assert.assertEquals(propSixIndex.getSize(), 2);
+    Assert.assertEquals(propSixIndex.getInternal().size(), 2);
     Assert.assertNotNull(propSixIndex.get("value1"));
     Assert.assertNotNull(propSixIndex.get("value2"));
 
@@ -592,7 +592,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(propSixIndex.getSize(), 2);
+    Assert.assertEquals(propSixIndex.getInternal().size(), 2);
     Assert.assertNotNull(propSixIndex.get("value1"));
     Assert.assertNotNull(propSixIndex.get("value5"));
   }
@@ -603,9 +603,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propFourIndex = oClass.getClassIndex("classIndexManagerTestClass.prop4");
+    final OIndex propFourIndex = oClass.getClassIndex("classIndexManagerTestClass.prop4");
 
-    Assert.assertEquals(propFourIndex.getSize(), 0);
+    Assert.assertEquals(propFourIndex.getInternal().size(), 0);
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
@@ -616,7 +616,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.field("prop4", listProperty);
     doc.save();
 
-    Assert.assertEquals(propFourIndex.getSize(), 2);
+    Assert.assertEquals(propFourIndex.getInternal().size(), 2);
     Assert.assertNotNull(propFourIndex.get("value1"));
     Assert.assertNotNull(propFourIndex.get("value2"));
 
@@ -632,7 +632,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(propFourIndex.getSize(), 3);
+    Assert.assertEquals(propFourIndex.getInternal().size(), 3);
     Assert.assertNotNull(propFourIndex.get("value3"));
     Assert.assertNotNull(propFourIndex.get("value4"));
     Assert.assertNotNull(propFourIndex.get("value5"));
@@ -644,7 +644,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.delete();
 
-    Assert.assertEquals(propFourIndex.getSize(), 0);
+    Assert.assertEquals(propFourIndex.getInternal().size(), 0);
   }
 
   public void testMapDelete() {
@@ -653,10 +653,10 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propFiveIndexKey = oClass.getClassIndex("classIndexManagerTestIndexByKey");
-    final OIndex<?> propFiveIndexValue = oClass.getClassIndex("classIndexManagerTestIndexByValue");
+    final OIndex propFiveIndexKey = oClass.getClassIndex("classIndexManagerTestIndexByKey");
+    final OIndex propFiveIndexValue = oClass.getClassIndex("classIndexManagerTestIndexByValue");
 
-    Assert.assertEquals(propFiveIndexKey.getSize(), 0);
+    Assert.assertEquals(propFiveIndexKey.getInternal().size(), 0);
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
@@ -667,7 +667,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.field("prop5", mapProperty);
     doc.save();
 
-    Assert.assertEquals(propFiveIndexKey.getSize(), 2);
+    Assert.assertEquals(propFiveIndexKey.getInternal().size(), 2);
     Assert.assertNotNull(propFiveIndexKey.get("key1"));
     Assert.assertNotNull(propFiveIndexKey.get("key2"));
 
@@ -686,14 +686,14 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(propFiveIndexKey.getSize(), 5);
+    Assert.assertEquals(propFiveIndexKey.getInternal().size(), 5);
     Assert.assertNotNull(propFiveIndexKey.get("key1"));
     Assert.assertNotNull(propFiveIndexKey.get("key3"));
     Assert.assertNotNull(propFiveIndexKey.get("key4"));
     Assert.assertNotNull(propFiveIndexKey.get("key6"));
     Assert.assertNotNull(propFiveIndexKey.get("key7"));
 
-    Assert.assertEquals(propFiveIndexValue.getSize(), 4);
+    Assert.assertEquals(propFiveIndexValue.getInternal().size(), 4);
     Assert.assertNotNull(propFiveIndexValue.get("value5"));
     Assert.assertNotNull(propFiveIndexValue.get("value3"));
     Assert.assertNotNull(propFiveIndexValue.get("value7"));
@@ -709,8 +709,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.delete();
 
-    Assert.assertEquals(propFiveIndexKey.getSize(), 0);
-    Assert.assertEquals(propFiveIndexValue.getSize(), 0);
+    Assert.assertEquals(propFiveIndexKey.getInternal().size(), 0);
+    Assert.assertEquals(propFiveIndexValue.getInternal().size(), 0);
   }
 
   public void testSetDelete() {
@@ -719,9 +719,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propSixIndex = oClass.getClassIndex("classIndexManagerTestClass.prop6");
+    final OIndex propSixIndex = oClass.getClassIndex("classIndexManagerTestClass.prop6");
 
-    Assert.assertEquals(propSixIndex.getSize(), 0);
+    Assert.assertEquals(propSixIndex.getInternal().size(), 0);
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
@@ -732,7 +732,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.field("prop6", setProperty);
     doc.save();
 
-    Assert.assertEquals(propSixIndex.getSize(), 2);
+    Assert.assertEquals(propSixIndex.getInternal().size(), 2);
     Assert.assertNotNull(propSixIndex.get("value1"));
     Assert.assertNotNull(propSixIndex.get("value2"));
 
@@ -747,7 +747,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(propSixIndex.getSize(), 2);
+    Assert.assertEquals(propSixIndex.getInternal().size(), 2);
     Assert.assertNotNull(propSixIndex.get("value1"));
     Assert.assertNotNull(propSixIndex.get("value5"));
 
@@ -757,7 +757,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.delete();
 
-    Assert.assertEquals(propSixIndex.getSize(), 0);
+    Assert.assertEquals(propSixIndex.getInternal().size(), 0);
   }
 
   public void testDeleteDocumentIndexRecordDeleted() {
@@ -774,19 +774,19 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OClass oSuperClass = schema.getClass("classIndexManagerTestSuperClass");
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
-    final OIndex<?> propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
-    final OIndex<?> compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
+    final OIndex propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
+    final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
+    final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
 
-    Assert.assertEquals(propZeroIndex.getSize(), 1);
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 1);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 1);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 1);
 
     doc.delete();
 
-    Assert.assertEquals(propZeroIndex.getSize(), 0);
-    Assert.assertEquals(propOneIndex.getSize(), 0);
-    Assert.assertEquals(compositeIndex.getSize(), 0);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 0);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 0);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 0);
   }
 
   public void testDeleteUpdatedDocumentIndexRecordDeleted() {
@@ -803,22 +803,22 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OClass oSuperClass = schema.getClass("classIndexManagerTestSuperClass");
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
-    final OIndex<?> compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
+    final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
+    final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
 
-    final OIndex<?> propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
-    Assert.assertEquals(propZeroIndex.getSize(), 1);
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 1);
+    final OIndex propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 1);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 1);
 
     doc.field("prop2", 2);
     doc.field("prop0", "y");
 
     doc.delete();
 
-    Assert.assertEquals(propZeroIndex.getSize(), 0);
-    Assert.assertEquals(propOneIndex.getSize(), 0);
-    Assert.assertEquals(compositeIndex.getSize(), 0);
+    Assert.assertEquals(propZeroIndex.getInternal().size(), 0);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 0);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 0);
   }
 
   public void testDeleteUpdatedDocumentNullFieldIndexRecordDeleted() {
@@ -833,16 +833,16 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
-    final OIndex<?> compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
+    final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
+    final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 0);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 0);
 
     doc.delete();
 
-    Assert.assertEquals(propOneIndex.getSize(), 0);
-    Assert.assertEquals(compositeIndex.getSize(), 0);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 0);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 0);
   }
 
   public void testDeleteUpdatedDocumentOrigNullFieldIndexRecordDeleted() {
@@ -857,18 +857,18 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final OIndex<?> propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
-    final OIndex<?> compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
+    final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
+    final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
 
-    Assert.assertEquals(propOneIndex.getSize(), 1);
-    Assert.assertEquals(compositeIndex.getSize(), 0);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 1);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 0);
 
     doc.field("prop2", 2);
 
     doc.delete();
 
-    Assert.assertEquals(propOneIndex.getSize(), 0);
-    Assert.assertEquals(compositeIndex.getSize(), 0);
+    Assert.assertEquals(propOneIndex.getInternal().size(), 0);
+    Assert.assertEquals(compositeIndex.getInternal().size(), 0);
   }
 
   public void testNoClassIndexesUpdate() {
@@ -884,9 +884,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
 
-    final Collection<OIndex<?>> indexes = oClass.getIndexes();
-    for (final OIndex<?> index : indexes) {
-      Assert.assertEquals(index.getSize(), 0);
+    final Collection<OIndex> indexes = oClass.getIndexes();
+    for (final OIndex index : indexes) {
+      Assert.assertEquals(index.getInternal().size(), 0);
     }
   }
 
@@ -908,16 +908,16 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     Assert.assertEquals(index.get(new OCompositeKey("test1", 1)), doc.getIdentity());
     Assert.assertEquals(index.get(new OCompositeKey("test1", 2)), doc.getIdentity());
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeNullSimpleFieldCreation() {
@@ -930,9 +930,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     doc.delete();
   }
@@ -947,9 +947,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     doc.delete();
   }
@@ -964,9 +964,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop1", "test2");
 
@@ -975,11 +975,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     Assert.assertEquals(index.get(new OCompositeKey("test2", 1)), doc.getIdentity());
     Assert.assertEquals(index.get(new OCompositeKey("test2", 2)), doc.getIdentity());
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeUpdateCollectionWasAssigned() {
@@ -992,9 +992,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop2", Arrays.asList(1, 3));
 
@@ -1003,11 +1003,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     Assert.assertEquals(index.get(new OCompositeKey("test1", 1)), doc.getIdentity());
     Assert.assertEquals(index.get(new OCompositeKey("test1", 3)), doc.getIdentity());
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeUpdateCollectionWasChanged() {
@@ -1020,9 +1020,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     List<Integer> docList = doc.field("prop2");
     docList.add(3);
@@ -1038,11 +1038,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     Assert.assertEquals(index.get(new OCompositeKey("test1", 4)), doc.getIdentity());
     Assert.assertEquals(index.get(new OCompositeKey("test1", 5)), doc.getIdentity());
 
-    Assert.assertEquals(index.getSize(), 4);
+    Assert.assertEquals(index.getInternal().size(), 4);
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeUpdateCollectionWasChangedSimpleFieldWasAssigned() {
@@ -1055,9 +1055,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     List<Integer> docList = doc.field("prop2");
     docList.add(3);
@@ -1070,7 +1070,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(index.getSize(), 4);
+    Assert.assertEquals(index.getInternal().size(), 4);
 
     Assert.assertEquals(index.get(new OCompositeKey("test2", 2)), doc.getIdentity());
     Assert.assertEquals(index.get(new OCompositeKey("test2", 3)), doc.getIdentity());
@@ -1079,7 +1079,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeUpdateSimpleFieldNull() {
@@ -1092,19 +1092,19 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop1", (Object) null);
 
     doc.save();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeUpdateCollectionWasAssignedNull() {
@@ -1117,19 +1117,19 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop2", (Object) null);
 
     doc.save();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeUpdateBothAssignedNull() {
@@ -1142,20 +1142,20 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop2", (Object) null);
     doc.field("prop1", (Object) null);
 
     doc.save();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeUpdateCollectionWasChangedSimpleFieldWasAssignedNull() {
@@ -1168,9 +1168,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     List<Integer> docList = doc.field("prop2");
     docList.add(3);
@@ -1183,11 +1183,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeDeleteSimpleFieldAssigend() {
@@ -1200,14 +1200,14 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop1", "test2");
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeDeleteCollectionFieldAssigend() {
@@ -1220,14 +1220,14 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop2", Arrays.asList(1, 3));
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeDeleteCollectionFieldChanged() {
@@ -1240,9 +1240,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     List<Integer> docList = doc.field("prop2");
     docList.add(3);
@@ -1252,7 +1252,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeDeleteBothCollectionSimpleFieldChanged() {
@@ -1265,9 +1265,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     List<Integer> docList = doc.field("prop2");
     docList.add(3);
@@ -1279,7 +1279,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeDeleteBothCollectionSimpleFieldAssigend() {
@@ -1292,15 +1292,15 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop2", Arrays.asList(1, 3));
     doc.field("prop1", "test2");
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeDeleteSimpleFieldNull() {
@@ -1313,14 +1313,14 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop1", (Object) null);
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeDeleteCollectionFieldNull() {
@@ -1333,14 +1333,14 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop2", (Object) null);
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeDeleteBothSimpleCollectionFieldNull() {
@@ -1353,15 +1353,15 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     doc.field("prop2", (Object) null);
     doc.field("prop1", (Object) null);
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testCollectionCompositeDeleteCollectionFieldChangedSimpleFieldNull() {
@@ -1374,9 +1374,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    final OIndex<?> index = database.getMetadata().getIndexManagerInternal()
+    final OIndex index = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getInternal().size(), 2);
 
     List<Integer> docList = doc.field("prop2");
     docList.add(3);
@@ -1388,7 +1388,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.delete();
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getInternal().size(), 0);
   }
 
   public void testIndexOnPropertiesFromClassAndSuperclass() {
@@ -1406,8 +1406,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("classIndexManagerTestClass");
-    final OIndex<?> oIndex = oClass.getClassIndex("classIndexManagerTestIndexOnPropertiesFromClassAndSuperclass");
+    final OIndex oIndex = oClass.getClassIndex("classIndexManagerTestIndexOnPropertiesFromClassAndSuperclass");
 
-    Assert.assertEquals(oIndex.getSize(), 2);
+    Assert.assertEquals(oIndex.getInternal().size(), 2);
   }
 }

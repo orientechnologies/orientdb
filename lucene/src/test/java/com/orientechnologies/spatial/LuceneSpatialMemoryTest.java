@@ -111,7 +111,7 @@ public class LuceneSpatialMemoryTest {
           });
         }
       }).setOperation(SpatialOperation.IsWithin);
-      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Point.ll");
+      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Point.ll");
 
       Collection coll = (Collection) index.get(oSpatialCompositeKey);
       Assert.assertEquals(1, coll.size());
@@ -175,7 +175,7 @@ public class LuceneSpatialMemoryTest {
         }
       }).setOperation(SpatialOperation.IsWithin);
 
-      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Point.ll");
+      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Point.ll");
 
       Collection coll = (Collection) index.get(oSpatialCompositeKey);
       Assert.assertEquals(1, coll.size());

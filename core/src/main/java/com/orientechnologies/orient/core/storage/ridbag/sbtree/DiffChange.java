@@ -7,7 +7,7 @@ public class DiffChange implements Change {
   public static final byte TYPE = 0;
   private int delta;
 
-  DiffChange(int delta) {
+  public DiffChange(int delta) {
     this.delta = delta;
   }
 

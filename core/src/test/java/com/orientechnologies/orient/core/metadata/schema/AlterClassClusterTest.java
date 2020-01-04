@@ -1,16 +1,15 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class AlterClassClusterTest {
 
@@ -18,6 +17,7 @@ public class AlterClassClusterTest {
 
   @Before
   public void before() {
+    //noinspection deprecation
     db = new ODatabaseDocumentTx("memory:" + AlterClassClusterTest.class.getSimpleName());
     db.create();
   }

@@ -69,6 +69,7 @@ import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
@@ -261,7 +262,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       return;
 
     ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
-    serializer = serializerFactory.getFormat(ORecordSerializerNetworkV37.NAME);
+    serializer = serializerFactory.getFormat(ORecordSerializerNetworkV37Client.NAME);
     localCache.startup();
     componentsFactory = getStorage().getComponentsFactory();
     user = null;
@@ -890,17 +891,20 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific, int iOperation) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific,
+      int iOperation) {
     return (DB) this;
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation, Object iResourceSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
+      Object iResourceSpecific) {
     return (DB) this;
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
+      Object... iResourcesSpecific) {
     return (DB) this;
   }
 
@@ -919,5 +923,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     return (DB) this;
   }
 
-
+  @Override
+  public boolean isRemote() {
+    return true;
+  }
 }

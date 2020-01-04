@@ -642,7 +642,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     OSchema schema = md.getSchema();
     schema.reload();
     OClass clazz = schema.getClass(className);
-    Set<OIndex<?>> idx = clazz.getIndexes();
+    Set<OIndex> idx = clazz.getIndexes();
     Set<String> indexes = new HashSet<>();
     for (OIndex id : idx) {
       indexes.add(id.getName());

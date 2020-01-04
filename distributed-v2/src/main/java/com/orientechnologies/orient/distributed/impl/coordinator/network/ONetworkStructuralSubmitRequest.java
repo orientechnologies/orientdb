@@ -3,13 +3,13 @@ package com.orientechnologies.orient.distributed.impl.coordinator.network;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.orientechnologies.orient.distributed.impl.network.binary.OBinaryDistributedMessage.DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST;
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST;
 
 public class ONetworkStructuralSubmitRequest implements ODistributedMessage {
   private OStructuralSubmitRequest request;
@@ -41,7 +41,7 @@ public class ONetworkStructuralSubmitRequest implements ODistributedMessage {
 
   @Override
   public void execute(ONodeIdentity sender, OCoordinatedExecutor executor) {
-    executor.executeStructuralSubmitRequest(sender, this);
+    executor.executeStructuralSubmitRequest(sender, operationId, request);
   }
 
   @Override

@@ -1,6 +1,5 @@
 package com.orientechnologies.lucene.functions;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
@@ -13,7 +12,10 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import com.orientechnologies.orient.core.sql.parser.OFromItem;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
@@ -65,22 +67,15 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
 
     List<Object> key = index.getDefinition().getFields().stream().map(s -> element.getProperty(s)).collect(Collectors.toList());
 
-    try {
-      for (IndexableField field : index.buildDocument(key).getFields()) {
-        memoryIndex.addField(field, index.indexAnalyzer());
-      }
-
-      ODocument metadata = getMetadata(params);
-      OLuceneKeyAndMetadata keyAndMetadata = new OLuceneKeyAndMetadata(
-          new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), metadata);
-
-      return memoryIndex.search(index.buildQuery(keyAndMetadata)) > 0.0f;
-    } catch (ParseException e) {
-      OLogManager.instance().error(this, "error occurred while building query", e);
-
+    for (IndexableField field : index.buildDocument(key).getFields()) {
+      memoryIndex.addField(field, index.indexAnalyzer());
     }
-    return null;
 
+    ODocument metadata = getMetadata(params);
+    OLuceneKeyAndMetadata keyAndMetadata = new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx),
+        metadata);
+
+    return memoryIndex.search(index.buildQuery(keyAndMetadata)) > 0.0f;
   }
 
   private ODocument getMetadata(Object[] params) {

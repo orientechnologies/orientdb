@@ -70,6 +70,6 @@ public class OLuceneInsertUpdateSingleDocumentTransactionTest extends OLuceneBas
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Collection<?> coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(2, coll.size());
-    Assert.assertEquals(2, idx.getSize());
+    Assert.assertEquals(2, idx.getInternal().size());
   }
 }

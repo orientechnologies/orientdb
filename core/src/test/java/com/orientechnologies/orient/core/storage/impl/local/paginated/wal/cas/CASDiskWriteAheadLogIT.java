@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 public class CASDiskWriteAheadLogIT {
   private static Path testDirectory;
@@ -1657,8 +1658,11 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        long walSize = Files.walk(testDirectory).filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
-            .mapToLong(p -> p.toFile().length()).sum();
+        long walSize;
+        try (Stream<Path> walk = Files.walk(testDirectory)) {
+          walSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+              .mapToLong(p -> p.toFile().length()).sum();
+        }
 
         long calculatedWalSize = ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
 
@@ -1726,8 +1730,9 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        walSize = Files.walk(testDirectory).filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
-            .mapToLong(p -> p.toFile().length()).sum();
+        try (Stream<Path> walk = Files.walk(testDirectory)) {
+          walSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal")).mapToLong(p -> p.toFile().length()).sum();
+        }
 
         calculatedWalSize = ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
 
@@ -1813,8 +1818,11 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        long walSize = Files.walk(testDirectory).filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
-            .mapToLong(p -> p.toFile().length()).sum();
+        long walSize;
+        try (Stream<Path> walk = Files.walk(testDirectory)) {
+          walSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+              .mapToLong(p -> p.toFile().length()).sum();
+        }
 
         long calculatedWalSize = ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
 
@@ -1882,8 +1890,9 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        walSize = Files.walk(testDirectory).filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
-            .mapToLong(p -> p.toFile().length()).sum();
+        try (Stream<Path> walk = Files.walk(testDirectory)) {
+          walSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal")).mapToLong(p -> p.toFile().length()).sum();
+        }
 
         calculatedWalSize = ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
 
@@ -2634,9 +2643,11 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        final long segSize = Files.walk(testDirectory)
-            .filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal")).mapToLong(p -> p.toFile().length())
-            .sum();
+        final long segSize;
+        try (Stream<Path> walk = Files.walk(testDirectory)) {
+          segSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+              .mapToLong(p -> p.toFile().length()).sum();
+        }
 
         final long calculatedSegSize = ((wal.segSize() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
         Assert.assertEquals(segSize, calculatedSegSize);

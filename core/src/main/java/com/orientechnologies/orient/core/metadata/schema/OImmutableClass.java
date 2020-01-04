@@ -86,9 +86,9 @@ public class OImmutableClass implements OClass {
   private       boolean                     scheduler;
   private       boolean                     sequence;
   private       boolean                     ouser;
-  private       boolean                     orole;
-  private       OIndex<?>                   autoShardingIndex;
-  private       HashSet<OIndex<?>>          indexes;
+  private       boolean         orole;
+  private       OIndex          autoShardingIndex;
+  private       HashSet<OIndex> indexes;
 
   public OImmutableClass(final OClass oClass, final OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -585,37 +585,37 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, INDEX_TYPE iType, String... fields) {
+  public OIndex createIndex(String iName, INDEX_TYPE iType, String... fields) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, String... fields) {
+  public OIndex createIndex(String iName, String iType, String... fields) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, INDEX_TYPE iType, OProgressListener iProgressListener, String... fields) {
+  public OIndex createIndex(String iName, INDEX_TYPE iType, OProgressListener iProgressListener, String... fields) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
+  public OIndex createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
       String algorithm, String... fields) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
+  public OIndex createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
       String... fields) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Set<OIndex<?>> getInvolvedIndexes(Collection<String> fields) {
+  public Set<OIndex> getInvolvedIndexes(Collection<String> fields) {
     initSuperClasses();
 
-    final Set<OIndex<?>> result = new HashSet<OIndex<?>>(getClassInvolvedIndexes(fields));
+    final Set<OIndex> result = new HashSet<OIndex>(getClassInvolvedIndexes(fields));
 
     for (OImmutableClass superClass : superClasses) {
       result.addAll(superClass.getInvolvedIndexes(fields));
@@ -624,19 +624,19 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public Set<OIndex<?>> getInvolvedIndexes(String... fields) {
+  public Set<OIndex> getInvolvedIndexes(String... fields) {
     return getInvolvedIndexes(Arrays.asList(fields));
   }
 
   @Override
-  public Set<OIndex<?>> getClassInvolvedIndexes(Collection<String> fields) {
+  public Set<OIndex> getClassInvolvedIndexes(Collection<String> fields) {
     final ODatabaseDocumentInternal database = getDatabase();
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     return indexManager.getClassInvolvedIndexes(database, name, fields);
   }
 
   @Override
-  public Set<OIndex<?>> getClassInvolvedIndexes(String... fields) {
+  public Set<OIndex> getClassInvolvedIndexes(String... fields) {
     return getClassInvolvedIndexes(Arrays.asList(fields));
   }
 
@@ -664,29 +664,29 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public OIndex<?> getClassIndex(String iName) {
+  public OIndex getClassIndex(String iName) {
     final ODatabaseDocumentInternal database = getDatabase();
     return database.getMetadata().getIndexManagerInternal().getClassIndex(database, this.name, iName);
   }
 
   @Override
-  public Set<OIndex<?>> getClassIndexes() {
+  public Set<OIndex> getClassIndexes() {
     final ODatabaseDocumentInternal database = getDatabase();
     return database.getMetadata().getIndexManagerInternal().getClassIndexes(database, name);
   }
 
   @Override
-  public void getClassIndexes(final Collection<OIndex<?>> indexes) {
+  public void getClassIndexes(final Collection<OIndex> indexes) {
     final ODatabaseDocumentInternal database = getDatabase();
     database.getMetadata().getIndexManagerInternal().getClassIndexes(database, name, indexes);
   }
 
-  public void getRawClassIndexes(final Collection<OIndex<?>> indexes) {
+  public void getRawClassIndexes(final Collection<OIndex> indexes) {
     getDatabase().getMetadata().getIndexManagerInternal().getClassRawIndexes(name, indexes);
   }
 
   @Override
-  public void getIndexes(final Collection<OIndex<?>> indexes) {
+  public void getIndexes(final Collection<OIndex> indexes) {
     initSuperClasses();
 
     getClassIndexes(indexes);
@@ -695,7 +695,7 @@ public class OImmutableClass implements OClass {
     }
   }
 
-  public void getRawIndexes(final Collection<OIndex<?>> indexes) {
+  public void getRawIndexes(final Collection<OIndex> indexes) {
     initSuperClasses();
 
     getRawClassIndexes(indexes);
@@ -705,18 +705,18 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public Set<OIndex<?>> getIndexes() {
-    final Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
+  public Set<OIndex> getIndexes() {
+    final Set<OIndex> indexes = new HashSet<OIndex>();
     getIndexes(indexes);
     return indexes;
   }
 
-  public Set<OIndex<?>> getRawIndexes() {
+  public Set<OIndex> getRawIndexes() {
     return indexes;
   }
 
   @Override
-  public OIndex<?> getAutoShardingIndex() {
+  public OIndex getAutoShardingIndex() {
     return autoShardingIndex;
   }
 

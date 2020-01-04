@@ -1,13 +1,14 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.stream.Stream;
 
 public interface OSBTree<K, V> {
   void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, int keySize,
@@ -21,8 +22,7 @@ public interface OSBTree<K, V> {
 
   boolean validatedPut(K key, V value, OBaseIndexEngine.Validator<K, V> validator) throws IOException;
 
-  boolean update(K key, OIndexKeyUpdater<V> updater, OBaseIndexEngine.Validator<K, V> validator)
-      throws IOException;
+  boolean update(K key, OIndexKeyUpdater<V> updater, OBaseIndexEngine.Validator<K, V> validator) throws IOException;
 
   void close(boolean flush);
 
@@ -37,27 +37,20 @@ public interface OSBTree<K, V> {
 
   V remove(K key) throws IOException;
 
-  OSBTreeCursor<K, V> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, V>> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder);
 
-  OSBTreeCursor<K, V> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, V>> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder);
 
   K firstKey();
 
   K lastKey();
 
-  OSBTreeKeyCursor<K> keyCursor();
+  Stream<K> keyStream();
 
-  OSBTreeCursor<K, V> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, boolean ascSortOrder);
+  Stream<ORawPair<K, V>> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+      boolean ascSortOrder);
 
   void flush();
 
   void acquireAtomicExclusiveLock();
-
-  interface OSBTreeCursor<K2, V2> {
-    Map.Entry<K2, V2> next(int prefetchSize);
-  }
-
-  interface OSBTreeKeyCursor<K2> {
-    K2 next(int prefetchSize);
-  }
 }

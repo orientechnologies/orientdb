@@ -22,12 +22,13 @@ package com.orientechnologies.orient.core.storage.index.engine;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
-import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -36,8 +37,10 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -50,14 +53,12 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OSBTree<Object, Object> sbTree;
-  private final int                     version;
   private final String                  name;
   private final int                     id;
 
   public OSBTreeIndexEngine(final int id, String name, OAbstractPaginatedStorage storage, int version) {
     this.id = id;
     this.name = name;
-    this.version = version;
 
     if (version == 1) {
       sbTree = new OSBTreeV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
@@ -109,12 +110,14 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   private void doClearTree() throws IOException {
-    final OSBTree.OSBTreeKeyCursor<Object> keyCursor = sbTree.keyCursor();
-    Object key = keyCursor.next(-1);
-
-    while (key != null) {
-      sbTree.remove(key);
-      key = keyCursor.next(-1);
+    try (final Stream<Object> stream = sbTree.keyStream()) {
+      stream.forEach((key) -> {
+        try {
+          sbTree.remove(key);
+        } catch (final IOException e) {
+          throw OException.wrapException(new OIndexException("Error during clearing a tree" + name), e);
+        }
+      });
     }
 
     if (sbTree.isNullPointerSupport()) {
@@ -130,22 +133,12 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean contains(Object key) {
-    return sbTree.get(key) != null;
-  }
-
-  @Override
   public boolean remove(Object key) {
     try {
       return sbTree.remove(key) != null;
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during removal of key " + key + " from index " + name), e);
     }
-  }
-
-  @Override
-  public int getVersion() {
-    return version;
   }
 
   @Override
@@ -168,35 +161,38 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
     final Object firstKey = sbTree.firstKey();
     if (firstKey == null) {
-      return new NullCursor();
+      return StreamSupport.stream(Spliterators.emptySpliterator(), false);
     }
+    return convertTreeStreamToIndexStream(valuesTransformer, sbTree.iterateEntriesMajor(firstKey, true, true));
+  }
 
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesMajor(firstKey, true, true), valuesTransformer);
+  private static Stream<ORawPair<Object, ORID>> convertTreeStreamToIndexStream(ValuesTransformer valuesTransformer,
+      Stream<ORawPair<Object, Object>> treeStream) {
+    if (valuesTransformer == null) {
+      return treeStream.map((entry) -> new ORawPair<>(entry.first, (ORID) entry.second));
+    } else {
+      //noinspection resource
+      return treeStream.flatMap(
+          (entry) -> valuesTransformer.transformFromValue(entry.second).stream().map((rid) -> new ORawPair<>(entry.first, rid)));
+    }
   }
 
   @Override
-  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
     final Object lastKey = sbTree.lastKey();
     if (lastKey == null) {
-      return new NullCursor();
+      return StreamSupport.stream(Spliterators.emptySpliterator(), false);
     }
 
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesMinor(lastKey, true, false), valuesTransformer);
+    return convertTreeStreamToIndexStream(valuesTransformer, sbTree.iterateEntriesMinor(lastKey, true, false));
   }
 
   @Override
-  public OIndexKeyCursor keyCursor() {
-    return new OIndexKeyCursor() {
-      private final OSBTree.OSBTreeKeyCursor<Object> sbTreeKeyCursor = sbTree.keyCursor();
-
-      @Override
-      public Object next(int prefetchSize) {
-        return sbTreeKeyCursor.next(prefetchSize);
-      }
-    };
+  public Stream<Object> keyStream() {
+    return sbTree.keyStream();
   }
 
   @Override
@@ -228,31 +224,22 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Object getFirstKey() {
-    return sbTree.firstKey();
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
+      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return convertTreeStreamToIndexStream(transformer,
+        sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder));
   }
 
   @Override
-  public Object getLastKey() {
-    return sbTree.lastKey();
-  }
-
-  @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder),
-        transformer);
-  }
-
-  @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer transformer) {
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder), transformer);
+    return convertTreeStreamToIndexStream(transformer, sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder));
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OSBTreeIndexCursor(sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder), transformer);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    return convertTreeStreamToIndexStream(transformer, sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder));
   }
 
   @Override
@@ -273,13 +260,9 @@ public class OSBTreeIndexEngine implements OIndexEngine {
       final Object lastKey = sbTree.lastKey();
 
       if (firstKey != null && lastKey != null) {
-        final OSBTree.OSBTreeCursor<Object, Object> cursor = sbTree.iterateEntriesBetween(firstKey, true, lastKey, true, true);
-        Map.Entry<Object, Object> entry = cursor.next(-1);
-        while (entry != null) {
-          counter += transformer.transformFromValue(entry.getValue()).size();
-          entry = cursor.next(-1);
+        try (final Stream<ORawPair<Object, Object>> stream = sbTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
+          counter += stream.mapToInt((pair) -> transformer.transformFromValue(pair.second).size()).sum();
         }
-
         return counter;
       }
 
@@ -303,69 +286,4 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     return name;
   }
 
-  private static final class OSBTreeIndexCursor extends OIndexAbstractCursor {
-    private final OSBTree.OSBTreeCursor<Object, Object> treeCursor;
-    private final ValuesTransformer                     valuesTransformer;
-
-    private Iterator<ORID> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object         currentKey      = null;
-
-    private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, Object> treeCursor, ValuesTransformer valuesTransformer) {
-      this.treeCursor = treeCursor;
-      this.valuesTransformer = valuesTransformer;
-    }
-
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (valuesTransformer == null) {
-        final Object entry = treeCursor.next(getPrefetchSize());
-        //noinspection unchecked
-        return (Map.Entry<Object, OIdentifiable>) entry;
-      }
-
-      if (currentIterator == null) {
-        return null;
-      }
-
-      while (!currentIterator.hasNext()) {
-        final Object p = treeCursor.next(getPrefetchSize());
-        @SuppressWarnings("unchecked")
-        final Map.Entry<Object, OIdentifiable> entry = (Map.Entry<Object, OIdentifiable>) p;
-
-        if (entry == null) {
-          currentIterator = null;
-          return null;
-        }
-
-        currentKey = entry.getKey();
-        currentIterator = valuesTransformer.transformFromValue(entry.getValue()).iterator();
-      }
-
-      final OIdentifiable value = currentIterator.next();
-
-      return new Map.Entry<Object, OIdentifiable>() {
-        @Override
-        public Object getKey() {
-          return currentKey;
-        }
-
-        @Override
-        public OIdentifiable getValue() {
-          return value;
-        }
-
-        @Override
-        public OIdentifiable setValue(OIdentifiable value) {
-          throw new UnsupportedOperationException("setValue");
-        }
-      };
-    }
-  }
-
-  private static class NullCursor extends OIndexAbstractCursor {
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      return null;
-    }
-  }
 }

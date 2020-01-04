@@ -94,7 +94,7 @@ public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     @Override
     public V setValue(V value) {
-      throw new UnsupportedOperationException("SBTreeEntry.setValue");
+      throw new UnsupportedOperationException("CellBTreeEntry.setValue");
     }
 
     @Override
@@ -129,7 +129,7 @@ public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     @Override
     public String toString() {
-      return "SBTreeEntry{" + "leftChild=" + leftChild + ", rightChild=" + rightChild + ", key=" + key + ", value=" + value + '}';
+      return "CellBTreeEntry{" + "leftChild=" + leftChild + ", rightChild=" + rightChild + ", key=" + key + ", value=" + value + '}';
     }
 
     @Override

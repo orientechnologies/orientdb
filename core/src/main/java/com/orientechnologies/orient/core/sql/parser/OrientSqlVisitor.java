@@ -28,11 +28,9 @@ public interface OrientSqlVisitor
   public Object visit(OUpdateIncrementItem node, Object data);
   public Object visit(OUpdateRemoveItem node, Object data);
   public Object visit(OUpdatePutItem node, Object data);
-  public Object visit(OUpdateAddItem node, Object data);
   public Object visit(OInsertStatement node, Object data);
   public Object visit(OInsertBody node, Object data);
   public Object visit(OCreateVertexStatementEmptyNoTarget node, Object data);
-  public Object visit(OCreateVertexStatementEmpty node, Object data);
   public Object visit(OCreateVertexStatement node, Object data);
   public Object visit(OCreateVertexStatementNoTarget node, Object data);
   public Object visit(OCreateEdgeStatement node, Object data);
@@ -86,7 +84,6 @@ public interface OrientSqlVisitor
   public Object visit(OBinaryCondition node, Object data);
   public Object visit(OContainsValueCondition node, Object data);
   public Object visit(OInstanceofCondition node, Object data);
-  public Object visit(OIndexMatchCondition node, Object data);
   public Object visit(OBetweenCondition node, Object data);
   public Object visit(OIsNullCondition node, Object data);
   public Object visit(OIsNotNullCondition node, Object data);

@@ -84,7 +84,7 @@ public class LuceneTransactionEmbeddedQueryTest {
       ODocument doc = new ODocument("c1");
       doc.field("p1", new String[] { "abc" });
 
-      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
       db.save(doc);
 
@@ -93,14 +93,14 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, vertices.size());
 
-      Assert.assertEquals(1, index.getSize());
+      Assert.assertEquals(1, index.getInternal().size());
       db.commit();
 
       query = "select from C1 where p1 lucene \"abc\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
       Assert.assertEquals(1, vertices.size());
-      Assert.assertEquals(1, index.getSize());
+      Assert.assertEquals(1, index.getInternal().size());
 
       db.begin();
 
@@ -121,7 +121,7 @@ public class LuceneTransactionEmbeddedQueryTest {
         i++;
       }
       Assert.assertEquals(0, i);
-      Assert.assertEquals(0, index.getSize());
+      Assert.assertEquals(0, index.getInternal().size());
 
       db.rollback();
 
@@ -130,7 +130,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, vertices.size());
 
-      Assert.assertEquals(1, index.getSize());
+      Assert.assertEquals(1, index.getInternal().size());
     } finally {
       db.drop();
     }
@@ -144,9 +144,9 @@ public class LuceneTransactionEmbeddedQueryTest {
     createSchema(db);
     try {
 
-      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
-      Assert.assertEquals(0, index.getSize());
+      Assert.assertEquals(0, index.getInternal().size());
 
       db.begin();
 
@@ -160,7 +160,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(vertices.size(), 1);
 
-      Assert.assertEquals(2, index.getSize());
+      Assert.assertEquals(2, index.getInternal().size());
 
       db.commit();
 
@@ -171,7 +171,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, vertices.size());
       Assert.assertEquals(2, coll.size());
-      Assert.assertEquals(2, index.getSize());
+      Assert.assertEquals(2, index.getInternal().size());
 
       db.begin();
 
@@ -196,7 +196,7 @@ public class LuceneTransactionEmbeddedQueryTest {
       }
       Assert.assertEquals(i, 1);
 
-      Assert.assertEquals(1, index.getSize());
+      Assert.assertEquals(1, index.getInternal().size());
 
       query = "select from C1 where p1 lucene \"update\"";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -213,7 +213,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, vertices.size());
 
-      Assert.assertEquals(2, index.getSize());
+      Assert.assertEquals(2, index.getInternal().size());
     } finally {
       db.drop();
     }
@@ -227,9 +227,9 @@ public class LuceneTransactionEmbeddedQueryTest {
     db.create();
     createSchema(db);
     try {
-      OIndex<?> index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
-      Assert.assertEquals(0, index.getSize());
+      Assert.assertEquals(0, index.getInternal().size());
 
       db.begin();
 
@@ -266,7 +266,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(1, i);
       Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
-      Assert.assertEquals(2, index.getSize());
+      Assert.assertEquals(2, index.getInternal().size());
 
       query = "select from C1 where p1 lucene \"removed\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -282,7 +282,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(2, vertices.size());
 
-      Assert.assertEquals(2, index.getSize());
+      Assert.assertEquals(2, index.getInternal().size());
     } finally {
       db.drop();
     }
