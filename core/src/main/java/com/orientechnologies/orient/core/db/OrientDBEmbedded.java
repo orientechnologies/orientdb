@@ -131,7 +131,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         new LinkedBlockingQueue<>());
     timer = new Timer();
 
-    cachedPoolFactory = createCachedDatabasePoolFactory(configurations);
+    cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
 
     boolean autoClose = this.configurations.getConfigurations().getValueAsBoolean(OGlobalConfiguration.AUTO_CLOSE_AFTER_DELAY);
     if (autoClose) {
