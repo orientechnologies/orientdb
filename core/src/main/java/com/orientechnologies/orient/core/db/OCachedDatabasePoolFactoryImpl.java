@@ -96,17 +96,23 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
       return pool;
     }
 
-    return poolCache.computeIfAbsent(key, hash -> {
-      OrientDBConfig config = OrientDBConfig.builder()
-              .addConfig(OGlobalConfiguration.DB_POOL_MAX, maxPoolSize)
-              .build();
+    ODatabasePoolInternal db = poolCache.get(key);
+    if (db != null && !db.isClosed()) {
+      return db;
+    }
 
-      if (parentConfig != null) {
-        config.setParent(parentConfig);
-      }
+    OrientDBConfig config = OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.DB_POOL_MAX, maxPoolSize)
+            .build();
 
-      return new ODatabasePoolImpl(orientDB, database, username, password, config);
-    });
+    if (parentConfig != null) {
+      config.setParent(parentConfig);
+    }
+    db = new ODatabasePoolImpl(orientDB, database, username, password, config);
+
+    poolCache.put(key, db);
+
+    return db;
   }
 
   /**
