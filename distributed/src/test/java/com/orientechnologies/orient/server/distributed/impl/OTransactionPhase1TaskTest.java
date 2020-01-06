@@ -76,6 +76,7 @@ public class OTransactionPhase1TaskTest {
 
     ODocument rec2 = new ODocument("TestClass");
     rec2.field("one", "three");
+    ((ODatabaseDocumentInternal) session).assignAndCheckCluster(rec2, null);
 
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     operations.add(new ORecordOperation(id1.getIdentity(), ORecordOperation.DELETED));
