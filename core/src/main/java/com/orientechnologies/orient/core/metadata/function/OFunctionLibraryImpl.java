@@ -30,15 +30,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import java.util.*;
@@ -52,9 +49,9 @@ import java.util.regex.Pattern;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunctionLibraryImpl {
-  public static final String CLASSNAME = "OFunction";
-  protected final Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
-  private AtomicBoolean needReload = new AtomicBoolean(false);
+  public static final String                 CLASSNAME  = "OFunction";
+  protected final     Map<String, OFunction> functions  = new ConcurrentHashMap<String, OFunction>();
+  private             AtomicBoolean          needReload = new AtomicBoolean(false);
 
   static {
     OCommandManager.instance().registerExecutor(OCommandFunction.class, OCommandExecutorFunction.class);
@@ -186,7 +183,9 @@ public class OFunctionLibraryImpl {
     reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
     try {
       String oldName = (String) function.getOriginalValue("name");
-      functions.remove(oldName.toUpperCase(Locale.ENGLISH));
+      if (oldName != null) {
+        functions.remove(oldName.toUpperCase(Locale.ENGLISH));
+      }
     } catch (Exception e) {
 
     }
