@@ -659,8 +659,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     return cls;
   }
 
-
-
   public Collection<OClass> getSubclasses() {
     acquireSchemaReadLock();
     try {
@@ -852,27 +850,25 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
 
     final OStorage storage = db.getStorage();
-    acquireSchemaReadLock();
+    acquireSchemaWriteLock();
     try {
 
       for (int id : clusterIds) {
         final String clusterName = storage.getClusterNameById(id);
         db.checkForClusterPermissions(clusterName);
-        //noinspection EmptyTryBlock
-        try (final OResultSet resultSet = db.command("truncate cluster " + clusterName)) {
-        }
+        truncateCluster(clusterName);
       }
-      for (OIndex<?> index : getClassIndexes())
+      for (OIndex<?> index : getClassIndexes()) {
         index.clear();
+      }
 
-      Set<OIndex<?>> superclassIndexes = new HashSet<OIndex<?>>();
-      superclassIndexes.addAll(getIndexes());
+      Set<OIndex<?>> superclassIndexes = new HashSet<OIndex<?>>(getIndexes());
       superclassIndexes.removeAll(getClassIndexes());
       for (OIndex index : superclassIndexes) {
         index.rebuild();
       }
     } finally {
-      releaseSchemaReadLock();
+      releaseSchemaWriteLock();
     }
   }
 

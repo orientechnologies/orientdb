@@ -262,13 +262,13 @@ public class OClassRemote extends OClassImpl {
   public OClass truncateCluster(String clusterName) {
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, name);
-    acquireSchemaReadLock();
+    acquireSchemaWriteLock();
     try {
 
       final String cmd = String.format("truncate cluster %s", clusterName);
       database.command(cmd).close();
     } finally {
-      releaseSchemaReadLock();
+      releaseSchemaWriteLock();
     }
 
     return this;
