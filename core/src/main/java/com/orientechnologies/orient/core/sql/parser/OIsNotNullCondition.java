@@ -23,19 +23,13 @@ public class OIsNotNullCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
-
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return expression.execute(currentRecord, ctx) != null;
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     return expression.execute(currentRecord, ctx) != null;
   }
 
@@ -44,46 +38,54 @@ public class OIsNotNullCondition extends OBooleanExpression {
     builder.append(" IS NOT NULL");
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return expression.supportsBasicCalculation();
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     if (!expression.supportsBasicCalculation()) {
       return 1;
     }
     return 0;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     if (!expression.supportsBasicCalculation()) {
       return (List) Collections.singletonList(expression);
     }
     return Collections.EMPTY_LIST;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     return expression.needsAliases(aliases);
   }
 
-  @Override public OBooleanExpression copy() {
+  @Override
+  public OBooleanExpression copy() {
     OIsNotNullCondition result = new OIsNotNullCondition(-1);
     result.expression = expression.copy();
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     this.expression.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (expression != null && expression.refersToParent()) {
       return true;
     }
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -97,11 +99,13 @@ public class OIsNotNullCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return expression != null ? expression.hashCode() : 0;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     return expression.getMatchPatternInvolvedAliases();
   }
 

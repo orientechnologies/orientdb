@@ -21,21 +21,16 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
     return "UPDATE EDGE ";
   }
 
-  @Override public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  @Override
+  public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OUpdateExecutionPlanner planner = new OUpdateExecutionPlanner(this);
     OUpdateExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
     result.setStatement(originalStatement);
     return result;
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
-  @Override public OUpdateEdgeStatement copy() {
+  @Override
+  public OUpdateEdgeStatement copy() {
     OUpdateEdgeStatement result = new OUpdateEdgeStatement(-1);
     result.target = target == null ? null : target.copy();
     result.operations = operations == null ? null : operations.stream().map(x -> x.copy()).collect(Collectors.toList());

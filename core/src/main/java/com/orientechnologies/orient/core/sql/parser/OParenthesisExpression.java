@@ -33,13 +33,6 @@ public class OParenthesisExpression extends OMathExpression {
     this.expression = exp;
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (expression != null) {

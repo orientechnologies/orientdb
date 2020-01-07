@@ -719,7 +719,7 @@ public class OMathExpression extends SimpleNode {
       operators = operatorsStack;
     }
   }
-  
+
   public List<OMathExpression> getChildExpressions() {
     return childExpressions;
   }

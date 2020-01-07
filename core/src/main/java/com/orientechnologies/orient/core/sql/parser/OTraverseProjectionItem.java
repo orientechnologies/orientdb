@@ -89,13 +89,6 @@ public class OTraverseProjectionItem extends SimpleNode {
     return val instanceof OResult;
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
 
     base.toString(params, builder);

@@ -13,13 +13,6 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override
   public boolean execute(Object iLeft, Object iRight) {
     if (iLeft == iRight) {

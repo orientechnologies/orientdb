@@ -4,20 +4,13 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 
-public
-class ONeOperator extends SimpleNode  implements OBinaryCompareOperator{
+public class ONeOperator extends SimpleNode  implements OBinaryCompareOperator{
   public ONeOperator(int id) {
     super(id);
   }
 
   public ONeOperator(OrientSql p, int id) {
     super(p, id);
-  }
-
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   @Override public boolean execute(Object left, Object right) {

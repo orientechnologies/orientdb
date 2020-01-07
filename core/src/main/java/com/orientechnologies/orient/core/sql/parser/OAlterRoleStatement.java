@@ -106,11 +106,5 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
     }
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
 }
 /* JavaCC - OriginalChecksum=1a221cad0dfbc01f66a720300b776def (do not edit this line) */

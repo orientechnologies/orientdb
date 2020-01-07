@@ -31,13 +31,6 @@ public class OContainsCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   public boolean execute(Object left, Object right) {
     if (left instanceof Collection) {
       if (right instanceof Collection) {

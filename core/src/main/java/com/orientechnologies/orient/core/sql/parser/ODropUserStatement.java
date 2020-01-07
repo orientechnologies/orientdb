@@ -48,13 +48,6 @@ public class ODropUserStatement extends OSimpleExecStatement {
     return result;
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o)

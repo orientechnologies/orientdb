@@ -37,13 +37,6 @@ public class OProjection extends SimpleNode {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   public List<OProjectionItem> getItems() {
     return items;
   }

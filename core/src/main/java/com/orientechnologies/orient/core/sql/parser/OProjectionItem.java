@@ -48,13 +48,6 @@ public class OProjectionItem extends SimpleNode {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   public boolean isAll() {
     if (all) {
       return true;

@@ -26,13 +26,6 @@ public class OContainsAnyCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   public boolean execute(Object left, Object right) {
     if (left instanceof Collection) {
       if (right instanceof Iterable) {
@@ -45,7 +38,7 @@ public class OContainsAnyCondition extends OBooleanExpression {
           if (((Collection) left).contains(next)) {
             return true;
           }
-          if(next instanceof OResult && ((OResult) next).isElement() && ((Collection) left).contains(((OResult) next).toElement())){
+          if (next instanceof OResult && ((OResult) next).isElement() && ((Collection) left).contains(((OResult) next).toElement())) {
             return true;
           }
         }

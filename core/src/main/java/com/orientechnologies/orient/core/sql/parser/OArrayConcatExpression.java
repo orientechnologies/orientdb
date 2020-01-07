@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class OArrayConcatExpression extends SimpleNode {
 
-  List<OArrayConcatExpressionElement> childExpressions = new ArrayList<>();
+  protected List<OArrayConcatExpressionElement> childExpressions = new ArrayList<>();
 
   public OArrayConcatExpression(int id) {
     super(id);
@@ -23,13 +23,6 @@ public class OArrayConcatExpression extends SimpleNode {
 
   public OArrayConcatExpression(OrientSql p, int id) {
     super(p, id);
-  }
-
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   public List<OArrayConcatExpressionElement> getChildExpressions() {
