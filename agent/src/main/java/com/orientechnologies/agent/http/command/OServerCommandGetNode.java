@@ -52,7 +52,7 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
     String command = parts[1];
 
     if (isLocalNode(iRequest)) {
-      if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
+      if ("GET".equalsIgnoreCase(iRequest.getHttpMethod())) {
         doGet(iRequest, iResponse, command);
       } else {
         doPost(iResponse, parts, command);
@@ -82,7 +82,7 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String command) throws IOException {
     if (command.equalsIgnoreCase("info")) {
-      iRequest.data.commandInfo = "Server status";
+      iRequest.getData().commandInfo = "Server status";
       final String result = OServerInfo.getServerInfo(server);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, result, null);
     } else if (command.equalsIgnoreCase("threadDump")) {

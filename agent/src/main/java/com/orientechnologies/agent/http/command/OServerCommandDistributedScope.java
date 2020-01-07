@@ -1,10 +1,6 @@
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsResponse;
-import com.orientechnologies.agent.cloud.processor.tasks.NewEnterpriseStatsTask;
-import com.orientechnologies.agent.operation.NodeResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
-import com.orientechnologies.agent.operation.ResponseOk;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -12,7 +8,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperation;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -21,8 +16,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Created by Enrico Risa on 16/11/15.
@@ -55,11 +48,11 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
     if (localDatabase == null) {
-      final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
-      localDatabase = server.openDatabase(iRequest.databaseName, parts.get(0), parts.get(1));
+      final List<String> parts = OStringSerializerHelper.split(iRequest.getAuthorization(), ':');
+      localDatabase = server.openDatabase(iRequest.getDatabaseName(), parts.get(0), parts.get(1));
     } else {
 
-      String currentUserId = iRequest.data.currentUserId;
+      String currentUserId = iRequest.getData().currentUserId;
       if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
         if (!currentUserId.equals(localDatabase.getUser().getIdentity().toString())) {
           ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
@@ -68,8 +61,8 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
       }
     }
 
-    iRequest.data.lastDatabase = localDatabase.getName();
-    iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
+    iRequest.getData().lastDatabase = localDatabase.getName();
+    iRequest.getData().lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
     return (ODatabaseDocumentInternal) localDatabase.getDatabaseOwner();
   }
 
@@ -78,13 +71,13 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
 
     try {
       if (isLocalNode(iRequest)) {
-        if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
+        if ("GET".equalsIgnoreCase(iRequest.getHttpMethod())) {
           doGet(iRequest, iResponse);
-        } else if ("POST".equalsIgnoreCase(iRequest.httpMethod)) {
+        } else if ("POST".equalsIgnoreCase(iRequest.getHttpMethod())) {
           doPost(iRequest, iResponse);
-        } else if ("PUT".equalsIgnoreCase(iRequest.httpMethod)) {
+        } else if ("PUT".equalsIgnoreCase(iRequest.getHttpMethod())) {
           doPut(iRequest, iResponse);
-        } else if ("DELETE".equalsIgnoreCase(iRequest.httpMethod)) {
+        } else if ("DELETE".equalsIgnoreCase(iRequest.getHttpMethod())) {
           doDelete(iRequest, iResponse);
         }
       } else {

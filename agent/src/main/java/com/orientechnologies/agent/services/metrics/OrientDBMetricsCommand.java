@@ -51,9 +51,9 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: metrics");
 
-    if (iRequest.httpMethod.equalsIgnoreCase("GET")) {
+    if (iRequest.getHttpMethod().equalsIgnoreCase("GET")) {
       doGet(iResponse, parts);
-    } else if (iRequest.httpMethod.equalsIgnoreCase("POST")) {
+    } else if (iRequest.getHttpMethod().equalsIgnoreCase("POST")) {
 
       if (super.authenticate(iRequest, iResponse, true, EnterprisePermissions.SERVER_METRICS_EDIT.toString())) {
         doPost(iRequest, iResponse, parts);
@@ -245,7 +245,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
 
   private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
 
-    OrientDBMetricsSettings settings = mapper.readValue(iRequest.content, OrientDBMetricsSettings.class);
+    OrientDBMetricsSettings settings = mapper.readValue(iRequest.getContent(), OrientDBMetricsSettings.class);
     service.changeSettings(settings);
     iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, null, null);
   }

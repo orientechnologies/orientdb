@@ -46,17 +46,17 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: auditing/<db>/<action>");
 
-    iRequest.data.commandInfo = "Auditing information";
+    iRequest.getData().commandInfo = "Auditing information";
 
     String db = parts[1];
     String action = parts[2];
 
     if (isLocalNode(iRequest)) {
-      if ("GET".equals(iRequest.httpMethod)) {
+      if ("GET".equals(iRequest.getHttpMethod())) {
         if (action.equalsIgnoreCase("config")) {
           doGet(iRequest, iResponse, parts[1]);
         }
-      } else if ("POST".equals(iRequest.httpMethod)) {
+      } else if ("POST".equals(iRequest.getHttpMethod())) {
 
         if (action.equalsIgnoreCase("config")) {
           doPost(iRequest, iResponse, db);
@@ -73,7 +73,7 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
   private void doGetData(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws IOException, InterruptedException {
 
-    ODocument params = new ODocument().fromJSON(iRequest.content);
+    ODocument params = new ODocument().fromJSON(iRequest.getContent());
 
     Collection<ODocument> documents = new ArrayList<ODocument>();
 
@@ -158,8 +158,8 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
   private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws InterruptedException, IOException {
 
-    ODocument config = new ODocument().fromJSON(iRequest.content, "noMap");
-    iRequest.databaseName = db;
+    ODocument config = new ODocument().fromJSON(iRequest.getContent(), "noMap");
+    iRequest.setDatabaseName(db);
 
     ODatabaseDocument dbDoc = null;
 
@@ -177,7 +177,7 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
   }
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws IOException {
-    iRequest.databaseName = db;
+    iRequest.setDatabaseName(db);
 
     ODocument config = null;
     if (server.getSecurity().getAuditing() != null) {

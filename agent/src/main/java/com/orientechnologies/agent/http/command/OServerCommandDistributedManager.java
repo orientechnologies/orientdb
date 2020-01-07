@@ -60,7 +60,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    iRequest.data.commandInfo = "Distributed information";
+    iRequest.getData().commandInfo = "Distributed information";
     return super.execute(iRequest, iResponse);
   }
 
@@ -71,7 +71,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     if (command.equalsIgnoreCase("database")) {
 
-      String jsonContent = iRequest.content;
+      String jsonContent = iRequest.getContent();
 
       changeConfig(server, id, jsonContent);
 

@@ -52,7 +52,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-    if (iRequest.content == null) {
+    if (iRequest.getContent() == null) {
       writeError(iResponse, "OServerCommandPostSecurityReload.execute()", "Request Content is null");
       return false;
     }
@@ -64,7 +64,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
     try {
       // Convert the JSON content to an ODocument to make parsing it easier.
-      final ODocument jsonParams = new ODocument().fromJSON(iRequest.content, "noMap");
+      final ODocument jsonParams = new ODocument().fromJSON(iRequest.getContent(), "noMap");
 
       // "configFile" and "config"/"module" are mutually exclusive properties.
       if (jsonParams.containsField("configFile")) {

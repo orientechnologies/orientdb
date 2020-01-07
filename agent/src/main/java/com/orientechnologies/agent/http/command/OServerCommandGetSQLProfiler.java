@@ -48,13 +48,13 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: sqlProfiler/<command>");
 
-    iRequest.data.commandInfo = "Profiler information";
+    iRequest.getData().commandInfo = "Profiler information";
 
     try {
 
       if (isLocalNode(iRequest)) {
         final String db = parts[1];
-        if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
+        if ("GET".equalsIgnoreCase(iRequest.getHttpMethod())) {
           doGet(iRequest, iResponse, parts, db);
         }
       } else {

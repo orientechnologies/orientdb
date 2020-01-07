@@ -21,7 +21,7 @@ public class OServerCommandGetDeployDb extends OServerCommandAuthenticatedServer
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.url, 2, "Syntax error: distributed/<cluster>/<db>");
+    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: distributed/<cluster>/<db>");
     String db = parts[1];
 
     final ODistributedServerManager manager = OServerMain.server().getDistributedManager();

@@ -62,11 +62,11 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
       ODocument configDoc = null;
 
       // If the content is null then we return the main security configuration.
-      if (iRequest.content == null) {
+      if (iRequest.getContent() == null) {
         configDoc = serverSecurity.getConfig();
       } else {
         // Convert the JSON content to an ODocument to make parsing it easier.
-        final ODocument jsonParams = new ODocument().fromJSON(iRequest.content, "noMap");
+        final ODocument jsonParams = new ODocument().fromJSON(iRequest.getContent(), "noMap");
 
         if (jsonParams.containsField("module")) {
           final String compName = jsonParams.field("module");

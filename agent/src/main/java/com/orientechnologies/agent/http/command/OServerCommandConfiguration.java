@@ -29,7 +29,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class OServerCommandConfiguration extends OServerCommandDistributedScope {
 
@@ -48,7 +47,7 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 
     checkSyntax(iRequest.getUrl(), 1, "Syntax error: configuration/");
-    if (iRequest.httpMethod.equals("GET")) {
+    if (iRequest.getHttpMethod().equals("GET")) {
       return doGetRequest(iRequest, iResponse);
     }
     return false;

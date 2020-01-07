@@ -58,7 +58,7 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
     if (super.authenticate(iRequest, iResponse, true, EnterprisePermissions.SERVER_BACKUP_EDIT.toString())) {
       final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: backupManager");
       if (parts.length == 1) {
-        ODocument body = new ODocument().fromJSON(iRequest.content, "noMap");
+        ODocument body = new ODocument().fromJSON(iRequest.getContent(), "noMap");
         ODocument doc = backupManager.addBackup(body);
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
       } else if (parts.length == 3) {
@@ -66,7 +66,7 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
         String uuid = parts[1];
         String command = parts[2];
         if (command.equals("restore")) {
-          ODocument body = new ODocument().fromJSON(iRequest.content, "noMap");
+          ODocument body = new ODocument().fromJSON(iRequest.getContent(), "noMap");
           backupManager.restoreBackup(uuid, body);
           iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
         } else {
@@ -82,7 +82,7 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
   protected void doPut(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
     if (super.authenticate(iRequest, iResponse, true, EnterprisePermissions.SERVER_BACKUP_EDIT.toString())) {
       final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: backupManager");
-      ODocument body = new ODocument().fromJSON(iRequest.content, "noMap");
+      ODocument body = new ODocument().fromJSON(iRequest.getContent(), "noMap");
       backupManager.changeBackup(parts[1], body);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, body.toJSON(""), null);
     } else {

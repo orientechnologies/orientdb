@@ -34,7 +34,7 @@ public class StudioPermissionCommand extends OServerCommandAuthenticatedServerAb
 
     final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: metrics");
 
-    if (iRequest.httpMethod.equalsIgnoreCase("GET")) {
+    if (iRequest.getHttpMethod().equalsIgnoreCase("GET")) {
       doGet(iRequest, iResponse, parts);
     }
     return false;

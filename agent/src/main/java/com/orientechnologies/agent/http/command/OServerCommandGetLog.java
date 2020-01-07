@@ -19,16 +19,13 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.agent.Utils;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
 import java.io.*;
-import java.net.URLDecoder;
 import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -157,7 +154,7 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
         return false;
       }
 
-      iRequest.data.commandInfo = "Load log";
+      iRequest.getData().commandInfo = "Load log";
 
       result.field("logs", subdocuments);
 
