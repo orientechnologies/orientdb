@@ -44,6 +44,8 @@ public abstract class OHttpRequest {
   private final InputStream                  in;
   private final ONetworkProtocolData         data;
   private final ONetworkProtocolHttpAbstract executor;
+  protected     String                       authorization;
+  private String databaseName;
 
   public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
       final OContextConfiguration iConfiguration) {
@@ -134,9 +136,13 @@ public abstract class OHttpRequest {
     return executor;
   }
 
-  public abstract String getAuthorization();
+  public String getAuthorization() {
+    return authorization;
+  }
 
-  public abstract void setAuthorization(String authorization);
+  public void setAuthorization(String authorization) {
+    this.authorization = authorization;
+  }
 
   public abstract String getSessionId();
 
@@ -170,9 +176,13 @@ public abstract class OHttpRequest {
 
   public abstract void setBoundary(String boundary);
 
-  public abstract String getDatabaseName();
+  public String getDatabaseName() {
+    return databaseName;
+  }
 
-  public abstract void setDatabaseName(String databaseName);
+  public void setDatabaseName(String databaseName) {
+    this.databaseName = databaseName;
+  }
 
   public abstract boolean isMultipart();
 

@@ -11,7 +11,6 @@ import java.util.Map;
 public class OHttpRequestImpl extends OHttpRequest {
 
   private String                        content;
-  private String                        authorization;
   private String                        sessionId;
   private String                        url;
   private Map<String, String>           parameters;
@@ -21,7 +20,6 @@ public class OHttpRequestImpl extends OHttpRequest {
   private String                        contentEncoding;
   private OHttpMultipartBaseInputStream multipartStream;
   private String                        boundary;
-  private String                        databaseName;
   private boolean                       isMultipart;
   private String                        ifMatch;
   private String                        authentication;
@@ -43,15 +41,7 @@ public class OHttpRequestImpl extends OHttpRequest {
     this.content = content;
   }
 
-  @Override
-  public String getAuthorization() {
-    return authorization;
-  }
 
-  @Override
-  public void setAuthorization(String authorization) {
-    this.authorization = authorization;
-  }
 
   @Override
   public String getSessionId() {
@@ -131,16 +121,6 @@ public class OHttpRequestImpl extends OHttpRequest {
   @Override
   public void setBoundary(String boundary) {
     this.boundary = boundary;
-  }
-
-  @Override
-  public String getDatabaseName() {
-    return databaseName;
-  }
-
-  @Override
-  public void setDatabaseName(String databaseName) {
-    this.databaseName = databaseName;
   }
 
   @Override
