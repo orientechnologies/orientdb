@@ -49,7 +49,7 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
       iResponse.setSessionId(iRequest.getSessionId());
     }
 
-    iResponse.keepAlive = false;
+    iResponse.setKeepAlive(false);
 
     if (isJsonResponse(iResponse)) {
       sendJsonError(iResponse, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,

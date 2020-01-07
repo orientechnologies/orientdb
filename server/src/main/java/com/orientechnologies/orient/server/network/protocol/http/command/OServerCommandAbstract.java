@@ -85,7 +85,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
   }
 
   protected boolean isJsonResponse(OHttpResponse response) {
-    return response.jsonErrorResponse;
+    return response.isJsonErrorResponse();
 
   }
 

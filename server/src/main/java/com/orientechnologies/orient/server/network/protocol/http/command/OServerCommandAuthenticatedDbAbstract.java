@@ -170,7 +170,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       // AUTHENTICATED: CREATE THE SESSION
       iRequest.setSessionId(server.getHttpSessionManager()
           .createSession(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1)));
-      iResponse.sessionId = iRequest.getSessionId();
+      iResponse.setSessionId(iRequest.getSessionId());
       return true;
 
     } catch (OSecurityAccessException e) {

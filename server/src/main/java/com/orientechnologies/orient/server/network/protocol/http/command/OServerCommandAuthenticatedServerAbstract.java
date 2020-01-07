@@ -54,7 +54,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   protected boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse, final boolean iAskForAuthentication, String resource) throws IOException {
     if (checkGuestAccess()) {
       // GUEST ACCESSES TO THE RESOURCE: OK ALSO WITHOUT AN AUTHENTICATION.
-      iResponse.sessionId = null;
+      iResponse.setSessionId(null);
       return true;
     }
 
