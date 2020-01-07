@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.network.protocol.http;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
@@ -62,13 +63,14 @@ public abstract class OHttpResponse {
   public static final    char[]  URL_SEPARATOR = { '/' };
   protected static final Charset utf8          = Charset.forName("utf8");
 
-  private final String       httpVersion;
-  private final OutputStream out;
-  private       String       headers;
-  private       String[]     additionalHeaders;
-  private       String       characterSet;
-  private       String       contentType;
-  private       String       serverInfo;
+  private final String                httpVersion;
+  private final OutputStream          out;
+  private final OContextConfiguration contextConfiguration;
+  private       String                headers;
+  private       String[]              additionalHeaders;
+  private       String                characterSet;
+  private       String                contentType;
+  private       String                serverInfo;
 
   private String            sessionId;
   private String            callbackFunction;
@@ -84,9 +86,8 @@ public abstract class OHttpResponse {
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
-      final boolean iKeepAlive, OClientConnection connection) {
-    setStreaming(connection.getProtocol().getServer().getContextConfiguration()
-        .getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_STREAMING));
+      final boolean iKeepAlive, OClientConnection connection, OContextConfiguration contextConfiguration) {
+    setStreaming(contextConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_STREAMING));
     out = iOutStream;
     httpVersion = iHttpVersion;
     setAdditionalHeaders(iAdditionalHeaders);
@@ -96,6 +97,7 @@ public abstract class OHttpResponse {
     setCallbackFunction(iCallbackFunction);
     setKeepAlive(iKeepAlive);
     this.setConnection(connection);
+    this.contextConfiguration = contextConfiguration;
   }
 
   public abstract void send(int iCode, String iReason, String iContentType, Object iContent, String iHeaders) throws IOException;
@@ -614,5 +616,9 @@ public abstract class OHttpResponse {
 
   public boolean isStreaming() {
     return streaming;
+  }
+
+  public OContextConfiguration getContextConfiguration() {
+    return contextConfiguration;
   }
 }

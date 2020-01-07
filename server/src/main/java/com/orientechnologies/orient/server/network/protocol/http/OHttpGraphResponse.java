@@ -49,7 +49,7 @@ public class OHttpGraphResponse extends OHttpResponse {
   public OHttpGraphResponse(final OHttpResponse iWrapped) {
     super(iWrapped.getOutputStream(), iWrapped.getHttpVersion(), iWrapped.getAdditionalHeaders(), iWrapped.getCharacterSet(),
         iWrapped.getServerInfo(), iWrapped.getSessionId(), iWrapped.getCallbackFunction(), iWrapped.isKeepAlive(),
-        iWrapped.getConnection());
+        iWrapped.getConnection(),iWrapped.getContextConfiguration());
   }
 
   public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.OClientConnection;
 
 import java.io.*;
@@ -10,11 +11,11 @@ import java.util.Map;
 
 public class OHttpResponseImpl extends OHttpResponse {
 
-
   public OHttpResponseImpl(OutputStream iOutStream, String iHttpVersion, String[] iAdditionalHeaders, String iResponseCharSet,
-      String iServerInfo, String iSessionId, String iCallbackFunction, boolean iKeepAlive, OClientConnection connection) {
+      String iServerInfo, String iSessionId, String iCallbackFunction, boolean iKeepAlive, OClientConnection connection,
+      OContextConfiguration contextConfiguration) {
     super(iOutStream, iHttpVersion, iAdditionalHeaders, iResponseCharSet, iServerInfo, iSessionId, iCallbackFunction, iKeepAlive,
-        connection);
+        connection, contextConfiguration);
   }
 
   @Override

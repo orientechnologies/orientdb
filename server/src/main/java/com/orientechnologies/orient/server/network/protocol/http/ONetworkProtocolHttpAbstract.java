@@ -183,7 +183,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       callbackF = null;
 
     response = new OHttpResponseImpl(channel.outStream, request.getHttpVersion(), additionalResponseHeaders, responseCharSet,
-        connection.getData().serverInfo, request.getSessionId(), callbackF, request.isKeepAlive(), connection);
+        connection.getData().serverInfo, request.getSessionId(), callbackF, request.isKeepAlive(), connection,
+        server.getContextConfiguration());
     response.setJsonErrorResponse(jsonResponseError);
     if (request.getContentEncoding() != null && request.getContentEncoding().equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
@@ -616,7 +617,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
           channel.read(buffer, 1, contentLength - 1);
 
-          if (iRequest.getContentEncoding() != null && iRequest.getContentEncoding().equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+          if (iRequest.getContentEncoding() != null && iRequest.getContentEncoding()
+              .equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
             iRequest.setContent(this.deCompress(buffer));
           } else {
             iRequest.setContent(new String(buffer));
@@ -732,8 +734,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     } catch (Exception t) {
       if (request.getHttpMethod() != null && request.getUrl() != null) {
         try {
-          sendError(505, "Error on executing of " + request.getHttpMethod() + " for the resource: " + request.getUrl(), null, "text/plain",
-              t.toString(), request.isKeepAlive());
+          sendError(505, "Error on executing of " + request.getHttpMethod() + " for the resource: " + request.getUrl(), null,
+              "text/plain", t.toString(), request.isKeepAlive());
         } catch (IOException e) {
         }
       } else
