@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -36,13 +35,12 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(
-        iRequest.url,
+    String[] urlParts = checkSyntax(iRequest.getUrl(),
         3,
         "Syntax error: cluster/<database>/<cluster-name>[/<limit>]<br>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
-    iRequest.data.commandInfo = "Browse cluster";
-    iRequest.data.commandDetail = urlParts[2];
+    iRequest.getData().commandInfo = "Browse cluster";
+    iRequest.getData().commandDetail = urlParts[2];
 
     ODatabaseDocument db = null;
 

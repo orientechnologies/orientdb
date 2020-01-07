@@ -37,9 +37,9 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
     ODatabaseDocument db = null;
 
     try {
-      final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");
+      final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: document/<database>/<record-id>");
 
-      iRequest.data.commandInfo = "Delete document";
+      iRequest.getData().commandInfo = "Delete document";
 
       db = getProfiledDatabaseInstance(iRequest);
 
@@ -54,13 +54,13 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
       final ODocument doc = new ODocument(recordId);
 
       // UNMARSHALL DOCUMENT WITH REQUEST CONTENT
-      if (iRequest.content != null)
+      if (iRequest.getContent() != null)
         // GET THE VERSION FROM THE DOCUMENT
-        doc.fromJSON(iRequest.content);
+        doc.fromJSON(iRequest.getContent());
       else {
-        if (iRequest.ifMatch != null)
+        if (iRequest.getIfMatch() != null)
           // USE THE IF-MATCH HTTP HEADER AS VERSION
-          ORecordInternal.setVersion(doc, Integer.parseInt(iRequest.ifMatch));
+          ORecordInternal.setVersion(doc, Integer.parseInt(iRequest.getIfMatch()));
         else
           // IGNORE THE VERSION
           ORecordInternal.setVersion(doc, -1);

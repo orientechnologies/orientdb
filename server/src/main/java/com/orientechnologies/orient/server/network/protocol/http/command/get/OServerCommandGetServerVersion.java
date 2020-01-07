@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.server.OServerInfo;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -45,9 +44,9 @@ public class OServerCommandGetServerVersion extends OServerCommandGetConnections
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    checkSyntax(iRequest.url, 1, "Syntax error: server");
+    checkSyntax(iRequest.getUrl(), 1, "Syntax error: server");
 
-    iRequest.data.commandInfo = "Server status";
+    iRequest.getData().commandInfo = "Server status";
 
     final String result = OConstants.getRawVersion();
 

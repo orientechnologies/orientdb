@@ -38,9 +38,9 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    checkSyntax(iRequest.url, 1, "Syntax error: server");
+    checkSyntax(iRequest.getUrl(), 1, "Syntax error: server");
 
-    iRequest.data.commandInfo = "Server status";
+    iRequest.getData().commandInfo = "Server status";
 
     final String result = OServerInfo.getServerInfo(server);
 

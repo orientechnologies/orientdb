@@ -29,10 +29,10 @@ public abstract class OServerCommandDocumentAbstract extends OServerCommandAuthe
 
   protected String bindToFields(final OHttpRequest iRequest, final Map<String, String> iFields, final ORecordId iRid)
       throws Exception {
-    if (iRequest.content == null)
+    if (iRequest.getContent() == null)
       throw new IllegalArgumentException("HTTP Request content is empty");
 
-    final String req = iRequest.content;
+    final String req = iRequest.getContent();
 
     // PARSE PARAMETERS
     String className = null;

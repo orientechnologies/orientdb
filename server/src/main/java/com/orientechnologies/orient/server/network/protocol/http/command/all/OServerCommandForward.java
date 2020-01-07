@@ -55,12 +55,12 @@ public class OServerCommandForward extends OServerCommandAbstract {
 
     if (prefix.endsWith("*")) {
       final int prefixLength = prefix.length() - 1;
-      final int postfix = iRequest.url.indexOf(prefix.substring(0, prefixLength));
+      final int postfix = iRequest.getUrl().indexOf(prefix.substring(0, prefixLength));
       if (postfix > -1)
-        forwardURL.append(iRequest.url.substring(postfix + prefixLength));
+        forwardURL.append(iRequest.getUrl().substring(postfix + prefixLength));
     }
 
-    iRequest.url = forwardURL.toString();
+    iRequest.setUrl(forwardURL.toString());
     return true;
   }
 

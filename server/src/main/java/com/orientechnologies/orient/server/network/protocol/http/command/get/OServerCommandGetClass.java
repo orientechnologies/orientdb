@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -35,10 +34,10 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
+    String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: class/<database>/<class-name>");
 
-    iRequest.data.commandInfo = "Returns the information of a class in the schema";
-    iRequest.data.commandDetail = urlParts[2];
+    iRequest.getData().commandInfo = "Returns the information of a class in the schema";
+    iRequest.getData().commandDetail = urlParts[2];
 
     ODatabaseDocument db = null;
 

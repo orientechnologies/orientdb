@@ -51,10 +51,10 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    if (!iRequest.isMultipart) {
+    if (!iRequest.isMultipart()) {
       iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Request is not multipart/form-data", OHttpUtils.CONTENT_TEXT_PLAIN,
           "Request is not multipart/form-data", null);
-    } else if (iRequest.multipartStream == null || iRequest.multipartStream.available() <= 0) {
+    } else if (iRequest.getMultipartStream() == null || iRequest.getMultipartStream().available() <= 0) {
       iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", OHttpUtils.CONTENT_TEXT_PLAIN,
           "Content stream is null or empty", null);
     } else {

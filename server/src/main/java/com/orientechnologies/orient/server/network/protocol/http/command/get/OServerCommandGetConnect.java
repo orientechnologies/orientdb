@@ -31,12 +31,12 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
     urlParts[1] = urlParts[1].replace(DBNAME_DIR_SEPARATOR, '/');
 
-    iRequest.data.commandInfo = "Connect";
-    iRequest.data.commandDetail = urlParts[1];
+    iRequest.getData().commandInfo = "Connect";
+    iRequest.getData().commandDetail = urlParts[1];
 
     iResponse
         .send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
@@ -46,7 +46,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
   @Override
   public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
     if (urlParts == null || urlParts.length < 3)
       return super.beforeExecute(iRequest, iResponse);

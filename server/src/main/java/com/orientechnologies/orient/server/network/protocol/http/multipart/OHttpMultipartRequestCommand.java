@@ -42,12 +42,12 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
       final ODatabaseDocument database) throws Exception {
     char currChar;
     boolean endRequest = false;
-    final OHttpMultipartContentInputStream contentIn = new OHttpMultipartContentInputStream(iRequest.multipartStream,
-        iRequest.boundary);
+    final OHttpMultipartContentInputStream contentIn = new OHttpMultipartContentInputStream(iRequest.getMultipartStream(),
+        iRequest.getBoundary());
     final HashMap<String, String> headers = new LinkedHashMap<String, String>();
     int in;
     try {
-      while (!endRequest && (in = iRequest.multipartStream.read()) > 0) {
+      while (!endRequest && (in = iRequest.getMultipartStream().read()) > 0) {
         currChar = (char) in;
         switch (parseStatus) {
         case STATUS_EXPECTED_BOUNDARY: {
@@ -69,7 +69,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
         }
 
         case STATUS_EXPECTED_PART_CONTENT: {
-          iRequest.multipartStream.setSkipInput(in);
+          iRequest.getMultipartStream().setSkipInput(in);
           contentIn.reset();
           if (headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME) != null) {
             parseFileContent(iRequest, fileContentParser, headers, contentIn, database);
@@ -80,7 +80,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
         }
 
         case STATUS_EXPECTED_END_REQUEST: {
-          iRequest.multipartStream.setSkipInput(in);
+          iRequest.getMultipartStream().setSkipInput(in);
           endRequest = OHttpMultipartHelper.isEndRequest(iRequest);
           if (!endRequest) {
             parseStatus = STATUS.STATUS_EXPECTED_BOUNDARY_CRLF;
@@ -103,13 +103,13 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
       throws IOException {
     int in;
     if (currChar == '\r') {
-      in = iRequest.multipartStream.read();
+      in = iRequest.getMultipartStream().read();
       currChar = (char) in;
       if (currChar == '\n') {
         return false;
       }
     } else if (currChar == '-') {
-      in = iRequest.multipartStream.read();
+      in = iRequest.getMultipartStream().read();
       currChar = (char) in;
       if (currChar == '-') {
         endRequest = true;
@@ -135,17 +135,17 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
             "Wrong request: Expected boundary", null);
         return;
       }
-      in = iRequest.multipartStream.read();
+      in = iRequest.getMultipartStream().read();
       currChar = (char) in;
     }
-    while (boundaryCursor < iRequest.boundary.length()) {
-      if (currChar != iRequest.boundary.charAt(boundaryCursor)) {
+    while (boundaryCursor < iRequest.getBoundary().length()) {
+      if (currChar != iRequest.getBoundary().charAt(boundaryCursor)) {
         iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request: Expected boundary", OHttpUtils.CONTENT_TEXT_PLAIN,
             "Wrong request: Expected boundary", null);
       }
       boundaryCursor++;
-      if (boundaryCursor < iRequest.boundary.length()) {
-        in = iRequest.multipartStream.read();
+      if (boundaryCursor < iRequest.getBoundary().length()) {
+        in = iRequest.getMultipartStream().read();
         currChar = (char) in;
       }
     }
@@ -163,13 +163,13 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
         headerName.setLength(0);
       }
       if (currChar == '\r') {
-        in = iRequest.multipartStream.read();
+        in = iRequest.getMultipartStream().read();
         currChar = (char) in;
         if (currChar == '\n') {
-          in = iRequest.multipartStream.read();
+          in = iRequest.getMultipartStream().read();
           currChar = (char) in;
           if (currChar == '\r') {
-            in = iRequest.multipartStream.read();
+            in = iRequest.getMultipartStream().read();
             currChar = (char) in;
             if (currChar == '\n') {
               endOfHeaders = true;
@@ -177,7 +177,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
           }
         }
       } else {
-        in = iRequest.multipartStream.read();
+        in = iRequest.getMultipartStream().read();
         currChar = (char) in;
       }
     }
@@ -189,10 +189,10 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
     boolean endOfHeader = false;
     int in;
     char currChar;
-    in = iRequest.multipartStream.read();
+    in = iRequest.getMultipartStream().read();
     currChar = (char) in;
     if (currChar == ':') {
-      in = iRequest.multipartStream.read();
+      in = iRequest.getMultipartStream().read();
       currChar = (char) in;
       if (currChar != ' ') {
         iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE,
@@ -204,7 +204,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
           OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request part header: Expected ':' (header: " + headerName + ")", null);
     }
     while (!endOfHeader) {
-      in = iRequest.multipartStream.read();
+      in = iRequest.getMultipartStream().read();
       currChar = (char) in;
       if (currChar == ';') {
         if (header.charAt(0) == '"') {
@@ -214,7 +214,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
           header.deleteCharAt(header.length() - 1);
         }
         headers.put(headerName, header.toString());
-        in = iRequest.multipartStream.read();
+        in = iRequest.getMultipartStream().read();
         return (char) in;
       } else if (currChar == '\r') {
         if (header.charAt(0) == '"') {

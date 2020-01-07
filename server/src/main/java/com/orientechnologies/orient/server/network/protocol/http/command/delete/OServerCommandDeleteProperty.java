@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.delete;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -32,10 +31,10 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: property/<database>/<class-name>/<property-name>");
+    String[] urlParts = checkSyntax(iRequest.getUrl(), 4, "Syntax error: property/<database>/<class-name>/<property-name>");
 
-    iRequest.data.commandInfo = "Delete property";
-    iRequest.data.commandDetail = urlParts[2] + "." + urlParts[3];
+    iRequest.getData().commandInfo = "Delete property";
+    iRequest.getData().commandDetail = urlParts[2] + "." + urlParts[3];
 
     ODatabaseDocument db = null;
 

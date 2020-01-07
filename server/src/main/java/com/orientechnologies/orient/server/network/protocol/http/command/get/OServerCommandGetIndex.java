@@ -35,9 +35,9 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
   @SuppressWarnings("unchecked")
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>");
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>");
 
-    iRequest.data.commandInfo = "Index get";
+    iRequest.getData().commandInfo = "Index get";
 
     ODatabaseDocumentInternal db = null;
 

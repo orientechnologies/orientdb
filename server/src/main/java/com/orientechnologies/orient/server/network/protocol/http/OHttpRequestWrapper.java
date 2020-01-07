@@ -46,7 +46,7 @@ public class OHttpRequestWrapper {
    * @return The content in form of String
    */
   public String getContent() {
-    return request.content;
+    return request.getContent();
   }
 
   /**
@@ -64,7 +64,7 @@ public class OHttpRequestWrapper {
    * @return The content type in form of String
    */
   public String getContentType() {
-    return request.contentType;
+    return request.getContentType();
   }
 
   /**
@@ -73,7 +73,7 @@ public class OHttpRequestWrapper {
    * @return The HTTP method version in form of String
    */
   public String getHttpVersion() {
-    return request.httpVersion;
+    return request.getHttpVersion();
   }
 
   /**
@@ -82,7 +82,7 @@ public class OHttpRequestWrapper {
    * @return The HTTP method name in form of String
    */
   public String getHttpMethod() {
-    return request.httpMethod;
+    return request.getHttpMethod();
   }
 
   /**
@@ -91,7 +91,7 @@ public class OHttpRequestWrapper {
    * @return The HTTP request headers in the form of a map
    */
   public Map<String, String> getHeaders() {
-    return request.headers;
+    return request.getHeaders();
   }
 
   /**
@@ -100,7 +100,7 @@ public class OHttpRequestWrapper {
    * @return The if-match header in form of String
    */
   public String getIfMatch() {
-    return request.ifMatch;
+    return request.getIfMatch();
   }
 
   /**
@@ -109,7 +109,7 @@ public class OHttpRequestWrapper {
    * @return true if is multipart, otherwise false
    */
   public boolean isMultipart() {
-    return request.isMultipart;
+    return request.isMultipart();
   }
 
   /**
@@ -136,7 +136,7 @@ public class OHttpRequestWrapper {
    * @return The parameters as a Map<String,String>
    */
   public Map<String, String> getParameters() {
-    return request.parameters;
+    return request.getParameters();
   }
 
   /**
@@ -145,7 +145,7 @@ public class OHttpRequestWrapper {
    * @return The parameter value if any otherwise null
    */
   public String getParameter(final String iName) {
-    return request.parameters != null ? request.parameters.get(iName) : null;
+    return request.getParameters() != null ? request.getParameters().get(iName) : null;
   }
 
   /**
@@ -156,9 +156,9 @@ public class OHttpRequestWrapper {
   public int hasParameters(final String... iNames) {
     int found = 0;
 
-    if (iNames != null && request.parameters != null)
+    if (iNames != null && request.getParameters() != null)
       for (String name : iNames)
-        found += request.parameters.containsKey(name) ? 1 : 0;
+        found += request.getParameters().containsKey(name) ? 1 : 0;
 
     return found;
   }
@@ -169,7 +169,7 @@ public class OHttpRequestWrapper {
    * @return The session-id in form of String
    */
   public String getSessionId() {
-    return request.sessionId;
+    return request.getSessionId();
   }
 
   /**
@@ -178,7 +178,7 @@ public class OHttpRequestWrapper {
    * @return The URL requested in form of String
    */
   public String getURL() {
-    return request.url;
+    return request.getUrl();
   }
 
   public String getRemoteAddress() {
