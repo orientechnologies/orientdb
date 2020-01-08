@@ -11,7 +11,6 @@ import java.util.Map;
 public class OHttpRequestImpl extends OHttpRequest {
 
   private String                        content;
-  private String                        sessionId;
   private String                        url;
   private Map<String, String>           parameters;
   private String                        httpMethod;
@@ -43,15 +42,7 @@ public class OHttpRequestImpl extends OHttpRequest {
 
 
 
-  @Override
-  public String getSessionId() {
-    return sessionId;
-  }
 
-  @Override
-  public void setSessionId(String sessionId) {
-    this.sessionId = sessionId;
-  }
 
   @Override
   public void setUrl(String url) {

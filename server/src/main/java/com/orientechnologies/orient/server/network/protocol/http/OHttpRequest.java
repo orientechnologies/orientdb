@@ -44,8 +44,9 @@ public abstract class OHttpRequest {
   private final InputStream                  in;
   private final ONetworkProtocolData         data;
   private final ONetworkProtocolHttpAbstract executor;
+  private       String                       sessionId;
   protected     String                       authorization;
-  private String databaseName;
+  private       String                       databaseName;
 
   public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
       final OContextConfiguration iConfiguration) {
@@ -144,9 +145,13 @@ public abstract class OHttpRequest {
     this.authorization = authorization;
   }
 
-  public abstract String getSessionId();
+  public String getSessionId() {
+    return sessionId;
+  }
 
-  public abstract void setSessionId(String sessionId);
+  public void setSessionId(String sessionId) {
+    this.sessionId = sessionId;
+  }
 
   public abstract void setUrl(String url);
 
