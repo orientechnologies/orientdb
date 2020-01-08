@@ -23,19 +23,21 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 29.04.13
  */
-public abstract class OAbstractPageWALRecord extends OOperationUnitBodyRecord {
+public abstract class OAbstractPageWALRecord<T> extends OOperationUnitBodyRecord<T> {
   private long pageIndex;
   private long fileId;
 
   protected OAbstractPageWALRecord() {
   }
 
-  protected OAbstractPageWALRecord(long pageIndex, long fileId, OOperationUnitId operationUnitId) {
+  protected OAbstractPageWALRecord(long pageIndex, long fileId, T operationUnitId) {
     super(operationUnitId);
     this.pageIndex = pageIndex;
     this.fileId = fileId;
@@ -103,16 +105,13 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitBodyRecord {
       return false;
     if (pageIndex != that.pageIndex)
       return false;
-    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null)
-      return false;
-
-    return true;
+    return Objects.equals(lsn, that.lsn);
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + (lsn != null ? lsn.hashCode() : 0);
+    result = 31 * result + (Optional.ofNullable(lsn).map(OLogSequenceNumber::hashCode).orElse(0));
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + (int) (fileId ^ (fileId >>> 32));
     return result;

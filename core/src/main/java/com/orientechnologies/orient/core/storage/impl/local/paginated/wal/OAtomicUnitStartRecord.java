@@ -28,13 +28,13 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 24.05.13
  */
-public class OAtomicUnitStartRecord extends OOperationUnitRecord {
+public abstract class OAtomicUnitStartRecord<T> extends OOperationUnitRecord<T> {
   private boolean isRollbackSupported;
 
   public OAtomicUnitStartRecord() {
   }
 
-  public OAtomicUnitStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId) {
+  public OAtomicUnitStartRecord(final boolean isRollbackSupported, final T unitId) {
     super(unitId);
     this.isRollbackSupported = isRollbackSupported;
   }
@@ -79,11 +79,6 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
-  }
-
-  @Override
-  public byte getId() {
-    return WALRecordTypes.ATOMIC_UNIT_START_RECORD;
   }
 
   @Override

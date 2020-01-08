@@ -38,15 +38,15 @@ import java.util.Set;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 24.05.13
  */
-public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
-  private boolean                                  rollback;
+public abstract class OAtomicUnitEndRecord<T> extends OOperationUnitBodyRecord<T> {
+  private boolean rollback;
 
   private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap = new LinkedHashMap<>();
 
   public OAtomicUnitEndRecord() {
   }
 
-  public OAtomicUnitEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
+  public OAtomicUnitEndRecord(final T operationUnitId, final boolean rollback,
       final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap) {
     super(operationUnitId);
 
@@ -196,10 +196,5 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   @Override
   public String toString() {
     return toString("rollback=" + rollback);
-  }
-
-  @Override
-  public byte getId() {
-    return WALRecordTypes.ATOMIC_UNIT_END_RECORD;
   }
 }

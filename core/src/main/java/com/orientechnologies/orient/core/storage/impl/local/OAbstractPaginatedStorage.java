@@ -5574,7 +5574,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     long recordsProcessed = 0;
 
     final int reportBatchSize = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
-    final Map<OOperationUnitId, List<OWALRecord>> operationUnits = new HashMap<>(1024);
+
+    final Map<OOperationUnitId, List<OWALRecord>> operationUnitsByOperationId = new HashMap<>(1024);
+    final Map<Long, List<OWALRecord>> operationUnitsByLongId = new HashMap<>(1024);
 
     long lastReportTime = 0;
 
@@ -5582,40 +5584,50 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       List<OWriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
       while (!records.isEmpty()) {
         for (final OWriteableWALRecord walRecord : records) {
-          logSequenceNumber = walRecord.getLsn();
+          if (walRecord instanceof OOperationUnitRecord) {
+            logSequenceNumber = walRecord.getLsn();
 
-          if (walRecord instanceof OAtomicUnitEndRecord) {
-            final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
-            final List<OWALRecord> atomicUnit = operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
-
-            // in case of data restore from fuzzy checkpoint part of operations may be already flushed to the disk
-            if (atomicUnit != null) {
-              atomicUnit.add(walRecord);
-              restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
-            }
-
-          } else if (walRecord instanceof OAtomicUnitStartRecord) {
-            final List<OWALRecord> operationList = new ArrayList<>(1024);
-
-            assert !operationUnits.containsKey(((OAtomicUnitStartRecord) walRecord).getOperationUnitId());
-
-            operationUnits.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
-            operationList.add(walRecord);
-          } else if (walRecord instanceof OOperationUnitRecord) {
-            final OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
-
-            List<OWALRecord> operationList = operationUnits.get(operationUnitRecord.getOperationUnitId());
-
-            if (operationList == null || operationList.isEmpty()) {
-              OLogManager.instance().errorNoDb(this, "'Start transaction' record is absent for atomic operation", null);
-
-              if (operationList == null) {
-                operationList = new ArrayList<>(1024);
-                operationUnits.put(operationUnitRecord.getOperationUnitId(), operationList);
+            final OOperationUnitRecord<?> operationUnitRecord = (OOperationUnitRecord<?>) walRecord;
+            if (walRecord instanceof OAtomicUnitEndRecord) {
+              final List<OWALRecord> atomicUnit;
+              if (operationUnitRecord instanceof OperationUnitOperationId) {
+                atomicUnit = removeAtomicUnitOperation(operationUnitsByOperationId, (OperationUnitOperationId) operationUnitRecord);
+              } else if (operationUnitRecord instanceof LongOperationId) {
+                atomicUnit = removeAtomicUnitOperation(operationUnitsByLongId, (LongOperationId) operationUnitRecord);
+              } else {
+                throw new IllegalStateException("Invalid type of operation id interface");
               }
-            }
 
-            operationList.add(operationUnitRecord);
+              // in case of data restore from fuzzy checkpoint part of operations may be already flushed to the disk
+              if (atomicUnit != null) {
+                atomicUnit.add(walRecord);
+                restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
+              }
+            } else if (walRecord instanceof OAtomicUnitStartRecord) {
+              final List<OWALRecord> operationList;
+
+              if (operationUnitRecord instanceof OperationUnitOperationId) {
+                operationList = initAtomicOperation(operationUnitsByOperationId, (OperationUnitOperationId) operationUnitRecord);
+              } else if (operationUnitRecord instanceof LongOperationId) {
+                operationList = initAtomicOperation(operationUnitsByLongId, (LongOperationId) operationUnitRecord);
+              } else {
+                throw new IllegalStateException("Invalid type of operation id interface");
+              }
+
+              operationList.add(walRecord);
+            } else {
+              final List<OWALRecord> operationList;
+
+              if (operationUnitRecord instanceof OperationUnitOperationId) {
+                operationList = getAtomicUnitOperation(operationUnitsByOperationId, (OperationUnitOperationId) operationUnitRecord);
+              } else if (operationUnitRecord instanceof LongOperationId) {
+                operationList = getAtomicUnitOperation(operationUnitsByLongId, (LongOperationId) operationUnitRecord);
+              } else {
+                throw new IllegalStateException("Invalid type of operation id interface");
+              }
+
+              operationList.add(operationUnitRecord);
+            }
           } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
             if (!wereNonTxOperationsPerformedInPreviousOpen) {
               OLogManager.instance()
@@ -5657,6 +5669,42 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     return null;
+  }
+
+  private static <T> List<OWALRecord> removeAtomicUnitOperation(final Map<T, List<OWALRecord>> operationUnitsById,
+      OperationIdRecord<T> operationIdRecord) {
+    return operationUnitsById.remove(operationIdRecord.getOperationUnitId());
+  }
+
+  private static <T> List<OWALRecord> getAtomicUnitOperation(final Map<T, List<OWALRecord>> operationUnitsById,
+      OperationIdRecord<T> operationIdRecord) {
+    final T operationUnitId = operationIdRecord.getOperationUnitId();
+    List<OWALRecord> operationList = operationUnitsById.get(operationUnitId);
+
+    if (operationList == null || operationList.isEmpty()) {
+      OLogManager.instance()
+          .errorNoDb(OAbstractPaginatedStorage.class, "'Start transaction' record is absent for atomic operation", null);
+
+      if (operationList == null) {
+        operationList = new ArrayList<>(1024);
+        operationUnitsById.put(operationUnitId, operationList);
+      }
+
+    }
+
+    return operationList;
+  }
+
+  private static <T> List<OWALRecord> initAtomicOperation(final Map<T, List<OWALRecord>> operationUnitsById,
+      OperationIdRecord<T> operationIdRecord) {
+
+    final List<OWALRecord> operationList = new ArrayList<>(1024);
+    final T operationUnitId = operationIdRecord.getOperationUnitId();
+
+    assert !operationUnitsById.containsKey(operationUnitId);
+    operationUnitsById.put(operationUnitId, operationList);
+
+    return operationList;
   }
 
   private void backUpWAL(final Exception e) {
@@ -5781,8 +5829,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         try {
           final ODurablePage durablePage = new ODurablePage(cacheEntry);
-          durablePage.restoreChanges(updatePageRecord.getChanges());
-          durablePage.setLsn(updatePageRecord.getLsn());
+          if (durablePage.getLsn().compareTo(walRecord.getLsn()) > 0) {
+            durablePage.restoreChanges(updatePageRecord.getChanges());
+            durablePage.setLsn(updatePageRecord.getLsn());
+          }
         } finally {
           readCache.releaseFromWrite(cacheEntry, writeCache);
         }

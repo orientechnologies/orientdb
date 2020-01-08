@@ -20,100 +20,16 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-
-import java.nio.ByteBuffer;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.04.13
  */
-public class OUpdatePageRecordV2 extends OAbstractPageWALRecordV2 {
-  private OWALChanges changes;
-
-  @SuppressWarnings("WeakerAccess")
+public class OUpdatePageRecordV2 extends OUpdatePageRecord<Long> implements LongOperationId {
   public OUpdatePageRecordV2() {
   }
 
-  public OUpdatePageRecordV2(final long pageIndex, final long fileId, final long operationUnitId, final OWALChanges changes) {
-    super(pageIndex, fileId, operationUnitId);
-    this.changes = changes;
-  }
-
-  public OWALChanges getChanges() {
-    return changes;
-  }
-
-  @Override
-  public int serializedSize() {
-    int serializedSize = super.serializedSize();
-    serializedSize += changes.serializedSize();
-
-    serializedSize += 2 * OLongSerializer.LONG_SIZE;
-
-    return serializedSize;
-  }
-
-  @Override
-  public int toStream(final byte[] content, int offset) {
-    offset = super.toStream(content, offset);
-    offset = changes.toStream(offset, content);
-
-    return offset;
-  }
-
-  @Override
-  public void toStream(final ByteBuffer buffer) {
-    super.toStream(buffer);
-    changes.toStream(buffer);
-  }
-
-  @Override
-  public int fromStream(final byte[] content, int offset) {
-    offset = super.fromStream(content, offset);
-
-    changes = new OWALPageChangesPortion();
-    offset = changes.fromStream(offset, content);
-
-    return offset;
-  }
-
-  @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    if (!super.equals(o))
-      return false;
-
-    final OUpdatePageRecordV2 that = (OUpdatePageRecordV2) o;
-
-    if (lsn == null && that.lsn == null)
-      return true;
-
-    if (lsn == null)
-      return false;
-
-    if (that.lsn == null)
-      return false;
-
-    if (!lsn.equals(that.lsn))
-      return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + lsn.hashCode();
-    return result;
+  public OUpdatePageRecordV2(long pageIndex, long fileId, Long operationUnitId, OWALChanges changes) {
+    super(pageIndex, fileId, operationUnitId, changes);
   }
 
   @Override

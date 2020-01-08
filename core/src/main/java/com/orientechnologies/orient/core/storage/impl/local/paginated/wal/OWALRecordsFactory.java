@@ -94,7 +94,7 @@ public final class OWALRecordsFactory {
     final OWriteableWALRecord walRecord;
     switch (content[0]) {
     case UPDATE_PAGE_RECORD:
-      walRecord = new OUpdatePageRecord();
+      walRecord = new OUpdatePageRecordV1();
       break;
     case UPDATE_PAGE_RECORD_V2:
       walRecord = new OUpdatePageRecordV2();
@@ -112,19 +112,19 @@ public final class OWALRecordsFactory {
       walRecord = new OCheckpointEndRecord();
       break;
     case ATOMIC_UNIT_START_RECORD:
-      walRecord = new OAtomicUnitStartRecord();
+      walRecord = new OAtomicUnitStartRecordV1();
       break;
     case ATOMIC_UNIT_START_RECORD_V2:
       walRecord = new OAtomicUnitStartRecordV2();
       break;
     case ATOMIC_UNIT_END_RECORD:
-      walRecord = new OAtomicUnitEndRecord();
+      walRecord = new OAtomicUnitEndRecordV1();
       break;
     case ATOMIC_UNIT_END_RECORD_V2:
       walRecord = new OAtomicUnitEndRecordV2();
       break;
     case FILE_CREATED_WAL_RECORD:
-      walRecord = new OFileCreatedWALRecord();
+      walRecord = new OFileCreatedWALRecordV1();
       break;
     case FILE_CREATED_WAL_RECORD_V2:
       walRecord = new OFileCreatedWALRecordV2();
@@ -133,13 +133,13 @@ public final class OWALRecordsFactory {
       walRecord = new ONonTxOperationPerformedWALRecord();
       break;
     case FILE_DELETED_WAL_RECORD:
-      walRecord = new OFileDeletedWALRecord();
+      walRecord = new OFileDeletedWALRecordV1();
       break;
     case FILE_DELETED_WAL_RECORD_V2:
       walRecord = new OFileDeletedWALRecordV2();
       break;
     case FILE_TRUNCATED_WAL_RECORD:
-      walRecord = new OFileTruncatedWALRecord();
+      walRecord = new OFileTruncatedWALRecordV1();
       break;
     case FILE_TRUNCATED_WAL_RECORD_V2:
       walRecord = new OFileTruncatedWALRecordV2();

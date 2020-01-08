@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OW
 import com.sun.jna.Native;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Abstract WAL record.
@@ -42,7 +44,6 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   private long       pointer;
 
   private boolean written;
-
 
   protected OAbstractWALRecord() {
   }
@@ -135,15 +136,12 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
 
     final OAbstractWALRecord that = (OAbstractWALRecord) o;
 
-    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null)
-      return false;
-
-    return true;
+    return Objects.equals(lsn, that.lsn);
   }
 
   @Override
   public int hashCode() {
-    return lsn != null ? lsn.hashCode() : 0;
+    return Optional.ofNullable(lsn).map(OLogSequenceNumber::hashCode).orElse(0);
   }
 
   @Override

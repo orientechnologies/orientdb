@@ -58,10 +58,7 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
     if (position != that.position)
       return false;
-    if (segment != that.segment)
-      return false;
-
-    return true;
+    return segment == that.segment;
   }
 
   @Override

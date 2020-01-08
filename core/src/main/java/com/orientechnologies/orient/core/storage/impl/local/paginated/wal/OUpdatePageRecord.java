@@ -28,15 +28,13 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.04.13
  */
-public class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private OWALChanges        changes;
+public abstract class OUpdatePageRecord<T> extends OAbstractPageWALRecord<T> {
+  private OWALChanges changes;
 
-  @SuppressWarnings("WeakerAccess")
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
-      final OWALChanges changes) {
+  public OUpdatePageRecord(final long pageIndex, final long fileId, final T operationUnitId, final OWALChanges changes) {
     super(pageIndex, fileId, operationUnitId);
     this.changes = changes;
   }
@@ -104,10 +102,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     if (that.lsn == null)
       return false;
 
-    if (!lsn.equals(that.lsn))
-      return false;
-
-    return true;
+    return lsn.equals(that.lsn);
   }
 
   @Override
@@ -115,10 +110,5 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     int result = super.hashCode();
     result = 31 * result + lsn.hashCode();
     return result;
-  }
-
-  @Override
-  public byte getId() {
-    return WALRecordTypes.UPDATE_PAGE_RECORD;
   }
 }

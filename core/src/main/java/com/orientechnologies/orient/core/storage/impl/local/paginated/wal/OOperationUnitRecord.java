@@ -15,45 +15,77 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+
 import java.nio.ByteBuffer;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 30.05.13
  */
-public abstract class OOperationUnitRecord extends OAbstractWALRecord {
-  private OOperationUnitId operationUnitId;
+public abstract class OOperationUnitRecord<T> extends OAbstractWALRecord {
+  private T operationUnitId;
 
   protected OOperationUnitRecord() {
   }
 
-  protected OOperationUnitRecord(OOperationUnitId operationUnitId) {
+  protected OOperationUnitRecord(T operationUnitId) {
     this.operationUnitId = operationUnitId;
   }
 
-  public OOperationUnitId getOperationUnitId() {
+  public T getOperationUnitId() {
     return operationUnitId;
   }
 
   @Override
   public int toStream(final byte[] content, final int offset) {
-    return operationUnitId.toStream(content, offset);
+    if (this instanceof OperationUnitOperationId) {
+      return ((OOperationUnitId) operationUnitId).toStream(content, offset);
+    } else if (this instanceof LongOperationId) {
+      OLongSerializer.INSTANCE.serializeNative((Long) operationUnitId, content, offset);
+      return offset + OLongSerializer.LONG_SIZE;
+    } else {
+      throw new IllegalStateException("Invalid type of operation unit id");
+    }
   }
 
   @Override
   public void toStream(ByteBuffer buffer) {
-    operationUnitId.toStream(buffer);
+    if (this instanceof OperationUnitOperationId) {
+      ((OOperationUnitId) operationUnitId).toStream(buffer);
+    } else if (this instanceof LongOperationId) {
+      buffer.putLong((Long) operationUnitId);
+    } else {
+      throw new IllegalStateException("Invalid type of operation unit id");
+    }
   }
 
   @Override
   public int fromStream(final byte[] content, final int offset) {
-    operationUnitId = new OOperationUnitId();
-    return operationUnitId.fromStream(content, offset);
+    if (this instanceof OperationUnitOperationId) {
+      final OOperationUnitId operationUnitId = new OOperationUnitId();
+      final int position = operationUnitId.fromStream(content, offset);
+      //noinspection unchecked
+      this.operationUnitId = (T) operationUnitId;
+      return position;
+    } else if (this instanceof LongOperationId) {
+      //noinspection unchecked
+      operationUnitId = (T) OLongSerializer.INSTANCE.deserializeNativeObject(content, offset);
+      return offset + OLongSerializer.LONG_SIZE;
+    } else {
+      throw new IllegalStateException("Invalid type of operation id");
+    }
   }
 
   @Override
   public int serializedSize() {
-    return OOperationUnitId.SERIALIZED_SIZE;
+    if (this instanceof OperationUnitOperationId) {
+      return OOperationUnitId.SERIALIZED_SIZE;
+    } else if (this instanceof LongOperationId) {
+      return OLongSerializer.LONG_SIZE;
+    } else {
+      throw new IllegalStateException("Invalid type of operation id");
+    }
   }
 
   @Override
@@ -65,10 +97,7 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
 
     final OOperationUnitRecord that = (OOperationUnitRecord) o;
 
-    if (!operationUnitId.equals(that.operationUnitId))
-      return false;
-
-    return true;
+    return operationUnitId.equals(that.operationUnitId);
   }
 
   @Override

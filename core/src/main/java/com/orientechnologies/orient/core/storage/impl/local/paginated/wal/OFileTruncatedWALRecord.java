@@ -4,13 +4,13 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 import java.nio.ByteBuffer;
 
-public class OFileTruncatedWALRecord extends OOperationUnitBodyRecord {
+public abstract class OFileTruncatedWALRecord<T> extends OOperationUnitBodyRecord<T> {
   private long fileId;
 
   public OFileTruncatedWALRecord() {
   }
 
-  public OFileTruncatedWALRecord(OOperationUnitId operationUnitId, long fileId) {
+  public OFileTruncatedWALRecord(T operationUnitId, long fileId) {
     super(operationUnitId);
     this.fileId = fileId;
   }
@@ -54,10 +54,5 @@ public class OFileTruncatedWALRecord extends OOperationUnitBodyRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
-  }
-
-  @Override
-  public byte getId() {
-    return WALRecordTypes.FILE_TRUNCATED_WAL_RECORD;
   }
 }

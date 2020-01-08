@@ -4,13 +4,13 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 import java.nio.ByteBuffer;
 
-public class OFileDeletedWALRecord extends OOperationUnitBodyRecord {
+public abstract class OFileDeletedWALRecord<T> extends OOperationUnitBodyRecord<T> {
   private long fileId;
 
   public OFileDeletedWALRecord() {
   }
 
-  public OFileDeletedWALRecord(OOperationUnitId operationUnitId, long fileId) {
+  public OFileDeletedWALRecord(T operationUnitId, long fileId) {
     super(operationUnitId);
     this.fileId = fileId;
   }
@@ -35,7 +35,6 @@ public class OFileDeletedWALRecord extends OOperationUnitBodyRecord {
     buffer.putLong(fileId);
   }
 
-
   @Override
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
@@ -56,8 +55,4 @@ public class OFileDeletedWALRecord extends OOperationUnitBodyRecord {
     return false;
   }
 
-  @Override
-  public byte getId() {
-    return WALRecordTypes.FILE_DELETED_WAL_RECORD;
-  }
 }

@@ -20,74 +20,20 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-
-import java.nio.ByteBuffer;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 24.05.13
  */
-public class OAtomicUnitStartRecordV2 extends OOperationUnitRecordV2 {
-  private boolean isRollbackSupported;
-
+public final class OAtomicUnitStartRecordV2 extends OAtomicUnitStartRecord<Long> implements LongOperationId {
   public OAtomicUnitStartRecordV2() {
   }
 
-  public OAtomicUnitStartRecordV2(final boolean isRollbackSupported, final long unitId) {
-    super(unitId);
-    this.isRollbackSupported = isRollbackSupported;
-  }
-
-  public boolean isRollbackSupported() {
-    return isRollbackSupported;
-  }
-
-  @Override
-  public int toStream(final byte[] content, int offset) {
-    offset = super.toStream(content, offset);
-
-    content[offset] = isRollbackSupported ? (byte) 1 : 0;
-    offset++;
-
-    return offset;
-
-  }
-
-  @Override
-  public void toStream(final ByteBuffer buffer) {
-    super.toStream(buffer);
-
-    buffer.put(isRollbackSupported ? (byte) 1 : 0);
-  }
-
-  @Override
-  public int fromStream(final byte[] content, int offset) {
-    offset = super.fromStream(content, offset);
-
-    isRollbackSupported = content[offset] > 0;
-    offset++;
-
-    return offset;
-  }
-
-  @Override
-  public int serializedSize() {
-    return super.serializedSize() + OByteSerializer.BYTE_SIZE;
-  }
-
-  @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
+  public OAtomicUnitStartRecordV2(boolean isRollbackSupported, Long unitId) {
+    super(isRollbackSupported, unitId);
   }
 
   @Override
   public byte getId() {
     return WALRecordTypes.ATOMIC_UNIT_START_RECORD_V2;
-  }
-
-  @Override
-  public String toString() {
-    return toString("isRollbackSupported=" + isRollbackSupported);
   }
 }

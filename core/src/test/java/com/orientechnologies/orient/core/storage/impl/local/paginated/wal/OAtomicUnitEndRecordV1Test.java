@@ -1,32 +1,32 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import org.junit.Assert; import org.junit.Test;
-
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class OAtomicUnitEndRecordTest {
-  public void recordMetadataSerializationTest() throws IOException {
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class OAtomicUnitEndRecordV1Test {
+  @Test
+  public void recordMetadataSerializationTest() {
     ORecordOperationMetadata recordOperationMetadata = new ORecordOperationMetadata();
     recordOperationMetadata.addRid(new ORecordId(10, 42));
     recordOperationMetadata.addRid(new ORecordId(42, 10));
 
-    Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
+    Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<>();
     metadata.put(recordOperationMetadata.getKey(), recordOperationMetadata);
 
-    OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecord(OOperationUnitId.generateId(), false, metadata);
+    OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecordV1(OOperationUnitId.generateId(), false, metadata);
     int arraySize = atomicUnitEndRecord.serializedSize() + 1;
     byte[] content = new byte[arraySize];
 
     final int endOffset = atomicUnitEndRecord.toStream(content, 1);
     Assert.assertEquals(endOffset, content.length);
 
-    OAtomicUnitEndRecord atomicUnitEndRecordD = new OAtomicUnitEndRecord();
+    OAtomicUnitEndRecord atomicUnitEndRecordD = new OAtomicUnitEndRecordV1();
     final int dEndOffset = atomicUnitEndRecordD.fromStream(content, 1);
     Assert.assertEquals(dEndOffset, content.length);
 
@@ -37,15 +37,16 @@ public class OAtomicUnitEndRecordTest {
     Assert.assertEquals(recordOperationMetadataD.getValue(), recordOperationMetadata.getValue());
   }
 
-  public void recordNoMetadataSerializationTest() throws IOException {
-    OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecord(OOperationUnitId.generateId(), false, null);
+  @Test
+  public void recordNoMetadataSerializationTest() {
+    OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecordV1(OOperationUnitId.generateId(), false, null);
     int arraySize = atomicUnitEndRecord.serializedSize() + 1;
     byte[] content = new byte[arraySize];
 
     final int endOffset = atomicUnitEndRecord.toStream(content, 1);
     Assert.assertEquals(endOffset, content.length);
 
-    OAtomicUnitEndRecord atomicUnitEndRecordD = new OAtomicUnitEndRecord();
+    OAtomicUnitEndRecord atomicUnitEndRecordD = new OAtomicUnitEndRecordV1();
     final int dEndOffset = atomicUnitEndRecordD.fromStream(content, 1);
     Assert.assertEquals(dEndOffset, content.length);
   }

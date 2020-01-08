@@ -20,11 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.serialization.types.*;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -281,10 +277,22 @@ public class ODurablePage {
 
   public void setLsn(final OLogSequenceNumber lsn) {
     final ByteBuffer buffer = pointer.getBuffer();
+    assert buffer != null;
     buffer.position(WAL_SEGMENT_OFFSET);
 
     buffer.putLong(lsn.getSegment());
     buffer.putLong(lsn.getPosition());
+  }
+
+  public OLogSequenceNumber getLsn() {
+    final ByteBuffer buffer = pointer.getBuffer();
+    assert buffer != null;
+    buffer.position(WAL_SEGMENT_OFFSET);
+
+    final long segment = buffer.getLong();
+    final long position = buffer.getLong();
+
+    return new OLogSequenceNumber(segment, position);
   }
 
   @Override

@@ -29,14 +29,14 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/21/14
  */
-public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
+public abstract class OFileCreatedWALRecord<T> extends OOperationUnitBodyRecord<T> {
   private String fileName;
   private long   fileId;
 
   public OFileCreatedWALRecord() {
   }
 
-  public OFileCreatedWALRecord(OOperationUnitId operationUnitId, String fileName, long fileId) {
+  public OFileCreatedWALRecord(T operationUnitId, String fileName, long fileId) {
     super(operationUnitId);
     this.fileName = fileName;
     this.fileId = fileId;
@@ -92,10 +92,5 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
-  }
-
-  @Override
-  public byte getId() {
-    return WALRecordTypes.FILE_CREATED_WAL_RECORD;
   }
 }
