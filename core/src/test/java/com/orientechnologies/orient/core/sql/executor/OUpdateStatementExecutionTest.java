@@ -702,4 +702,18 @@ public class OUpdateStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
+
+  @Test
+  public void testReturnBefore() {
+    OResultSet result = db.command("update " + className + " set name = 'foo' RETURN BEFORE where name = 'name1'");
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals("name1", item.getProperty("name"));
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
 }
