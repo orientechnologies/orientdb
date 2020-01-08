@@ -327,4 +327,16 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public boolean isIdempotent() {
     return false;
   }
+
+  public byte[] getContent() {
+    return content;
+  }
+
+  public byte getRecordType() {
+    return recordType;
+  }
+
+  public int getClusterId() {
+    return clusterId;
+  }
 }

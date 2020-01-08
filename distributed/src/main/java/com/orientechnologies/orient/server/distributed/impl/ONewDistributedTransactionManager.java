@@ -325,8 +325,9 @@ public class ONewDistributedTransactionManager {
       sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
       localKo(requestId, database);
 
-      ODistributedOperationException ex = new ODistributedOperationException(
-          String.format("quorum of '%d' not reached, responses: [%s]", responseManager.getQuorum(), String.join(",", messages)));
+      ODistributedOperationException ex = new ODistributedOperationException(String
+          .format("Request `%s` didn't reach the quorum of '%d', responses: [%s]", requestId, responseManager.getQuorum(),
+              String.join(",", messages)));
       for (Exception e : exceptions) {
         ex.addSuppressed(e);
       }

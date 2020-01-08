@@ -41,11 +41,11 @@ import static org.junit.Assert.assertTrue;
  */
 public class RemoteQuerySupportTest {
 
-  private static final String            SERVER_DIRECTORY = "./target/query";
-  private              OServer           server;
-  private              OrientDB          orientDB;
-  private              ODatabaseDocument session;
-  private              int               oldPageSize;
+  private static final String SERVER_DIRECTORY = "./target/query";
+  private OServer server;
+  private OrientDB orientDB;
+  private ODatabaseDocument session;
+  private int oldPageSize;
 
   @Before
   public void before() throws Exception {
@@ -248,6 +248,29 @@ public class RemoteQuerySupportTest {
       session.query("select from Some where prop= ?", new ORecordId(10, 10)).close();
       throw e;
     }
+  }
+
+  @Test
+  public void testScriptWithRidbags() {
+    session.command("create class testScriptWithRidbagsV extends V");
+    session.command("create class testScriptWithRidbagsE extends E");
+    session.command("create vertex testScriptWithRidbagsV set name = 'a'");
+    session.command("create vertex testScriptWithRidbagsV set name = 'b'");
+
+    session.command("create edge testScriptWithRidbagsE from (select from testScriptWithRidbagsV where name = 'a') TO (select from testScriptWithRidbagsV where name = 'b');");
+
+
+    String script = "";
+    script += "BEGIN;";
+    script += "LET q1 = SELECT * FROM testScriptWithRidbagsV WHERE name = 'a';";
+    script += "LET q2 = SELECT * FROM testScriptWithRidbagsV WHERE name = 'b';";
+    script += "COMMIT ;";
+    script += "RETURN [$q1,$q2]";
+
+    OResultSet rs = session.execute("sql", script);
+
+    rs.forEachRemaining(x -> System.out.println(x));
+    rs.close();
   }
 
   @After

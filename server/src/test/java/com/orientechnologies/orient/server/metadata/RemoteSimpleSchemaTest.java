@@ -53,6 +53,16 @@ public class RemoteSimpleSchemaTest {
     assertFalse(database.getMetadata().getSchema().existsClass("test"));
   }
 
+
+  @Test
+  public void testWithSpecialCharacters() {
+    database.createClass("test-foo");
+    assertTrue(database.getMetadata().getSchema().existsClass("test-foo"));
+    database.getMetadata().getSchema().dropClass("test-foo");
+    assertFalse(database.getMetadata().getSchema().existsClass("test-foo"));
+  }
+
+
   @After
   public void after() {
     database.close();

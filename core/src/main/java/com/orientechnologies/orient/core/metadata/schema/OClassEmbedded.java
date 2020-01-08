@@ -630,15 +630,16 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaReadLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
+      database.checkForClusterPermissions(clusterName);
       if (isDistributedCommand(database)) {
         final String cmd = String.format("truncate cluster %s", clusterName);
 
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
         database.command(commandSQL).execute();
-        truncateClusterInternal(clusterName, database);
+        for (OIndex index : getIndexes()) {
+          index.rebuild();
+        }
       } else
         truncateClusterInternal(clusterName, database);
     } finally {

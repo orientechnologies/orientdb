@@ -738,6 +738,7 @@ public class ODistributedOutput {
           row.field("startedOn", dateFormat.format(new Date(entries.getValue().getStartedOn())));
           row.field("status", context.getStatus().toString());
           row.field("records", context.getLockedRids().stream().map(Object::toString).collect(Collectors.toList()));
+          row.field("keys", context.getLockedKeys().stream().map(Object::toString).collect(Collectors.toList()));
 
           rows.add(row);
         }
