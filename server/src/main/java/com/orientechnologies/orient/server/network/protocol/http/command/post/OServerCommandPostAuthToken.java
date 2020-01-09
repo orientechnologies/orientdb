@@ -23,9 +23,9 @@ import java.util.Map;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OServerCommandPostAuthToken extends OServerCommandAbstract {
-  private static final String[] NAMES           = { "POST|token/*" };
-  private static final String   RESPONSE_FORMAT = "indent:-1,attribSameRow";
-  private volatile OTokenHandler tokenHandler;
+  private static final String[]      NAMES           = { "POST|token/*" };
+  private static final String        RESPONSE_FORMAT = "indent:-1,attribSameRow";
+  private volatile     OTokenHandler tokenHandler;
 
   @Override
   public String[] getNames() {
@@ -143,6 +143,9 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
       // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
       header = server.getSecurity().getAuthenticationHeader(iDatabaseName);
+
+      Map<String, String> headers = server.getSecurity().getAuthenticationHeaders(iDatabaseName);
+      headers.entrySet().forEach(s -> iResponse.addHeader(s.getKey(), s.getValue()));
     }
 
     if (isJsonResponse(iResponse)) {

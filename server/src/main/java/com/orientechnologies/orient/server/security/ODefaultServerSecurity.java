@@ -49,7 +49,9 @@ import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -70,13 +72,13 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   // default authentication mode if external authentication fails.
   private boolean allowDefault = true;
 
-  private Object passwordValidatorSynch = new Object();
+  private Object             passwordValidatorSynch = new Object();
   private OPasswordValidator passwordValidator;
 
-  private Object importLDAPSynch = new Object();
+  private Object             importLDAPSynch = new Object();
   private OSecurityComponent importLDAP;
 
-  private Object auditingSynch = new Object();
+  private Object           auditingSynch = new Object();
   private OAuditingService auditingService;
 
   private ODocument                   configDoc;                                                         // Holds the
@@ -92,15 +94,15 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   private ODocument ldapImportDoc;
 
   // The SuperUser is now only used by the ODefaultServerSecurity for self-authentication.
-  private final String superUser = "OSecurityModuleSuperUser";
-  private String                   superUserPassword;
-  private OServerUserConfiguration superUserCfg;
+  private final String                   superUser = "OSecurityModuleSuperUser";
+  private       String                   superUserPassword;
+  private       OServerUserConfiguration superUserCfg;
 
   // We use a list because the order indicates priority of method.
   private final List<OSecurityAuthenticator> authenticatorsList = new ArrayList<OSecurityAuthenticator>();
 
   private ConcurrentHashMap<String, Class<?>> securityClassMap = new ConcurrentHashMap<String, Class<?>>();
-  private OSyslog sysLog;
+  private OSyslog                             sysLog;
 
   public ODefaultServerSecurity(final OServer oServer, final OServerConfigurationManager serverCfg) {
     server = oServer;
@@ -221,6 +223,33 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     }
 
     return header;
+  }
+
+  @Override
+  public Map<String, String> getAuthenticationHeaders(String databaseName) {
+    Map<String, String> headers = new HashMap<>();
+
+    // Default to Basic.
+    if (databaseName != null)
+      headers.put("WWW-Authenticate", "Basic realm=\"OrientDB db-" + databaseName + "\"");
+    else
+      headers.put("WWW-Authenticate", "Basic realm=\"OrientDB Server\"");
+
+    if (isEnabled()) {
+      synchronized (authenticatorsList) {
+
+        // Walk through the list of OSecurityAuthenticators.
+        for (OSecurityAuthenticator sa : authenticatorsList) {
+          if (sa.isEnabled()) {
+            Map<String, String> currentHeaders = sa.getAuthenticationHeaders(databaseName);
+            currentHeaders.entrySet().forEach(entry -> headers.put(entry.getKey(), entry.getValue()));
+          }
+        }
+
+      }
+    }
+
+    return headers;
   }
 
   // OSecuritySystem (via OServerSecurity)

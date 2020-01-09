@@ -26,6 +26,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Server based authenticated commands. Authenticates against the OrientDB server users found in configuration.
@@ -108,6 +109,9 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
     if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
       // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
       header = server.getSecurity().getAuthenticationHeader(null);
+
+      Map<String, String> headers = server.getSecurity().getAuthenticationHeaders(null);
+      headers.entrySet().forEach(s -> iResponse.addHeader(s.getKey(), s.getValue()));
     }
 
     if (isJsonResponse(iResponse)) {

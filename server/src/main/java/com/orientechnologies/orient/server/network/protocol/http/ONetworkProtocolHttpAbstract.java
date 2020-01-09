@@ -95,10 +95,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -112,7 +109,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
-public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
+public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol implements ONetworkHttpExecutor {
   private static final String                     COMMAND_SEPARATOR = "|";
   private static final Charset                    utf8              = Charset.forName("utf8");
   private static       int                        requestMaxContentLength;                    // MAX = 10Kb
@@ -380,6 +377,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
               // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
               responseHeaders = server.getSecurity().getAuthenticationHeader(((OSecurityAccessException) cause).getDatabaseName());
+
             }
             errorMessage = null;
           } else {
@@ -890,4 +888,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     return commandString.toString();
   }
 
+  @Override
+  public String getRemoteAddress() {
+    return ((InetSocketAddress) channel.socket.getRemoteSocketAddress()).getAddress().getHostAddress();
+  }
+
+  @Override
+  public void setDatabase(ODatabaseDocumentInternal db) {
+    connection.setDatabase(db);
+  }
 }

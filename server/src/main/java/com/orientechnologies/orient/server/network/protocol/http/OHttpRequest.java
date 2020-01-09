@@ -40,15 +40,15 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OHttpRequest {
-  private final OContextConfiguration        configuration;
-  private final InputStream                  in;
-  private final ONetworkProtocolData         data;
-  private final ONetworkProtocolHttpAbstract executor;
-  private       String                       sessionId;
-  protected     String                       authorization;
-  private       String                       databaseName;
+  private final OContextConfiguration configuration;
+  private final InputStream           in;
+  private final ONetworkProtocolData  data;
+  private final ONetworkHttpExecutor  executor;
+  private       String                sessionId;
+  protected     String                authorization;
+  private       String                databaseName;
 
-  public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
+  public OHttpRequest(final ONetworkHttpExecutor iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
       final OContextConfiguration iConfiguration) {
     executor = iExecutor;
     in = iInStream;
@@ -112,7 +112,7 @@ public abstract class OHttpRequest {
   public String getRemoteAddress() {
     if (getData().caller != null)
       return getData().caller;
-    return ((InetSocketAddress) getExecutor().channel.socket.getRemoteSocketAddress()).getAddress().getHostAddress();
+    return getExecutor().getRemoteAddress();
   }
 
   public abstract String getUrl();
@@ -133,7 +133,7 @@ public abstract class OHttpRequest {
     return data;
   }
 
-  public ONetworkProtocolHttpAbstract getExecutor() {
+  public ONetworkHttpExecutor getExecutor() {
     return executor;
   }
 

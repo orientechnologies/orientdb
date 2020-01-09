@@ -37,6 +37,7 @@ import com.orientechnologies.orient.server.network.protocol.http.*;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Database based authenticated command. Authenticates against the database taken as second parameter of the URL. The URL must be in
@@ -50,10 +51,10 @@ import java.util.List;
  */
 public abstract class OServerCommandAuthenticatedDbAbstract extends OServerCommandAbstract {
 
-  public static final char   DBNAME_DIR_SEPARATOR   = '$';
-  public static final String SESSIONID_UNAUTHORIZED = "-";
-  public static final String SESSIONID_LOGOUT       = "!";
-  private volatile OTokenHandler tokenHandler;
+  public static final char          DBNAME_DIR_SEPARATOR   = '$';
+  public static final String        SESSIONID_UNAUTHORIZED = "-";
+  public static final String        SESSIONID_LOGOUT       = "!";
+  private volatile    OTokenHandler tokenHandler;
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
@@ -151,7 +152,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   @Override
   public boolean afterExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
     ODatabaseRecordThreadLocal.instance().remove();
-    iRequest.getExecutor().getConnection().setDatabase(null);
+    iRequest.getExecutor().setDatabase(null);
     return true;
   }
 
@@ -168,8 +169,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       iRequest.getData().currentUserId = db.getUser() == null ? "<server user>" : db.getUser().getIdentity().toString();
 
       // AUTHENTICATED: CREATE THE SESSION
-      iRequest.setSessionId(server.getHttpSessionManager()
-          .createSession(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1)));
+      iRequest.setSessionId(
+          server.getHttpSessionManager().createSession(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1)));
       iResponse.setSessionId(iRequest.getSessionId());
       return true;
 
@@ -198,6 +199,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
       // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
       header = server.getSecurity().getAuthenticationHeader(iDatabaseName);
+
+      Map<String, String> headers = server.getSecurity().getAuthenticationHeaders(iDatabaseName);
+      headers.entrySet().forEach(s -> iResponse.addHeader(s.getKey(), s.getValue()));
     }
 
     if (isJsonResponse(iResponse)) {
@@ -262,7 +266,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
     iRequest.getData().lastDatabase = localDatabase.getName();
     iRequest.getData().lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
-    iRequest.getExecutor().getConnection().setDatabase(localDatabase);
+    iRequest.getExecutor().setDatabase(localDatabase);
     return (ODatabaseDocumentInternal) localDatabase.getDatabaseOwner();
   }
 
