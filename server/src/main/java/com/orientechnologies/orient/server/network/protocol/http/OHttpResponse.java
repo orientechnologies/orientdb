@@ -43,14 +43,7 @@ import java.io.Writer;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -71,6 +64,8 @@ public abstract class OHttpResponse {
   private       String                characterSet;
   private       String                contentType;
   private       String                serverInfo;
+
+  private Map<String, String> headersMap = new HashMap<>();
 
   private String            sessionId;
   private String            callbackFunction;
@@ -460,6 +455,8 @@ public abstract class OHttpResponse {
   /**
    * Stores additional headers to send
    */
+
+  @Deprecated
   public void setHeader(final String iHeader) {
     setHeaders(iHeader);
   }
@@ -620,5 +617,13 @@ public abstract class OHttpResponse {
 
   public OContextConfiguration getContextConfiguration() {
     return contextConfiguration;
+  }
+
+  public void addHeader(String name, String value) {
+    headersMap.put(name, value);
+  }
+
+  public Map<String, String> getHeadersMap() {
+    return Collections.unmodifiableMap(headersMap);
   }
 }
