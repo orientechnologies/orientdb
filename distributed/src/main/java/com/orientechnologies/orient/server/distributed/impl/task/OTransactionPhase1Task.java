@@ -49,6 +49,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   private transient int                                             retryCount = 0;
   private volatile  boolean                                         finished;
   private           TimerTask                                       notYetFinishedTask;
+  private           OTransactionId                                  transactionId;
 
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
