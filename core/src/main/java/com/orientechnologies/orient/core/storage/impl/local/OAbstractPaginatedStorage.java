@@ -308,7 +308,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         atomicOperationsTable = new AtomicOperationsTable(
             contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
-            idGen.getLastId());
+            idGen.getLastId() + 1);
         atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
         recoverIfNeeded();
 
@@ -529,7 +529,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         initWalAndDiskCache(contextConfiguration);
         atomicOperationsTable = new AtomicOperationsTable(
             contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
-            idGen.getLastId());
+            idGen.getLastId() + 1);
         atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
         transaction = new ThreadLocal<>();
 

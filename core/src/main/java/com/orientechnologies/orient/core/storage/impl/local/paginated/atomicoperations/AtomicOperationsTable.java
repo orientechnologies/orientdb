@@ -131,7 +131,7 @@ public class AtomicOperationsTable {
       final int tableSize = table.size();
       boolean addition = false;
 
-      long newIdOffset = 0;
+      long newIdOffset = -1;
       for (int i = 0; i < tableSize; i++) {
         final OperationInformation operationInformation = table.get(i);
         if (!addition) {
@@ -144,6 +144,10 @@ public class AtomicOperationsTable {
         } else {
           newTable.add(operationInformation);
         }
+      }
+
+      if (newIdOffset < 0) {
+        newIdOffset = idOffset + tableSize;
       }
 
       this.table = newTable;
