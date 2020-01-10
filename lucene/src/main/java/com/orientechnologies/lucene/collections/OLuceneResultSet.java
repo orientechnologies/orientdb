@@ -48,18 +48,22 @@ import java.util.*;
  */
 public class OLuceneResultSet implements Set<OIdentifiable> {
 
-  private static Integer             PAGE_SIZE = 10000;
-  private final  Query               query;
-  private final  OLuceneIndexEngine  engine;
-  private final  OLuceneQueryContext queryContext;
-  private final  String              indexName;
-  private final  Highlighter         highlighter;
-  private final  List<String>        highlighted;
-  private final  int                 maxNumFragments;
+  private static Integer             PAGE_SIZE         = 10000;
+  private        Query               query;
+  private        OLuceneIndexEngine  engine;
+  private        OLuceneQueryContext queryContext;
+  private        String              indexName;
+  private        Highlighter         highlighter;
+  private        List<String>        highlighted;
+  private        int                 maxNumFragments;
   private        TopDocs             topDocs;
+  private        long                deletedMatchCount = 0;
 
-  private long    deletedMatchCount = 0;
-  private boolean closed            = false;
+  boolean closed = false;
+
+  protected OLuceneResultSet() {
+
+  }
 
   public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext, ODocument metadata) {
     this.engine = engine;

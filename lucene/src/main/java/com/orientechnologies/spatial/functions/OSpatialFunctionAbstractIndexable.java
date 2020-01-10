@@ -15,19 +15,24 @@
 package com.orientechnologies.spatial.functions;
 
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
+import com.orientechnologies.lucene.collections.OLuceneResultSetEmpty;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.spatial.index.OLuceneSpatialIndex;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import com.orientechnologies.spatial.strategy.SpatialQueryBuilderAbstract;
 
+import java.text.CollationKey;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -81,6 +86,37 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
       shape = doc.toMap();
     } else {
       shape = args[1].execute((OIdentifiable) null, ctx);
+    }
+
+    if (shape instanceof Collection) {
+      int size = ((Collection) shape).size();
+
+      if (size == 0) {
+        return new OLuceneResultSetEmpty();
+      }
+      if (size == 1) {
+
+        Object next = ((Collection) shape).iterator().next();
+
+        if (next instanceof OResult) {
+          OResult inner = (OResult) next;
+          Set<String> propertyNames = inner.getPropertyNames();
+          if (propertyNames.size() == 1) {
+            Object property = inner.getProperty(propertyNames.iterator().next());
+            if (property instanceof OResult) {
+              shape = ((OResult) property).toElement();
+            }
+          } else {
+            return new OLuceneResultSetEmpty();
+          }
+        }
+      } else {
+        throw new OCommandExecutionException("The collection in input cannot be major than 1");
+      }
+    }
+
+    if (shape instanceof OResultInternal) {
+      shape = ((OResultInternal) shape).toElement();
     }
     queryParams.put(SpatialQueryBuilderAbstract.SHAPE, shape);
 
