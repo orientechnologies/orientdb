@@ -13,11 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -71,7 +72,8 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
     for (int i = 0; i < THREADS + RTHREADS; ++i)
       threads[i].start();
 
-    System.out.println("Started LuceneInsertReadMultithreadBaseTest test, waiting for " + threads.length + " threads to complete...");
+    System.out
+        .println("Started LuceneInsertReadMultithreadBaseTest test, waiting for " + threads.length + " threads to complete...");
 
     for (int i = 0; i < THREADS + RTHREADS; ++i)
       threads[i].join();
@@ -85,9 +87,9 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
   public class LuceneInsertThread implements Runnable {
 
-    private ODatabaseDocumentTx db;
-    private int cycle     = 0;
-    private int commitBuf = 500;
+    private ODatabaseSession db;
+    private int              cycle     = 0;
+    private int              commitBuf = 500;
 
     public LuceneInsertThread(int cycle) {
       this.cycle = cycle;
@@ -96,8 +98,8 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
     @Override
     public void run() {
 
-      db = new ODatabaseDocumentTx(url);
-      db.open("admin", "admin");
+      db = openDatabase();
+
       db.declareIntent(new OIntentMassiveInsert());
       db.begin();
       for (int i = 0; i < cycle; i++) {
@@ -119,8 +121,8 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
   }
 
   public class LuceneReadThread implements Runnable {
-    private final int               cycle;
-    private       ODatabaseDocument databaseDocumentTx;
+    private final int              cycle;
+    private       ODatabaseSession databaseDocumentTx;
 
     public LuceneReadThread(int cycle) {
       this.cycle = cycle;
@@ -129,8 +131,8 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
     @Override
     public void run() {
 
-      databaseDocumentTx = new ODatabaseDocumentTx(url);
-      databaseDocumentTx.open("admin", "admin");
+      databaseDocumentTx = openDatabase();
+
       OSchema schema = databaseDocumentTx.getMetadata().getSchema();
       OIndex idx = schema.getClass("City").getClassIndex("City.name");
 

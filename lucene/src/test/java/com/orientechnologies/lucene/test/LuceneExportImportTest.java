@@ -20,6 +20,7 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.lucene.OLuceneIndexFactory;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -72,17 +73,20 @@ public class LuceneExportImportTest extends BaseLuceneTest {
     try {
 
       //export
-      new ODatabaseExport(db, file, new OCommandOutputListener() {
+      new ODatabaseExport((ODatabaseDocumentInternal) db, file, new OCommandOutputListener() {
         @Override
         public void onMessage(String s) {
         }
       }).exportDatabase();
 
-      //import
-      db.drop();
-      db.create();
+      dropDatabase();
+
+      createDatabase();
+
+      db = (ODatabaseDocumentInternal) openDatabase();
+
       GZIPInputStream stream = new GZIPInputStream(new FileInputStream(file + ".gz"));
-      new ODatabaseImport(db, stream, new OCommandOutputListener() {
+      new ODatabaseImport((ODatabaseDocumentInternal) db, stream, new OCommandOutputListener() {
         @Override
         public void onMessage(String s) {
         }
