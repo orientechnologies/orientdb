@@ -502,6 +502,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       do {
         final String value = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY).trim();
+        if ("[]".equals(value)) {
+          return;
+        }
 
         if (!value.isEmpty()) {
           doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
