@@ -44,8 +44,8 @@ import static org.junit.Assert.assertTrue;
 public class FreezeAndRecordInsertAtomicityTest {
 
   private static final String URL;
-  private static final int THREADS    = Runtime.getRuntime().availableProcessors() * 2;
-  private static final int ITERATIONS = 100;
+  private static final int    THREADS    = Runtime.getRuntime().availableProcessors() * 2;
+  private static final int    ITERATIONS = 100;
 
   static {
     String buildDirectory = System.getProperty("buildDirectory");
@@ -62,7 +62,7 @@ public class FreezeAndRecordInsertAtomicityTest {
 
   @Before
   public void before() {
-    final long seed = System.currentTimeMillis();
+    final long seed = 1578671001576L; //System.currentTimeMillis();
     System.out.println(FreezeAndRecordInsertAtomicityTest.class.getSimpleName() + " seed: " + seed);
     random = new Random(seed);
 

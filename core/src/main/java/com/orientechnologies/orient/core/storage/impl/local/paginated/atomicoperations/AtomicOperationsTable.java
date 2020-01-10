@@ -135,7 +135,8 @@ public class AtomicOperationsTable {
       for (int i = 0; i < tableSize; i++) {
         final OperationInformation operationInformation = table.get(i);
         if (!addition) {
-          if (operationInformation.status == AtomicOperationStatus.IN_PROGRESS) {
+          if (operationInformation.status == AtomicOperationStatus.IN_PROGRESS
+              || operationInformation.status == AtomicOperationStatus.NOT_STARTED) {
             addition = true;
 
             newIdOffset = i + idOffset;
