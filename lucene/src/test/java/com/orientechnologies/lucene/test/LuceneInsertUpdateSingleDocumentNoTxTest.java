@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -54,7 +54,7 @@ public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
   public void testInsertUpdateTransactionWithIndex() throws Exception {
 
     db.close();
-    db.open("admin", "admin");
+    db = openDatabase();
     OSchema schema = db.getMetadata().getSchema();
     schema.reload();
     ODocument doc = new ODocument("City");
