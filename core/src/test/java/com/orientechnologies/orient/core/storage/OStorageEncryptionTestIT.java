@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
@@ -20,13 +22,12 @@ import java.io.File;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static org.junit.Assert.assertTrue;
+
 public class OStorageEncryptionTestIT {
   @Test
   public void testEncryption() {
-    final String buildDirectory = System.getProperty("buildDirectory", ".");
-    final String dbDirectory = buildDirectory + File.separator + OStorageEncryptionTestIT.class.getSimpleName();
-    final File dbDirectoryFile = new File(dbDirectory);
-    OFileUtils.deleteRecursively(dbDirectoryFile);
+    final File dbDirectoryFile = cleanAndGetDirectory();
 
     final OrientDBConfig orientDBConfig = OrientDBConfig.builder()
         .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==").build();
@@ -62,9 +63,7 @@ public class OStorageEncryptionTestIT {
       }
     }
 
-    try (final OrientDB orientDB = new OrientDB(
-        "embedded:" + buildDirectory + File.separator + OStorageEncryptionTestIT.class.getSimpleName(),
-        OrientDBConfig.defaultConfig())) {
+    try (final OrientDB orientDB = new OrientDB("embedded:" + dbDirectoryFile.getAbsolutePath(), OrientDBConfig.defaultConfig())) {
       try {
         try (final ODatabaseSession session = orientDB.open("encryption", "admin", "admin")) {
           Assert.fail();
@@ -76,9 +75,7 @@ public class OStorageEncryptionTestIT {
 
     final OrientDBConfig wrongKeyOneOrientDBConfig = OrientDBConfig.builder()
         .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "DD0ViGecppQOx4ijWL4XGBwun9NAfbqFaDnVpn9+lj8=").build();
-    try (final OrientDB orientDB = new OrientDB(
-        "embedded:" + buildDirectory + File.separator + OStorageEncryptionTestIT.class.getSimpleName(),
-        wrongKeyOneOrientDBConfig)) {
+    try (final OrientDB orientDB = new OrientDB("embedded:" + dbDirectoryFile.getAbsolutePath(), wrongKeyOneOrientDBConfig)) {
       try {
         try (final ODatabaseSession session = orientDB.open("encryption", "admin", "admin")) {
           Assert.fail();
@@ -90,9 +87,7 @@ public class OStorageEncryptionTestIT {
 
     final OrientDBConfig wrongKeyTwoOrientDBConfig = OrientDBConfig.builder()
         .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "DD0ViGecppQOx4ijWL4XGBwun9NAfbqFaDnVpn9+lj8").build();
-    try (final OrientDB orientDB = new OrientDB(
-        "embedded:" + buildDirectory + File.separator + OStorageEncryptionTestIT.class.getSimpleName(),
-        wrongKeyTwoOrientDBConfig)) {
+    try (final OrientDB orientDB = new OrientDB("embedded:" + dbDirectoryFile.getAbsolutePath(), wrongKeyTwoOrientDBConfig)) {
       try {
         try (final ODatabaseSession session = orientDB.open("encryption", "admin", "admin")) {
           Assert.fail();
@@ -102,8 +97,7 @@ public class OStorageEncryptionTestIT {
       }
     }
 
-    try (final OrientDB orientDB = new OrientDB(
-        "embedded:" + buildDirectory + File.separator + OStorageEncryptionTestIT.class.getSimpleName(), orientDBConfig)) {
+    try (final OrientDB orientDB = new OrientDB("embedded:" + dbDirectoryFile.getAbsolutePath(), orientDBConfig)) {
       try (final ODatabaseSession session = orientDB.open("encryption", "admin", "admin")) {
         final OIndexManagerAbstract indexManager = ((ODatabaseDocumentInternal) session).getMetadata().getIndexManagerInternal();
         final OIndex treeIndex = indexManager.getIndex((ODatabaseDocumentInternal) session, "EncryptedTree");
@@ -123,6 +117,45 @@ public class OStorageEncryptionTestIT {
       }
     }
 
+  }
+
+  private File cleanAndGetDirectory() {
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    final String dbDirectory = buildDirectory + File.separator + OStorageEncryptionTestIT.class.getSimpleName();
+    final File dbDirectoryFile = new File(dbDirectory);
+    OFileUtils.deleteRecursively(dbDirectoryFile);
+    return dbDirectoryFile;
+  }
+
+  @Test
+  public void testEncryptionSingleDatabase() {
+    final File dbDirectoryFile = cleanAndGetDirectory();
+
+    try (final OrientDB orientDB = new OrientDB("embedded:" + dbDirectoryFile.getAbsolutePath(), OrientDBConfig.defaultConfig())) {
+      final OrientDBConfig orientDBConfig = OrientDBConfig.builder()
+          .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==").build();
+
+      orientDB.create("encryption", ODatabaseType.PLOCAL, orientDBConfig);
+    }
+    try (final OrientDB orientDB = new OrientDB("embedded:" + dbDirectoryFile.getAbsolutePath(), OrientDBConfig.defaultConfig())) {
+      final OrientDBConfig orientDBConfig = OrientDBConfig.builder()
+          .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==").build();
+      try (final ODatabaseSession session = orientDB.open("encryption", "admin", "admin", orientDBConfig)) {
+        final OSchema schema = session.getMetadata().getSchema();
+        final OClass cls = schema.createClass("EncryptedData");
+
+        final ODocument document = new ODocument(cls);
+        document.setProperty("id", 10);
+        document.setProperty("value", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+            + "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,"
+            + " quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ");
+        document.save();
+
+        try (OResultSet resultSet = session.query("select from EncryptedData where id = ?", 10)) {
+          assertTrue(resultSet.hasNext());
+        }
+      }
+    }
   }
 
 }
