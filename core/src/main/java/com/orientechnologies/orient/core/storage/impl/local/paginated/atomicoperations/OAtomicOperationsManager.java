@@ -102,9 +102,16 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final boolean useWal = useWal();
     final long unitId = idGen.nextId();
 
-    final long activeSegment = writeAheadLog.activeSegment();
+    final long activeSegment;
+    if (writeAheadLog != null) {
+      activeSegment = writeAheadLog.activeSegment();
+    } else {
+      activeSegment = -1;
+    }
     final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
-    atomicOperationsTable.startOperation(unitId, activeSegment);
+    if (activeSegment >= 0) {
+      atomicOperationsTable.startOperation(unitId, activeSegment);
+    }
 
     operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
     currentOperation.set(operation);
@@ -294,10 +301,16 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         final boolean useWal = useWal();
         if (!operation.isRollback()) {
-          operation.commitChanges(useWal ? writeAheadLog : null);
-          atomicOperationsTable.commitOperation(operation.getOperationUnitId());
+          if (useWal) {
+            operation.commitChanges(writeAheadLog);
+            atomicOperationsTable.commitOperation(operation.getOperationUnitId());
+          } else {
+            operation.commitChanges(null);
+          }
         } else {
-          atomicOperationsTable.rollbackOperation(operation.getOperationUnitId());
+          if (useWal) {
+            atomicOperationsTable.rollbackOperation(operation.getOperationUnitId());
+          }
         }
       } finally {
         final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
