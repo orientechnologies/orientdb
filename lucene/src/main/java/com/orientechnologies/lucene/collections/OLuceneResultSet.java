@@ -59,7 +59,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
   private        TopDocs             topDocs;
   private        long                deletedMatchCount = 0;
 
-  boolean closed = false;
+  private boolean closed = false;
 
   protected OLuceneResultSet() {
 
