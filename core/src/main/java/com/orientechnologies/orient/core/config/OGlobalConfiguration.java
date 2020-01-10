@@ -221,6 +221,9 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       "Indicates whether a full checkpoint should be performed, if storage was opened. It is needed so fuzzy checkpoints can work properly",
       Boolean.class, true),
 
+  STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT("storage.atomicOperationsTable.compactionLimit",
+      "Limit of size of atomic operations table after which compaction will be triggered on", Integer.class, 10_000),
+
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
       "Indicates whether a full checkpoint should be performed, if storage was opened", Boolean.class, true),
 

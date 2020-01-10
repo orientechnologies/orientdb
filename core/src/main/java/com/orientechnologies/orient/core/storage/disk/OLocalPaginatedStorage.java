@@ -686,6 +686,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           } finally {
             atomicOperationsManager.releaseComponentOperations(freezeId);
           }
+          atomicOperationsTable.compactTable();
         } finally {
           stateLock.releaseReadLock();
         }

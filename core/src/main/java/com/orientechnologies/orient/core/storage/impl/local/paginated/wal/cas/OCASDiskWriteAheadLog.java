@@ -44,8 +44,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -143,7 +141,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private final ScalableRWLock segmentLock = new ScalableRWLock();
 
   private final TreeMap<OLogSequenceNumber, Integer> cutTillLimits = new TreeMap<>();
-  private final Lock                                 cuttingLock   = new ReentrantLock();
+  private final ScalableRWLock                       cuttingLock   = new ScalableRWLock();
 
   private final ConcurrentLinkedQueue<OPair<Long, OWALFile>> fileCloseQueue     = new ConcurrentLinkedQueue<>();
   private final AtomicInteger                                fileCloseQueueSize = new AtomicInteger();
@@ -971,11 +969,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    cuttingLock.lock();
+    cuttingLock.sharedLock();
     try {
       cutTillLimits.merge(lsn, 1, (a, b) -> a + b);
     } finally {
-      cuttingLock.unlock();
+      cuttingLock.sharedUnlock();
     }
   }
 
@@ -983,21 +981,22 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    cuttingLock.lock();
+    cuttingLock.sharedLock();
     try {
-      final Integer oldCounter = cutTillLimits.get(lsn);
+      cutTillLimits.compute(lsn, (key, oldCounter) -> {
+        if (oldCounter == null) {
+          throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
+        }
 
-      if (oldCounter == null)
-        throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
+        final int newCounter = oldCounter - 1;
+        if (newCounter == 0) {
+          return null;
+        }
 
-      final Integer newCounter = oldCounter - 1;
-      if (newCounter == 0) {
-        cutTillLimits.remove(lsn);
-      } else {
-        cutTillLimits.put(lsn, newCounter);
-      }
+        return newCounter;
+      });
     } finally {
-      cuttingLock.unlock();
+      cuttingLock.sharedUnlock();
     }
   }
 
@@ -1124,7 +1123,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   public boolean cutAllSegmentsSmallerThan(long segmentId) throws IOException {
-    cuttingLock.lock();
+    cuttingLock.exclusiveLock();
     try {
       segmentLock.sharedLock();
       try {
@@ -1193,7 +1192,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         segmentLock.sharedUnlock();
       }
     } finally {
-      cuttingLock.unlock();
+      cuttingLock.exclusiveUnlock();
     }
   }
 

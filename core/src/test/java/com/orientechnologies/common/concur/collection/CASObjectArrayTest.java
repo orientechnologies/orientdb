@@ -67,7 +67,7 @@ public class CASObjectArrayTest {
     final CASObjectArray<Integer> array = new CASObjectArray<>();
 
     Assert.assertEquals(0, array.add(1));
-    array.set(0, 21);
+    array.set(0, 21, -1);
 
     Assert.assertEquals(21, array.get(0).intValue());
   }
@@ -79,8 +79,8 @@ public class CASObjectArrayTest {
     Assert.assertEquals(0, array.add(1));
     Assert.assertEquals(1, array.add(2));
 
-    array.set(0, 21);
-    array.set(1, 22);
+    array.set(0, 21, -1);
+    array.set(1, 22, -1);
 
     Assert.assertEquals(21, array.get(0).intValue());
     Assert.assertEquals(22, array.get(1).intValue());
@@ -94,9 +94,9 @@ public class CASObjectArrayTest {
     Assert.assertEquals(1, array.add(2));
     Assert.assertEquals(2, array.add(3));
 
-    array.set(0, 21);
-    array.set(1, 22);
-    array.set(2, 23);
+    array.set(0, 21, -1);
+    array.set(1, 22, -1);
+    array.set(2, 23, -1);
 
     Assert.assertEquals(21, array.get(0).intValue());
     Assert.assertEquals(22, array.get(1).intValue());
@@ -113,7 +113,7 @@ public class CASObjectArrayTest {
     }
 
     for (int i = 0; i < 12; i++) {
-      array.set(i, 21 + i);
+      array.set(i, 21 + i, -1);
     }
 
     for (int i = 0; i < 12; i++) {
@@ -172,7 +172,6 @@ public class CASObjectArrayTest {
     Assert.assertEquals(3, array.get(2).intValue());
     Assert.assertTrue(array.compareAndSet(2, 3, 23));
 
-
     Assert.assertEquals(21, array.get(0).intValue());
     Assert.assertEquals(22, array.get(1).intValue());
     Assert.assertEquals(23, array.get(2).intValue());
@@ -198,7 +197,6 @@ public class CASObjectArrayTest {
     for (int i = 0; i < 12; i++) {
       Assert.assertTrue(array.compareAndSet(i, i + 1, 21 + i));
     }
-
 
     for (int i = 0; i < 12; i++) {
       Assert.assertEquals(i + 21, array.get(i).intValue());

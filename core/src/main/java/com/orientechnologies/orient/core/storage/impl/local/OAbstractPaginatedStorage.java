@@ -91,6 +91,7 @@ import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConf
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.AtomicOperationsTable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -222,6 +223,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicInteger sessionCount  = new AtomicInteger(0);
   private final AtomicLong    lastCloseTime = new AtomicLong(System.currentTimeMillis());
 
+  protected AtomicOperationsTable atomicOperationsTable;
+
   public OAbstractPaginatedStorage(final String name, final String filePath, final String mode, final int id) {
     super(name, filePath, mode);
 
@@ -294,7 +297,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
 
         initWalAndDiskCache(contextConfiguration);
-        atomicOperationsManager = new OAtomicOperationsManager(this);
         transaction = new ThreadLocal<>();
 
         final long lastTxId = checkIfStorageDirty();
@@ -304,6 +306,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           idGen.setStartId(0);
         }
 
+        atomicOperationsTable = new AtomicOperationsTable(
+            contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
+            idGen.getLastId());
+        atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
         recoverIfNeeded();
 
         atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
@@ -521,7 +527,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
 
         initWalAndDiskCache(contextConfiguration);
-        atomicOperationsManager = new OAtomicOperationsManager(this);
+        atomicOperationsTable = new AtomicOperationsTable(
+            contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
+            idGen.getLastId());
+        atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
         transaction = new ThreadLocal<>();
 
         preCreateSteps();
@@ -1269,7 +1278,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     ((OClusterBasedStorageConfiguration) configuration).setClusterStatus(atomicOperation, cluster.getId(), status);
 
-    makeFullCheckpoint();
     return true;
   }
 
@@ -4489,7 +4497,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       final Long minLSNSegment = writeCache.getMinimalNotFlushedSegment();
 
-      final long fuzzySegment;
+      long fuzzySegment;
 
       if (minLSNSegment != null) {
         fuzzySegment = minLSNSegment;
@@ -4499,6 +4507,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         fuzzySegment = endLSN.getSegment();
+      }
+
+      atomicOperationsTable.compactTable();
+      final long minAtomicOperationSegment = atomicOperationsTable.getSegmentEarliestOperationInProgress();
+      if (minAtomicOperationSegment >= 0 && fuzzySegment > minAtomicOperationSegment) {
+        fuzzySegment = minAtomicOperationSegment;
       }
 
       OLogManager.instance().debugNoDb(this,
@@ -4541,9 +4555,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
         writeCache.flush();
+
+        atomicOperationsTable.compactTable();
+        final long operationSegment = atomicOperationsTable.getSegmentEarliestOperationInProgress();
+        if (operationSegment >= 0) {
+          throw new IllegalStateException("Can not perform full checkpoint if some of atomic operations in progress");
+        }
+
         writeAheadLog.logFullCheckpointEnd();
         writeAheadLog.flush();
-
         writeAheadLog.cutTill(lastLSN);
 
         if (jvmError.get() == null) {
@@ -6539,11 +6559,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           return;
         }
 
-        final long flushTillSegmentId;
+        long flushTillSegmentId;
         if (nonActiveSegments.length == 1) {
           flushTillSegmentId = writeAheadLog.activeSegment();
         } else {
           flushTillSegmentId = (nonActiveSegments[0] + nonActiveSegments[nonActiveSegments.length - 1]) / 2;
+        }
+
+        atomicOperationsTable.compactTable();
+        final long operationSegment = atomicOperationsTable.getSegmentEarliestOperationInProgress();
+
+        if (operationSegment == nonActiveSegments[0]) {
+          //atomic operations in progress prevent to remove at least single segment of WAL, we need to try later once operation
+          //completes
+          return;
+        } else if (operationSegment >= 0 && operationSegment < nonActiveSegments[0]) {
+          throw new IllegalStateException("Atomic operation still in progress but WAL segment from it is started already removed");
+        }
+
+        if (flushTillSegmentId > operationSegment) {
+          flushTillSegmentId = operationSegment;
         }
 
         long minDirtySegment;

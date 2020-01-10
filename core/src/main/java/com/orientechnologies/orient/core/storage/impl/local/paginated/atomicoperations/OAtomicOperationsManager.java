@@ -80,13 +80,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final OReadCache                         readCache;
   private final OWriteCache                        writeCache;
   private final AtomicOperationIdGen               idGen;
+  private final AtomicOperationsTable              atomicOperationsTable;
 
-  public OAtomicOperationsManager(OAbstractPaginatedStorage storage) {
+  public OAtomicOperationsManager(OAbstractPaginatedStorage storage, AtomicOperationsTable atomicOperationsTable) {
     this.storage = storage;
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
     this.idGen = storage.getIdGen();
+    this.atomicOperationsTable = atomicOperationsTable;
   }
 
   public OAtomicOperation startAtomicOperation() throws IOException {
@@ -99,7 +101,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     final boolean useWal = useWal();
     final long unitId = idGen.nextId();
+
+    final long activeSegment = writeAheadLog.activeSegment();
     final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
+    atomicOperationsTable.startOperation(unitId, activeSegment);
 
     operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
     currentOperation.set(operation);
@@ -290,6 +295,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         final boolean useWal = useWal();
         if (!operation.isRollback()) {
           operation.commitChanges(useWal ? writeAheadLog : null);
+          atomicOperationsTable.commitOperation(operation.getOperationUnitId());
+        } else {
+          atomicOperationsTable.rollbackOperation(operation.getOperationUnitId());
         }
       } finally {
         final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();

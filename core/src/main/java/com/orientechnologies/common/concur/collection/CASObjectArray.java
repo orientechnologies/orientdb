@@ -33,13 +33,17 @@ public final class CASObjectArray<T> {
 
   }
 
-  public void set(int index, T value) {
+  public void set(int index, T value, T placeholder) {
     Objects.requireNonNull(value);
+    Objects.requireNonNull(placeholder);
 
     final int size = this.size.get();
 
     if (size <= index) {
-      throw new ArrayIndexOutOfBoundsException("Requested " + index + ", size is " + size);
+      //noinspection StatementWithEmptyBody
+      while (add(placeholder) < index) {
+        //repeat till we will not create place for the element
+      }
     }
 
     final int containerIndex = 31 - Integer.numberOfLeadingZeros(index + 1);
@@ -69,7 +73,7 @@ public final class CASObjectArray<T> {
       throw new ArrayIndexOutOfBoundsException("Requested " + index + ", size is " + size);
     }
 
-    final int containerIndex =  31 - Integer.numberOfLeadingZeros(index + 1);
+    final int containerIndex = 31 - Integer.numberOfLeadingZeros(index + 1);
     final int containerSize = 1 << containerIndex;
     final int indexInsideContainer = index + 1 - containerSize;
 
@@ -93,7 +97,7 @@ public final class CASObjectArray<T> {
       throw new ArrayIndexOutOfBoundsException("Requested " + index + ", size is " + size);
     }
 
-    final int containerIndex =  31 - Integer.numberOfLeadingZeros(index + 1);
+    final int containerIndex = 31 - Integer.numberOfLeadingZeros(index + 1);
     final int containerSize = 1 << containerIndex;
     final int indexInsideContainer = index + 1 - containerSize;
 
