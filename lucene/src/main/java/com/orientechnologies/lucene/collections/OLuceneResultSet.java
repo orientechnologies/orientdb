@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.collections;
@@ -48,18 +48,23 @@ import java.util.*;
  */
 public class OLuceneResultSet implements Set<OIdentifiable> {
 
-  private static Integer PAGE_SIZE = 10000;
-  private final Query               query;
-  private final OLuceneIndexEngine  engine;
-  private final OLuceneQueryContext queryContext;
-  private final String              indexName;
-  private final Highlighter         highlighter;
-  private final List<String>        highlighted;
-  private final int                 maxNumFragments;
-  private       TopDocs             topDocs;
-  private long deletedMatchCount = 0;
+  private static Integer             PAGE_SIZE         = 10000;
+  private        Query               query;
+  private        OLuceneIndexEngine  engine;
+  private        OLuceneQueryContext queryContext;
+  private        String              indexName;
+  private        Highlighter         highlighter;
+  private        List<String>        highlighted;
+  private        int                 maxNumFragments;
+  private        TopDocs             topDocs;
+  private        long                deletedMatchCount = 0;
 
   boolean closed = false;
+
+  protected OLuceneResultSet() {
+
+  }
+
   public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext, ODocument metadata) {
     this.engine = engine;
     this.queryContext = queryContext;
@@ -177,7 +182,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     private ScoreDoc[] scoreDocs;
     private int        index;
     private int        localIndex;
-    private long        totalHits;
+    private long       totalHits;
 
     public OLuceneResultSetIteratorTx() {
       totalHits = topDocs.totalHits;
@@ -194,7 +199,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
         final IndexSearcher searcher = queryContext.getSearcher();
         if (searcher.getIndexReader().getRefCount() > 1) {
           engine.release(searcher);
-          closed= true;
+          closed = true;
         }
       }
       return hasNext;
