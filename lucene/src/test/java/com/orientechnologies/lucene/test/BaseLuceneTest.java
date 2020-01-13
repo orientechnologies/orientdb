@@ -55,8 +55,7 @@ public abstract class BaseLuceneTest {
 
       type = ODatabaseType.PLOCAL;
 
-      path = "embedded:./target/databases"[
-          \
+      path = "embedded:./target/databases";
 
     } else {
       type = ODatabaseType.MEMORY;
