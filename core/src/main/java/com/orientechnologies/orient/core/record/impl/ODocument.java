@@ -111,6 +111,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
+
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
@@ -526,6 +528,13 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+    if (fieldType == OType.CUSTOM) {
+      if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+        throw new ODatabaseException(String.format(
+            "OType CUSTOM used by serializable types, for value  '%s' is not enabled, set `db.custom.support` to true for enable it",
+            iPropertyValue));
+      }
+    }
     if (oldType != fieldType && oldType != null) {
       // can be made in a better way, but "keeping type" issue should be solved before
       if (iPropertyValue == null || fieldType != null || oldType != OType.getTypeByValue(iPropertyValue))
@@ -1515,6 +1524,15 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+    if (fieldType == OType.CUSTOM) {
+      if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+        throw new ODatabaseException(String.format(
+            "OType CUSTOM used by serializable types, for value  '%s' is not enabled, set `db.custom.support` to true for enable it",
+            iPropertyValue));
+      }
+    }
+
+
     if (oldType != fieldType && oldType != null) {
       // can be made in a better way, but "keeping type" issue should be solved before
       if (iPropertyValue == null || fieldType != null || oldType != OType.getTypeByValue(iPropertyValue))
@@ -2125,6 +2143,13 @@ public class ODocument extends ORecordAbstract
     if (iFieldType != null) {
       if (_fields == null)
         _fields = _ordered ? new LinkedHashMap<>() : new HashMap<>();
+
+      if (iFieldType == OType.CUSTOM) {
+        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+          throw new ODatabaseException(String
+              .format("OType CUSTOM used by serializable types is not enabled, set `db.custom.support` to true for enable it"));
+        }
+      }
       // SET THE FORCED TYPE
       ODocumentEntry entry = getOrCreate(iFieldName);
       if (entry.type != iFieldType)
