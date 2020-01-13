@@ -55,11 +55,6 @@ public abstract class BaseLuceneTest {
 
       path = "embedded:./target/databases";
 
-      if (context.exists(name.getMethodName())) {
-        context.drop(name.getMethodName());
-      }
-
-      context.create(name.getMethodName(), ODatabaseType.PLOCAL);
 
     } else {
       type = ODatabaseType.MEMORY;
