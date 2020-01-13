@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -2114,6 +2115,8 @@ public class ODocumentSerializerDeltaTest {
 
   @Test
   public void testDocumentWithCostum() {
+    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     ODatabaseRecordThreadLocal.instance().remove();
     ODocument document = new ODocument();
     document.field("test", "test");
@@ -2128,6 +2131,7 @@ public class ODocumentSerializerDeltaTest {
     assertEquals(extr.fields(), document.fields());
     assertEquals(extr.<Object>field("test"), document.field("test"));
     assertEquals(extr.<Object>field("custom"), document.field("custom"));
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(old);
   }
 
   @Test
@@ -2309,6 +2313,9 @@ public class ODocumentSerializerDeltaTest {
 
   @Test
   public void testSerializableValue() {
+    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
+
     ODocument document = new ODocument();
     SimpleSerializableClass ser = new SimpleSerializableClass();
     ser.name = "testName";
@@ -2323,7 +2330,7 @@ public class ODocumentSerializerDeltaTest {
     assertEquals(extr.fieldType("seri"), OType.CUSTOM);
     SimpleSerializableClass newser = extr.field("seri");
     assertEquals(newser.name, ser.name);
-
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(old);
   }
 
   @Test
