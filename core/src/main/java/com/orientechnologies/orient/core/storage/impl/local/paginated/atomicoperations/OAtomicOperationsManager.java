@@ -105,9 +105,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final long unitId;
     final long activeSegment;
 
-    synchronized (segmentLock) {
+    if (useWal) {
+      synchronized (segmentLock) {
+        unitId = idGen.nextId();
+        activeSegment = writeAheadLog.activeSegment();
+      }
+    } else {
       unitId = idGen.nextId();
-      activeSegment = writeAheadLog.activeSegment();
+      activeSegment = -1;
     }
 
     final OLogSequenceNumber lsn;
