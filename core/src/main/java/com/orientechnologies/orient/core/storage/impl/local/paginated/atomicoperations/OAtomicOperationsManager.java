@@ -117,8 +117,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     final OLogSequenceNumber lsn;
     if (useWal) {
-      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
       atomicOperationsTable.startOperation(unitId, activeSegment);
+      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
     } else {
       lsn = null;
     }

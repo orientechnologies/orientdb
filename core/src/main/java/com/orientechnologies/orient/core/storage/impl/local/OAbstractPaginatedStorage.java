@@ -6576,12 +6576,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         atomicOperationsTable.compactTable();
         final long operationSegment = atomicOperationsTable.getSegmentEarliestOperationInProgress();
 
-        if (operationSegment == nonActiveSegments[0]) {
+        if (operationSegment >= nonActiveSegments[0]) {
           //atomic operations in progress prevent to remove at least single segment of WAL, we need to try later once operation
           //completes
           return;
-        } else if (operationSegment >= 0 && operationSegment < nonActiveSegments[0]) {
-          throw new IllegalStateException("Atomic operation still in progress but WAL segment from it is started already removed");
         }
 
         if (flushTillSegmentId > operationSegment) {
