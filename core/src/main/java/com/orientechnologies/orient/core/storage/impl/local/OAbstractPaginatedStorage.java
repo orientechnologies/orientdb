@@ -79,6 +79,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexEngine;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
@@ -5125,7 +5126,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             // we close all files inside cache system so we only clear index metadata and close non core indexes
             for (final OBaseIndexEngine engine : indexEngines) {
               if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine
-                  || engine instanceof OCellBTreeSingleValueIndexEngine || engine instanceof OCellBTreeMultiValueIndexEngine)) {
+                  || engine instanceof OCellBTreeSingleValueIndexEngine || engine instanceof OCellBTreeMultiValueIndexEngine
+                  || engine instanceof OAutoShardingIndexEngine)) {
                 engine.close();
               }
             }
@@ -5134,7 +5136,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         } else {
           for (final OBaseIndexEngine engine : indexEngines) {
             if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine
-                || engine instanceof OCellBTreeSingleValueIndexEngine || engine instanceof OCellBTreeMultiValueIndexEngine)) {
+                || engine instanceof OCellBTreeSingleValueIndexEngine || engine instanceof OCellBTreeMultiValueIndexEngine
+                || engine instanceof OAutoShardingIndexEngine)) {
               //delete method is implemented only in non native indexes, so they do not use ODB atomic operation
               engine.delete(null);
             }
